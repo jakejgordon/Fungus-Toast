@@ -424,7 +424,7 @@ namespace FungusToast.Unity.Campaign
             return changed;
         }
 
-        public static List<MoldinessUnlockDefinition> GenerateOffers(MoldinessProgressionState progressionState, System.Random random, int count)
+        public static List<MoldinessUnlockDefinition> GenerateOffers(MoldinessProgressionState progressionState, System.Random random, int count, string forcedUnlockId = "")
         {
             progressionState ??= MoldinessProgression.CreateDefaultState();
             NormalizeProgressionState(progressionState);
@@ -453,6 +453,21 @@ namespace FungusToast.Unity.Campaign
                 .Where(definition => definition.Type != MoldinessUnlockType.UnlockMycovariant || !ownedMycovariantIds.Contains(definition.MycovariantId))
                 .ToList();
 
+            MoldinessUnlockDefinition forcedUnlock = null;
+            if (!string.IsNullOrWhiteSpace(forcedUnlockId)
+                && MoldinessUnlockCatalog.TryGetById(forcedUnlockId, out var forcedDefinition)
+                && forcedDefinition != null
+                && (forcedDefinition.IsRepeatable || !ownedRewardIds.Contains(forcedDefinition.Id))
+                && (forcedDefinition.Type != MoldinessUnlockType.UnlockAdaptation || !ownedAdaptationIds.Contains(forcedDefinition.AdaptationId))
+                && (forcedDefinition.Type != MoldinessUnlockType.UnlockMycovariant || !ownedMycovariantIds.Contains(forcedDefinition.MycovariantId)))
+            {
+                forcedUnlock = forcedDefinition;
+                if (!eligible.Any(definition => string.Equals(definition.Id, forcedUnlock.Id, StringComparison.Ordinal)))
+                {
+                    eligible.Add(forcedUnlock);
+                }
+            }
+
             if (eligible.Count == 0)
             {
                 return new List<MoldinessUnlockDefinition>();
@@ -466,6 +481,16 @@ namespace FungusToast.Unity.Campaign
 
             int takeCount = Math.Min(Math.Max(1, count), eligible.Count);
             var offers = eligible.Take(takeCount).ToList();
+            if (forcedUnlock != null && !offers.Any(definition => string.Equals(definition.Id, forcedUnlock.Id, StringComparison.Ordinal)))
+            {
+                offers[offers.Count - 1] = forcedUnlock;
+
+                for (int i = offers.Count - 1; i > 0; i--)
+                {
+                    int swapIndex = random.Next(i + 1);
+                    (offers[i], offers[swapIndex]) = (offers[swapIndex], offers[i]);
+                }
+            }
             progressionState.pendingUnlockChoice = new MoldinessUnlockChoiceState
             {
                 triggerTierIndex = progressionState.currentTierIndex,

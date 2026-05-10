@@ -299,6 +299,7 @@ namespace FungusToast.Unity
         public int? testingMycovariantId = null; 
         public int testingCampaignLevelIndex = 0;
         public string testingForcedAdaptationId = string.Empty;
+        public string testingForcedMoldinessRewardId = string.Empty;
         public List<string> testingForcedStartingAdaptationIds = new();
         public bool testingModeForceHumanFirst = true; 
         public ForcedGameResultMode testingForcedGameResult = ForcedGameResultMode.Natural;
@@ -416,6 +417,7 @@ namespace FungusToast.Unity
         public int? TestingMycovariantId => testingMycovariantId;
         public int TestingCampaignLevelIndex => testingCampaignLevelIndex;
         public string TestingForcedAdaptationId => testingForcedAdaptationId;
+        public string TestingForcedMoldinessRewardId => testingForcedMoldinessRewardId;
         public IReadOnlyList<string> TestingForcedStartingAdaptationIds => testingForcedStartingAdaptationIds;
         public ForcedGameResultMode TestingForcedGameResult => testingForcedGameResult;
         public bool TestingForceMoldinessRewards => testingForceMoldinessRewards;
@@ -708,7 +710,8 @@ namespace FungusToast.Unity
                 () => FirstUpgradeRounds,
                 () => testingModeEnabled,
                 () => testingForcedGameResult,
-                () => testingForceMoldinessRewards);
+                () => testingForceMoldinessRewards,
+                () => testingForcedMoldinessRewardId);
             mutationPointService = new MutationPointService(
                 gameUIManager,
                 () => Board,
@@ -1796,12 +1799,14 @@ namespace FungusToast.Unity
             bool forceMoldinessRewards = false,
             int campaignLevelIndex = 0,
             string forcedAdaptationId = "",
+            string forcedMoldinessRewardId = "",
             IReadOnlyList<string>? forcedStartingAdaptationIds = null)
         {
             testingModeEnabled = true;
             testingMycovariantId = mycovariantId;
             testingCampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             testingForcedAdaptationId = forcedAdaptationId ?? string.Empty;
+            testingForcedMoldinessRewardId = forcedMoldinessRewardId ?? string.Empty;
             testingForcedStartingAdaptationIds = forcedStartingAdaptationIds?
                 .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.Ordinal)
@@ -1823,6 +1828,7 @@ namespace FungusToast.Unity
             testingMycovariantId = null;
             testingCampaignLevelIndex = 0;
             testingForcedAdaptationId = string.Empty;
+            testingForcedMoldinessRewardId = string.Empty;
             testingForcedStartingAdaptationIds = new List<string>();
             testingModeForceHumanFirst = false;
             testingForcedGameResult = ForcedGameResultMode.Natural;

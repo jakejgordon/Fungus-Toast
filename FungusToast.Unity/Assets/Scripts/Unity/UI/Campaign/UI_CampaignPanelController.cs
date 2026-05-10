@@ -257,6 +257,7 @@ namespace FungusToast.Unity.UI.Campaign
                 SupportsCampaignLevelSelection = true,
                 SupportsForcedAdaptation = true,
                 SupportsForceMoldinessRewards = true,
+                SupportsForcedMoldinessRewardSelection = true,
                 CardName = "UI_CampaignTestingCard",
                 ControlPrefix = "UI_CampaignTesting",
                 LogPrefix = "UI_CampaignPanelController",

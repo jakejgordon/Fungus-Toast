@@ -107,6 +107,7 @@ namespace FungusToast.Unity.UI.Testing
         public bool ForceMoldinessRewards { get; }
         public int CampaignLevelIndex { get; }
         public string ForcedAdaptationId { get; }
+        public string ForcedMoldinessRewardId { get; }
         public IReadOnlyList<string> ForcedStartingAdaptationIds { get; }
 
         public DevelopmentTestingConfiguration(
@@ -120,6 +121,7 @@ namespace FungusToast.Unity.UI.Testing
             bool forceMoldinessRewards,
             int campaignLevelIndex,
             string forcedAdaptationId,
+            string forcedMoldinessRewardId,
             IReadOnlyList<string> forcedStartingAdaptationIds)
         {
             IsEnabled = isEnabled;
@@ -134,6 +136,7 @@ namespace FungusToast.Unity.UI.Testing
                 && forceMoldinessRewards;
             CampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             ForcedAdaptationId = forcedAdaptationId ?? string.Empty;
+            ForcedMoldinessRewardId = forcedMoldinessRewardId ?? string.Empty;
             ForcedStartingAdaptationIds = forcedStartingAdaptationIds?
                 .Where(id => !string.IsNullOrWhiteSpace(id))
                 .Distinct(StringComparer.Ordinal)
@@ -150,6 +153,7 @@ namespace FungusToast.Unity.UI.Testing
         public bool SupportsCampaignLevelSelection { get; set; } = true;
         public bool SupportsForcedAdaptation { get; set; }
         public bool SupportsForceMoldinessRewards { get; set; }
+        public bool SupportsForcedMoldinessRewardSelection { get; set; }
         public bool SupportsBoardSizeOverride { get; set; }
         public bool SupportsFirstGameToggle { get; set; } = true;
         public string CardName { get; set; } = "UI_DevelopmentTestingCard";
@@ -195,6 +199,8 @@ namespace FungusToast.Unity.UI.Testing
         private Button skipToEndButton;
         private Button forcedResultButton;
         private Button forceMoldinessRewardsButton;
+        private GameObject forcedMoldinessRewardRow;
+        private TMP_Dropdown forcedMoldinessRewardDropdown;
         private GameObject adaptationRow;
         private TMP_Dropdown adaptationDropdown;
         private Button forcedStartingAdaptationsToggleButton;
@@ -203,12 +209,14 @@ namespace FungusToast.Unity.UI.Testing
         private readonly List<Toggle> forcedStartingAdaptationToggles = new();
         private List<Mycovariant> sortedMycovariants = new List<Mycovariant>();
         private List<AdaptationDefinition> sortedAdaptations = new List<AdaptationDefinition>();
+        private List<MoldinessUnlockDefinition> sortedMoldinessRewards = new List<MoldinessUnlockDefinition>();
 
         private bool testingEnabled;
         private bool skipToEnd;
         private bool forceFirstGame;
         private bool forceMoldinessRewards;
         private bool forceStartingAdaptationsEnabled;
+        private string selectedForcedMoldinessRewardId = string.Empty;
         private readonly HashSet<string> selectedForcedStartingAdaptationIds = new(StringComparer.Ordinal);
         private int fastForwardRounds;
         private int selectedBoardSize = DevelopmentTestingBoardSizePresets.DefaultSize;
@@ -274,6 +282,17 @@ namespace FungusToast.Unity.UI.Testing
             if (options.SupportsForceMoldinessRewards)
             {
                 forceMoldinessRewardsButton = EnsureSettingButton($"{options.ControlPrefix}ForceMoldinessRewardsButton", OnForceMoldinessRewardsClicked);
+
+                if (options.SupportsForcedMoldinessRewardSelection)
+                {
+                    forcedMoldinessRewardRow = EnsureDropdownRow(
+                        $"{options.ControlPrefix}ForcedMoldinessRewardRow",
+                        $"{options.ControlPrefix}ForcedMoldinessRewardLabel",
+                        $"{options.ControlPrefix}ForcedMoldinessRewardDropdown",
+                        "Forced Moldiness Reward",
+                        out forcedMoldinessRewardDropdown);
+                    ConfigureForcedMoldinessRewardDropdown();
+                }
             }
 
             if (options.SupportsForcedAdaptation)
@@ -295,11 +314,12 @@ namespace FungusToast.Unity.UI.Testing
             SetSiblingIndex(skipToEndButton != null ? skipToEndButton.transform : null, 3);
             SetSiblingIndex(forcedResultButton != null ? forcedResultButton.transform : null, 4);
             SetSiblingIndex(forceMoldinessRewardsButton != null ? forceMoldinessRewardsButton.transform : null, 5);
-            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 6);
-            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 7);
-            SetSiblingIndex(forcedStartingAdaptationsToggleButton != null ? forcedStartingAdaptationsToggleButton.transform : null, 8);
-            SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 9);
-            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 10);
+            SetSiblingIndex(forcedMoldinessRewardRow != null ? forcedMoldinessRewardRow.transform : null, 6);
+            SetSiblingIndex(adaptationRow != null ? adaptationRow.transform : null, 7);
+            SetSiblingIndex(firstGameButton != null ? firstGameButton.transform : null, 8);
+            SetSiblingIndex(forcedStartingAdaptationsToggleButton != null ? forcedStartingAdaptationsToggleButton.transform : null, 9);
+            SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 10);
+            SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 11);
 
             RefreshDropdownOptions();
             RefreshVisualState();
@@ -328,6 +348,7 @@ namespace FungusToast.Unity.UI.Testing
                 && skipToEnd
                 && configuration.ForcedResult == ForcedGameResultMode.ForcedWin
                 && configuration.ForceMoldinessRewards;
+            selectedForcedMoldinessRewardId = configuration.ForcedMoldinessRewardId ?? string.Empty;
             selectedForcedStartingAdaptationIds.Clear();
             foreach (var adaptationId in configuration.ForcedStartingAdaptationIds)
             {
@@ -381,6 +402,22 @@ namespace FungusToast.Unity.UI.Testing
 
                 adaptationDropdown.SetValueWithoutNotify(selectedAdaptationIndex);
                 adaptationDropdown.RefreshShownValue();
+            }
+
+            if (forcedMoldinessRewardDropdown != null)
+            {
+                int selectedMoldinessRewardIndex = 0;
+                if (!string.IsNullOrWhiteSpace(selectedForcedMoldinessRewardId))
+                {
+                    int found = sortedMoldinessRewards.FindIndex(reward => string.Equals(reward.Id, selectedForcedMoldinessRewardId, StringComparison.Ordinal));
+                    if (found >= 0)
+                    {
+                        selectedMoldinessRewardIndex = found + 1;
+                    }
+                }
+
+                forcedMoldinessRewardDropdown.SetValueWithoutNotify(selectedMoldinessRewardIndex);
+                forcedMoldinessRewardDropdown.RefreshShownValue();
             }
 
             RefreshVisualState();
@@ -467,6 +504,26 @@ namespace FungusToast.Unity.UI.Testing
                 adaptationDropdown.RefreshShownValue();
                 ApplyDropdownReadability(adaptationDropdown);
             }
+
+            if (forcedMoldinessRewardDropdown != null)
+            {
+                sortedMoldinessRewards = MoldinessUnlockCatalog.All
+                    .OrderBy(reward => reward.DisplayName, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(reward => reward.Id, StringComparer.Ordinal)
+                    .ToList();
+
+                var moldinessRewardOptions = new List<string> { "Select reward" };
+                for (int index = 0; index < sortedMoldinessRewards.Count; index++)
+                {
+                    moldinessRewardOptions.Add(sortedMoldinessRewards[index].DisplayName);
+                }
+
+                forcedMoldinessRewardDropdown.ClearOptions();
+                forcedMoldinessRewardDropdown.AddOptions(moldinessRewardOptions);
+                forcedMoldinessRewardDropdown.value = 0;
+                forcedMoldinessRewardDropdown.RefreshShownValue();
+                ApplyDropdownReadability(forcedMoldinessRewardDropdown);
+            }
         }
 
         public void RefreshVisualState()
@@ -491,6 +548,11 @@ namespace FungusToast.Unity.UI.Testing
                 forceMoldinessRewardsButton,
                 testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin,
                 testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin);
+
+            if (forcedMoldinessRewardRow != null)
+            {
+                forcedMoldinessRewardRow.SetActive(testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin && forceMoldinessRewards);
+            }
 
             if (adaptationRow != null)
             {
@@ -520,6 +582,11 @@ namespace FungusToast.Unity.UI.Testing
             if (adaptationDropdown != null)
             {
                 adaptationDropdown.interactable = testingEnabled && skipToEnd;
+            }
+
+            if (forcedMoldinessRewardDropdown != null)
+            {
+                forcedMoldinessRewardDropdown.interactable = testingEnabled && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin && forceMoldinessRewards;
             }
 
             if (!skipToEnd)
@@ -575,7 +642,7 @@ namespace FungusToast.Unity.UI.Testing
         {
             if (!testingEnabled)
             {
-                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, false, 0, string.Empty, Array.Empty<string>());
+                return new DevelopmentTestingConfiguration(false, null, null, 0, false, false, ForcedGameResultMode.Natural, false, 0, string.Empty, string.Empty, Array.Empty<string>());
             }
 
             int? selectedMycovariantId = null;
@@ -598,6 +665,23 @@ namespace FungusToast.Unity.UI.Testing
                 }
             }
 
+            string selectedMoldinessRewardId = selectedForcedMoldinessRewardId;
+            if (forcedMoldinessRewardDropdown != null)
+            {
+                if (forcedMoldinessRewardDropdown.value > 0)
+                {
+                    int rewardIndex = forcedMoldinessRewardDropdown.value - 1;
+                    if (rewardIndex >= 0 && rewardIndex < sortedMoldinessRewards.Count)
+                    {
+                        selectedMoldinessRewardId = sortedMoldinessRewards[rewardIndex].Id;
+                    }
+                }
+                else
+                {
+                    selectedMoldinessRewardId = string.Empty;
+                }
+            }
+
             var forcedStartingAdaptationIds = forceStartingAdaptationsEnabled
                 ? GetSelectedForcedStartingAdaptationIds()
                 : Array.Empty<string>();
@@ -613,6 +697,7 @@ namespace FungusToast.Unity.UI.Testing
                 options.SupportsForceMoldinessRewards && skipToEnd && forcedResult == ForcedGameResultMode.ForcedWin && forceMoldinessRewards,
                 selectedCampaignLevelIndex,
                 selectedAdaptationId,
+                selectedMoldinessRewardId,
                 forcedStartingAdaptationIds);
         }
 
@@ -639,6 +724,7 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.ForceMoldinessRewards,
                 configuration.CampaignLevelIndex,
                 configuration.ForcedAdaptationId,
+                configuration.ForcedMoldinessRewardId,
                 configuration.ForcedStartingAdaptationIds);
         }
 
@@ -668,6 +754,19 @@ namespace FungusToast.Unity.UI.Testing
             campaignLevelDropdown.onValueChanged.AddListener(OnCampaignLevelChanged);
             campaignLevelDropdown.RefreshShownValue();
             ApplyDropdownReadability(campaignLevelDropdown);
+        }
+
+        private void ConfigureForcedMoldinessRewardDropdown()
+        {
+            if (forcedMoldinessRewardDropdown == null)
+            {
+                return;
+            }
+
+            forcedMoldinessRewardDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+            forcedMoldinessRewardDropdown.onValueChanged.AddListener(OnForcedMoldinessRewardChanged);
+            forcedMoldinessRewardDropdown.RefreshShownValue();
+            ApplyDropdownReadability(forcedMoldinessRewardDropdown);
         }
 
         private List<string> BuildCampaignLevelOptions()
@@ -1098,11 +1197,18 @@ namespace FungusToast.Unity.UI.Testing
             skipToEnd = false;
             forceFirstGame = false;
             forceMoldinessRewards = false;
+            selectedForcedMoldinessRewardId = string.Empty;
             forceStartingAdaptationsEnabled = false;
             selectedForcedStartingAdaptationIds.Clear();
             fastForwardRounds = 0;
             selectedCampaignLevelIndex = 0;
             forcedResult = ForcedGameResultMode.Natural;
+
+            if (forcedMoldinessRewardDropdown != null)
+            {
+                forcedMoldinessRewardDropdown.SetValueWithoutNotify(0);
+                forcedMoldinessRewardDropdown.RefreshShownValue();
+            }
         }
 
         private void OnFastForwardClicked()
@@ -1180,6 +1286,23 @@ namespace FungusToast.Unity.UI.Testing
         private void OnCampaignLevelChanged(int index)
         {
             selectedCampaignLevelIndex = Math.Max(0, index);
+            NotifyLayoutInvalidated();
+        }
+
+        private void OnForcedMoldinessRewardChanged(int index)
+        {
+            if (index <= 0)
+            {
+                selectedForcedMoldinessRewardId = string.Empty;
+            }
+            else
+            {
+                int rewardIndex = index - 1;
+                selectedForcedMoldinessRewardId = rewardIndex >= 0 && rewardIndex < sortedMoldinessRewards.Count
+                    ? sortedMoldinessRewards[rewardIndex].Id
+                    : string.Empty;
+            }
+
             NotifyLayoutInvalidated();
         }
 

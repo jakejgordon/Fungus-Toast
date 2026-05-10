@@ -4133,6 +4133,7 @@ namespace FungusToast.Unity.UI
                 manager != null && manager.TestingForceMoldinessRewards,
                 manager != null ? manager.TestingCampaignLevelIndex : 0,
                 forcedAdaptationId,
+                manager?.TestingForcedMoldinessRewardId ?? string.Empty,
                 manager?.TestingForcedStartingAdaptationIds);
         }
 
@@ -4216,6 +4217,7 @@ namespace FungusToast.Unity.UI
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = true,
                 SupportsForceMoldinessRewards = true,
+                SupportsForcedMoldinessRewardSelection = false,
                 SupportsFirstGameToggle = false,
                 CardName = "UI_EndGameTestingCard",
                 ControlPrefix = "UI_EndGameTesting",

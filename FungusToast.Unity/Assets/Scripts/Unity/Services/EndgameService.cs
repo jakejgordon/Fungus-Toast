@@ -42,6 +42,7 @@ namespace FungusToast.Unity
         private readonly Func<bool> getTestingModeEnabled;
         private readonly Func<ForcedGameResultMode> getForcedGameResultMode;
         private readonly Func<bool> getForceMoldinessRewards;
+        private readonly Func<string> getForcedMoldinessRewardId;
 
         private bool isCountdownActive;
         private int roundsRemainingUntilGameEnd;
@@ -59,7 +60,8 @@ namespace FungusToast.Unity
             Func<Dictionary<(int playerId, int mutationId), List<int>>> getFirstUpgradeRounds,
             Func<bool> getTestingModeEnabled,
             Func<ForcedGameResultMode> getForcedGameResultMode,
-            Func<bool> getForceMoldinessRewards)
+            Func<bool> getForceMoldinessRewards,
+            Func<string> getForcedMoldinessRewardId)
         {
             this.ui = ui;
             this.getBoard = getBoard;
@@ -72,6 +74,7 @@ namespace FungusToast.Unity
             this.getTestingModeEnabled = getTestingModeEnabled;
             this.getForcedGameResultMode = getForcedGameResultMode;
             this.getForceMoldinessRewards = getForceMoldinessRewards;
+            this.getForcedMoldinessRewardId = getForcedMoldinessRewardId;
         }
 
         /// <summary>
@@ -253,7 +256,10 @@ namespace FungusToast.Unity
 
                 if (shouldForceMoldinessRewardForTesting)
                 {
-                    campaignController.TryQueueForcedMoldinessRewardForTesting(new System.Random(campaignController.State?.seed ?? 0), 3);
+                    campaignController.TryQueueForcedMoldinessRewardForTesting(
+                        new System.Random(campaignController.State?.seed ?? 0),
+                        3,
+                        getForcedMoldinessRewardId());
                 }
 
                 var carryoverOptions = !humanWon && campaignController.IsAwaitingDefeatCarryoverSelection

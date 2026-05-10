@@ -588,7 +588,7 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
-        public bool TryQueueForcedMoldinessRewardForTesting(System.Random random, int count)
+        public bool TryQueueForcedMoldinessRewardForTesting(System.Random random, int count, string forcedUnlockId = "")
         {
             if (State?.moldiness == null || random == null || !State.pendingAdaptationSelection)
             {
@@ -610,7 +610,7 @@ namespace FungusToast.Unity.Campaign
             };
 
             State.moldiness.pendingUnlockTriggers.Add(trigger);
-            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count);
+            var offers = MoldinessUnlockService.GenerateOffers(State.moldiness, random, count, forcedUnlockId);
             if (offers.Count == 0)
             {
                 State.moldiness.pendingUnlockTriggers.RemoveAt(State.moldiness.pendingUnlockTriggers.Count - 1);
