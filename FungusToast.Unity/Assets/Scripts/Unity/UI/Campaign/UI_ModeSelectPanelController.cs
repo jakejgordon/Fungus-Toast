@@ -38,7 +38,9 @@ namespace FungusToast.Unity.UI.Campaign
         private const string MusicCreditCopy = "Thanks to Chris Howard for the music track of Fungus Toast. It sounds great!";
         private const string SettingsHeadingText = "Settings";
         private const string SettingsAudioHeadingText = "Audio";
+        private const string SettingsHelpHeadingText = "Help & Tutorials";
         private const string SettingsAdvancedHeadingText = "Advanced Campaign";
+        private const string SettingsTutorialSummaryText = "Re-enable tutorial popups and guidance hints you previously dismissed. This does not reset campaign progress.";
         private const string SettingsResetPromptText = "Are you sure you want to reset all of your campaign rewards?";
 
         [Header("Panels")] 
@@ -67,9 +69,11 @@ namespace FungusToast.Unity.UI.Campaign
         private Button settingsBackButton;
         private Button settingsSoundEffectsButton;
         private Button settingsMusicButton;
+        private Button settingsTutorialReplayButton;
         private Button settingsResetButton;
         private Button settingsResetCancelButton;
         private Button quitButton;
+        private TextMeshProUGUI settingsTutorialStatusText;
         private TextMeshProUGUI settingsResetStatusText;
         private TextMeshProUGUI settingsResetPromptLabel;
         private bool isConfirmingCampaignReset;
@@ -152,6 +156,7 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsSoundEffectsButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsTutorialReplayButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(quitButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
@@ -247,6 +252,21 @@ namespace FungusToast.Unity.UI.Campaign
             MusicSettings.CycleVolumeForward();
             GameManager.Instance?.RefreshMusicVolume();
             RefreshSettingsAudioLabels();
+        }
+
+        private void OnSettingsTutorialReplayClicked()
+        {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            if (manager != null)
+            {
+                manager.ResetDismissedTutorialTips();
+            }
+
+            if (settingsTutorialStatusText != null)
+            {
+                settingsTutorialStatusText.text = "Tutorial tips re-enabled.";
+                settingsTutorialStatusText.color = UIStyleTokens.State.Success;
+            }
         }
 
         private void OnSettingsResetClicked()
@@ -698,6 +718,37 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
             settingsMusicButton.onClick.AddListener(OnSettingsMusicClicked);
 
+            TextMeshProUGUI helpHeading = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsHelpHeading",
+                SettingsHelpHeadingText,
+                24f,
+                34f,
+                UIStyleTokens.Accent.Spore,
+                FontStyles.Bold);
+
+            CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsHelpSummary",
+                SettingsTutorialSummaryText,
+                20f,
+                78f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+
+            settingsTutorialReplayButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsTutorialReplayButton", "Replay Tutorial Tips");
+            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsTutorialReplayButton);
+            settingsTutorialReplayButton.onClick.AddListener(OnSettingsTutorialReplayClicked);
+
+            settingsTutorialStatusText = CreateSettingsLabel(
+                cardObject.transform,
+                "UI_ModeSelectSettingsTutorialStatus",
+                string.Empty,
+                18f,
+                36f,
+                UIStyleTokens.Text.Secondary,
+                FontStyles.Normal);
+
             TextMeshProUGUI advancedHeading = CreateSettingsLabel(
                 cardObject.transform,
                 "UI_ModeSelectSettingsAdvancedHeading",
@@ -747,6 +798,7 @@ namespace FungusToast.Unity.UI.Campaign
             settingsBackButton.onClick.AddListener(OnSettingsBackClicked);
 
             _ = audioHeading;
+            _ = helpHeading;
             _ = advancedHeading;
             RefreshSettingsState();
         }
@@ -954,6 +1006,7 @@ namespace FungusToast.Unity.UI.Campaign
         private void RefreshSettingsState()
         {
             RefreshSettingsAudioLabels();
+            RefreshSettingsTutorialControls();
             RefreshSettingsResetControls();
         }
 
@@ -961,6 +1014,11 @@ namespace FungusToast.Unity.UI.Campaign
         {
             SetButtonLabel(settingsSoundEffectsButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
             SetButtonLabel(settingsMusicButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
+        }
+
+        private void RefreshSettingsTutorialControls()
+        {
+            SetButtonLabel(settingsTutorialReplayButton, "Replay Tutorial Tips");
         }
 
         private void RefreshSettingsResetControls()

@@ -284,6 +284,8 @@ namespace FungusToast.Unity
     public class GameManager : MonoBehaviour
     {
         private const string AlphaMutationOnboardingSeenKey = "Onboarding.AlphaMutationPhaseSeen";
+        private const string MutationTreeGuidanceSeenKey = "Onboarding.AlphaMutationTreeGuidanceSeen";
+        private const string ScoreboardCoachmarkSeenKey = "Onboarding.ScoreboardWinConditionSeen";
         private const string AlphaMutationOnboardingBannerText = "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.";
         private const string TropicLysisDisplayName = "Tropic Lysis";
 
@@ -767,6 +769,14 @@ namespace FungusToast.Unity
         public bool HasCampaignSave() => gameStartService != null && gameStartService.HasCampaignSave();
         public bool HasSoloSave() => gameStartService != null && gameStartService.HasSoloSave();
         public bool HasResumableCampaignSave() => gameStartService != null && gameStartService.HasResumableCampaignSave();
+
+        public void ResetDismissedTutorialTips()
+        {
+            ScopedPlayerPrefs.SetInt(AlphaMutationOnboardingSeenKey, 0);
+            ScopedPlayerPrefs.SetInt(MutationTreeGuidanceSeenKey, 0);
+            ScopedPlayerPrefs.SetInt(ScoreboardCoachmarkSeenKey, 0);
+            ScopedPlayerPrefs.Save();
+        }
         public bool IsCampaignAwaitingAdaptationSelection() =>
             gameStartService != null && gameStartService.IsCampaignAwaitingAdaptationSelection();
         public bool HasPendingCampaignMoldinessUnlockOnSavedRun()
