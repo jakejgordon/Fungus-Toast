@@ -83,6 +83,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
             if (effectText != null)
             {
+                effectText.enableAutoSizing = true;
+                effectText.fontSizeMin = 14f;
+                effectText.fontSizeMax = 18f;
+                effectText.textWrappingMode = TextWrappingModes.Normal;
+                effectText.overflowMode = TextOverflowModes.Ellipsis;
+                effectText.alignment = TextAlignmentOptions.TopLeft;
                 effectText.text = description;
             }
 

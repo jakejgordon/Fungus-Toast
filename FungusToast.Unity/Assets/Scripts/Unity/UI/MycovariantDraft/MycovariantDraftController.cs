@@ -67,10 +67,20 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const float DraftHistoryEntryDetailFontSize = 18f;
         private const float CampaignAdaptationUtilityPanelHeight = 92f;
         private const float CampaignAdaptationUtilityPanelWidth = 840f;
+        private const float CampaignAdaptationUtilityStatusWidth = 808f;
+        private const float CampaignDraftUtilityButtonWidth = 330f;
+        private const float CampaignDraftUtilityButtonHeight = 36f;
         private const float CampaignAdaptationSummaryPanelWidth = 840f;
         private const float CampaignAdaptationSummaryPanelMinHeight = 82f;
         private const float CampaignAdaptationSummaryIconSize = 34f;
         private const float CampaignAdaptationSummaryIconPadding = 4f;
+        private const float DraftContentPreferredHeight = 780f;
+        private const float DraftHeaderPreferredHeight = 56f;
+        private const float DraftBlurbPreferredHeight = 40f;
+        private const float DraftChoiceContainerPreferredHeight = 452f;
+        private const float DraftCardPreferredWidth = 240f;
+        private const float DraftCardPreferredHeight = 452f;
+        private const int CampaignMycovariantRedrawRetryCount = 12;
         private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
         private const string CampaignAdaptationRedrawConfirmLabel = "Confirm Redraw";
         private const string CampaignAdaptationRedrawUsedLabel = "Spore Sifting Used";
@@ -132,6 +142,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private bool campaignAdaptationRedrawAvailable;
         private bool campaignAdaptationRedrawConfirmArmed;
         private Func<IReadOnlyList<AdaptationDefinition>> onCampaignAdaptationRedrawRequested;
+        private bool showCampaignMycovariantRedrawControl;
+        private bool campaignMycovariantRedrawAvailable;
+        private bool campaignMycovariantRedrawConfirmArmed;
         private AudioSource soundEffectAudioSource;
         private RectTransform draftHistoryOverlayRoot;
         private CanvasGroup draftHistoryOverlayCanvasGroup;
@@ -187,10 +200,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             TryAnnounceAscusPrimacyDraftPriority();
 
             SetDraftHeader(draftHeaderTitle, draftHeaderBlurb);
+            ApplyDraftLayoutSizing();
 
             isCampaignAdaptationDraft = false;
             onAdaptationPicked = null;
             ConfigureCampaignAdaptationRedrawControl(false, false, null);
+            ConfigureCampaignMycovariantRedrawControl();
             ShowDraftUI();
             BeginNextDraft();
         }
@@ -214,6 +229,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignAdaptationRedrawAvailable = false;
             campaignAdaptationRedrawConfirmArmed = false;
             onCampaignAdaptationRedrawRequested = null;
+            showCampaignMycovariantRedrawControl = false;
+            campaignMycovariantRedrawAvailable = false;
+            campaignMycovariantRedrawConfirmArmed = false;
             _cameraRecenteredThisDraftPhase = false;
 
             if (draftOrder != null)
@@ -296,8 +314,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             SetDraftHeader(
                 "Choose an Adaptation",
                 "Select one adaptation to strengthen your colony for the rest of the campaign.");
+            ApplyDraftLayoutSizing();
 
             ConfigureCampaignAdaptationRedrawControl(showRedrawControl, redrawAvailable, onRedrawRequested);
+            showCampaignMycovariantRedrawControl = false;
+            campaignMycovariantRedrawAvailable = false;
+            campaignMycovariantRedrawConfirmArmed = false;
             ShowDraftUI();
             if (draftOrderRow != null)
             {
@@ -351,6 +373,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (state != DraftUIState.HumanTurn)
             {
                 campaignAdaptationRedrawConfirmArmed = false;
+                campaignMycovariantRedrawConfirmArmed = false;
             }
 
             switch (state)
@@ -542,12 +565,44 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private List<Mycovariant> GetFreshDraftChoicesForCurrentPlayer()
         {
-            return MycovariantDraftManager.GetDraftChoices(
-                currentPlayer,
-                poolManager,
-                draftChoicesCount,
-                rng,
-                GetForcedMycovariantIdForCurrentPlayer());
+            return GetFreshDraftChoicesForCurrentPlayer(null);
+        }
+
+        private List<Mycovariant> GetFreshDraftChoicesForCurrentPlayer(IReadOnlyCollection<int> excludedChoiceIds)
+        {
+            int? forcedMycovariantId = GetForcedMycovariantIdForCurrentPlayer();
+            if (excludedChoiceIds == null || excludedChoiceIds.Count == 0)
+            {
+                return MycovariantDraftManager.GetDraftChoices(
+                    currentPlayer,
+                    poolManager,
+                    draftChoicesCount,
+                    rng,
+                    forcedMycovariantId);
+            }
+
+            var eligibleChoices = poolManager
+                .GetEligibleMycovariantsForPlayer(currentPlayer)
+                .GroupBy(mycovariant => mycovariant.Id)
+                .Select(group => group.First())
+                .Where(mycovariant => !excludedChoiceIds.Contains(mycovariant.Id)
+                    || (forcedMycovariantId.HasValue && mycovariant.Id == forcedMycovariantId.Value))
+                .OrderBy(_ => rng.Next())
+                .ToList();
+
+            if (eligibleChoices.Count < draftChoicesCount)
+            {
+                return MycovariantDraftManager.GetDraftChoices(
+                    currentPlayer,
+                    poolManager,
+                    draftChoicesCount,
+                    rng,
+                    forcedMycovariantId);
+            }
+
+            var freshChoices = eligibleChoices.Take(draftChoicesCount).ToList();
+            ForceMycovariantIntoChoicesIfNeeded(freshChoices, eligibleChoices);
+            return freshChoices;
         }
 
         private List<Mycovariant> BuildCarriedForwardDraftChoices(Mycovariant picked)
@@ -826,9 +881,103 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private MycovariantCard CreateChoiceCard(Mycovariant boundMycovariant, string title, string description, Sprite icon, Action onPicked, bool highlight)
         {
             var card = Instantiate(cardPrefab, choiceContainer);
+            ConfigureChoiceCardLayout(card);
             card.SetChoiceContent(boundMycovariant, title, description, icon, onPicked);
             card.SetActiveHighlight(highlight);
             return card;
+        }
+
+        private void ConfigureChoiceCardLayout(MycovariantCard card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            var cardRect = card.GetComponent<RectTransform>();
+            if (cardRect != null)
+            {
+                cardRect.sizeDelta = new Vector2(DraftCardPreferredWidth, DraftCardPreferredHeight);
+            }
+
+            var layoutElement = card.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = card.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.preferredWidth = DraftCardPreferredWidth;
+            layoutElement.minWidth = DraftCardPreferredWidth;
+            layoutElement.preferredHeight = DraftCardPreferredHeight;
+            layoutElement.minHeight = DraftCardPreferredHeight;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+        }
+
+        private void ApplyDraftLayoutSizing()
+        {
+            var contentRoot = choiceContainer?.parent as RectTransform;
+            if (contentRoot != null)
+            {
+                contentRoot.sizeDelta = new Vector2(contentRoot.sizeDelta.x, DraftContentPreferredHeight);
+                var contentLayout = contentRoot.GetComponent<LayoutElement>();
+                if (contentLayout != null)
+                {
+                    contentLayout.preferredHeight = DraftContentPreferredHeight;
+                    contentLayout.minHeight = DraftContentPreferredHeight;
+                }
+            }
+
+            var headerRect = draftBannerText != null ? draftBannerText.GetComponent<RectTransform>() : null;
+            var headerLayout = draftBannerText != null ? draftBannerText.GetComponent<LayoutElement>() : null;
+            if (headerRect != null)
+            {
+                headerRect.sizeDelta = new Vector2(headerRect.sizeDelta.x, DraftHeaderPreferredHeight);
+            }
+
+            if (headerLayout != null)
+            {
+                headerLayout.preferredHeight = DraftHeaderPreferredHeight;
+                headerLayout.minHeight = DraftHeaderPreferredHeight;
+            }
+
+            var blurbRoot = draftBlurbText != null ? draftBlurbText.transform.parent as RectTransform : null;
+            var blurbRootLayout = blurbRoot != null ? blurbRoot.GetComponent<LayoutElement>() : null;
+            if (blurbRoot != null)
+            {
+                blurbRoot.sizeDelta = new Vector2(blurbRoot.sizeDelta.x, DraftBlurbPreferredHeight);
+            }
+
+            if (blurbRootLayout != null)
+            {
+                blurbRootLayout.preferredHeight = DraftBlurbPreferredHeight;
+                blurbRootLayout.minHeight = DraftBlurbPreferredHeight;
+            }
+
+            var blurbTextRect = draftBlurbText != null ? draftBlurbText.GetComponent<RectTransform>() : null;
+            var blurbTextLayout = draftBlurbText != null ? draftBlurbText.GetComponent<LayoutElement>() : null;
+            if (blurbTextRect != null)
+            {
+                blurbTextRect.sizeDelta = new Vector2(blurbTextRect.sizeDelta.x, DraftBlurbPreferredHeight);
+            }
+
+            if (blurbTextLayout != null)
+            {
+                blurbTextLayout.preferredHeight = DraftBlurbPreferredHeight;
+                blurbTextLayout.minHeight = DraftBlurbPreferredHeight;
+            }
+
+            var choiceContainerRect = choiceContainer as RectTransform;
+            if (choiceContainerRect != null)
+            {
+                choiceContainerRect.sizeDelta = new Vector2(choiceContainerRect.sizeDelta.x, DraftChoiceContainerPreferredHeight);
+            }
+
+            if (contentRoot != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+            }
         }
 
         private void OnAdaptationChoicePicked(AdaptationDefinition picked)
@@ -976,6 +1125,24 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             RefreshCampaignAdaptationUtilityUi();
         }
 
+        private void ConfigureCampaignMycovariantRedrawControl()
+        {
+            var gameManager = GameManager.Instance;
+            var campaignController = gameManager?.CampaignController;
+            bool showControl = gameManager != null
+                && gameManager.CurrentGameMode == FungusToast.Unity.Campaign.GameMode.Campaign
+                && campaignController != null
+                && campaignController.HasUnlockedCampaignMycovariantDraftRedraw;
+
+            showCampaignMycovariantRedrawControl = showControl;
+            campaignMycovariantRedrawAvailable = showControl
+                && campaignController != null
+                && campaignController.CanUseCampaignMycovariantDraftRedraw;
+            campaignMycovariantRedrawConfirmArmed = false;
+            EnsureCampaignAdaptationUtilityUi();
+            RefreshCampaignAdaptationUtilityUi();
+        }
+
         private void EnsureCampaignAdaptationUtilityUi()
         {
             if (choiceContainer == null || choiceContainer.parent == null || campaignAdaptationUtilityRoot != null)
@@ -1016,12 +1183,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             layout.childAlignment = TextAnchor.UpperCenter;
             layout.childControlWidth = true;
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = true;
+            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
 
             var statusObject = new GameObject("Status", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
             statusObject.transform.SetParent(campaignAdaptationUtilityRoot.transform, false);
             var statusLayout = statusObject.GetComponent<LayoutElement>();
+            statusLayout.preferredWidth = CampaignAdaptationUtilityStatusWidth;
+            statusLayout.minWidth = CampaignAdaptationUtilityStatusWidth;
             statusLayout.preferredHeight = 28f;
             statusLayout.minHeight = 28f;
             campaignAdaptationUtilityStatusText = statusObject.GetComponent<TextMeshProUGUI>();
@@ -1037,15 +1206,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             var buttonObject = new GameObject("RedrawButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             buttonObject.transform.SetParent(campaignAdaptationUtilityRoot.transform, false);
             var buttonRect = buttonObject.GetComponent<RectTransform>();
-            buttonRect.sizeDelta = new Vector2(260f, 36f);
+            buttonRect.sizeDelta = new Vector2(CampaignDraftUtilityButtonWidth, CampaignDraftUtilityButtonHeight);
             var buttonLayout = buttonObject.GetComponent<LayoutElement>();
-            buttonLayout.preferredWidth = 260f;
-            buttonLayout.minWidth = 260f;
-            buttonLayout.preferredHeight = 36f;
-            buttonLayout.minHeight = 36f;
+            buttonLayout.preferredWidth = CampaignDraftUtilityButtonWidth;
+            buttonLayout.minWidth = CampaignDraftUtilityButtonWidth;
+            buttonLayout.preferredHeight = CampaignDraftUtilityButtonHeight;
+            buttonLayout.minHeight = CampaignDraftUtilityButtonHeight;
             campaignAdaptationRedrawButton = buttonObject.GetComponent<Button>();
             campaignAdaptationRedrawButton.targetGraphic = buttonObject.GetComponent<Image>();
-            UIStyleTokens.Button.ApplyStyle(campaignAdaptationRedrawButton, useSelectedAsNormal: true);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(
+                campaignAdaptationRedrawButton,
+                CampaignDraftUtilityButtonWidth,
+                preferredHeight: CampaignDraftUtilityButtonHeight,
+                minHeight: CampaignDraftUtilityButtonHeight);
             campaignAdaptationRedrawButton.onClick.AddListener(OnCampaignAdaptationRedrawButtonClicked);
 
             var redrawTooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
@@ -1071,9 +1244,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignAdaptationRedrawButtonText.fontSizeMax = 16f;
             campaignAdaptationRedrawButtonText.textWrappingMode = TextWrappingModes.NoWrap;
             campaignAdaptationRedrawButtonText.overflowMode = TextOverflowModes.Ellipsis;
-            campaignAdaptationRedrawButtonText.color = UIStyleTokens.Button.TextDefault;
+            campaignAdaptationRedrawButtonText.color = UIStyleTokens.Text.Primary;
             campaignAdaptationRedrawButtonText.raycastTarget = false;
-            UIStyleTokens.Button.SetButtonLabelColor(campaignAdaptationRedrawButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(campaignAdaptationRedrawButton, UIStyleTokens.Text.Primary);
 
             campaignAdaptationUtilityRoot.SetActive(false);
         }
@@ -1304,11 +1477,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void RefreshCampaignAdaptationUtilityUi()
         {
-            bool shouldShow = isCampaignAdaptationDraft && showCampaignAdaptationRedrawControl;
+            bool showingAdaptationRedraw = isCampaignAdaptationDraft && showCampaignAdaptationRedrawControl;
+            bool showingMycovariantRedraw = !isCampaignAdaptationDraft
+                && showCampaignMycovariantRedrawControl
+                && currentPlayer?.PlayerType == PlayerTypeEnum.Human;
+            bool shouldShow = showingAdaptationRedraw || showingMycovariantRedraw;
 
             if (!shouldShow)
             {
                 campaignAdaptationRedrawConfirmArmed = false;
+                campaignMycovariantRedrawConfirmArmed = false;
             }
 
             if (campaignAdaptationUtilityRoot != null)
@@ -1329,22 +1507,38 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            bool canInteract = campaignAdaptationRedrawAvailable && uiState == DraftUIState.HumanTurn;
+            bool redrawAvailable = showingAdaptationRedraw
+                ? campaignAdaptationRedrawAvailable
+                : campaignMycovariantRedrawAvailable;
+            bool confirmArmed = showingAdaptationRedraw
+                ? campaignAdaptationRedrawConfirmArmed
+                : campaignMycovariantRedrawConfirmArmed;
+
+            bool canInteract = redrawAvailable && uiState == DraftUIState.HumanTurn;
             if (!canInteract)
             {
-                campaignAdaptationRedrawConfirmArmed = false;
+                if (showingAdaptationRedraw)
+                {
+                    campaignAdaptationRedrawConfirmArmed = false;
+                    confirmArmed = false;
+                }
+                else
+                {
+                    campaignMycovariantRedrawConfirmArmed = false;
+                    confirmArmed = false;
+                }
             }
 
             string buttonLabel;
             string statusText;
             Color statusColor;
-            if (!campaignAdaptationRedrawAvailable)
+            if (!redrawAvailable)
             {
                 buttonLabel = CampaignAdaptationRedrawUsedLabel;
                 statusText = "Spore Sifting has already been used for this campaign level.";
                 statusColor = UIStyleTokens.Text.Muted;
             }
-            else if (campaignAdaptationRedrawConfirmArmed)
+            else if (confirmArmed)
             {
                 buttonLabel = CampaignAdaptationRedrawConfirmLabel;
                 statusText = "Click again to redraw all 3 Mycovariants. This spends Spore Sifting for this level.";
@@ -1365,6 +1559,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void OnCampaignAdaptationRedrawButtonClicked()
         {
+            if (!isCampaignAdaptationDraft)
+            {
+                OnCampaignMycovariantRedrawButtonClicked();
+                return;
+            }
+
             if (!isCampaignAdaptationDraft || !showCampaignAdaptationRedrawControl || !campaignAdaptationRedrawAvailable || uiState != DraftUIState.HumanTurn)
             {
                 return;
@@ -1390,6 +1590,94 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             PopulateAdaptationChoices(redrawnChoices);
             AddDraftMessage("Spore Sifting scatters the old offer. A fresh 3-card Mycovariant draft blooms.");
             SetDraftState(DraftUIState.HumanTurn);
+        }
+
+        private void OnCampaignMycovariantRedrawButtonClicked()
+        {
+            if (isCampaignAdaptationDraft
+                || !showCampaignMycovariantRedrawControl
+                || !campaignMycovariantRedrawAvailable
+                || uiState != DraftUIState.HumanTurn
+                || currentPlayer?.PlayerType != PlayerTypeEnum.Human)
+            {
+                return;
+            }
+
+            if (!campaignMycovariantRedrawConfirmArmed)
+            {
+                campaignMycovariantRedrawConfirmArmed = true;
+                RefreshCampaignAdaptationUtilityUi();
+                return;
+            }
+
+            var redrawnChoices = TryBuildCampaignMycovariantRedrawChoices();
+            campaignMycovariantRedrawConfirmArmed = false;
+            if (redrawnChoices == null || redrawnChoices.Count == 0)
+            {
+                AddDraftMessage("Spore Sifting failed to redraw the current offer.");
+                RefreshCampaignAdaptationUtilityUi();
+                return;
+            }
+
+            var campaignController = GameManager.Instance?.CampaignController;
+            if (campaignController == null || !campaignController.TryConsumeCampaignMycovariantDraftRedraw())
+            {
+                AddDraftMessage("Spore Sifting could not be spent for this draft.");
+                RefreshCampaignAdaptationUtilityUi();
+                return;
+            }
+
+            campaignMycovariantRedrawAvailable = false;
+            AddDraftMessage("Spore Sifting scatters the old offer. A fresh 3-card Mycovariant draft blooms.");
+            EnterDraftTurn(redrawnChoices, repopulateChoices: true);
+        }
+
+        private List<Mycovariant> TryBuildCampaignMycovariantRedrawChoices()
+        {
+            var currentOfferIds = draftChoices?
+                .Where(choice => choice != null)
+                .Select(choice => choice.Id)
+                .ToHashSet()
+                ?? new HashSet<int>();
+
+            if (currentOfferIds.Count == 0)
+            {
+                return new List<Mycovariant>();
+            }
+
+            for (int attempt = 0; attempt < CampaignMycovariantRedrawRetryCount; attempt++)
+            {
+                var redrawnChoices = GetFreshDraftChoicesForCurrentPlayer();
+                if (redrawnChoices.Count == 0)
+                {
+                    return new List<Mycovariant>();
+                }
+
+                if (!ChoiceSetMatches(redrawnChoices, currentOfferIds))
+                {
+                    return redrawnChoices;
+                }
+            }
+
+            return new List<Mycovariant>();
+        }
+
+        private static bool ChoiceSetMatches(IReadOnlyCollection<Mycovariant> choices, ISet<int> offeredIds)
+        {
+            if (choices == null || offeredIds == null || choices.Count != offeredIds.Count)
+            {
+                return false;
+            }
+
+            foreach (var choice in choices)
+            {
+                if (choice == null || !offeredIds.Contains(choice.Id))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void SetDraftMessagePanelTitle(string title)

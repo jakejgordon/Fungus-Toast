@@ -171,7 +171,16 @@ Notes:
 - **Destructive / abandon / dismissive action**: never use success-green styling for `Exit Game`, `Quit to Desktop`, `Main Menu`, `Delete`, or `Back`. Use neutral or darker secondary styling unless the flow explicitly requires a stronger warning treatment.
 - **Single-green rule**: within one visible action cluster, prefer exactly one green button. Only break this when multiple buttons intentionally represent the same class of positive continuation.
 - **Mode-choice exception**: when a screen is presenting two or more peer mode choices without a recommended path (for example `Solo / Hotseat Game` vs `Campaign`), it is valid for all of those buttons to remain neutral/light instead of forcing one to read as primary.
+- **Contextual draft utility rule**: actions like `Use Spore Sifting`, `Redraw Draft`, or other optional pre-pick draft utilities are not the primary CTA of the draft. The real primary action remains choosing one of the offered cards. These utility actions should therefore read as scoped controls, not full-width hero buttons.
 - Unity implementation note: prefer semantic helpers such as `ApplyAffirmativeMenuAction`, `ApplyNeutralMenuAction`, and `ApplySecondaryMenuAction` instead of treating all large menu buttons as the same role.
+
+### 5.1.4 Draft Utility Buttons
+- In draft overlays, optional utility actions that sit above or near the card row should generally be centered and narrower than the full draft content width.
+- Default recommendation for desktop: use a width that reads as an intentional control group rather than a page-level CTA, roughly `260-360px` when the draft surface is around `780-900px` wide.
+- Avoid full-width treatment for optional draft utilities unless the action is truly the only meaningful next step. A full-width button above the cards visually competes with the card choices and can misread as the main action of the screen.
+- If a draft utility uses confirmation-on-second-click behavior, keep the button footprint stable between idle and confirm states so the control does not jump or pull surrounding content.
+- Pair draft utility buttons with a short status line above or below the button. Prefer helper text for availability/used-state messaging instead of expanding the button itself.
+- On dark draft panels, use a utility or scoped-action treatment first. Only use the affirmative green resting state when the control genuinely needs strong emphasis and does not obscure the fact that card selection is the primary outcome.
 
 ### 5.1.1 Buttons With Icons
 - Use icons only when they reinforce a familiar action or improve scan speed. Good candidates include menu, play, pause, skip, close, back, add, delete, download, and settings.
@@ -275,6 +284,12 @@ Notes:
 - Compact mutation-tree header actions such as `Store Mutation Points` and `Time-Lapse` should auto-size to their icon-plus-label content instead of clipping or relying on ellipsis when the header has room.
 - These compact mutation-tree header actions should use the same dark raised secondary treatment as other dark-panel utility controls, with a visible but still subtle hover highlight that clearly reads as interactive.
 - First-run mutation-tree guidance should use a dismissible modal, not a toast, because the player is being taught a core turn decision.
+
+### 6.3.1 Draft And Reward Selection Surfaces
+- Mycovariant drafts, adaptation drafts, and similar reward-selection overlays should keep the offered cards or choices as the visual center of gravity.
+- Optional utilities above the choice row, such as redraw/reroll affordances, should be treated as supporting controls rather than banner-width CTAs.
+- Prefer a centered compact utility panel or button with nearby explanatory text over a full-width button spanning the draft content area.
+- When extra status text is needed, grow vertical space around the header/blurb/utility region before shrinking the choice cards into unreadable layouts.
 
 ### 6.4 Tooltips + Logs
 - Unify tooltip/log text sizing and line-height for readability.

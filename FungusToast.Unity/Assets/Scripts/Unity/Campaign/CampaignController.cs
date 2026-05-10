@@ -73,12 +73,12 @@ namespace FungusToast.Unity.Campaign
         public MoldinessProgressSnapshot MoldinessProgress => MoldinessProgression.GetSnapshot(State?.moldiness);
         public bool HasPendingMoldinessUnlockChoice => State?.moldiness?.pendingUnlockTriggers?.Count > 0;
         public bool HasSavedGameplayCheckpoint => State?.hasInLevelGameplayCheckpoint == true;
-        public bool HasUnlockedCampaignAdaptationDraftRedraw => HasUnlockedMoldinessReward(MoldinessUnlockCatalog.SporeSiftingRewardId);
-        public bool CanUsePendingAdaptationDraftRedraw => State != null
-            && State.pendingAdaptationSelection
-            && HasUnlockedCampaignAdaptationDraftRedraw
-            && !State.pendingAdaptationDraftRedrawUsed
-            && (State.pendingAdaptationDraftChoiceIds?.Count ?? 0) > 0;
+        public bool HasUnlockedCampaignMycovariantDraftRedraw => HasUnlockedMoldinessReward(MoldinessUnlockCatalog.SporeSiftingRewardId);
+        public bool CanUseCampaignMycovariantDraftRedraw => State != null
+            && HasUnlockedCampaignMycovariantDraftRedraw
+            && !State.pendingAdaptationDraftRedrawUsed;
+        public bool HasUnlockedCampaignAdaptationDraftRedraw => false;
+        public bool CanUsePendingAdaptationDraftRedraw => false;
 
         public bool HasUnlockedMoldinessReward(string unlockId)
         {
@@ -502,6 +502,18 @@ namespace FungusToast.Unity.Campaign
 
             State.pendingAdaptationDraftRedrawUsed = true;
             PersistPendingAdaptationDraftChoices(redrawnChoices);
+            return true;
+        }
+
+        public bool TryConsumeCampaignMycovariantDraftRedraw()
+        {
+            if (!CanUseCampaignMycovariantDraftRedraw)
+            {
+                return false;
+            }
+
+            State.pendingAdaptationDraftRedrawUsed = true;
+            CampaignSaveService.Save(State);
             return true;
         }
 
