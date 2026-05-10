@@ -803,7 +803,8 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            ShowMoldinessRewardSelectionRows(snapshot, offers, progressionState);
+            var visibleOffers = EnsureForcedMoldinessRewardVisible(offers);
+            ShowMoldinessRewardSelectionRows(snapshot, visibleOffers, progressionState);
             SetLegacyResultsHeaderVisibility(false);
             SetOutcomeBannerVisibility(true);
             ApplyPendingRewardBackgroundMode(true);
@@ -1626,13 +1627,6 @@ namespace FungusToast.Unity.UI
             info.fontSizeMax = 18f;
             info.fontSizeMin = 16f;
 
-            var unlockedRewardsStrip = new MoldinessUnlockedRewardsStripController(
-                root.transform,
-                "UI_EndGameMoldiness",
-                CampaignMoldinessUnlockedRewardsGridWidth,
-                GetMoldinessRewardIcon);
-            unlockedRewardsStrip.Refresh(progressionState);
-
             if (offers == null || offers.Count == 0)
             {
                 var emptyText = CreateCarryoverInfoText(root.transform,
@@ -1675,6 +1669,13 @@ namespace FungusToast.Unity.UI
             {
                 CreateMoldinessRewardOptionButton(offersColumn.transform, offer);
             }
+
+            var unlockedRewardsStrip = new MoldinessUnlockedRewardsStripController(
+                root.transform,
+                "UI_EndGameMoldiness",
+                CampaignMoldinessUnlockedRewardsGridWidth,
+                GetMoldinessRewardIcon);
+            unlockedRewardsStrip.Refresh(ResolveDisplayMoldinessProgressionState(progressionState));
         }
 
         private void CreateMoldinessRewardOptionButton(Transform parent, MoldinessUnlockDefinition offer)
@@ -2252,9 +2253,23 @@ namespace FungusToast.Unity.UI
                 }
 
                 bool hasOffers = moldinessRewardOptionVisuals.Count > 0;
-                bool resolved = hasOffers
-                    ? !string.IsNullOrWhiteSpace(selectedMoldinessRewardId) && campaignController.TryApplyMoldinessUnlock(selectedMoldinessRewardId)
-                    : campaignController.TryContinueWithoutMoldinessUnlock();
+                bool resolved = false;
+                if (hasOffers)
+                {
+                    resolved = !string.IsNullOrWhiteSpace(selectedMoldinessRewardId)
+                        && campaignController.TryApplyMoldinessUnlock(selectedMoldinessRewardId);
+
+                    if (!resolved
+                        && !string.IsNullOrWhiteSpace(selectedMoldinessRewardId)
+                        && IsForcedMoldinessRewardSelectedForTesting(selectedMoldinessRewardId))
+                    {
+                        resolved = campaignController.TryResolveForcedMoldinessUnlockSelectionForTesting(selectedMoldinessRewardId);
+                    }
+                }
+                else
+                {
+                    resolved = campaignController.TryContinueWithoutMoldinessUnlock();
+                }
                 if (!resolved)
                 {
                     return;
@@ -4964,6 +4979,74 @@ namespace FungusToast.Unity.UI
                 ForcedGameResultMode.ForcedLoss => "Forced Loss",
                 _ => "Natural"
             };
+        }
+
+        private static IReadOnlyList<MoldinessUnlockDefinition> EnsureForcedMoldinessRewardVisible(IReadOnlyList<MoldinessUnlockDefinition> offers)
+        {
+            var manager = GameManager.Instance;
+            if (manager == null
+                || !manager.IsTestingModeEnabled
+                || !manager.TestingForceMoldinessRewards
+                || string.IsNullOrWhiteSpace(manager.TestingForcedMoldinessRewardId)
+                || !MoldinessUnlockCatalog.TryGetById(manager.TestingForcedMoldinessRewardId, out var forcedDefinition)
+                || forcedDefinition == null)
+            {
+                return offers ?? Array.Empty<MoldinessUnlockDefinition>();
+            }
+
+            var visibleOffers = (offers ?? Array.Empty<MoldinessUnlockDefinition>())
+                .Where(offer => offer != null)
+                .ToList();
+            if (visibleOffers.Any(offer => string.Equals(offer.Id, forcedDefinition.Id, StringComparison.Ordinal)))
+            {
+                return visibleOffers;
+            }
+
+            if (visibleOffers.Count == 0)
+            {
+                visibleOffers.Add(forcedDefinition);
+            }
+            else
+            {
+                visibleOffers[visibleOffers.Count - 1] = forcedDefinition;
+            }
+
+            return visibleOffers;
+        }
+
+        private static bool IsForcedMoldinessRewardSelectedForTesting(string rewardId)
+        {
+            var manager = GameManager.Instance;
+            return manager != null
+                && manager.IsTestingModeEnabled
+                && manager.TestingForceMoldinessRewards
+                && !string.IsNullOrWhiteSpace(rewardId)
+                && string.Equals(manager.TestingForcedMoldinessRewardId, rewardId, StringComparison.Ordinal);
+        }
+
+        private static UnityMoldinessProgressionState ResolveDisplayMoldinessProgressionState(UnityMoldinessProgressionState progressionState)
+        {
+            if (progressionState?.unlockedRewardIds?.Count > 0)
+            {
+                return progressionState;
+            }
+
+            var liveState = GameManager.Instance?.CampaignController?.State?.moldiness;
+            if (liveState?.unlockedRewardIds?.Count > 0)
+            {
+                return liveState;
+            }
+
+            if (CampaignSaveService.Exists())
+            {
+                var savedState = CampaignSaveService.Load();
+                if (savedState?.moldiness?.unlockedRewardIds?.Count > 0)
+                {
+                    return savedState.moldiness;
+                }
+            }
+
+            return progressionState;
         }
 
         private void EnsureActionButtonsShareContainer()

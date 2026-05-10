@@ -567,6 +567,29 @@ namespace FungusToast.Unity.Campaign
             return true;
         }
 
+        public bool TryResolveForcedMoldinessUnlockSelectionForTesting(string unlockId)
+        {
+            if (State?.moldiness == null
+                || string.IsNullOrWhiteSpace(unlockId)
+                || State.moldiness.pendingUnlockTriggers == null
+                || State.moldiness.pendingUnlockTriggers.Count == 0)
+            {
+                return false;
+            }
+
+            if (!MoldinessUnlockCatalog.TryGetById(unlockId, out var definition) || definition == null)
+            {
+                return false;
+            }
+
+            State.moldiness.pendingUnlockChoice = null;
+            State.moldiness.pendingUnlockTriggers.RemoveAt(0);
+            SynchronizePendingVictorySnapshotAfterMoldinessResolution();
+            CampaignSaveService.Save(State);
+            Debug.Log($"[CampaignController] Resolved forced moldiness unlock '{definition.Id}' for testing without modifying persistent ownership.");
+            return true;
+        }
+
         public bool TryContinueWithoutMoldinessUnlock()
         {
             if (State?.moldiness == null || State.moldiness.pendingUnlockTriggers == null || State.moldiness.pendingUnlockTriggers.Count == 0)
