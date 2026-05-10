@@ -1,8 +1,13 @@
 # Fungus Toast - GitHub Copilot Instructions
 
 ## Start Here
-
+ 
 This file is the top-level router for AI-assisted development in this repository.
+
+If a task is unclear, use this routing order before making changes:
+1. Match the task to a document in the list below.
+2. Open the document whose title directly names that task domain.
+3. If no title directly matches, open `FungusToast.Core/docs/README.md`.
 
 ### First-hop task entry docs
 
@@ -28,8 +33,6 @@ This file is the top-level router for AI-assisted development in this repository
 - **Analytics workflow for simulation exports:** `FungusToast.Analytics/README.md`
 - **Unity-front-end-only overview:** `FungusToast.Unity/.github/instructions/project-overview.instructions.md`
 - **Complete documentation map / secondary references:** `FungusToast.Core/docs/README.md`
-
-If a task is unclear, route through the most specific document above before making changes.
 
 ## Repository Overview
 
