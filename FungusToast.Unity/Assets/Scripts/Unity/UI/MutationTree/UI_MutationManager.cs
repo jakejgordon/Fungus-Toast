@@ -1636,8 +1636,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = storePointsButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.7f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
             var layout = storePointsButton.GetComponent<LayoutElement>();
             if (layout == null)
@@ -1694,8 +1694,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = presentationSpeedButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.72f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
             var layout = presentationSpeedButton.GetComponent<LayoutElement>();
             if (layout == null)
