@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Players;
+using FungusToast.Unity.UI;
 
 namespace FungusToast.Unity.UI.Hotseat
 {
@@ -15,8 +16,13 @@ namespace FungusToast.Unity.UI.Hotseat
         [SerializeField] private TextMeshProUGUI titleText;
         [SerializeField] private CanvasGroup canvasGroup;
         [Header("Player Visuals")] [SerializeField] private Image playerIconImage;
+        [Header("Overlay Sorting")] [SerializeField] private bool forceTopMostCanvas = true;
+        [SerializeField] private int overlaySortingOrder = 500;
         [Header("Behaviour")] [SerializeField] private bool useFade = true;
         [SerializeField] private float fadeDuration = 0.15f;
+
+        private Canvas overlayCanvas;
+        private GraphicRaycaster graphicRaycaster;
 
         private Action onConfirmed;
         private bool isShowing;
@@ -41,6 +47,7 @@ namespace FungusToast.Unity.UI.Hotseat
             }
 
             ApplyStyle();
+            EnsureOverlayCanvas();
 
             WireOkButton();
             HideImmediate(preserveCallback: true); // ensure hidden but do not clear future callback placeholder
@@ -72,6 +79,29 @@ namespace FungusToast.Unity.UI.Hotseat
             return path;
         }
 
+        private void EnsureOverlayCanvas()
+        {
+            if (!forceTopMostCanvas || root == null)
+            {
+                return;
+            }
+
+            overlayCanvas = root.GetComponent<Canvas>();
+            if (overlayCanvas == null)
+            {
+                overlayCanvas = root.AddComponent<Canvas>();
+            }
+
+            overlayCanvas.overrideSorting = true;
+            overlayCanvas.sortingOrder = overlaySortingOrder;
+
+            graphicRaycaster = root.GetComponent<GraphicRaycaster>();
+            if (graphicRaycaster == null)
+            {
+                graphicRaycaster = root.AddComponent<GraphicRaycaster>();
+            }
+        }
+
         private void WireOkButton()
         {
             if (okButton == null)
@@ -92,9 +122,19 @@ namespace FungusToast.Unity.UI.Hotseat
         public void Show(Player player, Action confirmedCallback)
         {
             if (player == null) { ShowInternal("(Unknown)", null, confirmedCallback); return; }
-            // Attempt to fetch icon sprite from grid visualizer (if available)
+
             Sprite iconSprite = null;
-            try { iconSprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite; } catch { }
+            try
+            {
+                var binder = GameManager.Instance?.GameUI?.PlayerUIBinder;
+                iconSprite = binder != null ? binder.GetPlayerIcon(player.PlayerId) : null;
+                if (iconSprite == null)
+                {
+                    iconSprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
+                }
+            }
+            catch { }
+
             ShowInternal(player.PlayerName, iconSprite, confirmedCallback);
         }
 
@@ -107,6 +147,12 @@ namespace FungusToast.Unity.UI.Hotseat
             if (!gameObject.activeSelf) gameObject.SetActive(true);
             if (root != null && !root.activeSelf) root.SetActive(true);
 
+            EnsureOverlayCanvas();
+            if (root != null)
+            {
+                root.transform.SetAsLastSibling();
+            }
+
             if (!gameObject.activeInHierarchy)
             {
                 Debug.LogWarning("[HotseatTurnPrompt] Not active in hierarchy after activation attempt; invoking callback immediately.");
@@ -115,7 +161,7 @@ namespace FungusToast.Unity.UI.Hotseat
             }
 
             if (titleText != null)
-                titleText.text = $"{playerName}'s Turn"; // updated formatting
+                titleText.text = $"{playerName}'s Turn";
 
             if (playerIconImage != null)
             {
