@@ -10,6 +10,9 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class MutationTreeBuilder : MonoBehaviour
     {
+        private const float HeaderInvestmentSummaryFontSize = 14f;
+        private const float HeaderInvestmentSummaryHeight = 20f;
+
         [Header("Prefabs")]
         [SerializeField] private GameObject categoryHeaderPrefab;
         [SerializeField] private GameObject mutationNodePrefab;
@@ -128,7 +131,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 var summaryGO = new GameObject("InvestmentSummary");
                 summaryGO.transform.SetParent(headerGO.transform, false);
                 var summaryText = summaryGO.AddComponent<TextMeshProUGUI>();
-                summaryText.fontSize = 10;
+                summaryText.fontSize = HeaderInvestmentSummaryFontSize;
                 summaryText.alignment = TextAlignmentOptions.Center;
                 summaryText.color = new Color(
                     Mathf.Min(accent.r + 0.2f, 1f),
@@ -142,7 +145,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 summaryRect.anchorMax = new Vector2(1, 0);
                 summaryRect.pivot = new Vector2(0.5f, 1f);
                 summaryRect.anchoredPosition = new Vector2(0, 0);
-                summaryRect.sizeDelta = new Vector2(0, 16);
+                summaryRect.sizeDelta = new Vector2(0, HeaderInvestmentSummaryHeight);
                 headerSummaryTexts[category] = summaryText;
 
                 headerGO.transform.SetSiblingIndex(0); // Ensure header is always first

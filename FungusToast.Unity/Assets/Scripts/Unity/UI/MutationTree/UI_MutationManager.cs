@@ -957,12 +957,20 @@ namespace FungusToast.Unity.UI.MutationTree
                     continue;
                 }
 
+                if (!child.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
                 if (child.anchorMin.y < 0.9f || child.anchorMax.y < 0.9f)
                 {
                     continue;
                 }
 
-                float childTopInset = Mathf.Max(0f, -child.anchoredPosition.y + (child.rect.height * child.pivot.y));
+                float childHeight = child == headerControlsRowRect
+                    ? HeaderControlsHeight
+                    : child.rect.height;
+                float childTopInset = Mathf.Max(0f, -child.anchoredPosition.y + (childHeight * child.pivot.y));
                 topInset = Mathf.Max(topInset, childTopInset);
             }
 
@@ -1385,26 +1393,18 @@ namespace FungusToast.Unity.UI.MutationTree
                 var rowObject = new GameObject("UI_MutationHeaderControlsRow", typeof(RectTransform), typeof(HorizontalLayoutGroup));
                 headerControlsRowRect = rowObject.GetComponent<RectTransform>();
                 headerControlsRowRect.SetParent(mutationTreeRect, false);
-                headerControlsRowRect.SetAsLastSibling();
-                headerControlsRowRect.anchorMin = new Vector2(0f, 1f);
-                headerControlsRowRect.anchorMax = new Vector2(1f, 1f);
-                headerControlsRowRect.pivot = new Vector2(0.5f, 0.5f);
-                headerControlsRowRect.anchoredPosition = new Vector2(0f, -20f);
-                headerControlsRowRect.sizeDelta = new Vector2(-(HeaderControlsHorizontalInset * 2f), HeaderControlsHeight);
-
-                var rowLayout = rowObject.GetComponent<HorizontalLayoutGroup>();
-                rowLayout.padding = new RectOffset(0, 0, 0, 0);
-                rowLayout.spacing = HeaderControlsSpacing;
-                rowLayout.childAlignment = TextAnchor.MiddleCenter;
-                rowLayout.childControlWidth = true;
-                rowLayout.childControlHeight = true;
-                rowLayout.childForceExpandWidth = false;
-                rowLayout.childForceExpandHeight = false;
             }
+
+            ConfigureHeaderControlsRowRect();
+            ConfigureHeaderControlsRowLayout();
 
             headerLeftSlotRect ??= CreateHeaderSlot("UI_MutationHeaderLeftSlot", flexibleWidth: 1f, preferredWidth: 0f);
             headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
             headerRightSlotRect ??= CreateHeaderSlot("UI_MutationHeaderRightSlot", flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
+
+            ConfigureHeaderSlotLayout(headerLeftSlotRect, flexibleWidth: 1f, preferredWidth: 0f);
+            ConfigureHeaderSlotLayout(headerCenterSlotRect, flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
+            ConfigureHeaderSlotLayout(headerRightSlotRect, flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
 
             MoveLabelToHeaderLeftSlot();
             MoveButtonToHeaderCenterSlot(storePointsButton);
@@ -1412,22 +1412,79 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshHeaderActionButtonWidths();
         }
 
+        private void ConfigureHeaderControlsRowRect()
+        {
+            if (headerControlsRowRect == null || mutationTreeRect == null)
+            {
+                return;
+            }
+
+            headerControlsRowRect.SetParent(mutationTreeRect, false);
+            headerControlsRowRect.SetAsLastSibling();
+            headerControlsRowRect.anchorMin = new Vector2(0f, 1f);
+            headerControlsRowRect.anchorMax = new Vector2(1f, 1f);
+            headerControlsRowRect.pivot = new Vector2(0.5f, 0.5f);
+            headerControlsRowRect.anchoredPosition = new Vector2(0f, -20f);
+            headerControlsRowRect.sizeDelta = new Vector2(-(HeaderControlsHorizontalInset * 2f), HeaderControlsHeight);
+            headerControlsRowRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderControlsHeight);
+        }
+
+        private void ConfigureHeaderControlsRowLayout()
+        {
+            if (headerControlsRowRect == null)
+            {
+                return;
+            }
+
+            var rowLayout = headerControlsRowRect.GetComponent<HorizontalLayoutGroup>();
+            if (rowLayout == null)
+            {
+                rowLayout = headerControlsRowRect.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            rowLayout.padding = new RectOffset(0, 0, 0, 0);
+            rowLayout.spacing = HeaderControlsSpacing;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+        }
+
         private RectTransform CreateHeaderSlot(string name, float flexibleWidth, float preferredWidth)
         {
             var slotObject = new GameObject(name, typeof(RectTransform), typeof(LayoutElement));
             var slotRect = slotObject.GetComponent<RectTransform>();
             slotRect.SetParent(headerControlsRowRect, false);
+            ConfigureHeaderSlotLayout(slotRect, flexibleWidth, preferredWidth);
+
+            return slotRect;
+        }
+
+        private void ConfigureHeaderSlotLayout(RectTransform slotRect, float flexibleWidth, float preferredWidth)
+        {
+            if (slotRect == null)
+            {
+                return;
+            }
+
             slotRect.anchorMin = Vector2.zero;
             slotRect.anchorMax = Vector2.one;
             slotRect.pivot = new Vector2(0.5f, 0.5f);
             slotRect.sizeDelta = Vector2.zero;
+            slotRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderControlsHeight);
 
-            var layoutElement = slotObject.GetComponent<LayoutElement>();
+            var layoutElement = slotRect.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = slotRect.gameObject.AddComponent<LayoutElement>();
+            }
+
             layoutElement.flexibleWidth = flexibleWidth;
             layoutElement.preferredWidth = preferredWidth;
             layoutElement.minHeight = HeaderControlsHeight;
-
-            return slotRect;
+            layoutElement.preferredHeight = HeaderControlsHeight;
+            layoutElement.flexibleHeight = 0f;
         }
 
         private void MoveLabelToHeaderLeftSlot()
