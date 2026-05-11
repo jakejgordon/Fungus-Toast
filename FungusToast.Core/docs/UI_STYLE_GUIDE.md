@@ -28,18 +28,18 @@ Use these names in docs, comments, and future theme assets.
 Do not introduce ad hoc color names in new UI work.
 
 ### 2.1 Core Surfaces
-- `Surface.Canvas`: `#2C3140` (global background/navy-earth anchor)
-- `Surface.PanelPrimary`: `#3A4350` (sidebar + major panel)
-- `Surface.PanelSecondary`: `#465164` (nested cards/sections)
-- `Surface.PanelElevated`: `#4F5C70` (hovered/active section)
+- `Surface.Canvas`: `#26271F` (global background / forest-loam anchor)
+- `Surface.PanelPrimary`: `#34382C` (sidebar + major panel)
+- `Surface.PanelSecondary`: `#424837` (nested cards/sections)
+- `Surface.PanelElevated`: `#515A45` (hovered/active section)
 - `Surface.OverlayDim`: `#12161DCC` (modal/overlay dim)
 
 ### 2.2 Fungal Accent Palette
-- `Accent.Moss`: `#6D8F3A` (primary fungal accent)
-- `Accent.Lichen`: `#8FAF52` (positive/selected)
-- `Accent.Spore`: `#B3C77A` (soft highlight)
-- `Accent.Hyphae`: `#D5DDB0` (subtle bright details)
-- `Accent.Putrefaction`: `#7A5B3A` (warning-secondary, earthy)
+- `Accent.Moss`: `#718E43` (primary fungal accent)
+- `Accent.Lichen`: `#90AE5B` (positive/selected)
+- `Accent.Spore`: `#BCCB88` (soft highlight)
+- `Accent.Hyphae`: `#D9DEC0` (subtle bright details)
+- `Accent.Putrefaction`: `#7F6242` (warning-secondary, earthy)
 
 ### 2.3 Text Colors
 - `Text.Primary`: `#F1F3EE`
@@ -56,13 +56,13 @@ Do not introduce ad hoc color names in new UI work.
 - `State.Focus`: `#B3C77A`
 
 ### 2.5 Buttons (State Tokens)
-- `Button.Bg.Default`: `#E7E8E5`
-- `Button.Bg.Hover`: `#F4F5F2`
-- `Button.Bg.Pressed`: `#D3D7C9`
-- `Button.Bg.Selected`: `#8FD28A`
-- `Button.Bg.Disabled`: `#B7BBB2`
-- `Button.Text.Default`: `#34392E`
-- `Button.Text.Disabled`: `#747A71`
+- `Button.Bg.Default`: `#DFE4D4`
+- `Button.Bg.Hover`: `#EBEFE2`
+- `Button.Bg.Pressed`: `#C9D2BA`
+- `Button.Bg.Selected`: `#98BE74`
+- `Button.Bg.Disabled`: `#A7AE9C`
+- `Button.Text.Default`: `#2F3628`
+- `Button.Text.Disabled`: `#6F7466`
 
 ### 2.6 Mutation Category Accents (Map Existing Categories)
 - `Category.Growth`: `#5F8F61`

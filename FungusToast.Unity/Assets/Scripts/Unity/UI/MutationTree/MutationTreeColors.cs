@@ -19,10 +19,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
         // ── Universal state colors ──────────────────────────────────────
         public static readonly Color MaxedGold     = UIStyleTokens.Accent.Spore;
-        public static readonly Color AffordableGlow = new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0.08f);
+        public static readonly Color AffordableGlow = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.08f);
         public static readonly Color LockedTint    = UIStyleTokens.Text.Disabled;
         public static readonly Color DefaultNodeBG = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.34f);
-        public static readonly Color DependentHover = new Color(UIStyleTokens.State.Info.r, UIStyleTokens.State.Info.g, UIStyleTokens.State.Info.b, 0.32f);
+        public static readonly Color DependentHover = UIStyleTokens.WithAlpha(UIStyleTokens.State.Info, 0.32f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
         public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;
@@ -106,7 +106,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public static Color GetProgressBarColor(MutationCategory category)
         {
             Color c = GetCategoryAccent(category);
-            return new Color(c.r, c.g, c.b, 0.18f);
+            return UIStyleTokens.WithAlpha(c, 0.18f);
         }
 
         // ── Helpers ─────────────────────────────────────────────────────

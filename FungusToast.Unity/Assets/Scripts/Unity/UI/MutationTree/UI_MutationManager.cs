@@ -1295,7 +1295,7 @@ namespace FungusToast.Unity.UI.MutationTree
             int current = humanPlayer.MutationPoints;
             int projected = Mathf.Max(0, current - cost);
             basePointsText ??= mutationPointsCounterText.text;
-            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#AAAAAA>→ {projected}</color>";
+            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.Text.Muted)}>→ {projected}</color>";
         }
 
         /// <summary>Restores normal points counter text.</summary>

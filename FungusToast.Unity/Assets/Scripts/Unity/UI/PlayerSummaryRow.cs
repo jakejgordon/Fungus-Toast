@@ -15,11 +15,9 @@ namespace FungusToast.Unity.UI
     {
         private const float StatTextScale = 1.05f;
         private const float StatColumnWidth = 90f;
-        private static readonly Color InactiveRowBackground = new Color(
-            UIStyleTokens.Surface.PanelPrimary.r,
-            UIStyleTokens.Surface.PanelPrimary.g,
-            UIStyleTokens.Surface.PanelPrimary.b,
-            0.52f);
+        private static readonly Color InactiveRowBackground = UIStyleTokens.WithAlpha(
+            UIStyleTokens.Surface.PanelPrimary,
+            UIStyleTokens.Alpha.InactivePanel);
 
         [SerializeField] private Image moldIconImage;
         [SerializeField] private TextMeshProUGUI livingCellsText;
@@ -203,7 +201,7 @@ namespace FungusToast.Unity.UI
             if (rowBackground != null)
             {
                 rowBackground.color = isPerspectivePlayer
-                    ? new Color(UIStyleTokens.Accent.Moss.r, UIStyleTokens.Accent.Moss.g, UIStyleTokens.Accent.Moss.b, 0.38f)
+                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Moss, UIStyleTokens.Alpha.PerspectiveHighlight)
                     : InactiveRowBackground;
             }
 

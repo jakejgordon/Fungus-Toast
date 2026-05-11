@@ -991,7 +991,7 @@ namespace FungusToast.Unity.UI.Testing
             var viewportObject = new GameObject($"{options.ControlPrefix}ForcedStartingAdaptationsViewport", typeof(RectTransform), typeof(Image), typeof(Mask), typeof(LayoutElement));
             viewportObject.transform.SetParent(row.transform, false);
             var viewportImage = viewportObject.GetComponent<Image>();
-            viewportImage.color = new Color(1f, 1f, 1f, 0.04f);
+            viewportImage.color = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, UIStyleTokens.Alpha.ViewportChrome);
             var viewportMask = viewportObject.GetComponent<Mask>();
             viewportMask.showMaskGraphic = false;
             var viewportElement = viewportObject.GetComponent<LayoutElement>();
@@ -1075,7 +1075,7 @@ namespace FungusToast.Unity.UI.Testing
                 toggleRect.anchoredPosition = Vector2.zero;
 
                 var toggleBackground = toggleObject.GetComponent<Image>();
-                toggleBackground.color = new Color(1f, 1f, 1f, 0.12f);
+                toggleBackground.color = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, UIStyleTokens.Alpha.ToggleChrome);
                 toggleBackground.type = Image.Type.Sliced;
 
                 var checkmarkObject = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));

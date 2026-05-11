@@ -1206,8 +1206,8 @@ namespace FungusToast.Unity.UI
             }
 
             outline.effectColor = isSelected
-                ? new Color(UIStyleTokens.State.Success.r, UIStyleTokens.State.Success.g, UIStyleTokens.State.Success.b, 0.95f)
-                : new Color(UIStyleTokens.Text.Primary.r, UIStyleTokens.Text.Primary.g, UIStyleTokens.Text.Primary.b, 0f);
+                ? UIStyleTokens.WithAlpha(UIStyleTokens.State.Success, 0.95f)
+                : UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0f);
             outline.effectDistance = isSelected ? new Vector2(4f, -4f) : Vector2.zero;
         }
 
@@ -1735,12 +1735,12 @@ namespace FungusToast.Unity.UI
             fillOverlay.enabled = false;
             fillOverlayObject.SetActive(false);
             var fillOverlayOutline = fillOverlayObject.AddComponent<Outline>();
-            fillOverlayOutline.effectColor = new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 1f);
+            fillOverlayOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 1f);
             fillOverlayOutline.effectDistance = new Vector2(2f, -2f);
             fillOverlayOutline.enabled = false;
 
             var outline = buttonObject.AddComponent<Outline>();
-            outline.effectColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.35f);
+            outline.effectColor = UIStyleTokens.WithAlpha(offer.AccentColor, UIStyleTokens.Alpha.AccentOutline);
             outline.effectDistance = new Vector2(1.5f, -1.5f);
 
             var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
@@ -1765,7 +1765,7 @@ namespace FungusToast.Unity.UI
             badgeRect.anchoredPosition = new Vector2(-10f, -7f);
             badgeRect.sizeDelta = new Vector2(300f, 26f);
             var badgeImage = badgeObject.GetComponent<Image>();
-            Color badgeBaseColor = new Color(offer.AccentColor.r, offer.AccentColor.g, offer.AccentColor.b, 0.18f);
+            Color badgeBaseColor = UIStyleTokens.WithAlpha(offer.AccentColor, UIStyleTokens.Alpha.BadgeTint);
             badgeImage.color = badgeBaseColor;
 
             var visual = new MoldinessRewardOptionVisual
@@ -2188,8 +2188,8 @@ namespace FungusToast.Unity.UI
             if (visual.Outline != null)
             {
                 visual.Outline.effectColor = isSelected
-                    ? new Color(UIStyleTokens.Button.BackgroundSelected.r, UIStyleTokens.Button.BackgroundSelected.g, UIStyleTokens.Button.BackgroundSelected.b, 0.7f)
-                    : new Color(UIStyleTokens.Text.Muted.r, UIStyleTokens.Text.Muted.g, UIStyleTokens.Text.Muted.b, 0.45f);
+                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, UIStyleTokens.Alpha.SelectionFill)
+                    : UIStyleTokens.WithAlpha(UIStyleTokens.Text.Muted, UIStyleTokens.Alpha.MutedFill);
                 visual.Outline.effectDistance = isSelected ? new Vector2(2f, -2f) : new Vector2(1.5f, -1.5f);
             }
 
@@ -2712,7 +2712,7 @@ namespace FungusToast.Unity.UI
 
             detailsOverlayCanvasGroup = detailsOverlayRoot.GetComponent<CanvasGroup>();
             detailsOverlayBackground = detailsOverlayRoot.GetComponent<Image>();
-            detailsOverlayBackground.color = new Color(UIStyleTokens.Surface.OverlayDim.r, UIStyleTokens.Surface.OverlayDim.g, UIStyleTokens.Surface.OverlayDim.b, 0.88f);
+            detailsOverlayBackground.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.OverlayDim, UIStyleTokens.Alpha.DetailsOverlay);
             detailsOverlayBackground.raycastTarget = true;
 
             detailsBackdropButton = detailsOverlayRoot.GetComponent<Button>();
@@ -2819,7 +2819,7 @@ namespace FungusToast.Unity.UI
             scrollLayout.minHeight = 220f;
 
             var scrollImage = scrollObject.GetComponent<Image>();
-            scrollImage.color = new Color(UIStyleTokens.Surface.PanelSecondary.r, UIStyleTokens.Surface.PanelSecondary.g, UIStyleTokens.Surface.PanelSecondary.b, 0.22f);
+            scrollImage.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Alpha.ScrollSurface);
             scrollImage.raycastTarget = true;
 
             detailsScrollRect = scrollObject.GetComponent<ScrollRect>();
@@ -2838,7 +2838,7 @@ namespace FungusToast.Unity.UI
             viewportRect.offsetMax = new Vector2(-8f, -8f);
 
             var viewportImage = viewportObject.GetComponent<Image>();
-            viewportImage.color = new Color(0f, 0f, 0f, 0.01f);
+            viewportImage.color = UIStyleTokens.WithAlpha(Color.black, UIStyleTokens.Alpha.InvisibleViewport);
             viewportImage.raycastTarget = true;
             viewportObject.GetComponent<Mask>().showMaskGraphic = false;
 
@@ -3790,7 +3790,7 @@ namespace FungusToast.Unity.UI
             endGameResultsScrollRoot.localScale = Vector3.one;
 
             var scrollImage = endGameResultsScrollRoot.GetComponent<Image>();
-            scrollImage.color = new Color(0f, 0f, 0f, 0.001f);
+            scrollImage.color = UIStyleTokens.WithAlpha(Color.black, UIStyleTokens.Alpha.InvisibleHitbox);
             scrollImage.raycastTarget = true;
 
             var scrollLayoutElement = endGameResultsScrollRoot.GetComponent<LayoutElement>();
@@ -3815,7 +3815,7 @@ namespace FungusToast.Unity.UI
             endGameResultsViewportRoot.localScale = Vector3.one;
 
             var viewportImage = endGameResultsViewportRoot.GetComponent<Image>();
-            viewportImage.color = new Color(0f, 0f, 0f, 0.001f);
+            viewportImage.color = UIStyleTokens.WithAlpha(Color.black, UIStyleTokens.Alpha.InvisibleHitbox);
             viewportImage.raycastTarget = false;
 
             var viewportMask = endGameResultsViewportRoot.GetComponent<Mask>();

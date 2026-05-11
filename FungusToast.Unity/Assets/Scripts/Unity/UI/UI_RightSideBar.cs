@@ -525,7 +525,7 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = true;
 
             var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
             outline.effectDistance = new Vector2(1f, -1f);
 
             var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -676,7 +676,7 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = true;
 
             var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
             outline.effectDistance = new Vector2(1f, -1f);
 
             var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));

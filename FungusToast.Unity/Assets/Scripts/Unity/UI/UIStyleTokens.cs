@@ -14,20 +14,20 @@ namespace FungusToast.Unity.UI
     {
         public static class Surface
         {
-            public static readonly Color Canvas = Hex("#2C3140");
-            public static readonly Color PanelPrimary = Hex("#3A4350");
-            public static readonly Color PanelSecondary = Hex("#465164");
-            public static readonly Color PanelElevated = Hex("#4F5C70");
+            public static readonly Color Canvas = Hex("#26271F");
+            public static readonly Color PanelPrimary = Hex("#34382C");
+            public static readonly Color PanelSecondary = Hex("#424837");
+            public static readonly Color PanelElevated = Hex("#515A45");
             public static readonly Color OverlayDim = Hex("#12161DCC");
         }
 
         public static class Accent
         {
-            public static readonly Color Moss = Hex("#6D8F3A");
-            public static readonly Color Lichen = Hex("#8FAF52");
-            public static readonly Color Spore = Hex("#B3C77A");
-            public static readonly Color Hyphae = Hex("#D5DDB0");
-            public static readonly Color Putrefaction = Hex("#7A5B3A");
+            public static readonly Color Moss = Hex("#718E43");
+            public static readonly Color Lichen = Hex("#90AE5B");
+            public static readonly Color Spore = Hex("#BCCB88");
+            public static readonly Color Hyphae = Hex("#D9DEC0");
+            public static readonly Color Putrefaction = Hex("#7F6242");
         }
 
         public static class Text
@@ -66,14 +66,14 @@ namespace FungusToast.Unity.UI
             public const float NarrowMenuActionHeight = 52f;
             public const float MinimumMenuActionHeight = 48f;
 
-            public static readonly Color BackgroundDefault = Hex("#E7E8E5");
-            public static readonly Color BackgroundHover = Hex("#F4F5F2");
-            public static readonly Color BackgroundPressed = Hex("#D3D7C9");
-            public static readonly Color BackgroundSelected = Hex("#8FD28A");
-            public static readonly Color BackgroundDisabled = Hex("#B7BBB2");
+            public static readonly Color BackgroundDefault = Hex("#DFE4D4");
+            public static readonly Color BackgroundHover = Hex("#EBEFE2");
+            public static readonly Color BackgroundPressed = Hex("#C9D2BA");
+            public static readonly Color BackgroundSelected = Hex("#98BE74");
+            public static readonly Color BackgroundDisabled = Hex("#A7AE9C");
 
-            public static readonly Color TextDefault = Hex("#34392E");
-            public static readonly Color TextDisabled = Hex("#747A71");
+            public static readonly Color TextDefault = Hex("#2F3628");
+            public static readonly Color TextDisabled = Hex("#6F7466");
 
             public static ColorBlock BuildColorBlock(float colorMultiplier = 1f, float fadeDuration = 0.1f)
             {
@@ -189,7 +189,7 @@ namespace FungusToast.Unity.UI
                     highlightedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
                     pressedColor = Surface.PanelPrimary,
                     selectedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
-                    disabledColor = new Color(Surface.PanelPrimary.r, Surface.PanelPrimary.g, Surface.PanelPrimary.b, 0.6f),
+                    disabledColor = WithAlpha(Surface.PanelPrimary, Alpha.PanelDisabled),
                     colorMultiplier = 1f,
                     fadeDuration = 0.1f
                 };
@@ -216,6 +216,24 @@ namespace FungusToast.Unity.UI
                     labels[i].color = color;
                 }
             }
+        }
+
+        public static class Alpha
+        {
+            public const float PanelDisabled = 0.6f;
+            public const float InactivePanel = 0.52f;
+            public const float PerspectiveHighlight = 0.38f;
+            public const float FocusOutline = 0.8f;
+            public const float AccentOutline = 0.35f;
+            public const float BadgeTint = 0.18f;
+            public const float DetailsOverlay = 0.88f;
+            public const float ScrollSurface = 0.22f;
+            public const float SelectionFill = 0.7f;
+            public const float MutedFill = 0.45f;
+            public const float ViewportChrome = 0.04f;
+            public const float ToggleChrome = 0.12f;
+            public const float InvisibleViewport = 0.01f;
+            public const float InvisibleHitbox = 0.001f;
         }
 
         public static void ApplyPanelSurface(GameObject panelRoot, Color color)
@@ -265,6 +283,17 @@ namespace FungusToast.Unity.UI
         private static bool IsInsideButton(Transform target)
         {
             return target.GetComponentInParent<UnityEngine.UI.Button>() != null;
+        }
+
+        public static Color WithAlpha(Color color, float alpha)
+        {
+            color.a = alpha;
+            return color;
+        }
+
+        public static string ToHtmlRgb(Color color)
+        {
+            return ColorUtility.ToHtmlStringRGB(color);
         }
 
         private static Color Hex(string html)
