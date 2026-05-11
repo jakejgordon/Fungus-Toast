@@ -281,10 +281,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 storePointsButton.interactable = false;
             }
 
-            if (spendPointsButtonText != null)
-            {
-                spendPointsButtonText.text = "No Points Available";
-            }
+            SetSpendPointsButtonText("No Points Available");
 
             if (mutationPointsCounterText != null)
             {
@@ -631,7 +628,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (pendingTargetedSurgeSelection != null)
             {
                 spendPointsButton.interactable = false;
-                spendPointsButtonText.text = "Select Tile";
+                SetSpendPointsButtonText("Select Tile");
                 buttonOutline.enabled = false;
 
                 if (mutationPointsCounterText != null)
@@ -644,13 +641,13 @@ namespace FungusToast.Unity.UI.MutationTree
             if (points > 0)
             {
                 spendPointsButton.interactable = true;
-                spendPointsButtonText.text = $"Spend {points} Points!";
+                SetSpendPointsButtonText($"Spend {points} Points!");
                 buttonOutline.enabled = true;
             }
             else
             {
                 spendPointsButton.interactable = false;
-                spendPointsButtonText.text = "No Points Available";
+                SetSpendPointsButtonText("No Points Available");
                 buttonOutline.enabled = false;
             }
 
@@ -1295,10 +1292,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 storePointsButton.interactable = true;
             }
             if (buttonOutline != null) buttonOutline.enabled = player.MutationPoints > 0;
-            if (spendPointsButtonText != null)
-            {
-                spendPointsButtonText.text = player.MutationPoints > 0 ? $"Spend {player.MutationPoints} Points!" : "No Points Available";
-            }
+            SetSpendPointsButtonText(player.MutationPoints > 0 ? $"Spend {player.MutationPoints} Points!" : "No Points Available");
             if (mutationPointsCounterText != null)
                 mutationPointsCounterText.text = $"Mutation Points: {player.MutationPoints}";
 
@@ -1897,8 +1891,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = storePointsButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.7f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
             var layout = storePointsButton.GetComponent<LayoutElement>();
             if (layout == null)
@@ -1955,8 +1949,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 outline = presentationSpeedButton.gameObject.AddComponent<Outline>();
             }
 
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.72f);
-            outline.effectDistance = new Vector2(1f, -1f);
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
             var layout = presentationSpeedButton.GetComponent<LayoutElement>();
             if (layout == null)
@@ -2009,6 +2003,50 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             UpdateHeaderActionButtonWidth(storePointsButton, headerCenterSlotRect, StoreButtonMinWidth);
             UpdateHeaderActionButtonWidth(presentationSpeedButton, headerRightSlotRect, PresentationSpeedButtonMinWidth);
+        }
+
+        private void SetSpendPointsButtonText(string text)
+        {
+            if (spendPointsButtonText == null)
+            {
+                return;
+            }
+
+            spendPointsButtonText.text = text;
+            RefreshSpendPointsButtonWidth();
+        }
+
+        private void RefreshSpendPointsButtonWidth()
+        {
+            if (spendPointsButton == null || spendPointsButtonText == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            float preferredWidth = SpendButtonMinWidth;
+            float labelWidth = spendPointsButtonText.GetPreferredValues(spendPointsButtonText.text).x;
+            preferredWidth = Mathf.Max(preferredWidth, Mathf.Ceil(labelWidth) + (HeaderButtonHorizontalPadding * 2f));
+
+            var layout = spendPointsButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = spendPointsButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = preferredWidth;
+            layout.preferredWidth = preferredWidth;
+            layout.minHeight = Mathf.Max(layout.minHeight, SpendButtonMinHeight);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, SpendButtonMinHeight);
+
+            if (spendPointsButton.TryGetComponent<RectTransform>(out var buttonRect))
+            {
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, SpendButtonMinHeight);
+            }
+
+            ForceLayoutRebuild(spendPointsButton.transform.parent as RectTransform);
         }
 
         private void UpdateHeaderActionButtonWidth(Button button, RectTransform slotRect, float minWidth)
@@ -2463,10 +2501,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 layout = spendPointsButton.gameObject.AddComponent<LayoutElement>();
             }
 
-            layout.minWidth = Mathf.Max(layout.minWidth, SpendButtonMinWidth);
-            layout.preferredWidth = Mathf.Max(layout.preferredWidth, SpendButtonMinWidth);
             layout.minHeight = Mathf.Max(layout.minHeight, SpendButtonMinHeight);
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, SpendButtonMinHeight);
+
+            RefreshSpendPointsButtonWidth();
         }
 
         private void RestoreStoreButtonLayout()
