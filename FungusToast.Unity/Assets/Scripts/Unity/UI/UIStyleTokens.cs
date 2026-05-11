@@ -72,8 +72,8 @@ namespace FungusToast.Unity.UI
             public static readonly Color BackgroundSelected = Hex("#98BE74");
             public static readonly Color BackgroundDisabled = Hex("#A7AE9C");
 
-            public static readonly Color TextDefault = Hex("#2F3628");
-            public static readonly Color TextDisabled = Hex("#6F7466");
+            public static readonly Color TextDefault = Hex("#202418");
+            public static readonly Color TextDisabled = Hex("#666B5E");
 
             public static ColorBlock BuildColorBlock(float colorMultiplier = 1f, float fadeDuration = 0.1f)
             {
@@ -208,12 +208,14 @@ namespace FungusToast.Unity.UI
                 for (int i = 0; i < tmpLabels.Length; i++)
                 {
                     tmpLabels[i].color = color;
+                    tmpLabels[i].fontStyle = FontStyles.Bold;
                 }
 
                 var labels = button.GetComponentsInChildren<UnityEngine.UI.Text>(true);
                 for (int i = 0; i < labels.Length; i++)
                 {
                     labels[i].color = color;
+                    labels[i].fontStyle = FontStyle.Bold;
                 }
             }
         }

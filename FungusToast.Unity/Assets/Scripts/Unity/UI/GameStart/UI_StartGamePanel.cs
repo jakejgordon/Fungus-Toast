@@ -2051,6 +2051,7 @@ namespace FungusToast.Unity.UI.GameStart
             label.alignment = TextAlignmentOptions.Center;
             label.overflowMode = TextOverflowModes.Ellipsis;
             label.color = UIStyleTokens.Button.TextDefault;
+            label.fontStyle = FontStyles.Bold;
             label.raycastTarget = false;
 
             moldSelectionButtons.Add(button);
