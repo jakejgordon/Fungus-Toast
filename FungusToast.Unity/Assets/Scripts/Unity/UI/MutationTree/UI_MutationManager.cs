@@ -1640,14 +1640,12 @@ namespace FungusToast.Unity.UI.MutationTree
             GameManager gameManager = GameManager.Instance;
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
-            bool isTimeLapseEnabled = gameManager != null && gameManager.RoundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
             int currentRound = gameManager?.Board?.CurrentRound ?? 0;
             if (!NewPlayerTooltipRules.ShouldShowTimeLapseModeIntro(
                     forceFirstGame,
                     currentRound,
                     hasDismissedTimeLapseCoachmarkThisGame,
-                    isFastForwarding,
-                    isTimeLapseEnabled))
+                    isFastForwarding))
             {
                 return;
             }

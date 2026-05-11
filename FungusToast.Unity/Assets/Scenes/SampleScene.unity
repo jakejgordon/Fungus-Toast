@@ -117921,6 +117921,8 @@ MonoBehaviour:
   titleText: {fileID: 1620071570}
   canvasGroup: {fileID: 1565504627}
   playerIconImage: {fileID: 123252514}
+  forceTopMostCanvas: 1
+  overlaySortingOrder: 500
   useFade: 1
   fadeDuration: 0.15
 --- !u!225 &1565504627
