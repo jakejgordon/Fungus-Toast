@@ -8,6 +8,7 @@ namespace FungusToast.Unity.UI.Onboarding
     {
         AlphaMutationPhaseIntro,
         MutationTreeGuidance,
+        TimeLapseModeIntro,
         ScoreboardWinCondition,
         MycovariantDraftIntro,
         EndgameCountdownIntro,
@@ -17,6 +18,7 @@ namespace FungusToast.Unity.UI.Onboarding
     {
         PhaseBanner,
         MutationTreeToast,
+        MutationTreeCoachmark,
         SidebarCoachmark,
         DraftCoachmark,
     }
@@ -65,6 +67,13 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Hover upgrades to inspect them, then click an affordable one to buy it.\n\nIf you want stronger upgrades later, use Store Mutation Points at the top of this panel.",
                 NewPlayerTooltipSurface.MutationTreeToast,
                 "Show when the mutation tree is opened for a player who has not dismissed it this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.TimeLapseModeIntro,
+                "Onboarding.TimeLapseModeIntroSeen",
+                "Time-Lapse Mode",
+                "Want to go faster? Toggle on Time-Lapse mode to skip most animations and fly through the growth and decay phases.",
+                NewPlayerTooltipSurface.MutationTreeCoachmark,
+                "Show on round 10 or later when the mutation tree opens unless it has already been dismissed this game; suppress while fast-forwarding or when Time-Lapse mode is already enabled, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.ScoreboardWinCondition,
                 "Onboarding.ScoreboardWinConditionSeen",
@@ -179,6 +188,21 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.ScoreboardWinCondition);
+        }
+
+        public static bool ShouldShowTimeLapseModeIntro(
+            bool forceFirstGameExperience,
+            int currentRound,
+            bool hasDismissedThisGame,
+            bool isFastForwarding,
+            bool isTimeLapseEnabled)
+        {
+            if (currentRound < 10 || hasDismissedThisGame || isFastForwarding || isTimeLapseEnabled)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseModeIntro);
         }
 
         public static bool ShouldShowMycovariantDraftIntro(

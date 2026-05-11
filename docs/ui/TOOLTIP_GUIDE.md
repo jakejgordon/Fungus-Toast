@@ -122,7 +122,10 @@ When adding explanatory UI, use this decision order:
 These currently live in `NewPlayerTooltipCatalog.cs`:
 - `AlphaMutationPhaseIntro`
 - `MutationTreeGuidance`
+- `TimeLapseModeIntro`
 - `ScoreboardWinCondition`
+- `MycovariantDraftIntro`
+- `EndgameCountdownIntro`
 
 Each onboarding entry should define:
 - stable id
