@@ -686,7 +686,6 @@ namespace FungusToast.Unity
                 humanPlayers,
                 () => humanPlayer,
                 () => isFastForwarding,
-                () => testingModeEnabled,
                 OnAllHumansFinishedMutationTurn);
             fastForwardService = new FastForwardService(this, () => isFastForwarding, v => isFastForwarding = v, () => endgameService.GameEnded);
             fastForwardService.SetProgressCallbacks(
