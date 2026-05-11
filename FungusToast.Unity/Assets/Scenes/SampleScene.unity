@@ -107193,6 +107193,7 @@ MonoBehaviour:
   testingModeEnabled: 0
   testingCampaignLevelIndex: 0
   testingForcedAdaptationId: 
+  testingForcedMoldinessRewardId: 
   testingForcedStartingAdaptationIds: []
   testingModeForceHumanFirst: 1
   testingForcedGameResult: 0
