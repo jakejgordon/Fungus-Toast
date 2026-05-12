@@ -18,6 +18,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MutationNameMinimumFontSize = 10f;
         private const float MutationNameHorizontalPadding = 8f;
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
+        private static readonly Color HighlightedTextColor = UIStyleTokens.Text.OnAccent;
 
         // Upgrade-cost badge layout constants (must match prefab values)
         private const float UpgradeCostIconWidth = 24f;
@@ -254,6 +255,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
+            ApplyTextContrast(useDarkText: false);
 
             UpdateInteractable();
         }
@@ -304,6 +306,30 @@ namespace FungusToast.Unity.UI.MutationTree
             if (!upgradeButton.interactable) return;
 
             nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.30f);
+            ApplyTextContrast(useDarkText: true);
+        }
+
+        private void ApplyTextContrast(bool useDarkText)
+        {
+            Color primary = useDarkText ? HighlightedTextColor : MutationTreeColors.PrimaryText;
+            Color secondary = useDarkText
+                ? Color.Lerp(HighlightedTextColor, MutationTreeColors.SecondaryText, 0.2f)
+                : MutationTreeColors.SecondaryText;
+
+            if (mutationNameText != null)
+            {
+                mutationNameText.color = primary;
+            }
+
+            if (levelText != null)
+            {
+                levelText.color = secondary;
+            }
+
+            if (upgradeCostText != null)
+            {
+                upgradeCostText.color = primary;
+            }
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -583,8 +609,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (nodeBackground != null && on)
             {
-                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.DependentBorder, 0.3f);
+                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
             }
+
+            ApplyTextContrast(useDarkText: on);
         }
 
         public void ClearHighlights()
