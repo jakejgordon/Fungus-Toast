@@ -209,6 +209,32 @@ public class UI_EndGamePanel : MonoBehaviour
 
 ---
 
+## Board Background Variants
+
+Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`.
+
+### Authoring Rules
+
+1. Keep the board medium as the theme-level owner (`toast`, future surfaces, etc.).
+2. Use the medium's default background fields for the primary image.
+3. Add future alternate images through `boardBackgroundOverrides`, ordered from smallest / most specific match to broadest fallback.
+4. Size rules are inclusive width/height thresholds: an override matches when `boardWidth <= maxBoardWidth` and `boardHeight <= maxBoardHeight`.
+5. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
+
+### Current Small-Board Pattern
+
+- `ToastBoardMedium.asset` keeps the bread image as the default background.
+- Boards `20x20` and smaller automatically switch to the cracker image through a size override.
+- This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
+
+### Import Guidance
+
+- Keep board background sprites square unless there is a clear gameplay-presentational reason not to.
+- Match the established sprite import baseline where possible, especially pixels-per-unit and filtering behavior, so world-space fit remains predictable.
+- If a new image has different composition or margins, create a new override entry and retune safe-area insets rather than reusing bread values verbatim.
+
+---
+
 ## Resizable Window
 
 The Unity Player window is configured as resizable (`resizableWindow: 1` in `ProjectSettings.asset`), allowing users to resize the game window at runtime. The `SidebarResizer` and CanvasScaler (Scale With Screen Size, 1920×1080 reference, 0.5 match) handle responsive layout automatically.

@@ -53,7 +53,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		public Color GetSurfaceColor(int x, int y, int boardWidth, int boardHeight)
 		{
 			var activeMedium = _getActiveMedium();
-			if (activeMedium != null && activeMedium.ShouldHidePlayableSurfaceTiles)
+			if (activeMedium != null && activeMedium.ShouldHidePlayableSurfaceTilesForSize(boardWidth, boardHeight))
 			{
 				return Color.clear;
 			}
@@ -78,7 +78,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		public int GetCrustThickness(GameBoard activeBoard)
 		{
 			var activeMedium = _getActiveMedium();
-			if (activeMedium != null && activeMedium.ShouldRenderBoardBackground)
+			if (activeMedium != null && activeMedium.ShouldRenderBoardBackgroundForSize(activeBoard.Width, activeBoard.Height))
 			{
 				return 0;
 			}
@@ -116,7 +116,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				return;
 			}
 
-			if (activeMedium.ShouldRenderBoardBackground)
+			if (activeMedium.ShouldRenderBoardBackgroundForSize(activeBoard.Width, activeBoard.Height))
 			{
 				ClearDecorativeCrustTilemap();
 				ResetGeneratedCrustVisual();
@@ -206,7 +206,8 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private void RenderBoardBackground(GameBoard activeBoard, BoardMediumConfig activeMedium)
 		{
-			if (activeMedium.backgroundSprite == null)
+			BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings = activeMedium.GetResolvedBoardBackgroundSettings(activeBoard.Width, activeBoard.Height);
+			if (!backgroundSettings.ShouldRenderBoardBackground)
 			{
 				ResetBoardBackgroundVisual();
 				return;
@@ -228,22 +229,22 @@ namespace FungusToast.Unity.Grid.Helpers
 				_backgroundRenderer.transform.SetParent(visualParent, false);
 			}
 
-			_backgroundRenderer.sprite = activeMedium.backgroundSprite;
-			_backgroundRenderer.color = activeMedium.backgroundColor;
-			PositionBoardBackgroundRenderer(activeBoard, activeMedium, activeMedium.backgroundSprite);
+			_backgroundRenderer.sprite = backgroundSettings.BackgroundSprite;
+			_backgroundRenderer.color = backgroundSettings.BackgroundColor;
+			PositionBoardBackgroundRenderer(activeBoard, backgroundSettings);
 			_backgroundRenderer.enabled = true;
-			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium);
+			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium, backgroundSettings);
 		}
 
-		private void EnsureBoardEdgeFadeVisual(GameBoard activeBoard, BoardMediumConfig activeMedium)
+		private void EnsureBoardEdgeFadeVisual(GameBoard activeBoard, BoardMediumConfig activeMedium, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
 		{
-			if (!activeMedium.ShouldRenderBoardEdgeFade)
+			if (!backgroundSettings.ShouldRenderBoardEdgeFade)
 			{
 				ResetBoardEdgeFadeVisual();
 				return;
 			}
 
-			string cacheKey = BuildBoardEdgeFadeCacheKey(activeBoard, activeMedium);
+			string cacheKey = BuildBoardEdgeFadeCacheKey(activeBoard, activeMedium, backgroundSettings);
 			if (_boardEdgeFadeRenderer == null)
 			{
 				_boardEdgeFadeRenderer = CreateBoardEdgeFadeRenderer();
@@ -262,7 +263,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			if (_boardEdgeFadeCacheKey != cacheKey || _boardEdgeFadeSprite == null || _boardEdgeFadeTexture == null)
 			{
-				RebuildBoardEdgeFadeSprite(activeBoard, activeMedium, cacheKey);
+				RebuildBoardEdgeFadeSprite(activeBoard, activeMedium, backgroundSettings, cacheKey);
 			}
 
 			PositionBoardEdgeFadeRenderer(activeBoard);
@@ -357,20 +358,21 @@ namespace FungusToast.Unity.Grid.Helpers
 			return spriteRenderer;
 		}
 
-		private void PositionBoardBackgroundRenderer(GameBoard activeBoard, BoardMediumConfig activeMedium, Sprite sprite)
+		private void PositionBoardBackgroundRenderer(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
 		{
+			Sprite sprite = backgroundSettings.BackgroundSprite;
 			if (_backgroundRenderer == null || sprite == null)
 			{
 				return;
 			}
 
-			Rect safeArea = activeMedium.GetBackgroundSafeAreaNormalized();
+			Rect safeArea = backgroundSettings.SafeAreaNormalized;
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
 			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
 			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
 			float safeHeight = Mathf.Max(0.01f, spriteHeight * safeArea.height);
 			float scale = Mathf.Max(activeBoard.Width / safeWidth, activeBoard.Height / safeHeight);
-			scale *= Mathf.Max(0.01f, activeMedium.backgroundScaleMultiplier);
+			scale *= Mathf.Max(0.01f, backgroundSettings.BackgroundScaleMultiplier);
 
 			float safeCenterX = ((safeArea.xMin + safeArea.xMax) * 0.5f) - 0.5f;
 			float safeCenterY = ((safeArea.yMin + safeArea.yMax) * 0.5f) - 0.5f;
@@ -394,7 +396,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardEdgeFadeRenderer.transform.localScale = Vector3.one;
 		}
 
-		private void RebuildBoardEdgeFadeSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, string cacheKey)
+		private void RebuildBoardEdgeFadeSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings, string cacheKey)
 		{
 			DestroyBoardEdgeFadeAssets();
 
@@ -409,9 +411,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 
 			var pixels = new Color32[textureWidth * textureHeight];
-			float fadeWidth = Mathf.Max(0.001f, activeMedium.boardEdgeFadeWidthTiles);
-			Color fadeColor = activeMedium.boardEdgeFadeColor;
-			float noiseStrength = Mathf.Clamp(activeMedium.boardEdgeFadeNoiseStrength, 0f, 0.2f);
+			float fadeWidth = Mathf.Max(0.001f, backgroundSettings.BoardEdgeFadeWidthTiles);
+			Color fadeColor = backgroundSettings.BoardEdgeFadeColor;
+			float noiseStrength = Mathf.Clamp(backgroundSettings.BoardEdgeFadeNoiseStrength, 0f, 0.2f);
 
 			for (int py = 0; py < textureHeight; py++)
 			{
@@ -556,15 +558,16 @@ namespace FungusToast.Unity.Grid.Helpers
 				activeMedium.maxVisualCrustThickness);
 		}
 
-		private static string BuildBoardEdgeFadeCacheKey(GameBoard activeBoard, BoardMediumConfig activeMedium)
+		private static string BuildBoardEdgeFadeCacheKey(GameBoard activeBoard, BoardMediumConfig activeMedium, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
 		{
 			return string.Join("|",
 				activeBoard.Width,
 				activeBoard.Height,
 				activeMedium.mediumId,
-				activeMedium.boardEdgeFadeColor,
-				activeMedium.boardEdgeFadeWidthTiles,
-				activeMedium.boardEdgeFadeNoiseStrength);
+				backgroundSettings.BackgroundSprite != null ? backgroundSettings.BackgroundSprite.GetInstanceID() : 0,
+				backgroundSettings.BoardEdgeFadeColor,
+				backgroundSettings.BoardEdgeFadeWidthTiles,
+				backgroundSettings.BoardEdgeFadeNoiseStrength);
 		}
 
 		private void DestroyGeneratedCrustAssets()

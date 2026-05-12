@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -9,6 +11,102 @@ namespace FungusToast.Unity.Grid
     [CreateAssetMenu(menuName = "Configs/Board Medium", fileName = "BoardMediumConfig")]
     public class BoardMediumConfig : ScriptableObject
     {
+        [Serializable]
+        public sealed class BoardBackgroundSizeOverride
+        {
+            [Min(1)] public int maxBoardWidth = 20;
+            [Min(1)] public int maxBoardHeight = 20;
+
+            [Header("Background")]
+            public bool renderBoardBackground = true;
+            public Sprite backgroundSprite;
+            public Color backgroundColor = Color.white;
+            public bool hidePlayableSurfaceTiles = true;
+            [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
+            [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
+            [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
+            [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
+            [Min(0.01f)] public float backgroundScaleMultiplier = 1f;
+            public bool renderBoardEdgeFade = true;
+            public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
+            [Range(0.5f, 6f)] public float boardEdgeFadeWidthTiles = 2.5f;
+            [Range(0f, 0.2f)] public float boardEdgeFadeNoiseStrength = 0.035f;
+
+            public bool Matches(int boardWidth, int boardHeight)
+            {
+                return boardWidth > 0
+                    && boardHeight > 0
+                    && boardWidth <= maxBoardWidth
+                    && boardHeight <= maxBoardHeight;
+            }
+
+            public Rect GetBackgroundSafeAreaNormalized()
+            {
+                return BuildBackgroundSafeAreaNormalized(
+                    backgroundInsetLeftNormalized,
+                    backgroundInsetRightNormalized,
+                    backgroundInsetBottomNormalized,
+                    backgroundInsetTopNormalized);
+            }
+
+            public ResolvedBoardBackgroundSettings ToResolvedSettings()
+            {
+                return new ResolvedBoardBackgroundSettings(
+                    renderBoardBackground,
+                    backgroundSprite,
+                    backgroundColor,
+                    hidePlayableSurfaceTiles,
+                    GetBackgroundSafeAreaNormalized(),
+                    backgroundScaleMultiplier,
+                    renderBoardEdgeFade,
+                    boardEdgeFadeColor,
+                    boardEdgeFadeWidthTiles,
+                    boardEdgeFadeNoiseStrength);
+            }
+        }
+
+        public readonly struct ResolvedBoardBackgroundSettings
+        {
+            public ResolvedBoardBackgroundSettings(
+                bool renderBoardBackground,
+                Sprite backgroundSprite,
+                Color backgroundColor,
+                bool hidePlayableSurfaceTiles,
+                Rect safeAreaNormalized,
+                float backgroundScaleMultiplier,
+                bool renderBoardEdgeFade,
+                Color boardEdgeFadeColor,
+                float boardEdgeFadeWidthTiles,
+                float boardEdgeFadeNoiseStrength)
+            {
+                RenderBoardBackground = renderBoardBackground;
+                BackgroundSprite = backgroundSprite;
+                BackgroundColor = backgroundColor;
+                HidePlayableSurfaceTiles = hidePlayableSurfaceTiles;
+                SafeAreaNormalized = safeAreaNormalized;
+                BackgroundScaleMultiplier = backgroundScaleMultiplier;
+                RenderBoardEdgeFade = renderBoardEdgeFade;
+                BoardEdgeFadeColor = boardEdgeFadeColor;
+                BoardEdgeFadeWidthTiles = boardEdgeFadeWidthTiles;
+                BoardEdgeFadeNoiseStrength = boardEdgeFadeNoiseStrength;
+            }
+
+            public bool RenderBoardBackground { get; }
+            public Sprite BackgroundSprite { get; }
+            public Color BackgroundColor { get; }
+            public bool HidePlayableSurfaceTiles { get; }
+            public Rect SafeAreaNormalized { get; }
+            public float BackgroundScaleMultiplier { get; }
+            public bool RenderBoardEdgeFade { get; }
+            public Color BoardEdgeFadeColor { get; }
+            public float BoardEdgeFadeWidthTiles { get; }
+            public float BoardEdgeFadeNoiseStrength { get; }
+
+            public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
+            public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
+            public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
+        }
+
         [Header("Identity")]
         public string mediumId = "toast";
 
@@ -32,6 +130,9 @@ namespace FungusToast.Unity.Grid
         public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
         [Range(0.5f, 6f)] public float boardEdgeFadeWidthTiles = 2.5f;
         [Range(0f, 0.2f)] public float boardEdgeFadeNoiseStrength = 0.035f;
+
+        [Header("Board Background Overrides")]
+        public List<BoardBackgroundSizeOverride> boardBackgroundOverrides = new();
 
         [Header("Crust")]
         public bool renderCrust = true;
@@ -95,21 +196,60 @@ namespace FungusToast.Unity.Grid
 
         public bool IsPerimeterTintEnabled => tintPerimeterTiles && perimeterTint.a > 0f;
         public bool ShouldOverridePlayableSurface => overridePlayableSurface && boardSurfaceTile != null;
-        public bool ShouldRenderBoardBackground => renderBoardBackground && backgroundSprite != null;
-        public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && hidePlayableSurfaceTiles;
+        public bool ShouldRenderBoardBackground => GetResolvedBoardBackgroundSettings(int.MaxValue, int.MaxValue).ShouldRenderBoardBackground;
+        public bool ShouldHidePlayableSurfaceTiles => GetResolvedBoardBackgroundSettings(int.MaxValue, int.MaxValue).ShouldHidePlayableSurfaceTiles;
         public bool ShouldRenderCrust => renderCrust && !ShouldRenderBoardBackground;
-        public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && renderBoardEdgeFade && boardEdgeFadeColor.a > 0f && boardEdgeFadeWidthTiles > 0f;
+        public bool ShouldRenderBoardEdgeFade => GetResolvedBoardBackgroundSettings(int.MaxValue, int.MaxValue).ShouldRenderBoardEdgeFade;
+
+        public ResolvedBoardBackgroundSettings GetResolvedBoardBackgroundSettings(int boardWidth, int boardHeight)
+        {
+            if (boardBackgroundOverrides != null)
+            {
+                for (int i = 0; i < boardBackgroundOverrides.Count; i++)
+                {
+                    BoardBackgroundSizeOverride backgroundOverride = boardBackgroundOverrides[i];
+                    if (backgroundOverride != null && backgroundOverride.Matches(boardWidth, boardHeight))
+                    {
+                        return backgroundOverride.ToResolvedSettings();
+                    }
+                }
+            }
+
+            return new ResolvedBoardBackgroundSettings(
+                renderBoardBackground,
+                backgroundSprite,
+                backgroundColor,
+                hidePlayableSurfaceTiles,
+                GetBackgroundSafeAreaNormalized(),
+                backgroundScaleMultiplier,
+                renderBoardEdgeFade,
+                boardEdgeFadeColor,
+                boardEdgeFadeWidthTiles,
+                boardEdgeFadeNoiseStrength);
+        }
+
+        public bool ShouldRenderBoardBackgroundForSize(int boardWidth, int boardHeight)
+        {
+            return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldRenderBoardBackground;
+        }
+
+        public bool ShouldHidePlayableSurfaceTilesForSize(int boardWidth, int boardHeight)
+        {
+            return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldHidePlayableSurfaceTiles;
+        }
+
+        public bool ShouldRenderBoardEdgeFadeForSize(int boardWidth, int boardHeight)
+        {
+            return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldRenderBoardEdgeFade;
+        }
 
         public Rect GetBackgroundSafeAreaNormalized()
         {
-            float left = Mathf.Clamp01(backgroundInsetLeftNormalized);
-            float right = Mathf.Clamp01(backgroundInsetRightNormalized);
-            float bottom = Mathf.Clamp01(backgroundInsetBottomNormalized);
-            float top = Mathf.Clamp01(backgroundInsetTopNormalized);
-
-            float width = Mathf.Max(0.01f, 1f - left - right);
-            float height = Mathf.Max(0.01f, 1f - bottom - top);
-            return new Rect(left, bottom, width, height);
+            return BuildBackgroundSafeAreaNormalized(
+                backgroundInsetLeftNormalized,
+                backgroundInsetRightNormalized,
+                backgroundInsetBottomNormalized,
+                backgroundInsetTopNormalized);
         }
 
         public TileBase GetSurfaceTile(int x, int y)
@@ -147,6 +287,18 @@ namespace FungusToast.Unity.Grid
 
                 return hash;
             }
+        }
+
+        private static Rect BuildBackgroundSafeAreaNormalized(float leftInset, float rightInset, float bottomInset, float topInset)
+        {
+            float left = Mathf.Clamp01(leftInset);
+            float right = Mathf.Clamp01(rightInset);
+            float bottom = Mathf.Clamp01(bottomInset);
+            float top = Mathf.Clamp01(topInset);
+
+            float width = Mathf.Max(0.01f, 1f - left - right);
+            float height = Mathf.Max(0.01f, 1f - bottom - top);
+            return new Rect(left, bottom, width, height);
         }
     }
 }
