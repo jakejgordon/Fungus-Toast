@@ -11,7 +11,10 @@ namespace FungusToast.Unity.UI.MutationTree
     public class MutationTreeBuilder : MonoBehaviour
     {
         private const float HeaderInvestmentSummaryFontSize = 14f;
+        private const float HeaderInvestmentSummaryMinFontSize = 11f;
         private const float HeaderInvestmentSummaryHeight = 20f;
+        private const float DefaultColumnWidth = 200f;
+        private const float GrowthColumnWidth = 220f;
 
         [Header("Prefabs")]
         [SerializeField] private GameObject categoryHeaderPrefab;
@@ -56,12 +59,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 (MutationCategory.MycelialSurges, mycelialSurgesColumn)
             })
             {
+                ApplyColumnWidth(category, parentColumn);
+
                 GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
                 headerGO.name = $"Header_{category}";
                 headerGO.transform.localScale = Vector3.one;
 
-                // ── Category accent colors on header ──
-                Color accent = MutationTreeColors.GetCategoryAccent(category);
+                float columnWidth = GetColumnWidth(category);
 
                 // ── Ensure header has a background Image + readable label ──
                 // The prefab root has TMP (a Graphic). Unity allows only one Graphic
@@ -127,19 +131,34 @@ namespace FungusToast.Unity.UI.MutationTree
                     headerText.color = Color.white;
                 }
 
+                var headerLayout = headerGO.GetComponent<LayoutElement>();
+                if (headerLayout == null)
+                {
+                    headerLayout = headerGO.AddComponent<LayoutElement>();
+                }
+
+                headerLayout.preferredWidth = columnWidth;
+                headerLayout.minWidth = columnWidth;
+                headerLayout.flexibleWidth = 0f;
+
+                var headerRect = headerGO.GetComponent<RectTransform>();
+                if (headerRect != null)
+                {
+                    headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, columnWidth);
+                }
+
                 // ── Investment summary label (child text, created dynamically) ──
                 var summaryGO = new GameObject("InvestmentSummary");
                 summaryGO.transform.SetParent(headerGO.transform, false);
                 var summaryText = summaryGO.AddComponent<TextMeshProUGUI>();
                 summaryText.fontSize = HeaderInvestmentSummaryFontSize;
+                summaryText.fontSizeMax = HeaderInvestmentSummaryFontSize;
+                summaryText.fontSizeMin = HeaderInvestmentSummaryMinFontSize;
                 summaryText.alignment = TextAlignmentOptions.Center;
-                summaryText.color = new Color(
-                    Mathf.Min(accent.r + 0.2f, 1f),
-                    Mathf.Min(accent.g + 0.2f, 1f),
-                    Mathf.Min(accent.b + 0.2f, 1f),
-                    0.85f);
-                summaryText.enableAutoSizing = false;
-                summaryText.overflowMode = TextOverflowModes.Ellipsis;
+                summaryText.color = MutationTreeColors.UniformSubheaderText;
+                summaryText.enableAutoSizing = true;
+                summaryText.textWrappingMode = TextWrappingModes.NoWrap;
+                summaryText.overflowMode = TextOverflowModes.Truncate;
                 var summaryRect = summaryGO.GetComponent<RectTransform>();
                 summaryRect.anchorMin = new Vector2(0, 0);
                 summaryRect.anchorMax = new Vector2(1, 0);
@@ -240,6 +259,30 @@ namespace FungusToast.Unity.UI.MutationTree
                 else
                     kvp.Value.text = "";
             }
+        }
+
+        private void ApplyColumnWidth(MutationCategory category, RectTransform column)
+        {
+            if (column == null)
+            {
+                return;
+            }
+
+            float width = GetColumnWidth(category);
+            var layout = column.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.preferredWidth = width;
+                layout.minWidth = width;
+                layout.flexibleWidth = 0f;
+            }
+
+            column.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
+        }
+
+        private static float GetColumnWidth(MutationCategory category)
+        {
+            return category == MutationCategory.Growth ? GrowthColumnWidth : DefaultColumnWidth;
         }
 
         private RectTransform GetColumnForCategory(MutationCategory category)

@@ -18,11 +18,12 @@ namespace FungusToast.Unity.UI.MutationTree
         private static readonly Color MycelialSurgesAccent     = UIStyleTokens.Category.MycelialSurges;
 
         // ── Universal state colors ──────────────────────────────────────
-        public static readonly Color MaxedGold     = UIStyleTokens.Accent.Spore;
-        public static readonly Color AffordableGlow = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.08f);
-        public static readonly Color LockedTint    = UIStyleTokens.Text.Disabled;
-        public static readonly Color DefaultNodeBG = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.34f);
-        public static readonly Color DependentHover = UIStyleTokens.WithAlpha(UIStyleTokens.State.Info, 0.32f);
+        public static readonly Color MaxedGold      = UIStyleTokens.Accent.Spore;
+        public static readonly Color AffordableGlow  = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.08f);
+        public static readonly Color LockedTint      = UIStyleTokens.Text.Disabled;
+        public static readonly Color DefaultNodeBG   = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, FungicideAccent, 0.18f);
+        public static readonly Color DependentHover  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.6f);
+        public static readonly Color DependentBorder = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.State.Focus, UIStyleTokens.Text.Primary, 0.35f), 0.95f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
         public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;
@@ -32,9 +33,10 @@ namespace FungusToast.Unity.UI.MutationTree
         public static readonly Color ButtonNormal    = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.Canvas, 0.22f);
         public static readonly Color ButtonHighlight = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.12f);
         public static readonly Color ButtonPressed   = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Surface.Canvas, 0.20f);
-        public static readonly Color PrimaryText     = UIStyleTokens.Text.Primary;
-        public static readonly Color SecondaryText   = UIStyleTokens.Text.Secondary;
-        public static readonly Color PulseOutline    = UIStyleTokens.State.Focus;
+        public static readonly Color PrimaryText      = UIStyleTokens.Text.Primary;
+        public static readonly Color SecondaryText    = UIStyleTokens.Text.Secondary;
+        public static readonly Color UniformSubheaderText = UIStyleTokens.Text.Secondary;
+        public static readonly Color PulseOutline     = UIStyleTokens.State.Focus;
 
         // ── Flash / feedback ────────────────────────────────────────────
         public static readonly Color UpgradeFlashWhite = new Color(1f, 1f, 1f, 0.45f);

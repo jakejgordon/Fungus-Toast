@@ -17,6 +17,7 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private const float MutationNameMinimumFontSize = 10f;
         private const float MutationNameHorizontalPadding = 8f;
+        private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
 
         // Upgrade-cost badge layout constants (must match prefab values)
         private const float UpgradeCostIconWidth = 24f;
@@ -554,9 +555,16 @@ namespace FungusToast.Unity.UI.MutationTree
             if (dependentHighlightOverlay != null)
             {
                 if (on)
+                {
                     SyncOverlayRectToButton(dependentHighlightOverlay);
+                    var dependentImage = dependentHighlightOverlay.GetComponent<Image>();
+                    if (dependentImage != null)
+                    {
+                        dependentImage.color = MutationTreeColors.DependentHover;
+                    }
+                }
+
                 dependentHighlightOverlay.SetActive(on);
-                return;
             }
 
             if (highlightOutline != null)
@@ -564,10 +572,18 @@ namespace FungusToast.Unity.UI.MutationTree
                 highlightOutline.enabled = on;
                 if (on)
                 {
-                    var c = MutationTreeColors.DependentHover;
-                    c.a = 0.8f;
-                    highlightOutline.effectColor = c;
+                    highlightOutline.effectColor = MutationTreeColors.DependentBorder;
+                    highlightOutline.effectDistance = new Vector2(3f, -3f);
                 }
+                else
+                {
+                    highlightOutline.effectDistance = DefaultHighlightEffectDistance;
+                }
+            }
+
+            if (nodeBackground != null && on)
+            {
+                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.DependentBorder, 0.3f);
             }
         }
 
@@ -576,7 +592,10 @@ namespace FungusToast.Unity.UI.MutationTree
             SetPrerequisiteHighlight(false);
             SetDependentHighlight(false);
             if (highlightOutline != null)
+            {
+                highlightOutline.effectDistance = DefaultHighlightEffectDistance;
                 highlightOutline.enabled = false;
+            }
         }
 
         public void UpdateInteractable()
@@ -661,7 +680,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var border = target.AddComponent<Outline>();
             border.effectColor = new Color(MutationTreeColors.SecondaryText.r, MutationTreeColors.SecondaryText.g, MutationTreeColors.SecondaryText.b, 0.45f);
-            border.effectDistance = new Vector2(1.2f, -1.2f);
+            border.effectDistance = DefaultHighlightEffectDistance;
         }
 
         private void EnsureDependentHighlightOverlay()
@@ -676,6 +695,8 @@ namespace FungusToast.Unity.UI.MutationTree
             var dependentImage = dependentHighlightOverlay.GetComponent<Image>();
             if (dependentImage != null)
                 dependentImage.color = MutationTreeColors.DependentHover;
+
+            dependentHighlightOverlay.transform.SetAsLastSibling();
 
             var prereqRect = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
             var dependentRect = dependentHighlightOverlay.GetComponent<RectTransform>();
