@@ -564,7 +564,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				activeBoard.Width,
 				activeBoard.Height,
 				activeMedium.mediumId,
-				backgroundSettings.BackgroundSprite != null ? backgroundSettings.BackgroundSprite.GetInstanceID() : 0,
+				backgroundSettings.BackgroundSprite != null ? backgroundSettings.BackgroundSprite.GetEntityId() : default,
 				backgroundSettings.BoardEdgeFadeColor,
 				backgroundSettings.BoardEdgeFadeWidthTiles,
 				backgroundSettings.BoardEdgeFadeNoiseStrength);
