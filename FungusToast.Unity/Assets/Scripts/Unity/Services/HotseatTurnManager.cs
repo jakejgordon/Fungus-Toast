@@ -14,15 +14,19 @@ namespace FungusToast.Unity
         private readonly List<Player> humanPlayers;
         private readonly Func<Player> getPrimaryHuman;
         private readonly Func<bool> isFastForwarding;
-        private readonly Func<bool> isTesting;
         private readonly Action onAllHumansFinished;
 
         private int currentIndex = -1;
         private bool active = false;
 
-        public HotseatTurnManager(GameUIManager ui, UI_HotseatTurnPrompt prompt, List<Player> humanPlayers, Func<Player> getPrimaryHuman, Func<bool> fastForwarding, Func<bool> isTesting, Action onAllFinished)
+        public HotseatTurnManager(GameUIManager ui, UI_HotseatTurnPrompt prompt, List<Player> humanPlayers, Func<Player> getPrimaryHuman, Func<bool> fastForwarding, Action onAllFinished)
         {
-            this.ui = ui; this.prompt = prompt; this.humanPlayers = humanPlayers; this.getPrimaryHuman = getPrimaryHuman; this.isFastForwarding = fastForwarding; this.isTesting = isTesting; this.onAllHumansFinished = onAllFinished;
+            this.ui = ui;
+            this.prompt = prompt;
+            this.humanPlayers = humanPlayers;
+            this.getPrimaryHuman = getPrimaryHuman;
+            this.isFastForwarding = fastForwarding;
+            this.onAllHumansFinished = onAllFinished;
         }
 
         public void BeginHumanMutationPhase()
@@ -52,8 +56,9 @@ namespace FungusToast.Unity
                 return;
             }
             var hp = humanPlayers[currentIndex];
-            // Show prompt only if more than one human player
-            bool showPrompt = humanPlayers.Count > 1 && prompt != null && !isFastForwarding() && !isTesting();
+            // Show prompt whenever multiple humans are sharing the device, except during actual fast-forward.
+            // Testing mode alone should not suppress the handoff prompt during ordinary hotseat play.
+            bool showPrompt = humanPlayers.Count > 1 && prompt != null && !isFastForwarding();
             if (showPrompt)
             {
                 PreSwitchPlayerUI(hp);
