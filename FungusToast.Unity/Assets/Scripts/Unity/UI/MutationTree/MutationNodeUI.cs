@@ -18,7 +18,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MutationNameMinimumFontSize = 10f;
         private const float MutationNameHorizontalPadding = 8f;
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
-        private static readonly Color HighlightedTextColor = UIStyleTokens.Text.OnAccent;
+        private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
+        private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
+        private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
         private const float UpgradeCostIconWidth = 24f;
@@ -255,7 +257,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
-            ApplyTextContrast(useDarkText: false);
+            ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
 
             UpdateInteractable();
         }
@@ -313,7 +315,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             Color primary = useDarkText ? HighlightedTextColor : MutationTreeColors.PrimaryText;
             Color secondary = useDarkText
-                ? Color.Lerp(HighlightedTextColor, MutationTreeColors.SecondaryText, 0.2f)
+                ? HighlightedSecondaryTextColor
                 : MutationTreeColors.SecondaryText;
 
             if (mutationNameText != null)
@@ -612,7 +614,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
             }
 
-            ApplyTextContrast(useDarkText: on);
+            ApplyTextContrast(useDarkText: on || ShouldUseDarkTextForCurrentBackground());
         }
 
         public void ClearHighlights()
@@ -754,6 +756,16 @@ namespace FungusToast.Unity.UI.MutationTree
             overlayRect.anchoredPosition = Vector2.zero;
             overlayRect.sizeDelta = buttonRect.sizeDelta;
             overlayRect.localScale = Vector3.one;
+        }
+
+        private bool ShouldUseDarkTextForCurrentBackground()
+        {
+            if (nodeBackground == null)
+                return false;
+
+            Color background = nodeBackground.color;
+            float luminance = (0.2126f * background.r) + (0.7152f * background.g) + (0.0722f * background.b);
+            return luminance >= DarkTextBackgroundLuminanceThreshold;
         }
 
         private void EnsureMaxBadge()
