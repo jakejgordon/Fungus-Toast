@@ -552,63 +552,25 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void SetPrerequisiteHighlight(bool on)
         {
-            // Use the new prerequisite highlight overlay for full square highlighting
+            // The old full-card overlay was washing out text because it rendered above the label layer.
+            // Keep it disabled and drive highlight readability through background tint + outline instead.
             if (prerequisiteHighlightOverlay != null)
-            {
-                if (on)
-                    SyncOverlayRectToButton(prerequisiteHighlightOverlay);
+                prerequisiteHighlightOverlay.SetActive(false);
 
-                prerequisiteHighlightOverlay.SetActive(on);
-
-                if (on)
-                {
-                    var rectTransform = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
-                    if (rectTransform != null)
-                    {
-                        Canvas.ForceUpdateCanvases();
-                        LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
-                    }
-                }
-            }
-            else
-            {
-                // Fallback to outline if no prerequisite highlight overlay is configured
-                if (highlightOutline != null)
-                    highlightOutline.enabled = on;
-            }
+            if (highlightOutline != null)
+                highlightOutline.enabled = on;
 
             if (!on)
                 return;
 
-            if (nodeBackground != null)
-            {
-                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
-            }
-
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 1f;
-            }
-
-            ApplyTextContrast(useDarkText: true);
+            ApplyHighlightCardVisual();
         }
 
         public void SetDependentHighlight(bool on)
         {
+            // Same issue as prerequisite highlight: the overlay sits above TMP text and kills contrast.
             if (dependentHighlightOverlay != null)
-            {
-                if (on)
-                {
-                    SyncOverlayRectToButton(dependentHighlightOverlay);
-                    var dependentImage = dependentHighlightOverlay.GetComponent<Image>();
-                    if (dependentImage != null)
-                    {
-                        dependentImage.color = MutationTreeColors.DependentHover;
-                    }
-                }
-
-                dependentHighlightOverlay.SetActive(on);
-            }
+                dependentHighlightOverlay.SetActive(false);
 
             if (highlightOutline != null)
             {
@@ -627,17 +589,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (!on)
                 return;
 
-            if (nodeBackground != null)
-            {
-                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
-            }
-
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 1f;
-            }
-
-            ApplyTextContrast(useDarkText: true);
+            ApplyHighlightCardVisual();
         }
 
         public void ClearHighlights()
@@ -751,8 +703,6 @@ namespace FungusToast.Unity.UI.MutationTree
             if (dependentImage != null)
                 dependentImage.color = MutationTreeColors.DependentHover;
 
-            dependentHighlightOverlay.transform.SetAsLastSibling();
-
             var prereqRect = prerequisiteHighlightOverlay.GetComponent<RectTransform>();
             var dependentRect = dependentHighlightOverlay.GetComponent<RectTransform>();
             if (prereqRect != null && dependentRect != null)
@@ -791,6 +741,26 @@ namespace FungusToast.Unity.UI.MutationTree
             Color background = nodeBackground.color;
             float luminance = (0.2126f * background.r) + (0.7152f * background.g) + (0.0722f * background.b);
             return luminance >= DarkTextBackgroundLuminanceThreshold;
+        }
+
+        private void ApplyHighlightCardVisual()
+        {
+            if (nodeBackground != null)
+            {
+                Color highlightedBackground = Color.Lerp(
+                    MutationTreeColors.GetAffordableNodeBG(mutation.Category, 0.24f),
+                    MutationTreeColors.PrimaryText,
+                    0.52f);
+                highlightedBackground.a = 1f;
+                nodeBackground.color = highlightedBackground;
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+            }
+
+            ApplyTextContrast(useDarkText: true);
         }
 
         private void EnsureMaxBadge()
