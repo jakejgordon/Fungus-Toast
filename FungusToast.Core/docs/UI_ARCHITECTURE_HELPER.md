@@ -218,13 +218,15 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 1. Keep the board medium as the theme-level owner (`toast`, future surfaces, etc.).
 2. Use the medium's default background fields for the primary image.
 3. Add future alternate images through `boardBackgroundOverrides`, ordered from smallest / most specific match to broadest fallback.
-4. Size rules are inclusive width/height thresholds: an override matches when `boardWidth <= maxBoardWidth` and `boardHeight <= maxBoardHeight`.
+4. Size rules are inclusive min/max width/height thresholds: an override matches when `boardWidth >= minBoardWidth`, `boardHeight >= minBoardHeight`, `boardWidth <= maxBoardWidth`, and `boardHeight <= maxBoardHeight`.
 5. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
 
 ### Current Small-Board Pattern
 
 - `ToastBoardMedium.asset` keeps the bread image as the default background.
-- Boards `20x20` and smaller automatically switch to the cracker image through a size override.
+- Boards `20x20` and smaller automatically switch to the seeded cracker image through the first size override.
+- Boards `40x40` and smaller automatically switch to the plain cracker image unless a smaller override matched first.
+- Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
 
 ### Import Guidance

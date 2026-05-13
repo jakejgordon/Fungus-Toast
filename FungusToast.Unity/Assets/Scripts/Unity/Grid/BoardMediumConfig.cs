@@ -14,6 +14,8 @@ namespace FungusToast.Unity.Grid
         [Serializable]
         public sealed class BoardBackgroundSizeOverride
         {
+            [Min(1)] public int minBoardWidth = 1;
+            [Min(1)] public int minBoardHeight = 1;
             [Min(1)] public int maxBoardWidth = 20;
             [Min(1)] public int maxBoardHeight = 20;
 
@@ -36,6 +38,8 @@ namespace FungusToast.Unity.Grid
             {
                 return boardWidth > 0
                     && boardHeight > 0
+                    && boardWidth >= minBoardWidth
+                    && boardHeight >= minBoardHeight
                     && boardWidth <= maxBoardWidth
                     && boardHeight <= maxBoardHeight;
             }
