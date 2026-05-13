@@ -576,6 +576,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 if (highlightOutline != null)
                     highlightOutline.enabled = on;
             }
+
+            if (!on)
+                return;
+
+            if (nodeBackground != null)
+            {
+                nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
+            }
+
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+            }
+
+            ApplyTextContrast(useDarkText: true);
         }
 
         public void SetDependentHighlight(bool on)
@@ -609,12 +624,20 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
-            if (nodeBackground != null && on)
+            if (!on)
+                return;
+
+            if (nodeBackground != null)
             {
                 nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.42f);
             }
 
-            ApplyTextContrast(useDarkText: on || ShouldUseDarkTextForCurrentBackground());
+            if (canvasGroup != null)
+            {
+                canvasGroup.alpha = 1f;
+            }
+
+            ApplyTextContrast(useDarkText: true);
         }
 
         public void ClearHighlights()
@@ -626,6 +649,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 highlightOutline.effectDistance = DefaultHighlightEffectDistance;
                 highlightOutline.enabled = false;
             }
+
+            UpdateDisplay();
         }
 
         public void UpdateInteractable()
