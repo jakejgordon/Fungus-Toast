@@ -24,6 +24,8 @@ MonoBehaviour:
   deriveBlockedTilesFromBackgroundAlpha: 0
   backgroundAlphaPlayableThreshold: 0.1
   backgroundMinTileCoverage: 0
+  useExplicitBlockedTileIds: 0
+  explicitBlockedTileIds: []
   backgroundInsetLeftNormalized: 0.06
   backgroundInsetRightNormalized: 0.10
   backgroundInsetBottomNormalized: 0.08
@@ -34,6 +36,52 @@ MonoBehaviour:
   boardEdgeFadeWidthTiles: 1.6
   boardEdgeFadeNoiseStrength: 0.015
   boardBackgroundOverrides:
+  - minBoardWidth: 10
+    minBoardHeight: 10
+    maxBoardWidth: 10
+    maxBoardHeight: 10
+    renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: a2ac9a449b17bb142b3c3738d24db8a4, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 0
+    backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
+    useExplicitBlockedTileIds: 1
+    explicitBlockedTileIds:
+    - 0
+    - 1
+    - 2
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 18
+    - 19
+    - 20
+    - 29
+    - 70
+    - 79
+    - 80
+    - 81
+    - 88
+    - 89
+    - 90
+    - 91
+    - 92
+    - 97
+    - 98
+    - 99
+    backgroundInsetLeftNormalized: 0
+    backgroundInsetRightNormalized: 0
+    backgroundInsetBottomNormalized: 0
+    backgroundInsetTopNormalized: 0
+    backgroundScaleMultiplier: 1
+    renderBoardEdgeFade: 0
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
+    boardEdgeFadeWidthTiles: 1.1
+    boardEdgeFadeNoiseStrength: 0.01
   - maxBoardWidth: 20
     maxBoardHeight: 20
     renderBoardBackground: 1
@@ -43,6 +91,8 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0.8
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0
     backgroundInsetRightNormalized: 0
     backgroundInsetBottomNormalized: 0
@@ -61,6 +111,8 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 0
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0.04
     backgroundInsetRightNormalized: 0.04
     backgroundInsetBottomNormalized: 0.04
@@ -79,6 +131,8 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 0
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0.12
     backgroundInsetRightNormalized: 0.12
     backgroundInsetBottomNormalized: 0.12
@@ -99,6 +153,8 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0.171
     backgroundInsetRightNormalized: 0.171
     backgroundInsetBottomNormalized: 0.171

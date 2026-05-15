@@ -27,6 +27,8 @@ namespace FungusToast.Unity.Grid
             public bool deriveBlockedTilesFromBackgroundAlpha = false;
             [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
             [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
+            public bool useExplicitBlockedTileIds = false;
+            public List<int> explicitBlockedTileIds = new();
             [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -66,6 +68,8 @@ namespace FungusToast.Unity.Grid
                     deriveBlockedTilesFromBackgroundAlpha,
                     backgroundAlphaPlayableThreshold,
                     backgroundMinTileCoverage,
+                    useExplicitBlockedTileIds,
+                    explicitBlockedTileIds,
                     GetBackgroundSafeAreaNormalized(),
                     backgroundScaleMultiplier,
                     renderBoardEdgeFade,
@@ -85,6 +89,8 @@ namespace FungusToast.Unity.Grid
                 bool deriveBlockedTilesFromBackgroundAlpha,
                 float backgroundAlphaPlayableThreshold,
                 float backgroundMinTileCoverage,
+                bool useExplicitBlockedTileIds,
+                IReadOnlyList<int> explicitBlockedTileIds,
                 Rect safeAreaNormalized,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
@@ -99,6 +105,8 @@ namespace FungusToast.Unity.Grid
                 DeriveBlockedTilesFromBackgroundAlpha = deriveBlockedTilesFromBackgroundAlpha;
                 BackgroundAlphaPlayableThreshold = backgroundAlphaPlayableThreshold;
                 BackgroundMinTileCoverage = backgroundMinTileCoverage;
+                UseExplicitBlockedTileIds = useExplicitBlockedTileIds;
+                ExplicitBlockedTileIds = explicitBlockedTileIds ?? Array.Empty<int>();
                 SafeAreaNormalized = safeAreaNormalized;
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
@@ -114,6 +122,8 @@ namespace FungusToast.Unity.Grid
             public bool DeriveBlockedTilesFromBackgroundAlpha { get; }
             public float BackgroundAlphaPlayableThreshold { get; }
             public float BackgroundMinTileCoverage { get; }
+            public bool UseExplicitBlockedTileIds { get; }
+            public IReadOnlyList<int> ExplicitBlockedTileIds { get; }
             public Rect SafeAreaNormalized { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
@@ -144,6 +154,8 @@ namespace FungusToast.Unity.Grid
         public bool deriveBlockedTilesFromBackgroundAlpha = false;
         [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
         [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
+        public bool useExplicitBlockedTileIds = false;
+        public List<int> explicitBlockedTileIds = new();
         [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -246,6 +258,8 @@ namespace FungusToast.Unity.Grid
                 deriveBlockedTilesFromBackgroundAlpha,
                 backgroundAlphaPlayableThreshold,
                 backgroundMinTileCoverage,
+                useExplicitBlockedTileIds,
+                explicitBlockedTileIds,
                 GetBackgroundSafeAreaNormalized(),
                 backgroundScaleMultiplier,
                 renderBoardEdgeFade,
@@ -277,6 +291,11 @@ namespace FungusToast.Unity.Grid
             }
 
             var settings = GetResolvedBoardBackgroundSettings(boardWidth, boardHeight);
+            if (settings.UseExplicitBlockedTileIds)
+            {
+                return SanitizeBlockedTileIds(settings.ExplicitBlockedTileIds, boardWidth, boardHeight);
+            }
+
             if (!settings.ShouldUseBackgroundAlphaPlayableMask)
             {
                 return Array.Empty<int>();
@@ -409,6 +428,32 @@ namespace FungusToast.Unity.Grid
             float width = Mathf.Max(0.01f, 1f - left - right);
             float height = Mathf.Max(0.01f, 1f - bottom - top);
             return new Rect(left, bottom, width, height);
+        }
+
+        private static IReadOnlyCollection<int> SanitizeBlockedTileIds(IReadOnlyList<int> blockedTileIds, int boardWidth, int boardHeight)
+        {
+            if (blockedTileIds == null || blockedTileIds.Count == 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            int totalTiles = boardWidth * boardHeight;
+            var sanitized = new HashSet<int>();
+            for (int i = 0; i < blockedTileIds.Count; i++)
+            {
+                int tileId = blockedTileIds[i];
+                if (tileId >= 0 && tileId < totalTiles)
+                {
+                    sanitized.Add(tileId);
+                }
+            }
+
+            if (sanitized.Count >= totalTiles)
+            {
+                return Array.Empty<int>();
+            }
+
+            return sanitized.Count == 0 ? Array.Empty<int>() : new List<int>(sanitized);
         }
 
         private static bool EvaluateTileCoverage(
