@@ -275,7 +275,11 @@ namespace FungusToast.Core.Board
 
                 if (player?.HasAdaptation(AdaptationIds.CentripetalGermination) == true)
                     (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
-                board.PlaceInitialSpore(pid, x, y);
+
+                if (TryResolvePlayableStartingPosition(board, x, y, out var resolvedPosition))
+                {
+                    board.PlaceInitialSpore(pid, resolvedPosition.x, resolvedPosition.y);
+                }
             }
         }
 
@@ -294,6 +298,33 @@ namespace FungusToast.Core.Board
                 Math.Clamp(x + stepX * shiftAmount, 0, boardWidth - 1),
                 Math.Clamp(y + stepY * shiftAmount, 0, boardHeight - 1)
             );
+        }
+
+        private static bool TryResolvePlayableStartingPosition(GameBoard board, int preferredX, int preferredY, out (int x, int y) resolvedPosition)
+        {
+            resolvedPosition = (preferredX, preferredY);
+
+            var preferredTile = board.GetTile(preferredX, preferredY);
+            if (preferredTile != null
+                && !preferredTile.IsOccupiedForSporePlacement
+                && !board.IsTileBlockedForOccupation(preferredTile.TileId))
+            {
+                return true;
+            }
+
+            var fallbackTile = board.AllTiles()
+                .Where(tile => !tile.IsOccupiedForSporePlacement && !board.IsTileBlockedForOccupation(tile.TileId))
+                .OrderBy(tile => SquaredDistance(tile.X, tile.Y, preferredX, preferredY))
+                .ThenBy(tile => tile.TileId)
+                .FirstOrDefault();
+
+            if (fallbackTile == null)
+            {
+                return false;
+            }
+
+            resolvedPosition = (fallbackTile.X, fallbackTile.Y);
+            return true;
         }
 
         private static IReadOnlyList<(int x, int y)> ApplyEdgeOffsets(IReadOnlyList<(int x, int y)> positions, int boardWidth, int boardHeight, IReadOnlyList<int> edgeOffsets)

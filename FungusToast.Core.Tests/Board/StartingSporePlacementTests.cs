@@ -108,9 +108,30 @@ public class StartingSporePlacementTests
         Assert.Contains(humanPosition, overridePositions);
     }
 
-    private static GameBoard CreateBoard(int width, int height, int playerCount)
+    [Fact]
+    public void PlaceStartingSpores_relocates_blocked_slots_to_nearest_playable_tiles()
     {
-        var board = new GameBoard(width, height, playerCount);
+        var blockedTileIds = new[] { 0, 4, 20, 24 };
+        var board = CreateBoard(width: 5, height: 5, playerCount: 4, blockedTileIds);
+        var players = board.Players;
+        var overridePositions = new[]
+        {
+            (0, 0),
+            (4, 0),
+            (0, 4),
+            (4, 4),
+        };
+
+        StartingSporeUtility.PlaceStartingSpores(board, players, new Random(7), shufflePlayerOrder: false, overridePositions);
+
+        Assert.All(players, player => Assert.True(player.StartingTileId.HasValue));
+        Assert.DoesNotContain(players.Select(player => player.StartingTileId!.Value), blockedTileIds.Contains);
+        Assert.All(players, player => Assert.False(board.GetTileById(player.StartingTileId!.Value)!.IsBlocked));
+    }
+
+    private static GameBoard CreateBoard(int width, int height, int playerCount, IEnumerable<int>? blockedTileIds = null)
+    {
+        var board = new GameBoard(width, height, playerCount, blockedTileIds);
         for (int playerId = 0; playerId < playerCount; playerId++)
         {
             board.Players.Add(new Player(playerId, $"Player {playerId}", PlayerTypeEnum.AI));

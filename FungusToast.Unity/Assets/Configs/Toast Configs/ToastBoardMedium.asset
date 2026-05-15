@@ -21,6 +21,8 @@ MonoBehaviour:
   backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
   backgroundColor: {r: 1, g: 1, b: 1, a: 1}
   hidePlayableSurfaceTiles: 1
+  deriveBlockedTilesFromBackgroundAlpha: 0
+  backgroundAlphaPlayableThreshold: 0.1
   backgroundInsetLeftNormalized: 0.06
   backgroundInsetRightNormalized: 0.10
   backgroundInsetBottomNormalized: 0.08
@@ -37,12 +39,14 @@ MonoBehaviour:
     backgroundSprite: {fileID: 21300000, guid: a2ac9a449b17bb142b3c3738d24db8a4, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 1
+    backgroundAlphaPlayableThreshold: 0.1
     backgroundInsetLeftNormalized: 0.155
     backgroundInsetRightNormalized: 0.155
     backgroundInsetBottomNormalized: 0.155
     backgroundInsetTopNormalized: 0.155
     backgroundScaleMultiplier: 1
-    renderBoardEdgeFade: 1
+    renderBoardEdgeFade: 0
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
     boardEdgeFadeWidthTiles: 1.1
     boardEdgeFadeNoiseStrength: 0.01
@@ -52,6 +56,8 @@ MonoBehaviour:
     backgroundSprite: {fileID: 21300000, guid: c945b49acd66f8248950d2627044ab76, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 0
+    backgroundAlphaPlayableThreshold: 0.1
     backgroundInsetLeftNormalized: 0.04
     backgroundInsetRightNormalized: 0.04
     backgroundInsetBottomNormalized: 0.04
@@ -67,6 +73,8 @@ MonoBehaviour:
     backgroundSprite: {fileID: 21300000, guid: d0154f861fa82c842aba2cfd1a1dc380, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 0
+    backgroundAlphaPlayableThreshold: 0.1
     backgroundInsetLeftNormalized: 0.12
     backgroundInsetRightNormalized: 0.12
     backgroundInsetBottomNormalized: 0.12

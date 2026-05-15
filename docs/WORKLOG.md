@@ -33,24 +33,19 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** implement shape-aware playable areas for bread backgrounds so `seed_cracker` and `pita` can use blocked non-playable tiles instead of forcing full square occupation.
-- **Chosen direction:** keep the core board rectangular, but derive permanent blocked tiles from the active background silhouette so gameplay, saves, and rendering all agree on the same playable mask.
+- **Current focus:** blocked-tile board-shape support is now implemented in core + Unity rendering for silhouette-driven bread backgrounds.
+- **Current state:** `seed_cracker` is wired to use the new background-alpha mask path; the same code path is ready for `pita`, but there is still no `*pita*` sprite asset in the fetched repo to hook up.
 
 ## Current Plan
 
-1. Add permanent blocked-tile support to `GameBoard`, occupancy math, and runtime snapshot restore/export.
-2. Derive blocked tiles from `BoardMediumConfig` background art/safe-area settings rather than hard-coding shape math per medium.
-3. Update startup placement, open-tile targeting, and board rendering so blocked tiles cannot be selected, occupied, or drawn as playable cells.
-4. Wire the first masked background (`seed_cracker`) through `ToastBoardMedium.asset` and leave the code path ready for `pita` once its sprite is present in the repo.
-5. Verify with focused core tests plus repo inspection, then commit/push.
+1. Keep the new permanent blocked-tile path as the default shape solution for non-rectangular bread backgrounds.
+2. When the `pita` sprite is added to the repo, add a `ToastBoardMedium.asset` override that enables the same alpha-mask path for that background.
+3. If future boards need true rectangles/ovals with different aspect ratios in the dev start UI, split the current square-only board-size picker into independent width/height controls instead of reworking the core again.
 
 ## Pending Tasks
 
-- Implement permanent blocked-tile state in core board/runtime snapshot code.
-- Implement background-alpha-derived playable masks in Unity board-medium code.
-- Update seed-cracker config to enable the mask.
-- Verify whether the `pita` sprite is actually present; it was requested, but no `*pita*` asset currently exists in the fetched repo.
-- After the planning checkpoint commit, finish the implementation pass and push again.
+- Add the missing `pita` background asset, then wire a size override for it in `ToastBoardMedium.asset`.
+- Do an in-Unity visual pass to fine-tune per-background safe-area insets if any masked edge feels too tight or too loose.
 
 ## Current Handoff
 

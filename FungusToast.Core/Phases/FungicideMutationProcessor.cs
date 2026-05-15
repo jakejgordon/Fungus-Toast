@@ -226,7 +226,9 @@ namespace FungusToast.Core.Phases
                     .Where(t => {
                         var cell = t.FungalCell;
                         // Exclude tiles with player's own living or dead cells
-                        return !(cell != null && cell.OwnerPlayerId == player.PlayerId) && !t.HasNutrientPatch;
+                        return !board.IsTileBlockedForOccupation(t.TileId)
+                            && !(cell != null && cell.OwnerPlayerId == player.PlayerId)
+                            && !t.HasNutrientPatch;
                     })
                     .ToList();
 
@@ -613,7 +615,7 @@ namespace FungusToast.Core.Phases
             float averageFailedGrowthsPerCycle = (float)failedGrowthsThisRound / GameBalance.TotalGrowthCycles;
             int failedGrowthsThisRoundAdjusted = (int)Math.Round(averageFailedGrowthsPerCycle);
 
-            int totalTiles = board.TotalTiles;
+            int totalTiles = board.PlayableTileCount;
             int maxToxinsThisRound = totalTiles / GameBalance.MycotoxinTracerMaxToxinsDivisor;
 
             // 1. Base toxin count with diminishing returns (square root scaling)

@@ -23,7 +23,7 @@ namespace FungusToast.Core.Board
 
             int baseTargetCount = Math.Max(
                 GameBalance.NutrientPatchMinimumCount,
-                (int)Math.Round(board.TotalTiles * GameBalance.NutrientPatchDensity, MidpointRounding.AwayFromZero));
+                (int)Math.Round(board.PlayableTileCount * GameBalance.NutrientPatchDensity, MidpointRounding.AwayFromZero));
             int targetCount = Math.Max(
                 GameBalance.NutrientPatchMinimumCount,
                 (int)Math.Floor(baseTargetCount * GameBalance.NutrientPatchTotalTileMultiplier));
@@ -38,7 +38,7 @@ namespace FungusToast.Core.Board
                 .ToList();
 
             var candidateTileIds = board.AllTiles()
-                .Where(tile => !tile.IsOccupied && !tile.HasNutrientPatch)
+                .Where(tile => !tile.IsOccupiedForSporePlacement)
                 .Select(tile => tile.TileId)
                 .ToList();
 
@@ -281,7 +281,7 @@ namespace FungusToast.Core.Board
             IEnumerable<int> currentClusterTileIds)
         {
             BoardTile? candidateTile = board.GetTileById(candidateTileId);
-            if (candidateTile == null || candidateTile.IsOccupied || candidateTile.HasNutrientPatch)
+            if (candidateTile == null || candidateTile.IsOccupiedForSporePlacement)
             {
                 return false;
             }

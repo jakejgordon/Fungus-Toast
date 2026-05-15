@@ -151,6 +151,24 @@ public class RoundStartRuntimeSnapshotFactoryTests
         Assert.Equal(poolManager.ExportRuntimeState().TemporarilyRemovedMycovariantIds, restored.MycovariantPoolManager.ExportRuntimeState().TemporarilyRemovedMycovariantIds);
     }
 
+    [Fact]
+    public void Export_and_restore_preserve_permanently_blocked_tiles()
+    {
+        var board = new GameBoard(width: 4, height: 4, playerCount: 1, permanentlyBlockedTileIds: new[] { 0, 3, 12, 15 });
+        board.Players.Add(new Player(0, "Player 0", PlayerTypeEnum.AI));
+        board.PlaceInitialSpore(playerId: 0, x: 1, y: 1);
+        board.SpawnSporeForPlayer(board.Players[0], tileId: 6, GrowthSource.Manual);
+
+        var snapshot = RoundStartRuntimeSnapshotFactory.Export(board);
+        var (restoredBoard, _) = RoundStartRuntimeSnapshotFactory.Restore(snapshot);
+
+        Assert.Equal(new[] { 0, 3, 12, 15 }, snapshot.PermanentlyBlockedTileIds.OrderBy(tileId => tileId).ToArray());
+        Assert.Equal(snapshot.PermanentlyBlockedTileIds.OrderBy(tileId => tileId), restoredBoard.GetPermanentlyBlockedTileIds());
+        Assert.True(restoredBoard.GetTileById(0)!.IsBlocked);
+        Assert.False(restoredBoard.SpawnSporeForPlayer(restoredBoard.Players[0], 0, GrowthSource.Manual));
+        Assert.Equal(board.PlayableTileCount, restoredBoard.PlayableTileCount);
+    }
+
     private sealed class SnapshotTestMutationStrategy : IMutationSpendingStrategy
     {
         public SnapshotTestMutationStrategy(string strategyName)

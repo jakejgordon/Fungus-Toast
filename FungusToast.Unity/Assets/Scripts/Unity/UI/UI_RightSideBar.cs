@@ -827,7 +827,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            int boardArea = board?.TotalTiles ?? (GameBalance.BoardWidth * GameBalance.BoardHeight);
+            int boardArea = board?.PlayableTileCount ?? (GameBalance.BoardWidth * GameBalance.BoardHeight);
             float threshold = GameBalance.GetGameEndTileOccupancyThreshold(boardArea);
             trigger.SetStaticText(
                 $"The Round number increases after each Decay Phase. Occupancy % represents the percentage of the board that is occupied. Once the board reaches {threshold:P0} occupancy, a {GameBalance.TurnsAfterEndGameTileOccupancyThresholdMet}-round end-of-game countdown starts.");
