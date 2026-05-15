@@ -33,16 +33,24 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** no active handoff right now; spore-sifting and campaign-update follow-ups are cleared out.
-- **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
+- **Current focus:** implement shape-aware playable areas for bread backgrounds so `seed_cracker` and `pita` can use blocked non-playable tiles instead of forcing full square occupation.
+- **Chosen direction:** keep the core board rectangular, but derive permanent blocked tiles from the active background silhouette so gameplay, saves, and rendering all agree on the same playable mask.
 
 ## Current Plan
 
-1. Start a new topic when ready.
+1. Add permanent blocked-tile support to `GameBoard`, occupancy math, and runtime snapshot restore/export.
+2. Derive blocked tiles from `BoardMediumConfig` background art/safe-area settings rather than hard-coding shape math per medium.
+3. Update startup placement, open-tile targeting, and board rendering so blocked tiles cannot be selected, occupied, or drawn as playable cells.
+4. Wire the first masked background (`seed_cracker`) through `ToastBoardMedium.asset` and leave the code path ready for `pita` once its sprite is present in the repo.
+5. Verify with focused core tests plus repo inspection, then commit/push.
 
 ## Pending Tasks
 
-- None right now.
+- Implement permanent blocked-tile state in core board/runtime snapshot code.
+- Implement background-alpha-derived playable masks in Unity board-medium code.
+- Update seed-cracker config to enable the mask.
+- Verify whether the `pita` sprite is actually present; it was requested, but no `*pita*` asset currently exists in the fetched repo.
+- After the planning checkpoint commit, finish the implementation pass and push again.
 
 ## Current Handoff
 
