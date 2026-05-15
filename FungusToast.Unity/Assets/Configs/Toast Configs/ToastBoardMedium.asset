@@ -41,10 +41,10 @@ MonoBehaviour:
     hidePlayableSurfaceTiles: 1
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
-    backgroundInsetLeftNormalized: 0.155
-    backgroundInsetRightNormalized: 0.155
-    backgroundInsetBottomNormalized: 0.155
-    backgroundInsetTopNormalized: 0.155
+    backgroundInsetLeftNormalized: 0
+    backgroundInsetRightNormalized: 0
+    backgroundInsetBottomNormalized: 0
+    backgroundInsetTopNormalized: 0
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 0
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
