@@ -22,6 +22,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using static FungusToast.Unity.Campaign.MoldinessProgression;
 using UnityMoldinessProgressionState = FungusToast.Unity.Campaign.MoldinessProgressionState;
+using UnityEngine.InputSystem;
 
 namespace FungusToast.Unity.UI
 {
@@ -93,6 +94,14 @@ namespace FungusToast.Unity.UI
         private const float DetailsHeaderIconSize = 56f;
         private const float DetailsSectionSpacing = 12f;
         private const float DefeatCarryoverInfoFontSize = 23f;
+        private const float EndGameDockBarHeight = 88f;
+        private const float EndGameDockBarBottomInset = 18f;
+        private const float EndGameDockBarHorizontalInset = 18f;
+        private const float EndGameDockBarSpacing = 16f;
+        private const float EndGameDockSummaryPreferredWidth = 360f;
+        private const float EndGameDockToggleButtonWidth = 210f;
+        private const float EndGameDockActionButtonPreferredWidth = 188f;
+        private const float EndGameDockActionButtonMinWidth = 164f;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -142,6 +151,11 @@ namespace FungusToast.Unity.UI
         private RectTransform endGameTestingRailMirrorSpacerRoot;
         private LayoutElement endGameTestingRailMirrorSpacerLayoutElement;
         private RectTransform endGameActionBarRoot;
+        private RectTransform endGameDockBarRoot;
+        private CanvasGroup endGameDockBarCanvasGroup;
+        private TextMeshProUGUI endGameDockSummaryLabel;
+        private RectTransform endGameDockButtonStripRoot;
+        private Button toggleResultsDockButton;
         private RectTransform endGameResultsScrollRoot;
         private RectTransform endGameResultsViewportRoot;
         private ScrollRect endGameResultsScrollRect;
@@ -156,6 +170,7 @@ namespace FungusToast.Unity.UI
         private bool postVictoryTestingRailVisible;
         private bool showPostAdaptationConfirmationState;
         private bool showCampaignLossActionStack;
+        private bool isEndGameResultsDocked;
 
         private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection || requiresDefeatCarryoverSelection || showCampaignLossActionStack;
 
@@ -249,12 +264,23 @@ namespace FungusToast.Unity.UI
         {
             UpdateCampaignMoldinessAwardPulse();
 
-            if (!Application.isPlaying || !IsDetailsModalOpen || !UnityInputAdapter.WasEscapePressedThisFrame())
+            if (!Application.isPlaying)
             {
                 return;
             }
 
-            HidePlayerDetails();
+            if (IsDetailsModalOpen && UnityInputAdapter.WasEscapePressedThisFrame())
+            {
+                HidePlayerDetails();
+                return;
+            }
+
+            if (!gameObject.activeInHierarchy || IsDetailsModalOpen || !WasResultsDockTogglePressedThisFrame())
+            {
+                return;
+            }
+
+            ToggleEndGameResultsDocked();
         }
 
         private void LateUpdate()
@@ -309,9 +335,42 @@ namespace FungusToast.Unity.UI
             EnsureButtonLayout(playAgainButton);
             EnsureActionButtonsShareContainer();
             EnsureButtonContainerLayout();
+            EnsureDockedResultsControls();
             EnsurePostVictoryTestingControls();
             EnsureDetailsModal();
             UpdatePostVictoryTestingLabels();
+
+            if (toggleResultsDockButton != null)
+            {
+                UIStyleTokens.Button.ApplySecondaryMenuAction(toggleResultsDockButton, EndGameDockToggleButtonWidth);
+                UIStyleTokens.Button.SetButtonLabelColor(toggleResultsDockButton, UIStyleTokens.Button.TextDefault);
+            }
+
+            if (endGameDockBarRoot != null)
+            {
+                var dockBackground = endGameDockBarRoot.GetComponent<Image>();
+                if (dockBackground != null)
+                {
+                    var dockColor = UIStyleTokens.Surface.PanelPrimary;
+                    dockColor.a = 0.97f;
+                    dockBackground.color = dockColor;
+                    dockBackground.raycastTarget = true;
+                }
+            }
+
+            if (endGameDockSummaryLabel != null)
+            {
+                endGameDockSummaryLabel.color = UIStyleTokens.Text.Secondary;
+                endGameDockSummaryLabel.fontStyle = FontStyles.Normal;
+                endGameDockSummaryLabel.alignment = TextAlignmentOptions.Left;
+                endGameDockSummaryLabel.enableAutoSizing = true;
+                endGameDockSummaryLabel.fontSizeMax = 19f;
+                endGameDockSummaryLabel.fontSizeMin = 14f;
+                endGameDockSummaryLabel.textWrappingMode = TextWrappingModes.Normal;
+                endGameDockSummaryLabel.overflowMode = TextOverflowModes.Ellipsis;
+            }
+
+            UpdateDockedResultsCopy();
 
             if (outcomeLabel != null)
             {
@@ -347,6 +406,183 @@ namespace FungusToast.Unity.UI
             EnsureTooltip(playAgainButton, "Return to the main menu to start a new game.");
             EnsureTooltip(exitButton, "Close the game.");
             EnsureTooltip(continueButton, "Advance to the next campaign level.");
+            EnsureDockedResultsControls();
+            UpdateDockedResultsCopy();
+        }
+
+        private void ToggleEndGameResultsDocked()
+        {
+            if (!gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            HidePlayerDetails();
+            SetEndGameResultsDocked(!isEndGameResultsDocked);
+        }
+
+        private void SetEndGameResultsDocked(bool docked, bool preserveCurrentOverlayCanvasState = false)
+        {
+            EnsureDockedResultsControls();
+            isEndGameResultsDocked = docked;
+
+            bool showDockBar = docked && gameObject.activeInHierarchy;
+            if (endGameDockBarRoot != null)
+            {
+                endGameDockBarRoot.gameObject.SetActive(showDockBar);
+                endGameDockBarRoot.transform.SetAsLastSibling();
+            }
+
+            if (endGameDockBarCanvasGroup != null)
+            {
+                endGameDockBarCanvasGroup.alpha = showDockBar ? 1f : 0f;
+                endGameDockBarCanvasGroup.interactable = showDockBar;
+                endGameDockBarCanvasGroup.blocksRaycasts = showDockBar;
+            }
+
+            if (resultsCardBackground != null)
+            {
+                resultsCardBackground.gameObject.SetActive(!docked);
+            }
+
+            if (panelBackground != null)
+            {
+                if (docked)
+                {
+                    panelBackground.color = Color.clear;
+                    panelBackground.raycastTarget = false;
+                }
+                else
+                {
+                    ApplyPendingRewardBackgroundMode(requiresMoldinessRewardSelection);
+                    panelBackground.raycastTarget = true;
+                }
+            }
+
+            EnsureActionButtonsShareContainer();
+            UpdateDockedResultsCopy();
+
+            if (canvasGroup != null && !preserveCurrentOverlayCanvasState)
+            {
+                canvasGroup.alpha = docked ? 0f : 1f;
+                canvasGroup.interactable = !docked;
+                canvasGroup.blocksRaycasts = !docked;
+            }
+
+            ApplyControlReadabilityOverrides();
+            RefreshRuntimeEndGameLayout();
+        }
+
+        private void EnsureDockedResultsControls()
+        {
+            if (endGameDockBarRoot == null)
+            {
+                var dockRoot = new GameObject("UI_EndGameDockBar", typeof(RectTransform), typeof(Image), typeof(CanvasGroup), typeof(HorizontalLayoutGroup));
+                dockRoot.transform.SetParent(transform, false);
+                dockRoot.transform.SetAsLastSibling();
+                EnsureIgnoreParentLayout(dockRoot);
+
+                endGameDockBarRoot = dockRoot.GetComponent<RectTransform>();
+                endGameDockBarCanvasGroup = dockRoot.GetComponent<CanvasGroup>();
+                endGameDockBarCanvasGroup.ignoreParentGroups = true;
+
+                var dockLayout = dockRoot.GetComponent<HorizontalLayoutGroup>();
+                dockLayout.childAlignment = TextAnchor.MiddleLeft;
+                dockLayout.childControlWidth = true;
+                dockLayout.childControlHeight = true;
+                dockLayout.childForceExpandWidth = false;
+                dockLayout.childForceExpandHeight = true;
+                dockLayout.spacing = EndGameDockBarSpacing;
+                dockLayout.padding = new RectOffset(18, 18, 12, 12);
+
+                var summaryObject = new GameObject("UI_EndGameDockSummary", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+                summaryObject.transform.SetParent(dockRoot.transform, false);
+                endGameDockSummaryLabel = summaryObject.GetComponent<TextMeshProUGUI>();
+
+                var summaryLayout = summaryObject.GetComponent<LayoutElement>();
+                summaryLayout.flexibleWidth = 1f;
+                summaryLayout.preferredWidth = EndGameDockSummaryPreferredWidth;
+                summaryLayout.minWidth = 0f;
+
+                var buttonStripObject = new GameObject("UI_EndGameDockButtonStrip", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+                buttonStripObject.transform.SetParent(dockRoot.transform, false);
+                endGameDockButtonStripRoot = buttonStripObject.GetComponent<RectTransform>();
+
+                var buttonStripLayout = buttonStripObject.GetComponent<HorizontalLayoutGroup>();
+                buttonStripLayout.childAlignment = TextAnchor.MiddleRight;
+                buttonStripLayout.childControlWidth = true;
+                buttonStripLayout.childControlHeight = true;
+                buttonStripLayout.childForceExpandWidth = false;
+                buttonStripLayout.childForceExpandHeight = false;
+                buttonStripLayout.spacing = 12f;
+
+                var buttonStripElement = buttonStripObject.GetComponent<LayoutElement>();
+                buttonStripElement.flexibleWidth = 0f;
+                buttonStripElement.minWidth = 0f;
+
+                CreateDockToggleButton(endGameDockButtonStripRoot);
+
+                dockRoot.SetActive(false);
+                endGameDockBarCanvasGroup.alpha = 0f;
+                endGameDockBarCanvasGroup.interactable = false;
+                endGameDockBarCanvasGroup.blocksRaycasts = false;
+            }
+
+            endGameDockBarRoot.anchorMin = new Vector2(0f, 0f);
+            endGameDockBarRoot.anchorMax = new Vector2(1f, 0f);
+            endGameDockBarRoot.pivot = new Vector2(0.5f, 0f);
+            endGameDockBarRoot.anchoredPosition = new Vector2(0f, EndGameDockBarBottomInset);
+            endGameDockBarRoot.sizeDelta = new Vector2(0f, EndGameDockBarHeight);
+            endGameDockBarRoot.offsetMin = new Vector2(EndGameDockBarHorizontalInset, endGameDockBarRoot.offsetMin.y);
+            endGameDockBarRoot.offsetMax = new Vector2(-EndGameDockBarHorizontalInset, endGameDockBarRoot.offsetMax.y);
+        }
+
+        private void CreateDockToggleButton(Transform parent)
+        {
+            if (toggleResultsDockButton != null || parent == null)
+            {
+                return;
+            }
+
+            var template = exitButton != null ? exitButton : (playAgainButton != null ? playAgainButton : continueButton);
+            if (template == null)
+            {
+                return;
+            }
+
+            var clone = Instantiate(template.gameObject, parent);
+            clone.name = "UI_EndGameDockToggleButton";
+            clone.SetActive(true);
+
+            toggleResultsDockButton = clone.GetComponent<Button>();
+            if (toggleResultsDockButton == null)
+            {
+                return;
+            }
+
+            toggleResultsDockButton.onClick.RemoveAllListeners();
+            toggleResultsDockButton.onClick.AddListener(ToggleEndGameResultsDocked);
+        }
+
+        private void UpdateDockedResultsCopy()
+        {
+            if (toggleResultsDockButton != null)
+            {
+                SetButtonLabel(toggleResultsDockButton, isEndGameResultsDocked ? "Show Results" : "Inspect Board");
+                EnsureTooltip(toggleResultsDockButton, isEndGameResultsDocked
+                    ? "Restore the full endgame results screen. Press Tab to toggle."
+                    : "Hide the full endgame screen so you can inspect the board. Press Tab to toggle.");
+            }
+
+            if (endGameDockSummaryLabel != null)
+            {
+                endGameDockSummaryLabel.text = "Results hidden. Inspect the board, then choose Show Results or press Tab to reopen this screen.";
+            }
+        }
+
+        private static bool WasResultsDockTogglePressedThisFrame()
+        {
+            return Keyboard.current?.tabKey.wasPressedThisFrame ?? false;
         }
 
         /* ─────────── Public API (generic solo / hotseat) ─────────── */
@@ -2480,6 +2716,7 @@ namespace FungusToast.Unity.UI
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
             selectedMoldinessRewardVisual = null;
+            SetEndGameResultsDocked(false, preserveCurrentOverlayCanvasState: true);
             canvasGroup.alpha = 0f;
             canvasGroup.interactable = false;
             canvasGroup.blocksRaycasts = false;
@@ -2972,7 +3209,7 @@ namespace FungusToast.Unity.UI
             detailsOverlayRoot.SetActive(false);
         }
 
-        public bool BlocksGameplayCameraInput => gameObject.activeInHierarchy && canvasGroup != null && canvasGroup.blocksRaycasts;
+        public bool BlocksGameplayCameraInput => gameObject.activeInHierarchy && !isEndGameResultsDocked && canvasGroup != null && canvasGroup.blocksRaycasts;
 
         public bool IsDetailsModalOpen => detailsOverlayRoot != null && detailsOverlayRoot.activeSelf && detailsOverlayCanvasGroup != null && detailsOverlayCanvasGroup.blocksRaycasts;
 
@@ -3451,6 +3688,8 @@ namespace FungusToast.Unity.UI
 
         private void PreparePanelForContentBuild()
         {
+            SetEndGameResultsDocked(false, preserveCurrentOverlayCanvasState: true);
+
             if (!gameObject.activeSelf)
             {
                 gameObject.SetActive(true);
@@ -3915,6 +4154,22 @@ namespace FungusToast.Unity.UI
                 ApplyPostVictoryTestingRailVisibility(reloadConfiguration: false);
                 UpdatePostAdaptationHelperText();
                 EnsureActionButtonsShareContainer();
+
+                if (isEndGameResultsDocked)
+                {
+                    if (resultsCardBackground != null)
+                    {
+                        resultsCardBackground.gameObject.SetActive(false);
+                    }
+
+                    if (endGameDockBarRoot != null)
+                    {
+                        endGameDockBarRoot.gameObject.SetActive(gameObject.activeInHierarchy);
+                        LayoutRebuilder.ForceRebuildLayoutImmediate(endGameDockBarRoot);
+                    }
+
+                    return;
+                }
 
                 var shellLayout = endGameContentShellRoot != null ? endGameContentShellRoot.GetComponent<HorizontalLayoutGroup>() : null;
                 bool showMirroredRailSpacer = showPostAdaptationConfirmationState && postVictoryTestingRailVisible;
@@ -4805,6 +5060,7 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.SetButtonLabelColor(continueButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(exitButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(playAgainButton, UIStyleTokens.Button.TextDefault);
+            UIStyleTokens.Button.SetButtonLabelColor(toggleResultsDockButton, UIStyleTokens.Button.TextDefault);
 
             UIStyleTokens.Button.SetButtonLabelColor(postVictoryTestingToggleButton, UIStyleTokens.Button.TextDefault);
             UIStyleTokens.Button.SetButtonLabelColor(postVictoryFastForwardButton, UIStyleTokens.Button.TextDefault);
@@ -5076,11 +5332,19 @@ namespace FungusToast.Unity.UI
         private void EnsureActionButtonsShareContainer()
         {
             EnsureRuntimeLayoutScaffold();
+            EnsureDockedResultsControls();
 
-            var targetParent = UseVerticalActionStack ? endGamePostAdaptationRoot : endGameActionBarRoot;
+            var targetParent = isEndGameResultsDocked
+                ? endGameDockButtonStripRoot
+                : UseVerticalActionStack ? endGamePostAdaptationRoot : endGameActionBarRoot;
             if (targetParent == null)
             {
                 return;
+            }
+
+            if (toggleResultsDockButton != null && toggleResultsDockButton.transform.parent != targetParent)
+            {
+                toggleResultsDockButton.transform.SetParent(targetParent, false);
             }
 
             if (playAgainButton != null && playAgainButton.transform.parent != targetParent)
@@ -5099,7 +5363,32 @@ namespace FungusToast.Unity.UI
             }
 
             int nextIndex = 0;
-            if (UseVerticalActionStack)
+            if (isEndGameResultsDocked)
+            {
+                if (toggleResultsDockButton != null)
+                {
+                    toggleResultsDockButton.transform.SetSiblingIndex(nextIndex);
+                    nextIndex++;
+                }
+
+                if (continueButton != null)
+                {
+                    continueButton.transform.SetSiblingIndex(nextIndex);
+                    nextIndex++;
+                }
+
+                if (playAgainButton != null)
+                {
+                    playAgainButton.transform.SetSiblingIndex(nextIndex);
+                    nextIndex++;
+                }
+
+                if (exitButton != null)
+                {
+                    exitButton.transform.SetSiblingIndex(nextIndex);
+                }
+            }
+            else if (UseVerticalActionStack)
             {
                 bool hasHelperText = endGamePostAdaptationHelperLabel != null && endGamePostAdaptationHelperLabel.gameObject.activeSelf;
                 if (hasHelperText)
@@ -5114,6 +5403,12 @@ namespace FungusToast.Unity.UI
                     nextIndex++;
                 }
 
+                if (toggleResultsDockButton != null)
+                {
+                    toggleResultsDockButton.transform.SetSiblingIndex(nextIndex);
+                    nextIndex++;
+                }
+
                 if (playAgainButton != null)
                 {
                     playAgainButton.transform.SetSiblingIndex(nextIndex);
@@ -5127,6 +5422,12 @@ namespace FungusToast.Unity.UI
             }
             else
             {
+                if (toggleResultsDockButton != null)
+                {
+                    toggleResultsDockButton.transform.SetSiblingIndex(nextIndex);
+                    nextIndex++;
+                }
+
                 if (playAgainButton != null)
                 {
                     playAgainButton.transform.SetSiblingIndex(nextIndex);
@@ -5145,17 +5446,41 @@ namespace FungusToast.Unity.UI
                 }
             }
 
-            if (UseVerticalActionStack)
+            if (isEndGameResultsDocked)
             {
+                ConfigureDockBarButtonLayout(toggleResultsDockButton, EndGameDockToggleButtonWidth);
+                ConfigureDockBarButtonLayout(continueButton, EndGameDockActionButtonPreferredWidth);
+                ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
+                ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
+            }
+            else if (UseVerticalActionStack)
+            {
+                ConfigureVerticalActionStackButtonLayout(toggleResultsDockButton);
                 ConfigureVerticalActionStackButtonLayout(continueButton);
                 ConfigureVerticalActionStackButtonLayout(playAgainButton);
                 ConfigureVerticalActionStackButtonLayout(exitButton);
             }
             else
             {
-                ConfigureActionBarButtonLayout(playAgainButton);
-                ConfigureActionBarButtonLayout(continueButton);
-                ConfigureActionBarButtonLayout(exitButton);
+                int visibleActionCount = (toggleResultsDockButton != null ? 1 : 0)
+                    + (playAgainButton != null && playAgainButton.gameObject.activeSelf ? 1 : 0)
+                    + (continueButton != null && continueButton.gameObject.activeSelf ? 1 : 0)
+                    + (exitButton != null && exitButton.gameObject.activeSelf ? 1 : 0);
+                bool useCompactHorizontalLayout = visibleActionCount >= 4;
+
+                ConfigureDockBarButtonLayout(toggleResultsDockButton, EndGameDockToggleButtonWidth);
+                if (useCompactHorizontalLayout)
+                {
+                    ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
+                    ConfigureDockBarButtonLayout(continueButton, EndGameDockActionButtonPreferredWidth);
+                    ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
+                }
+                else
+                {
+                    ConfigureActionBarButtonLayout(playAgainButton);
+                    ConfigureActionBarButtonLayout(continueButton);
+                    ConfigureActionBarButtonLayout(exitButton);
+                }
             }
         }
 
@@ -5219,6 +5544,23 @@ namespace FungusToast.Unity.UI
                 label.fontSizeMin = 16f;
                 label.alignment = TextAlignmentOptions.Center;
                 label.margin = new Vector4(24f, 0f, 24f, 0f);
+            }
+        }
+
+        private void ConfigureDockBarButtonLayout(Button button, float preferredWidth)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            ConfigureActionBarButtonLayout(button);
+
+            var layout = button.GetComponent<LayoutElement>();
+            if (layout != null)
+            {
+                layout.preferredWidth = preferredWidth;
+                layout.minWidth = Mathf.Min(preferredWidth, EndGameDockActionButtonMinWidth);
             }
         }
 
