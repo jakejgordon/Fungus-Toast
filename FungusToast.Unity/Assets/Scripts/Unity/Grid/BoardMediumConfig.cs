@@ -26,6 +26,7 @@ namespace FungusToast.Unity.Grid
             public bool hidePlayableSurfaceTiles = true;
             public bool deriveBlockedTilesFromBackgroundAlpha = false;
             [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
+            [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
             [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -64,6 +65,7 @@ namespace FungusToast.Unity.Grid
                     hidePlayableSurfaceTiles,
                     deriveBlockedTilesFromBackgroundAlpha,
                     backgroundAlphaPlayableThreshold,
+                    backgroundMinTileCoverage,
                     GetBackgroundSafeAreaNormalized(),
                     backgroundScaleMultiplier,
                     renderBoardEdgeFade,
@@ -82,6 +84,7 @@ namespace FungusToast.Unity.Grid
                 bool hidePlayableSurfaceTiles,
                 bool deriveBlockedTilesFromBackgroundAlpha,
                 float backgroundAlphaPlayableThreshold,
+                float backgroundMinTileCoverage,
                 Rect safeAreaNormalized,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
@@ -95,6 +98,7 @@ namespace FungusToast.Unity.Grid
                 HidePlayableSurfaceTiles = hidePlayableSurfaceTiles;
                 DeriveBlockedTilesFromBackgroundAlpha = deriveBlockedTilesFromBackgroundAlpha;
                 BackgroundAlphaPlayableThreshold = backgroundAlphaPlayableThreshold;
+                BackgroundMinTileCoverage = backgroundMinTileCoverage;
                 SafeAreaNormalized = safeAreaNormalized;
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
@@ -109,6 +113,7 @@ namespace FungusToast.Unity.Grid
             public bool HidePlayableSurfaceTiles { get; }
             public bool DeriveBlockedTilesFromBackgroundAlpha { get; }
             public float BackgroundAlphaPlayableThreshold { get; }
+            public float BackgroundMinTileCoverage { get; }
             public Rect SafeAreaNormalized { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
@@ -138,6 +143,7 @@ namespace FungusToast.Unity.Grid
         public bool hidePlayableSurfaceTiles = true;
         public bool deriveBlockedTilesFromBackgroundAlpha = false;
         [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
+        [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
         [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -239,6 +245,7 @@ namespace FungusToast.Unity.Grid
                 hidePlayableSurfaceTiles,
                 deriveBlockedTilesFromBackgroundAlpha,
                 backgroundAlphaPlayableThreshold,
+                backgroundMinTileCoverage,
                 GetBackgroundSafeAreaNormalized(),
                 backgroundScaleMultiplier,
                 renderBoardEdgeFade,
@@ -288,18 +295,34 @@ namespace FungusToast.Unity.Grid
                 Rect spriteRect = settings.BackgroundSprite.textureRect;
                 Rect safeArea = settings.SafeAreaNormalized;
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
+                float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
                 var blockedTileIds = new List<int>();
 
                 for (int y = 0; y < boardHeight; y++)
                 {
                     for (int x = 0; x < boardWidth; x++)
                     {
-                        float normalizedX = safeArea.xMin + ((x + 0.5f) / boardWidth) * safeArea.width;
-                        float normalizedY = safeArea.yMin + ((y + 0.5f) / boardHeight) * safeArea.height;
-                        float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
-                        float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
-                        float alpha = samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
-                        if (alpha < alphaThreshold)
+                        bool isPlayable = minimumTileCoverage > 0f
+                            ? EvaluateTileCoverage(
+                                samplingTexture,
+                                spriteRect,
+                                safeArea,
+                                boardWidth,
+                                boardHeight,
+                                x,
+                                y,
+                                alphaThreshold,
+                                minimumTileCoverage)
+                            : SampleTileCenterAlpha(
+                                samplingTexture,
+                                spriteRect,
+                                safeArea,
+                                boardWidth,
+                                boardHeight,
+                                x,
+                                y) >= alphaThreshold;
+
+                        if (!isPlayable)
                         {
                             blockedTileIds.Add((y * boardWidth) + x);
                         }
@@ -386,6 +409,56 @@ namespace FungusToast.Unity.Grid
             float width = Mathf.Max(0.01f, 1f - left - right);
             float height = Mathf.Max(0.01f, 1f - bottom - top);
             return new Rect(left, bottom, width, height);
+        }
+
+        private static bool EvaluateTileCoverage(
+            Texture2D samplingTexture,
+            Rect spriteRect,
+            Rect safeArea,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float alphaThreshold,
+            float minimumTileCoverage)
+        {
+            const int sampleResolution = 5;
+            int coveredSamples = 0;
+            int totalSamples = sampleResolution * sampleResolution;
+
+            for (int sampleY = 0; sampleY < sampleResolution; sampleY++)
+            {
+                for (int sampleX = 0; sampleX < sampleResolution; sampleX++)
+                {
+                    float normalizedX = safeArea.xMin + ((tileX + ((sampleX + 0.5f) / sampleResolution)) / boardWidth) * safeArea.width;
+                    float normalizedY = safeArea.yMin + ((tileY + ((sampleY + 0.5f) / sampleResolution)) / boardHeight) * safeArea.height;
+                    float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
+                    float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
+                    float alpha = samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
+                    if (alpha >= alphaThreshold)
+                    {
+                        coveredSamples++;
+                    }
+                }
+            }
+
+            return ((float)coveredSamples / totalSamples) >= minimumTileCoverage;
+        }
+
+        private static float SampleTileCenterAlpha(
+            Texture2D samplingTexture,
+            Rect spriteRect,
+            Rect safeArea,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY)
+        {
+            float normalizedX = safeArea.xMin + ((tileX + 0.5f) / boardWidth) * safeArea.width;
+            float normalizedY = safeArea.yMin + ((tileY + 0.5f) / boardHeight) * safeArea.height;
+            float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
+            float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
+            return samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
         }
 
         private static Texture2D GetReadableTexture(Sprite sprite, out bool ownsTexture)

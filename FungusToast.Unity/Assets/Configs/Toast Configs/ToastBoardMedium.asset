@@ -23,6 +23,7 @@ MonoBehaviour:
   hidePlayableSurfaceTiles: 1
   deriveBlockedTilesFromBackgroundAlpha: 0
   backgroundAlphaPlayableThreshold: 0.1
+  backgroundMinTileCoverage: 0
   backgroundInsetLeftNormalized: 0.06
   backgroundInsetRightNormalized: 0.10
   backgroundInsetBottomNormalized: 0.08
@@ -41,6 +42,7 @@ MonoBehaviour:
     hidePlayableSurfaceTiles: 1
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0.8
     backgroundInsetLeftNormalized: 0
     backgroundInsetRightNormalized: 0
     backgroundInsetBottomNormalized: 0
@@ -58,6 +60,7 @@ MonoBehaviour:
     hidePlayableSurfaceTiles: 1
     deriveBlockedTilesFromBackgroundAlpha: 0
     backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
     backgroundInsetLeftNormalized: 0.04
     backgroundInsetRightNormalized: 0.04
     backgroundInsetBottomNormalized: 0.04
@@ -75,6 +78,7 @@ MonoBehaviour:
     hidePlayableSurfaceTiles: 1
     deriveBlockedTilesFromBackgroundAlpha: 0
     backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
     backgroundInsetLeftNormalized: 0.12
     backgroundInsetRightNormalized: 0.12
     backgroundInsetBottomNormalized: 0.12
@@ -94,6 +98,7 @@ MonoBehaviour:
     hidePlayableSurfaceTiles: 1
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
     backgroundInsetLeftNormalized: 0.171
     backgroundInsetRightNormalized: 0.171
     backgroundInsetBottomNormalized: 0.171
