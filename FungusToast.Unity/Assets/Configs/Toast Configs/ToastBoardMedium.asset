@@ -76,6 +76,23 @@ MonoBehaviour:
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
     boardEdgeFadeWidthTiles: 1.1
     boardEdgeFadeNoiseStrength: 0.01
+  - minBoardWidth: 100
+    minBoardHeight: 100
+    maxBoardWidth: 10000
+    maxBoardHeight: 10000
+    renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: 9d8f3efff43346849a2a91614e2b4a6a, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    backgroundInsetLeftNormalized: 0.171
+    backgroundInsetRightNormalized: 0.171
+    backgroundInsetBottomNormalized: 0.171
+    backgroundInsetTopNormalized: 0.171
+    backgroundScaleMultiplier: 1
+    renderBoardEdgeFade: 1
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.05}
+    boardEdgeFadeWidthTiles: 1.2
+    boardEdgeFadeNoiseStrength: 0.01
   renderCrust: 0
   crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
   crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}

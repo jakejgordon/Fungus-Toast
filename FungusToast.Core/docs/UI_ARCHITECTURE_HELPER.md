@@ -227,6 +227,7 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 - Boards `20x20` and smaller automatically switch to the seeded cracker image through the first size override.
 - Boards `40x40` and smaller automatically switch to the plain cracker image unless a smaller override matched first.
 - Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
+- Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
 
 ### Import Guidance
