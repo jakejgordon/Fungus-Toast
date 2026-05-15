@@ -787,6 +787,11 @@ namespace FungusToast.Unity
             return campaignController != null && campaignController.ResetMoldinessProgression();
         }
 
+        private IReadOnlyCollection<int> ResolveBoardBlockedTileIds(int width, int height)
+        {
+            return gridVisualizer?.ActiveBoardMedium?.GetBlockedTileIdsForSize(width, height) ?? Array.Empty<int>();
+        }
+
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)
         {
             return gameStartService != null && gameStartService.TryStartCampaignAdaptationDraft(onSelectionComplete);
@@ -801,7 +806,7 @@ namespace FungusToast.Unity
 
             var ui = gameUIManager;
 
-            Board = new GameBoard(boardWidth, boardHeight, playerCount);
+            Board = new GameBoard(boardWidth, boardHeight, playerCount, ResolveBoardBlockedTileIds(boardWidth, boardHeight));
             ui.SetBoard(Board); // expose board to UI components via façade
             rng = new System.Random(ResolveGameplaySeedForNewSession());
             postGrowthVisualSequence.Register(Board); // board post-growth events

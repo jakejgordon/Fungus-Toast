@@ -17,6 +17,7 @@ public sealed class RoundStartRuntimeSnapshot
     public int CurrentGrowthCycle;
     public bool NecrophyticBloomActivated;
     public List<PlayerRuntimeSnapshot> Players = new();
+    public List<int> PermanentlyBlockedTileIds = new();
     public List<FungalCellSnapshot> Cells = new();
     public List<NutrientPatchSnapshot> NutrientPatches = new();
     public List<ChemobeaconMarkerSnapshot> Chemobeacons = new();

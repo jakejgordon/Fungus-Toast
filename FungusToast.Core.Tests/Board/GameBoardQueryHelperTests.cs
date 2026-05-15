@@ -54,6 +54,24 @@ public class GameBoardQueryHelperTests
         Assert.Equal(3f / 25f, board.GetOccupiedTileRatio(), precision: 6);
     }
 
+    [Fact]
+    public void Blocked_tiles_reduce_playable_area_and_block_placement()
+    {
+        var board = CreateBoard(width: 2, height: 2, playerCount: 1, blockedTileIds: new[] { 0 });
+
+        Assert.Equal(4, board.TotalTiles);
+        Assert.Equal(3, board.PlayableTileCount);
+        Assert.True(board.IsTileBlockedForOccupation(0));
+        Assert.True(board.GetTileById(0)!.IsBlocked);
+        Assert.False(board.SpawnSporeForPlayer(board.Players[0], 0, GrowthSource.Manual));
+        Assert.False(board.PlaceNutrientPatch(0, NutrientPatch.CreateSporemealCluster(clusterId: 1, clusterTileCount: 1)));
+
+        board.SpawnSporeForPlayer(board.Players[0], 1, GrowthSource.Manual);
+        board.SpawnSporeForPlayer(board.Players[0], 2, GrowthSource.Manual);
+
+        Assert.Equal(2f / 3f, board.GetOccupiedTileRatio(), precision: 6);
+    }
+
     [Theory]
     [InlineData(10, 10, 0.80f)]
     [InlineData(50, 50, 0.85f)]
@@ -142,9 +160,9 @@ public class GameBoardQueryHelperTests
         Assert.Equal(new[] { 7 }, excludingPlayerZero);
     }
 
-    private static GameBoard CreateBoard(int width, int height, int playerCount)
+    private static GameBoard CreateBoard(int width, int height, int playerCount, IEnumerable<int>? blockedTileIds = null)
     {
-        var board = new GameBoard(width, height, playerCount);
+        var board = new GameBoard(width, height, playerCount, blockedTileIds);
         for (int playerId = 0; playerId < playerCount; playerId++)
         {
             board.Players.Add(new Player(playerId, $"Player {playerId}", PlayerTypeEnum.AI));

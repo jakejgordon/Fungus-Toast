@@ -33,16 +33,19 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** no active handoff right now; spore-sifting and campaign-update follow-ups are cleared out.
-- **How to update this section:** whenever we pivot, replace this with the current active thread in one or two lines
+- **Current focus:** blocked-tile board-shape support is now implemented in core + Unity rendering for silhouette-driven bread backgrounds.
+- **Current state:** `seed_cracker` is wired to use the new background-alpha mask path; the same code path is ready for `pita`, but there is still no `*pita*` sprite asset in the fetched repo to hook up.
 
 ## Current Plan
 
-1. Start a new topic when ready.
+1. Keep the new permanent blocked-tile path as the default shape solution for non-rectangular bread backgrounds.
+2. When the `pita` sprite is added to the repo, add a `ToastBoardMedium.asset` override that enables the same alpha-mask path for that background.
+3. If future boards need true rectangles/ovals with different aspect ratios in the dev start UI, split the current square-only board-size picker into independent width/height controls instead of reworking the core again.
 
 ## Pending Tasks
 
-- None right now.
+- Add the missing `pita` background asset, then wire a size override for it in `ToastBoardMedium.asset`.
+- Do an in-Unity visual pass to fine-tune per-background safe-area insets if any masked edge feels too tight or too loose.
 
 ## Current Handoff
 

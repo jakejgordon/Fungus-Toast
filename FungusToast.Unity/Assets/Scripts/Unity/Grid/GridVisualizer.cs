@@ -1116,6 +1116,11 @@ namespace FungusToast.Unity.Grid
                 {
                     var pos = new Vector3Int(x, y, 0);
                     var tile = board.Grid[x, y];
+                    if (tile.IsBlocked)
+                    {
+                        continue;
+                    }
+
                     toastTilemap.SetTile(pos, GetSurfaceTile(x, y));
                     toastTilemap.SetTileFlags(pos, TileFlags.None);
                     toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));

@@ -31,6 +31,7 @@ public static class RoundStartRuntimeSnapshotFactory
                 .OrderBy(player => player.PlayerId)
                 .Select(ExportPlayer)
                 .ToList(),
+            PermanentlyBlockedTileIds = board.GetPermanentlyBlockedTileIds().OrderBy(tileId => tileId).ToList(),
             Cells = board.GetAllCells()
                 .OrderBy(cell => cell.TileId)
                 .Select(ExportCell)
@@ -65,7 +66,7 @@ public static class RoundStartRuntimeSnapshotFactory
             throw new ArgumentNullException(nameof(snapshot));
         }
 
-        var board = new GameBoard(snapshot.BoardWidth, snapshot.BoardHeight, snapshot.Players.Count);
+        var board = new GameBoard(snapshot.BoardWidth, snapshot.BoardHeight, snapshot.Players.Count, snapshot.PermanentlyBlockedTileIds);
 
         foreach (var playerSnapshot in snapshot.Players.OrderBy(player => player.PlayerId))
         {

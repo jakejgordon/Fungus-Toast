@@ -67,6 +67,8 @@ namespace FungusToast.Core.Phases
             bool targetIsToxin = targetTile.FungalCell != null && targetTile.FungalCell.IsToxin;
             bool specialToxinJumpCase = hasMaxCreepingMold && targetIsToxin;
 
+            if (board.IsTileBlockedForOccupation(targetTile.TileId)) return false;
+
             // Only allow occupied tiles if it's the special toxin jump case
             if (targetTile.IsOccupied && !specialToxinJumpCase) return false;
 
@@ -85,12 +87,12 @@ namespace FungusToast.Core.Phases
                 int jumpX = targetTile.X + dx;
                 int jumpY = targetTile.Y + dy;
                 var jumpTile = board.GetTile(jumpX, jumpY);
-                if (jumpTile != null && !jumpTile.IsOccupied && (jumpTile.FungalCell == null || !jumpTile.FungalCell.IsToxin)) {
+                if (jumpTile != null && !jumpTile.IsOccupiedForSporePlacement && (jumpTile.FungalCell == null || !jumpTile.FungalCell.IsToxin)) {
                     if (rng.NextDouble() <= moveChance) {
                         int sourceOpen = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
-                                                .Count(n => !n.IsOccupied);
+                                                .Count(n => !n.IsOccupiedForSporePlacement);
                         int targetOpen = board.GetOrthogonalNeighbors(jumpTile.X, jumpTile.Y)
-                                                .Count(n => !n.IsOccupied);
+                                                .Count(n => !n.IsOccupiedForSporePlacement);
                         if (targetOpen >= sourceOpen && targetOpen >= 2) {
                             CreateCreepingMoldCell(player, sourceCell, sourceTile, jumpTile, board);
                             observer.RecordCreepingMoldToxinJump(player.PlayerId);
@@ -106,9 +108,9 @@ namespace FungusToast.Core.Phases
 
             // Count open (unoccupied) orthogonal neighbors for source and target
             int sourceOpenStandard = board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
-                                  .Count(n => !n.IsOccupied);
+                                  .Count(n => !n.IsOccupiedForSporePlacement);
             int targetOpenStandard = board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
-                                  .Count(n => !n.IsOccupied);
+                                  .Count(n => !n.IsOccupiedForSporePlacement);
 
             // Only allow the move if the target is at least as open as the source,
             // and the target has at least 2 open sides. This prevents mold from

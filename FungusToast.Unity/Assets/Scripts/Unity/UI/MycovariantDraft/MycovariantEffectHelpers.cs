@@ -707,7 +707,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 bool selectionResolved = false;
                 bool executed = false;
 
-                Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null || (!tile.FungalCell.IsResistant);
+                Func<BoardTile, bool> isValidTile = tile => !tile.IsBlocked && (tile.FungalCell == null || !tile.FungalCell.IsResistant);
                 var validTileIds = board.AllTiles()
                     .Where(isValidTile)
                     .Select(tile => tile.TileId)
@@ -823,7 +823,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             else
             {
                 draftPanel?.SetActive(false);
-                Func<BoardTile, bool> isValidTile = tile => tile.FungalCell == null;
+                Func<BoardTile, bool> isValidTile = tile => !tile.IsOccupiedForSporePlacement;
                 var validTileIds = board.AllTiles()
                     .Where(isValidTile)
                     .Select(tile => tile.TileId)

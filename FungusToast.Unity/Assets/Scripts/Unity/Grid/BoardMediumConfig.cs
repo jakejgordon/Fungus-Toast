@@ -24,6 +24,8 @@ namespace FungusToast.Unity.Grid
             public Sprite backgroundSprite;
             public Color backgroundColor = Color.white;
             public bool hidePlayableSurfaceTiles = true;
+            public bool deriveBlockedTilesFromBackgroundAlpha = false;
+            [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
             [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -60,6 +62,8 @@ namespace FungusToast.Unity.Grid
                     backgroundSprite,
                     backgroundColor,
                     hidePlayableSurfaceTiles,
+                    deriveBlockedTilesFromBackgroundAlpha,
+                    backgroundAlphaPlayableThreshold,
                     GetBackgroundSafeAreaNormalized(),
                     backgroundScaleMultiplier,
                     renderBoardEdgeFade,
@@ -76,6 +80,8 @@ namespace FungusToast.Unity.Grid
                 Sprite backgroundSprite,
                 Color backgroundColor,
                 bool hidePlayableSurfaceTiles,
+                bool deriveBlockedTilesFromBackgroundAlpha,
+                float backgroundAlphaPlayableThreshold,
                 Rect safeAreaNormalized,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
@@ -87,6 +93,8 @@ namespace FungusToast.Unity.Grid
                 BackgroundSprite = backgroundSprite;
                 BackgroundColor = backgroundColor;
                 HidePlayableSurfaceTiles = hidePlayableSurfaceTiles;
+                DeriveBlockedTilesFromBackgroundAlpha = deriveBlockedTilesFromBackgroundAlpha;
+                BackgroundAlphaPlayableThreshold = backgroundAlphaPlayableThreshold;
                 SafeAreaNormalized = safeAreaNormalized;
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
@@ -99,6 +107,8 @@ namespace FungusToast.Unity.Grid
             public Sprite BackgroundSprite { get; }
             public Color BackgroundColor { get; }
             public bool HidePlayableSurfaceTiles { get; }
+            public bool DeriveBlockedTilesFromBackgroundAlpha { get; }
+            public float BackgroundAlphaPlayableThreshold { get; }
             public Rect SafeAreaNormalized { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
@@ -108,6 +118,7 @@ namespace FungusToast.Unity.Grid
 
             public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
             public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
+            public bool ShouldUseBackgroundAlphaPlayableMask => ShouldRenderBoardBackground && DeriveBlockedTilesFromBackgroundAlpha && BackgroundSprite != null;
             public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
         }
 
@@ -125,6 +136,8 @@ namespace FungusToast.Unity.Grid
         public Sprite backgroundSprite;
         public Color backgroundColor = Color.white;
         public bool hidePlayableSurfaceTiles = true;
+        public bool deriveBlockedTilesFromBackgroundAlpha = false;
+        [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
         [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
@@ -224,6 +237,8 @@ namespace FungusToast.Unity.Grid
                 backgroundSprite,
                 backgroundColor,
                 hidePlayableSurfaceTiles,
+                deriveBlockedTilesFromBackgroundAlpha,
+                backgroundAlphaPlayableThreshold,
                 GetBackgroundSafeAreaNormalized(),
                 backgroundScaleMultiplier,
                 renderBoardEdgeFade,
@@ -245,6 +260,74 @@ namespace FungusToast.Unity.Grid
         public bool ShouldRenderBoardEdgeFadeForSize(int boardWidth, int boardHeight)
         {
             return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldRenderBoardEdgeFade;
+        }
+
+        public IReadOnlyCollection<int> GetBlockedTileIdsForSize(int boardWidth, int boardHeight)
+        {
+            if (boardWidth <= 0 || boardHeight <= 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            var settings = GetResolvedBoardBackgroundSettings(boardWidth, boardHeight);
+            if (!settings.ShouldUseBackgroundAlphaPlayableMask)
+            {
+                return Array.Empty<int>();
+            }
+
+            Texture2D samplingTexture = null;
+            bool ownsSamplingTexture = false;
+            try
+            {
+                samplingTexture = GetReadableTexture(settings.BackgroundSprite, out ownsSamplingTexture);
+                if (samplingTexture == null)
+                {
+                    return Array.Empty<int>();
+                }
+
+                Rect spriteRect = settings.BackgroundSprite.textureRect;
+                Rect safeArea = settings.SafeAreaNormalized;
+                float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
+                var blockedTileIds = new List<int>();
+
+                for (int y = 0; y < boardHeight; y++)
+                {
+                    for (int x = 0; x < boardWidth; x++)
+                    {
+                        float normalizedX = safeArea.xMin + ((x + 0.5f) / boardWidth) * safeArea.width;
+                        float normalizedY = safeArea.yMin + ((y + 0.5f) / boardHeight) * safeArea.height;
+                        float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
+                        float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
+                        float alpha = samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
+                        if (alpha < alphaThreshold)
+                        {
+                            blockedTileIds.Add((y * boardWidth) + x);
+                        }
+                    }
+                }
+
+                if (blockedTileIds.Count >= boardWidth * boardHeight)
+                {
+                    Debug.LogWarning($"Board medium '{mediumId}' produced a fully blocked playable mask for {boardWidth}x{boardHeight}; ignoring the mask.");
+                    return Array.Empty<int>();
+                }
+
+                return blockedTileIds;
+            }
+            finally
+            {
+                if (ownsSamplingTexture && samplingTexture != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(samplingTexture);
+                    }
+                    else
+                    {
+                        DestroyImmediate(samplingTexture);
+                    }
+                }
+            }
         }
 
         public Rect GetBackgroundSafeAreaNormalized()
@@ -303,6 +386,39 @@ namespace FungusToast.Unity.Grid
             float width = Mathf.Max(0.01f, 1f - left - right);
             float height = Mathf.Max(0.01f, 1f - bottom - top);
             return new Rect(left, bottom, width, height);
+        }
+
+        private static Texture2D GetReadableTexture(Sprite sprite, out bool ownsTexture)
+        {
+            ownsTexture = false;
+            if (sprite == null || sprite.texture == null)
+            {
+                return null;
+            }
+
+            Texture2D sourceTexture = sprite.texture;
+            if (sourceTexture.isReadable)
+            {
+                return sourceTexture;
+            }
+
+            RenderTexture temporaryRenderTexture = RenderTexture.GetTemporary(sourceTexture.width, sourceTexture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Default);
+            RenderTexture previousActive = RenderTexture.active;
+            try
+            {
+                Graphics.Blit(sourceTexture, temporaryRenderTexture);
+                RenderTexture.active = temporaryRenderTexture;
+                var readableTexture = new Texture2D(sourceTexture.width, sourceTexture.height, TextureFormat.RGBA32, mipChain: false);
+                readableTexture.ReadPixels(new Rect(0f, 0f, temporaryRenderTexture.width, temporaryRenderTexture.height), 0, 0);
+                readableTexture.Apply(updateMipmaps: false, makeNoLongerReadable: false);
+                ownsTexture = true;
+                return readableTexture;
+            }
+            finally
+            {
+                RenderTexture.active = previousActive;
+                RenderTexture.ReleaseTemporary(temporaryRenderTexture);
+            }
         }
     }
 }

@@ -1031,7 +1031,7 @@ public static class MycovariantEffectProcessor
         {
             var adj = board.GetOrthogonalNeighbors(cell.TileId);
             return adj.Count(
-                t => t.FungalCell == null || t.FungalCell.IsDead);
+                t => !t.IsBlocked && (t.FungalCell == null || t.FungalCell.IsDead));
         }
 
         var bestEnemyCell = enemyLivingCells
@@ -1052,7 +1052,8 @@ public static class MycovariantEffectProcessor
         {
             // 3. If no enemy living cells, pick any open tile (not already Resistant)
             var openTiles = board.AllTiles()
-                .Where(tile => (tile.FungalCell == null || tile.FungalCell.IsDead)
+                .Where(tile => !tile.IsBlocked
+                    && (tile.FungalCell == null || tile.FungalCell.IsDead)
                     && (tile.FungalCell == null || !tile.FungalCell.IsResistant))
                 .ToList();
             if (openTiles.Count > 0)

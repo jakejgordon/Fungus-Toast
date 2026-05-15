@@ -1060,23 +1060,33 @@ namespace FungusToast.Core.Phases
                 (Math.Max(0, board.Height - 1) * board.Width) + Math.Max(0, board.Width - 1)
             };
 
-            int cornerTileId = cornerTileIds
+            var cornerTile = cornerTileIds
                 .Distinct()
-                .OrderByDescending(tileId => SquaredDistance(board.GetXYFromTileId(tileId), (startX, startY)))
-                .ThenBy(tileId => tileId)
-                .First();
+                .Select(board.GetTileById)
+                .Where(tile => tile != null && !board.IsTileBlockedForOccupation(tile.TileId))
+                .Select(tile => tile!)
+                .OrderByDescending(tile => SquaredDistance((tile.X, tile.Y), (startX, startY)))
+                .ThenBy(tile => tile.TileId)
+                .FirstOrDefault();
 
-            var cornerTile = board.GetTileById(cornerTileId);
             if (cornerTile == null)
             {
-                return false;
+                cornerTile = board.AllTiles()
+                    .Where(tile => !board.IsTileBlockedForOccupation(tile.TileId))
+                    .OrderByDescending(tile => SquaredDistance((tile.X, tile.Y), (startX, startY)))
+                    .ThenBy(tile => tile.TileId)
+                    .FirstOrDefault();
+                if (cornerTile == null)
+                {
+                    return false;
+                }
             }
 
-            int targetTileId = cornerTileId;
+            int targetTileId = cornerTile.TileId;
             if (cornerTile.FungalCell?.IsResistant == true)
             {
                 var fallbackTile = board.AllTiles()
-                    .Where(tile => tile.FungalCell?.IsResistant != true)
+                    .Where(tile => !board.IsTileBlockedForOccupation(tile.TileId) && tile.FungalCell?.IsResistant != true)
                     .OrderBy(tile => SquaredDistance((tile.X, tile.Y), (cornerTile.X, cornerTile.Y)))
                     .ThenBy(tile => tile.TileId)
                     .FirstOrDefault();
@@ -1439,7 +1449,7 @@ namespace FungusToast.Core.Phases
 
             var patchTileIds = candidateIds
                 .Select(tid => board.GetTileById(tid))
-                .Where(tile => tile != null && !tile.IsOccupied && !tile.HasNutrientPatch)
+                .Where(tile => tile != null && !tile.IsOccupiedForSporePlacement)
                 .Take(patchSize)
                 .Select(tile => tile!.TileId)
                 .ToList();
