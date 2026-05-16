@@ -552,17 +552,15 @@ namespace FungusToast.Unity.Grid
                 return true;
             }
 
-            int clampedResolution = Mathf.Clamp(sampleResolution, 1, 7);
+            // Clip-budget checks must include the allowed boundary, otherwise edge tiles can pass
+            // while still violating the configured maximum clipped fraction.
+            int clampedResolution = Mathf.Clamp(sampleResolution, 2, 7);
             for (int sampleY = 0; sampleY < clampedResolution; sampleY++)
             {
-                float sampleOffsetY = clampedResolution == 1
-                    ? 0f
-                    : Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, (sampleY + 0.5f) / clampedResolution);
+                float sampleOffsetY = Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, sampleY / (float)(clampedResolution - 1));
                 for (int sampleX = 0; sampleX < clampedResolution; sampleX++)
                 {
-                    float sampleOffsetX = clampedResolution == 1
-                        ? 0f
-                        : Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, (sampleX + 0.5f) / clampedResolution);
+                    float sampleOffsetX = Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, sampleX / (float)(clampedResolution - 1));
                     float normalizedX = safeArea.xMin + ((tileX + 0.5f + sampleOffsetX) / boardWidth) * safeArea.width;
                     float normalizedY = safeArea.yMin + ((tileY + 0.5f + sampleOffsetY) / boardHeight) * safeArea.height;
                     float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;

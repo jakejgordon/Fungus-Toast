@@ -50,14 +50,14 @@ MonoBehaviour:
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
     backgroundMaxTileClipFraction: 0.1
-    backgroundTileClipSampleResolution: 3
+    backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0
     backgroundInsetRightNormalized: 0
     backgroundInsetBottomNormalized: 0
     backgroundInsetTopNormalized: 0
-    backgroundScaleMultiplier: 1
+    backgroundScaleMultiplier: 1.05
     renderBoardEdgeFade: 0
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
     boardEdgeFadeWidthTiles: 1.1
