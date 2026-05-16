@@ -120,6 +120,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image resultsCardBackground;
         [SerializeField] private Image outcomeBackdrop;
         [SerializeField] private Sprite pendingRewardBreadSprite;
+        [SerializeField] private Sprite mainMenuButtonIcon;
         [SerializeField] private Sprite inspectBoardButtonIcon;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
@@ -2889,7 +2890,7 @@ namespace FungusToast.Unity.UI
                 playAgainButton,
                 "EndGamePlayAgainButtonContent",
                 "EndGamePlayAgainButtonIcon",
-                gameUI != null ? gameUI.PauseMenuButtonIcon : null,
+                mainMenuButtonIcon != null ? mainMenuButtonIcon : gameUI != null ? gameUI.PauseMenuButtonIcon : null,
                 UIStyleTokens.Button.TextDefault);
 
             ConfigureActionButtonContent(
@@ -2991,6 +2992,18 @@ namespace FungusToast.Unity.UI
             }
 
             SetButtonContentColor(button, contentColor);
+
+            Canvas.ForceUpdateCanvases();
+            if (contentRoot != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+            }
+
+            var buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRect);
+            }
         }
 
         private static Image EnsureActionButtonIcon(RectTransform contentRoot, string iconObjectName, Sprite iconSprite, Color iconColor)
