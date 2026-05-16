@@ -32,6 +32,7 @@ MonoBehaviour:
   backgroundInsetRightNormalized: 0.10
   backgroundInsetBottomNormalized: 0.08
   backgroundInsetTopNormalized: 0.10
+  composeSafeAreaWithBoardBoundsMetadata: 0
   backgroundScaleMultiplier: 1.05
   renderBoardEdgeFade: 1
   boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
@@ -55,8 +56,9 @@ MonoBehaviour:
     explicitBlockedTileIds: []
     backgroundInsetLeftNormalized: 0
     backgroundInsetRightNormalized: 0
-    backgroundInsetBottomNormalized: 0
-    backgroundInsetTopNormalized: 0
+    backgroundInsetBottomNormalized: 0.03
+    backgroundInsetTopNormalized: 0.07
+    composeSafeAreaWithBoardBoundsMetadata: 1
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 0
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
@@ -79,6 +81,7 @@ MonoBehaviour:
     backgroundInsetRightNormalized: 0.005
     backgroundInsetBottomNormalized: 0.005
     backgroundInsetTopNormalized: 0.005
+    composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1.02
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.08}
@@ -101,6 +104,7 @@ MonoBehaviour:
     backgroundInsetRightNormalized: 0.12
     backgroundInsetBottomNormalized: 0.12
     backgroundInsetTopNormalized: 0.12
+    composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1.05
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
@@ -125,6 +129,7 @@ MonoBehaviour:
     backgroundInsetRightNormalized: 0.171
     backgroundInsetBottomNormalized: 0.171
     backgroundInsetTopNormalized: 0.171
+    composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1.05
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.05}

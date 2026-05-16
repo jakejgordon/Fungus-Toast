@@ -49,6 +49,7 @@ namespace FungusToast.Unity.Grid
             [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
             [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
             [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
+            public bool composeSafeAreaWithBoardBoundsMetadata = false;
             [Min(0.01f)] public float backgroundScaleMultiplier = 1.05f;
             public bool renderBoardEdgeFade = true;
             public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
@@ -91,6 +92,7 @@ namespace FungusToast.Unity.Grid
                 bool useExplicitBlockedTileIds,
                 IReadOnlyList<int> explicitBlockedTileIds,
                 Rect safeAreaNormalized,
+                bool composeSafeAreaWithBoardBoundsMetadata,
                 bool hasVisibleAlphaBoundsMetadata,
                 Rect visibleAlphaBoundsNormalizedMetadata,
                 bool hasBoardBoundsMetadata,
@@ -113,6 +115,7 @@ namespace FungusToast.Unity.Grid
                 UseExplicitBlockedTileIds = useExplicitBlockedTileIds;
                 ExplicitBlockedTileIds = explicitBlockedTileIds ?? Array.Empty<int>();
                 SafeAreaNormalized = SanitizeNormalizedRect(safeAreaNormalized);
+                ComposeSafeAreaWithBoardBoundsMetadata = composeSafeAreaWithBoardBoundsMetadata;
                 HasVisibleAlphaBoundsMetadata = hasVisibleAlphaBoundsMetadata;
                 VisibleAlphaBoundsNormalizedMetadata = SanitizeNormalizedRect(visibleAlphaBoundsNormalizedMetadata);
                 HasBoardBoundsMetadata = hasBoardBoundsMetadata;
@@ -136,6 +139,7 @@ namespace FungusToast.Unity.Grid
             public bool UseExplicitBlockedTileIds { get; }
             public IReadOnlyList<int> ExplicitBlockedTileIds { get; }
             public Rect SafeAreaNormalized { get; }
+            public bool ComposeSafeAreaWithBoardBoundsMetadata { get; }
             public bool HasVisibleAlphaBoundsMetadata { get; }
             public Rect VisibleAlphaBoundsNormalizedMetadata { get; }
             public bool HasBoardBoundsMetadata { get; }
@@ -177,6 +181,7 @@ namespace FungusToast.Unity.Grid
         [Range(0f, 0.49f)] public float backgroundInsetRightNormalized = 0.16f;
         [Range(0f, 0.49f)] public float backgroundInsetBottomNormalized = 0.14f;
         [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
+        public bool composeSafeAreaWithBoardBoundsMetadata = false;
         [Min(0.01f)] public float backgroundScaleMultiplier = 1.05f;
         public bool renderBoardEdgeFade = true;
         public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
@@ -278,6 +283,7 @@ namespace FungusToast.Unity.Grid
                             backgroundOverride.useExplicitBlockedTileIds,
                             backgroundOverride.explicitBlockedTileIds,
                             backgroundOverride.GetBackgroundSafeAreaNormalized(),
+                            backgroundOverride.composeSafeAreaWithBoardBoundsMetadata,
                             backgroundOverride.backgroundScaleMultiplier,
                             backgroundOverride.renderBoardEdgeFade,
                             backgroundOverride.boardEdgeFadeColor,
@@ -300,6 +306,7 @@ namespace FungusToast.Unity.Grid
                 useExplicitBlockedTileIds,
                 explicitBlockedTileIds,
                 GetBackgroundSafeAreaNormalized(),
+                composeSafeAreaWithBoardBoundsMetadata,
                 backgroundScaleMultiplier,
                 renderBoardEdgeFade,
                 boardEdgeFadeColor,
@@ -320,6 +327,7 @@ namespace FungusToast.Unity.Grid
             bool resolvedUseExplicitBlockedTileIds,
             IReadOnlyList<int> resolvedExplicitBlockedTileIds,
             Rect resolvedSafeAreaNormalized,
+            bool resolvedComposeSafeAreaWithBoardBoundsMetadata,
             float resolvedBackgroundScaleMultiplier,
             bool resolvedRenderBoardEdgeFade,
             Color resolvedBoardEdgeFadeColor,
@@ -341,6 +349,7 @@ namespace FungusToast.Unity.Grid
                 resolvedUseExplicitBlockedTileIds,
                 resolvedExplicitBlockedTileIds,
                 resolvedSafeAreaNormalized,
+                resolvedComposeSafeAreaWithBoardBoundsMetadata,
                 hasVisibleAlphaBoundsMetadata,
                 visibleAlphaBoundsNormalizedMetadata,
                 hasBoardBoundsMetadata,
@@ -400,6 +409,7 @@ namespace FungusToast.Unity.Grid
                     settings.BackgroundSprite,
                     settings.SafeAreaNormalized,
                     settings.ShouldUseBackgroundAlphaPlayableMask,
+                    settings.ComposeSafeAreaWithBoardBoundsMetadata,
                     settings.HasVisibleAlphaBoundsMetadata,
                     settings.VisibleAlphaBoundsNormalizedMetadata,
                     settings.HasBoardBoundsMetadata,
@@ -716,17 +726,21 @@ namespace FungusToast.Unity.Grid
             Sprite sprite,
             Rect configuredSafeAreaNormalized,
             bool fitToVisibleAlphaBounds,
+            bool composeSafeAreaWithBoardBoundsMetadata = false,
             bool hasVisibleAlphaBoundsMetadata = false,
             Rect visibleAlphaBoundsNormalizedMetadata = default,
             bool hasBoardBoundsMetadata = false,
             Rect boardBoundsNormalizedMetadata = default)
         {
+            Rect safeArea = SanitizeNormalizedRect(configuredSafeAreaNormalized);
+
             if (hasBoardBoundsMetadata)
             {
-                return SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
+                Rect boardBounds = SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
+                return composeSafeAreaWithBoardBoundsMetadata
+                    ? ComposeNormalizedRect(boardBounds, safeArea)
+                    : boardBounds;
             }
-
-            Rect safeArea = SanitizeNormalizedRect(configuredSafeAreaNormalized);
 
             Rect visibleAlphaBounds;
             if (hasVisibleAlphaBoundsMetadata)
@@ -738,11 +752,18 @@ namespace FungusToast.Unity.Grid
                 return safeArea;
             }
 
+            return ComposeNormalizedRect(visibleAlphaBounds, safeArea);
+        }
+
+        private static Rect ComposeNormalizedRect(Rect outerRectNormalized, Rect innerRectNormalized)
+        {
+            Rect outer = SanitizeNormalizedRect(outerRectNormalized);
+            Rect inner = SanitizeNormalizedRect(innerRectNormalized);
             return new Rect(
-                visibleAlphaBounds.xMin + (safeArea.xMin * visibleAlphaBounds.width),
-                visibleAlphaBounds.yMin + (safeArea.yMin * visibleAlphaBounds.height),
-                visibleAlphaBounds.width * safeArea.width,
-                visibleAlphaBounds.height * safeArea.height);
+                outer.xMin + (inner.xMin * outer.width),
+                outer.yMin + (inner.yMin * outer.height),
+                outer.width * inner.width,
+                outer.height * inner.height);
         }
 
         private static bool TryGetVisibleAlphaBoundsNormalized(Sprite sprite, out Rect bounds)
