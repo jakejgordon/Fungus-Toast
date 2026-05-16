@@ -13,6 +13,7 @@ For general Unity UI architecture, also see `../../FungusToast.Core/docs/UI_ARCH
 - mutation phase intro banner
 - mutation tree first-open guidance
 - scoreboard win-condition coachmark
+- camera movement coachmark
 
 **Current source of truth:**
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/Onboarding/NewPlayerTooltipCatalog.cs`
@@ -124,6 +125,7 @@ These currently live in `NewPlayerTooltipCatalog.cs`:
 - `MutationTreeGuidance`
 - `TimeLapseModeIntro`
 - `ScoreboardWinCondition`
+- `CameraPanIntro`
 - `MycovariantDraftIntro`
 - `EndgameCountdownIntro`
 
@@ -146,6 +148,7 @@ Each onboarding entry should define:
 
 - **“Explain what this button does when hovered.”** → hover tooltip
 - **“Teach new players what the scoreboard means.”** → onboarding coachmark
+- **“Teach new players how to move around the board.”** → onboarding coachmark
 - **“Show details for the tile under the mouse.”** → cell/board inspection tooltip
 - **“Announce a phase or status change.”** → informational banner/toast
 - **“Teach the player a system the first time they encounter it.”** → onboarding catalog entry
