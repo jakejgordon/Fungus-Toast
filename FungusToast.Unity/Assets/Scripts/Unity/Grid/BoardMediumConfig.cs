@@ -12,7 +12,7 @@ namespace FungusToast.Unity.Grid
     public class BoardMediumConfig : ScriptableObject
     {
         private const float VisibleAlphaBoundsThreshold = 1f / 255f;
-        private static readonly Dictionary<int, Rect> VisibleAlphaBoundsCache = new();
+        private static readonly Dictionary<Sprite, Rect> VisibleAlphaBoundsCache = new();
 
         [Serializable]
         public sealed class BoardBackgroundSizeOverride
@@ -622,8 +622,7 @@ namespace FungusToast.Unity.Grid
                 return false;
             }
 
-            int spriteId = sprite.GetInstanceID();
-            if (VisibleAlphaBoundsCache.TryGetValue(spriteId, out Rect cachedBounds))
+            if (VisibleAlphaBoundsCache.TryGetValue(sprite, out Rect cachedBounds))
             {
                 bounds = cachedBounds;
                 return true;
@@ -681,7 +680,7 @@ namespace FungusToast.Unity.Grid
                     Mathf.Clamp((alphaMaxX + 1f - alphaMinX) / width, 0.001f, 1f),
                     Mathf.Clamp((alphaMaxY + 1f - alphaMinY) / height, 0.001f, 1f));
 
-                VisibleAlphaBoundsCache[spriteId] = bounds;
+                VisibleAlphaBoundsCache[sprite] = bounds;
                 return true;
             }
             finally
