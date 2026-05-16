@@ -34,12 +34,12 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
 - **Current focus:** blocked-tile board-shape support is now implemented in core + Unity rendering for silhouette-driven bread backgrounds.
-- **Current state:** all current bread photo backgrounds in `ToastBoardMedium.asset` now use the shared visible-alpha fit + clip-budget path, and each of the five current bread sprites also has explicit serialized background metadata for measured visible-alpha bounds plus canonical board bounds, so blocked-tile derivation, sprite placement, and `SpriteMask` clipping no longer depend on recomputing those per-image boundaries at runtime; board-edge fade, hover hit-testing, and highlight/ping overlays now also follow the blocked-tile silhouette instead of the raw rectangular board bounds; small seeded-cracker boards up to `20x20` now additionally compose a light vertical safe-area margin on top of the canonical sprite board bounds so the top edge is less aggressive without redefining the sprite-wide footprint.
+- **Current state:** bread photo backgrounds still use the shared visible-alpha fit + clip-budget path, but the earlier "canonical board bounds" metadata turned out to be too aggressive for some shapes: large pita boards were incorrectly locked to a hard-coded inner square and then further enlarged by a render-only scale multiplier, which left a large unused bread border; the current pita override now falls back to measured visible-alpha bounds with only a light 1% inset and no extra scale multiplier, while small seeded-cracker boards up to `20x20` still compose a light vertical safe-area margin on top of their sprite metadata so the top edge is less aggressive without redefining the sprite-wide footprint; board-edge fade, hover hit-testing, and highlight/ping overlays continue to follow the blocked-tile silhouette instead of the raw rectangular board bounds.
 
 ## Current Plan
 
 1. Keep the visible-alpha-fit + clip-budget path as the default shape solution for bread-photo backgrounds.
-2. Treat the current alpha-mask tuning baseline as `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05` unless a new image proves it needs a different fit.
+2. Treat the current alpha-mask tuning baseline as `backgroundMaxTileClipFraction: 0.1` and `backgroundTileClipSampleResolution: 5`; only keep per-background scale multipliers or hard-coded board-bounds metadata when they have been visually verified not to shrink the playable footprint.
 3. If future boards need true rectangles/ovals with different aspect ratios in the dev start UI, split the current square-only board-size picker into independent width/height controls instead of reworking the core again.
 
 ## Pending Tasks
