@@ -34,17 +34,16 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
 - **Current focus:** blocked-tile board-shape support is now implemented in core + Unity rendering for silhouette-driven bread backgrounds.
-- **Current state:** `seed_cracker` is wired to use the new background-alpha mask path; the same code path is ready for `pita`, but there is still no `*pita*` sprite asset in the fetched repo to hook up.
+- **Current state:** all current bread photo backgrounds in `ToastBoardMedium.asset` now use the shared visible-alpha fit + clip-budget path, so blocked-tile derivation, sprite placement, and `SpriteMask` clipping stay aligned across white bread, seeded cracker, plain cracker, cheese, and pita.
 
 ## Current Plan
 
-1. Keep the new permanent blocked-tile path as the default shape solution for non-rectangular bread backgrounds.
-2. When the `pita` sprite is added to the repo, add a `ToastBoardMedium.asset` override that enables the same alpha-mask path for that background.
+1. Keep the visible-alpha-fit + clip-budget path as the default shape solution for bread-photo backgrounds.
+2. Treat the current alpha-mask tuning baseline as `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05` unless a new image proves it needs a different fit.
 3. If future boards need true rectangles/ovals with different aspect ratios in the dev start UI, split the current square-only board-size picker into independent width/height controls instead of reworking the core again.
 
 ## Pending Tasks
 
-- Add the missing `pita` background asset, then wire a size override for it in `ToastBoardMedium.asset`.
 - Do an in-Unity visual pass to fine-tune per-background safe-area insets if any masked edge feels too tight or too loose.
 
 ## Current Handoff

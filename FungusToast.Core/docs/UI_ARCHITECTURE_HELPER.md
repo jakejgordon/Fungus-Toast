@@ -220,6 +220,10 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 3. Add future alternate images through `boardBackgroundOverrides`, ordered from smallest / most specific match to broadest fallback.
 4. Size rules are inclusive min/max width/height thresholds: an override matches when `boardWidth >= minBoardWidth`, `boardHeight >= minBoardHeight`, `boardWidth <= maxBoardWidth`, and `boardHeight <= maxBoardHeight`.
 5. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
+6. For bread-photo boards, prefer the shared alpha-mask path:
+   - enable `deriveBlockedTilesFromBackgroundAlpha`
+   - keep blocker sampling, sprite placement, and `SpriteMask` clipping aligned to the visible alpha footprint
+   - start with `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05`, then only retune if a specific image still needs it
 
 ### Current Small-Board Pattern
 
@@ -229,6 +233,7 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 - Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
 - Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
+- All current bread-photo bands now use the same alpha-mask fitting/clipping rule, so board placement, blocked-tile derivation, and visual mask clipping stay in sync across white bread, seeded cracker, plain cracker, cheese, and pita.
 
 ### Import Guidance
 
