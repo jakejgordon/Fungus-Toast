@@ -27,6 +27,8 @@ namespace FungusToast.Unity.Grid
             public bool deriveBlockedTilesFromBackgroundAlpha = false;
             [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
             [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
+            [Range(0f, 0.49f)] public float backgroundMaxTileClipFraction = 0f;
+            [Range(1, 7)] public int backgroundTileClipSampleResolution = 3;
             public bool useExplicitBlockedTileIds = false;
             public List<int> explicitBlockedTileIds = new();
             [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
@@ -68,6 +70,8 @@ namespace FungusToast.Unity.Grid
                     deriveBlockedTilesFromBackgroundAlpha,
                     backgroundAlphaPlayableThreshold,
                     backgroundMinTileCoverage,
+                    backgroundMaxTileClipFraction,
+                    backgroundTileClipSampleResolution,
                     useExplicitBlockedTileIds,
                     explicitBlockedTileIds,
                     GetBackgroundSafeAreaNormalized(),
@@ -89,6 +93,8 @@ namespace FungusToast.Unity.Grid
                 bool deriveBlockedTilesFromBackgroundAlpha,
                 float backgroundAlphaPlayableThreshold,
                 float backgroundMinTileCoverage,
+                float backgroundMaxTileClipFraction,
+                int backgroundTileClipSampleResolution,
                 bool useExplicitBlockedTileIds,
                 IReadOnlyList<int> explicitBlockedTileIds,
                 Rect safeAreaNormalized,
@@ -105,6 +111,8 @@ namespace FungusToast.Unity.Grid
                 DeriveBlockedTilesFromBackgroundAlpha = deriveBlockedTilesFromBackgroundAlpha;
                 BackgroundAlphaPlayableThreshold = backgroundAlphaPlayableThreshold;
                 BackgroundMinTileCoverage = backgroundMinTileCoverage;
+                BackgroundMaxTileClipFraction = backgroundMaxTileClipFraction;
+                BackgroundTileClipSampleResolution = Mathf.Clamp(backgroundTileClipSampleResolution, 1, 7);
                 UseExplicitBlockedTileIds = useExplicitBlockedTileIds;
                 ExplicitBlockedTileIds = explicitBlockedTileIds ?? Array.Empty<int>();
                 SafeAreaNormalized = safeAreaNormalized;
@@ -122,6 +130,8 @@ namespace FungusToast.Unity.Grid
             public bool DeriveBlockedTilesFromBackgroundAlpha { get; }
             public float BackgroundAlphaPlayableThreshold { get; }
             public float BackgroundMinTileCoverage { get; }
+            public float BackgroundMaxTileClipFraction { get; }
+            public int BackgroundTileClipSampleResolution { get; }
             public bool UseExplicitBlockedTileIds { get; }
             public IReadOnlyList<int> ExplicitBlockedTileIds { get; }
             public Rect SafeAreaNormalized { get; }
@@ -154,6 +164,8 @@ namespace FungusToast.Unity.Grid
         public bool deriveBlockedTilesFromBackgroundAlpha = false;
         [Range(0f, 1f)] public float backgroundAlphaPlayableThreshold = 0.1f;
         [Range(0f, 1f)] public float backgroundMinTileCoverage = 0f;
+        [Range(0f, 0.49f)] public float backgroundMaxTileClipFraction = 0f;
+        [Range(1, 7)] public int backgroundTileClipSampleResolution = 3;
         public bool useExplicitBlockedTileIds = false;
         public List<int> explicitBlockedTileIds = new();
         [Range(0f, 0.49f)] public float backgroundInsetLeftNormalized = 0.16f;
@@ -258,6 +270,8 @@ namespace FungusToast.Unity.Grid
                 deriveBlockedTilesFromBackgroundAlpha,
                 backgroundAlphaPlayableThreshold,
                 backgroundMinTileCoverage,
+                backgroundMaxTileClipFraction,
+                backgroundTileClipSampleResolution,
                 useExplicitBlockedTileIds,
                 explicitBlockedTileIds,
                 GetBackgroundSafeAreaNormalized(),
@@ -315,14 +329,17 @@ namespace FungusToast.Unity.Grid
                 Rect safeArea = settings.SafeAreaNormalized;
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
                 float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
+                float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
+                int tileClipSampleResolution = Mathf.Clamp(settings.BackgroundTileClipSampleResolution, 1, 7);
+                float playableSurfaceTileScaleForMask = Mathf.Max(1f, playableSurfaceTileScale);
                 var blockedTileIds = new List<int>();
 
                 for (int y = 0; y < boardHeight; y++)
                 {
                     for (int x = 0; x < boardWidth; x++)
                     {
-                        bool isPlayable = minimumTileCoverage > 0f
-                            ? EvaluateTileCoverage(
+                        bool satisfiesClipBudget = maximumTileClipFraction <= 0f
+                            || EvaluateTileClipBudget(
                                 samplingTexture,
                                 spriteRect,
                                 safeArea,
@@ -331,8 +348,26 @@ namespace FungusToast.Unity.Grid
                                 x,
                                 y,
                                 alphaThreshold,
-                                minimumTileCoverage)
-                            : SampleTileCenterAlpha(
+                                maximumTileClipFraction,
+                                playableSurfaceTileScaleForMask,
+                                tileClipSampleResolution);
+
+                        bool satisfiesCoverage = minimumTileCoverage <= 0f
+                            || EvaluateTileCoverage(
+                                samplingTexture,
+                                spriteRect,
+                                safeArea,
+                                boardWidth,
+                                boardHeight,
+                                x,
+                                y,
+                                alphaThreshold,
+                                minimumTileCoverage);
+
+                        bool isPlayable = satisfiesClipBudget && satisfiesCoverage;
+                        if (!isPlayable && maximumTileClipFraction <= 0f && minimumTileCoverage <= 0f)
+                        {
+                            isPlayable = SampleTileCenterAlpha(
                                 samplingTexture,
                                 spriteRect,
                                 safeArea,
@@ -340,6 +375,7 @@ namespace FungusToast.Unity.Grid
                                 boardHeight,
                                 x,
                                 y) >= alphaThreshold;
+                        }
 
                         if (!isPlayable)
                         {
@@ -488,6 +524,52 @@ namespace FungusToast.Unity.Grid
             }
 
             return ((float)coveredSamples / totalSamples) >= minimumTileCoverage;
+        }
+
+        private static bool EvaluateTileClipBudget(
+            Texture2D samplingTexture,
+            Rect spriteRect,
+            Rect safeArea,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float alphaThreshold,
+            float maximumTileClipFraction,
+            float playableSurfaceTileScale,
+            int sampleResolution)
+        {
+            float halfTileSpan = playableSurfaceTileScale * 0.5f;
+            float requiredInsetFromCenter = Mathf.Clamp(halfTileSpan - maximumTileClipFraction, 0f, 0.5f);
+            if (requiredInsetFromCenter <= 0.0001f)
+            {
+                return true;
+            }
+
+            int clampedResolution = Mathf.Clamp(sampleResolution, 1, 7);
+            for (int sampleY = 0; sampleY < clampedResolution; sampleY++)
+            {
+                float sampleOffsetY = clampedResolution == 1
+                    ? 0f
+                    : Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, (sampleY + 0.5f) / clampedResolution);
+                for (int sampleX = 0; sampleX < clampedResolution; sampleX++)
+                {
+                    float sampleOffsetX = clampedResolution == 1
+                        ? 0f
+                        : Mathf.Lerp(-requiredInsetFromCenter, requiredInsetFromCenter, (sampleX + 0.5f) / clampedResolution);
+                    float normalizedX = safeArea.xMin + ((tileX + 0.5f + sampleOffsetX) / boardWidth) * safeArea.width;
+                    float normalizedY = safeArea.yMin + ((tileY + 0.5f + sampleOffsetY) / boardHeight) * safeArea.height;
+                    float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
+                    float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
+                    float alpha = samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
+                    if (alpha < alphaThreshold)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private static float SampleTileCenterAlpha(
