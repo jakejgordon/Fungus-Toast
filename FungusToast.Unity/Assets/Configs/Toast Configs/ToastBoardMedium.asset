@@ -57,7 +57,7 @@ MonoBehaviour:
     backgroundInsetRightNormalized: 0
     backgroundInsetBottomNormalized: 0
     backgroundInsetTopNormalized: 0
-    backgroundScaleMultiplier: 1.05
+    backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 0
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
     boardEdgeFadeWidthTiles: 1.1
@@ -130,6 +130,82 @@ MonoBehaviour:
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.05}
     boardEdgeFadeWidthTiles: 1.2
     boardEdgeFadeNoiseStrength: 0.01
+  boardBackgroundSpriteMetadata:
+  - backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.019531
+      y: 0.005859
+      width: 0.977539
+      height: 0.993164
+    hasBoardBounds: 1
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.078183
+      y: 0.085312
+      width: 0.821133
+      height: 0.814394
+  - backgroundSprite: {fileID: 21300000, guid: a2ac9a449b17bb142b3c3738d24db8a4, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.003636
+      y: 0.034545
+      width: 0.994545
+      height: 0.938182
+    hasBoardBounds: 1
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.003636
+      y: 0.034545
+      width: 0.994545
+      height: 0.938182
+  - backgroundSprite: {fileID: 21300000, guid: c945b49acd66f8248950d2627044ab76, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.01
+      y: 0.011667
+      width: 0.975
+      height: 0.968333
+    hasBoardBounds: 1
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.014875
+      y: 0.016509
+      width: 0.96525
+      height: 0.95865
+  - backgroundSprite: {fileID: 21300000, guid: d0154f861fa82c842aba2cfd1a1dc380, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.085
+      y: 0.03375
+      width: 0.8525
+      height: 0.93125
+    hasBoardBounds: 1
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.1873
+      y: 0.1455
+      width: 0.6479
+      height: 0.70775
+  - backgroundSprite: {fileID: 21300000, guid: 9d8f3efff43346849a2a91614e2b4a6a, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.022222
+      y: 0.026667
+      width: 0.956667
+      height: 0.941111
+    hasBoardBounds: 1
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.185812
+      y: 0.187597
+      width: 0.629487
+      height: 0.619251
   renderCrust: 0
   crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
   crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}

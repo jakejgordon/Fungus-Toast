@@ -405,7 +405,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			Rect safeArea = BoardMediumConfig.GetEffectiveBackgroundSafeAreaNormalized(
 				sprite,
 				backgroundSettings.SafeAreaNormalized,
-				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask);
+				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask,
+				backgroundSettings.HasVisibleAlphaBoundsMetadata,
+				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
+				backgroundSettings.HasBoardBoundsMetadata,
+				backgroundSettings.BoardBoundsNormalizedMetadata);
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
 			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
 			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
@@ -466,7 +470,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			Rect safeArea = BoardMediumConfig.GetEffectiveBackgroundSafeAreaNormalized(
 				sprite,
 				backgroundSettings.SafeAreaNormalized,
-				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask);
+				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask,
+				backgroundSettings.HasVisibleAlphaBoundsMetadata,
+				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
+				backgroundSettings.HasBoardBoundsMetadata,
+				backgroundSettings.BoardBoundsNormalizedMetadata);
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
 			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
 			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);

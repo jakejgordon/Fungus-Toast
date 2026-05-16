@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `/home/jakejgordon/Fungus-Toast`
 - **Current focus:** blocked-tile board-shape support is now implemented in core + Unity rendering for silhouette-driven bread backgrounds.
-- **Current state:** all current bread photo backgrounds in `ToastBoardMedium.asset` now use the shared visible-alpha fit + clip-budget path, so blocked-tile derivation, sprite placement, and `SpriteMask` clipping stay aligned across white bread, seeded cracker, plain cracker, cheese, and pita.
+- **Current state:** all current bread photo backgrounds in `ToastBoardMedium.asset` now use the shared visible-alpha fit + clip-budget path, and each of the five current bread sprites also has explicit serialized background metadata for measured visible-alpha bounds plus canonical board bounds, so blocked-tile derivation, sprite placement, and `SpriteMask` clipping no longer depend on recomputing those per-image boundaries at runtime.
 
 ## Current Plan
 

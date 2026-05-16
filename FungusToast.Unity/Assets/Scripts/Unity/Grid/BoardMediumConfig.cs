@@ -16,6 +16,16 @@ namespace FungusToast.Unity.Grid
         private static readonly Dictionary<Sprite, Rect> VisibleAlphaBoundsCache = new();
 
         [Serializable]
+        public sealed class BoardBackgroundSpriteMetadata
+        {
+            public Sprite backgroundSprite;
+            public bool hasVisibleAlphaBounds = false;
+            public Rect visibleAlphaBoundsNormalized = new(0f, 0f, 1f, 1f);
+            public bool hasBoardBounds = false;
+            public Rect boardBoundsNormalized = new(0f, 0f, 1f, 1f);
+        }
+
+        [Serializable]
         public sealed class BoardBackgroundSizeOverride
         {
             [Min(1)] public int minBoardWidth = 1;
@@ -64,27 +74,6 @@ namespace FungusToast.Unity.Grid
                     backgroundInsetTopNormalized);
             }
 
-            public ResolvedBoardBackgroundSettings ToResolvedSettings()
-            {
-                return new ResolvedBoardBackgroundSettings(
-                    renderBoardBackground,
-                    backgroundSprite,
-                    backgroundColor,
-                    hidePlayableSurfaceTiles,
-                    deriveBlockedTilesFromBackgroundAlpha,
-                    backgroundAlphaPlayableThreshold,
-                    backgroundMinTileCoverage,
-                    backgroundMaxTileClipFraction,
-                    backgroundTileClipSampleResolution,
-                    useExplicitBlockedTileIds,
-                    explicitBlockedTileIds,
-                    GetBackgroundSafeAreaNormalized(),
-                    backgroundScaleMultiplier,
-                    renderBoardEdgeFade,
-                    boardEdgeFadeColor,
-                    boardEdgeFadeWidthTiles,
-                    boardEdgeFadeNoiseStrength);
-            }
         }
 
         public readonly struct ResolvedBoardBackgroundSettings
@@ -102,6 +91,10 @@ namespace FungusToast.Unity.Grid
                 bool useExplicitBlockedTileIds,
                 IReadOnlyList<int> explicitBlockedTileIds,
                 Rect safeAreaNormalized,
+                bool hasVisibleAlphaBoundsMetadata,
+                Rect visibleAlphaBoundsNormalizedMetadata,
+                bool hasBoardBoundsMetadata,
+                Rect boardBoundsNormalizedMetadata,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
                 Color boardEdgeFadeColor,
@@ -119,7 +112,11 @@ namespace FungusToast.Unity.Grid
                 BackgroundTileClipSampleResolution = Mathf.Clamp(backgroundTileClipSampleResolution, 1, 7);
                 UseExplicitBlockedTileIds = useExplicitBlockedTileIds;
                 ExplicitBlockedTileIds = explicitBlockedTileIds ?? Array.Empty<int>();
-                SafeAreaNormalized = safeAreaNormalized;
+                SafeAreaNormalized = SanitizeNormalizedRect(safeAreaNormalized);
+                HasVisibleAlphaBoundsMetadata = hasVisibleAlphaBoundsMetadata;
+                VisibleAlphaBoundsNormalizedMetadata = SanitizeNormalizedRect(visibleAlphaBoundsNormalizedMetadata);
+                HasBoardBoundsMetadata = hasBoardBoundsMetadata;
+                BoardBoundsNormalizedMetadata = SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
                 BoardEdgeFadeColor = boardEdgeFadeColor;
@@ -139,6 +136,10 @@ namespace FungusToast.Unity.Grid
             public bool UseExplicitBlockedTileIds { get; }
             public IReadOnlyList<int> ExplicitBlockedTileIds { get; }
             public Rect SafeAreaNormalized { get; }
+            public bool HasVisibleAlphaBoundsMetadata { get; }
+            public Rect VisibleAlphaBoundsNormalizedMetadata { get; }
+            public bool HasBoardBoundsMetadata { get; }
+            public Rect BoardBoundsNormalizedMetadata { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
             public Color BoardEdgeFadeColor { get; }
@@ -184,6 +185,9 @@ namespace FungusToast.Unity.Grid
 
         [Header("Board Background Overrides")]
         public List<BoardBackgroundSizeOverride> boardBackgroundOverrides = new();
+
+        [Header("Board Background Sprite Metadata")]
+        public List<BoardBackgroundSpriteMetadata> boardBackgroundSpriteMetadata = new();
 
         [Header("Crust")]
         public bool renderCrust = true;
@@ -261,12 +265,29 @@ namespace FungusToast.Unity.Grid
                     BoardBackgroundSizeOverride backgroundOverride = boardBackgroundOverrides[i];
                     if (backgroundOverride != null && backgroundOverride.Matches(boardWidth, boardHeight))
                     {
-                        return backgroundOverride.ToResolvedSettings();
+                        return BuildResolvedBoardBackgroundSettings(
+                            backgroundOverride.renderBoardBackground,
+                            backgroundOverride.backgroundSprite,
+                            backgroundOverride.backgroundColor,
+                            backgroundOverride.hidePlayableSurfaceTiles,
+                            backgroundOverride.deriveBlockedTilesFromBackgroundAlpha,
+                            backgroundOverride.backgroundAlphaPlayableThreshold,
+                            backgroundOverride.backgroundMinTileCoverage,
+                            backgroundOverride.backgroundMaxTileClipFraction,
+                            backgroundOverride.backgroundTileClipSampleResolution,
+                            backgroundOverride.useExplicitBlockedTileIds,
+                            backgroundOverride.explicitBlockedTileIds,
+                            backgroundOverride.GetBackgroundSafeAreaNormalized(),
+                            backgroundOverride.backgroundScaleMultiplier,
+                            backgroundOverride.renderBoardEdgeFade,
+                            backgroundOverride.boardEdgeFadeColor,
+                            backgroundOverride.boardEdgeFadeWidthTiles,
+                            backgroundOverride.boardEdgeFadeNoiseStrength);
                     }
                 }
             }
 
-            return new ResolvedBoardBackgroundSettings(
+            return BuildResolvedBoardBackgroundSettings(
                 renderBoardBackground,
                 backgroundSprite,
                 backgroundColor,
@@ -284,6 +305,51 @@ namespace FungusToast.Unity.Grid
                 boardEdgeFadeColor,
                 boardEdgeFadeWidthTiles,
                 boardEdgeFadeNoiseStrength);
+        }
+
+        private ResolvedBoardBackgroundSettings BuildResolvedBoardBackgroundSettings(
+            bool resolvedRenderBoardBackground,
+            Sprite resolvedBackgroundSprite,
+            Color resolvedBackgroundColor,
+            bool resolvedHidePlayableSurfaceTiles,
+            bool resolvedDeriveBlockedTilesFromBackgroundAlpha,
+            float resolvedBackgroundAlphaPlayableThreshold,
+            float resolvedBackgroundMinTileCoverage,
+            float resolvedBackgroundMaxTileClipFraction,
+            int resolvedBackgroundTileClipSampleResolution,
+            bool resolvedUseExplicitBlockedTileIds,
+            IReadOnlyList<int> resolvedExplicitBlockedTileIds,
+            Rect resolvedSafeAreaNormalized,
+            float resolvedBackgroundScaleMultiplier,
+            bool resolvedRenderBoardEdgeFade,
+            Color resolvedBoardEdgeFadeColor,
+            float resolvedBoardEdgeFadeWidthTiles,
+            float resolvedBoardEdgeFadeNoiseStrength)
+        {
+            bool hasVisibleAlphaBoundsMetadata = TryGetBackgroundSpriteMetadataVisibleAlphaBoundsNormalized(resolvedBackgroundSprite, out Rect visibleAlphaBoundsNormalizedMetadata);
+            bool hasBoardBoundsMetadata = TryGetBackgroundSpriteMetadataBoardBoundsNormalized(resolvedBackgroundSprite, out Rect boardBoundsNormalizedMetadata);
+            return new ResolvedBoardBackgroundSettings(
+                resolvedRenderBoardBackground,
+                resolvedBackgroundSprite,
+                resolvedBackgroundColor,
+                resolvedHidePlayableSurfaceTiles,
+                resolvedDeriveBlockedTilesFromBackgroundAlpha,
+                resolvedBackgroundAlphaPlayableThreshold,
+                resolvedBackgroundMinTileCoverage,
+                resolvedBackgroundMaxTileClipFraction,
+                resolvedBackgroundTileClipSampleResolution,
+                resolvedUseExplicitBlockedTileIds,
+                resolvedExplicitBlockedTileIds,
+                resolvedSafeAreaNormalized,
+                hasVisibleAlphaBoundsMetadata,
+                visibleAlphaBoundsNormalizedMetadata,
+                hasBoardBoundsMetadata,
+                boardBoundsNormalizedMetadata,
+                resolvedBackgroundScaleMultiplier,
+                resolvedRenderBoardEdgeFade,
+                resolvedBoardEdgeFadeColor,
+                resolvedBoardEdgeFadeWidthTiles,
+                resolvedBoardEdgeFadeNoiseStrength);
         }
 
         public bool ShouldRenderBoardBackgroundForSize(int boardWidth, int boardHeight)
@@ -333,7 +399,11 @@ namespace FungusToast.Unity.Grid
                 Rect safeArea = GetEffectiveBackgroundSafeAreaNormalized(
                     settings.BackgroundSprite,
                     settings.SafeAreaNormalized,
-                    settings.ShouldUseBackgroundAlphaPlayableMask);
+                    settings.ShouldUseBackgroundAlphaPlayableMask,
+                    settings.HasVisibleAlphaBoundsMetadata,
+                    settings.VisibleAlphaBoundsNormalizedMetadata,
+                    settings.HasBoardBoundsMetadata,
+                    settings.BoardBoundsNormalizedMetadata);
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
                 float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
                 float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
@@ -475,6 +545,60 @@ namespace FungusToast.Unity.Grid
             return new Rect(left, bottom, width, height);
         }
 
+        private static Rect SanitizeNormalizedRect(Rect rect)
+        {
+            float xMin = Mathf.Clamp01(rect.xMin);
+            float yMin = Mathf.Clamp01(rect.yMin);
+            float xMax = Mathf.Clamp(rect.xMax, xMin + 0.001f, 1f);
+            float yMax = Mathf.Clamp(rect.yMax, yMin + 0.001f, 1f);
+            return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        private bool TryGetBackgroundSpriteMetadataVisibleAlphaBoundsNormalized(Sprite sprite, out Rect visibleAlphaBoundsNormalized)
+        {
+            visibleAlphaBoundsNormalized = new Rect(0f, 0f, 1f, 1f);
+            BoardBackgroundSpriteMetadata metadata = GetBackgroundSpriteMetadata(sprite);
+            if (metadata == null || !metadata.hasVisibleAlphaBounds)
+            {
+                return false;
+            }
+
+            visibleAlphaBoundsNormalized = SanitizeNormalizedRect(metadata.visibleAlphaBoundsNormalized);
+            return true;
+        }
+
+        private bool TryGetBackgroundSpriteMetadataBoardBoundsNormalized(Sprite sprite, out Rect boardBoundsNormalized)
+        {
+            boardBoundsNormalized = new Rect(0f, 0f, 1f, 1f);
+            BoardBackgroundSpriteMetadata metadata = GetBackgroundSpriteMetadata(sprite);
+            if (metadata == null || !metadata.hasBoardBounds)
+            {
+                return false;
+            }
+
+            boardBoundsNormalized = SanitizeNormalizedRect(metadata.boardBoundsNormalized);
+            return true;
+        }
+
+        private BoardBackgroundSpriteMetadata GetBackgroundSpriteMetadata(Sprite sprite)
+        {
+            if (sprite == null || boardBackgroundSpriteMetadata == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < boardBackgroundSpriteMetadata.Count; i++)
+            {
+                BoardBackgroundSpriteMetadata metadata = boardBackgroundSpriteMetadata[i];
+                if (metadata != null && metadata.backgroundSprite == sprite)
+                {
+                    return metadata;
+                }
+            }
+
+            return null;
+        }
+
         private static IReadOnlyCollection<int> SanitizeBlockedTileIds(IReadOnlyList<int> blockedTileIds, int boardWidth, int boardHeight)
         {
             if (blockedTileIds == null || blockedTileIds.Count == 0)
@@ -588,15 +712,28 @@ namespace FungusToast.Unity.Grid
             return samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
         }
 
-        public static Rect GetEffectiveBackgroundSafeAreaNormalized(Sprite sprite, Rect configuredSafeAreaNormalized, bool fitToVisibleAlphaBounds)
+        public static Rect GetEffectiveBackgroundSafeAreaNormalized(
+            Sprite sprite,
+            Rect configuredSafeAreaNormalized,
+            bool fitToVisibleAlphaBounds,
+            bool hasVisibleAlphaBoundsMetadata = false,
+            Rect visibleAlphaBoundsNormalizedMetadata = default,
+            bool hasBoardBoundsMetadata = false,
+            Rect boardBoundsNormalizedMetadata = default)
         {
-            Rect safeArea = new Rect(
-                Mathf.Clamp01(configuredSafeAreaNormalized.xMin),
-                Mathf.Clamp01(configuredSafeAreaNormalized.yMin),
-                Mathf.Clamp01(configuredSafeAreaNormalized.width),
-                Mathf.Clamp01(configuredSafeAreaNormalized.height));
+            if (hasBoardBoundsMetadata)
+            {
+                return SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
+            }
 
-            if (!fitToVisibleAlphaBounds || sprite == null || !TryGetVisibleAlphaBoundsNormalized(sprite, out Rect visibleAlphaBounds))
+            Rect safeArea = SanitizeNormalizedRect(configuredSafeAreaNormalized);
+
+            Rect visibleAlphaBounds;
+            if (hasVisibleAlphaBoundsMetadata)
+            {
+                visibleAlphaBounds = SanitizeNormalizedRect(visibleAlphaBoundsNormalizedMetadata);
+            }
+            else if (!fitToVisibleAlphaBounds || sprite == null || !TryGetVisibleAlphaBoundsNormalized(sprite, out visibleAlphaBounds))
             {
                 return safeArea;
             }
