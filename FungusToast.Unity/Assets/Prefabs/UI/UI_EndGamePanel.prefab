@@ -314,6 +314,7 @@ MonoBehaviour:
   outcomeLabel: {fileID: 8621186854274905799}
   panelBackground: {fileID: 0}
   resultsCardBackground: {fileID: 3528134092260301093}
+  inspectBoardButtonIcon: {fileID: 21300000, guid: f60b144fd946a754cb46f2d5023595d2, type: 3}
 --- !u!1 &3509382878464025741
 GameObject:
   m_ObjectHideFlags: 0

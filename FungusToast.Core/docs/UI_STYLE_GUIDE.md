@@ -191,6 +191,11 @@ Notes:
 - Keep icon spacing tight and intentional. The icon should read as part of the button content, not as a detached decoration.
 - In related button stacks or groups, be consistent. If icons are introduced for one large sibling action, either use icons for all sibling actions that benefit from them or remove icons from the set.
 - Do not add icons to low-recognition or ambiguous actions just to decorate the button.
+- Canonical storage location for reusable button icons: `FungusToast.Unity/Assets/Sprites/UI/Buttons/`. If candidate art is first imported elsewhere under `Assets/Sprites/UI/`, move the approved button-use asset into `Buttons/` before wiring it into prefabs or scripts.
+- For new button icon source files, follow the Unity asset naming guidance in `second-level/UNIT_ASSET_NAMING_CONVENTIONS.md`: use lowercase `snake_case`, keep names semantic, and avoid repeating folder words in the file name.
+- High-confidence icon use in the current game: `Main Menu`, `Inspect Board`, `Next Track`, `Settings`, `Back`, `Delete`, `Store Mutation Points`, and `Time-Lapse` / presentation-speed utility controls.
+- Default text-only buttons in the current game: stateful forward CTAs and long dynamic labels such as `Resume`, `Restart Level`, `Continue Campaign`, `Select Adaptation`, `Claim Moldiness Reward`, `Preserve Spores for Next Run`, `Confirm Carryover`, `Sound Effects: On`, `SFX Volume: 25%`, `Music Volume: 25%`, `Replay Tutorial Tips`, and development-testing toggles.
+- Stateful-label rule: if a control changes between distinct meanings, the icon must change with the meaning or disappear. Example: a magnifying-glass icon is appropriate for `Inspect Board`, but should not remain visible when that same button changes to `Show Results`.
 
 ### 5.1.2 Large Button Icon Alignment
 - For large buttons in menus, pause overlays, modal action lists, and other full-width stacks, do not pin the icon to the extreme left edge while keeping the label centered. This creates a split focal point and makes the button feel visually unbalanced.
@@ -207,6 +212,17 @@ Notes:
 - Size the rendered icon box from the visible icon content, not from a source asset's empty transparent canvas.
 - Source assets for button icons should be tightly cropped. Do not rely on runtime scale increases to compensate for excessive transparent borders.
 - Reserve enough inset so the icon does not touch the button edge, but keep the inset smaller than the visual gap caused by a stranded edge-aligned icon.
+
+### 5.1.5 Current Button Icon Inventory Recommendation
+- `menu_hamburger`: use for `Main Menu` and compact open-menu / pause-menu HUD controls. This is an established cross-screen icon and should remain the canonical menu-return symbol.
+- `inspect_board`: use for `Inspect Board` and other explicit board-inspection toggles. Preferred concept: clean magnifying glass.
+- `skip_track_next`: use for `Next Track` controls in pause and audio utility surfaces.
+- `settings`: use for the `Settings` entry point. Preferred concept: gear or slider/tuning glyph.
+- `back_arrow`: use for `Back`, `Credits Back`, and `Settings Back` buttons.
+- `delete_trash`: use for destructive `Delete` actions such as deleting a campaign save.
+- `store_mutation_points`: use for `Store Mutation Points` or equivalent mutation-bank utilities. Existing DNA-battery-style art is an acceptable concept direction.
+- `time_lapse`: use for `Time-Lapse` or presentation-speed utility controls. Existing clock-style art is an acceptable concept direction.
+- Do not plan a first-wave button icon for `Resume`, `Restart Level`, `Continue Campaign`, `Start Campaign`, `Resume Campaign`, `Exit Game`, `Credits`, audio-value buttons, tutorial replay, confirmation buttons, or development-testing toggles unless later playtests show a clear scan-speed benefit.
 
 ### 5.2 Secondary/Tertiary Buttons
 - Prefer lower contrast fill with clear border/label.
@@ -322,6 +338,8 @@ Notes:
 ## 8) Recommended Asset File Sizes (UI)
 
 Use these as default targets for PNG UI art to balance visual quality, memory, and load time.
+
+Reusable button icons should live under `FungusToast.Unity/Assets/Sprites/UI/Buttons/` and should normally be exported as tightly cropped `256x256` PNGs unless a specific icon requires a different authored size.
 
 - **Small icons (inline, badges, helper icons):** source at `64x64` or `128x128`.
 - **Standard UI icons/buttons (most HUD/menu icon use):** source at `256x256`.

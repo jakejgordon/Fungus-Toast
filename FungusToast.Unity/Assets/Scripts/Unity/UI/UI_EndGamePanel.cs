@@ -103,6 +103,9 @@ namespace FungusToast.Unity.UI
         private const float EndGameDockActionButtonPreferredWidth = 188f;
         private const float EndGameDockLongActionButtonPreferredWidth = 248f;
         private const float EndGameDockActionButtonMinWidth = 164f;
+        private const float EndGameActionButtonIconSize = 22f;
+        private const float EndGameActionButtonContentSpacing = 10f;
+        private const float EndGameActionButtonLabelHeight = 28f;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -117,6 +120,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image resultsCardBackground;
         [SerializeField] private Image outcomeBackdrop;
         [SerializeField] private Sprite pendingRewardBreadSprite;
+        [SerializeField] private Sprite inspectBoardButtonIcon;
 
         // Façade reference — set by GameManager so we don't need GameManager.Instance
         private GameUIManager gameUI;
@@ -230,6 +234,7 @@ namespace FungusToast.Unity.UI
             gameUI = ui;
             onCampaignResume = campaignResume;
             onExitToModeSelect = exitToModeSelect;
+            RefreshActionButtonIconState();
         }
 
         /* ─────────── Unity ─────────── */
@@ -327,9 +332,9 @@ namespace FungusToast.Unity.UI
             UIStyleTokens.Button.ApplyAffirmativeMenuAction(continueButton);
             UIStyleTokens.Button.ApplyNeutralMenuAction(exitButton);
             UIStyleTokens.Button.ApplyNeutralMenuAction(playAgainButton);
-            UIStyleTokens.Button.SetButtonLabelColor(continueButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(exitButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(playAgainButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(continueButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(exitButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(playAgainButton, UIStyleTokens.Button.TextDefault);
 
             EnsureRuntimeLayoutScaffold();
             EnsureButtonLayout(continueButton);
@@ -345,8 +350,10 @@ namespace FungusToast.Unity.UI
             if (toggleResultsDockButton != null)
             {
                 UIStyleTokens.Button.ApplySecondaryMenuAction(toggleResultsDockButton, EndGameDockToggleButtonWidth);
-                UIStyleTokens.Button.SetButtonLabelColor(toggleResultsDockButton, UIStyleTokens.Button.TextDefault);
+                SetButtonContentColor(toggleResultsDockButton, UIStyleTokens.Text.Primary);
             }
+
+            RefreshActionButtonIconState();
 
             if (endGameDockBarRoot != null)
             {
@@ -575,6 +582,8 @@ namespace FungusToast.Unity.UI
                     ? "Restore the full endgame results screen. Press Tab to toggle."
                     : "Hide the full endgame screen so you can inspect the board. Press Tab to toggle.");
             }
+
+            RefreshActionButtonIconState();
 
             if (endGameDockSummaryLabel != null)
             {
@@ -2874,6 +2883,190 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        private void RefreshActionButtonIconState()
+        {
+            ConfigureActionButtonContent(
+                playAgainButton,
+                "EndGamePlayAgainButtonContent",
+                "EndGamePlayAgainButtonIcon",
+                gameUI != null ? gameUI.PauseMenuButtonIcon : null,
+                UIStyleTokens.Button.TextDefault);
+
+            ConfigureActionButtonContent(
+                toggleResultsDockButton,
+                "EndGameDockToggleButtonContent",
+                "EndGameDockToggleButtonIcon",
+                isEndGameResultsDocked ? null : inspectBoardButtonIcon,
+                UIStyleTokens.Text.Primary);
+        }
+
+        private static void ConfigureActionButtonContent(
+            Button button,
+            string contentRootName,
+            string iconObjectName,
+            Sprite iconSprite,
+            Color contentColor)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var contentRoot = button.transform.Find(contentRootName) as RectTransform;
+            if (contentRoot == null)
+            {
+                var contentRootObject = new GameObject(contentRootName, typeof(RectTransform));
+                contentRoot = contentRootObject.GetComponent<RectTransform>();
+                contentRoot.SetParent(button.transform, false);
+                contentRoot.anchorMin = new Vector2(0.5f, 0.5f);
+                contentRoot.anchorMax = new Vector2(0.5f, 0.5f);
+                contentRoot.pivot = new Vector2(0.5f, 0.5f);
+                contentRoot.anchoredPosition = Vector2.zero;
+            }
+
+            var contentLayout = contentRoot.gameObject.GetComponent<HorizontalLayoutGroup>();
+            if (contentLayout == null)
+            {
+                contentLayout = contentRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            contentLayout.spacing = EndGameActionButtonContentSpacing;
+            contentLayout.padding = new RectOffset(0, 0, 0, 0);
+            contentLayout.childAlignment = TextAnchor.MiddleCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+
+            var fitter = contentRoot.gameObject.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = contentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true)
+                ?? button.GetComponentsInChildren<TextMeshProUGUI>(true)
+                    .FirstOrDefault(candidate => candidate.transform != contentRoot && !candidate.transform.IsChildOf(contentRoot));
+
+            if (label != null)
+            {
+                label.transform.SetParent(contentRoot, false);
+                label.gameObject.name = "Label";
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.margin = Vector4.zero;
+                label.raycastTarget = false;
+
+                var labelRect = label.rectTransform;
+                labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+                labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRect.pivot = new Vector2(0.5f, 0.5f);
+                labelRect.sizeDelta = new Vector2(0f, EndGameActionButtonLabelHeight);
+
+                var labelLayout = label.GetComponent<LayoutElement>();
+                if (labelLayout == null)
+                {
+                    labelLayout = label.gameObject.AddComponent<LayoutElement>();
+                }
+
+                labelLayout.minHeight = EndGameActionButtonLabelHeight;
+                labelLayout.preferredHeight = EndGameActionButtonLabelHeight;
+                labelLayout.flexibleWidth = 0f;
+                labelLayout.flexibleHeight = 0f;
+            }
+
+            var iconImage = EnsureActionButtonIcon(contentRoot, iconObjectName, iconSprite, contentColor);
+            if (iconImage != null && iconImage.gameObject.activeSelf)
+            {
+                iconImage.transform.SetSiblingIndex(0);
+            }
+
+            if (label != null)
+            {
+                label.transform.SetSiblingIndex(iconImage != null && iconImage.gameObject.activeSelf ? 1 : 0);
+            }
+
+            SetButtonContentColor(button, contentColor);
+        }
+
+        private static Image EnsureActionButtonIcon(RectTransform contentRoot, string iconObjectName, Sprite iconSprite, Color iconColor)
+        {
+            if (contentRoot == null)
+            {
+                return null;
+            }
+
+            var iconImage = contentRoot.Find(iconObjectName)?.GetComponent<Image>();
+            if (iconSprite == null)
+            {
+                if (iconImage != null)
+                {
+                    iconImage.gameObject.SetActive(false);
+                }
+
+                return iconImage;
+            }
+
+            if (iconImage == null)
+            {
+                var iconObject = new GameObject(iconObjectName, typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                iconObject.transform.SetParent(contentRoot, false);
+                iconImage = iconObject.GetComponent<Image>();
+            }
+
+            iconImage.gameObject.SetActive(true);
+            iconImage.gameObject.name = iconObjectName;
+            iconImage.sprite = iconSprite;
+            iconImage.color = iconColor;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+
+            var iconLayout = iconImage.GetComponent<LayoutElement>();
+            if (iconLayout == null)
+            {
+                iconLayout = iconImage.gameObject.AddComponent<LayoutElement>();
+            }
+
+            iconLayout.minWidth = EndGameActionButtonIconSize;
+            iconLayout.preferredWidth = EndGameActionButtonIconSize;
+            iconLayout.minHeight = EndGameActionButtonIconSize;
+            iconLayout.preferredHeight = EndGameActionButtonIconSize;
+            iconLayout.flexibleWidth = 0f;
+            iconLayout.flexibleHeight = 0f;
+            return iconImage;
+        }
+
+        private static void SetButtonContentColor(Button button, Color color)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            UIStyleTokens.Button.SetButtonLabelColor(button, color);
+
+            var images = button.GetComponentsInChildren<Image>(true);
+            for (int i = 0; i < images.Length; i++)
+            {
+                var image = images[i];
+                if (image == null || image.gameObject == button.gameObject)
+                {
+                    continue;
+                }
+
+                if (!image.gameObject.name.EndsWith("ButtonIcon", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                image.color = color;
+            }
+        }
+
         private IEnumerator FadeCanvasGroup(float targetAlpha, float duration)
         {
             float start = canvasGroup.alpha;
@@ -5075,15 +5268,15 @@ namespace FungusToast.Unity.UI
 
         private void ApplyControlReadabilityOverrides()
         {
-            UIStyleTokens.Button.SetButtonLabelColor(continueButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(exitButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(playAgainButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(toggleResultsDockButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(continueButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(exitButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(playAgainButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(toggleResultsDockButton, UIStyleTokens.Text.Primary);
 
-            UIStyleTokens.Button.SetButtonLabelColor(postVictoryTestingToggleButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(postVictoryFastForwardButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(postVictorySkipToEndButton, UIStyleTokens.Button.TextDefault);
-            UIStyleTokens.Button.SetButtonLabelColor(postVictoryForcedResultButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(postVictoryTestingToggleButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(postVictoryFastForwardButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(postVictorySkipToEndButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(postVictoryForcedResultButton, UIStyleTokens.Button.TextDefault);
 
             if (detailsCloseButton != null)
             {
