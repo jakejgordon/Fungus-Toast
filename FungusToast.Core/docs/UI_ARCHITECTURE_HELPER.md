@@ -221,14 +221,15 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 3. Add future alternate images through `boardBackgroundOverrides`, ordered from smallest / most specific match to broadest fallback.
 4. Size rules are inclusive min/max width/height thresholds: an override matches when `boardWidth >= minBoardWidth`, `boardHeight >= minBoardHeight`, `boardWidth <= maxBoardWidth`, and `boardHeight <= maxBoardHeight`.
 5. Every bread-photo background should also have a matching `boardBackgroundSpriteMetadata` entry for that sprite.
-6. Treat `boardBoundsNormalized` as the canonical board footprint for the sprite, and `visibleAlphaBoundsNormalized` as the measured visible non-transparent pixel envelope.
-7. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
-8. Use `composeSafeAreaWithBoardBoundsMetadata` only when a size-specific override needs extra inset inside the sprite's canonical `boardBoundsNormalized` footprint instead of replacing that footprint.
-9. Prefer keeping one sprite-wide canonical footprint in metadata and doing any board-size-specific margin tweaks through overrides.
-10. For bread-photo boards, prefer the shared alpha-mask path:
+6. Treat `visibleAlphaBoundsNormalized` as the measured source-of-truth envelope for the sprite's visible non-transparent pixels.
+7. Treat `boardBoundsNormalized` as an optional override, not a default requirement. It is a high-risk knob because it replaces normal inset composition unless `composeSafeAreaWithBoardBoundsMetadata` is enabled.
+8. Prefer starting from visible-alpha fitting plus light per-band insets. Only add `boardBoundsNormalized` after visual verification proves the sprite needs a different canonical playable footprint.
+9. Keep `backgroundScaleMultiplier` near `1.0` unless a specific image still needs render framing adjustment after safe-area tuning. It is another high-risk knob because it changes background placement and mask derivation together.
+10. Use `composeSafeAreaWithBoardBoundsMetadata` only when a size-specific override needs extra inset inside a deliberately verified `boardBoundsNormalized` footprint instead of replacing that footprint.
+11. For bread-photo boards, prefer the shared alpha-mask path:
    - enable `deriveBlockedTilesFromBackgroundAlpha`
-   - keep blocker sampling, sprite placement, and `SpriteMask` clipping aligned to the visible alpha footprint
-   - start with `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05`, then only retune if a specific image still needs it
+   - keep blocker sampling, sprite placement, and `SpriteMask` clipping aligned to the same effective safe area
+   - start with `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune if a specific image still needs it
 
 ### Add A New Background
 
@@ -238,15 +239,16 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using an explicit blocked-tile list instead.
 5. Add a `boardBackgroundSpriteMetadata` entry for the sprite.
 6. Set `visibleAlphaBoundsNormalized` to the measured normalized bounds of the sprite's visible non-transparent pixels.
-7. Set `boardBoundsNormalized` to the intended playable-board footprint inside that image. This can be smaller than the visible-alpha bounds when the art has crust, rim, or decorative margin that should remain visible but not playable.
-8. Leave `composeSafeAreaWithBoardBoundsMetadata` off by default. Turn it on only for a size-specific override that needs extra margin inside the canonical sprite footprint.
-9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05`.
-10. If the image still needs fit adjustment after metadata is set, retune `backgroundInset*Normalized`, edge-fade values, or override bands before changing broader rendering assumptions.
+7. Leave `boardBoundsNormalized` off unless visual verification proves the playable board needs a different canonical footprint than the visible-alpha envelope.
+8. If `boardBoundsNormalized` is added, verify it deliberately and remember that ordinary inset fields stop affecting runtime placement unless `composeSafeAreaWithBoardBoundsMetadata` is also enabled.
+9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`.
+10. If the image still needs fit adjustment, prefer retuning `backgroundInset*Normalized`, edge-fade values, or override bands before introducing `boardBoundsNormalized` or a non-`1.0` scale multiplier.
+11. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
 
 ### Metadata Field Intent
 
 - `visibleAlphaBoundsNormalized`: the measured raw visible-pixel envelope for the sprite.
-- `boardBoundsNormalized`: the canonical board placement footprint for the sprite.
+- `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite.
 - If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 
@@ -271,6 +273,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Confirm the sprite is referenced by either the medium default background or the intended override band.
 - Confirm the sprite also has a `boardBackgroundSpriteMetadata` entry.
 - Confirm the override ordering still matches from narrowest / most specific band to broadest fallback.
+- Run `python3 scripts/validate_board_backgrounds.py` and fix any metadata or footprint errors it reports.
 - Do an in-Unity visual pass at the target board sizes and verify all of the following agree with the intended silhouette:
   - background placement
   - blocked-tile footprint
