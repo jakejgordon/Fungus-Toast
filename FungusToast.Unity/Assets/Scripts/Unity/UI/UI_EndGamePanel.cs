@@ -101,6 +101,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameDockSummaryPreferredWidth = 360f;
         private const float EndGameDockToggleButtonWidth = 210f;
         private const float EndGameDockActionButtonPreferredWidth = 188f;
+        private const float EndGameDockLongActionButtonPreferredWidth = 248f;
         private const float EndGameDockActionButtonMinWidth = 164f;
 
         /* ─────────── Inspector ─────────── */
@@ -173,6 +174,7 @@ namespace FungusToast.Unity.UI
         private bool isEndGameResultsDocked;
 
         private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection || requiresDefeatCarryoverSelection || showCampaignLossActionStack;
+        private bool CanShowResultsDockToggle => !showPostAdaptationConfirmationState && !requiresMoldinessRewardSelection && !requiresDefeatCarryoverSelection;
 
         private sealed class MoldinessRewardOptionVisual
         {
@@ -275,7 +277,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            if (!gameObject.activeInHierarchy || IsDetailsModalOpen || !WasResultsDockTogglePressedThisFrame())
+            if (!gameObject.activeInHierarchy || IsDetailsModalOpen || !CanShowResultsDockToggle || !WasResultsDockTogglePressedThisFrame())
             {
                 return;
             }
@@ -412,7 +414,7 @@ namespace FungusToast.Unity.UI
 
         private void ToggleEndGameResultsDocked()
         {
-            if (!gameObject.activeInHierarchy)
+            if (!gameObject.activeInHierarchy || !CanShowResultsDockToggle)
             {
                 return;
             }
@@ -4393,6 +4395,22 @@ namespace FungusToast.Unity.UI
             return button != null && button.gameObject.activeSelf;
         }
 
+        private float GetDockBarPreferredWidth(Button button)
+        {
+            if (button == continueButton && HasLongDockButtonLabel(button))
+            {
+                return EndGameDockLongActionButtonPreferredWidth;
+            }
+
+            return EndGameDockActionButtonPreferredWidth;
+        }
+
+        private static bool HasLongDockButtonLabel(Button button)
+        {
+            var label = button != null ? button.GetComponentInChildren<TextMeshProUGUI>(true) : null;
+            return label != null && !string.IsNullOrWhiteSpace(label.text) && label.text.Length >= 20;
+        }
+
         private static void ConfigureActionBarButtonLayout(Button button)
         {
             if (button == null)
@@ -5334,6 +5352,11 @@ namespace FungusToast.Unity.UI
             EnsureRuntimeLayoutScaffold();
             EnsureDockedResultsControls();
 
+            if (toggleResultsDockButton != null)
+            {
+                toggleResultsDockButton.gameObject.SetActive(CanShowResultsDockToggle);
+            }
+
             var targetParent = isEndGameResultsDocked
                 ? endGameDockButtonStripRoot
                 : UseVerticalActionStack ? endGamePostAdaptationRoot : endGameActionBarRoot;
@@ -5449,7 +5472,7 @@ namespace FungusToast.Unity.UI
             if (isEndGameResultsDocked)
             {
                 ConfigureDockBarButtonLayout(toggleResultsDockButton, EndGameDockToggleButtonWidth);
-                ConfigureDockBarButtonLayout(continueButton, EndGameDockActionButtonPreferredWidth);
+                ConfigureDockBarButtonLayout(continueButton, GetDockBarPreferredWidth(continueButton));
                 ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
                 ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
             }
@@ -5462,17 +5485,17 @@ namespace FungusToast.Unity.UI
             }
             else
             {
-                int visibleActionCount = (toggleResultsDockButton != null ? 1 : 0)
-                    + (playAgainButton != null && playAgainButton.gameObject.activeSelf ? 1 : 0)
-                    + (continueButton != null && continueButton.gameObject.activeSelf ? 1 : 0)
-                    + (exitButton != null && exitButton.gameObject.activeSelf ? 1 : 0);
+                int visibleActionCount = (IsButtonVisible(toggleResultsDockButton) ? 1 : 0)
+                    + (IsButtonVisible(playAgainButton) ? 1 : 0)
+                    + (IsButtonVisible(continueButton) ? 1 : 0)
+                    + (IsButtonVisible(exitButton) ? 1 : 0);
                 bool useCompactHorizontalLayout = visibleActionCount >= 4;
 
                 ConfigureDockBarButtonLayout(toggleResultsDockButton, EndGameDockToggleButtonWidth);
                 if (useCompactHorizontalLayout)
                 {
                     ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
-                    ConfigureDockBarButtonLayout(continueButton, EndGameDockActionButtonPreferredWidth);
+                    ConfigureDockBarButtonLayout(continueButton, GetDockBarPreferredWidth(continueButton));
                     ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
                 }
                 else
@@ -5561,6 +5584,18 @@ namespace FungusToast.Unity.UI
             {
                 layout.preferredWidth = preferredWidth;
                 layout.minWidth = Mathf.Min(preferredWidth, EndGameDockActionButtonMinWidth);
+            }
+
+            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.enableAutoSizing = true;
+                label.fontSizeMax = 22f;
+                label.fontSizeMin = 13f;
+                label.alignment = TextAlignmentOptions.Center;
+                label.margin = new Vector4(18f, 0f, 18f, 0f);
             }
         }
 
