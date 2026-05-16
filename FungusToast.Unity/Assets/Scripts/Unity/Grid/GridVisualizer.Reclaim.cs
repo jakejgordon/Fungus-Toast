@@ -15,10 +15,13 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<BoardMediumConfig> _getActiveMedium;
 		private readonly Func<Tilemap> _getToastTilemap;
 		private readonly Func<Tilemap> _getCrustTilemap;
+		private readonly Func<Tilemap> _getMoldTilemap;
+		private readonly Func<Tilemap> _getOverlayTilemap;
 		private readonly Func<Transform> _getVisualParent;
 
 		private SpriteRenderer _generatedCrustRenderer;
 		private SpriteRenderer _backgroundRenderer;
+		private SpriteMask _boardClipMask;
 		private SpriteRenderer _boardEdgeFadeRenderer;
 		private Sprite _generatedCrustSprite;
 		private Sprite _boardEdgeFadeSprite;
@@ -31,11 +34,15 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<BoardMediumConfig> getActiveMedium,
 			Func<Tilemap> getToastTilemap,
 			Func<Tilemap> getCrustTilemap,
+			Func<Tilemap> getMoldTilemap,
+			Func<Tilemap> getOverlayTilemap,
 			Func<Transform> getVisualParent)
 		{
 			_getActiveMedium = getActiveMedium;
 			_getToastTilemap = getToastTilemap;
 			_getCrustTilemap = getCrustTilemap;
+			_getMoldTilemap = getMoldTilemap;
+			_getOverlayTilemap = getOverlayTilemap;
 			_getVisualParent = getVisualParent;
 		}
 
@@ -154,6 +161,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			if (_backgroundRenderer == null)
 			{
+				ResetBoardClipMaskVisual();
 				ResetBoardEdgeFadeVisual();
 				return;
 			}
@@ -164,7 +172,22 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.transform.localPosition = Vector3.zero;
 			_backgroundRenderer.transform.localRotation = Quaternion.identity;
 			_backgroundRenderer.transform.localScale = Vector3.one;
+			ResetBoardClipMaskVisual();
 			ResetBoardEdgeFadeVisual();
+		}
+
+		public void ResetBoardClipMaskVisual()
+		{
+			if (_boardClipMask != null)
+			{
+				_boardClipMask.sprite = null;
+				_boardClipMask.enabled = false;
+				_boardClipMask.transform.localPosition = Vector3.zero;
+				_boardClipMask.transform.localRotation = Quaternion.identity;
+				_boardClipMask.transform.localScale = Vector3.one;
+			}
+
+			ApplyTilemapClipMask(false);
 		}
 
 		public void ResetBoardEdgeFadeVisual()
@@ -196,6 +219,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			if (_backgroundRenderer != null)
 			{
 				_backgroundRenderer = null;
+			}
+
+			if (_boardClipMask != null)
+			{
+				_boardClipMask = null;
 			}
 
 			if (_boardEdgeFadeRenderer != null)
@@ -233,6 +261,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.color = backgroundSettings.BackgroundColor;
 			PositionBoardBackgroundRenderer(activeBoard, backgroundSettings);
 			_backgroundRenderer.enabled = true;
+			EnsureBoardClipMask(activeBoard, backgroundSettings);
 			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium, backgroundSettings);
 		}
 
@@ -338,6 +367,13 @@ namespace FungusToast.Unity.Grid.Helpers
 			return spriteRenderer;
 		}
 
+		private SpriteMask CreateBoardClipMask()
+		{
+			var maskObject = new GameObject("BoardClipMask");
+			maskObject.transform.SetParent(_getVisualParent(), false);
+			return maskObject.AddComponent<SpriteMask>();
+		}
+
 		private SpriteRenderer CreateBoardEdgeFadeRenderer()
 		{
 			var fadeObject = new GameObject("BoardEdgeFadeVisual");
@@ -382,6 +418,93 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.transform.localPosition = boardCenter - safeCenterOffset;
 			_backgroundRenderer.transform.localRotation = Quaternion.identity;
 			_backgroundRenderer.transform.localScale = new Vector3(scale, scale, 1f);
+		}
+
+		private void EnsureBoardClipMask(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
+		{
+			Sprite sprite = backgroundSettings.BackgroundSprite;
+			if (sprite == null)
+			{
+				ResetBoardClipMaskVisual();
+				return;
+			}
+
+			if (_boardClipMask == null)
+			{
+				_boardClipMask = CreateBoardClipMask();
+			}
+
+			if (_boardClipMask == null)
+			{
+				return;
+			}
+
+			Transform visualParent = _getVisualParent();
+			if (_boardClipMask.transform.parent != visualParent)
+			{
+				_boardClipMask.transform.SetParent(visualParent, false);
+			}
+
+			_boardClipMask.sprite = sprite;
+			_boardClipMask.alphaCutoff = 0.01f;
+			PositionBoardClipMask(activeBoard, backgroundSettings);
+			_boardClipMask.enabled = true;
+			ApplyTilemapClipMask(true);
+		}
+
+		private void PositionBoardClipMask(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
+		{
+			if (_boardClipMask == null)
+			{
+				return;
+			}
+
+			Rect safeArea = backgroundSettings.SafeAreaNormalized;
+			Sprite sprite = backgroundSettings.BackgroundSprite;
+			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
+			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
+			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
+			float safeHeight = Mathf.Max(0.01f, spriteHeight * safeArea.height);
+			float scale = Mathf.Max(activeBoard.Width / safeWidth, activeBoard.Height / safeHeight);
+			scale *= Mathf.Max(0.01f, backgroundSettings.BackgroundScaleMultiplier);
+
+			float safeCenterX = ((safeArea.xMin + safeArea.xMax) * 0.5f) - 0.5f;
+			float safeCenterY = ((safeArea.yMin + safeArea.yMax) * 0.5f) - 0.5f;
+			Vector3 safeCenterOffset = new Vector3(safeCenterX * spriteWidth * scale, safeCenterY * spriteHeight * scale, 0f);
+			Vector3 boardCenter = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
+
+			_boardClipMask.transform.localPosition = boardCenter - safeCenterOffset;
+			_boardClipMask.transform.localRotation = Quaternion.identity;
+			_boardClipMask.transform.localScale = new Vector3(scale, scale, 1f);
+		}
+
+		private void ApplyTilemapClipMask(bool enabled)
+		{
+			ApplyTilemapMaskInteraction(_getMoldTilemap(), enabled);
+			ApplyTilemapMaskInteraction(_getOverlayTilemap(), enabled);
+		}
+
+		private static void ApplyTilemapMaskInteraction(Tilemap tilemap, bool enabled)
+		{
+			if (tilemap == null)
+			{
+				return;
+			}
+
+			var tilemapRenderer = tilemap.GetComponent<TilemapRenderer>();
+			if (tilemapRenderer == null)
+			{
+				return;
+			}
+
+			if (enabled)
+			{
+				tilemapRenderer.mode = TilemapRenderer.Mode.Individual;
+			}
+
+			tilemapRenderer.maskInteraction = enabled
+				? SpriteMaskInteraction.VisibleInsideMask
+				: SpriteMaskInteraction.None;
 		}
 
 		private void PositionBoardEdgeFadeRenderer(GameBoard activeBoard)

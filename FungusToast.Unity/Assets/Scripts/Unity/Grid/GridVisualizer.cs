@@ -168,6 +168,8 @@ namespace FungusToast.Unity.Grid
                 () => ActiveBoardMedium,
                 () => toastTilemap,
                 () => crustTilemap,
+                () => moldTilemap,
+                () => overlayTilemap,
                 () => toastTilemap != null ? toastTilemap.transform : transform);
             overlayRenderer = new GridOverlayRenderer(
                 () => ActiveBoard,
