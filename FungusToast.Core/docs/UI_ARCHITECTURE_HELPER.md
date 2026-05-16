@@ -212,6 +212,7 @@ public class UI_EndGamePanel : MonoBehaviour
 ## Board Background Variants
 
 Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`.
+The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`.
 
 ### Authoring Rules
 
@@ -219,11 +220,35 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 2. Use the medium's default background fields for the primary image.
 3. Add future alternate images through `boardBackgroundOverrides`, ordered from smallest / most specific match to broadest fallback.
 4. Size rules are inclusive min/max width/height thresholds: an override matches when `boardWidth >= minBoardWidth`, `boardHeight >= minBoardHeight`, `boardWidth <= maxBoardWidth`, and `boardHeight <= maxBoardHeight`.
-5. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
-6. For bread-photo boards, prefer the shared alpha-mask path:
+5. Every bread-photo background should also have a matching `boardBackgroundSpriteMetadata` entry for that sprite.
+6. Treat `boardBoundsNormalized` as the canonical board footprint for the sprite, and `visibleAlphaBoundsNormalized` as the measured visible non-transparent pixel envelope.
+7. Tune fit with `backgroundInset*Normalized` and `backgroundScaleMultiplier` per image instead of changing camera framing.
+8. Use `composeSafeAreaWithBoardBoundsMetadata` only when a size-specific override needs extra inset inside the sprite's canonical `boardBoundsNormalized` footprint instead of replacing that footprint.
+9. Prefer keeping one sprite-wide canonical footprint in metadata and doing any board-size-specific margin tweaks through overrides.
+10. For bread-photo boards, prefer the shared alpha-mask path:
    - enable `deriveBlockedTilesFromBackgroundAlpha`
    - keep blocker sampling, sprite placement, and `SpriteMask` clipping aligned to the visible alpha footprint
    - start with `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05`, then only retune if a specific image still needs it
+
+### Add A New Background
+
+1. Import the sprite and keep it square unless there is a clear reason not to.
+2. Open `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`.
+3. If the new image is the general fallback background, replace the medium's default `backgroundSprite`. If it only applies to a size band, add or update a `boardBackgroundOverrides` entry in the correct matching order.
+4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using an explicit blocked-tile list instead.
+5. Add a `boardBackgroundSpriteMetadata` entry for the sprite.
+6. Set `visibleAlphaBoundsNormalized` to the measured normalized bounds of the sprite's visible non-transparent pixels.
+7. Set `boardBoundsNormalized` to the intended playable-board footprint inside that image. This can be smaller than the visible-alpha bounds when the art has crust, rim, or decorative margin that should remain visible but not playable.
+8. Leave `composeSafeAreaWithBoardBoundsMetadata` off by default. Turn it on only for a size-specific override that needs extra margin inside the canonical sprite footprint.
+9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.05`.
+10. If the image still needs fit adjustment after metadata is set, retune `backgroundInset*Normalized`, edge-fade values, or override bands before changing broader rendering assumptions.
+
+### Metadata Field Intent
+
+- `visibleAlphaBoundsNormalized`: the measured raw visible-pixel envelope for the sprite.
+- `boardBoundsNormalized`: the canonical board placement footprint for the sprite.
+- If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
+- If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 
 ### Current Small-Board Pattern
 
@@ -240,6 +265,19 @@ Board backgrounds are authored through `BoardMediumConfig` in `FungusToast.Unity
 - Keep board background sprites square unless there is a clear gameplay-presentational reason not to.
 - Match the established sprite import baseline where possible, especially pixels-per-unit and filtering behavior, so world-space fit remains predictable.
 - If a new image has different composition or margins, create a new override entry and retune safe-area insets rather than reusing bread values verbatim.
+
+### Validation Checklist
+
+- Confirm the sprite is referenced by either the medium default background or the intended override band.
+- Confirm the sprite also has a `boardBackgroundSpriteMetadata` entry.
+- Confirm the override ordering still matches from narrowest / most specific band to broadest fallback.
+- Do an in-Unity visual pass at the target board sizes and verify all of the following agree with the intended silhouette:
+  - background placement
+  - blocked-tile footprint
+  - hover / magnifier hit-testing
+  - highlight / ping clipping
+  - board-edge fade
+- If the image is replacing or overlapping an existing size band, quickly compare neighboring board sizes too so no transition band regresses.
 
 ---
 
