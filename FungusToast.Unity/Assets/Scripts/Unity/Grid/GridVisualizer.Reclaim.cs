@@ -17,6 +17,10 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Tilemap> _getCrustTilemap;
 		private readonly Func<Tilemap> _getMoldTilemap;
 		private readonly Func<Tilemap> _getOverlayTilemap;
+		private readonly Func<Tilemap> _getSelectionHighlightTilemap;
+		private readonly Func<Tilemap> _getSelectedTilemap;
+		private readonly Func<Tilemap> _getHoverOverlayTilemap;
+		private readonly Func<Tilemap> _getPingOverlayTilemap;
 		private readonly Func<Transform> _getVisualParent;
 
 		private SpriteRenderer _generatedCrustRenderer;
@@ -36,6 +40,10 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<Tilemap> getCrustTilemap,
 			Func<Tilemap> getMoldTilemap,
 			Func<Tilemap> getOverlayTilemap,
+			Func<Tilemap> getSelectionHighlightTilemap,
+			Func<Tilemap> getSelectedTilemap,
+			Func<Tilemap> getHoverOverlayTilemap,
+			Func<Tilemap> getPingOverlayTilemap,
 			Func<Transform> getVisualParent)
 		{
 			_getActiveMedium = getActiveMedium;
@@ -43,6 +51,10 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getCrustTilemap = getCrustTilemap;
 			_getMoldTilemap = getMoldTilemap;
 			_getOverlayTilemap = getOverlayTilemap;
+			_getSelectionHighlightTilemap = getSelectionHighlightTilemap;
+			_getSelectedTilemap = getSelectedTilemap;
+			_getHoverOverlayTilemap = getHoverOverlayTilemap;
+			_getPingOverlayTilemap = getPingOverlayTilemap;
 			_getVisualParent = getVisualParent;
 		}
 
@@ -197,6 +209,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				_boardEdgeFadeRenderer.sprite = null;
 				_boardEdgeFadeRenderer.enabled = false;
 				_boardEdgeFadeRenderer.color = Color.white;
+				_boardEdgeFadeRenderer.maskInteraction = SpriteMaskInteraction.None;
 				_boardEdgeFadeRenderer.transform.localPosition = Vector3.zero;
 				_boardEdgeFadeRenderer.transform.localRotation = Quaternion.identity;
 				_boardEdgeFadeRenderer.transform.localScale = Vector3.one;
@@ -295,6 +308,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				RebuildBoardEdgeFadeSprite(activeBoard, activeMedium, backgroundSettings, cacheKey);
 			}
 
+			_boardEdgeFadeRenderer.maskInteraction = _boardClipMask != null && _boardClipMask.enabled
+				? SpriteMaskInteraction.VisibleInsideMask
+				: SpriteMaskInteraction.None;
 			PositionBoardEdgeFadeRenderer(activeBoard);
 			_boardEdgeFadeRenderer.enabled = _boardEdgeFadeSprite != null;
 		}
@@ -496,6 +512,10 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			ApplyTilemapMaskInteraction(_getMoldTilemap(), enabled);
 			ApplyTilemapMaskInteraction(_getOverlayTilemap(), enabled);
+			ApplyTilemapMaskInteraction(_getSelectionHighlightTilemap(), enabled);
+			ApplyTilemapMaskInteraction(_getSelectedTilemap(), enabled);
+			ApplyTilemapMaskInteraction(_getHoverOverlayTilemap(), enabled);
+			ApplyTilemapMaskInteraction(_getPingOverlayTilemap(), enabled);
 		}
 
 		private static void ApplyTilemapMaskInteraction(Tilemap tilemap, bool enabled)
@@ -558,7 +578,12 @@ namespace FungusToast.Unity.Grid.Helpers
 				for (int px = 0; px < textureWidth; px++)
 				{
 					float x = (px + 0.5f) / pixelsPerUnit;
-					float distanceToEdge = Mathf.Min(x, y, activeBoard.Width - x, activeBoard.Height - y);
+					float distanceToEdge = GetDistanceToPlayableEdge(activeBoard, x, y);
+					if (float.IsInfinity(distanceToEdge) || float.IsNaN(distanceToEdge))
+					{
+						continue;
+					}
+
 					float fade = 1f - Mathf.Clamp01(distanceToEdge / fadeWidth);
 					fade = Mathf.SmoothStep(0f, 1f, fade);
 					if (fade <= 0.001f)
@@ -595,6 +620,58 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardEdgeFadeRenderer.sprite = _boardEdgeFadeSprite;
 			_boardEdgeFadeRenderer.color = Color.white;
 			_boardEdgeFadeCacheKey = cacheKey;
+		}
+
+		private static float GetDistanceToPlayableEdge(GameBoard activeBoard, float x, float y)
+		{
+			if (activeBoard == null || x < 0f || y < 0f || x >= activeBoard.Width || y >= activeBoard.Height)
+			{
+				return float.PositiveInfinity;
+			}
+
+			int tileX = Mathf.Clamp(Mathf.FloorToInt(x), 0, activeBoard.Width - 1);
+			int tileY = Mathf.Clamp(Mathf.FloorToInt(y), 0, activeBoard.Height - 1);
+			BoardTile tile = activeBoard.Grid[tileX, tileY];
+			if (tile == null || tile.IsBlocked)
+			{
+				return float.PositiveInfinity;
+			}
+
+			float localX = x - tileX;
+			float localY = y - tileY;
+			float minDistance = float.PositiveInfinity;
+
+			if (!IsPlayableTile(activeBoard, tileX - 1, tileY))
+			{
+				minDistance = Mathf.Min(minDistance, localX);
+			}
+
+			if (!IsPlayableTile(activeBoard, tileX + 1, tileY))
+			{
+				minDistance = Mathf.Min(minDistance, 1f - localX);
+			}
+
+			if (!IsPlayableTile(activeBoard, tileX, tileY - 1))
+			{
+				minDistance = Mathf.Min(minDistance, localY);
+			}
+
+			if (!IsPlayableTile(activeBoard, tileX, tileY + 1))
+			{
+				minDistance = Mathf.Min(minDistance, 1f - localY);
+			}
+
+			return minDistance;
+		}
+
+		private static bool IsPlayableTile(GameBoard activeBoard, int x, int y)
+		{
+			return activeBoard != null
+				&& x >= 0
+				&& y >= 0
+				&& x < activeBoard.Width
+				&& y < activeBoard.Height
+				&& !activeBoard.Grid[x, y].IsBlocked;
 		}
 
 		private void RebuildGeneratedCrustSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness, string cacheKey)
@@ -700,11 +777,34 @@ namespace FungusToast.Unity.Grid.Helpers
 			return string.Join("|",
 				activeBoard.Width,
 				activeBoard.Height,
+				ComputeBlockedTileShapeHash(activeBoard),
 				activeMedium.mediumId,
 				backgroundSettings.BackgroundSprite != null ? backgroundSettings.BackgroundSprite.GetEntityId() : default,
 				backgroundSettings.BoardEdgeFadeColor,
 				backgroundSettings.BoardEdgeFadeWidthTiles,
 				backgroundSettings.BoardEdgeFadeNoiseStrength);
+		}
+
+		private static int ComputeBlockedTileShapeHash(GameBoard activeBoard)
+		{
+			if (activeBoard == null)
+			{
+				return 0;
+			}
+
+			unchecked
+			{
+				int hash = 17;
+				for (int y = 0; y < activeBoard.Height; y++)
+				{
+					for (int x = 0; x < activeBoard.Width; x++)
+					{
+						hash = (hash * 31) + (activeBoard.Grid[x, y].IsBlocked ? 1 : 0);
+					}
+				}
+
+				return hash;
+			}
 		}
 
 		private void DestroyGeneratedCrustAssets()

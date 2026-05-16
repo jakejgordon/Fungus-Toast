@@ -64,7 +64,7 @@ namespace FungusToast.Unity.Grid
 
             bool isSelectable = selectionTiles.Count == 0 || IsSelectable(cellPos);
 
-            if (isSelectable && gridVisualizer.toastTilemap.HasTile(cellPos))
+            if (isSelectable && gridVisualizer.IsRenderedBoardCell(cellPos))
             {
                 if (lastHoveredCell != cellPos)
                 {
@@ -101,7 +101,7 @@ namespace FungusToast.Unity.Grid
 
             bool pointerBlockedByUi = IsPointerBlockedByUi(pointerScreen);
 
-            if (!pointerBlockedByUi && UnityInputAdapter.WasPrimaryPointerPressedThisFrame() && gridVisualizer.toastTilemap.HasTile(cellPos))
+            if (!pointerBlockedByUi && UnityInputAdapter.WasPrimaryPointerPressedThisFrame() && gridVisualizer.IsRenderedBoardCell(cellPos))
             {
                 int tileId = TileIdFromCell(cellPos);
                 bool gateOk = selectionTiles.Count == 0 || selectionTiles.Contains(tileId);
@@ -187,7 +187,7 @@ namespace FungusToast.Unity.Grid
 
         bool IsCellOnBoard(Vector3Int cellPos)
         {
-            return gridVisualizer != null && gridVisualizer.IsPlayableBoardCell(cellPos);
+            return gridVisualizer != null && gridVisualizer.IsRenderedBoardCell(cellPos);
         }
 
         public void SetSelectableTiles(HashSet<int> selectableTileIds)

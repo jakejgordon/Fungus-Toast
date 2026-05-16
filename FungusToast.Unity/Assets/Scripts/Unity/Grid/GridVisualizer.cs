@@ -170,6 +170,10 @@ namespace FungusToast.Unity.Grid
                 () => crustTilemap,
                 () => moldTilemap,
                 () => overlayTilemap,
+                () => SelectionHighlightTileMap,
+                () => SelectedTileMap,
+                () => HoverOverlayTileMap,
+                () => PingOverlayTileMap,
                 () => toastTilemap != null ? toastTilemap.transform : transform);
             overlayRenderer = new GridOverlayRenderer(
                 () => ActiveBoard,
@@ -365,6 +369,23 @@ namespace FungusToast.Unity.Grid
         public void ClearPlayerMoldAssignments() => playerMoldAssignments.Clear();
         public bool IsPlayableBoardCell(Vector3Int cellPos)
             => board != null && cellPos.x >= 0 && cellPos.x < board.Width && cellPos.y >= 0 && cellPos.y < board.Height;
+        public bool IsRenderedBoardCell(Vector3Int cellPos)
+        {
+            var activeBoard = ActiveBoard;
+            if (activeBoard == null
+                || cellPos.x < 0
+                || cellPos.x >= activeBoard.Width
+                || cellPos.y < 0
+                || cellPos.y >= activeBoard.Height)
+            {
+                return false;
+            }
+
+            BoardTile tile = activeBoard.Grid[cellPos.x, cellPos.y];
+            return tile != null
+                && !tile.IsBlocked
+                && (toastTilemap == null || toastTilemap.HasTile(cellPos));
+        }
 
         private void UpdateMoldIdleVisuals()
         {
