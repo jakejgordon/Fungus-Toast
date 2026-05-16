@@ -75,11 +75,11 @@ MonoBehaviour:
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.04
-    backgroundInsetRightNormalized: 0.04
-    backgroundInsetBottomNormalized: 0.04
-    backgroundInsetTopNormalized: 0.04
-    backgroundScaleMultiplier: 1.05
+    backgroundInsetLeftNormalized: 0.005
+    backgroundInsetRightNormalized: 0.005
+    backgroundInsetBottomNormalized: 0.005
+    backgroundInsetTopNormalized: 0.005
+    backgroundScaleMultiplier: 1.02
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.08}
     boardEdgeFadeWidthTiles: 1.2
