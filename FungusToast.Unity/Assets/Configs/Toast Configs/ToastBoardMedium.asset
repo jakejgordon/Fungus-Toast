@@ -100,12 +100,12 @@ MonoBehaviour:
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.12
-    backgroundInsetRightNormalized: 0.12
-    backgroundInsetBottomNormalized: 0.12
-    backgroundInsetTopNormalized: 0.12
+    backgroundInsetLeftNormalized: 0.03
+    backgroundInsetRightNormalized: 0.03
+    backgroundInsetBottomNormalized: 0.03
+    backgroundInsetTopNormalized: 0.03
     composeSafeAreaWithBoardBoundsMetadata: 0
-    backgroundScaleMultiplier: 1.05
+    backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
     boardEdgeFadeWidthTiles: 1.1
@@ -125,10 +125,10 @@ MonoBehaviour:
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.01
-    backgroundInsetRightNormalized: 0.01
-    backgroundInsetBottomNormalized: 0.01
-    backgroundInsetTopNormalized: 0.01
+    backgroundInsetLeftNormalized: 0.025
+    backgroundInsetRightNormalized: 0.025
+    backgroundInsetBottomNormalized: 0.025
+    backgroundInsetTopNormalized: 0.025
     composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1
@@ -189,13 +189,13 @@ MonoBehaviour:
       y: 0.03375
       width: 0.8525
       height: 0.93125
-    hasBoardBounds: 1
+    hasBoardBounds: 0
     boardBoundsNormalized:
       serializedVersion: 2
-      x: 0.1873
-      y: 0.1455
-      width: 0.6479
-      height: 0.70775
+      x: 0.085
+      y: 0.03375
+      width: 0.8525
+      height: 0.93125
   - backgroundSprite: {fileID: 21300000, guid: 9d8f3efff43346849a2a91614e2b4a6a, type: 3}
     hasVisibleAlphaBounds: 1
     visibleAlphaBoundsNormalized:
