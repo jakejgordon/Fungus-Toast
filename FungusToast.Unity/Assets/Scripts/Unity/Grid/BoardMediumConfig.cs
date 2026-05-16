@@ -11,6 +11,9 @@ namespace FungusToast.Unity.Grid
     [CreateAssetMenu(menuName = "Configs/Board Medium", fileName = "BoardMediumConfig")]
     public class BoardMediumConfig : ScriptableObject
     {
+        private const float VisibleAlphaBoundsThreshold = 1f / 255f;
+        private static readonly Dictionary<int, Rect> VisibleAlphaBoundsCache = new();
+
         [Serializable]
         public sealed class BoardBackgroundSizeOverride
         {
@@ -326,7 +329,10 @@ namespace FungusToast.Unity.Grid
                 }
 
                 Rect spriteRect = settings.BackgroundSprite.textureRect;
-                Rect safeArea = settings.SafeAreaNormalized;
+                Rect safeArea = GetEffectiveBackgroundSafeAreaNormalized(
+                    settings.BackgroundSprite,
+                    settings.SafeAreaNormalized,
+                    settings.ShouldUseBackgroundAlphaPlayableMask);
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
                 float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
                 float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
@@ -586,6 +592,112 @@ namespace FungusToast.Unity.Grid
             float sampleU = (spriteRect.x + (normalizedX * spriteRect.width)) / samplingTexture.width;
             float sampleV = (spriteRect.y + (normalizedY * spriteRect.height)) / samplingTexture.height;
             return samplingTexture.GetPixelBilinear(sampleU, sampleV).a;
+        }
+
+        public static Rect GetEffectiveBackgroundSafeAreaNormalized(Sprite sprite, Rect configuredSafeAreaNormalized, bool fitToVisibleAlphaBounds)
+        {
+            Rect safeArea = new Rect(
+                Mathf.Clamp01(configuredSafeAreaNormalized.xMin),
+                Mathf.Clamp01(configuredSafeAreaNormalized.yMin),
+                Mathf.Clamp01(configuredSafeAreaNormalized.width),
+                Mathf.Clamp01(configuredSafeAreaNormalized.height));
+
+            if (!fitToVisibleAlphaBounds || sprite == null || !TryGetVisibleAlphaBoundsNormalized(sprite, out Rect visibleAlphaBounds))
+            {
+                return safeArea;
+            }
+
+            return new Rect(
+                visibleAlphaBounds.xMin + (safeArea.xMin * visibleAlphaBounds.width),
+                visibleAlphaBounds.yMin + (safeArea.yMin * visibleAlphaBounds.height),
+                visibleAlphaBounds.width * safeArea.width,
+                visibleAlphaBounds.height * safeArea.height);
+        }
+
+        private static bool TryGetVisibleAlphaBoundsNormalized(Sprite sprite, out Rect bounds)
+        {
+            bounds = new Rect(0f, 0f, 1f, 1f);
+            if (sprite == null)
+            {
+                return false;
+            }
+
+            int spriteId = sprite.GetInstanceID();
+            if (VisibleAlphaBoundsCache.TryGetValue(spriteId, out Rect cachedBounds))
+            {
+                bounds = cachedBounds;
+                return true;
+            }
+
+            Texture2D samplingTexture = null;
+            bool ownsSamplingTexture = false;
+            try
+            {
+                samplingTexture = GetReadableTexture(sprite, out ownsSamplingTexture);
+                if (samplingTexture == null)
+                {
+                    return false;
+                }
+
+                Rect spriteRect = sprite.textureRect;
+                int minX = Mathf.FloorToInt(spriteRect.xMin);
+                int maxX = Mathf.CeilToInt(spriteRect.xMax) - 1;
+                int minY = Mathf.FloorToInt(spriteRect.yMin);
+                int maxY = Mathf.CeilToInt(spriteRect.yMax) - 1;
+
+                int alphaMinX = maxX;
+                int alphaMaxX = minX;
+                int alphaMinY = maxY;
+                int alphaMaxY = minY;
+                bool foundVisiblePixel = false;
+
+                for (int y = minY; y <= maxY; y++)
+                {
+                    for (int x = minX; x <= maxX; x++)
+                    {
+                        if (samplingTexture.GetPixel(x, y).a < VisibleAlphaBoundsThreshold)
+                        {
+                            continue;
+                        }
+
+                        foundVisiblePixel = true;
+                        alphaMinX = Mathf.Min(alphaMinX, x);
+                        alphaMaxX = Mathf.Max(alphaMaxX, x);
+                        alphaMinY = Mathf.Min(alphaMinY, y);
+                        alphaMaxY = Mathf.Max(alphaMaxY, y);
+                    }
+                }
+
+                if (!foundVisiblePixel)
+                {
+                    return false;
+                }
+
+                float width = Mathf.Max(1f, spriteRect.width);
+                float height = Mathf.Max(1f, spriteRect.height);
+                bounds = new Rect(
+                    Mathf.Clamp01((alphaMinX - spriteRect.xMin) / width),
+                    Mathf.Clamp01((alphaMinY - spriteRect.yMin) / height),
+                    Mathf.Clamp((alphaMaxX + 1f - alphaMinX) / width, 0.001f, 1f),
+                    Mathf.Clamp((alphaMaxY + 1f - alphaMinY) / height, 0.001f, 1f));
+
+                VisibleAlphaBoundsCache[spriteId] = bounds;
+                return true;
+            }
+            finally
+            {
+                if (ownsSamplingTexture && samplingTexture != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(samplingTexture);
+                    }
+                    else
+                    {
+                        DestroyImmediate(samplingTexture);
+                    }
+                }
+            }
         }
 
         private static Texture2D GetReadableTexture(Sprite sprite, out bool ownsTexture)
