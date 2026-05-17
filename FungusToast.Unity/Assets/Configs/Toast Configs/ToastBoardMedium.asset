@@ -125,10 +125,10 @@ MonoBehaviour:
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.025
-    backgroundInsetRightNormalized: 0.025
-    backgroundInsetBottomNormalized: 0.025
-    backgroundInsetTopNormalized: 0.025
+    backgroundInsetLeftNormalized: 0.024
+    backgroundInsetRightNormalized: 0.026
+    backgroundInsetBottomNormalized: 0.024
+    backgroundInsetTopNormalized: 0.026
     composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1

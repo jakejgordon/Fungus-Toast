@@ -17,6 +17,12 @@ namespace FungusToast.Core.Death
         /// </summary>
         public static void ConvertToToxin(GameBoard board, int tileId, int toxinLifespan, GrowthSource growthSource, Player? owner = null)
         {
+            var tile = board.GetTileById(tileId);
+            if (tile == null || tile.IsBlocked || board.IsTileBlockedForOccupation(tileId))
+            {
+                return;
+            }
+
             // Fire ToxinPlaced event to allow for neutralization
             var toxinPlacedArgs = new ToxinPlacedEventArgs(tileId, owner?.PlayerId ?? -1);
             board.OnToxinPlaced(toxinPlacedArgs);
@@ -25,7 +31,6 @@ namespace FungusToast.Core.Death
             if (toxinPlacedArgs.Neutralized)
                 return;
 
-            var tile = board.GetTileById(tileId);
             var cell = tile?.FungalCell;
 
             if (cell != null)
@@ -90,6 +95,11 @@ namespace FungusToast.Core.Death
         public static void KillAndToxify(GameBoard board, int tileId, int toxinLifespan, DeathReason reason, GrowthSource growthSource, Player? owner = null, int? attackerTileId = null)
         {
             var tile = board.GetTileById(tileId);
+            if (tile == null || tile.IsBlocked || board.IsTileBlockedForOccupation(tileId))
+            {
+                return;
+            }
+
             var cell = tile?.FungalCell;
 
             if (cell == null || !cell.IsAlive || cell.IsResistant)

@@ -3070,7 +3070,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			var moldTilemap = _getMoldTilemap();
 			var overlayTilemap = _getOverlayTilemap();
-			if (tile == null || moldTilemap == null || overlayTilemap == null)
+			if (tile == null || tile.IsBlocked || moldTilemap == null || overlayTilemap == null)
 			{
 				return;
 			}
@@ -3182,6 +3182,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			_removeTrackedNutrientTile?.Invoke(tileId);
+
+			if (tile?.IsBlocked == true)
+			{
+				return;
+			}
 
 			if (tile?.FungalCell != null)
 			{

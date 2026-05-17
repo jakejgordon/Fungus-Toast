@@ -65,6 +65,17 @@ public class ToxinHelperTests
     }
 
     [Fact]
+    public void ConvertToToxin_does_not_place_toxin_on_a_permanently_blocked_tile()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1, permanentlyBlockedTileIds: new[] { 12 });
+
+        ToxinHelper.ConvertToToxin(board, tileId: 12, toxinLifespan: 7, growthSource: GrowthSource.CytolyticBurst);
+
+        Assert.True(board.GetTileById(12)?.IsBlocked);
+        Assert.Null(board.GetCell(12));
+    }
+
+    [Fact]
     public void KillAndToxify_returns_without_effect_when_tile_has_no_living_cell()
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 0);
