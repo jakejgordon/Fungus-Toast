@@ -413,7 +413,9 @@ namespace FungusToast.Unity.Grid
                     settings.HasVisibleAlphaBoundsMetadata,
                     settings.VisibleAlphaBoundsNormalizedMetadata,
                     settings.HasBoardBoundsMetadata,
-                    settings.BoardBoundsNormalizedMetadata);
+                    settings.BoardBoundsNormalizedMetadata,
+                    boardWidth,
+                    boardHeight);
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
                 float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
                 float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
@@ -730,7 +732,9 @@ namespace FungusToast.Unity.Grid
             bool hasVisibleAlphaBoundsMetadata = false,
             Rect visibleAlphaBoundsNormalizedMetadata = default,
             bool hasBoardBoundsMetadata = false,
-            Rect boardBoundsNormalizedMetadata = default)
+            Rect boardBoundsNormalizedMetadata = default,
+            int boardWidth = 0,
+            int boardHeight = 0)
         {
             Rect safeArea = SanitizeNormalizedRect(configuredSafeAreaNormalized);
 
@@ -752,7 +756,8 @@ namespace FungusToast.Unity.Grid
                 return safeArea;
             }
 
-            return ComposeNormalizedRect(visibleAlphaBounds, safeArea);
+            Rect composedSafeArea = ComposeNormalizedRect(visibleAlphaBounds, safeArea);
+            return FitNormalizedRectToAspectRatio(composedSafeArea, boardWidth, boardHeight);
         }
 
         private static Rect ComposeNormalizedRect(Rect outerRectNormalized, Rect innerRectNormalized)
@@ -764,6 +769,38 @@ namespace FungusToast.Unity.Grid
                 outer.yMin + (inner.yMin * outer.height),
                 outer.width * inner.width,
                 outer.height * inner.height);
+        }
+
+        private static Rect FitNormalizedRectToAspectRatio(Rect rect, int boardWidth, int boardHeight)
+        {
+            Rect sanitized = SanitizeNormalizedRect(rect);
+            if (boardWidth <= 0 || boardHeight <= 0)
+            {
+                return sanitized;
+            }
+
+            float targetAspect = boardWidth / (float)boardHeight;
+            if (targetAspect <= 0f)
+            {
+                return sanitized;
+            }
+
+            float currentAspect = sanitized.width / sanitized.height;
+            if (Mathf.Abs(currentAspect - targetAspect) <= 0.0001f)
+            {
+                return sanitized;
+            }
+
+            if (currentAspect > targetAspect)
+            {
+                float fittedWidth = sanitized.height * targetAspect;
+                float x = sanitized.xMin + ((sanitized.width - fittedWidth) * 0.5f);
+                return new Rect(x, sanitized.yMin, fittedWidth, sanitized.height);
+            }
+
+            float fittedHeight = sanitized.width / targetAspect;
+            float y = sanitized.yMin + ((sanitized.height - fittedHeight) * 0.5f);
+            return new Rect(sanitized.xMin, y, sanitized.width, fittedHeight);
         }
 
         private static bool TryGetVisibleAlphaBoundsNormalized(Sprite sprite, out Rect bounds)

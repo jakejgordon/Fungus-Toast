@@ -426,7 +426,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				backgroundSettings.HasVisibleAlphaBoundsMetadata,
 				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
 				backgroundSettings.HasBoardBoundsMetadata,
-				backgroundSettings.BoardBoundsNormalizedMetadata);
+				backgroundSettings.BoardBoundsNormalizedMetadata,
+				activeBoard.Width,
+				activeBoard.Height);
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
 			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
 			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
@@ -492,7 +494,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				backgroundSettings.HasVisibleAlphaBoundsMetadata,
 				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
 				backgroundSettings.HasBoardBoundsMetadata,
-				backgroundSettings.BoardBoundsNormalizedMetadata);
+				backgroundSettings.BoardBoundsNormalizedMetadata,
+				activeBoard.Width,
+				activeBoard.Height);
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
 			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
 			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
@@ -3088,7 +3092,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					if (cell.OwnerPlayerId is int aliveOwnerId)
 					{
 						moldTile = _getTileForPlayer(aliveOwnerId);
-							moldColor = new Color(1f, 1f, 1f, _getAliveCellAlpha(tile.TileId, cell));
+						moldColor = new Color(1f, 1f, 1f, _getAliveCellAlpha(tile.TileId, cell));
 					}
 
 					if (_shouldRenderResistanceOverlay(tile.TileId, cell))
@@ -3120,14 +3124,13 @@ namespace FungusToast.Unity.Grid.Helpers
 					break;
 
 				case FungalCellType.Toxin:
-					if (cell.OwnerPlayerId is int toxinOwnerId)
+					if (TryResolveOwnerMoldTile(cell, out TileBase toxinMoldTile))
 					{
-						moldTile = _getTileForPlayer(toxinOwnerId);
+						moldTile = toxinMoldTile;
 						moldColor = Color.white;
+						overlayTile = _getToxinOverlayTile();
+						overlayColor = cell.IsReceivingToxinDrop ? new Color(1f, 1f, 1f, 0f) : Color.white;
 					}
-
-					overlayTile = _getToxinOverlayTile();
-					overlayColor = cell.IsReceivingToxinDrop ? new Color(1f, 1f, 1f, 0f) : Color.white;
 					break;
 
 				default:
@@ -3217,6 +3220,31 @@ namespace FungusToast.Unity.Grid.Helpers
 				overlayColor.a = 0f;
 				overlayTilemap.SetColor(pos, overlayColor);
 			}
+		}
+
+		private bool TryResolveOwnerMoldTile(FungalCell cell, out TileBase moldTile)
+		{
+			moldTile = null;
+			if (cell == null)
+			{
+				return false;
+			}
+
+			if (cell.OwnerPlayerId is int ownerPlayerId)
+			{
+				moldTile = _getTileForPlayer(ownerPlayerId);
+				if (moldTile != null)
+				{
+					return true;
+				}
+			}
+
+			if (cell.LastOwnerPlayerId is int lastOwnerPlayerId)
+			{
+				moldTile = _getTileForPlayer(lastOwnerPlayerId);
+			}
+
+			return moldTile != null;
 		}
 	}
 }
