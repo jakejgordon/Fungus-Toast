@@ -154,6 +154,9 @@ def main() -> int:
     notes: list[str] = []
 
     validate_metadata(metadata_by_guid, sprite_images, errors)
+    validate_settings(default_settings, errors)
+    for override in overrides:
+        validate_settings(override, errors)
     collect_override_notes(default_settings, notes)
     for override in overrides:
         collect_override_notes(override, notes)
@@ -358,6 +361,27 @@ def validate_metadata(
             )
 
 
+def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
+    metadata = settings.metadata
+    if (
+        metadata
+        and metadata.has_visible_alpha_bounds
+        and metadata.has_board_bounds
+        and settings.derive_blocked_tiles_from_alpha
+        and not settings.compose_safe_area_with_board_bounds_metadata
+    ):
+        visible_area = metadata.visible_alpha_bounds.width * metadata.visible_alpha_bounds.height
+        board_area = metadata.board_bounds.width * metadata.board_bounds.height
+        if visible_area > 0:
+            retained_area_fraction = board_area / visible_area
+            if retained_area_fraction < 0.8:
+                errors.append(
+                    f"{settings.sprite_path.name} {settings.override_description}: boardBoundsNormalized keeps only "
+                    f"{retained_area_fraction:.2%} of the visible alpha area while alpha masking is enabled; "
+                    "this forces a conservative inner rectangle instead of filling the bread silhouette."
+                )
+
+
 def collect_override_notes(settings: BackgroundSettings, notes: list[str]) -> None:
     zero_safe_area = build_safe_area(0.0, 0.0, 0.0, 0.0)
     if settings.metadata and settings.metadata.has_board_bounds and not settings.compose_safe_area_with_board_bounds_metadata:
@@ -483,43 +507,8 @@ def get_effective_safe_area(settings: BackgroundSettings, board_width: int = 0, 
             return compose_rect(board_bounds, safe_area)
         return board_bounds
     if metadata and metadata.has_visible_alpha_bounds:
-        return fit_rect_to_aspect_ratio(
-            compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area),
-            board_width,
-            board_height,
-        )
+        return compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area)
     return safe_area
-
-
-def fit_rect_to_aspect_ratio(rect: Rect, board_width: int, board_height: int) -> Rect:
-    sanitized = sanitize_rect(rect)
-    if board_width <= 0 or board_height <= 0:
-        return sanitized
-
-    target_aspect = board_width / board_height
-    if target_aspect <= 0:
-        return sanitized
-
-    current_aspect = sanitized.width / sanitized.height
-    if math.isclose(current_aspect, target_aspect, abs_tol=0.0001):
-        return sanitized
-
-    if current_aspect > target_aspect:
-        fitted_width = sanitized.height * target_aspect
-        return Rect(
-            sanitized.x + ((sanitized.width - fitted_width) * 0.5),
-            sanitized.y,
-            fitted_width,
-            sanitized.height,
-        )
-
-    fitted_height = sanitized.width / target_aspect
-    return Rect(
-        sanitized.x,
-        sanitized.y + ((sanitized.height - fitted_height) * 0.5),
-        sanitized.width,
-        fitted_height,
-    )
 
 
 def measure_effective_area_transparency_fraction(image: SpriteImage, safe_area: Rect, threshold: float) -> float:
