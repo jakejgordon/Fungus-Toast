@@ -1765,6 +1765,7 @@ namespace FungusToast.Unity
             isInDraftPhase = false;
             isFastForwarding = false;
             _fastForwardStarted = false;
+            DisableTestingMode();
             initialMutationPointsAssigned = false;
             skipMutationPointAssignmentForRoundStart = false;
             currentLevelGameplaySeed = 0;
@@ -1845,6 +1846,7 @@ namespace FungusToast.Unity
             fastForwardRounds =0;
             testingSkipToEndgameAfterFastForward = false;
             testingTreatAsFirstGame = false;
+            _fastForwardStarted = false;
         }
 
         internal void RequestFastForwardIfNeeded()

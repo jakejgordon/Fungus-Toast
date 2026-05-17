@@ -57,7 +57,6 @@ namespace FungusToast.Unity.UI.Campaign
         [Header("Buttons")]
         [SerializeField] private Button resumeButton;
         [SerializeField] private Button newButton;
-        [SerializeField] private Button deleteButton;
         [SerializeField] private Button backButton;
 
         [Header("Panels")]
@@ -115,6 +114,7 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
+            RemoveLegacyDeleteButtonObjects();
             BuildLayoutScaffold();
             BuildTestingCard();
             BuildMoldinessSummarySection();
@@ -125,7 +125,6 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeClicked);
             if (newButton != null) newButton.onClick.AddListener(OnNewClicked);
-            if (deleteButton != null) deleteButton.onClick.AddListener(OnDeleteClicked);
             if (backButton != null) backButton.onClick.AddListener(OnBackClicked);
         }
 
@@ -245,6 +244,46 @@ namespace FungusToast.Unity.UI.Campaign
                 }
 
                 t.gameObject.SetActive(false);
+            }
+        }
+
+        private void RemoveLegacyDeleteButtonObjects()
+        {
+            if (contentRoot == null)
+            {
+                return;
+            }
+
+            var children = GetComponentsInChildren<Transform>(true);
+            for (int index = 0; index < children.Length; index++)
+            {
+                var child = children[index];
+                if (child == null)
+                {
+                    continue;
+                }
+
+                bool hasLegacyDeleteName = child.name.IndexOf("CampaignDeleteButton", StringComparison.OrdinalIgnoreCase) >= 0;
+                var tmpLabel = child.GetComponent<TextMeshProUGUI>();
+                bool hasLegacyDeleteLabel = tmpLabel != null
+                    && string.Equals(tmpLabel.text, "Delete Saved Campaign", StringComparison.Ordinal);
+
+                if (!hasLegacyDeleteName && !hasLegacyDeleteLabel)
+                {
+                    continue;
+                }
+
+                GameObject target = child.GetComponentInParent<Button>(true)?.gameObject ?? child.gameObject;
+                target.SetActive(false);
+
+                if (Application.isPlaying)
+                {
+                    Destroy(target);
+                }
+                else
+                {
+                    DestroyImmediate(target);
+                }
             }
         }
 
@@ -1626,13 +1665,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             ReparentActionButton(resumeButton, 0);
             ReparentActionButton(newButton, 1);
-            ReparentActionButton(deleteButton, 2);
-            ReparentActionButton(backButton, 3);
-
-            if (deleteButton != null)
-            {
-                deleteButton.gameObject.SetActive(false);
-            }
+            ReparentActionButton(backButton, 2);
         }
 
         private void ReparentActionButton(Button button, int index)
@@ -1706,11 +1739,6 @@ namespace FungusToast.Unity.UI.Campaign
                 }
             }
 
-            if (deleteButton != null)
-            {
-                UIStyleTokens.Button.ApplyNeutralMenuAction(deleteButton);
-            }
-
             UIStyleTokens.Button.ApplySecondaryMenuAction(backButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
         }
 
@@ -1738,11 +1766,6 @@ namespace FungusToast.Unity.UI.Campaign
             if (moldinessSummarySectionRoot != null)
             {
                 moldinessSummarySectionRoot.gameObject.SetActive(!selectingMold && hasCampaignSave);
-            }
-
-            if (deleteButton != null)
-            {
-                deleteButton.gameObject.SetActive(false);
             }
 
             if (newButton != null)
@@ -2113,12 +2136,6 @@ namespace FungusToast.Unity.UI.Campaign
                 moldinessSummarySectionRoot.gameObject.SetActive(hasSave && currentStep == CampaignPanelStep.MainActions);
             }
 
-            if (deleteButton != null)
-            {
-                // Start New Campaign already replaces existing progress.
-                deleteButton.gameObject.SetActive(false);
-                deleteButton.interactable = false;
-            }
         }
 
         private void ApplyTestingModeToGameManager()
@@ -2221,13 +2238,6 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             return campaignController?.IsAwaitingDefeatCarryoverSelection ?? false;
-        }
-
-        private void OnDeleteClicked()
-        {
-            CampaignSaveService.Delete();
-            RefreshButtonStates();
-            ForceLayoutNow();
         }
 
         private void OnBackClicked()

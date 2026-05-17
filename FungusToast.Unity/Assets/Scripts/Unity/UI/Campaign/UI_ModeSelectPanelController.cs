@@ -22,6 +22,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float TitleHeight = 34f;
         private const float SummaryHeight = 68f;
         private const float FooterHeight = 24f;
+        private const float CompactMenuButtonIconSize = 22f;
+        private const float CompactMenuButtonContentSpacing = 10f;
         private const float MinimumVerticalMargin = 32f;
         private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float SettingsCardWidth = 860f;
@@ -58,6 +60,7 @@ namespace FungusToast.Unity.UI.Campaign
         [SerializeField] private TextMeshProUGUI hotseatDescriptionText = null;
         [SerializeField] private TextMeshProUGUI campaignDescriptionText = null;
         [SerializeField] private Sprite wideTitleLogoSprite = null;
+        [SerializeField] private Sprite settingsButtonIcon = null;
 
         private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
@@ -384,7 +387,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (settingsButton == null)
             {
-                settingsButton = CreateButton("UI_ModeSelectSettingsButton", "Settings");
+                settingsButton = CreateButton("UI_ModeSelectSettingsButton", "Settings", settingsButtonIcon);
                 settingsButton.onClick.AddListener(OnSettingsClicked);
             }
 
@@ -1097,7 +1100,7 @@ namespace FungusToast.Unity.UI.Campaign
             contentRoot.localScale = new Vector3(scale, scale, 1f);
         }
 
-        private Button CreateButton(string objectName, string labelText)
+        private Button CreateButton(string objectName, string labelText, Sprite icon = null)
         {
             GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Button));
             buttonObject.transform.SetParent(contentRoot, false);
@@ -1109,17 +1112,88 @@ namespace FungusToast.Unity.UI.Campaign
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;
 
-            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(buttonObject.transform, false);
-            labelObject.layer = gameObject.layer;
+            TextMeshProUGUI label;
+            Image iconImage = null;
+            if (icon != null)
+            {
+                GameObject contentObject = new GameObject("ButtonContent", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
+                contentObject.transform.SetParent(buttonObject.transform, false);
+                contentObject.layer = gameObject.layer;
 
-            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
+                RectTransform contentRect = contentObject.GetComponent<RectTransform>();
+                contentRect.anchorMin = new Vector2(0.5f, 0.5f);
+                contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                contentRect.pivot = new Vector2(0.5f, 0.5f);
+                contentRect.anchoredPosition = Vector2.zero;
 
-            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+                HorizontalLayoutGroup contentLayout = contentObject.GetComponent<HorizontalLayoutGroup>();
+                contentLayout.spacing = CompactMenuButtonContentSpacing;
+                contentLayout.padding = new RectOffset(0, 0, 0, 0);
+                contentLayout.childAlignment = TextAnchor.MiddleCenter;
+                contentLayout.childControlWidth = true;
+                contentLayout.childControlHeight = true;
+                contentLayout.childForceExpandWidth = false;
+                contentLayout.childForceExpandHeight = false;
+
+                ContentSizeFitter contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+                contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+                contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+                GameObject iconObject = new GameObject("ButtonIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                iconObject.transform.SetParent(contentObject.transform, false);
+                iconObject.layer = gameObject.layer;
+
+                iconImage = iconObject.GetComponent<Image>();
+                iconImage.sprite = icon;
+                iconImage.preserveAspect = true;
+                iconImage.raycastTarget = false;
+
+                LayoutElement iconLayout = iconObject.GetComponent<LayoutElement>();
+                iconLayout.minWidth = CompactMenuButtonIconSize;
+                iconLayout.preferredWidth = CompactMenuButtonIconSize;
+                iconLayout.minHeight = CompactMenuButtonIconSize;
+                iconLayout.preferredHeight = CompactMenuButtonIconSize;
+                iconLayout.flexibleWidth = 0f;
+                iconLayout.flexibleHeight = 0f;
+
+                RectTransform iconRect = iconObject.GetComponent<RectTransform>();
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+                iconRect.sizeDelta = new Vector2(CompactMenuButtonIconSize, CompactMenuButtonIconSize);
+
+                GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+                labelObject.transform.SetParent(contentObject.transform, false);
+                labelObject.layer = gameObject.layer;
+
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+                LayoutElement labelLayout = labelObject.GetComponent<LayoutElement>();
+                labelLayout.minHeight = 28f;
+                labelLayout.preferredHeight = 28f;
+                labelLayout.flexibleWidth = 0f;
+                labelLayout.flexibleHeight = 0f;
+
+                RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+                labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRect.pivot = new Vector2(0.5f, 0.5f);
+                labelRect.sizeDelta = new Vector2(0f, 28f);
+            }
+            else
+            {
+                GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.transform.SetParent(buttonObject.transform, false);
+                labelObject.layer = gameObject.layer;
+
+                RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+            }
+
             label.text = labelText;
             label.font = ResolveSharedFont();
             label.fontSize = 22f;
@@ -1127,6 +1201,11 @@ namespace FungusToast.Unity.UI.Campaign
             label.raycastTarget = false;
 
             UIStyleTokens.Button.ApplySecondaryMenuAction(button, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+
+            if (iconImage != null)
+            {
+                iconImage.color = label.color;
+            }
 
             return button;
         }
