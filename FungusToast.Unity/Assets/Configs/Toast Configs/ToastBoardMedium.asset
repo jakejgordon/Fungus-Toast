@@ -24,7 +24,7 @@ MonoBehaviour:
   deriveBlockedTilesFromBackgroundAlpha: 1
   backgroundAlphaPlayableThreshold: 0.1
   backgroundMinTileCoverage: 0
-  backgroundMaxTileClipFraction: 0.1
+  backgroundMaxTileClipFraction: 0
   backgroundTileClipSampleResolution: 5
   useExplicitBlockedTileIds: 0
   explicitBlockedTileIds: []
@@ -50,7 +50,7 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
-    backgroundMaxTileClipFraction: 0.1
+    backgroundMaxTileClipFraction: 0
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
@@ -73,16 +73,16 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
-    backgroundMaxTileClipFraction: 0.1
+    backgroundMaxTileClipFraction: 0
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.005
-    backgroundInsetRightNormalized: 0.005
-    backgroundInsetBottomNormalized: 0.005
-    backgroundInsetTopNormalized: 0.005
+    backgroundInsetLeftNormalized: 0.025
+    backgroundInsetRightNormalized: 0.025
+    backgroundInsetBottomNormalized: 0.025
+    backgroundInsetTopNormalized: 0.025
     composeSafeAreaWithBoardBoundsMetadata: 0
-    backgroundScaleMultiplier: 1.02
+    backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.08}
     boardEdgeFadeWidthTiles: 1.2
@@ -96,7 +96,7 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
-    backgroundMaxTileClipFraction: 0.1
+    backgroundMaxTileClipFraction: 0
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
@@ -121,7 +121,7 @@ MonoBehaviour:
     deriveBlockedTilesFromBackgroundAlpha: 1
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
-    backgroundMaxTileClipFraction: 0.1
+    backgroundMaxTileClipFraction: 0
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
@@ -174,7 +174,7 @@ MonoBehaviour:
       y: 0.011667
       width: 0.975
       height: 0.968333
-    hasBoardBounds: 1
+    hasBoardBounds: 0
     boardBoundsNormalized:
       serializedVersion: 2
       x: 0.014875
@@ -211,6 +211,9 @@ MonoBehaviour:
       y: 0.026667
       width: 0.956667
       height: 0.941111
+    hasPlayableEllipse: 1
+    playableEllipseCenterNormalized: {x: 0.494876, y: 0.502903}
+    playableEllipseRadiiNormalized: {x: 0.478333, y: 0.478333}
   renderCrust: 0
   crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
   crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}

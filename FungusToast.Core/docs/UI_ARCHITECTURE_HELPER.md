@@ -228,20 +228,23 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 10. Use `composeSafeAreaWithBoardBoundsMetadata` only when a size-specific override needs extra inset inside a deliberately verified `boardBoundsNormalized` footprint instead of replacing that footprint.
 11. For bread-photo boards, prefer the shared alpha-mask path:
    - enable `deriveBlockedTilesFromBackgroundAlpha`
-   - keep blocker sampling, sprite placement, and `SpriteMask` clipping aligned to the same effective safe area
-   - start with `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune if a specific image still needs it
+    - keep blocker sampling and sprite placement aligned to the same effective safe area, then build the runtime `SpriteMask` from the live blocked-tile footprint so mold/overlay visuals follow the actual playable silhouette instead of the raw sprite alpha
+    - when `backgroundMaxTileClipFraction` is `0.0`, treat that as strict no-overrun clipping; do not add a center-sample fallback that can re-allow partially outside tiles
+    - inscribe the requested board aspect ratio inside visible-alpha-derived safe areas before placement/mask sampling so square boards do not inherit rectangular alpha slack
+    - start with `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune safe-area insets before considering anything looser
+12. When alpha-derived geometry keeps drifting from the actual intended board shape, add explicit `hasPlayableEllipse` metadata for that sprite and let both blocked-tile derivation and background placement read the same stored ellipse instead of continuing to infer the shape from art alpha.
 
 ### Add A New Background
 
 1. Import the sprite and keep it square unless there is a clear reason not to.
 2. Open `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`.
 3. If the new image is the general fallback background, replace the medium's default `backgroundSprite`. If it only applies to a size band, add or update a `boardBackgroundOverrides` entry in the correct matching order.
-4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using an explicit blocked-tile list instead.
+4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using an explicit blocked-tile list instead. If a background needs explicit geometry, add `hasPlayableEllipse` metadata instead of widening clip budgets.
 5. Add a `boardBackgroundSpriteMetadata` entry for the sprite.
 6. Set `visibleAlphaBoundsNormalized` to the measured normalized bounds of the sprite's visible non-transparent pixels.
 7. Leave `boardBoundsNormalized` off unless visual verification proves the playable board needs a different canonical footprint than the visible-alpha envelope.
 8. If `boardBoundsNormalized` is added, verify it deliberately and remember that ordinary inset fields stop affecting runtime placement unless `composeSafeAreaWithBoardBoundsMetadata` is also enabled.
-9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.1`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`.
+9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`.
 10. If the image still needs fit adjustment, prefer retuning `backgroundInset*Normalized`, edge-fade values, or override bands before introducing `boardBoundsNormalized` or a non-`1.0` scale multiplier.
 11. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
 
@@ -249,8 +252,10 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 
 - `visibleAlphaBoundsNormalized`: the measured raw visible-pixel envelope for the sprite.
 - `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite.
+- `hasPlayableEllipse` + `playableEllipseCenterNormalized` + `playableEllipseRadiiNormalized`: optional explicit geometric shape metadata. When present, runtime placement and blocked-tile derivation use the ellipse bounds instead of visible-alpha fitting for that sprite.
 - If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
+- If `hasPlayableEllipse` is present, that ellipse becomes the source-of-truth footprint for placement and mask derivation, and the configured safe area composes inside the ellipse bounds.
 
 ### Current Small-Board Pattern
 
@@ -260,7 +265,8 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
 - Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
-- All current bread-photo bands now use the same alpha-mask fitting/clipping rule, so board placement, blocked-tile derivation, and visual mask clipping stay in sync across white bread, seeded cracker, plain cracker, cheese, and pita.
+- White bread, seeded cracker, plain cracker, and cheese still use the shared alpha-mask fitting rule.
+- Pita now uses explicit stored ellipse metadata so the square gameplay board, the blocked-tile footprint, and the rendered background all read the same authored circular shape.
 
 ### Import Guidance
 

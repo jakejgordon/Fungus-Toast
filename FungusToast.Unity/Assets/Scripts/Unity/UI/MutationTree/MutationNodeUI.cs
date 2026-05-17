@@ -68,6 +68,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
+        private bool isPointerHovering;
 
         // Animation state
         private Coroutine upgradeEffectCoroutine;
@@ -260,6 +261,11 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
 
             UpdateInteractable();
+
+            if (isPointerHovering)
+            {
+                ApplyInteractableHoverVisual();
+            }
         }
 
         private void Update()
@@ -336,35 +342,22 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            isPointerHovering = true;
+
             // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
             // We only keep prerequisite highlighting here.
-            bool isLocked = mutation.Prerequisites.Any(prereq => player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
-            if (isLocked)
-                uiManager.HighlightUnmetPrerequisites(mutation, player);
-            else
-                uiManager.HighlightDirectDependents(mutation);
+            uiManager.HandleMutationNodeHover(mutation, player);
 
             // Stronger hover affordance for clickable/upgradeable nodes.
             ApplyInteractableHoverVisual();
-
-            // Show projected cost in the points panel
-            if (mutation != null && player != null)
-            {
-                int currentLevel = player.GetMutationLevel(mutation.Id);
-                bool isMaxed = currentLevel >= mutation.MaxLevel;
-                if (!isMaxed)
-                {
-                    int cost = player.GetMutationPointCost(mutation);
-                    uiManager.ShowProjectedCost(cost);
-                }
-            }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
+            isPointerHovering = false;
+
             // Tooltip hiding is handled by TooltipTrigger.OnPointerExit.
-            uiManager.ClearAllHighlights();
-            uiManager.ClearProjectedCost();
+            uiManager.HandleMutationNodeHoverExit(mutation);
 
             // Restore correct base state tint after hover.
             UpdateDisplay();

@@ -118,6 +118,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool humanTurnEnded = false;
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
+        private Mutation hoveredMutation;
+        private Player hoveredMutationPlayer;
         private PendingTargetedSurgeSelection pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
@@ -165,6 +167,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void OnDisable()
         {
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
             HideTimeLapseCoachmarkImmediate(false);
             SetDockButtonVisible(false);
         }
@@ -393,6 +397,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 Debug.LogError("❌ Cannot build mutation tree — missing references.");
                 return;
             }
+
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
 
             var mutations = mutationManager.GetAllMutations().ToList();
             BuildDirectDependentLookup(mutations);
@@ -838,6 +845,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 button.UpdateDisplay();
             }
 
+            ReapplyHoveredMutationState();
+
             // Also refresh category investment summaries
             if (mutationTreeBuilder != null && humanPlayer != null)
                 mutationTreeBuilder.UpdateCategoryInvestmentSummaries(mutationButtons, humanPlayer);
@@ -846,6 +855,55 @@ namespace FungusToast.Unity.UI.MutationTree
         public Mutation GetMutationById(int id)
         {
             return mutationManager?.GetMutationById(id);
+        }
+
+        public void HandleMutationNodeHover(Mutation mutation, Player player)
+        {
+            hoveredMutation = mutation;
+            hoveredMutationPlayer = player;
+            ReapplyHoveredMutationState();
+        }
+
+        public void HandleMutationNodeHoverExit(Mutation mutation)
+        {
+            if (hoveredMutation != null && mutation != null && hoveredMutation.Id != mutation.Id)
+            {
+                return;
+            }
+
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            ClearAllHighlights();
+            ClearProjectedCost();
+        }
+
+        private void ReapplyHoveredMutationState()
+        {
+            if (hoveredMutation == null || hoveredMutationPlayer == null)
+            {
+                return;
+            }
+
+            bool isLocked = hoveredMutation.Prerequisites.Any(prereq => hoveredMutationPlayer.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
+            if (isLocked)
+            {
+                HighlightUnmetPrerequisites(hoveredMutation, hoveredMutationPlayer);
+            }
+            else
+            {
+                HighlightDirectDependents(hoveredMutation);
+            }
+
+            int currentLevel = hoveredMutationPlayer.GetMutationLevel(hoveredMutation.Id);
+            bool isMaxed = currentLevel >= hoveredMutation.MaxLevel;
+            if (isMaxed)
+            {
+                ClearProjectedCost();
+                return;
+            }
+
+            int cost = hoveredMutationPlayer.GetMutationPointCost(hoveredMutation);
+            ShowProjectedCost(cost);
         }
 
         private void OnStoreMutationPointsClicked()

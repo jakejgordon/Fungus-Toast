@@ -28,10 +28,13 @@ namespace FungusToast.Unity.Grid.Helpers
 		private SpriteMask _boardClipMask;
 		private SpriteRenderer _boardEdgeFadeRenderer;
 		private Sprite _generatedCrustSprite;
+		private Sprite _boardClipMaskSprite;
 		private Sprite _boardEdgeFadeSprite;
 		private Texture2D _generatedCrustTexture;
+		private Texture2D _boardClipMaskTexture;
 		private Texture2D _boardEdgeFadeTexture;
 		private string _generatedCrustCacheKey;
+		private string _boardClipMaskCacheKey;
 		private string _boardEdgeFadeCacheKey;
 
 		public GridBoardMediumRenderer(
@@ -199,6 +202,8 @@ namespace FungusToast.Unity.Grid.Helpers
 				_boardClipMask.transform.localScale = Vector3.one;
 			}
 
+			DestroyBoardClipMaskAssets();
+			_boardClipMaskCacheKey = null;
 			ApplyTilemapClipMask(false);
 		}
 
@@ -427,6 +432,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
 				backgroundSettings.HasBoardBoundsMetadata,
 				backgroundSettings.BoardBoundsNormalizedMetadata,
+				backgroundSettings.HasPlayableEllipseMetadata,
+				backgroundSettings.PlayableEllipseCenterNormalizedMetadata,
+				backgroundSettings.PlayableEllipseRadiiNormalizedMetadata,
 				activeBoard.Width,
 				activeBoard.Height);
 			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
@@ -448,8 +456,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private void EnsureBoardClipMask(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
 		{
-			Sprite sprite = backgroundSettings.BackgroundSprite;
-			if (sprite == null)
+			if (activeBoard == null)
 			{
 				ResetBoardClipMaskVisual();
 				return;
@@ -471,11 +478,17 @@ namespace FungusToast.Unity.Grid.Helpers
 				_boardClipMask.transform.SetParent(visualParent, false);
 			}
 
-			_boardClipMask.sprite = sprite;
-			_boardClipMask.alphaCutoff = 0.01f;
+			string cacheKey = BuildBoardClipMaskCacheKey(activeBoard);
+			if (_boardClipMaskCacheKey != cacheKey || _boardClipMaskSprite == null || _boardClipMaskTexture == null)
+			{
+				RebuildBoardClipMaskSprite(activeBoard, cacheKey);
+			}
+
+			_boardClipMask.sprite = _boardClipMaskSprite;
+			_boardClipMask.alphaCutoff = 0.5f;
 			PositionBoardClipMask(activeBoard, backgroundSettings);
-			_boardClipMask.enabled = true;
-			ApplyTilemapClipMask(true);
+			_boardClipMask.enabled = _boardClipMaskSprite != null;
+			ApplyTilemapClipMask(_boardClipMask.enabled);
 		}
 
 		private void PositionBoardClipMask(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
@@ -485,33 +498,55 @@ namespace FungusToast.Unity.Grid.Helpers
 				return;
 			}
 
-			Sprite sprite = backgroundSettings.BackgroundSprite;
-			Rect safeArea = BoardMediumConfig.GetEffectiveBackgroundSafeAreaNormalized(
-				sprite,
-				backgroundSettings.SafeAreaNormalized,
-				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask,
-				backgroundSettings.ComposeSafeAreaWithBoardBoundsMetadata,
-				backgroundSettings.HasVisibleAlphaBoundsMetadata,
-				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,
-				backgroundSettings.HasBoardBoundsMetadata,
-				backgroundSettings.BoardBoundsNormalizedMetadata,
-				activeBoard.Width,
-				activeBoard.Height);
-			float spriteWidth = Mathf.Max(0.001f, sprite.rect.width / sprite.pixelsPerUnit);
-			float spriteHeight = Mathf.Max(0.001f, sprite.rect.height / sprite.pixelsPerUnit);
-			float safeWidth = Mathf.Max(0.01f, spriteWidth * safeArea.width);
-			float safeHeight = Mathf.Max(0.01f, spriteHeight * safeArea.height);
-			float scale = Mathf.Max(activeBoard.Width / safeWidth, activeBoard.Height / safeHeight);
-			scale *= Mathf.Max(0.01f, backgroundSettings.BackgroundScaleMultiplier);
-
-			float safeCenterX = ((safeArea.xMin + safeArea.xMax) * 0.5f) - 0.5f;
-			float safeCenterY = ((safeArea.yMin + safeArea.yMax) * 0.5f) - 0.5f;
-			Vector3 safeCenterOffset = new Vector3(safeCenterX * spriteWidth * scale, safeCenterY * spriteHeight * scale, 0f);
 			Vector3 boardCenter = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
 
-			_boardClipMask.transform.localPosition = boardCenter - safeCenterOffset;
+			_boardClipMask.transform.localPosition = boardCenter;
 			_boardClipMask.transform.localRotation = Quaternion.identity;
-			_boardClipMask.transform.localScale = new Vector3(scale, scale, 1f);
+			_boardClipMask.transform.localScale = Vector3.one;
+		}
+
+		private void RebuildBoardClipMaskSprite(GameBoard activeBoard, string cacheKey)
+		{
+			DestroyBoardClipMaskAssets();
+
+			int pixelsPerUnit = GetBackdropPixelsPerUnit(activeBoard, 0f);
+			int textureWidth = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Width * pixelsPerUnit));
+			int textureHeight = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Height * pixelsPerUnit));
+
+			_boardClipMaskTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+			{
+				filterMode = FilterMode.Point,
+				wrapMode = TextureWrapMode.Clamp
+			};
+
+			var pixels = new Color32[textureWidth * textureHeight];
+			Color32 opaqueWhite = new Color32(255, 255, 255, 255);
+
+			for (int py = 0; py < textureHeight; py++)
+			{
+				float y = (py + 0.5f) / pixelsPerUnit;
+				for (int px = 0; px < textureWidth; px++)
+				{
+					float x = (px + 0.5f) / pixelsPerUnit;
+					if (!IsPlayableTile(activeBoard, Mathf.FloorToInt(x), Mathf.FloorToInt(y)))
+					{
+						continue;
+					}
+
+					pixels[(py * textureWidth) + px] = opaqueWhite;
+				}
+			}
+
+			_boardClipMaskTexture.SetPixels32(pixels);
+			_boardClipMaskTexture.Apply(false, false);
+			_boardClipMaskSprite = Sprite.Create(
+				_boardClipMaskTexture,
+				new Rect(0f, 0f, textureWidth, textureHeight),
+				new Vector2(0.5f, 0.5f),
+				pixelsPerUnit,
+				0,
+				SpriteMeshType.FullRect);
+			_boardClipMaskCacheKey = cacheKey;
 		}
 
 		private void ApplyTilemapClipMask(bool enabled)
@@ -680,6 +715,19 @@ namespace FungusToast.Unity.Grid.Helpers
 				&& !activeBoard.Grid[x, y].IsBlocked;
 		}
 
+		private static bool IsBlockedTileBoundary(GameBoard activeBoard, int x, int y)
+		{
+			if (activeBoard == null || x < 0 || y < 0 || x >= activeBoard.Width || y >= activeBoard.Height || !activeBoard.Grid[x, y].IsBlocked)
+			{
+				return false;
+			}
+
+			return IsPlayableTile(activeBoard, x - 1, y)
+				|| IsPlayableTile(activeBoard, x + 1, y)
+				|| IsPlayableTile(activeBoard, x, y - 1)
+				|| IsPlayableTile(activeBoard, x, y + 1);
+		}
+
 		private void RebuildGeneratedCrustSprite(GameBoard activeBoard, BoardMediumConfig activeMedium, float visualCrustThickness, string cacheKey)
 		{
 			DestroyGeneratedCrustAssets();
@@ -791,6 +839,14 @@ namespace FungusToast.Unity.Grid.Helpers
 				backgroundSettings.BoardEdgeFadeNoiseStrength);
 		}
 
+		private static string BuildBoardClipMaskCacheKey(GameBoard activeBoard)
+		{
+			return string.Join("|",
+				activeBoard.Width,
+				activeBoard.Height,
+				ComputeBlockedTileShapeHash(activeBoard));
+		}
+
 		private static int ComputeBlockedTileShapeHash(GameBoard activeBoard)
 		{
 			if (activeBoard == null)
@@ -840,6 +896,21 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				UnityEngine.Object.Destroy(_boardEdgeFadeTexture);
 				_boardEdgeFadeTexture = null;
+			}
+		}
+
+		private void DestroyBoardClipMaskAssets()
+		{
+			if (_boardClipMaskSprite != null)
+			{
+				UnityEngine.Object.Destroy(_boardClipMaskSprite);
+				_boardClipMaskSprite = null;
+			}
+
+			if (_boardClipMaskTexture != null)
+			{
+				UnityEngine.Object.Destroy(_boardClipMaskTexture);
+				_boardClipMaskTexture = null;
 			}
 		}
 

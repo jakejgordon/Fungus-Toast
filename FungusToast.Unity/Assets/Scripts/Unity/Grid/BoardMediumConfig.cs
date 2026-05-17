@@ -23,6 +23,9 @@ namespace FungusToast.Unity.Grid
             public Rect visibleAlphaBoundsNormalized = new(0f, 0f, 1f, 1f);
             public bool hasBoardBounds = false;
             public Rect boardBoundsNormalized = new(0f, 0f, 1f, 1f);
+            public bool hasPlayableEllipse = false;
+            public Vector2 playableEllipseCenterNormalized = new(0.5f, 0.5f);
+            public Vector2 playableEllipseRadiiNormalized = new(0.5f, 0.5f);
         }
 
         [Serializable]
@@ -97,6 +100,9 @@ namespace FungusToast.Unity.Grid
                 Rect visibleAlphaBoundsNormalizedMetadata,
                 bool hasBoardBoundsMetadata,
                 Rect boardBoundsNormalizedMetadata,
+                bool hasPlayableEllipseMetadata,
+                Vector2 playableEllipseCenterNormalizedMetadata,
+                Vector2 playableEllipseRadiiNormalizedMetadata,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
                 Color boardEdgeFadeColor,
@@ -120,6 +126,10 @@ namespace FungusToast.Unity.Grid
                 VisibleAlphaBoundsNormalizedMetadata = SanitizeNormalizedRect(visibleAlphaBoundsNormalizedMetadata);
                 HasBoardBoundsMetadata = hasBoardBoundsMetadata;
                 BoardBoundsNormalizedMetadata = SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
+                HasPlayableEllipseMetadata = hasPlayableEllipseMetadata;
+                (PlayableEllipseCenterNormalizedMetadata, PlayableEllipseRadiiNormalizedMetadata) = SanitizeNormalizedEllipse(
+                    playableEllipseCenterNormalizedMetadata,
+                    playableEllipseRadiiNormalizedMetadata);
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
                 BoardEdgeFadeColor = boardEdgeFadeColor;
@@ -144,6 +154,9 @@ namespace FungusToast.Unity.Grid
             public Rect VisibleAlphaBoundsNormalizedMetadata { get; }
             public bool HasBoardBoundsMetadata { get; }
             public Rect BoardBoundsNormalizedMetadata { get; }
+            public bool HasPlayableEllipseMetadata { get; }
+            public Vector2 PlayableEllipseCenterNormalizedMetadata { get; }
+            public Vector2 PlayableEllipseRadiiNormalizedMetadata { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
             public Color BoardEdgeFadeColor { get; }
@@ -152,7 +165,7 @@ namespace FungusToast.Unity.Grid
 
             public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
             public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
-            public bool ShouldUseBackgroundAlphaPlayableMask => ShouldRenderBoardBackground && DeriveBlockedTilesFromBackgroundAlpha && BackgroundSprite != null;
+            public bool ShouldUseBackgroundAlphaPlayableMask => ShouldRenderBoardBackground && BackgroundSprite != null && (DeriveBlockedTilesFromBackgroundAlpha || HasPlayableEllipseMetadata);
             public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
         }
 
@@ -336,6 +349,7 @@ namespace FungusToast.Unity.Grid
         {
             bool hasVisibleAlphaBoundsMetadata = TryGetBackgroundSpriteMetadataVisibleAlphaBoundsNormalized(resolvedBackgroundSprite, out Rect visibleAlphaBoundsNormalizedMetadata);
             bool hasBoardBoundsMetadata = TryGetBackgroundSpriteMetadataBoardBoundsNormalized(resolvedBackgroundSprite, out Rect boardBoundsNormalizedMetadata);
+            bool hasPlayableEllipseMetadata = TryGetBackgroundSpriteMetadataPlayableEllipseNormalized(resolvedBackgroundSprite, out Vector2 playableEllipseCenterNormalizedMetadata, out Vector2 playableEllipseRadiiNormalizedMetadata);
             return new ResolvedBoardBackgroundSettings(
                 resolvedRenderBoardBackground,
                 resolvedBackgroundSprite,
@@ -354,6 +368,9 @@ namespace FungusToast.Unity.Grid
                 visibleAlphaBoundsNormalizedMetadata,
                 hasBoardBoundsMetadata,
                 boardBoundsNormalizedMetadata,
+                hasPlayableEllipseMetadata,
+                playableEllipseCenterNormalizedMetadata,
+                playableEllipseRadiiNormalizedMetadata,
                 resolvedBackgroundScaleMultiplier,
                 resolvedRenderBoardEdgeFade,
                 resolvedBoardEdgeFadeColor,
@@ -394,6 +411,11 @@ namespace FungusToast.Unity.Grid
                 return Array.Empty<int>();
             }
 
+            if (settings.HasPlayableEllipseMetadata)
+            {
+                return BuildBlockedTileIdsFromEllipse(settings, boardWidth, boardHeight);
+            }
+
             Texture2D samplingTexture = null;
             bool ownsSamplingTexture = false;
             try
@@ -414,6 +436,9 @@ namespace FungusToast.Unity.Grid
                     settings.VisibleAlphaBoundsNormalizedMetadata,
                     settings.HasBoardBoundsMetadata,
                     settings.BoardBoundsNormalizedMetadata,
+                    settings.HasPlayableEllipseMetadata,
+                    settings.PlayableEllipseCenterNormalizedMetadata,
+                    settings.PlayableEllipseRadiiNormalizedMetadata,
                     boardWidth,
                     boardHeight);
                 float alphaThreshold = Mathf.Clamp01(settings.BackgroundAlphaPlayableThreshold);
@@ -456,18 +481,6 @@ namespace FungusToast.Unity.Grid
                                 minimumTileCoverage);
 
                         bool isPlayable = satisfiesClipBudget && satisfiesCoverage;
-                        if (!isPlayable && maximumTileClipFraction <= 0f && minimumTileCoverage <= 0f)
-                        {
-                            isPlayable = SampleTileCenterAlpha(
-                                samplingTexture,
-                                spriteRect,
-                                safeArea,
-                                boardWidth,
-                                boardHeight,
-                                x,
-                                y) >= alphaThreshold;
-                        }
-
                         if (!isPlayable)
                         {
                             blockedTileIds.Add((y * boardWidth) + x);
@@ -592,6 +605,22 @@ namespace FungusToast.Unity.Grid
             return true;
         }
 
+        private bool TryGetBackgroundSpriteMetadataPlayableEllipseNormalized(Sprite sprite, out Vector2 playableEllipseCenterNormalized, out Vector2 playableEllipseRadiiNormalized)
+        {
+            playableEllipseCenterNormalized = new Vector2(0.5f, 0.5f);
+            playableEllipseRadiiNormalized = new Vector2(0.5f, 0.5f);
+            BoardBackgroundSpriteMetadata metadata = GetBackgroundSpriteMetadata(sprite);
+            if (metadata == null || !metadata.hasPlayableEllipse)
+            {
+                return false;
+            }
+
+            (playableEllipseCenterNormalized, playableEllipseRadiiNormalized) = SanitizeNormalizedEllipse(
+                metadata.playableEllipseCenterNormalized,
+                metadata.playableEllipseRadiiNormalized);
+            return true;
+        }
+
         private BoardBackgroundSpriteMetadata GetBackgroundSpriteMetadata(Sprite sprite)
         {
             if (sprite == null || boardBackgroundSpriteMetadata == null)
@@ -635,6 +664,69 @@ namespace FungusToast.Unity.Grid
             }
 
             return sanitized.Count == 0 ? Array.Empty<int>() : new List<int>(sanitized);
+        }
+
+        private IReadOnlyCollection<int> BuildBlockedTileIdsFromEllipse(ResolvedBoardBackgroundSettings settings, int boardWidth, int boardHeight)
+        {
+            if (!TryGetEffectiveBackgroundEllipseNormalized(
+                    settings.SafeAreaNormalized,
+                    settings.HasPlayableEllipseMetadata,
+                    settings.PlayableEllipseCenterNormalizedMetadata,
+                    settings.PlayableEllipseRadiiNormalizedMetadata,
+                    out Vector2 effectiveEllipseCenterNormalized,
+                    out Vector2 effectiveEllipseRadiiNormalized))
+            {
+                return Array.Empty<int>();
+            }
+
+            float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
+            float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
+            int tileClipSampleResolution = Mathf.Clamp(settings.BackgroundTileClipSampleResolution, 1, 7);
+            float playableSurfaceTileScaleForMask = Mathf.Max(1f, playableSurfaceTileScale);
+            float[] clipBudgetSampleOffsets = BoardMaskClipSampling.BuildClipBudgetSampleOffsets(
+                playableSurfaceTileScaleForMask,
+                maximumTileClipFraction,
+                tileClipSampleResolution);
+            var blockedTileIds = new List<int>();
+
+            for (int y = 0; y < boardHeight; y++)
+            {
+                for (int x = 0; x < boardWidth; x++)
+                {
+                    bool satisfiesClipBudget = clipBudgetSampleOffsets.Length == 0
+                        || EvaluateTileEllipseClipBudget(
+                            effectiveEllipseCenterNormalized,
+                            effectiveEllipseRadiiNormalized,
+                            boardWidth,
+                            boardHeight,
+                            x,
+                            y,
+                            clipBudgetSampleOffsets);
+
+                    bool satisfiesCoverage = minimumTileCoverage <= 0f
+                        || EvaluateTileEllipseCoverage(
+                            effectiveEllipseCenterNormalized,
+                            effectiveEllipseRadiiNormalized,
+                            boardWidth,
+                            boardHeight,
+                            x,
+                            y,
+                            minimumTileCoverage);
+
+                    if (!(satisfiesClipBudget && satisfiesCoverage))
+                    {
+                        blockedTileIds.Add((y * boardWidth) + x);
+                    }
+                }
+            }
+
+            if (blockedTileIds.Count >= boardWidth * boardHeight)
+            {
+                Debug.LogWarning($"Board medium '{mediumId}' produced a fully blocked ellipse mask for {boardWidth}x{boardHeight}; ignoring the mask.");
+                return Array.Empty<int>();
+            }
+
+            return blockedTileIds;
         }
 
         private static bool EvaluateTileCoverage(
@@ -708,6 +800,81 @@ namespace FungusToast.Unity.Grid
             return true;
         }
 
+        private static bool EvaluateTileEllipseCoverage(
+            Vector2 ellipseCenterNormalized,
+            Vector2 ellipseRadiiNormalized,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float minimumTileCoverage)
+        {
+            const int sampleResolution = 5;
+            int coveredSamples = 0;
+            int totalSamples = sampleResolution * sampleResolution;
+
+            for (int sampleY = 0; sampleY < sampleResolution; sampleY++)
+            {
+                for (int sampleX = 0; sampleX < sampleResolution; sampleX++)
+                {
+                    Vector2 point = SampleEllipsePointNormalized(
+                        ellipseCenterNormalized,
+                        ellipseRadiiNormalized,
+                        boardWidth,
+                        boardHeight,
+                        tileX,
+                        tileY,
+                        (sampleX + 0.5f) / sampleResolution,
+                        (sampleY + 0.5f) / sampleResolution);
+                    if (IsPointInsideNormalizedEllipse(point, ellipseCenterNormalized, ellipseRadiiNormalized))
+                    {
+                        coveredSamples++;
+                    }
+                }
+            }
+
+            return ((float)coveredSamples / totalSamples) >= minimumTileCoverage;
+        }
+
+        private static bool EvaluateTileEllipseClipBudget(
+            Vector2 ellipseCenterNormalized,
+            Vector2 ellipseRadiiNormalized,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            IReadOnlyList<float> sampleOffsets)
+        {
+            if (sampleOffsets == null || sampleOffsets.Count == 0)
+            {
+                return true;
+            }
+
+            for (int sampleY = 0; sampleY < sampleOffsets.Count; sampleY++)
+            {
+                float sampleOffsetY = sampleOffsets[sampleY];
+                for (int sampleX = 0; sampleX < sampleOffsets.Count; sampleX++)
+                {
+                    float sampleOffsetX = sampleOffsets[sampleX];
+                    Vector2 point = SampleEllipsePointNormalized(
+                        ellipseCenterNormalized,
+                        ellipseRadiiNormalized,
+                        boardWidth,
+                        boardHeight,
+                        tileX,
+                        tileY,
+                        0.5f + sampleOffsetX,
+                        0.5f + sampleOffsetY);
+                    if (!IsPointInsideNormalizedEllipse(point, ellipseCenterNormalized, ellipseRadiiNormalized))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         private static float SampleTileCenterAlpha(
             Texture2D samplingTexture,
             Rect spriteRect,
@@ -733,10 +900,24 @@ namespace FungusToast.Unity.Grid
             Rect visibleAlphaBoundsNormalizedMetadata = default,
             bool hasBoardBoundsMetadata = false,
             Rect boardBoundsNormalizedMetadata = default,
+            bool hasPlayableEllipseMetadata = false,
+            Vector2 playableEllipseCenterNormalizedMetadata = default,
+            Vector2 playableEllipseRadiiNormalizedMetadata = default,
             int boardWidth = 0,
             int boardHeight = 0)
         {
             Rect safeArea = SanitizeNormalizedRect(configuredSafeAreaNormalized);
+
+            if (TryGetEffectiveBackgroundEllipseNormalized(
+                    safeArea,
+                    hasPlayableEllipseMetadata,
+                    playableEllipseCenterNormalizedMetadata,
+                    playableEllipseRadiiNormalizedMetadata,
+                    out Vector2 effectiveEllipseCenterNormalized,
+                    out Vector2 effectiveEllipseRadiiNormalized))
+            {
+                return BuildNormalizedEllipseBounds(effectiveEllipseCenterNormalized, effectiveEllipseRadiiNormalized);
+            }
 
             if (hasBoardBoundsMetadata)
             {
@@ -756,7 +937,34 @@ namespace FungusToast.Unity.Grid
                 return safeArea;
             }
 
-            return ComposeNormalizedRect(visibleAlphaBounds, safeArea);
+            Rect effectiveSafeArea = ComposeNormalizedRect(visibleAlphaBounds, safeArea);
+            return InscribeBoardAspectRatio(effectiveSafeArea, boardWidth, boardHeight);
+        }
+
+        private static bool TryGetEffectiveBackgroundEllipseNormalized(
+            Rect configuredSafeAreaNormalized,
+            bool hasPlayableEllipseMetadata,
+            Vector2 playableEllipseCenterNormalizedMetadata,
+            Vector2 playableEllipseRadiiNormalizedMetadata,
+            out Vector2 effectiveEllipseCenterNormalized,
+            out Vector2 effectiveEllipseRadiiNormalized)
+        {
+            effectiveEllipseCenterNormalized = default;
+            effectiveEllipseRadiiNormalized = default;
+            if (!hasPlayableEllipseMetadata)
+            {
+                return false;
+            }
+
+            (Vector2 ellipseCenterNormalized, Vector2 ellipseRadiiNormalized) = SanitizeNormalizedEllipse(
+                playableEllipseCenterNormalizedMetadata,
+                playableEllipseRadiiNormalizedMetadata);
+            Rect effectiveEllipseBounds = ComposeNormalizedRect(
+                BuildNormalizedEllipseBounds(ellipseCenterNormalized, ellipseRadiiNormalized),
+                SanitizeNormalizedRect(configuredSafeAreaNormalized));
+            effectiveEllipseCenterNormalized = new Vector2(effectiveEllipseBounds.center.x, effectiveEllipseBounds.center.y);
+            effectiveEllipseRadiiNormalized = new Vector2(effectiveEllipseBounds.width * 0.5f, effectiveEllipseBounds.height * 0.5f);
+            return effectiveEllipseRadiiNormalized.x > 0f && effectiveEllipseRadiiNormalized.y > 0f;
         }
 
         private static Rect ComposeNormalizedRect(Rect outerRectNormalized, Rect innerRectNormalized)
@@ -768,6 +976,81 @@ namespace FungusToast.Unity.Grid
                 outer.yMin + (inner.yMin * outer.height),
                 outer.width * inner.width,
                 outer.height * inner.height);
+        }
+
+        private static (Vector2 centerNormalized, Vector2 radiiNormalized) SanitizeNormalizedEllipse(Vector2 centerNormalized, Vector2 radiiNormalized)
+        {
+            centerNormalized.x = Mathf.Clamp01(centerNormalized.x);
+            centerNormalized.y = Mathf.Clamp01(centerNormalized.y);
+
+            float maxRadiusX = Mathf.Max(0.001f, Mathf.Min(centerNormalized.x, 1f - centerNormalized.x));
+            float maxRadiusY = Mathf.Max(0.001f, Mathf.Min(centerNormalized.y, 1f - centerNormalized.y));
+            radiiNormalized.x = Mathf.Clamp(radiiNormalized.x, 0.001f, maxRadiusX);
+            radiiNormalized.y = Mathf.Clamp(radiiNormalized.y, 0.001f, maxRadiusY);
+            return (centerNormalized, radiiNormalized);
+        }
+
+        private static Rect BuildNormalizedEllipseBounds(Vector2 centerNormalized, Vector2 radiiNormalized)
+        {
+            return Rect.MinMaxRect(
+                centerNormalized.x - radiiNormalized.x,
+                centerNormalized.y - radiiNormalized.y,
+                centerNormalized.x + radiiNormalized.x,
+                centerNormalized.y + radiiNormalized.y);
+        }
+
+        private static Vector2 SampleEllipsePointNormalized(
+            Vector2 ellipseCenterNormalized,
+            Vector2 ellipseRadiiNormalized,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float sampleXWithinTile,
+            float sampleYWithinTile)
+        {
+            float normalizedX = ellipseCenterNormalized.x + ((((tileX + sampleXWithinTile) / boardWidth) * 2f) - 1f) * ellipseRadiiNormalized.x;
+            float normalizedY = ellipseCenterNormalized.y + ((((tileY + sampleYWithinTile) / boardHeight) * 2f) - 1f) * ellipseRadiiNormalized.y;
+            return new Vector2(normalizedX, normalizedY);
+        }
+
+        private static bool IsPointInsideNormalizedEllipse(Vector2 pointNormalized, Vector2 ellipseCenterNormalized, Vector2 ellipseRadiiNormalized)
+        {
+            float deltaX = (pointNormalized.x - ellipseCenterNormalized.x) / Mathf.Max(0.001f, ellipseRadiiNormalized.x);
+            float deltaY = (pointNormalized.y - ellipseCenterNormalized.y) / Mathf.Max(0.001f, ellipseRadiiNormalized.y);
+            return ((deltaX * deltaX) + (deltaY * deltaY)) <= 1f;
+        }
+
+        private static Rect InscribeBoardAspectRatio(Rect candidateRectNormalized, int boardWidth, int boardHeight)
+        {
+            Rect candidate = SanitizeNormalizedRect(candidateRectNormalized);
+            if (boardWidth <= 0 || boardHeight <= 0)
+            {
+                return candidate;
+            }
+
+            float targetAspectRatio = boardWidth / (float)boardHeight;
+            if (targetAspectRatio <= 0f)
+            {
+                return candidate;
+            }
+
+            float candidateAspectRatio = candidate.width / Mathf.Max(0.001f, candidate.height);
+            if (Mathf.Abs(candidateAspectRatio - targetAspectRatio) <= 0.0001f)
+            {
+                return candidate;
+            }
+
+            if (candidateAspectRatio > targetAspectRatio)
+            {
+                float inscribedWidth = candidate.height * targetAspectRatio;
+                float insetX = (candidate.width - inscribedWidth) * 0.5f;
+                return new Rect(candidate.xMin + insetX, candidate.yMin, inscribedWidth, candidate.height);
+            }
+
+            float inscribedHeight = candidate.width / targetAspectRatio;
+            float insetY = (candidate.height - inscribedHeight) * 0.5f;
+            return new Rect(candidate.xMin, candidate.yMin + insetY, candidate.width, inscribedHeight);
         }
 
         private static bool TryGetVisibleAlphaBoundsNormalized(Sprite sprite, out Rect bounds)

@@ -56,6 +56,9 @@ class SpriteMetadata:
     visible_alpha_bounds: Rect
     has_board_bounds: bool
     board_bounds: Rect
+    has_playable_ellipse: bool
+    playable_ellipse_center: tuple[float, float]
+    playable_ellipse_radii: tuple[float, float]
 
 
 @dataclass(frozen=True)
@@ -89,6 +92,7 @@ class ProbeResult:
     total_tiles: int
     effective_safe_area: Rect
     effective_area_transparency_fraction: float
+    shape_source: str
 
 
 def main() -> int:
@@ -177,20 +181,20 @@ def main() -> int:
         print(
             f"  {metadata.sprite_path.name}: "
             f"visible={format_rect(metadata.visible_alpha_bounds)} "
-            f"board={'none' if not metadata.has_board_bounds else format_rect(metadata.board_bounds)}"
+            f"board={'none' if not metadata.has_board_bounds else format_rect(metadata.board_bounds)} "
+            f"ellipse={'none' if not metadata.has_playable_ellipse else format_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)}"
         )
 
     print("")
     print("Probe summary:")
     for result in results:
         blocked_fraction = result.blocked_tiles / result.total_tiles if result.total_tiles else 0.0
-        transparency = "alpha-shape" if result.effective_area_transparency_fraction > 0.0 else "rect-safe-area"
         print(
             f"  {result.width:>3}x{result.height:<3} "
             f"{result.settings.sprite_path.name:<24} "
             f"blocked={result.blocked_tiles:>5}/{result.total_tiles:<5} "
             f"({blocked_fraction:>6.2%}) "
-            f"{transparency:<14} "
+            f"{result.shape_source:<14} "
             f"{result.settings.override_description}"
         )
 
@@ -271,6 +275,9 @@ def build_metadata_map(asset: dict, sprite_guid_map: dict[str, Path]) -> dict[st
             visible_alpha_bounds=rect_from_yaml(entry.get("visibleAlphaBoundsNormalized")),
             has_board_bounds=bool(entry.get("hasBoardBounds", False)),
             board_bounds=rect_from_yaml(entry.get("boardBoundsNormalized")),
+            has_playable_ellipse=bool(entry.get("hasPlayableEllipse", False)),
+            playable_ellipse_center=vector2_from_yaml(entry.get("playableEllipseCenterNormalized"), (0.5, 0.5)),
+            playable_ellipse_radii=vector2_from_yaml(entry.get("playableEllipseRadiiNormalized"), (0.5, 0.5)),
         )
     return metadata_by_guid
 
@@ -360,6 +367,15 @@ def validate_metadata(
                 f"visible={format_rect(metadata.visible_alpha_bounds)} board={format_rect(metadata.board_bounds)}"
             )
 
+        if metadata.has_playable_ellipse:
+            center, radii = sanitize_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)
+            ellipse_bounds = build_ellipse_bounds(center, radii)
+            if ellipse_bounds.x_min < -0.0001 or ellipse_bounds.y_min < -0.0001 or ellipse_bounds.x_max > 1.0001 or ellipse_bounds.y_max > 1.0001:
+                errors.append(
+                    f"{metadata.sprite_path.name} playable ellipse escapes normalized sprite bounds: "
+                    f"ellipse={format_ellipse(center, radii)}"
+                )
+
 
 def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
     metadata = settings.metadata
@@ -405,6 +421,7 @@ def evaluate_probe(
 ) -> ProbeResult:
     image = sprite_images[settings.sprite_guid]
     effective_safe_area = get_effective_safe_area(settings, width, height)
+    effective_ellipse = get_effective_playable_ellipse(settings)
     clip_offsets = build_clip_budget_sample_offsets(
         PLAYABLE_SURFACE_TILE_SCALE,
         settings.max_tile_clip_fraction,
@@ -416,47 +433,63 @@ def evaluate_probe(
     minimum_tile_coverage = clamp01(settings.min_tile_coverage)
     for tile_y in range(height):
         for tile_x in range(width):
-            satisfies_clip_budget = (
-                not clip_offsets
-                or evaluate_tile_clip_budget(
-                    image,
-                    effective_safe_area,
-                    width,
-                    height,
-                    tile_x,
-                    tile_y,
-                    alpha_threshold,
-                    clip_offsets,
+            if effective_ellipse is not None:
+                satisfies_clip_budget = (
+                    not clip_offsets
+                    or evaluate_tile_ellipse_clip_budget(
+                        effective_ellipse,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        clip_offsets,
+                    )
                 )
-            )
-            satisfies_coverage = (
-                minimum_tile_coverage <= 0.0
-                or evaluate_tile_coverage(
-                    image,
-                    effective_safe_area,
-                    width,
-                    height,
-                    tile_x,
-                    tile_y,
-                    alpha_threshold,
-                    minimum_tile_coverage,
+                satisfies_coverage = (
+                    minimum_tile_coverage <= 0.0
+                    or evaluate_tile_ellipse_coverage(
+                        effective_ellipse,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        minimum_tile_coverage,
+                    )
                 )
-            )
+            else:
+                satisfies_clip_budget = (
+                    not clip_offsets
+                    or evaluate_tile_clip_budget(
+                        image,
+                        effective_safe_area,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        alpha_threshold,
+                        clip_offsets,
+                    )
+                )
+                satisfies_coverage = (
+                    minimum_tile_coverage <= 0.0
+                    or evaluate_tile_coverage(
+                        image,
+                        effective_safe_area,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        alpha_threshold,
+                        minimum_tile_coverage,
+                    )
+                )
             is_playable = satisfies_clip_budget and satisfies_coverage
-            if not is_playable and settings.max_tile_clip_fraction <= 0.0 and minimum_tile_coverage <= 0.0:
-                is_playable = sample_tile_center_alpha(
-                    image,
-                    effective_safe_area,
-                    width,
-                    height,
-                    tile_x,
-                    tile_y,
-                ) >= alpha_threshold
             if not is_playable:
                 blocked_tiles += 1
 
     total_tiles = width * height
     playable_tiles = total_tiles - blocked_tiles
+    effective_area_transparency_fraction = 0.0 if effective_ellipse is not None else measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold)
     return ProbeResult(
         width=width,
         height=height,
@@ -465,7 +498,8 @@ def evaluate_probe(
         blocked_tiles=blocked_tiles,
         total_tiles=total_tiles,
         effective_safe_area=effective_safe_area,
-        effective_area_transparency_fraction=measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold),
+        effective_area_transparency_fraction=effective_area_transparency_fraction,
+        shape_source="ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area"),
     )
 
 
@@ -477,6 +511,7 @@ def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> Non
             )
         if (
             result.settings.derive_blocked_tiles_from_alpha
+            and result.shape_source == "alpha-shape"
             and result.effective_area_transparency_fraction >= 0.02
             and max(result.width, result.height) >= 10
             and result.blocked_tiles == 0
@@ -501,14 +536,50 @@ def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> Non
 def get_effective_safe_area(settings: BackgroundSettings, board_width: int = 0, board_height: int = 0) -> Rect:
     safe_area = sanitize_rect(settings.safe_area)
     metadata = settings.metadata
+    if metadata and metadata.has_playable_ellipse:
+        ellipse = get_effective_playable_ellipse(settings)
+        return build_ellipse_bounds(ellipse[0], ellipse[1]) if ellipse is not None else safe_area
     if metadata and metadata.has_board_bounds:
         board_bounds = sanitize_rect(metadata.board_bounds)
         if settings.compose_safe_area_with_board_bounds_metadata:
             return compose_rect(board_bounds, safe_area)
         return board_bounds
     if metadata and metadata.has_visible_alpha_bounds:
-        return compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area)
-    return safe_area
+        return inscribe_board_aspect_ratio(compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area), board_width, board_height)
+    return inscribe_board_aspect_ratio(safe_area, board_width, board_height)
+
+
+def get_effective_playable_ellipse(settings: BackgroundSettings) -> tuple[tuple[float, float], tuple[float, float]] | None:
+    metadata = settings.metadata
+    if metadata is None or not metadata.has_playable_ellipse:
+        return None
+
+    center, radii = sanitize_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)
+    bounds = compose_rect(build_ellipse_bounds(center, radii), sanitize_rect(settings.safe_area))
+    return ((bounds.x + (bounds.width * 0.5), bounds.y + (bounds.height * 0.5)), (bounds.width * 0.5, bounds.height * 0.5))
+
+
+def inscribe_board_aspect_ratio(candidate: Rect, board_width: int, board_height: int) -> Rect:
+    candidate = sanitize_rect(candidate)
+    if board_width <= 0 or board_height <= 0:
+        return candidate
+
+    target_aspect_ratio = board_width / board_height
+    if target_aspect_ratio <= 0:
+        return candidate
+
+    candidate_aspect_ratio = candidate.width / max(0.001, candidate.height)
+    if math.isclose(candidate_aspect_ratio, target_aspect_ratio, rel_tol=0.0, abs_tol=0.0001):
+        return candidate
+
+    if candidate_aspect_ratio > target_aspect_ratio:
+        inscribed_width = candidate.height * target_aspect_ratio
+        inset_x = (candidate.width - inscribed_width) * 0.5
+        return Rect(candidate.x + inset_x, candidate.y, inscribed_width, candidate.height)
+
+    inscribed_height = candidate.width / target_aspect_ratio
+    inset_y = (candidate.height - inscribed_height) * 0.5
+    return Rect(candidate.x, candidate.y + inset_y, candidate.width, inscribed_height)
 
 
 def measure_effective_area_transparency_fraction(image: SpriteImage, safe_area: Rect, threshold: float) -> float:
@@ -580,6 +651,33 @@ def evaluate_tile_coverage(
     return (covered_samples / total_samples) >= minimum_tile_coverage
 
 
+def evaluate_tile_ellipse_coverage(
+    ellipse: tuple[tuple[float, float], tuple[float, float]],
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    minimum_tile_coverage: float,
+) -> bool:
+    sample_resolution = 5
+    covered_samples = 0
+    total_samples = sample_resolution * sample_resolution
+    for sample_y in range(sample_resolution):
+        for sample_x in range(sample_resolution):
+            point = sample_ellipse_point(
+                ellipse,
+                board_width,
+                board_height,
+                tile_x,
+                tile_y,
+                (sample_x + 0.5) / sample_resolution,
+                (sample_y + 0.5) / sample_resolution,
+            )
+            if point_inside_ellipse(point, ellipse):
+                covered_samples += 1
+    return (covered_samples / total_samples) >= minimum_tile_coverage
+
+
 def evaluate_tile_clip_budget(
     image: SpriteImage,
     safe_area: Rect,
@@ -595,6 +693,30 @@ def evaluate_tile_clip_budget(
             normalized_x = safe_area.x_min + ((tile_x + 0.5 + sample_offset_x) / board_width) * safe_area.width
             normalized_y = safe_area.y_min + ((tile_y + 0.5 + sample_offset_y) / board_height) * safe_area.height
             if sample_alpha_bilinear(image, normalized_x, normalized_y) < alpha_threshold:
+                return False
+    return True
+
+
+def evaluate_tile_ellipse_clip_budget(
+    ellipse: tuple[tuple[float, float], tuple[float, float]],
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    sample_offsets: list[float],
+) -> bool:
+    for sample_offset_y in sample_offsets:
+        for sample_offset_x in sample_offsets:
+            point = sample_ellipse_point(
+                ellipse,
+                board_width,
+                board_height,
+                tile_x,
+                tile_y,
+                0.5 + sample_offset_x,
+                0.5 + sample_offset_y,
+            )
+            if not point_inside_ellipse(point, ellipse):
                 return False
     return True
 
@@ -663,6 +785,12 @@ def rect_from_yaml(data: dict | None) -> Rect:
     )
 
 
+def vector2_from_yaml(data: dict | None, default: tuple[float, float]) -> tuple[float, float]:
+    if not data:
+        return default
+    return (float(data.get("x", default[0])), float(data.get("y", default[1])))
+
+
 def build_safe_area(left: float, right: float, bottom: float, top: float) -> Rect:
     left = clamp01(left)
     right = clamp01(right)
@@ -684,6 +812,16 @@ def sanitize_rect(rect: Rect) -> Rect:
     return Rect(x_min, y_min, x_max - x_min, y_max - y_min)
 
 
+def sanitize_ellipse(center: tuple[float, float], radii: tuple[float, float]) -> tuple[tuple[float, float], tuple[float, float]]:
+    center_x = clamp01(center[0])
+    center_y = clamp01(center[1])
+    max_radius_x = max(0.001, min(center_x, 1.0 - center_x))
+    max_radius_y = max(0.001, min(center_y, 1.0 - center_y))
+    radius_x = min(max(radii[0], 0.001), max_radius_x)
+    radius_y = min(max(radii[1], 0.001), max_radius_y)
+    return (center_x, center_y), (radius_x, radius_y)
+
+
 def compose_rect(outer: Rect, inner: Rect) -> Rect:
     outer = sanitize_rect(outer)
     inner = sanitize_rect(inner)
@@ -693,6 +831,32 @@ def compose_rect(outer: Rect, inner: Rect) -> Rect:
         outer.width * inner.width,
         outer.height * inner.height,
     )
+
+
+def build_ellipse_bounds(center: tuple[float, float], radii: tuple[float, float]) -> Rect:
+    return Rect(center[0] - radii[0], center[1] - radii[1], radii[0] * 2.0, radii[1] * 2.0)
+
+
+def sample_ellipse_point(
+    ellipse: tuple[tuple[float, float], tuple[float, float]],
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    sample_x_within_tile: float,
+    sample_y_within_tile: float,
+) -> tuple[float, float]:
+    center, radii = ellipse
+    normalized_x = center[0] + ((((tile_x + sample_x_within_tile) / board_width) * 2.0) - 1.0) * radii[0]
+    normalized_y = center[1] + ((((tile_y + sample_y_within_tile) / board_height) * 2.0) - 1.0) * radii[1]
+    return normalized_x, normalized_y
+
+
+def point_inside_ellipse(point: tuple[float, float], ellipse: tuple[tuple[float, float], tuple[float, float]]) -> bool:
+    center, radii = ellipse
+    delta_x = (point[0] - center[0]) / max(0.001, radii[0])
+    delta_y = (point[1] - center[1]) / max(0.001, radii[1])
+    return ((delta_x * delta_x) + (delta_y * delta_y)) <= 1.0
 
 
 def rects_close(a: Rect, b: Rect, tolerance_x: float, tolerance_y: float) -> bool:
@@ -715,6 +879,10 @@ def rect_contains(outer: Rect, inner: Rect, tolerance_x: float, tolerance_y: flo
 
 def format_rect(rect: Rect) -> str:
     return f"({rect.x:.6f}, {rect.y:.6f}, {rect.width:.6f}, {rect.height:.6f})"
+
+
+def format_ellipse(center: tuple[float, float], radii: tuple[float, float]) -> str:
+    return f"center=({center[0]:.6f}, {center[1]:.6f}) radii=({radii[0]:.6f}, {radii[1]:.6f})"
 
 
 def clamp01(value: float) -> float:

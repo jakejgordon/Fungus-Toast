@@ -52,6 +52,7 @@ namespace FungusToast.Unity
         {
             var board = gameManager.Board; var ui = gameManager.GameUI; var mutationMgr = gameManager.GetMutationManager();
             ui.GameLogRouter.EnableSilentMode(); setFastForwardFlag(true);
+            gameManager.gridVisualizer.RenderBoard(board, true);
             int startingRound = board.CurrentRound; int requestedValue = fastForwardRounds;
             bool treatAsTargetRound = requestedValue > startingRound; int targetRound = treatAsTargetRound ? requestedValue : (startingRound + requestedValue); if (targetRound < startingRound) targetRound = startingRound; int desiredRounds = targetRound - startingRound; int iterations = 0;
             // NEW: Capture and convert ALL human players (previous code only handled primary human)
