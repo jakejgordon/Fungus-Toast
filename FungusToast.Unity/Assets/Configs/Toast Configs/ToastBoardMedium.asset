@@ -204,13 +204,13 @@ MonoBehaviour:
       y: 0.026667
       width: 0.956667
       height: 0.941111
-    hasBoardBounds: 0
+    hasBoardBounds: 1
     boardBoundsNormalized:
       serializedVersion: 2
-      x: 0.022222
-      y: 0.026667
-      width: 0.956667
-      height: 0.941111
+      x: 0.185812
+      y: 0.187597
+      width: 0.629487
+      height: 0.619251
   renderCrust: 0
   crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
   crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
