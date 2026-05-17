@@ -1351,6 +1351,7 @@ namespace FungusToast.Unity
             if (humanPlayers.Count > 0)
             {
                 ui.RightSidebar?.TryShowScoreboardWinConditionCoachmark(board.CurrentRound);
+                ui.MoldProfileRoot?.TryShowAdaptationCoachmark(board.CurrentRound);
             }
             ui.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
             ui.GameLogRouter?.OnPhaseStart("Mutation");

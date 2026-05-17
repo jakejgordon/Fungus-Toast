@@ -18,6 +18,12 @@ For general Unity UI architecture, also see `../../FungusToast.Core/docs/UI_ARCH
 **Current source of truth:**
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/Onboarding/NewPlayerTooltipCatalog.cs`
 
+This onboarding/coaching system is split across two adjacent code surfaces:
+- `NewPlayerTooltipCatalog.cs` holds the canonical list of new-player coaching tooltips, including id, copy, display surface, seen key, and a human-readable trigger summary.
+- `NewPlayerTooltipRules` in the same file holds the executable trigger predicates that decide whether each coaching tooltip should appear.
+
+If you need to answer "where do the existing coaching tooltips live?", start with that file.
+
 **Trigger model:**
 - rule-driven
 - often once per profile
@@ -125,6 +131,7 @@ These currently live in `NewPlayerTooltipCatalog.cs`:
 - `MutationTreeGuidance`
 - `TimeLapseModeIntro`
 - `ScoreboardWinCondition`
+- `AdaptationPanelIntro`
 - `CameraPanIntro`
 - `MycovariantDraftIntro`
 - `EndgameCountdownIntro`
@@ -136,12 +143,30 @@ Each onboarding entry should define:
 - display surface
 - trigger summary
 
+### Human-readable coaching tooltip inventory
+
+Use this section when you want a quick description of what already exists without reading the code first.
+
+| Tooltip | Surface | When it appears |
+| --- | --- | --- |
+| `AlphaMutationPhaseIntro` | phase banner | Queued on round 1 for games with at least one human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
+| `MutationTreeGuidance` | mutation tree toast | Shown when the mutation tree opens, unless the player already dismissed it during the current game. Outside forced first-game experience, it only shows once per profile. |
+| `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 10, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `CameraPanIntro` | board coachmark | Shown during round 1 after a short delay for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
+| `MycovariantDraftIntro` | draft coachmark | Shown the first time the Mycovariant draft panel opens, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `EndgameCountdownIntro` | sidebar coachmark | Shown the first time the endgame countdown begins, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+
+For exact gating conditions, prefer `NewPlayerTooltipRules` over this prose summary.
+
 ## 4. Authoring Rules
 
 - Do **not** scatter new-player onboarding copy and seen keys inline across random controllers.
 - Prefer adding new first-time guidance to `NewPlayerTooltipCatalog.cs` and `NewPlayerTooltipRules`.
 - Keep trigger logic readable and named.
 - If a new onboarding item should be reset by the Settings menu’s replay option, it must be represented in the onboarding catalog.
+- If you add, remove, rename, or materially retime a new-player coaching tooltip, update this guide so the human-readable inventory stays in sync with `NewPlayerTooltipCatalog.cs` and `NewPlayerTooltipRules`.
 - If you introduce a brand-new tooltip category, update this guide and link the relevant implementation files.
 
 ## 5. Quick “Which one should I use?” examples

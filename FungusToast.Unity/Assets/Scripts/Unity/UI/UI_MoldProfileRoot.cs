@@ -7,6 +7,7 @@ using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
 using FungusToast.Core.Players;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Campaign;
+using FungusToast.Unity.UI.Onboarding;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
@@ -66,6 +67,8 @@ namespace FungusToast.Unity.UI
         private const int AdaptationIconMaxColumns = 12;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
+        private const float AdaptationCoachmarkWidth = 340f;
+        private const float AdaptationCoachmarkHeight = 170f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
         private const string StatsRootName = "UI_StatsRoot";
 
@@ -73,8 +76,14 @@ namespace FungusToast.Unity.UI
         private readonly List<GameObject> mycovariantIconObjects = new();
         private readonly List<GameObject> boardOverlayLegendObjects = new();
 
+        private RectTransform adaptationCoachmarkRoot;
+        private CanvasGroup adaptationCoachmarkCanvasGroup;
+        private TextMeshProUGUI adaptationCoachmarkTitleTextLabel;
+        private TextMeshProUGUI adaptationCoachmarkBodyTextLabel;
+        private Button adaptationCoachmarkCloseButton;
         private bool cellsResolved = false;
         private bool deferredRefreshRequested = false;
+        private bool hasDismissedAdaptationCoachmarkThisGame;
 
         private void Awake()
         {
@@ -84,6 +93,11 @@ namespace FungusToast.Unity.UI
         private void OnEnable()
         {
             ApplyStyle();
+        }
+
+        private void OnDisable()
+        {
+            HideAdaptationCoachmarkImmediate(false);
         }
 
         private void ApplyStyle()
@@ -253,6 +267,8 @@ namespace FungusToast.Unity.UI
         {
             trackedPlayer = player;
             allPlayers = players;
+            hasDismissedAdaptationCoachmarkThisGame = false;
+            HideAdaptationCoachmarkImmediate(false);
             EnsureCellsResolved();
             Refresh();
 
@@ -275,6 +291,19 @@ namespace FungusToast.Unity.UI
             RefreshBoardOverlayLegend();
             RefreshAdaptations();
             RefreshMycovariants();
+
+            if (adaptationCoachmarkRoot != null && adaptationCoachmarkRoot.gameObject.activeSelf)
+            {
+                if (adaptationSectionRoot != null && adaptationSectionRoot.gameObject.activeInHierarchy)
+                {
+                    PositionAdaptationCoachmark();
+                }
+                else
+                {
+                    HideAdaptationCoachmarkImmediate(false);
+                }
+            }
+
             deferredRefreshRequested = false;
         }
 
@@ -296,6 +325,43 @@ namespace FungusToast.Unity.UI
             ConfigureCenterPlayerIcon(player);
 
             Refresh();
+        }
+
+        public void TryShowAdaptationCoachmark(int currentRound)
+        {
+            EnsureAdaptationSectionExists();
+            if (adaptationSectionRoot == null || !adaptationSectionRoot.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            var gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowAdaptationPanelIntro(
+                    forceFirstGame,
+                    currentRound,
+                    hasDismissedAdaptationCoachmarkThisGame,
+                    isFastForwarding))
+            {
+                return;
+            }
+
+            EnsureAdaptationCoachmarkUi();
+            if (adaptationCoachmarkRoot == null || adaptationCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AdaptationPanelIntro);
+            adaptationCoachmarkTitleTextLabel.text = definition.Title;
+            adaptationCoachmarkBodyTextLabel.text = definition.Body;
+            PositionAdaptationCoachmark();
+            adaptationCoachmarkRoot.gameObject.SetActive(true);
+            adaptationCoachmarkRoot.SetAsLastSibling();
+            adaptationCoachmarkCanvasGroup.alpha = 1f;
+            adaptationCoachmarkCanvasGroup.blocksRaycasts = true;
+            adaptationCoachmarkCanvasGroup.interactable = true;
         }
 
         private void ConfigureCenterPlayerIcon(Player player)
@@ -826,6 +892,186 @@ namespace FungusToast.Unity.UI
             {
                 sectionLayout.preferredHeight = 8f + AdaptationHeaderHeight + AdaptationSectionSpacing + gridHeight + 10f;
                 sectionLayout.minHeight = sectionLayout.preferredHeight;
+            }
+        }
+
+        private void EnsureAdaptationCoachmarkUi()
+        {
+            if (adaptationCoachmarkRoot != null)
+            {
+                return;
+            }
+
+            Transform parent = GetComponentInParent<Canvas>()?.transform ?? transform.parent;
+            if (parent == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_AdaptationCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(parent, false);
+
+            adaptationCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            adaptationCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            adaptationCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            adaptationCoachmarkRoot.pivot = new Vector2(0f, 1f);
+            adaptationCoachmarkRoot.sizeDelta = new Vector2(AdaptationCoachmarkWidth, AdaptationCoachmarkHeight);
+
+            adaptationCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            adaptationCoachmarkCanvasGroup.alpha = 0f;
+            adaptationCoachmarkCanvasGroup.blocksRaycasts = false;
+            adaptationCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Success, 0.14f);
+            backgroundColor.a = 0.97f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            adaptationCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            adaptationCoachmarkTitleTextLabel.text = string.Empty;
+            adaptationCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            adaptationCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            adaptationCoachmarkTitleTextLabel.fontSize = 22f;
+            adaptationCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            adaptationCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            adaptationCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            adaptationCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            adaptationCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            adaptationCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            adaptationCoachmarkBodyTextLabel.fontSize = 18f;
+            adaptationCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            adaptationCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            adaptationCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            adaptationCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            adaptationCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(adaptationCoachmarkCloseButton);
+            adaptationCoachmarkCloseButton.onClick.RemoveAllListeners();
+            adaptationCoachmarkCloseButton.onClick.AddListener(OnAdaptationCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                adaptationCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                adaptationCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
+        private void PositionAdaptationCoachmark()
+        {
+            if (adaptationCoachmarkRoot == null || adaptationSectionRoot == null)
+            {
+                return;
+            }
+
+            RectTransform parentRect = adaptationCoachmarkRoot.parent as RectTransform;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (parentRect == null || canvas == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            adaptationSectionRoot.GetWorldCorners(corners);
+            Vector3 topRightWorld = corners[2];
+            Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, topRightWorld);
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
+            {
+                return;
+            }
+
+            adaptationCoachmarkRoot.anchoredPosition = localPoint + new Vector2(18f, -6f);
+        }
+
+        private void OnAdaptationCoachmarkDismissed()
+        {
+            hasDismissedAdaptationCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AdaptationPanelIntro);
+            }
+
+            HideAdaptationCoachmarkImmediate(false);
+        }
+
+        private void HideAdaptationCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedAdaptationCoachmarkThisGame = false;
+            }
+
+            if (adaptationCoachmarkCanvasGroup != null)
+            {
+                adaptationCoachmarkCanvasGroup.alpha = 0f;
+                adaptationCoachmarkCanvasGroup.blocksRaycasts = false;
+                adaptationCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (adaptationCoachmarkRoot != null)
+            {
+                adaptationCoachmarkRoot.gameObject.SetActive(false);
             }
         }
 

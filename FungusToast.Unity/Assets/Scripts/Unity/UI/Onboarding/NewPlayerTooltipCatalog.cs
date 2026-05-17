@@ -10,6 +10,7 @@ namespace FungusToast.Unity.UI.Onboarding
         MutationTreeGuidance,
         TimeLapseModeIntro,
         ScoreboardWinCondition,
+        AdaptationPanelIntro,
         CameraPanIntro,
         MycovariantDraftIntro,
         EndgameCountdownIntro,
@@ -21,6 +22,7 @@ namespace FungusToast.Unity.UI.Onboarding
         MutationTreeToast,
         MutationTreeCoachmark,
         SidebarCoachmark,
+        MoldProfileCoachmark,
         BoardCoachmark,
         DraftCoachmark,
     }
@@ -83,6 +85,13 @@ namespace FungusToast.Unity.UI.Onboarding
                 "This scoreboard is the clearest way to see who is ahead.\n\nWatch the Alive column. When the toast fills up and the game ends, the colony with the most living cells wins.",
                 NewPlayerTooltipSurface.SidebarCoachmark,
                 "Show on round 2 or later unless dismissed this game or while fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.AdaptationPanelIntro,
+                "Onboarding.AdaptationPanelIntroSeen",
+                "Adaptations",
+                "Adaptations are permanent boosts that stay with you for the entire level. In the campaign, adaptations stay with you for the entire run.",
+                NewPlayerTooltipSurface.MoldProfileCoachmark,
+                "Show on round 3 or later when the adaptations section is visible, unless dismissed this game or while fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.CameraPanIntro,
                 "Onboarding.CameraPanIntroSeen",
@@ -211,6 +220,20 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseModeIntro);
+        }
+
+        public static bool ShouldShowAdaptationPanelIntro(
+            bool forceFirstGameExperience,
+            int currentRound,
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
+        {
+            if (currentRound < 3 || hasDismissedThisGame || isFastForwarding)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.AdaptationPanelIntro);
         }
 
         public static bool ShouldShowCameraPanIntro(
