@@ -211,7 +211,7 @@ def main() -> int:
 
 def build_probe_sizes(full_square_max: int) -> list[tuple[int, int]]:
     squares = list(range(1, 21))
-    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 90, 99, 100, 101, 120, 140, 160, 180, 200])
+    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 90, 95, 99, 100, 101, 120, 140, 160, 180, 200])
     if full_square_max > 0:
         squares.extend(range(1, full_square_max + 1))
 
@@ -380,7 +380,7 @@ def evaluate_probe(
     sprite_images: dict[str, SpriteImage],
 ) -> ProbeResult:
     image = sprite_images[settings.sprite_guid]
-    effective_safe_area = get_effective_safe_area(settings)
+    effective_safe_area = get_effective_safe_area(settings, width, height)
     clip_offsets = build_clip_budget_sample_offsets(
         PLAYABLE_SURFACE_TILE_SCALE,
         settings.max_tile_clip_fraction,
@@ -461,9 +461,20 @@ def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> Non
                 f"{result.width}x{result.height} on {result.settings.sprite_path.name} produced a fully playable rectangle "
                 f"even though {result.effective_area_transparency_fraction:.2%} of its effective safe area is transparent."
             )
+        if (
+            result.width == 95
+            and result.height == 95
+            and result.settings.name == "default"
+            and result.settings.sprite_path.name == "white_bread_1024x1024.png"
+            and result.blocked_tiles == 0
+        ):
+            errors.append(
+                "95x95 default white bread produced a fully playable inner rectangle; "
+                "the toast silhouette should still clip rounded-corner edge tiles at that size."
+            )
 
 
-def get_effective_safe_area(settings: BackgroundSettings) -> Rect:
+def get_effective_safe_area(settings: BackgroundSettings, board_width: int = 0, board_height: int = 0) -> Rect:
     safe_area = sanitize_rect(settings.safe_area)
     metadata = settings.metadata
     if metadata and metadata.has_board_bounds:
@@ -472,8 +483,43 @@ def get_effective_safe_area(settings: BackgroundSettings) -> Rect:
             return compose_rect(board_bounds, safe_area)
         return board_bounds
     if metadata and metadata.has_visible_alpha_bounds:
-        return compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area)
+        return fit_rect_to_aspect_ratio(
+            compose_rect(sanitize_rect(metadata.visible_alpha_bounds), safe_area),
+            board_width,
+            board_height,
+        )
     return safe_area
+
+
+def fit_rect_to_aspect_ratio(rect: Rect, board_width: int, board_height: int) -> Rect:
+    sanitized = sanitize_rect(rect)
+    if board_width <= 0 or board_height <= 0:
+        return sanitized
+
+    target_aspect = board_width / board_height
+    if target_aspect <= 0:
+        return sanitized
+
+    current_aspect = sanitized.width / sanitized.height
+    if math.isclose(current_aspect, target_aspect, abs_tol=0.0001):
+        return sanitized
+
+    if current_aspect > target_aspect:
+        fitted_width = sanitized.height * target_aspect
+        return Rect(
+            sanitized.x + ((sanitized.width - fitted_width) * 0.5),
+            sanitized.y,
+            fitted_width,
+            sanitized.height,
+        )
+
+    fitted_height = sanitized.width / target_aspect
+    return Rect(
+        sanitized.x,
+        sanitized.y + ((sanitized.height - fitted_height) * 0.5),
+        sanitized.width,
+        fitted_height,
+    )
 
 
 def measure_effective_area_transparency_fraction(image: SpriteImage, safe_area: Rect, threshold: float) -> float:
