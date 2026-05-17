@@ -100,11 +100,11 @@ MonoBehaviour:
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.03
-    backgroundInsetRightNormalized: 0.03
-    backgroundInsetBottomNormalized: 0.03
-    backgroundInsetTopNormalized: 0.03
-    composeSafeAreaWithBoardBoundsMetadata: 0
+    backgroundInsetLeftNormalized: 0.04
+    backgroundInsetRightNormalized: 0.02
+    backgroundInsetBottomNormalized: 0.01
+    backgroundInsetTopNormalized: 0.045
+    composeSafeAreaWithBoardBoundsMetadata: 1
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
@@ -189,7 +189,7 @@ MonoBehaviour:
       y: 0.03375
       width: 0.8525
       height: 0.93125
-    hasBoardBounds: 0
+    hasBoardBounds: 1
     boardBoundsNormalized:
       serializedVersion: 2
       x: 0.085

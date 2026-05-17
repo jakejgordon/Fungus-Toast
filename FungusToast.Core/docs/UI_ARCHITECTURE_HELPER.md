@@ -265,7 +265,8 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
 - Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
-- White bread, seeded cracker, plain cracker, and cheese still use the shared alpha-mask fitting rule.
+- White bread, seeded cracker, and plain cracker still use the shared alpha-mask fitting rule.
+- Cheese now uses its measured visible bounds as composed board-bounds metadata so square boards can consume the sprite's extra vertical height while alpha masking trims the light side spill.
 - Pita now uses explicit stored ellipse metadata so the square gameplay board, the blocked-tile footprint, and the rendered background all read the same authored circular shape.
 
 ### Import Guidance
