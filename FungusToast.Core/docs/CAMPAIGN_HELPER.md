@@ -159,6 +159,31 @@ Current internal Campaign Tier intent:
 
 These are working curation heuristics and can change as balance data evolves.
 
+## Safe-proxy validation targets
+
+Campaign balance validation should use `TST_CampaignPlayer_SafeBaseline` via `scripts/run_campaign_balance.py` so the test matches the authored board preset, opponent lineup or pool resolution, nutrient-patch setting, and current campaign starting-adaptation flow.
+
+Current first-pass target curve agreed in principle for that proxy:
+- `Campaign0-2`: `90-100%`
+- `Campaign3`: `70-90%`
+- `Campaign4`: `50-70%`
+- `Campaign5`: `35-55%`
+- `Campaign6`: `25-45%`
+- `Campaign7`: `15-35%`
+- `Campaign8`: `10-25%`
+- `Campaign9`: `5-15%`
+- `Campaign10`: `0-10%`
+
+Intent behind this curve:
+- Opening levels should be very forgiving for the conservative, non-reactive safe proxy.
+- Difficulty should then decline roughly linearly through the early and mid campaign rather than hiding abrupt cliffs.
+- Near-zero proxy success by around `Campaign10` is acceptable for the current model.
+
+Current scope / unresolved edge:
+- This table is the current validation target for `Campaign0-10`.
+- `Campaign11+` and any later elite or boss progression are not fully settled yet; those levels may continue this decline or adopt a separate acceptance rule once late-campaign expectations are finalized.
+- Treat these as artifact-backed validation targets, not a guarantee that every single pooled seed lands exactly inside band.
+
 ## Campaign strategy naming direction
 
 Legacy campaign strategies currently use simple IDs like `AI1..AI13`.
