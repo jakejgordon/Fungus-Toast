@@ -37,7 +37,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.MycotropicInduction,
                 name: "Mycotropic Induction",
-                description: $"Each level increases all diagonal growth probabilities by a multiplier of {helper.FormatPercent(GameBalance.MycotropicInductionEffectPerLevel)}.",
+                description: $"Each level increases all diagonal growth probabilities by {helper.FormatPercent(GameBalance.MycotropicInductionEffectPerLevel)}.",
                 flavorText: "Signal transduction pathways activate branching vesicle recruitment along orthogonal gradients.",
                 type: MutationType.TendrilDirectionalMultiplier,
                 effectPerLevel: GameBalance.MycotropicInductionEffectPerLevel,
