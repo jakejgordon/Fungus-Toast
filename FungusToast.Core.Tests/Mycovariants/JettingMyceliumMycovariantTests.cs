@@ -137,6 +137,45 @@ public class JettingMyceliumMycovariantTests
     }
 
     [Fact]
+    public void ResolveJettingMycelium_skips_blocked_tiles_in_the_line_and_cone()
+    {
+        var blockedTileIds = new[]
+        {
+            GetTileId(width: 12, x: 2, y: 5),
+            GetTileId(width: 12, x: 6, y: 6)
+        };
+        var board = new GameBoard(width: 12, height: 11, playerCount: 2, blockedTileIds);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        var enemy = new Player(1, "P1", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 1, y: 5);
+        board.PlaceInitialSpore(playerId: enemy.PlayerId, x: 11, y: 10);
+
+        var playerMyco = new PlayerMycovariant(
+            owner.PlayerId,
+            MycovariantIds.JettingMyceliumIId,
+            new Mycovariant { Id = MycovariantIds.JettingMyceliumIId, Name = "Jetting Mycelium I" });
+
+        MycovariantEffectProcessor.ResolveJettingMycelium(
+            playerMyco,
+            owner,
+            board,
+            tileId: owner.StartingTileId!.Value,
+            direction: CardinalDirection.East,
+            rng: new Random(123),
+            observer: new TestSimulationObserver());
+
+        Assert.True(board.GetTile(2, 5)!.IsBlocked);
+        Assert.Null(board.GetTile(2, 5)?.FungalCell);
+        Assert.True(board.GetTile(6, 6)!.IsBlocked);
+        Assert.Null(board.GetTile(6, 6)?.FungalCell);
+        AssertOwnedLivingCell(board, 3, 5, owner.PlayerId);
+        AssertOwnedLivingCell(board, 4, 5, owner.PlayerId);
+    }
+
+    [Fact]
     public void FindBestPlacement_prefers_the_highest_scoring_direction()
     {
         var board = new GameBoard(width: 12, height: 11, playerCount: 2);
@@ -183,6 +222,19 @@ public class JettingMyceliumMycovariantTests
     private static int GetTileId(GameBoard board, int x, int y)
     {
         return y * board.Width + x;
+    }
+
+    private static int GetTileId(int width, int x, int y)
+    {
+        return y * width + x;
+    }
+
+    private static void AssertOwnedLivingCell(GameBoard board, int x, int y, int ownerPlayerId)
+    {
+        var cell = board.GetTile(x, y)?.FungalCell;
+        Assert.NotNull(cell);
+        Assert.True(cell!.IsAlive);
+        Assert.Equal(ownerPlayerId, cell.OwnerPlayerId);
     }
 
     private static int[] GetRowWidthsByColumn(GameBoard board, IEnumerable<int> tileIds)

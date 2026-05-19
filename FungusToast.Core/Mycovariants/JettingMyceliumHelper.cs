@@ -65,7 +65,7 @@ namespace FungusToast.Core.Mycovariants
             for (int i = 0; i < livingLine.Count && i < livingLength; i++)
             {
                 var targetTile = board.GetTileById(livingLine[i]);
-                if (targetTile == null) continue;
+                if (targetTile == null || targetTile.IsBlocked) continue;
 
                 var prevCell = targetTile.FungalCell;
                 if (prevCell == null)
@@ -101,7 +101,7 @@ namespace FungusToast.Core.Mycovariants
             foreach (int coneTileId in toxinCone)
             {
                 var targetTile = board.GetTileById(coneTileId);
-                if (targetTile == null) continue;
+                if (targetTile == null || targetTile.IsBlocked) continue;
 
                 var prevCell = targetTile.FungalCell;
                 if (prevCell == null || prevCell.IsDead)

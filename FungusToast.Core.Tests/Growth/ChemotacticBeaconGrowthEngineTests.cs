@@ -87,6 +87,21 @@ public class ChemotacticBeaconGrowthEngineTests
     }
 
     [Fact]
+    public void ProcessChemotacticBeacon_skips_blocked_tiles_without_spending_quota()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29, blockedTileIds: new[] { 4 + (2 * 10) });
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        Assert.True(setup.board.GetTile(4, 2)!.IsBlocked);
+        Assert.Null(setup.board.GetTile(4, 2)?.FungalCell);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 5, 2);
+        Assert.Null(setup.board.GetTile(6, 2)?.FungalCell);
+    }
+
+    [Fact]
     public void ApplyDirectedVectorLine_skips_friendly_dead_cells_without_spending_quota()
     {
         var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
@@ -147,9 +162,9 @@ public class ChemotacticBeaconGrowthEngineTests
         Assert.Contains(setup.board.GetTile(4, 2)!.TileId, outcome.AffectedTileIds);
     }
 
-    private static (GameBoard board, List<Player> players, Player player) CreateBeaconBoard(int level, int beaconTileId)
+    private static (GameBoard board, List<Player> players, Player player) CreateBeaconBoard(int level, int beaconTileId, IEnumerable<int>? blockedTileIds = null)
     {
-        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1, blockedTileIds);
         var player = new Player(playerId: 0, playerName: "Beacon Tester", playerType: PlayerTypeEnum.AI)
         {
             MutationPoints = 99
