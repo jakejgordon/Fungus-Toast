@@ -275,7 +275,13 @@ namespace FungusToast.Core.Phases
                 for (int cy = minY; cy <= maxY; cy++)
                 {
                     if (Math.Max(Math.Abs(cx - x), Math.Abs(cy - y)) <= radius)
-                        yield return board.Grid[cx, cy];
+                    {
+                        var tile = board.Grid[cx, cy];
+                        if (!tile.IsBlocked)
+                        {
+                            yield return tile;
+                        }
+                    }
                 }
             }
         }

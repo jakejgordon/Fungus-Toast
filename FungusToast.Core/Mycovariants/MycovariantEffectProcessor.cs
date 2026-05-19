@@ -629,7 +629,7 @@ public static class MycovariantEffectProcessor
         for (int i = 0; i < livingLine.Count && i < livingLength; i++)
         {
             var targetTile = board.GetTileById(livingLine[i]);
-            if (targetTile == null) { invalid++; continue; }
+            if (targetTile == null || targetTile.IsBlocked) { invalid++; continue; }
 
             var prevCell = targetTile.FungalCell;
 
@@ -667,7 +667,7 @@ public static class MycovariantEffectProcessor
         foreach (int coneTileId in toxinCone)
         {
             var targetTile = board.GetTileById(coneTileId);
-            if (targetTile == null) { invalid++; continue; }
+            if (targetTile == null || targetTile.IsBlocked) { invalid++; continue; }
 
             // Use ToxinHelper to get proper expiration age with all bonuses
             int toxinLifespan = ToxinHelper.GetToxinExpirationAge(
@@ -1090,7 +1090,7 @@ public static class MycovariantEffectProcessor
         ISimulationObserver observer)
     {
         var targetTile = board.GetTileById(tileId);
-        if (targetTile != null)
+        if (targetTile != null && !targetTile.IsBlocked)
         {
             var prevCell = targetTile.FungalCell;
             if (prevCell == null)

@@ -49,9 +49,10 @@ namespace FungusToast.Unity.UI
         {
             selectionActive = true;
             selectedTileIds.Clear();
+            bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
 
             var validTiles = GameManager.Instance.Board.AllTiles()
-                .Where(isValidTile)
+                .Where(IsSelectableTarget)
                 .ToList();
 
             this.maxSelections = Mathf.Min(maxSelections, validTiles.Count);
@@ -89,7 +90,7 @@ namespace FungusToast.Unity.UI
             if (!selectionActive || !selectableTileIds.Contains(tileId)) return;
 
             var tile = GameManager.Instance.Board.GetTileById(tileId);
-            if (tile != null)
+            if (tile != null && !tile.IsBlocked)
             {
                 if (selectedTileIds.Contains(tileId))
                 {

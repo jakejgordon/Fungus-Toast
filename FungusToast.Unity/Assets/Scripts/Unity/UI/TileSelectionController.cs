@@ -181,6 +181,8 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
+
             selectionActive = true;
 
             if (!string.IsNullOrEmpty(promptMessage))
@@ -190,7 +192,10 @@ namespace FungusToast.Unity.UI
             {
                 GameManager.Instance.HideSelectionPrompt();
                 var tile = board.GetTileById(tileId);
-                onSelected?.Invoke(tile);
+                if (IsSelectableTarget(tile))
+                {
+                    onSelected?.Invoke(tile);
+                }
             };
             onCancelled = () =>
             {
@@ -199,7 +204,7 @@ namespace FungusToast.Unity.UI
             };
 
             var validTiles = board.AllTiles()
-                .Where(isValidTile)
+                .Where(IsSelectableTarget)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
             highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
@@ -229,12 +234,14 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
+
             selectionActive = true;
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
             var validTiles = board.AllTiles()
-                .Where(isValidTile)
+                .Where(IsSelectableTarget)
                 .ToList();
             selectableTileIds = new HashSet<int>(validTiles.Select(t => t.TileId));
             highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
@@ -254,6 +261,8 @@ namespace FungusToast.Unity.UI
                 if (!selectableTileIds.Contains(tileId) || selectedTileIds.Contains(tileId))
                     return;
                 var tile = board.GetTileById(tileId);
+                if (!IsSelectableTarget(tile))
+                    return;
                 selectedTileIds.Add(tileId);
                 selectedCount++;
                 onTileSelected?.Invoke(tile);

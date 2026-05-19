@@ -442,7 +442,7 @@ namespace FungusToast.Core.Growth
         private static bool IsChemotacticBeaconGrowthTarget(BoardTile tile, GameBoard board, int playerId, out bool alreadyOwned)
         {
             alreadyOwned = false;
-            if (tile == null)
+            if (tile == null || tile.IsBlocked || board.IsTileBlockedForOccupation(tile.TileId))
             {
                 return false;
             }
