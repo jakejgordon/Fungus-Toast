@@ -16,6 +16,14 @@ namespace FungusToast.Unity.Grid
         private static readonly Dictionary<Sprite, Rect> VisibleAlphaBoundsCache = new();
 
         [Serializable]
+        public sealed class PlayableHorizontalSpanStop
+        {
+            [Range(0f, 1f)] public float normalizedY = 0f;
+            [Range(0f, 1f)] public float minXNormalized = 0f;
+            [Range(0f, 1f)] public float maxXNormalized = 1f;
+        }
+
+        [Serializable]
         public sealed class BoardBackgroundSpriteMetadata
         {
             public Sprite backgroundSprite;
@@ -26,6 +34,10 @@ namespace FungusToast.Unity.Grid
             public bool hasPlayableEllipse = false;
             public Vector2 playableEllipseCenterNormalized = new(0.5f, 0.5f);
             public Vector2 playableEllipseRadiiNormalized = new(0.5f, 0.5f);
+            public bool hasPlayableHorizontalSpanProfile = false;
+            [Range(0f, 1f)] public float playableHorizontalSpanProfileMinYNormalized = 0f;
+            [Range(0f, 1f)] public float playableHorizontalSpanProfileMaxYNormalized = 1f;
+            public List<PlayableHorizontalSpanStop> playableHorizontalSpanProfile = new();
         }
 
         [Serializable]
@@ -103,6 +115,10 @@ namespace FungusToast.Unity.Grid
                 bool hasPlayableEllipseMetadata,
                 Vector2 playableEllipseCenterNormalizedMetadata,
                 Vector2 playableEllipseRadiiNormalizedMetadata,
+                bool hasPlayableHorizontalSpanProfileMetadata,
+                float playableHorizontalSpanProfileMinYNormalizedMetadata,
+                float playableHorizontalSpanProfileMaxYNormalizedMetadata,
+                IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata,
                 float backgroundScaleMultiplier,
                 bool renderBoardEdgeFade,
                 Color boardEdgeFadeColor,
@@ -130,6 +146,10 @@ namespace FungusToast.Unity.Grid
                 (PlayableEllipseCenterNormalizedMetadata, PlayableEllipseRadiiNormalizedMetadata) = SanitizeNormalizedEllipse(
                     playableEllipseCenterNormalizedMetadata,
                     playableEllipseRadiiNormalizedMetadata);
+                HasPlayableHorizontalSpanProfileMetadata = hasPlayableHorizontalSpanProfileMetadata;
+                PlayableHorizontalSpanProfileMinYNormalizedMetadata = Mathf.Clamp01(Mathf.Min(playableHorizontalSpanProfileMinYNormalizedMetadata, playableHorizontalSpanProfileMaxYNormalizedMetadata));
+                PlayableHorizontalSpanProfileMaxYNormalizedMetadata = Mathf.Clamp01(Mathf.Max(playableHorizontalSpanProfileMinYNormalizedMetadata, playableHorizontalSpanProfileMaxYNormalizedMetadata));
+                PlayableHorizontalSpanProfileMetadata = playableHorizontalSpanProfileMetadata ?? Array.Empty<PlayableHorizontalSpanStop>();
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
                 BoardEdgeFadeColor = boardEdgeFadeColor;
@@ -157,6 +177,10 @@ namespace FungusToast.Unity.Grid
             public bool HasPlayableEllipseMetadata { get; }
             public Vector2 PlayableEllipseCenterNormalizedMetadata { get; }
             public Vector2 PlayableEllipseRadiiNormalizedMetadata { get; }
+            public bool HasPlayableHorizontalSpanProfileMetadata { get; }
+            public float PlayableHorizontalSpanProfileMinYNormalizedMetadata { get; }
+            public float PlayableHorizontalSpanProfileMaxYNormalizedMetadata { get; }
+            public IReadOnlyList<PlayableHorizontalSpanStop> PlayableHorizontalSpanProfileMetadata { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderBoardEdgeFade { get; }
             public Color BoardEdgeFadeColor { get; }
@@ -165,8 +189,22 @@ namespace FungusToast.Unity.Grid
 
             public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
             public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
-            public bool ShouldUseBackgroundAlphaPlayableMask => ShouldRenderBoardBackground && BackgroundSprite != null && (DeriveBlockedTilesFromBackgroundAlpha || HasPlayableEllipseMetadata);
+            public bool ShouldUseBackgroundPlayableMask => ShouldRenderBoardBackground && BackgroundSprite != null && (DeriveBlockedTilesFromBackgroundAlpha || HasPlayableEllipseMetadata || HasPlayableHorizontalSpanProfileMetadata);
             public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
+        }
+
+        private readonly struct SanitizedPlayableHorizontalSpanStop
+        {
+            public SanitizedPlayableHorizontalSpanStop(float normalizedY, float minXNormalized, float maxXNormalized)
+            {
+                NormalizedY = normalizedY;
+                MinXNormalized = minXNormalized;
+                MaxXNormalized = maxXNormalized;
+            }
+
+            public float NormalizedY { get; }
+            public float MinXNormalized { get; }
+            public float MaxXNormalized { get; }
         }
 
         [Header("Identity")]
@@ -350,6 +388,11 @@ namespace FungusToast.Unity.Grid
             bool hasVisibleAlphaBoundsMetadata = TryGetBackgroundSpriteMetadataVisibleAlphaBoundsNormalized(resolvedBackgroundSprite, out Rect visibleAlphaBoundsNormalizedMetadata);
             bool hasBoardBoundsMetadata = TryGetBackgroundSpriteMetadataBoardBoundsNormalized(resolvedBackgroundSprite, out Rect boardBoundsNormalizedMetadata);
             bool hasPlayableEllipseMetadata = TryGetBackgroundSpriteMetadataPlayableEllipseNormalized(resolvedBackgroundSprite, out Vector2 playableEllipseCenterNormalizedMetadata, out Vector2 playableEllipseRadiiNormalizedMetadata);
+            bool hasPlayableHorizontalSpanProfileMetadata = TryGetBackgroundSpriteMetadataPlayableHorizontalSpanProfile(
+                resolvedBackgroundSprite,
+                out float playableHorizontalSpanProfileMinYNormalizedMetadata,
+                out float playableHorizontalSpanProfileMaxYNormalizedMetadata,
+                out IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata);
             return new ResolvedBoardBackgroundSettings(
                 resolvedRenderBoardBackground,
                 resolvedBackgroundSprite,
@@ -371,6 +414,10 @@ namespace FungusToast.Unity.Grid
                 hasPlayableEllipseMetadata,
                 playableEllipseCenterNormalizedMetadata,
                 playableEllipseRadiiNormalizedMetadata,
+                hasPlayableHorizontalSpanProfileMetadata,
+                playableHorizontalSpanProfileMinYNormalizedMetadata,
+                playableHorizontalSpanProfileMaxYNormalizedMetadata,
+                playableHorizontalSpanProfileMetadata,
                 resolvedBackgroundScaleMultiplier,
                 resolvedRenderBoardEdgeFade,
                 resolvedBoardEdgeFadeColor,
@@ -406,9 +453,14 @@ namespace FungusToast.Unity.Grid
                 return SanitizeBlockedTileIds(settings.ExplicitBlockedTileIds, boardWidth, boardHeight);
             }
 
-            if (!settings.ShouldUseBackgroundAlphaPlayableMask)
+            if (!settings.ShouldUseBackgroundPlayableMask)
             {
                 return Array.Empty<int>();
+            }
+
+            if (settings.HasPlayableHorizontalSpanProfileMetadata)
+            {
+                return BuildBlockedTileIdsFromHorizontalSpanProfile(settings, boardWidth, boardHeight);
             }
 
             if (settings.HasPlayableEllipseMetadata)
@@ -430,7 +482,7 @@ namespace FungusToast.Unity.Grid
                 Rect safeArea = GetEffectiveBackgroundSafeAreaNormalized(
                     settings.BackgroundSprite,
                     settings.SafeAreaNormalized,
-                    settings.ShouldUseBackgroundAlphaPlayableMask,
+                    settings.ShouldUseBackgroundPlayableMask,
                     settings.ComposeSafeAreaWithBoardBoundsMetadata,
                     settings.HasVisibleAlphaBoundsMetadata,
                     settings.VisibleAlphaBoundsNormalizedMetadata,
@@ -621,6 +673,27 @@ namespace FungusToast.Unity.Grid
             return true;
         }
 
+        private bool TryGetBackgroundSpriteMetadataPlayableHorizontalSpanProfile(
+            Sprite sprite,
+            out float playableHorizontalSpanProfileMinYNormalized,
+            out float playableHorizontalSpanProfileMaxYNormalized,
+            out IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfile)
+        {
+            playableHorizontalSpanProfileMinYNormalized = 0f;
+            playableHorizontalSpanProfileMaxYNormalized = 1f;
+            playableHorizontalSpanProfile = Array.Empty<PlayableHorizontalSpanStop>();
+            BoardBackgroundSpriteMetadata metadata = GetBackgroundSpriteMetadata(sprite);
+            if (metadata == null || !metadata.hasPlayableHorizontalSpanProfile || metadata.playableHorizontalSpanProfile == null || metadata.playableHorizontalSpanProfile.Count == 0)
+            {
+                return false;
+            }
+
+            playableHorizontalSpanProfileMinYNormalized = Mathf.Clamp01(Mathf.Min(metadata.playableHorizontalSpanProfileMinYNormalized, metadata.playableHorizontalSpanProfileMaxYNormalized));
+            playableHorizontalSpanProfileMaxYNormalized = Mathf.Clamp01(Mathf.Max(metadata.playableHorizontalSpanProfileMinYNormalized, metadata.playableHorizontalSpanProfileMaxYNormalized));
+            playableHorizontalSpanProfile = metadata.playableHorizontalSpanProfile;
+            return true;
+        }
+
         private BoardBackgroundSpriteMetadata GetBackgroundSpriteMetadata(Sprite sprite)
         {
             if (sprite == null || boardBackgroundSpriteMetadata == null)
@@ -727,6 +800,138 @@ namespace FungusToast.Unity.Grid
             }
 
             return blockedTileIds;
+        }
+
+        private IReadOnlyCollection<int> BuildBlockedTileIdsFromHorizontalSpanProfile(ResolvedBoardBackgroundSettings settings, int boardWidth, int boardHeight)
+        {
+            if (!TryBuildSanitizedPlayableHorizontalSpanProfile(settings.PlayableHorizontalSpanProfileMetadata, out List<SanitizedPlayableHorizontalSpanStop> sanitizedProfile))
+            {
+                return Array.Empty<int>();
+            }
+
+            float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
+            float maximumTileClipFraction = Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f);
+            int tileClipSampleResolution = Mathf.Clamp(settings.BackgroundTileClipSampleResolution, 1, 7);
+            float playableSurfaceTileScaleForMask = Mathf.Max(1f, playableSurfaceTileScale);
+            float[] clipBudgetSampleOffsets = BoardMaskClipSampling.BuildClipBudgetSampleOffsets(
+                playableSurfaceTileScaleForMask,
+                maximumTileClipFraction,
+                tileClipSampleResolution);
+            var blockedTileIds = new List<int>();
+
+            for (int y = 0; y < boardHeight; y++)
+            {
+                for (int x = 0; x < boardWidth; x++)
+                {
+                    bool satisfiesClipBudget = clipBudgetSampleOffsets.Length == 0
+                        || EvaluateTileHorizontalSpanProfileClipBudget(
+                            sanitizedProfile,
+                            settings.PlayableHorizontalSpanProfileMinYNormalizedMetadata,
+                            settings.PlayableHorizontalSpanProfileMaxYNormalizedMetadata,
+                            boardWidth,
+                            boardHeight,
+                            x,
+                            y,
+                            clipBudgetSampleOffsets);
+
+                    bool satisfiesCoverage = minimumTileCoverage <= 0f
+                        || EvaluateTileHorizontalSpanProfileCoverage(
+                            sanitizedProfile,
+                            settings.PlayableHorizontalSpanProfileMinYNormalizedMetadata,
+                            settings.PlayableHorizontalSpanProfileMaxYNormalizedMetadata,
+                            boardWidth,
+                            boardHeight,
+                            x,
+                            y,
+                            minimumTileCoverage);
+
+                    if (!(satisfiesClipBudget && satisfiesCoverage))
+                    {
+                        blockedTileIds.Add((y * boardWidth) + x);
+                    }
+                }
+            }
+
+            if (blockedTileIds.Count >= boardWidth * boardHeight)
+            {
+                Debug.LogWarning($"Board medium '{mediumId}' produced a fully blocked horizontal-span mask for {boardWidth}x{boardHeight}; ignoring the mask.");
+                return Array.Empty<int>();
+            }
+
+            return blockedTileIds;
+        }
+
+        private static bool EvaluateTileHorizontalSpanProfileCoverage(
+            IReadOnlyList<SanitizedPlayableHorizontalSpanStop> sanitizedProfile,
+            float minYNormalized,
+            float maxYNormalized,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float minimumTileCoverage)
+        {
+            const int sampleResolution = 5;
+            int coveredSamples = 0;
+            int totalSamples = sampleResolution * sampleResolution;
+
+            for (int sampleY = 0; sampleY < sampleResolution; sampleY++)
+            {
+                for (int sampleX = 0; sampleX < sampleResolution; sampleX++)
+                {
+                    Vector2 point = SampleHorizontalSpanProfilePointNormalized(
+                        boardWidth,
+                        boardHeight,
+                        tileX,
+                        tileY,
+                        (sampleX + 0.5f) / sampleResolution,
+                        (sampleY + 0.5f) / sampleResolution);
+                    if (IsPointInsidePlayableHorizontalSpanProfile(point, sanitizedProfile, minYNormalized, maxYNormalized))
+                    {
+                        coveredSamples++;
+                    }
+                }
+            }
+
+            return ((float)coveredSamples / totalSamples) >= minimumTileCoverage;
+        }
+
+        private static bool EvaluateTileHorizontalSpanProfileClipBudget(
+            IReadOnlyList<SanitizedPlayableHorizontalSpanStop> sanitizedProfile,
+            float minYNormalized,
+            float maxYNormalized,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            IReadOnlyList<float> sampleOffsets)
+        {
+            if (sampleOffsets == null || sampleOffsets.Count == 0)
+            {
+                return true;
+            }
+
+            for (int sampleY = 0; sampleY < sampleOffsets.Count; sampleY++)
+            {
+                float sampleOffsetY = sampleOffsets[sampleY];
+                for (int sampleX = 0; sampleX < sampleOffsets.Count; sampleX++)
+                {
+                    float sampleOffsetX = sampleOffsets[sampleX];
+                    Vector2 point = SampleHorizontalSpanProfilePointNormalized(
+                        boardWidth,
+                        boardHeight,
+                        tileX,
+                        tileY,
+                        0.5f + sampleOffsetX,
+                        0.5f + sampleOffsetY);
+                    if (!IsPointInsidePlayableHorizontalSpanProfile(point, sanitizedProfile, minYNormalized, maxYNormalized))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private static bool EvaluateTileCoverage(
@@ -872,6 +1077,114 @@ namespace FungusToast.Unity.Grid
                 }
             }
 
+            return true;
+        }
+
+        private static Vector2 SampleHorizontalSpanProfilePointNormalized(
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float sampleXWithinTile,
+            float sampleYWithinTile)
+        {
+            return new Vector2(
+                Mathf.Clamp01((tileX + sampleXWithinTile) / boardWidth),
+                Mathf.Clamp01((tileY + sampleYWithinTile) / boardHeight));
+        }
+
+        private static bool IsPointInsidePlayableHorizontalSpanProfile(
+            Vector2 pointNormalized,
+            IReadOnlyList<SanitizedPlayableHorizontalSpanStop> sanitizedProfile,
+            float minYNormalized,
+            float maxYNormalized)
+        {
+            if (pointNormalized.y < minYNormalized || pointNormalized.y > maxYNormalized)
+            {
+                return false;
+            }
+
+            EvaluatePlayableHorizontalSpanAtYNormalized(sanitizedProfile, pointNormalized.y, out float minXNormalized, out float maxXNormalized);
+            return pointNormalized.x >= minXNormalized && pointNormalized.x <= maxXNormalized;
+        }
+
+        private static void EvaluatePlayableHorizontalSpanAtYNormalized(IReadOnlyList<SanitizedPlayableHorizontalSpanStop> sanitizedProfile, float normalizedY, out float minXNormalized, out float maxXNormalized)
+        {
+            if (sanitizedProfile == null || sanitizedProfile.Count == 0)
+            {
+                minXNormalized = 0f;
+                maxXNormalized = 1f;
+                return;
+            }
+
+            float clampedY = Mathf.Clamp01(normalizedY);
+            if (sanitizedProfile.Count == 1 || clampedY <= sanitizedProfile[0].NormalizedY)
+            {
+                minXNormalized = sanitizedProfile[0].MinXNormalized;
+                maxXNormalized = sanitizedProfile[0].MaxXNormalized;
+                return;
+            }
+
+            SanitizedPlayableHorizontalSpanStop lastStop = sanitizedProfile[sanitizedProfile.Count - 1];
+            if (clampedY >= lastStop.NormalizedY)
+            {
+                minXNormalized = lastStop.MinXNormalized;
+                maxXNormalized = lastStop.MaxXNormalized;
+                return;
+            }
+
+            for (int i = 0; i < sanitizedProfile.Count - 1; i++)
+            {
+                SanitizedPlayableHorizontalSpanStop lowerStop = sanitizedProfile[i];
+                SanitizedPlayableHorizontalSpanStop upperStop = sanitizedProfile[i + 1];
+                if (clampedY < lowerStop.NormalizedY || clampedY > upperStop.NormalizedY)
+                {
+                    continue;
+                }
+
+                float range = Mathf.Max(0.0001f, upperStop.NormalizedY - lowerStop.NormalizedY);
+                float t = Mathf.Clamp01((clampedY - lowerStop.NormalizedY) / range);
+                minXNormalized = Mathf.Lerp(lowerStop.MinXNormalized, upperStop.MinXNormalized, t);
+                maxXNormalized = Mathf.Lerp(lowerStop.MaxXNormalized, upperStop.MaxXNormalized, t);
+                return;
+            }
+
+            minXNormalized = lastStop.MinXNormalized;
+            maxXNormalized = lastStop.MaxXNormalized;
+        }
+
+        private static bool TryBuildSanitizedPlayableHorizontalSpanProfile(
+            IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata,
+            out List<SanitizedPlayableHorizontalSpanStop> sanitizedProfile)
+        {
+            sanitizedProfile = null;
+            if (playableHorizontalSpanProfileMetadata == null || playableHorizontalSpanProfileMetadata.Count == 0)
+            {
+                return false;
+            }
+
+            var workingProfile = new List<SanitizedPlayableHorizontalSpanStop>(playableHorizontalSpanProfileMetadata.Count);
+            for (int i = 0; i < playableHorizontalSpanProfileMetadata.Count; i++)
+            {
+                PlayableHorizontalSpanStop stop = playableHorizontalSpanProfileMetadata[i];
+                if (stop == null)
+                {
+                    continue;
+                }
+
+                float normalizedY = Mathf.Clamp01(stop.normalizedY);
+                float minXNormalized = Mathf.Clamp01(stop.minXNormalized);
+                float maxXNormalized = Mathf.Clamp(stop.maxXNormalized, minXNormalized, 1f);
+                workingProfile.Add(new SanitizedPlayableHorizontalSpanStop(normalizedY, minXNormalized, maxXNormalized));
+            }
+
+            if (workingProfile.Count == 0)
+            {
+                return false;
+            }
+
+            workingProfile.Sort((left, right) => left.NormalizedY.CompareTo(right.NormalizedY));
+            sanitizedProfile = workingProfile;
             return true;
         }
 

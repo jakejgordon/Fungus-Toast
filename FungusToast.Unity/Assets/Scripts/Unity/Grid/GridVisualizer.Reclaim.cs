@@ -426,7 +426,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Rect safeArea = BoardMediumConfig.GetEffectiveBackgroundSafeAreaNormalized(
 				sprite,
 				backgroundSettings.SafeAreaNormalized,
-				backgroundSettings.ShouldUseBackgroundAlphaPlayableMask,
+				backgroundSettings.ShouldUseBackgroundPlayableMask,
 				backgroundSettings.ComposeSafeAreaWithBoardBoundsMetadata,
 				backgroundSettings.HasVisibleAlphaBoundsMetadata,
 				backgroundSettings.VisibleAlphaBoundsNormalizedMetadata,

@@ -93,18 +93,18 @@ MonoBehaviour:
     backgroundSprite: {fileID: 21300000, guid: d0154f861fa82c842aba2cfd1a1dc380, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     hidePlayableSurfaceTiles: 1
-    deriveBlockedTilesFromBackgroundAlpha: 1
+    deriveBlockedTilesFromBackgroundAlpha: 0
     backgroundAlphaPlayableThreshold: 0.1
     backgroundMinTileCoverage: 0
     backgroundMaxTileClipFraction: 0
     backgroundTileClipSampleResolution: 5
     useExplicitBlockedTileIds: 0
     explicitBlockedTileIds: []
-    backgroundInsetLeftNormalized: 0.04
-    backgroundInsetRightNormalized: 0.02
-    backgroundInsetBottomNormalized: 0.01
-    backgroundInsetTopNormalized: 0.045
-    composeSafeAreaWithBoardBoundsMetadata: 1
+    backgroundInsetLeftNormalized: 0
+    backgroundInsetRightNormalized: 0
+    backgroundInsetBottomNormalized: 0
+    backgroundInsetTopNormalized: 0
+    composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.06}
@@ -192,10 +192,35 @@ MonoBehaviour:
     hasBoardBounds: 1
     boardBoundsNormalized:
       serializedVersion: 2
-      x: 0.085
+      x: 0.045625
       y: 0.03375
-      width: 0.8525
+      width: 0.93125
       height: 0.93125
+    hasPlayableHorizontalSpanProfile: 1
+    playableHorizontalSpanProfileMinYNormalized: 0.02
+    playableHorizontalSpanProfileMaxYNormalized: 0.98
+    playableHorizontalSpanProfile:
+    - normalizedY: 0.02
+      minXNormalized: 0.06
+      maxXNormalized: 0.94
+    - normalizedY: 0.8
+      minXNormalized: 0.06
+      maxXNormalized: 0.94
+    - normalizedY: 0.86
+      minXNormalized: 0.08
+      maxXNormalized: 0.94
+    - normalizedY: 0.9
+      minXNormalized: 0.12
+      maxXNormalized: 0.94
+    - normalizedY: 0.94
+      minXNormalized: 0.16
+      maxXNormalized: 0.94
+    - normalizedY: 0.98
+      minXNormalized: 0.22
+      maxXNormalized: 0.94
+    - normalizedY: 1
+      minXNormalized: 0.22
+      maxXNormalized: 0.94
   - backgroundSprite: {fileID: 21300000, guid: 9d8f3efff43346849a2a91614e2b4a6a, type: 3}
     hasVisibleAlphaBounds: 1
     visibleAlphaBoundsNormalized:

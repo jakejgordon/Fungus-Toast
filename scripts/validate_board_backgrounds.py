@@ -59,6 +59,10 @@ class SpriteMetadata:
     has_playable_ellipse: bool
     playable_ellipse_center: tuple[float, float]
     playable_ellipse_radii: tuple[float, float]
+    has_playable_horizontal_span_profile: bool
+    playable_horizontal_span_profile_min_y: float
+    playable_horizontal_span_profile_max_y: float
+    playable_horizontal_span_profile: list[tuple[float, float, float]]
 
 
 @dataclass(frozen=True)
@@ -93,6 +97,20 @@ class ProbeResult:
     effective_safe_area: Rect
     effective_area_transparency_fraction: float
     shape_source: str
+
+
+@dataclass(frozen=True)
+class HorizontalSpanStop:
+    normalized_y: float
+    min_x: float
+    max_x: float
+
+
+@dataclass(frozen=True)
+class HorizontalSpanProfile:
+    min_y: float
+    max_y: float
+    stops: list[HorizontalSpanStop]
 
 
 def main() -> int:
@@ -182,7 +200,8 @@ def main() -> int:
             f"  {metadata.sprite_path.name}: "
             f"visible={format_rect(metadata.visible_alpha_bounds)} "
             f"board={'none' if not metadata.has_board_bounds else format_rect(metadata.board_bounds)} "
-            f"ellipse={'none' if not metadata.has_playable_ellipse else format_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)}"
+            f"ellipse={'none' if not metadata.has_playable_ellipse else format_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)} "
+            f"profile={'none' if not metadata.has_playable_horizontal_span_profile else format_horizontal_span_profile(metadata.playable_horizontal_span_profile, metadata.playable_horizontal_span_profile_min_y, metadata.playable_horizontal_span_profile_max_y)}"
         )
 
     print("")
@@ -278,6 +297,10 @@ def build_metadata_map(asset: dict, sprite_guid_map: dict[str, Path]) -> dict[st
             has_playable_ellipse=bool(entry.get("hasPlayableEllipse", False)),
             playable_ellipse_center=vector2_from_yaml(entry.get("playableEllipseCenterNormalized"), (0.5, 0.5)),
             playable_ellipse_radii=vector2_from_yaml(entry.get("playableEllipseRadiiNormalized"), (0.5, 0.5)),
+            has_playable_horizontal_span_profile=bool(entry.get("hasPlayableHorizontalSpanProfile", False)),
+            playable_horizontal_span_profile_min_y=float(entry.get("playableHorizontalSpanProfileMinYNormalized", 0.0)),
+            playable_horizontal_span_profile_max_y=float(entry.get("playableHorizontalSpanProfileMaxYNormalized", 1.0)),
+            playable_horizontal_span_profile=horizontal_span_profile_from_yaml(entry.get("playableHorizontalSpanProfile")),
         )
     return metadata_by_guid
 
@@ -361,11 +384,18 @@ def validate_metadata(
                     f"serialized={format_rect(metadata.visible_alpha_bounds)} measured={format_rect(measured)}"
                 )
 
-        if metadata.has_board_bounds and not rect_contains(metadata.visible_alpha_bounds, metadata.board_bounds, 1.0 / image.width, 1.0 / image.height):
-            errors.append(
-                f"{metadata.sprite_path.name} boardBoundsNormalized escapes visible alpha bounds: "
-                f"visible={format_rect(metadata.visible_alpha_bounds)} board={format_rect(metadata.board_bounds)}"
-            )
+        if metadata.has_board_bounds:
+            board_bounds = sanitize_rect(metadata.board_bounds)
+            if (
+                board_bounds.x_min < -0.0001
+                or board_bounds.y_min < -0.0001
+                or board_bounds.x_max > 1.0001
+                or board_bounds.y_max > 1.0001
+            ):
+                errors.append(
+                    f"{metadata.sprite_path.name} boardBoundsNormalized escapes normalized sprite bounds: "
+                    f"board={format_rect(board_bounds)}"
+                )
 
         if metadata.has_playable_ellipse:
             center, radii = sanitize_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)
@@ -375,6 +405,28 @@ def validate_metadata(
                     f"{metadata.sprite_path.name} playable ellipse escapes normalized sprite bounds: "
                     f"ellipse={format_ellipse(center, radii)}"
                 )
+
+        if metadata.has_playable_horizontal_span_profile:
+            profile = sanitize_horizontal_span_profile(
+                metadata.playable_horizontal_span_profile_min_y,
+                metadata.playable_horizontal_span_profile_max_y,
+                metadata.playable_horizontal_span_profile,
+            )
+            if profile is None or not profile.stops:
+                errors.append(f"{metadata.sprite_path.name} playable horizontal span profile is enabled but empty.")
+            if profile is not None and (profile.min_y < -0.0001 or profile.max_y > 1.0001 or profile.min_y > profile.max_y):
+                errors.append(
+                    f"{metadata.sprite_path.name} horizontal span profile has invalid y bounds: "
+                    f"minY={profile.min_y:.6f} maxY={profile.max_y:.6f}"
+                )
+            for stop in ([] if profile is None else profile.stops):
+                if stop.normalized_y < -0.0001 or stop.normalized_y > 1.0001:
+                    errors.append(f"{metadata.sprite_path.name} horizontal span stop has invalid normalizedY={stop.normalized_y:.6f}.")
+                if stop.min_x < -0.0001 or stop.max_x > 1.0001 or stop.min_x > stop.max_x:
+                    errors.append(
+                        f"{metadata.sprite_path.name} horizontal span stop is invalid: "
+                        f"y={stop.normalized_y:.6f} span=({stop.min_x:.6f}, {stop.max_x:.6f})"
+                    )
 
 
 def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
@@ -406,6 +458,20 @@ def collect_override_notes(settings: BackgroundSettings, notes: list[str]) -> No
                 f"{settings.sprite_path.name} {settings.override_description}: boardBoundsNormalized is active, "
                 "so configured insets are ignored unless safe-area composition is enabled."
             )
+        if settings.metadata.has_visible_alpha_bounds and not rect_contains(
+            settings.metadata.visible_alpha_bounds,
+            settings.metadata.board_bounds,
+            0.0,
+            0.0,
+        ):
+            if settings.metadata.has_playable_horizontal_span_profile:
+                notes.append(
+                    f"{settings.sprite_path.name} {settings.override_description}: boardBoundsNormalized extends past visible alpha bounds and relies on the authored horizontal-span profile to trim the overhang."
+                )
+            else:
+                notes.append(
+                    f"{settings.sprite_path.name} {settings.override_description}: boardBoundsNormalized extends past visible alpha bounds and relies on alpha masking to trim the overhang."
+                )
     if not math.isclose(settings.background_scale_multiplier, 1.0, rel_tol=0.0, abs_tol=0.0001):
         notes.append(
             f"{settings.sprite_path.name} {settings.override_description}: backgroundScaleMultiplier={settings.background_scale_multiplier:.3f}; "
@@ -422,6 +488,7 @@ def evaluate_probe(
     image = sprite_images[settings.sprite_guid]
     effective_safe_area = get_effective_safe_area(settings, width, height)
     effective_ellipse = get_effective_playable_ellipse(settings)
+    effective_horizontal_span_profile = get_effective_playable_horizontal_span_profile(settings)
     clip_offsets = build_clip_budget_sample_offsets(
         PLAYABLE_SURFACE_TILE_SCALE,
         settings.max_tile_clip_fraction,
@@ -433,7 +500,30 @@ def evaluate_probe(
     minimum_tile_coverage = clamp01(settings.min_tile_coverage)
     for tile_y in range(height):
         for tile_x in range(width):
-            if effective_ellipse is not None:
+            if effective_horizontal_span_profile is not None:
+                satisfies_clip_budget = (
+                    not clip_offsets
+                    or evaluate_tile_horizontal_span_profile_clip_budget(
+                        effective_horizontal_span_profile,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        clip_offsets,
+                    )
+                )
+                satisfies_coverage = (
+                    minimum_tile_coverage <= 0.0
+                    or evaluate_tile_horizontal_span_profile_coverage(
+                        effective_horizontal_span_profile,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        minimum_tile_coverage,
+                    )
+                )
+            elif effective_ellipse is not None:
                 satisfies_clip_budget = (
                     not clip_offsets
                     or evaluate_tile_ellipse_clip_budget(
@@ -489,7 +579,7 @@ def evaluate_probe(
 
     total_tiles = width * height
     playable_tiles = total_tiles - blocked_tiles
-    effective_area_transparency_fraction = 0.0 if effective_ellipse is not None else measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold)
+    effective_area_transparency_fraction = 0.0 if effective_ellipse is not None or effective_horizontal_span_profile is not None else measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold)
     return ProbeResult(
         width=width,
         height=height,
@@ -499,7 +589,7 @@ def evaluate_probe(
         total_tiles=total_tiles,
         effective_safe_area=effective_safe_area,
         effective_area_transparency_fraction=effective_area_transparency_fraction,
-        shape_source="ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area"),
+        shape_source="profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area")),
     )
 
 
@@ -557,6 +647,18 @@ def get_effective_playable_ellipse(settings: BackgroundSettings) -> tuple[tuple[
     center, radii = sanitize_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)
     bounds = compose_rect(build_ellipse_bounds(center, radii), sanitize_rect(settings.safe_area))
     return ((bounds.x + (bounds.width * 0.5), bounds.y + (bounds.height * 0.5)), (bounds.width * 0.5, bounds.height * 0.5))
+
+
+def get_effective_playable_horizontal_span_profile(settings: BackgroundSettings) -> list[HorizontalSpanStop] | None:
+    metadata = settings.metadata
+    if metadata is None or not metadata.has_playable_horizontal_span_profile:
+        return None
+
+    return sanitize_horizontal_span_profile(
+        metadata.playable_horizontal_span_profile_min_y,
+        metadata.playable_horizontal_span_profile_max_y,
+        metadata.playable_horizontal_span_profile,
+    )
 
 
 def inscribe_board_aspect_ratio(candidate: Rect, board_width: int, board_height: int) -> Rect:
@@ -678,6 +780,32 @@ def evaluate_tile_ellipse_coverage(
     return (covered_samples / total_samples) >= minimum_tile_coverage
 
 
+def evaluate_tile_horizontal_span_profile_coverage(
+    profile: HorizontalSpanProfile,
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    minimum_tile_coverage: float,
+) -> bool:
+    sample_resolution = 5
+    covered_samples = 0
+    total_samples = sample_resolution * sample_resolution
+    for sample_y in range(sample_resolution):
+        for sample_x in range(sample_resolution):
+            point = sample_horizontal_span_profile_point(
+                board_width,
+                board_height,
+                tile_x,
+                tile_y,
+                (sample_x + 0.5) / sample_resolution,
+                (sample_y + 0.5) / sample_resolution,
+            )
+            if point_inside_horizontal_span_profile(point, profile):
+                covered_samples += 1
+    return (covered_samples / total_samples) >= minimum_tile_coverage
+
+
 def evaluate_tile_clip_budget(
     image: SpriteImage,
     safe_area: Rect,
@@ -717,6 +845,29 @@ def evaluate_tile_ellipse_clip_budget(
                 0.5 + sample_offset_y,
             )
             if not point_inside_ellipse(point, ellipse):
+                return False
+    return True
+
+
+def evaluate_tile_horizontal_span_profile_clip_budget(
+    profile: HorizontalSpanProfile,
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    sample_offsets: list[float],
+) -> bool:
+    for sample_offset_y in sample_offsets:
+        for sample_offset_x in sample_offsets:
+            point = sample_horizontal_span_profile_point(
+                board_width,
+                board_height,
+                tile_x,
+                tile_y,
+                0.5 + sample_offset_x,
+                0.5 + sample_offset_y,
+            )
+            if not point_inside_horizontal_span_profile(point, profile):
                 return False
     return True
 
@@ -791,6 +942,24 @@ def vector2_from_yaml(data: dict | None, default: tuple[float, float]) -> tuple[
     return (float(data.get("x", default[0])), float(data.get("y", default[1])))
 
 
+def horizontal_span_profile_from_yaml(data: list[dict] | None) -> list[tuple[float, float, float]]:
+    if not data:
+        return []
+
+    profile: list[tuple[float, float, float]] = []
+    for entry in data:
+        if not entry:
+            continue
+        profile.append(
+            (
+                float(entry.get("normalizedY", 0.0)),
+                float(entry.get("minXNormalized", 0.0)),
+                float(entry.get("maxXNormalized", 1.0)),
+            )
+        )
+    return profile
+
+
 def build_safe_area(left: float, right: float, bottom: float, top: float) -> Rect:
     left = clamp01(left)
     right = clamp01(right)
@@ -820,6 +989,26 @@ def sanitize_ellipse(center: tuple[float, float], radii: tuple[float, float]) ->
     radius_x = min(max(radii[0], 0.001), max_radius_x)
     radius_y = min(max(radii[1], 0.001), max_radius_y)
     return (center_x, center_y), (radius_x, radius_y)
+
+
+def sanitize_horizontal_span_profile(
+    min_y: float,
+    max_y: float,
+    profile: list[tuple[float, float, float]],
+) -> HorizontalSpanProfile | None:
+    sanitized: list[HorizontalSpanStop] = []
+    for normalized_y, min_x, max_x in profile:
+        clamped_y = clamp01(normalized_y)
+        clamped_min_x = clamp01(min_x)
+        clamped_max_x = min(1.0, max(clamped_min_x, max_x))
+        sanitized.append(HorizontalSpanStop(clamped_y, clamped_min_x, clamped_max_x))
+    sanitized.sort(key=lambda stop: stop.normalized_y)
+    if not sanitized:
+        return None
+
+    clamped_min_y = clamp01(min(min_y, max_y))
+    clamped_max_y = clamp01(max(min_y, max_y))
+    return HorizontalSpanProfile(clamped_min_y, clamped_max_y, sanitized)
 
 
 def compose_rect(outer: Rect, inner: Rect) -> Rect:
@@ -852,11 +1041,59 @@ def sample_ellipse_point(
     return normalized_x, normalized_y
 
 
+def sample_horizontal_span_profile_point(
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    sample_x_within_tile: float,
+    sample_y_within_tile: float,
+) -> tuple[float, float]:
+    return (
+        clamp01((tile_x + sample_x_within_tile) / board_width),
+        clamp01((tile_y + sample_y_within_tile) / board_height),
+    )
+
+
 def point_inside_ellipse(point: tuple[float, float], ellipse: tuple[tuple[float, float], tuple[float, float]]) -> bool:
     center, radii = ellipse
     delta_x = (point[0] - center[0]) / max(0.001, radii[0])
     delta_y = (point[1] - center[1]) / max(0.001, radii[1])
     return ((delta_x * delta_x) + (delta_y * delta_y)) <= 1.0
+
+
+def point_inside_horizontal_span_profile(point: tuple[float, float], profile: HorizontalSpanProfile) -> bool:
+    if point[1] < profile.min_y or point[1] > profile.max_y:
+        return False
+
+    min_x, max_x = evaluate_horizontal_span_at_y(point[1], profile.stops)
+    return point[0] >= min_x and point[0] <= max_x
+
+
+def evaluate_horizontal_span_at_y(normalized_y: float, profile: list[HorizontalSpanStop]) -> tuple[float, float]:
+    if not profile:
+        return 0.0, 1.0
+
+    clamped_y = clamp01(normalized_y)
+    if len(profile) == 1 or clamped_y <= profile[0].normalized_y:
+        return profile[0].min_x, profile[0].max_x
+
+    if clamped_y >= profile[-1].normalized_y:
+        return profile[-1].min_x, profile[-1].max_x
+
+    for index in range(len(profile) - 1):
+        lower = profile[index]
+        upper = profile[index + 1]
+        if clamped_y < lower.normalized_y or clamped_y > upper.normalized_y:
+            continue
+        span = max(0.0001, upper.normalized_y - lower.normalized_y)
+        t = clamp01((clamped_y - lower.normalized_y) / span)
+        return (
+            lower.min_x + ((upper.min_x - lower.min_x) * t),
+            lower.max_x + ((upper.max_x - lower.max_x) * t),
+        )
+
+    return profile[-1].min_x, profile[-1].max_x
 
 
 def rects_close(a: Rect, b: Rect, tolerance_x: float, tolerance_y: float) -> bool:
@@ -883,6 +1120,13 @@ def format_rect(rect: Rect) -> str:
 
 def format_ellipse(center: tuple[float, float], radii: tuple[float, float]) -> str:
     return f"center=({center[0]:.6f}, {center[1]:.6f}) radii=({radii[0]:.6f}, {radii[1]:.6f})"
+
+
+def format_horizontal_span_profile(profile: list[tuple[float, float, float]], min_y: float, max_y: float) -> str:
+    sanitized = sanitize_horizontal_span_profile(min_y, max_y, profile)
+    if sanitized is None:
+        return "empty"
+    return f"{len(sanitized.stops)} stops y=({sanitized.min_y:.3f},{sanitized.max_y:.3f})"
 
 
 def clamp01(value: float) -> float:

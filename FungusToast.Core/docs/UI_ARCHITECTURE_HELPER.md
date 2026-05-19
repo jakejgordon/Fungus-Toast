@@ -232,14 +232,15 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
     - when `backgroundMaxTileClipFraction` is `0.0`, treat that as strict no-overrun clipping; do not add a center-sample fallback that can re-allow partially outside tiles
     - inscribe the requested board aspect ratio inside visible-alpha-derived safe areas before placement/mask sampling so square boards do not inherit rectangular alpha slack
     - start with `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune safe-area insets before considering anything looser
-12. When alpha-derived geometry keeps drifting from the actual intended board shape, add explicit `hasPlayableEllipse` metadata for that sprite and let both blocked-tile derivation and background placement read the same stored ellipse instead of continuing to infer the shape from art alpha.
+12. When alpha-derived geometry keeps drifting from the actual intended board shape, add explicit authored shape metadata for that sprite instead of continuing to infer the shape from art alpha.
+13. Use `hasPlayableEllipse` when the intended shape is genuinely ellipse-like, but use an authored horizontal-span profile when the shape needs asymmetric per-row trimming such as cheese's fuller square with a top-left notch.
 
 ### Add A New Background
 
 1. Import the sprite and keep it square unless there is a clear reason not to.
 2. Open `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`.
 3. If the new image is the general fallback background, replace the medium's default `backgroundSprite`. If it only applies to a size band, add or update a `boardBackgroundOverrides` entry in the correct matching order.
-4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using an explicit blocked-tile list instead. If a background needs explicit geometry, add `hasPlayableEllipse` metadata instead of widening clip budgets.
+4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using explicit geometry instead. If a background needs explicit geometry, prefer `hasPlayableEllipse` for circular shapes or an authored horizontal-span profile for asymmetric silhouettes instead of widening clip budgets.
 5. Add a `boardBackgroundSpriteMetadata` entry for the sprite.
 6. Set `visibleAlphaBoundsNormalized` to the measured normalized bounds of the sprite's visible non-transparent pixels.
 7. Leave `boardBoundsNormalized` off unless visual verification proves the playable board needs a different canonical footprint than the visible-alpha envelope.
@@ -251,11 +252,13 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 ### Metadata Field Intent
 
 - `visibleAlphaBoundsNormalized`: the measured raw visible-pixel envelope for the sprite.
-- `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite.
+- `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite. For alpha-masked backgrounds, this footprint may intentionally extend beyond the visible art when you want a larger behind-the-scenes square and expect alpha masking to trim the overhang.
 - `hasPlayableEllipse` + `playableEllipseCenterNormalized` + `playableEllipseRadiiNormalized`: optional explicit geometric shape metadata. When present, runtime placement and blocked-tile derivation use the ellipse bounds instead of visible-alpha fitting for that sprite.
+- `hasPlayableHorizontalSpanProfile` + `playableHorizontalSpanProfile`: optional explicit non-elliptical shape metadata. Each stop defines a normalized board-space row and the playable horizontal span for that row, which lets runtime interpolate asymmetric shapes such as cheese's side trims and top-left notch.
 - If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 - If `hasPlayableEllipse` is present, that ellipse becomes the source-of-truth footprint for placement and mask derivation, and the configured safe area composes inside the ellipse bounds.
+- If `hasPlayableHorizontalSpanProfile` is present, blocked-tile derivation evaluates that authored board-space profile directly instead of sampling sprite alpha, while placement can still use `boardBoundsNormalized` to position the art against the same intended square footprint.
 
 ### Current Small-Board Pattern
 
@@ -266,7 +269,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
 - White bread, seeded cracker, and plain cracker still use the shared alpha-mask fitting rule.
-- Cheese now uses its measured visible bounds as composed board-bounds metadata so square boards can consume the sprite's extra vertical height while alpha masking trims the light side spill.
+- Cheese uses explicit authored horizontal-span profile metadata with vertical min/max bounds so it can keep a larger square placement footprint while trimming the left/right edges, top-left notch, and top/bottom bands deliberately across the cheese size band.
 - Pita now uses explicit stored ellipse metadata so the square gameplay board, the blocked-tile footprint, and the rendered background all read the same authored circular shape.
 
 ### Import Guidance

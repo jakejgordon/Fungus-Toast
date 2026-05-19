@@ -108287,6 +108287,8 @@ MonoBehaviour:
   startGameButton: {fileID: 1279758131}
   backButton: {fileID: 2146000003}
   modeSelectPanel: {fileID: 1539722632}
+  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
+  forwardStepButtonIcon: {fileID: 21300000, guid: 7702dcd5c39cf824ba1f1efe2429fad6, type: 3}
   humanPlayerSectionRoot: {fileID: 1152862161}
   humanPlayerButtons:
   - {fileID: 476987861}
@@ -113237,6 +113239,7 @@ MonoBehaviour:
   resumeButton: {fileID: 1550400851}
   newButton: {fileID: 1196639415}
   backButton: {fileID: 803248674}
+  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
   modeSelectPanel: {fileID: 1539722632}
   testingOptionsSectionRoot: {fileID: 0}
   testingModeToggleTemplate: {fileID: 0}
@@ -117369,6 +117372,7 @@ MonoBehaviour:
   campaignDescriptionText: {fileID: 1467730301}
   wideTitleLogoSprite: {fileID: -8837426643450192954, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
   settingsButtonIcon: {fileID: 21300000, guid: 46aeb8cdc6649454a9ee233d43938d90, type: 3}
+  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
 --- !u!1 &1550400849
 GameObject:
   m_ObjectHideFlags: 0
