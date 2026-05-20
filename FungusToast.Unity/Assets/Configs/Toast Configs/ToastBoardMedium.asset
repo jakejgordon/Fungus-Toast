@@ -172,8 +172,8 @@ MonoBehaviour:
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
     boardEdgeFadeWidthTiles: 1.6
     boardEdgeFadeNoiseStrength: 0.015
-  - minBoardWidth: 100
-    minBoardHeight: 100
+  - minBoardWidth: 126
+    minBoardHeight: 126
     maxBoardWidth: 10000
     maxBoardHeight: 10000
     renderBoardBackground: 1
