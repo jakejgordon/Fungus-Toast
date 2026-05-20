@@ -1078,7 +1078,7 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 25),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
@@ -1092,7 +1092,7 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 25),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
@@ -1107,7 +1107,7 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 25),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
