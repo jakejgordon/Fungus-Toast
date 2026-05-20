@@ -1078,8 +1078,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
-                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 35),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
@@ -1092,8 +1092,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
-                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 35),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
@@ -1107,8 +1107,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.IgnoreEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 15),
-                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 3),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 35),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
