@@ -54,6 +54,8 @@ namespace FungusToast.Unity.Campaign
         public bool HasActiveRun => State != null;
         public bool HasResumableRun => State != null && !State.requiresNewCampaignStart && !State.campaignCompleted;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
+        public int CurrentLevelDisplay => State != null ? GetLevelDisplay(State.levelIndex) : 0;
+        public string CurrentLevelTitle => State != null ? GetLevelTitle(State.levelIndex) : string.Empty;
         public BoardPreset CurrentBoardPreset
         {
             get
@@ -105,6 +107,26 @@ namespace FungusToast.Unity.Campaign
             return CampaignStartDifficultyOptions
                 .Where(option => option.StartLevelIndex < progression.MaxLevels)
                 .ToArray();
+        }
+
+        public int GetLevelDisplay(int levelIndex)
+        {
+            return Mathf.Max(1, levelIndex + 1);
+        }
+
+        public string GetLevelTitle(int levelIndex)
+        {
+            var levelSpec = progression.Get(levelIndex);
+            return levelSpec?.levelTitle?.Trim() ?? string.Empty;
+        }
+
+        public string GetFormattedLevelTitle(int levelIndex)
+        {
+            int levelDisplay = GetLevelDisplay(levelIndex);
+            string levelTitle = GetLevelTitle(levelIndex);
+            return string.IsNullOrWhiteSpace(levelTitle)
+                ? $"Level {levelDisplay}"
+                : $"Level {levelDisplay}: {levelTitle}";
         }
 
         public int GetHighestUnlockedCampaignStartDifficultyIndex()

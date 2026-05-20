@@ -24,6 +24,8 @@ namespace FungusToast.Unity.Campaign
         {
             /// <summary>Zero-based index for clarity / debugging (optional; may mirror list index).</summary>
             public int levelIndex;
+            /// <summary>Optional player-facing title shown when this campaign level begins.</summary>
+            public string levelTitle;
             /// <summary>Board preset containing authoritative board size, AI roster, mutation tier cap.</summary>
             public BoardPreset boardPreset;
             /// <summary>Whether nutrient patches should be placed on this campaign level.</summary>

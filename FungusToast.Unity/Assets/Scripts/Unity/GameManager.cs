@@ -799,7 +799,7 @@ namespace FungusToast.Unity
 
         public void InitializeGame(int numberOfPlayers)
         {
-            if (!PrepareGameplayInitialization(numberOfPlayers, "Preparing the toast…"))
+            if (!PrepareGameplayInitialization(numberOfPlayers, "Seeding the colony…"))
             {
                 return;
             }
@@ -845,22 +845,6 @@ namespace FungusToast.Unity
             mycovariantDraftController?.gameObject.SetActive(false);
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
-
-            if (testingModeEnabled)
-            {
-                if (fastForwardRounds <=0 && testingMycovariantId.HasValue)
-                {
-                    StartMycovariantDraftPhase();
-                }
-                else if (fastForwardRounds <=0)
-                {
-                    gameUIManager.PhaseBanner.Show("New Game Settings",2f);
-                }
-            }
-            else
-            {
-                gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings",2f);
-            }
 
             phaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
@@ -1932,12 +1916,140 @@ namespace FungusToast.Unity
             yield return PlayGameplayEntryFlow(applyStartingSporeEffects: false, allowSkippingIntroForTesting: true);
         }
 
+        private void ShowGameStartBanner()
+        {
+            if (gameUIManager?.PhaseBanner == null)
+            {
+                return;
+            }
+
+            if (CurrentGameMode == GameMode.Campaign)
+            {
+                if (campaignController != null && campaignController.HasActiveRun)
+                {
+                    gameUIManager.PhaseBanner.ShowCampaignLevelIntro(
+                        campaignController.CurrentLevelDisplay,
+                        campaignController.CurrentLevelTitle);
+                    return;
+                }
+
+                gameUIManager.PhaseBanner.Show("Campaign Level", 2f);
+                return;
+            }
+
+            (string overline, string title) = BuildNonCampaignStartBanner();
+            gameUIManager.PhaseBanner.ShowStyledIntro(overline, title);
+        }
+
+        private (string overline, string title) BuildNonCampaignStartBanner()
+        {
+            int width = Board?.Width ?? boardWidth;
+            int height = Board?.Height ?? boardHeight;
+            string sizeDescriptor = GetBoardSizeDescriptor(width, height);
+            (string themeLabel, string themeNoun) = ResolveBoardThemeFlavor(width, height);
+
+            string overline = $"{width}x{height} {themeLabel}";
+            var random = new System.Random(BuildNonCampaignStartBannerSeed(width, height, themeLabel));
+            string[] titleOptions =
+            {
+                $"{sizeDescriptor} {themeLabel} Skirmish",
+                $"{themeLabel} Shuffle",
+                $"{themeNoun} Clash",
+                $"{sizeDescriptor} {themeNoun} Tangle",
+                $"{themeLabel} Rumble",
+                $"{sizeDescriptor} Mold Melee"
+            };
+
+            return (overline, titleOptions[random.Next(titleOptions.Length)]);
+        }
+
+        private string GetBoardSizeDescriptor(int width, int height)
+        {
+            int shortSide = Mathf.Min(width, height);
+            if (shortSide <= 15)
+            {
+                return "Tiny";
+            }
+
+            if (shortSide <= 30)
+            {
+                return "Small";
+            }
+
+            if (shortSide <= 75)
+            {
+                return "Broad";
+            }
+
+            if (shortSide <= 120)
+            {
+                return "Grand";
+            }
+
+            return "Massive";
+        }
+
+        private (string themeLabel, string themeNoun) ResolveBoardThemeFlavor(int width, int height)
+        {
+            BoardMediumConfig? medium = gridVisualizer?.ActiveBoardMedium;
+            string mediumId = medium?.mediumId?.Trim() ?? string.Empty;
+            string spriteName = medium?.GetResolvedBoardBackgroundSettings(width, height).BackgroundSprite?.name?.Trim() ?? string.Empty;
+            string source = string.IsNullOrWhiteSpace(spriteName) ? mediumId : spriteName;
+
+            if (source.IndexOf("seed", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Seed Cracker", "Crumb");
+            }
+
+            if (source.IndexOf("cracker", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Cracker", "Crumb");
+            }
+
+            if (source.IndexOf("cheese", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Cheese Board", "Rind");
+            }
+
+            if (source.IndexOf("pita", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Pita Bread", "Pocket");
+            }
+
+            if (source.IndexOf("white_bread", StringComparison.OrdinalIgnoreCase) >= 0
+                || source.IndexOf("bread", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("White Bread", "Crust");
+            }
+
+            if (string.Equals(mediumId, "toast", StringComparison.OrdinalIgnoreCase))
+            {
+                return ("Toast", "Crust");
+            }
+
+            return ("Board", "Spore");
+        }
+
+        private int BuildNonCampaignStartBannerSeed(int width, int height, string themeLabel)
+        {
+            int seed = currentLevelGameplaySeed;
+            seed = unchecked((seed * 397) ^ width);
+            seed = unchecked((seed * 397) ^ height);
+            seed = unchecked((seed * 397) ^ configuredHumanPlayerCount);
+
+            for (int i = 0; i < themeLabel.Length; i++)
+            {
+                seed = unchecked((seed * 397) ^ themeLabel[i]);
+            }
+
+            return seed == int.MinValue ? int.MaxValue : Math.Abs(seed);
+        }
+
         private IEnumerator PlayGameplayEntryFlow(bool applyStartingSporeEffects, bool allowSkippingIntroForTesting)
         {
             List<int> startingIds = ResolveStartingSporeIntroTileIds();
             bool skipStartingSporeIntro = allowSkippingIntroForTesting && ShouldSkipStartingSporeIntro();
             bool skipTestingStartupEffects = ShouldSkipTestingStartupEffects();
-            gameUIManager.LoadingScreen?.SetStatus("Spores are landing…");
             if (startingIds.Count > 0 && !skipStartingSporeIntro)
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
@@ -1993,12 +2105,12 @@ namespace FungusToast.Unity
                 }
                 else
                 {
-                    gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
+                    ShowGameStartBanner();
                 }
             }
             else
             {
-                gameUIManager.PhaseBanner.Show(CurrentGameMode == GameMode.Campaign ? "Campaign Level" : "New Game Settings", 2f);
+                ShowGameStartBanner();
             }
 
             phaseProgressTracker?.ResetTracker();

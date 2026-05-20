@@ -247,7 +247,8 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 8. If `boardBoundsNormalized` is added, verify it deliberately and remember that ordinary inset fields stop affecting runtime placement unless `composeSafeAreaWithBoardBoundsMetadata` is also enabled.
 9. Start new alpha-mask backgrounds from the current tuning baseline: `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`.
 10. If the image still needs fit adjustment, prefer retuning `backgroundInset*Normalized`, edge-fade values, or override bands before introducing `boardBoundsNormalized` or a non-`1.0` scale multiplier.
-11. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
+11. If the new background should participate in background-themed startup flavor text, update the mapping logic in `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` as well. The current non-campaign intro generator keys off `ResolveBoardThemeFlavor()` and the resolved background sprite name, so a newly added bread photo will otherwise fall back to generic wording.
+12. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
 
 ### Metadata Field Intent
 
@@ -283,6 +284,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Confirm the sprite is referenced by either the medium default background or the intended override band.
 - Confirm the sprite also has a `boardBackgroundSpriteMetadata` entry.
 - Confirm the override ordering still matches from narrowest / most specific band to broadest fallback.
+- If the background should have custom startup-banner flavor text, confirm `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` still recognizes it in `ResolveBoardThemeFlavor()`.
 - Run `python3 scripts/validate_board_backgrounds.py` and fix any metadata or footprint errors it reports.
 - Do an in-Unity visual pass at the target board sizes and verify all of the following agree with the intended silhouette:
   - background placement
