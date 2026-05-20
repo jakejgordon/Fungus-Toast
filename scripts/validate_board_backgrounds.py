@@ -75,6 +75,8 @@ class BackgroundSettings:
     min_tile_coverage: float
     max_tile_clip_fraction: float
     tile_clip_sample_resolution: int
+    use_explicit_blocked_tile_ids: bool
+    explicit_blocked_tile_ids: list[int]
     safe_area: Rect
     compose_safe_area_with_board_bounds_metadata: bool
     background_scale_multiplier: float
@@ -327,6 +329,8 @@ def build_settings(
         min_tile_coverage=float(data.get("backgroundMinTileCoverage", 0.0)),
         max_tile_clip_fraction=float(data.get("backgroundMaxTileClipFraction", 0.0)),
         tile_clip_sample_resolution=int(data.get("backgroundTileClipSampleResolution", 3)),
+        use_explicit_blocked_tile_ids=bool(data.get("useExplicitBlockedTileIds", False)),
+        explicit_blocked_tile_ids=[int(tile_id) for tile_id in data.get("explicitBlockedTileIds", [])],
         safe_area=build_safe_area(
             float(data.get("backgroundInsetLeftNormalized", 0.0)),
             float(data.get("backgroundInsetRightNormalized", 0.0)),
@@ -496,10 +500,16 @@ def evaluate_probe(
     )
 
     blocked_tiles = 0
+    explicit_blocked_tile_ids = sanitize_explicit_blocked_tile_ids(settings.explicit_blocked_tile_ids, width, height) if settings.use_explicit_blocked_tile_ids else set()
     alpha_threshold = clamp01(settings.alpha_playable_threshold)
     minimum_tile_coverage = clamp01(settings.min_tile_coverage)
     for tile_y in range(height):
         for tile_x in range(width):
+            tile_id = (tile_y * width) + tile_x
+            if tile_id in explicit_blocked_tile_ids:
+                blocked_tiles += 1
+                continue
+
             if effective_horizontal_span_profile is not None:
                 satisfies_clip_budget = (
                     not clip_offsets
@@ -591,6 +601,11 @@ def evaluate_probe(
         effective_area_transparency_fraction=effective_area_transparency_fraction,
         shape_source="profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area")),
     )
+
+
+def sanitize_explicit_blocked_tile_ids(blocked_tile_ids: list[int], board_width: int, board_height: int) -> set[int]:
+    total_tiles = board_width * board_height
+    return {tile_id for tile_id in blocked_tile_ids if 0 <= tile_id < total_tiles}
 
 
 def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> None:

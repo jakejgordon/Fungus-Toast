@@ -26,15 +26,19 @@ namespace FungusToast.Unity.Grid.Helpers
 		private SpriteRenderer _generatedCrustRenderer;
 		private SpriteRenderer _backgroundRenderer;
 		private SpriteMask _boardClipMask;
+		private SpriteRenderer _playableAreaOverlayRenderer;
 		private SpriteRenderer _boardEdgeFadeRenderer;
 		private Sprite _generatedCrustSprite;
 		private Sprite _boardClipMaskSprite;
+		private Sprite _playableAreaOverlaySprite;
 		private Sprite _boardEdgeFadeSprite;
 		private Texture2D _generatedCrustTexture;
 		private Texture2D _boardClipMaskTexture;
+		private Texture2D _playableAreaOverlayTexture;
 		private Texture2D _boardEdgeFadeTexture;
 		private string _generatedCrustCacheKey;
 		private string _boardClipMaskCacheKey;
+		private string _playableAreaOverlayCacheKey;
 		private string _boardEdgeFadeCacheKey;
 
 		public GridBoardMediumRenderer(
@@ -177,6 +181,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			if (_backgroundRenderer == null)
 			{
 				ResetBoardClipMaskVisual();
+				ResetPlayableAreaOverlayVisual();
 				ResetBoardEdgeFadeVisual();
 				return;
 			}
@@ -188,6 +193,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.transform.localRotation = Quaternion.identity;
 			_backgroundRenderer.transform.localScale = Vector3.one;
 			ResetBoardClipMaskVisual();
+			ResetPlayableAreaOverlayVisual();
 			ResetBoardEdgeFadeVisual();
 		}
 
@@ -224,6 +230,23 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardEdgeFadeCacheKey = null;
 		}
 
+		public void ResetPlayableAreaOverlayVisual()
+		{
+			if (_playableAreaOverlayRenderer != null)
+			{
+				_playableAreaOverlayRenderer.sprite = null;
+				_playableAreaOverlayRenderer.enabled = false;
+				_playableAreaOverlayRenderer.color = Color.white;
+				_playableAreaOverlayRenderer.maskInteraction = SpriteMaskInteraction.None;
+				_playableAreaOverlayRenderer.transform.localPosition = Vector3.zero;
+				_playableAreaOverlayRenderer.transform.localRotation = Quaternion.identity;
+				_playableAreaOverlayRenderer.transform.localScale = Vector3.one;
+			}
+
+			DestroyPlayableAreaOverlayAssets();
+			_playableAreaOverlayCacheKey = null;
+		}
+
 		public void Dispose()
 		{
 			ResetGeneratedCrustVisual();
@@ -242,6 +265,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			if (_boardClipMask != null)
 			{
 				_boardClipMask = null;
+			}
+
+			if (_playableAreaOverlayRenderer != null)
+			{
+				_playableAreaOverlayRenderer = null;
 			}
 
 			if (_boardEdgeFadeRenderer != null)
@@ -280,6 +308,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			PositionBoardBackgroundRenderer(activeBoard, backgroundSettings);
 			_backgroundRenderer.enabled = true;
 			EnsureBoardClipMask(activeBoard, backgroundSettings);
+			EnsurePlayableAreaOverlayVisual(activeBoard, backgroundSettings);
 			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium, backgroundSettings);
 		}
 
@@ -381,7 +410,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				if (tilemapRenderer != null)
 				{
 					spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
-					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 1;
+					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 2;
 				}
 			}
 
@@ -409,6 +438,26 @@ namespace FungusToast.Unity.Grid.Helpers
 				{
 					spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
 					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder;
+				}
+			}
+
+			return spriteRenderer;
+		}
+
+		private SpriteRenderer CreatePlayableAreaOverlayRenderer()
+		{
+			var overlayObject = new GameObject("PlayableAreaOverlayVisual");
+			overlayObject.transform.SetParent(_getVisualParent(), false);
+			var spriteRenderer = overlayObject.AddComponent<SpriteRenderer>();
+
+			var toastTilemap = _getToastTilemap();
+			if (toastTilemap != null)
+			{
+				var tilemapRenderer = toastTilemap.GetComponent<TilemapRenderer>();
+				if (tilemapRenderer != null)
+				{
+					spriteRenderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+					spriteRenderer.sortingOrder = tilemapRenderer.sortingOrder - 1;
 				}
 			}
 
@@ -491,6 +540,43 @@ namespace FungusToast.Unity.Grid.Helpers
 			ApplyTilemapClipMask(_boardClipMask.enabled);
 		}
 
+		private void EnsurePlayableAreaOverlayVisual(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
+		{
+			if (activeBoard == null || !backgroundSettings.ShouldRenderPlayableAreaOverlay)
+			{
+				ResetPlayableAreaOverlayVisual();
+				return;
+			}
+
+			if (_playableAreaOverlayRenderer == null)
+			{
+				_playableAreaOverlayRenderer = CreatePlayableAreaOverlayRenderer();
+			}
+
+			if (_playableAreaOverlayRenderer == null)
+			{
+				return;
+			}
+
+			Transform visualParent = _getVisualParent();
+			if (_playableAreaOverlayRenderer.transform.parent != visualParent)
+			{
+				_playableAreaOverlayRenderer.transform.SetParent(visualParent, false);
+			}
+
+			string cacheKey = BuildPlayableAreaOverlayCacheKey(activeBoard);
+			if (_playableAreaOverlayCacheKey != cacheKey || _playableAreaOverlaySprite == null || _playableAreaOverlayTexture == null)
+			{
+				RebuildPlayableAreaOverlaySprite(activeBoard, cacheKey);
+			}
+
+			_playableAreaOverlayRenderer.sprite = _playableAreaOverlaySprite;
+			_playableAreaOverlayRenderer.color = backgroundSettings.PlayableAreaOverlayColor;
+			_playableAreaOverlayRenderer.maskInteraction = SpriteMaskInteraction.None;
+			PositionPlayableAreaOverlayRenderer(activeBoard);
+			_playableAreaOverlayRenderer.enabled = _playableAreaOverlaySprite != null;
+		}
+
 		private void PositionBoardClipMask(GameBoard activeBoard, BoardMediumConfig.ResolvedBoardBackgroundSettings backgroundSettings)
 		{
 			if (_boardClipMask == null)
@@ -503,6 +589,18 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardClipMask.transform.localPosition = boardCenter;
 			_boardClipMask.transform.localRotation = Quaternion.identity;
 			_boardClipMask.transform.localScale = Vector3.one;
+		}
+
+		private void PositionPlayableAreaOverlayRenderer(GameBoard activeBoard)
+		{
+			if (_playableAreaOverlayRenderer == null)
+			{
+				return;
+			}
+
+			_playableAreaOverlayRenderer.transform.localPosition = new Vector3(activeBoard.Width * 0.5f, activeBoard.Height * 0.5f, 0f);
+			_playableAreaOverlayRenderer.transform.localRotation = Quaternion.identity;
+			_playableAreaOverlayRenderer.transform.localScale = Vector3.one;
 		}
 
 		private void RebuildBoardClipMaskSprite(GameBoard activeBoard, string cacheKey)
@@ -547,6 +645,50 @@ namespace FungusToast.Unity.Grid.Helpers
 				0,
 				SpriteMeshType.FullRect);
 			_boardClipMaskCacheKey = cacheKey;
+		}
+
+		private void RebuildPlayableAreaOverlaySprite(GameBoard activeBoard, string cacheKey)
+		{
+			DestroyPlayableAreaOverlayAssets();
+
+			int pixelsPerUnit = GetBackdropPixelsPerUnit(activeBoard, 0f);
+			int textureWidth = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Width * pixelsPerUnit));
+			int textureHeight = Mathf.Max(1, Mathf.CeilToInt(activeBoard.Height * pixelsPerUnit));
+
+			_playableAreaOverlayTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RGBA32, false)
+			{
+				filterMode = FilterMode.Bilinear,
+				wrapMode = TextureWrapMode.Clamp
+			};
+
+			var pixels = new Color32[textureWidth * textureHeight];
+			Color32 opaqueWhite = new Color32(255, 255, 255, 255);
+
+			for (int py = 0; py < textureHeight; py++)
+			{
+				float y = (py + 0.5f) / pixelsPerUnit;
+				for (int px = 0; px < textureWidth; px++)
+				{
+					float x = (px + 0.5f) / pixelsPerUnit;
+					if (!IsPlayableTile(activeBoard, Mathf.FloorToInt(x), Mathf.FloorToInt(y)))
+					{
+						continue;
+					}
+
+					pixels[(py * textureWidth) + px] = opaqueWhite;
+				}
+			}
+
+			_playableAreaOverlayTexture.SetPixels32(pixels);
+			_playableAreaOverlayTexture.Apply(false, false);
+			_playableAreaOverlaySprite = Sprite.Create(
+				_playableAreaOverlayTexture,
+				new Rect(0f, 0f, textureWidth, textureHeight),
+				new Vector2(0.5f, 0.5f),
+				pixelsPerUnit,
+				0,
+				SpriteMeshType.FullRect);
+			_playableAreaOverlayCacheKey = cacheKey;
 		}
 
 		private void ApplyTilemapClipMask(bool enabled)
@@ -847,6 +989,14 @@ namespace FungusToast.Unity.Grid.Helpers
 				ComputeBlockedTileShapeHash(activeBoard));
 		}
 
+		private static string BuildPlayableAreaOverlayCacheKey(GameBoard activeBoard)
+		{
+			return string.Join("|",
+				activeBoard.Width,
+				activeBoard.Height,
+				ComputeBlockedTileShapeHash(activeBoard));
+		}
+
 		private static int ComputeBlockedTileShapeHash(GameBoard activeBoard)
 		{
 			if (activeBoard == null)
@@ -896,6 +1046,21 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				UnityEngine.Object.Destroy(_boardEdgeFadeTexture);
 				_boardEdgeFadeTexture = null;
+			}
+		}
+
+		private void DestroyPlayableAreaOverlayAssets()
+		{
+			if (_playableAreaOverlaySprite != null)
+			{
+				UnityEngine.Object.Destroy(_playableAreaOverlaySprite);
+				_playableAreaOverlaySprite = null;
+			}
+
+			if (_playableAreaOverlayTexture != null)
+			{
+				UnityEngine.Object.Destroy(_playableAreaOverlayTexture);
+				_playableAreaOverlayTexture = null;
 			}
 		}
 

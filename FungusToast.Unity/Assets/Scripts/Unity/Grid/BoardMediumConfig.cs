@@ -66,6 +66,8 @@ namespace FungusToast.Unity.Grid
             [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
             public bool composeSafeAreaWithBoardBoundsMetadata = false;
             [Min(0.01f)] public float backgroundScaleMultiplier = 1.05f;
+            public bool renderPlayableAreaOverlay = true;
+            public Color playableAreaOverlayColor = new(1f, 0.97f, 0.88f, 0.055f);
             public bool renderBoardEdgeFade = true;
             public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
             [Range(0.5f, 6f)] public float boardEdgeFadeWidthTiles = 2.5f;
@@ -120,6 +122,8 @@ namespace FungusToast.Unity.Grid
                 float playableHorizontalSpanProfileMaxYNormalizedMetadata,
                 IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata,
                 float backgroundScaleMultiplier,
+                bool renderPlayableAreaOverlay,
+                Color playableAreaOverlayColor,
                 bool renderBoardEdgeFade,
                 Color boardEdgeFadeColor,
                 float boardEdgeFadeWidthTiles,
@@ -151,6 +155,8 @@ namespace FungusToast.Unity.Grid
                 PlayableHorizontalSpanProfileMaxYNormalizedMetadata = Mathf.Clamp01(Mathf.Max(playableHorizontalSpanProfileMinYNormalizedMetadata, playableHorizontalSpanProfileMaxYNormalizedMetadata));
                 PlayableHorizontalSpanProfileMetadata = playableHorizontalSpanProfileMetadata ?? Array.Empty<PlayableHorizontalSpanStop>();
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
+                RenderPlayableAreaOverlay = renderPlayableAreaOverlay;
+                PlayableAreaOverlayColor = playableAreaOverlayColor;
                 RenderBoardEdgeFade = renderBoardEdgeFade;
                 BoardEdgeFadeColor = boardEdgeFadeColor;
                 BoardEdgeFadeWidthTiles = boardEdgeFadeWidthTiles;
@@ -182,6 +188,8 @@ namespace FungusToast.Unity.Grid
             public float PlayableHorizontalSpanProfileMaxYNormalizedMetadata { get; }
             public IReadOnlyList<PlayableHorizontalSpanStop> PlayableHorizontalSpanProfileMetadata { get; }
             public float BackgroundScaleMultiplier { get; }
+            public bool RenderPlayableAreaOverlay { get; }
+            public Color PlayableAreaOverlayColor { get; }
             public bool RenderBoardEdgeFade { get; }
             public Color BoardEdgeFadeColor { get; }
             public float BoardEdgeFadeWidthTiles { get; }
@@ -190,6 +198,7 @@ namespace FungusToast.Unity.Grid
             public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
             public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
             public bool ShouldUseBackgroundPlayableMask => ShouldRenderBoardBackground && BackgroundSprite != null && (DeriveBlockedTilesFromBackgroundAlpha || HasPlayableEllipseMetadata || HasPlayableHorizontalSpanProfileMetadata);
+            public bool ShouldRenderPlayableAreaOverlay => ShouldUseBackgroundPlayableMask && RenderPlayableAreaOverlay && PlayableAreaOverlayColor.a > 0f;
             public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
         }
 
@@ -234,6 +243,8 @@ namespace FungusToast.Unity.Grid
         [Range(0f, 0.49f)] public float backgroundInsetTopNormalized = 0.2f;
         public bool composeSafeAreaWithBoardBoundsMetadata = false;
         [Min(0.01f)] public float backgroundScaleMultiplier = 1.05f;
+        public bool renderPlayableAreaOverlay = true;
+        public Color playableAreaOverlayColor = new(1f, 0.97f, 0.88f, 0.055f);
         public bool renderBoardEdgeFade = true;
         public Color boardEdgeFadeColor = new(0.35f, 0.2f, 0.08f, 0.2f);
         [Range(0.5f, 6f)] public float boardEdgeFadeWidthTiles = 2.5f;
@@ -336,6 +347,8 @@ namespace FungusToast.Unity.Grid
                             backgroundOverride.GetBackgroundSafeAreaNormalized(),
                             backgroundOverride.composeSafeAreaWithBoardBoundsMetadata,
                             backgroundOverride.backgroundScaleMultiplier,
+                            backgroundOverride.renderPlayableAreaOverlay,
+                            backgroundOverride.playableAreaOverlayColor,
                             backgroundOverride.renderBoardEdgeFade,
                             backgroundOverride.boardEdgeFadeColor,
                             backgroundOverride.boardEdgeFadeWidthTiles,
@@ -359,6 +372,8 @@ namespace FungusToast.Unity.Grid
                 GetBackgroundSafeAreaNormalized(),
                 composeSafeAreaWithBoardBoundsMetadata,
                 backgroundScaleMultiplier,
+                renderPlayableAreaOverlay,
+                playableAreaOverlayColor,
                 renderBoardEdgeFade,
                 boardEdgeFadeColor,
                 boardEdgeFadeWidthTiles,
@@ -380,6 +395,8 @@ namespace FungusToast.Unity.Grid
             Rect resolvedSafeAreaNormalized,
             bool resolvedComposeSafeAreaWithBoardBoundsMetadata,
             float resolvedBackgroundScaleMultiplier,
+            bool resolvedRenderPlayableAreaOverlay,
+            Color resolvedPlayableAreaOverlayColor,
             bool resolvedRenderBoardEdgeFade,
             Color resolvedBoardEdgeFadeColor,
             float resolvedBoardEdgeFadeWidthTiles,
@@ -419,6 +436,8 @@ namespace FungusToast.Unity.Grid
                 playableHorizontalSpanProfileMaxYNormalizedMetadata,
                 playableHorizontalSpanProfileMetadata,
                 resolvedBackgroundScaleMultiplier,
+                resolvedRenderPlayableAreaOverlay,
+                resolvedPlayableAreaOverlayColor,
                 resolvedRenderBoardEdgeFade,
                 resolvedBoardEdgeFadeColor,
                 resolvedBoardEdgeFadeWidthTiles,
@@ -440,6 +459,11 @@ namespace FungusToast.Unity.Grid
             return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldRenderBoardEdgeFade;
         }
 
+        public bool ShouldRenderPlayableAreaOverlayForSize(int boardWidth, int boardHeight)
+        {
+            return GetResolvedBoardBackgroundSettings(boardWidth, boardHeight).ShouldRenderPlayableAreaOverlay;
+        }
+
         public IReadOnlyCollection<int> GetBlockedTileIdsForSize(int boardWidth, int boardHeight)
         {
             if (boardWidth <= 0 || boardHeight <= 0)
@@ -448,24 +472,31 @@ namespace FungusToast.Unity.Grid
             }
 
             var settings = GetResolvedBoardBackgroundSettings(boardWidth, boardHeight);
-            if (settings.UseExplicitBlockedTileIds)
-            {
-                return SanitizeBlockedTileIds(settings.ExplicitBlockedTileIds, boardWidth, boardHeight);
-            }
+            IReadOnlyCollection<int> explicitBlockedTileIds = settings.UseExplicitBlockedTileIds
+                ? SanitizeBlockedTileIds(settings.ExplicitBlockedTileIds, boardWidth, boardHeight)
+                : Array.Empty<int>();
 
             if (!settings.ShouldUseBackgroundPlayableMask)
             {
-                return Array.Empty<int>();
+                return explicitBlockedTileIds;
             }
 
             if (settings.HasPlayableHorizontalSpanProfileMetadata)
             {
-                return BuildBlockedTileIdsFromHorizontalSpanProfile(settings, boardWidth, boardHeight);
+                return MergeBlockedTileIds(
+                    BuildBlockedTileIdsFromHorizontalSpanProfile(settings, boardWidth, boardHeight),
+                    explicitBlockedTileIds,
+                    boardWidth,
+                    boardHeight);
             }
 
             if (settings.HasPlayableEllipseMetadata)
             {
-                return BuildBlockedTileIdsFromEllipse(settings, boardWidth, boardHeight);
+                return MergeBlockedTileIds(
+                    BuildBlockedTileIdsFromEllipse(settings, boardWidth, boardHeight),
+                    explicitBlockedTileIds,
+                    boardWidth,
+                    boardHeight);
             }
 
             Texture2D samplingTexture = null;
@@ -543,10 +574,10 @@ namespace FungusToast.Unity.Grid
                 if (blockedTileIds.Count >= boardWidth * boardHeight)
                 {
                     Debug.LogWarning($"Board medium '{mediumId}' produced a fully blocked playable mask for {boardWidth}x{boardHeight}; ignoring the mask.");
-                    return Array.Empty<int>();
+                    return explicitBlockedTileIds;
                 }
 
-                return blockedTileIds;
+                return MergeBlockedTileIds(blockedTileIds, explicitBlockedTileIds, boardWidth, boardHeight);
             }
             finally
             {
@@ -737,6 +768,38 @@ namespace FungusToast.Unity.Grid
             }
 
             return sanitized.Count == 0 ? Array.Empty<int>() : new List<int>(sanitized);
+        }
+
+        private static IReadOnlyCollection<int> MergeBlockedTileIds(
+            IReadOnlyCollection<int> primaryBlockedTileIds,
+            IReadOnlyCollection<int> additionalBlockedTileIds,
+            int boardWidth,
+            int boardHeight)
+        {
+            if ((primaryBlockedTileIds == null || primaryBlockedTileIds.Count == 0)
+                && (additionalBlockedTileIds == null || additionalBlockedTileIds.Count == 0))
+            {
+                return Array.Empty<int>();
+            }
+
+            var merged = new HashSet<int>();
+            if (primaryBlockedTileIds != null)
+            {
+                foreach (int tileId in primaryBlockedTileIds)
+                {
+                    merged.Add(tileId);
+                }
+            }
+
+            if (additionalBlockedTileIds != null)
+            {
+                foreach (int tileId in additionalBlockedTileIds)
+                {
+                    merged.Add(tileId);
+                }
+            }
+
+            return SanitizeBlockedTileIds(new List<int>(merged), boardWidth, boardHeight);
         }
 
         private IReadOnlyCollection<int> BuildBlockedTileIdsFromEllipse(ResolvedBoardBackgroundSettings settings, int boardWidth, int boardHeight)

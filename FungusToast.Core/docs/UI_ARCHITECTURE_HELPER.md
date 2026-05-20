@@ -260,6 +260,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 - If `hasPlayableEllipse` is present, that ellipse becomes the source-of-truth footprint for placement and mask derivation, and the configured safe area composes inside the ellipse bounds.
 - If `hasPlayableHorizontalSpanProfile` is present, blocked-tile derivation evaluates that authored board-space profile directly instead of sampling sprite alpha, while placement can still use `boardBoundsNormalized` to position the art against the same intended square footprint.
+- The renderer can also draw a very faint production playable-area overlay derived from the same live blocked-tile footprint, so any guidance tint stays aligned with real growth boundaries rather than inferred sprite alpha.
 
 ### Current Small-Board Pattern
 
@@ -272,6 +273,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - White bread, seeded cracker, and plain cracker still use the shared alpha-mask fitting rule.
 - Cheese uses explicit authored horizontal-span profile metadata with vertical min/max bounds so it can keep a larger square placement footprint while trimming the left/right edges, top-left notch, and top/bottom bands deliberately across the cheese size band.
 - Pita now uses explicit stored ellipse metadata so the square gameplay board, the blocked-tile footprint, and the rendered background all read the same authored circular shape.
+- Shaped photo boards can also enable a very faint playable-area overlay tint in `BoardMediumConfig`, and that overlay is generated from the live playable footprint rather than a separate authored shape.
 
 ### Import Guidance
 
@@ -288,6 +290,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Run `python3 scripts/validate_board_backgrounds.py` and fix any metadata or footprint errors it reports.
 - Do an in-Unity visual pass at the target board sizes and verify all of the following agree with the intended silhouette:
   - background placement
+    - faint playable-area overlay
   - blocked-tile footprint
   - hover / magnifier hit-testing
   - highlight / ping clipping
