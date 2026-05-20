@@ -29,6 +29,7 @@ namespace FungusToast.Unity.UI.GameStart
         private const float StartMenuDevelopmentRailTopOffset = 0f;
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
+        private const float ActionButtonHorizontalPadding = 12f;
         private const string HumanSelectionPrefix = "Select number of Human Players";
 
         private enum SetupStep
@@ -1082,6 +1083,7 @@ namespace FungusToast.Unity.UI.GameStart
             button.transform.SetSiblingIndex(siblingIndex);
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(onClick);
+            EnsurePlainClonedButtonContent(button);
             EnsureActionButtonLayout(button);
             UIStyleTokens.Button.ApplySecondaryMenuAction(
                 button,
@@ -1115,6 +1117,7 @@ namespace FungusToast.Unity.UI.GameStart
             button.transform.SetSiblingIndex(siblingIndex);
             button.onClick = new Button.ButtonClickedEvent();
             button.onClick.AddListener(onClick);
+            EnsurePlainClonedButtonContent(button);
             EnsureDevelopmentTestingButtonLayout(button);
             UIStyleTokens.Button.ApplySecondaryMenuAction(
                 button,
@@ -1464,6 +1467,7 @@ namespace FungusToast.Unity.UI.GameStart
             resumeSavedGameButton.transform.SetSiblingIndex(1);
             resumeSavedGameButton.onClick = new Button.ButtonClickedEvent();
             resumeSavedGameButton.onClick.AddListener(OnResumeSavedGamePressed);
+            EnsurePlainClonedButtonContent(resumeSavedGameButton);
             EnsureActionButtonLayout(resumeSavedGameButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(
                 resumeSavedGameButton,
@@ -1471,6 +1475,75 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
             SetButtonText(resumeSavedGameButton, "Resume Saved Game");
+        }
+
+        private void EnsurePlainClonedButtonContent(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Transform contentRoot = button.transform.Find("ButtonContent");
+            if (contentRoot != null)
+            {
+                Transform compoundIcon = contentRoot.Find("ButtonIcon");
+                if (compoundIcon != null)
+                {
+                    Destroy(compoundIcon.gameObject);
+                }
+
+                TextMeshProUGUI compoundLabel = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (compoundLabel != null)
+                {
+                    compoundLabel.transform.SetParent(button.transform, false);
+                    NormalizePlainButtonLabel(compoundLabel.rectTransform);
+                    compoundLabel.alignment = TextAlignmentOptions.Center;
+                    compoundLabel.textWrappingMode = TextWrappingModes.NoWrap;
+                    compoundLabel.overflowMode = TextOverflowModes.Ellipsis;
+                    compoundLabel.margin = Vector4.zero;
+                }
+
+                Text legacyCompoundLabel = contentRoot.GetComponentInChildren<Text>(true);
+                if (legacyCompoundLabel != null)
+                {
+                    legacyCompoundLabel.transform.SetParent(button.transform, false);
+                    NormalizePlainButtonLabel(legacyCompoundLabel.rectTransform);
+                    legacyCompoundLabel.alignment = TextAnchor.MiddleCenter;
+                }
+
+                Destroy(contentRoot.gameObject);
+            }
+
+            Transform directIcon = button.transform.Find("ButtonIcon");
+            if (directIcon != null)
+            {
+                Destroy(directIcon.gameObject);
+            }
+
+            SetDirectButtonLabelsActive(button.transform, true);
+
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRect);
+            }
+        }
+
+        private static void NormalizePlainButtonLabel(RectTransform labelRect)
+        {
+            if (labelRect == null)
+            {
+                return;
+            }
+
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = Vector2.zero;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            labelRect.sizeDelta = Vector2.zero;
         }
 
         private static void ConfigureSetupContentRoot(RectTransform contentRoot)
@@ -1618,7 +1691,7 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.NarrowMenuActionWidth,
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
-            ConfigureButtonContent(backButton, "Back", backButtonIcon);
+            ConfigureButtonContent(backButton, "Back", backButtonIcon, iconOnRight: false);
 
             if (playerSummaryLabel != null)
             {
@@ -1691,8 +1764,8 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 RefreshMoldSelectionUi();
             }
-            ConfigureButtonContent(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Start Game", isMoldSelectionStep ? null : forwardStepButtonIcon);
-            ConfigureButtonContent(backButton, "Back", backButtonIcon);
+            ConfigureButtonContent(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Start Game", isMoldSelectionStep ? null : forwardStepButtonIcon, iconOnRight: true);
+            ConfigureButtonContent(backButton, "Back", backButtonIcon, iconOnRight: false);
             startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
             if (resumeSavedGameButton != null)
             {
@@ -2239,150 +2312,197 @@ namespace FungusToast.Unity.UI.GameStart
             }
         }
 
-        private void ConfigureButtonContent(Button button, string text, Sprite icon)
+        private void ConfigureButtonContent(Button button, string text, Sprite icon, bool iconOnRight)
         {
             if (button == null)
             {
                 return;
             }
 
-            TextMeshProUGUI label = EnsureButtonLabel(button, icon != null);
-            if (label != null)
+            if (TryConfigureCompoundButtonContent(button, text, icon, iconOnRight))
             {
-                label.text = text;
+                return;
             }
 
-            Image iconImage = EnsureButtonIcon(button, icon);
+            SetButtonText(button, text);
+            SetDirectButtonLabelsActive(button.transform, true);
+
+            TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.margin = icon == null
+                    ? Vector4.zero
+                    : iconOnRight
+                        ? new Vector4(0f, 0f, ActionButtonIconSize + ActionButtonContentSpacing + ActionButtonHorizontalPadding, 0f)
+                        : new Vector4(ActionButtonIconSize + ActionButtonContentSpacing + ActionButtonHorizontalPadding, 0f, 0f, 0f);
+            }
+
+            var legacyContent = button.transform.Find("ButtonContent");
+            if (legacyContent != null)
+            {
+                legacyContent.gameObject.SetActive(false);
+            }
+
+            Image iconImage = EnsureButtonIcon(button.transform, icon, iconOnRight);
             if (iconImage != null)
             {
                 iconImage.color = label != null ? label.color : UIStyleTokens.Button.TextDefault;
             }
 
-            RectTransform contentRoot = button.transform.Find("ButtonContent") as RectTransform;
-            if (contentRoot != null)
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
             {
-                contentRoot.gameObject.SetActive(icon != null);
                 Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
-                LayoutRebuilder.ForceRebuildLayoutImmediate(button.GetComponent<RectTransform>());
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRect);
             }
         }
 
-        private TextMeshProUGUI EnsureButtonLabel(Button button, bool useCompoundContent)
+        private bool TryConfigureCompoundButtonContent(Button button, string text, Sprite icon, bool iconOnRight)
         {
-            if (button == null)
+            RectTransform contentRoot = button.transform.Find("ButtonContent") as RectTransform;
+            if (contentRoot == null)
             {
+                return false;
+            }
+
+            contentRoot.gameObject.SetActive(true);
+            contentRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            contentRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            contentRoot.pivot = new Vector2(0.5f, 0.5f);
+            contentRoot.anchoredPosition = Vector2.zero;
+            contentRoot.sizeDelta = Vector2.zero;
+
+            SetDirectButtonLabelsActive(button.transform, false);
+            EnsureCompoundButtonContentLayout(contentRoot);
+
+            TextMeshProUGUI label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.gameObject.SetActive(true);
+                label.text = text;
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Ellipsis;
+                label.margin = Vector4.zero;
+
+                RectTransform labelRect = label.rectTransform;
+                labelRect.anchorMin = new Vector2(0.5f, 0.5f);
+                labelRect.anchorMax = new Vector2(0.5f, 0.5f);
+                labelRect.pivot = new Vector2(0.5f, 0.5f);
+                labelRect.anchoredPosition = Vector2.zero;
+                labelRect.sizeDelta = Vector2.zero;
+            }
+
+            Image iconImage = EnsureCompoundButtonIcon(contentRoot, icon);
+            if (iconImage != null)
+            {
+                iconImage.color = label != null ? label.color : UIStyleTokens.Button.TextDefault;
+                iconImage.transform.SetSiblingIndex(iconOnRight ? 1 : 0);
+            }
+
+            if (label != null)
+            {
+                label.transform.SetSiblingIndex(iconImage != null && !iconOnRight ? 1 : 0);
+            }
+
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                Canvas.ForceUpdateCanvases();
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRoot);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRect);
+            }
+
+            return true;
+        }
+
+        private static void EnsureCompoundButtonContentLayout(RectTransform contentRoot)
+        {
+            HorizontalLayoutGroup contentLayout = contentRoot.GetComponent<HorizontalLayoutGroup>();
+            if (contentLayout == null)
+            {
+                contentLayout = contentRoot.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            contentLayout.spacing = ActionButtonContentSpacing;
+            contentLayout.childAlignment = TextAnchor.MiddleCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+            contentLayout.childScaleWidth = false;
+            contentLayout.childScaleHeight = false;
+
+            ContentSizeFitter contentFitter = contentRoot.GetComponent<ContentSizeFitter>();
+            if (contentFitter == null)
+            {
+                contentFitter = contentRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        }
+
+        private Image EnsureCompoundButtonIcon(RectTransform contentRoot, Sprite icon)
+        {
+            Transform iconTransform = contentRoot.Find("ButtonIcon");
+            Image iconImage = iconTransform != null ? iconTransform.GetComponent<Image>() : null;
+            if (icon == null)
+            {
+                if (iconImage != null)
+                {
+                    iconImage.gameObject.SetActive(false);
+                }
+
                 return null;
             }
 
-            var compoundContent = button.transform.Find("ButtonContent") as RectTransform;
-            if (useCompoundContent)
+            if (iconImage == null)
             {
-                if (compoundContent == null)
-                {
-                    compoundContent = CreateButtonContentRoot(button.transform);
-                }
-                else
-                {
-                    compoundContent.gameObject.SetActive(true);
-                }
-
-                var labelTransform = compoundContent.Find("Label");
-                if (labelTransform == null)
-                {
-                    GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-                    labelObject.transform.SetParent(compoundContent, false);
-                    labelObject.layer = gameObject.layer;
-
-                    var labelLayout = labelObject.GetComponent<LayoutElement>();
-                    labelLayout.minHeight = 28f;
-                    labelLayout.preferredHeight = 28f;
-                    labelLayout.flexibleWidth = 0f;
-                    labelLayout.flexibleHeight = 0f;
-
-                    var labelRect = labelObject.GetComponent<RectTransform>();
-                    labelRect.anchorMin = new Vector2(0.5f, 0.5f);
-                    labelRect.anchorMax = new Vector2(0.5f, 0.5f);
-                    labelRect.pivot = new Vector2(0.5f, 0.5f);
-                    labelRect.sizeDelta = new Vector2(0f, 28f);
-
-                    var newLabel = labelObject.GetComponent<TextMeshProUGUI>();
-                    var existingLabel = button.GetComponentInChildren<TextMeshProUGUI>(true);
-                    newLabel.font = existingLabel != null ? existingLabel.font : TMP_Settings.defaultFontAsset;
-                    newLabel.fontSize = existingLabel != null ? existingLabel.fontSize : 24f;
-                    newLabel.fontStyle = existingLabel != null ? existingLabel.fontStyle : FontStyles.Bold;
-                    newLabel.alignment = TextAlignmentOptions.Center;
-                    newLabel.textWrappingMode = TextWrappingModes.NoWrap;
-                    newLabel.color = UIStyleTokens.Text.Primary;
-                    newLabel.raycastTarget = false;
-                    labelTransform = labelObject.transform;
-                }
-
-                var label = labelTransform.GetComponent<TextMeshProUGUI>();
-                if (label != null)
-                {
-                    label.textWrappingMode = TextWrappingModes.NoWrap;
-                    label.alignment = TextAlignmentOptions.Center;
-                    label.raycastTarget = false;
-                }
-                SetDirectButtonLabelsActive(button.transform, false);
-
-                return label;
+                GameObject iconObject = new GameObject("ButtonIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+                iconObject.transform.SetParent(contentRoot, false);
+                iconObject.layer = gameObject.layer;
+                iconImage = iconObject.GetComponent<Image>();
             }
 
-            if (compoundContent != null)
+            iconImage.sprite = icon;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
+            iconImage.gameObject.SetActive(true);
+
+            LayoutElement iconLayout = iconImage.GetComponent<LayoutElement>();
+            if (iconLayout == null)
             {
-                compoundContent.gameObject.SetActive(false);
+                iconLayout = iconImage.gameObject.AddComponent<LayoutElement>();
             }
 
-            var directLabel = button.transform.Find("Label")?.GetComponent<TextMeshProUGUI>();
-            if (directLabel == null)
-            {
-                directLabel = button.GetComponentInChildren<TextMeshProUGUI>(true);
-            }
+            iconLayout.minWidth = ActionButtonIconSize;
+            iconLayout.preferredWidth = ActionButtonIconSize;
+            iconLayout.minHeight = ActionButtonIconSize;
+            iconLayout.preferredHeight = ActionButtonIconSize;
+            iconLayout.flexibleWidth = 0f;
+            iconLayout.flexibleHeight = 0f;
 
-            if (directLabel != null)
-            {
-                directLabel.gameObject.SetActive(true);
-            }
-
-            SetDirectButtonLabelsActive(button.transform, true);
-
-            return directLabel;
+            RectTransform iconRect = iconImage.rectTransform;
+            iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            iconRect.pivot = new Vector2(0.5f, 0.5f);
+            iconRect.anchoredPosition = Vector2.zero;
+            iconRect.sizeDelta = new Vector2(ActionButtonIconSize, ActionButtonIconSize);
+            return iconImage;
         }
 
-        private static void SetDirectButtonLabelsActive(Transform buttonTransform, bool isActive)
+        private Image EnsureButtonIcon(Transform buttonTransform, Sprite icon, bool iconOnRight)
         {
             if (buttonTransform == null)
             {
-                return;
-            }
-
-            for (int index = 0; index < buttonTransform.childCount; index++)
-            {
-                Transform child = buttonTransform.GetChild(index);
-                if (child == null || string.Equals(child.name, "ButtonContent", StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                bool hasDirectLabel = child.GetComponent<TextMeshProUGUI>() != null || child.GetComponent<Text>() != null;
-                if (hasDirectLabel)
-                {
-                    child.gameObject.SetActive(isActive);
-                }
-            }
-        }
-
-        private Image EnsureButtonIcon(Button button, Sprite icon)
-        {
-            var compoundContent = button.transform.Find("ButtonContent") as RectTransform;
-            if (compoundContent == null)
-            {
                 return null;
             }
 
-            var iconTransform = compoundContent.Find("ButtonIcon");
+            var iconTransform = buttonTransform.Find("ButtonIcon");
             Image iconImage = iconTransform != null ? iconTransform.GetComponent<Image>() : null;
             if (icon == null)
             {
@@ -2397,9 +2517,8 @@ namespace FungusToast.Unity.UI.GameStart
             if (iconImage == null)
             {
                 GameObject iconObject = new GameObject("ButtonIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-                iconObject.transform.SetParent(compoundContent, false);
+                iconObject.transform.SetParent(buttonTransform, false);
                 iconObject.layer = gameObject.layer;
-                iconObject.transform.SetSiblingIndex(0);
 
                 iconImage = iconObject.GetComponent<Image>();
                 iconImage.preserveAspect = true;
@@ -2413,44 +2532,67 @@ namespace FungusToast.Unity.UI.GameStart
                 iconLayout.flexibleWidth = 0f;
                 iconLayout.flexibleHeight = 0f;
 
-                var iconRect = iconObject.GetComponent<RectTransform>();
-                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-                iconRect.pivot = new Vector2(0.5f, 0.5f);
-                iconRect.sizeDelta = new Vector2(ActionButtonIconSize, ActionButtonIconSize);
+                var createdIconRect = iconObject.GetComponent<RectTransform>();
+                createdIconRect.sizeDelta = new Vector2(ActionButtonIconSize, ActionButtonIconSize);
             }
 
             iconImage.sprite = icon;
+            iconImage.preserveAspect = true;
+            iconImage.raycastTarget = false;
             iconImage.gameObject.SetActive(true);
+
+            var existingLayout = iconImage.GetComponent<LayoutElement>();
+            if (existingLayout != null)
+            {
+                existingLayout.minWidth = ActionButtonIconSize;
+                existingLayout.preferredWidth = ActionButtonIconSize;
+                existingLayout.minHeight = ActionButtonIconSize;
+                existingLayout.preferredHeight = ActionButtonIconSize;
+                existingLayout.flexibleWidth = 0f;
+                existingLayout.flexibleHeight = 0f;
+            }
+
+            var iconRect = iconImage.rectTransform;
+            iconRect.sizeDelta = new Vector2(ActionButtonIconSize, ActionButtonIconSize);
+
+            if (iconOnRight)
+            {
+                iconRect.anchorMin = new Vector2(1f, 0.5f);
+                iconRect.anchorMax = new Vector2(1f, 0.5f);
+                iconRect.pivot = new Vector2(1f, 0.5f);
+                iconRect.anchoredPosition = new Vector2(-(ActionButtonHorizontalPadding + (ActionButtonIconSize * 0.5f)), 0f);
+            }
+            else
+            {
+                iconRect.anchorMin = new Vector2(0f, 0.5f);
+                iconRect.anchorMax = new Vector2(0f, 0.5f);
+                iconRect.pivot = new Vector2(0f, 0.5f);
+                iconRect.anchoredPosition = new Vector2(ActionButtonHorizontalPadding, 0f);
+            }
+
             return iconImage;
         }
 
-        private RectTransform CreateButtonContentRoot(Transform buttonTransform)
+        private static void SetDirectButtonLabelsActive(Transform buttonTransform, bool isActive)
         {
-            GameObject contentObject = new GameObject("ButtonContent", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
-            contentObject.transform.SetParent(buttonTransform, false);
-            contentObject.layer = gameObject.layer;
+            if (buttonTransform == null)
+            {
+                return;
+            }
 
-            RectTransform contentRect = contentObject.GetComponent<RectTransform>();
-            contentRect.anchorMin = new Vector2(0.5f, 0.5f);
-            contentRect.anchorMax = new Vector2(0.5f, 0.5f);
-            contentRect.pivot = new Vector2(0.5f, 0.5f);
-            contentRect.anchoredPosition = Vector2.zero;
+            for (int index = 0; index < buttonTransform.childCount; index++)
+            {
+                var child = buttonTransform.GetChild(index);
+                if (child == null || string.Equals(child.name, "ButtonContent", StringComparison.Ordinal) || string.Equals(child.name, "ButtonIcon", StringComparison.Ordinal))
+                {
+                    continue;
+                }
 
-            HorizontalLayoutGroup contentLayout = contentObject.GetComponent<HorizontalLayoutGroup>();
-            contentLayout.spacing = ActionButtonContentSpacing;
-            contentLayout.padding = new RectOffset(0, 0, 0, 0);
-            contentLayout.childAlignment = TextAnchor.MiddleCenter;
-            contentLayout.childControlWidth = true;
-            contentLayout.childControlHeight = true;
-            contentLayout.childForceExpandWidth = false;
-            contentLayout.childForceExpandHeight = false;
-
-            ContentSizeFitter contentFitter = contentObject.GetComponent<ContentSizeFitter>();
-            contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            return contentRect;
+                if (child.GetComponent<TextMeshProUGUI>() != null || child.GetComponent<Text>() != null)
+                {
+                    child.gameObject.SetActive(isActive);
+                }
+            }
         }
 
         private void AdvanceMoldSelectionOrStartGame()

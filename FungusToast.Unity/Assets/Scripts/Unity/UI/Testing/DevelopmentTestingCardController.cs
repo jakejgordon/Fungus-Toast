@@ -862,6 +862,8 @@ namespace FungusToast.Unity.UI.Testing
 
         private void ConfigureSettingButton(Button button)
         {
+            EnsurePlainButtonContent(button);
+
             if (options.UseSecondaryButtonStyle)
             {
                 UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
@@ -883,6 +885,99 @@ namespace FungusToast.Unity.UI.Testing
                 label.fontSizeMax = 24f;
                 label.alignment = TextAlignmentOptions.Center;
                 label.color = options.UseSecondaryButtonStyle ? UIStyleTokens.Text.Primary : UIStyleTokens.Button.TextDefault;
+            }
+        }
+
+        private static void EnsurePlainButtonContent(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Transform contentRoot = button.transform.Find("ButtonContent");
+            if (contentRoot != null)
+            {
+                Transform compoundIcon = contentRoot.Find("ButtonIcon");
+                if (compoundIcon != null)
+                {
+                    UnityEngine.Object.Destroy(compoundIcon.gameObject);
+                }
+
+                TextMeshProUGUI compoundLabel = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (compoundLabel != null)
+                {
+                    compoundLabel.transform.SetParent(button.transform, false);
+                    NormalizePlainButtonLabel(compoundLabel.rectTransform);
+                    compoundLabel.alignment = TextAlignmentOptions.Center;
+                    compoundLabel.textWrappingMode = TextWrappingModes.NoWrap;
+                    compoundLabel.overflowMode = TextOverflowModes.Ellipsis;
+                    compoundLabel.margin = Vector4.zero;
+                    compoundLabel.gameObject.SetActive(true);
+                }
+
+                Text legacyCompoundLabel = contentRoot.GetComponentInChildren<Text>(true);
+                if (legacyCompoundLabel != null)
+                {
+                    legacyCompoundLabel.transform.SetParent(button.transform, false);
+                    NormalizePlainButtonLabel(legacyCompoundLabel.rectTransform);
+                    legacyCompoundLabel.alignment = TextAnchor.MiddleCenter;
+                    legacyCompoundLabel.gameObject.SetActive(true);
+                }
+
+                UnityEngine.Object.Destroy(contentRoot.gameObject);
+            }
+
+            Transform directIcon = button.transform.Find("ButtonIcon");
+            if (directIcon != null)
+            {
+                UnityEngine.Object.Destroy(directIcon.gameObject);
+            }
+
+            SetDirectButtonLabelsActive(button.transform, true);
+
+            RectTransform buttonRect = button.GetComponent<RectTransform>();
+            if (buttonRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(buttonRect);
+            }
+        }
+
+        private static void NormalizePlainButtonLabel(RectTransform labelRect)
+        {
+            if (labelRect == null)
+            {
+                return;
+            }
+
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.pivot = new Vector2(0.5f, 0.5f);
+            labelRect.anchoredPosition = Vector2.zero;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            labelRect.sizeDelta = Vector2.zero;
+        }
+
+        private static void SetDirectButtonLabelsActive(Transform buttonTransform, bool isActive)
+        {
+            if (buttonTransform == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < buttonTransform.childCount; index++)
+            {
+                var child = buttonTransform.GetChild(index);
+                if (child == null || string.Equals(child.name, "ButtonContent", StringComparison.Ordinal) || string.Equals(child.name, "ButtonIcon", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (child.GetComponent<TextMeshProUGUI>() != null || child.GetComponent<Text>() != null)
+                {
+                    child.gameObject.SetActive(isActive);
+                }
             }
         }
 

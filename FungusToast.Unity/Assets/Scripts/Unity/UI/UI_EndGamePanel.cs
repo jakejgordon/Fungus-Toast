@@ -106,6 +106,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameActionButtonIconSize = 22f;
         private const float EndGameActionButtonContentSpacing = 10f;
         private const float EndGameActionButtonLabelHeight = 28f;
+        private const float EndGameActionButtonHorizontalPadding = 14f;
 
         /* ─────────── Inspector ─────────── */
         [Header("UI References")]
@@ -2919,11 +2920,14 @@ namespace FungusToast.Unity.UI
                 var contentRootObject = new GameObject(contentRootName, typeof(RectTransform));
                 contentRoot = contentRootObject.GetComponent<RectTransform>();
                 contentRoot.SetParent(button.transform, false);
-                contentRoot.anchorMin = new Vector2(0.5f, 0.5f);
-                contentRoot.anchorMax = new Vector2(0.5f, 0.5f);
-                contentRoot.pivot = new Vector2(0.5f, 0.5f);
-                contentRoot.anchoredPosition = Vector2.zero;
             }
+
+            contentRoot.anchorMin = Vector2.zero;
+            contentRoot.anchorMax = Vector2.one;
+            contentRoot.pivot = new Vector2(0.5f, 0.5f);
+            contentRoot.offsetMin = new Vector2(EndGameActionButtonHorizontalPadding, 0f);
+            contentRoot.offsetMax = new Vector2(-EndGameActionButtonHorizontalPadding, 0f);
+            contentRoot.anchoredPosition = Vector2.zero;
 
             var contentLayout = contentRoot.gameObject.GetComponent<HorizontalLayoutGroup>();
             if (contentLayout == null)
@@ -2938,15 +2942,6 @@ namespace FungusToast.Unity.UI
             contentLayout.childControlHeight = true;
             contentLayout.childForceExpandWidth = false;
             contentLayout.childForceExpandHeight = false;
-
-            var fitter = contentRoot.gameObject.GetComponent<ContentSizeFitter>();
-            if (fitter == null)
-            {
-                fitter = contentRoot.gameObject.AddComponent<ContentSizeFitter>();
-            }
-
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true)
                 ?? button.GetComponentsInChildren<TextMeshProUGUI>(true)
@@ -2976,7 +2971,7 @@ namespace FungusToast.Unity.UI
 
                 labelLayout.minHeight = EndGameActionButtonLabelHeight;
                 labelLayout.preferredHeight = EndGameActionButtonLabelHeight;
-                labelLayout.flexibleWidth = 0f;
+                labelLayout.flexibleWidth = 1f;
                 labelLayout.flexibleHeight = 0f;
             }
 

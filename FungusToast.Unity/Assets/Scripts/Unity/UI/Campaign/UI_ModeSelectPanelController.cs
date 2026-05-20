@@ -24,6 +24,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float FooterHeight = 24f;
         private const float CompactMenuButtonIconSize = 22f;
         private const float CompactMenuButtonContentSpacing = 10f;
+        private const float CompactMenuButtonHorizontalPadding = 14f;
         private const float MinimumVerticalMargin = 32f;
         private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float SettingsCardWidth = 860f;
@@ -906,14 +907,16 @@ namespace FungusToast.Unity.UI.Campaign
             Image iconImage = null;
             if (icon != null)
             {
-                GameObject contentObject = new GameObject("ButtonContent", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(ContentSizeFitter));
+                GameObject contentObject = new GameObject("ButtonContent", typeof(RectTransform), typeof(HorizontalLayoutGroup));
                 contentObject.transform.SetParent(buttonObject.transform, false);
                 contentObject.layer = gameObject.layer;
 
                 RectTransform contentRect = contentObject.GetComponent<RectTransform>();
-                contentRect.anchorMin = new Vector2(0.5f, 0.5f);
-                contentRect.anchorMax = new Vector2(0.5f, 0.5f);
+                contentRect.anchorMin = Vector2.zero;
+                contentRect.anchorMax = Vector2.one;
                 contentRect.pivot = new Vector2(0.5f, 0.5f);
+                contentRect.offsetMin = new Vector2(CompactMenuButtonHorizontalPadding, 0f);
+                contentRect.offsetMax = new Vector2(-CompactMenuButtonHorizontalPadding, 0f);
                 contentRect.anchoredPosition = Vector2.zero;
 
                 HorizontalLayoutGroup contentLayout = contentObject.GetComponent<HorizontalLayoutGroup>();
@@ -924,10 +927,6 @@ namespace FungusToast.Unity.UI.Campaign
                 contentLayout.childControlHeight = true;
                 contentLayout.childForceExpandWidth = false;
                 contentLayout.childForceExpandHeight = false;
-
-                ContentSizeFitter contentFitter = contentObject.GetComponent<ContentSizeFitter>();
-                contentFitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-                contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
                 GameObject iconObject = new GameObject("ButtonIcon", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
                 iconObject.transform.SetParent(contentObject.transform, false);
@@ -960,7 +959,7 @@ namespace FungusToast.Unity.UI.Campaign
                 LayoutElement labelLayout = labelObject.GetComponent<LayoutElement>();
                 labelLayout.minHeight = 28f;
                 labelLayout.preferredHeight = 28f;
-                labelLayout.flexibleWidth = 0f;
+                labelLayout.flexibleWidth = 1f;
                 labelLayout.flexibleHeight = 0f;
 
                 RectTransform labelRect = labelObject.GetComponent<RectTransform>();
@@ -989,6 +988,9 @@ namespace FungusToast.Unity.UI.Campaign
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.margin = Vector4.zero;
             label.raycastTarget = false;
 
             if (iconImage != null)
