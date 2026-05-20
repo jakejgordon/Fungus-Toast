@@ -17,12 +17,12 @@ namespace FungusToast.Unity.Grid
 
             if (source.IndexOf("cracker", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                return ("Cracker", "Crumb");
+                return ("White Cracker", "Crumb");
             }
 
             if (source.IndexOf("cheese", StringComparison.OrdinalIgnoreCase) >= 0)
             {
-                return ("Cheese Board", "Rind");
+                return ("White Cheddar", "Rind");
             }
 
             if (source.IndexOf("pita", StringComparison.OrdinalIgnoreCase) >= 0)
