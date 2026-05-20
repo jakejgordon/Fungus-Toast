@@ -4,6 +4,7 @@ using System.Linq;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.Grid;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,6 +46,24 @@ namespace FungusToast.Unity.UI.Testing
             {
                 int size = Sizes[index];
                 labels.Add($"{size}x{size}");
+            }
+
+            return labels;
+        }
+
+        public static List<string> BuildLabels(BoardMediumConfig medium)
+        {
+            if (medium == null)
+            {
+                return BuildLabels();
+            }
+
+            var labels = new List<string>(Sizes.Count);
+            for (int index = 0; index < Sizes.Count; index++)
+            {
+                int size = Sizes[index];
+                string themeLabel = BoardThemeFlavorResolver.Resolve(medium, size, size).themeLabel;
+                labels.Add($"{size}x{size} - {themeLabel}");
             }
 
             return labels;

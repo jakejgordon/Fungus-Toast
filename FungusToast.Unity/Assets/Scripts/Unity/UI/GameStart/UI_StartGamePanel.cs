@@ -7,6 +7,7 @@ using UnityEngine.Tilemaps;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Unity;
+using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Testing;
 using FungusToast.Unity.UI.Tooltips;
@@ -2560,7 +2561,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             selectedBoardSize = DevelopmentTestingBoardSizePresets.ClampToSupportedSize(selectedBoardSize);
             boardSizeDropdown.ClearOptions();
-            boardSizeDropdown.AddOptions(DevelopmentTestingBoardSizePresets.BuildLabels());
+            boardSizeDropdown.AddOptions(DevelopmentTestingBoardSizePresets.BuildLabels(ResolveSoloBoardMedium()));
             boardSizeDropdown.value = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
             boardSizeDropdown.RefreshShownValue();
             ApplyDropdownReadability(boardSizeDropdown);
@@ -2570,6 +2571,12 @@ namespace FungusToast.Unity.UI.GameStart
         {
             selectedBoardSize = DevelopmentTestingBoardSizePresets.GetSizeAt(index);
             RefreshTestingSectionLayout();
+        }
+
+        private static BoardMediumConfig ResolveSoloBoardMedium()
+        {
+            GridVisualizer gridVisualizer = FindAnyObjectByType<GridVisualizer>();
+            return gridVisualizer != null ? gridVisualizer.ActiveBoardMedium : null;
         }
 
         private static void ApplySoloBoardSize(GameManager manager)
