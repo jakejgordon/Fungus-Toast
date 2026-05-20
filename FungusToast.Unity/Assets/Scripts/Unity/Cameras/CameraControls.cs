@@ -13,8 +13,11 @@ namespace FungusToast.Unity.Cameras
     public class CameraControls : MonoBehaviour
     {
         private const float CameraPanCoachmarkWidth = 380f;
-        private const float CameraPanCoachmarkHeight = 150f;
+        private const float CameraPanCoachmarkMinHeight = 150f;
         private const float CameraPanCoachmarkBottomOffset = 22f;
+        private const float CameraPanCoachmarkBodyHorizontalPadding = 14f;
+        private const float CameraPanCoachmarkBodyBottomPadding = 14f;
+        private const float CameraPanCoachmarkBodyTopReservedHeight = 46f;
         private const float CameraPanDragThreshold = 0.01f;
 
         public float zoomSpeed = 12.5f;
@@ -214,6 +217,7 @@ namespace FungusToast.Unity.Cameras
             NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.CameraPanIntro);
             cameraPanCoachmarkTitleTextLabel.text = definition.Title;
             cameraPanCoachmarkBodyTextLabel.text = definition.Body;
+            RefreshCameraPanCoachmarkLayout();
             cameraPanCoachmarkRoot.gameObject.SetActive(true);
             cameraPanCoachmarkRoot.SetAsLastSibling();
             cameraPanCoachmarkCanvasGroup.alpha = 1f;
@@ -269,7 +273,7 @@ namespace FungusToast.Unity.Cameras
             cameraPanCoachmarkRoot.anchorMax = new Vector2(0.5f, 0f);
             cameraPanCoachmarkRoot.pivot = new Vector2(0.5f, 0f);
             cameraPanCoachmarkRoot.anchoredPosition = new Vector2(0f, CameraPanCoachmarkBottomOffset);
-            cameraPanCoachmarkRoot.sizeDelta = new Vector2(CameraPanCoachmarkWidth, CameraPanCoachmarkHeight);
+            cameraPanCoachmarkRoot.sizeDelta = new Vector2(CameraPanCoachmarkWidth, CameraPanCoachmarkMinHeight);
 
             cameraPanCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
             cameraPanCoachmarkCanvasGroup.alpha = 0f;
@@ -312,8 +316,8 @@ namespace FungusToast.Unity.Cameras
             var bodyRect = bodyObject.GetComponent<RectTransform>();
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -46f);
+            bodyRect.offsetMin = new Vector2(CameraPanCoachmarkBodyHorizontalPadding, CameraPanCoachmarkBodyBottomPadding);
+            bodyRect.offsetMax = new Vector2(-CameraPanCoachmarkBodyHorizontalPadding, -CameraPanCoachmarkBodyTopReservedHeight);
 
             cameraPanCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             cameraPanCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -366,6 +370,32 @@ namespace FungusToast.Unity.Cameras
             }
 
             rootObject.SetActive(false);
+        }
+
+        private void RefreshCameraPanCoachmarkLayout()
+        {
+            if (cameraPanCoachmarkRoot == null || cameraPanCoachmarkBodyTextLabel == null)
+            {
+                return;
+            }
+
+            float availableBodyWidth = Mathf.Max(
+                1f,
+                CameraPanCoachmarkWidth - (2f * CameraPanCoachmarkBodyHorizontalPadding));
+            Vector2 bodyPreferredSize = cameraPanCoachmarkBodyTextLabel.GetPreferredValues(
+                cameraPanCoachmarkBodyTextLabel.text,
+                availableBodyWidth,
+                0f);
+            float requiredHeight = CameraPanCoachmarkBodyTopReservedHeight
+                + bodyPreferredSize.y
+                + CameraPanCoachmarkBodyBottomPadding;
+
+            cameraPanCoachmarkRoot.sizeDelta = new Vector2(
+                CameraPanCoachmarkWidth,
+                Mathf.Max(CameraPanCoachmarkMinHeight, requiredHeight));
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cameraPanCoachmarkRoot);
         }
 
         private Canvas ResolveRootCanvas(GameManager gameManager)
@@ -559,4 +589,3 @@ namespace FungusToast.Unity.Cameras
         }
     }
 }
-
