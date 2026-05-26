@@ -1136,7 +1136,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            Transform parent = draftPanel.GetComponentInParent<Canvas>()?.transform ?? transform.parent;
+            Transform parent = draftPanel.GetComponentInParent<Canvas>()?.rootCanvas?.transform ?? transform.parent;
             if (parent == null)
             {
                 return;
@@ -1253,7 +1253,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             RectTransform anchorRect = choiceContainer?.parent as RectTransform;
             RectTransform parentRect = mycovariantDraftCoachmarkRoot.parent as RectTransform;
-            Canvas canvas = draftPanel.GetComponentInParent<Canvas>();
+            Canvas canvas = draftPanel.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null)
             {
                 return;
@@ -1264,14 +1264,14 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Vector3[] corners = new Vector3[4];
             anchorRect.GetWorldCorners(corners);
             Vector3 topLeftWorld = corners[1];
-            Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, topLeftWorld);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
-            {
-                return;
-            }
 
-            mycovariantDraftCoachmarkRoot.anchoredPosition = localPoint + new Vector2(-24f, -210f);
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                mycovariantDraftCoachmarkRoot,
+                parentRect,
+                canvas,
+                topLeftWorld,
+                new Vector2(-24f, -210f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
         private void OnMycovariantDraftCoachmarkDismissed()

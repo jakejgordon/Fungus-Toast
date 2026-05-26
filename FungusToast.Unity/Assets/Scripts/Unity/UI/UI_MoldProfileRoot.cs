@@ -902,7 +902,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            Transform parent = GetComponentInParent<Canvas>()?.transform ?? transform.parent;
+            Transform parent = GetComponentInParent<Canvas>()?.rootCanvas?.transform ?? transform.parent;
             if (parent == null)
             {
                 return;
@@ -1022,7 +1022,7 @@ namespace FungusToast.Unity.UI
             }
 
             RectTransform parentRect = adaptationCoachmarkRoot.parent as RectTransform;
-            Canvas canvas = GetComponentInParent<Canvas>();
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (parentRect == null || canvas == null)
             {
                 return;
@@ -1033,14 +1033,14 @@ namespace FungusToast.Unity.UI
             Vector3[] corners = new Vector3[4];
             adaptationSectionRoot.GetWorldCorners(corners);
             Vector3 topRightWorld = corners[2];
-            Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, topRightWorld);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
-            {
-                return;
-            }
 
-            adaptationCoachmarkRoot.anchoredPosition = localPoint + new Vector2(18f, -6f);
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                adaptationCoachmarkRoot,
+                parentRect,
+                canvas,
+                topRightWorld,
+                new Vector2(18f, -6f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
         private void OnAdaptationCoachmarkDismissed()

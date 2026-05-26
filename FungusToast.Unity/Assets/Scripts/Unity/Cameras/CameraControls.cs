@@ -396,6 +396,15 @@ namespace FungusToast.Unity.Cameras
 
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(cameraPanCoachmarkRoot);
+
+            if (cameraPanCoachmarkRoot.parent is RectTransform parentRect)
+            {
+                CoachmarkLayoutUtility.SetAnchoredPositionClamped(
+                    cameraPanCoachmarkRoot,
+                    parentRect,
+                    cameraPanCoachmarkRoot.anchoredPosition,
+                    CoachmarkLayoutUtility.DefaultScreenPadding);
+            }
         }
 
         private Canvas ResolveRootCanvas(GameManager gameManager)

@@ -454,6 +454,7 @@ namespace FungusToast.Unity.UI
             NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.EndgameCountdownIntro);
             endgameCountdownCoachmarkTitleTextLabel.text = definition.Title;
             endgameCountdownCoachmarkBodyTextLabel.text = definition.Body;
+            PositionEndgameCountdownCoachmark();
             endgameCountdownCoachmarkRoot.gameObject.SetActive(true);
             endgameCountdownCoachmarkRoot.SetAsLastSibling();
             endgameCountdownCoachmarkCanvasGroup.alpha = 1f;
@@ -484,6 +485,7 @@ namespace FungusToast.Unity.UI
             NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.ScoreboardWinCondition);
             scoreboardCoachmarkTitleTextLabel.text = definition.Title;
             scoreboardCoachmarkBodyTextLabel.text = definition.Body;
+            PositionScoreboardCoachmark();
             scoreboardCoachmarkRoot.gameObject.SetActive(true);
             scoreboardCoachmarkRoot.SetAsLastSibling();
             scoreboardCoachmarkCanvasGroup.alpha = 1f;
@@ -498,19 +500,20 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            if (transform == null)
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (canvas == null)
             {
                 return;
             }
 
             var rootObject = new GameObject("UI_ScoreboardCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(transform, false);
+            rootObject.transform.SetParent(canvas.transform, false);
 
             scoreboardCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            scoreboardCoachmarkRoot.anchorMin = new Vector2(0f, 1f);
-            scoreboardCoachmarkRoot.anchorMax = new Vector2(0f, 1f);
+            scoreboardCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            scoreboardCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             scoreboardCoachmarkRoot.pivot = new Vector2(1f, 1f);
-            scoreboardCoachmarkRoot.anchoredPosition = new Vector2(-16f, -160f);
+            scoreboardCoachmarkRoot.anchoredPosition = Vector2.zero;
             scoreboardCoachmarkRoot.sizeDelta = new Vector2(360f, 190f);
 
             scoreboardCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
@@ -649,19 +652,20 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            if (transform == null)
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (canvas == null)
             {
                 return;
             }
 
             var rootObject = new GameObject("UI_EndgameCountdownCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(transform, false);
+            rootObject.transform.SetParent(canvas.transform, false);
 
             endgameCountdownCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            endgameCountdownCoachmarkRoot.anchorMin = new Vector2(0f, 1f);
-            endgameCountdownCoachmarkRoot.anchorMax = new Vector2(0f, 1f);
+            endgameCountdownCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            endgameCountdownCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             endgameCountdownCoachmarkRoot.pivot = new Vector2(1f, 1f);
-            endgameCountdownCoachmarkRoot.anchoredPosition = new Vector2(-16f, -52f);
+            endgameCountdownCoachmarkRoot.anchoredPosition = Vector2.zero;
             endgameCountdownCoachmarkRoot.sizeDelta = new Vector2(380f, 205f);
 
             endgameCountdownCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
@@ -755,6 +759,64 @@ namespace FungusToast.Unity.UI
             }
 
             rootObject.SetActive(false);
+        }
+
+        private void PositionScoreboardCoachmark()
+        {
+            if (scoreboardCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            {
+                return;
+            }
+
+            RectTransform parentRect = scoreboardCoachmarkRoot.parent as RectTransform;
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (parentRect == null || canvas == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            sidebarRect.GetWorldCorners(corners);
+            Vector3 topLeftWorld = corners[1];
+
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                scoreboardCoachmarkRoot,
+                parentRect,
+                canvas,
+                topLeftWorld,
+                new Vector2(-16f, -160f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
+        }
+
+        private void PositionEndgameCountdownCoachmark()
+        {
+            if (endgameCountdownCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            {
+                return;
+            }
+
+            RectTransform parentRect = endgameCountdownCoachmarkRoot.parent as RectTransform;
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (parentRect == null || canvas == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            sidebarRect.GetWorldCorners(corners);
+            Vector3 topLeftWorld = corners[1];
+
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                endgameCountdownCoachmarkRoot,
+                parentRect,
+                canvas,
+                topLeftWorld,
+                new Vector2(-16f, -52f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
         private void OnEndgameCountdownCoachmarkDismissed()

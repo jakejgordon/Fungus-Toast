@@ -43,7 +43,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float TimeLapseCoachmarkHeight = 168f;
         private const float TimeLapseCoachmarkHorizontalOffset = 5f;
         private const float TimeLapseCoachmarkVerticalOffset = -12f;
-        private const float TimeLapseCoachmarkScreenEdgePadding = 8f;
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
@@ -1846,7 +1845,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             RectTransform anchorRect = presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null;
             RectTransform parentRect = timeLapseCoachmarkRoot != null ? timeLapseCoachmarkRoot.parent as RectTransform : null;
-            Canvas canvas = rootCanvas != null ? rootCanvas : presentationSpeedButton?.GetComponentInParent<Canvas>()?.rootCanvas;
+            Canvas canvas = rootCanvas != null ? rootCanvas.rootCanvas : presentationSpeedButton?.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null || timeLapseCoachmarkRoot == null)
             {
                 return;
@@ -1857,26 +1856,14 @@ namespace FungusToast.Unity.UI.MutationTree
             Vector3[] corners = new Vector3[4];
             anchorRect.GetWorldCorners(corners);
             Vector3 rightCenterWorld = (corners[2] + corners[3]) * 0.5f;
-            Camera uiCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
-            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(uiCamera, rightCenterWorld);
-            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, screenPoint, uiCamera, out Vector2 localPoint))
-            {
-                return;
-            }
 
-            Vector2 anchoredPosition = localPoint + new Vector2(TimeLapseCoachmarkHorizontalOffset, TimeLapseCoachmarkVerticalOffset);
-            float coachmarkWidth = timeLapseCoachmarkRoot.rect.width > 0f ? timeLapseCoachmarkRoot.rect.width : TimeLapseCoachmarkWidth;
-            float coachmarkHeight = timeLapseCoachmarkRoot.rect.height > 0f ? timeLapseCoachmarkRoot.rect.height : TimeLapseCoachmarkHeight;
-            float halfParentWidth = parentRect.rect.width * 0.5f;
-            float halfParentHeight = parentRect.rect.height * 0.5f;
-            float minX = -halfParentWidth + TimeLapseCoachmarkScreenEdgePadding;
-            float maxX = halfParentWidth - coachmarkWidth - TimeLapseCoachmarkScreenEdgePadding;
-            float minY = -halfParentHeight + coachmarkHeight + TimeLapseCoachmarkScreenEdgePadding;
-            float maxY = halfParentHeight - TimeLapseCoachmarkScreenEdgePadding;
-
-            anchoredPosition.x = Mathf.Clamp(anchoredPosition.x, minX, maxX);
-            anchoredPosition.y = Mathf.Clamp(anchoredPosition.y, minY, maxY);
-            timeLapseCoachmarkRoot.anchoredPosition = anchoredPosition;
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                timeLapseCoachmarkRoot,
+                parentRect,
+                canvas,
+                rightCenterWorld,
+                new Vector2(TimeLapseCoachmarkHorizontalOffset, TimeLapseCoachmarkVerticalOffset),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
         private void OnTimeLapseCoachmarkDismissed()
