@@ -28,6 +28,7 @@ If a task is unclear, use this routing order before making changes:
 - **Sound design, storage, and trigger guidance:** `FungusToast.Core/docs/SOUNDS.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
+- **Git worktree / branch workflow for isolated task checkouts:** `docs/GIT_WORKTREE_WORKFLOW.md`
 - **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
 - **Technical architecture context:** `FungusToast.Core/docs/ARCHITECTURE_OVERVIEW.md`
 - **Canonical gameplay terminology and state verbs:** `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`

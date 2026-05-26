@@ -50,6 +50,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 These are useful for narrower tasks and should remain discoverable here even when not listed in the root router.
 
+- `../../docs/GIT_WORKTREE_WORKFLOW.md` — repo-specific Git worktree and branch workflow for isolated bug-fix or feature checkouts
 - `../../docs/ui/TOOLTIP_GUIDE.md` — taxonomy for onboarding tooltips, hover tooltips, cell/board inspection tooltips, and related guidance surfaces
 - `second-level/ANIMATION_HELPER.md` — gameplay animation trigger/timing guidance
 - `second-level/PLAYER_ACTIVITY_LOG_HELPER.md` — player activity log semantics and aggregation
