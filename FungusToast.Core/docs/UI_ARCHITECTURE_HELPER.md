@@ -268,7 +268,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - Boards `20x20` and smaller automatically switch to the seeded cracker image through the first size override.
 - Boards `40x40` and smaller automatically switch to the plain cracker image unless a smaller override matched first.
 - Boards `80x80` and smaller automatically switch to the cheese image unless a smaller override matched first.
-- Boards `126x126` and larger automatically switch to the pita image through a min-bound override, leaving white bread as the fallback band between the cheese and pita thresholds, with dedicated white-bread cleanup overrides still handling `85x85` and `95x95`.
+- Boards `100x100` and larger automatically switch to the pita image through a min-bound override, leaving bread as the fallback band between the cheese and pita thresholds.
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
 - White bread, seeded cracker, and plain cracker still use the shared alpha-mask fitting rule.
 - Cheese uses explicit authored horizontal-span profile metadata with vertical min/max bounds so it can keep a larger square placement footprint while trimming the left/right edges, top-left notch, and top/bottom bands deliberately across the cheese size band.
