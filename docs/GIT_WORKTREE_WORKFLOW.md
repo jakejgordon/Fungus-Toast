@@ -101,6 +101,38 @@ git branch -d fix/tooltip-positioning
 - Uncommitted changes in the main checkout do not block creating a separate worktree unless they affect the branch creation command itself.
 - Unity caches and local editor state remain per folder, so opening the worktree in a separate VS Code or Unity session is usually the cleanest option.
 
+## Opening Unity From A Worktree
+
+You do not need to add every worktree to Unity Hub.
+
+Use the repo helper script from the checkout you want to test:
+
+```powershell
+.\scripts\open_unity_project.ps1
+```
+
+That script:
+
+1. treats the current checkout as the repo root
+2. opens that checkout's `FungusToast.Unity` project
+3. detects the expected Unity editor version from `FungusToast.Unity/ProjectSettings/ProjectVersion.txt`
+4. launches `Unity.exe` directly with `-projectPath`
+
+Useful options:
+
+```powershell
+# Show the resolved editor and project path without launching Unity
+.\scripts\open_unity_project.ps1 -PrintOnly
+
+# Override the editor executable explicitly
+.\scripts\open_unity_project.ps1 -UnityPath "C:\Program Files\Unity\Hub\Editor\6000.4.0f1\Editor\Unity.exe"
+
+# Open a different Unity project folder if needed
+.\scripts\open_unity_project.ps1 -ProjectPath .\FungusToast.Unity
+```
+
+For worktree-based bug fixes, run the helper from the worktree checkout so Unity opens the branch-specific project copy rather than the main checkout.
+
 ## Suggested Repo-Specific Flow
 
 For the next isolated bug fix in this repository:
@@ -109,6 +141,7 @@ For the next isolated bug fix in this repository:
 git fetch origin
 git worktree add -b fix/tooltip-positioning ..\FungusToast.worktrees\fix-tooltip-positioning origin/main
 Set-Location ..\FungusToast.worktrees\fix-tooltip-positioning
+.\scripts\open_unity_project.ps1
 code .
 ```
 
