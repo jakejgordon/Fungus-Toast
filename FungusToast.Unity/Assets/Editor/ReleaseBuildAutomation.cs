@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -11,6 +12,8 @@ public static class ReleaseBuildAutomation
     private const string VersionArgumentName = "-releaseVersion";
     private const string ExecutableName = "FungusToast.exe";
     private const string MacAppName = "Fungus Toast.app";
+    private const string WindowsBuildProfileAssetPath = "Assets/Settings/Build Profiles/Fungus Toast Windows.asset";
+    private const string BuildProfileBundleVersionPrefix = "    - line: '|   bundleVersion: ";
 
     public static void BuildWindowsRelease()
     {
@@ -20,6 +23,7 @@ public static class ReleaseBuildAutomation
 
         string[] enabledScenes = GetEnabledScenes();
         string fullOutputDirectory = ResolveOutputDirectory(outputDirectory);
+        SyncBuildProfileBundleVersion(WindowsBuildProfileAssetPath, releaseVersion);
 
         string executablePath = Path.Combine(fullOutputDirectory, ExecutableName);
         BuildRelease(enabledScenes, executablePath, BuildTarget.StandaloneWindows64, releaseVersion, "Windows");
@@ -101,6 +105,39 @@ public static class ReleaseBuildAutomation
 
         Directory.CreateDirectory(fullOutputDirectory);
         return fullOutputDirectory;
+    }
+
+    private static void SyncBuildProfileBundleVersion(string assetPath, string releaseVersion)
+    {
+        string projectRoot = Path.GetDirectoryName(Application.dataPath)
+            ?? Directory.GetCurrentDirectory();
+        string fullAssetPath = Path.Combine(projectRoot, assetPath.Replace('/', Path.DirectorySeparatorChar));
+
+        if (!File.Exists(fullAssetPath))
+        {
+            throw new InvalidOperationException($"Required build profile asset was not found at '{fullAssetPath}'.");
+        }
+
+        string assetContents = File.ReadAllText(fullAssetPath);
+        string pattern = $"{Regex.Escape(BuildProfileBundleVersionPrefix)}[^']*'";
+        string replacement = BuildProfileBundleVersionPrefix + releaseVersion + "'";
+        string updatedContents = new Regex(pattern).Replace(assetContents, replacement, 1);
+
+        if (string.Equals(assetContents, updatedContents, StringComparison.Ordinal))
+        {
+            if (!assetContents.Contains(BuildProfileBundleVersionPrefix, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException($"Unable to find the bundleVersion line in build profile asset '{assetPath}'.");
+            }
+
+            return;
+        }
+
+        File.WriteAllText(fullAssetPath, updatedContents);
+        AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
+        AssetDatabase.SaveAssets();
+
+        Debug.Log($"Synchronized build profile '{assetPath}' bundleVersion to {releaseVersion}.");
     }
 
     private static string GetRequiredArgument(string[] args, string argumentName)
