@@ -22,6 +22,24 @@ dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj
 - When Core code changes, rebuild `FungusToast.Core`, refresh the Unity plugin copy, and commit the updated DLL together with the source change so local Unity and cloud Unity builds stay in sync.
 - If you encounter Unity script errors, copy and paste them into Cursor for troubleshooting.
 
+## Opening The Unity Project Directly
+
+On Windows, you can open the current checkout's Unity project without adding it to Unity Hub each time:
+
+```powershell
+.\scripts\open_unity_project.ps1
+```
+
+The helper resolves the expected Unity version from `FungusToast.Unity/ProjectSettings/ProjectVersion.txt`, locates a matching `Unity.exe` when possible, and launches the current checkout's `FungusToast.Unity` with `-projectPath`.
+
+To validate the resolved paths without launching the editor:
+
+```powershell
+.\scripts\open_unity_project.ps1 -PrintOnly
+```
+
+When working in a Git worktree, run the script from that worktree checkout so you open the branch-specific Unity project rather than the main checkout copy.
+
 This order ensures all dependencies are built correctly and avoids circular dependency issues.
 
 ## Local itch.io Release Flow
