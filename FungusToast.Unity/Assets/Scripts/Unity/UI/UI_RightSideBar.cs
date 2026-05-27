@@ -32,8 +32,6 @@ namespace FungusToast.Unity.UI
         [SerializeField] private GameObject playerSummaryPrefab;
         [SerializeField] private TextMeshProUGUI endgameCountdownText;
         [SerializeField] private TextMeshProUGUI roundAndOccupancyText;
-        [Header("Dynamic Chances")]
-        [SerializeField] private TextMeshProUGUI randomDecayChanceText; // NEW UI label (assign in prefab)
 
         // Add a GridVisualizer field and setter
         private GridVisualizer gridVisualizer;
@@ -78,13 +76,6 @@ namespace FungusToast.Unity.UI
                 roundAndOccupancyText.fontStyle = FontStyles.Bold;
                 ConfigureSingleLineAutosize(roundAndOccupancyText);
                 ApplyRoundAndOccupancyLayout();
-            }
-
-            if (randomDecayChanceText != null)
-            {
-                randomDecayChanceText.color = UIStyleTokens.Text.Secondary;
-                ApplyTextScale(randomDecayChanceText, TopStatsScale);
-                ConfigureSingleLineAutosize(randomDecayChanceText);
             }
 
             if (endgameCountdownText != null)
@@ -856,7 +847,6 @@ namespace FungusToast.Unity.UI
             string mycovariantDraftTiming = BuildMycovariantDraftTimingText(round);
             roundAndOccupancyText.text = $"<b>Round:</b> {round}\n<b>Occupancy:</b> {occupancy:F2}%\n<b>Mycovariant Draft:</b> {mycovariantDraftTiming}";
             ApplyRoundAndOccupancyLayout();
-            UpdateRandomDecayChance(round); // update dynamic label each round update
             RefreshDraftHistoryAvailability();
         }
 
@@ -919,41 +909,6 @@ namespace FungusToast.Unity.UI
 
             int roundsRemaining = nextDraftRound.Value - currentRound;
             return $"Round {nextDraftRound.Value} (in {roundsRemaining})";
-        }
-
-        // NEW: update random decay chance label
-        public void UpdateRandomDecayChance(int currentRound)
-        {
-            if (randomDecayChanceText == null) return; // optional safety
-            float baseChance = GameBalance.BaseRandomDecayChance;
-            float roundModifier = GameBalance.GetAdditionalRandomDecayChance(currentRound);
-            float mycelialBloomModifier = 0f;
-
-            if (board != null && perspectivePlayerId.HasValue)
-            {
-                Player perspectivePlayer = board.Players.FirstOrDefault(player => player.PlayerId == perspectivePlayerId.Value);
-                if (perspectivePlayer != null)
-                {
-                    mycelialBloomModifier = perspectivePlayer.GetMutationLevel(MutationIds.MycelialBloom) * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
-                }
-            }
-
-            float displayedModifier = roundModifier + mycelialBloomModifier;
-            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(baseChance * 100f):0.0}% (+{(displayedModifier * 100f):0.0}%)";
-        }
-
-        public void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)
-        {
-            if (randomDecayChanceText == null) return;
-            var go = randomDecayChanceText.gameObject;
-            var provider = go.GetComponent<RandomDecayChanceTooltipProvider>();
-            if (provider == null)
-                provider = go.AddComponent<RandomDecayChanceTooltipProvider>();
-            provider.Initialize(board, perspectivePlayer);
-            var trigger = go.GetComponent<TooltipTrigger>();
-            if (trigger == null)
-                trigger = go.AddComponent<TooltipTrigger>();
-            trigger.SetDynamicProvider(provider);
         }
     }
 }

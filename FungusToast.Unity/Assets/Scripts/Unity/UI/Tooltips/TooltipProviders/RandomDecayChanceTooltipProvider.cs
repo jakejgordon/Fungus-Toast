@@ -1,5 +1,6 @@
 using System.Text;
 using UnityEngine;
+using FungusToast.Core;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Core.Config;
 using FungusToast.Core.Players;
@@ -14,8 +15,39 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
     /// </summary>
     public class RandomDecayChanceTooltipProvider : MonoBehaviour, ITooltipContentProvider
     {
+        public readonly struct RandomDecayChanceBreakdown
+        {
+            public RandomDecayChanceBreakdown(float baseChance, float roundModifier, float mycelialBloomModifier, float harmonyReduction, float effectiveChance)
+            {
+                BaseChance = baseChance;
+                RoundModifier = roundModifier;
+                MycelialBloomModifier = mycelialBloomModifier;
+                HarmonyReduction = harmonyReduction;
+                EffectiveChance = effectiveChance;
+            }
+
+            public float BaseChance { get; }
+            public float RoundModifier { get; }
+            public float MycelialBloomModifier { get; }
+            public float HarmonyReduction { get; }
+            public float EffectiveChance { get; }
+        }
+
         private GameBoard board;
         private Player player; // perspective player
+
+        public static RandomDecayChanceBreakdown BuildBreakdown(GameBoard board, Player player)
+        {
+            float baseChance = GameBalance.BaseRandomDecayChance;
+            float roundModifier = board != null ? GameBalance.GetAdditionalRandomDecayChance(board.CurrentRound) : 0f;
+            float mycelialBloomModifier = player != null
+                ? player.GetMutationLevel(MutationIds.MycelialBloom) * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel
+                : 0f;
+            float harmonyReduction = player != null ? player.GetMutationEffect(MutationType.DefenseSurvival) : 0f;
+            float effectiveChance = Mathf.Max(0f, baseChance + roundModifier + mycelialBloomModifier - harmonyReduction);
+
+            return new RandomDecayChanceBreakdown(baseChance, roundModifier, mycelialBloomModifier, harmonyReduction, effectiveChance);
+        }
 
         public void Initialize(GameBoard gameBoard, Player perspectivePlayer)
         {
@@ -28,20 +60,11 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             if (board == null) return "Random Decay Chance: (board not set)";
 
             int currentRound = board.CurrentRound;
-            float baseChance = GameBalance.BaseRandomDecayChance; // fraction
             int scalingStart = GameBalance.RandomDecayScalingStartRound;
             float perRound = GameBalance.RandomDecayAdditionalChancePerRound; // fraction per round after start
-
-            float roundModifier = GameBalance.GetAdditionalRandomDecayChance(currentRound);
-
             int bloomLevel = player != null ? player.GetMutationLevel(MutationIds.MycelialBloom) : 0;
-            float mycelialBloomModifier = bloomLevel * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
-
             int harmonyLevel = player != null ? player.GetMutationLevel(MutationIds.HomeostaticHarmony) : 0;
-            float harmonyReduction = harmonyLevel * GameBalance.HomeostaticHarmonyEffectPerLevel;
-
-            float effective = baseChance + roundModifier + mycelialBloomModifier - harmonyReduction;
-            if (effective < 0f) effective = 0f;
+            RandomDecayChanceBreakdown breakdown = BuildBreakdown(board, player);
 
             var sb = new StringBuilder();
             string warningHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Warning);
@@ -63,11 +86,11 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             sb.AppendLine();
 
             sb.AppendLine("<b>Current Values</b>:");
-            sb.AppendLine($"Base Chance: <b>{baseChance * 100f:0.###}%</b>");
-            sb.AppendLine($"Round Modifier: <b>+{roundModifier * 100f:0.###}%</b>");
-            sb.AppendLine($"Mycelial Bloom Modifier: <b>+{mycelialBloomModifier * 100f:0.###}%</b> (Level {bloomLevel})");
-            sb.AppendLine($"Homeostatic Harmony Reduction: <b>-{harmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
-            sb.AppendLine($"Effective Chance: <b>{effective * 100f:0.###}%</b>");
+            sb.AppendLine($"Base Chance: <b>{breakdown.BaseChance * 100f:0.###}%</b>");
+            sb.AppendLine($"Round Modifier: <b>+{breakdown.RoundModifier * 100f:0.###}%</b>");
+            sb.AppendLine($"Mycelial Bloom Modifier: <b>+{breakdown.MycelialBloomModifier * 100f:0.###}%</b> (Level {bloomLevel})");
+            sb.AppendLine($"Homeostatic Harmony Reduction: <b>-{breakdown.HarmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
+            sb.AppendLine($"Effective Chance: <b>{breakdown.EffectiveChance * 100f:0.###}%</b>");
             return sb.ToString();
         }
     }

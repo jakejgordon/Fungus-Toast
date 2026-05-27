@@ -28,6 +28,10 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Image centerPlayerIcon;
         [SerializeField] private TextMeshProUGUI growthPreviewHeaderText;
 
+        [Header("Random Decay Chance")]
+        [SerializeField] private RectTransform randomDecayChanceRoot;
+        [SerializeField] private TextMeshProUGUI randomDecayChanceText;
+
         [Header("Adaptations")]
         [SerializeField] private RectTransform adaptationSectionRoot;
         [SerializeField] private TextMeshProUGUI adaptationHeaderText;
@@ -67,10 +71,15 @@ namespace FungusToast.Unity.UI
         private const int AdaptationIconMaxColumns = 12;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
+        private const float StatsRootHeight = 35f;
+        private const float RandomDecayChanceRowHeight = 24f;
+        private const float RandomDecayChanceFontSize = 18f;
         private const float AdaptationCoachmarkWidth = 340f;
         private const float AdaptationCoachmarkHeight = 170f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
         private const string StatsRootName = "UI_StatsRoot";
+        private const string RandomDecayChanceRootName = "UI_RandomDecayChanceRoot";
+        private const string RandomDecayChanceTextName = "UI_RandomDecayChanceText";
 
         private readonly List<GameObject> adaptationIconObjects = new();
         private readonly List<GameObject> mycovariantIconObjects = new();
@@ -129,10 +138,12 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyGrowthPreviewHeaderText();
+            EnsureRandomDecayChanceSectionExists();
             EnsureBoardOverlayLegendSectionExists();
             EnsureAdaptationSectionExists();
             EnsureMycovariantSectionExists();
             UpdateSectionSiblingOrder();
+            ApplyRandomDecayChanceStyle();
             ApplyBoardOverlayLegendSectionStyle();
             ApplyAdaptationSectionStyle();
             ApplyMycovariantSectionStyle();
@@ -155,6 +166,7 @@ namespace FungusToast.Unity.UI
 
             ApplyChildLayoutBehavior(GrowthPreviewRootName, ignoreIfEmpty: false);
             ApplyChildLayoutBehavior(StatsRootName, ignoreIfEmpty: true);
+            ApplyStatsRootStyle();
 
             if (transform is RectTransform rootRect)
             {
@@ -288,6 +300,7 @@ namespace FungusToast.Unity.UI
 
             EnsureCellsResolved();
             UpdateGrowthChances();
+            RefreshRandomDecayChance();
             RefreshBoardOverlayLegend();
             RefreshAdaptations();
             RefreshMycovariants();
@@ -325,6 +338,33 @@ namespace FungusToast.Unity.UI
             ConfigureCenterPlayerIcon(player);
 
             Refresh();
+        }
+
+        public void RefreshRandomDecayChance()
+        {
+            EnsureRandomDecayChanceSectionExists();
+            if (randomDecayChanceText == null)
+            {
+                return;
+            }
+
+            GameBoard board = GameManager.Instance?.Board;
+            bool canShow = trackedPlayer != null && board != null;
+
+            if (randomDecayChanceRoot != null)
+            {
+                randomDecayChanceRoot.gameObject.SetActive(canShow);
+            }
+
+            if (!canShow)
+            {
+                randomDecayChanceText.text = string.Empty;
+                return;
+            }
+
+            RandomDecayChanceTooltipProvider.RandomDecayChanceBreakdown breakdown = RandomDecayChanceTooltipProvider.BuildBreakdown(board, trackedPlayer);
+            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(breakdown.EffectiveChance * 100f):0.0}% effective";
+            InitializeRandomDecayChanceTooltip(board, trackedPlayer);
         }
 
         public void TryShowAdaptationCoachmark(int currentRound)
@@ -453,6 +493,32 @@ namespace FungusToast.Unity.UI
             RefreshIconSection(mycovariantSectionRoot, mycovariantIconGridRoot, mycovariantIconObjects, trackedPlayer?.PlayerMycovariants, CreateMycovariantIcon);
         }
 
+        private void EnsureRandomDecayChanceSectionExists()
+        {
+            if (randomDecayChanceRoot != null && randomDecayChanceText != null)
+            {
+                return;
+            }
+
+            RectTransform statsRoot = EnsureStatsRootExists();
+            if (statsRoot == null)
+            {
+                return;
+            }
+
+            randomDecayChanceRoot = FindNamedChild(statsRoot, RandomDecayChanceRootName);
+            if (randomDecayChanceRoot == null)
+            {
+                randomDecayChanceRoot = CreateRandomDecayChanceRoot(statsRoot);
+            }
+
+            randomDecayChanceText = randomDecayChanceRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (randomDecayChanceText == null)
+            {
+                randomDecayChanceText = CreateRandomDecayChanceText(randomDecayChanceRoot);
+            }
+        }
+
         private void RefreshIconSection<T>(RectTransform sectionRoot, RectTransform iconGridRoot, List<GameObject> iconObjects, IList<T> entries, Action<T> createIcon)
         {
             if (sectionRoot == null || iconGridRoot == null)
@@ -571,6 +637,12 @@ namespace FungusToast.Unity.UI
             var hostRoot = ResolveAdaptationSectionHostRoot(rootTransform);
             int nextIndex = hostRoot != null ? hostRoot.GetSiblingIndex() + 1 : rootTransform.childCount;
 
+            RectTransform statsRoot = EnsureStatsRootExists();
+            if (statsRoot != null)
+            {
+                statsRoot.SetSiblingIndex(nextIndex++);
+            }
+
             if (boardOverlayLegendSectionRoot != null)
             {
                 boardOverlayLegendSectionRoot.SetSiblingIndex(nextIndex++);
@@ -604,6 +676,95 @@ namespace FungusToast.Unity.UI
             }
 
             return adaptationSectionHostRoot;
+        }
+
+        private RectTransform EnsureStatsRootExists()
+        {
+            RectTransform statsRoot = FindDirectChildRect(StatsRootName);
+            if (statsRoot != null)
+            {
+                ApplyStatsRootStyle();
+                return statsRoot;
+            }
+
+            if (transform is not RectTransform rootTransform)
+            {
+                return null;
+            }
+
+            var statsObject = new GameObject(StatsRootName, typeof(RectTransform), typeof(LayoutElement), typeof(VerticalLayoutGroup));
+            statsObject.transform.SetParent(rootTransform, false);
+
+            statsRoot = statsObject.GetComponent<RectTransform>();
+            var layoutElement = statsObject.GetComponent<LayoutElement>();
+            layoutElement.preferredHeight = StatsRootHeight;
+            layoutElement.minHeight = StatsRootHeight;
+            layoutElement.flexibleHeight = 0f;
+
+            var layoutGroup = statsObject.GetComponent<VerticalLayoutGroup>();
+            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.spacing = 0f;
+            layoutGroup.childAlignment = TextAnchor.UpperLeft;
+            layoutGroup.childControlWidth = true;
+            layoutGroup.childControlHeight = true;
+            layoutGroup.childForceExpandWidth = true;
+            layoutGroup.childForceExpandHeight = false;
+
+            RectTransform growthPreviewRoot = FindDirectChildRect(GrowthPreviewRootName);
+            statsRoot.SetSiblingIndex(growthPreviewRoot != null ? growthPreviewRoot.GetSiblingIndex() + 1 : 0);
+            ApplyStatsRootStyle();
+            return statsRoot;
+        }
+
+        private void ApplyStatsRootStyle()
+        {
+            RectTransform statsRoot = FindDirectChildRect(StatsRootName);
+            if (statsRoot == null)
+            {
+                return;
+            }
+
+            if (statsRoot.TryGetComponent<LayoutElement>(out var layoutElement))
+            {
+                layoutElement.preferredHeight = StatsRootHeight;
+                layoutElement.minHeight = StatsRootHeight;
+                layoutElement.flexibleHeight = 0f;
+            }
+
+            if (statsRoot.TryGetComponent<VerticalLayoutGroup>(out var layoutGroup))
+            {
+                layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+                layoutGroup.spacing = 0f;
+                layoutGroup.childAlignment = TextAnchor.UpperLeft;
+                layoutGroup.childControlWidth = true;
+                layoutGroup.childControlHeight = true;
+                layoutGroup.childForceExpandWidth = true;
+                layoutGroup.childForceExpandHeight = false;
+            }
+        }
+
+        private void ApplyRandomDecayChanceStyle()
+        {
+            if (randomDecayChanceRoot == null || randomDecayChanceText == null)
+            {
+                return;
+            }
+
+            if (randomDecayChanceRoot.TryGetComponent<LayoutElement>(out var layout))
+            {
+                layout.preferredHeight = RandomDecayChanceRowHeight;
+                layout.minHeight = RandomDecayChanceRowHeight;
+                layout.flexibleHeight = 0f;
+            }
+
+            randomDecayChanceText.color = UIStyleTokens.Text.Secondary;
+            randomDecayChanceText.fontStyle = FontStyles.Normal;
+            randomDecayChanceText.enableAutoSizing = true;
+            randomDecayChanceText.fontSizeMin = 13f;
+            randomDecayChanceText.fontSizeMax = RandomDecayChanceFontSize;
+            randomDecayChanceText.textWrappingMode = TextWrappingModes.NoWrap;
+            randomDecayChanceText.overflowMode = TextOverflowModes.Ellipsis;
+            randomDecayChanceText.alignment = TextAlignmentOptions.Left;
         }
 
         private void ApplyAdaptationSectionStyle()
@@ -815,6 +976,85 @@ namespace FungusToast.Unity.UI
             layout.flexibleHeight = 0f;
 
             return rect;
+        }
+
+        private static RectTransform CreateRandomDecayChanceRoot(RectTransform parent)
+        {
+            var rootObject = new GameObject(RandomDecayChanceRootName, typeof(RectTransform), typeof(LayoutElement));
+            rootObject.transform.SetParent(parent, false);
+
+            var rect = rootObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+
+            var layout = rootObject.GetComponent<LayoutElement>();
+            layout.preferredHeight = RandomDecayChanceRowHeight;
+            layout.minHeight = RandomDecayChanceRowHeight;
+            layout.flexibleHeight = 0f;
+
+            return rect;
+        }
+
+        private static TextMeshProUGUI CreateRandomDecayChanceText(RectTransform parent)
+        {
+            var textObject = new GameObject(RandomDecayChanceTextName, typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+
+            var rect = textObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.textWrappingMode = TextWrappingModes.NoWrap;
+            text.alignment = TextAlignmentOptions.Left;
+            text.text = string.Empty;
+
+            return text;
+        }
+
+        private void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)
+        {
+            if (randomDecayChanceText == null)
+            {
+                return;
+            }
+
+            var provider = randomDecayChanceText.GetComponent<RandomDecayChanceTooltipProvider>();
+            if (provider == null)
+            {
+                provider = randomDecayChanceText.gameObject.AddComponent<RandomDecayChanceTooltipProvider>();
+            }
+
+            provider.Initialize(board, perspectivePlayer);
+
+            var trigger = randomDecayChanceText.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = randomDecayChanceText.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private static RectTransform FindNamedChild(RectTransform parent, string childName)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < parent.childCount; i++)
+            {
+                if (parent.GetChild(i) is RectTransform child && child.name == childName)
+                {
+                    return child;
+                }
+            }
+
+            return null;
         }
 
         private static TextMeshProUGUI CreateSectionHeader(RectTransform parent, string objectName, string label, string tooltipText)

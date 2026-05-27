@@ -941,8 +941,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.RightSidebar?.SetRoundAndOccupancy(Board.CurrentRound, Board.GetOccupiedTileRatio() * 100f);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
 
             if (cameraCenterer != null)
             {
@@ -1239,7 +1238,7 @@ namespace FungusToast.Unity
             }
             StartNextRound();
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
-            gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
             TrackFirstUpgradeRounds();
         }
 
@@ -1337,13 +1336,13 @@ namespace FungusToast.Unity
                 ui.RightSidebar?.TryShowScoreboardWinConditionCoachmark(board.CurrentRound);
                 ui.MoldProfileRoot?.TryShowAdaptationCoachmark(board.CurrentRound);
             }
-            ui.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
+            ui.MoldProfileRoot?.RefreshRandomDecayChance();
             ui.GameLogRouter?.OnPhaseStart("Mutation");
             bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
             if (!pendingAlphaMutationOnboarding && !suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
-                gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
             }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
@@ -1709,7 +1708,7 @@ namespace FungusToast.Unity
             int round = Board.CurrentRound;
             float occ = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
-            gameUIManager.RightSidebar.UpdateRandomDecayChance(round);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
         }
 
         private void ConfigureDraftHistoryUi()
@@ -2084,8 +2083,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(Board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(Board.CurrentRound);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
             if (!(testingModeEnabled && (fastForwardRounds > 0 || testingMycovariantId.HasValue)))
             {
                 StartNextRound();

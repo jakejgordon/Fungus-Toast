@@ -1339,8 +1339,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.SetBoard(board);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(board.Players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
-            gameUIManager.RightSidebar?.InitializeRandomDecayChanceTooltip(board, humanPlayer);
-            gameUIManager.RightSidebar?.UpdateRandomDecayChance(board.CurrentRound);
+            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
         }
 
         public void SetActiveHumanPlayer(Player player, GameBoard board, int humanPlayerCount, Action<Player> setPrimaryHuman)
