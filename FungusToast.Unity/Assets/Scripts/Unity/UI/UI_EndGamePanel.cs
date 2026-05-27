@@ -58,7 +58,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameConfirmationContentBottomInset = 56f;
         private const float EndGameActionBarHeight = 60f;
         private const float EndGameActionBarBottomInset = 24f;
-        private const float EndGameRailWidth = 340f;
+        private const float EndGameRailWidth = 400f;
         private const float EndGameRailGap = 18f;
         private const float EndGameActionButtonMinWidth = 220f;
         private const float EndGameActionButtonPreferredWidth = 280f;

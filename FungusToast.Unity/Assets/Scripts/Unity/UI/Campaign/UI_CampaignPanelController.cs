@@ -24,7 +24,7 @@ namespace FungusToast.Unity.UI.Campaign
     {
         private const string MoldinessSummaryTooltipText = "Earn moldiness for completing campaign levels. Higher levels award more moldiness. Whenever a moldiness threshold is reached, you can pick between permanent rewards to enhance future campaign runs.";
         private const float PrimaryColumnWidth = 500f;
-        private const float DevelopmentRailWidth = 340f;
+        private const float DevelopmentRailWidth = 400f;
         private const float LayoutShellWidth = 500f;
         private const float DevelopmentRailOffsetX = 440f;
         private const float DevelopmentRailTopOffsetY = -18f;

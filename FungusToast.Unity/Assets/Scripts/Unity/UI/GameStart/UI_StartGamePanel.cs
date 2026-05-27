@@ -25,7 +25,7 @@ namespace FungusToast.Unity.UI.GameStart
         private const float StartMenuVerticalMargin = 24f;
         private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float StartMenuPrimaryColumnWidth = 500f;
-        private const float StartMenuDevelopmentRailWidth = 340f;
+        private const float StartMenuDevelopmentRailWidth = 400f;
         private const float StartMenuDevelopmentRailRightMargin = 48f;
         private const float StartMenuDevelopmentRailTopOffset = 0f;
         private const float ActionButtonIconSize = 22f;
