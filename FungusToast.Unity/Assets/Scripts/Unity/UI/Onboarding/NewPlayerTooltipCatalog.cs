@@ -9,6 +9,7 @@ namespace FungusToast.Unity.UI.Onboarding
         AlphaMutationPhaseIntro,
         MutationTreeGuidance,
         TimeLapseModeIntro,
+        StoreMutationPointsIntro,
         ScoreboardWinCondition,
         AdaptationPanelIntro,
         CameraPanIntro,
@@ -77,7 +78,14 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Time-Lapse Mode",
                 "Time-Lapse mode skips most animations so you can fly through the growth and decay phases. Toggle it here whenever you want a faster pace.",
                 NewPlayerTooltipSurface.MutationTreeCoachmark,
-                "Show when the mutation tree opens on round 10 unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
+                "Show when the mutation tree opens on round 5 unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.StoreMutationPointsIntro,
+                "Onboarding.StoreMutationPointsIntroSeen",
+                "Store Mutation Points",
+                "Click this button to immediately end your turn and bank your mutation points for the next round. Use this to save up for mutations that you cannot afford this turn.",
+                NewPlayerTooltipSurface.MutationTreeCoachmark,
+                "Show when the mutation tree opens on round 6 or later unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.ScoreboardWinCondition,
                 "Onboarding.ScoreboardWinConditionSeen",
@@ -214,12 +222,26 @@ namespace FungusToast.Unity.UI.Onboarding
             bool hasDismissedThisGame,
             bool isFastForwarding)
         {
-            if (currentRound != 10 || hasDismissedThisGame || isFastForwarding)
+            if (currentRound != 5 || hasDismissedThisGame || isFastForwarding)
             {
                 return false;
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseModeIntro);
+        }
+
+        public static bool ShouldShowStoreMutationPointsIntro(
+            bool forceFirstGameExperience,
+            int currentRound,
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
+        {
+            if (currentRound < 6 || hasDismissedThisGame || isFastForwarding)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.StoreMutationPointsIntro);
         }
 
         public static bool ShouldShowAdaptationPanelIntro(

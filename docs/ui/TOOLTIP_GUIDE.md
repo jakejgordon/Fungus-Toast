@@ -130,6 +130,7 @@ These currently live in `NewPlayerTooltipCatalog.cs`:
 - `AlphaMutationPhaseIntro`
 - `MutationTreeGuidance`
 - `TimeLapseModeIntro`
+- `StoreMutationPointsIntro`
 - `ScoreboardWinCondition`
 - `AdaptationPanelIntro`
 - `CameraPanIntro`
@@ -151,7 +152,8 @@ Use this section when you want a quick description of what already exists withou
 | --- | --- | --- |
 | `AlphaMutationPhaseIntro` | phase banner | Queued on round 1 for games with at least one human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
 | `MutationTreeGuidance` | mutation tree toast | Shown when the mutation tree opens, unless the player already dismissed it during the current game. Outside forced first-game experience, it only shows once per profile. |
-| `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 10, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `CameraPanIntro` | board coachmark | Shown during round 1 after a short delay for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |

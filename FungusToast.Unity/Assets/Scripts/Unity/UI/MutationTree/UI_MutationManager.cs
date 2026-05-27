@@ -43,6 +43,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float TimeLapseCoachmarkHeight = 168f;
         private const float TimeLapseCoachmarkHorizontalOffset = 5f;
         private const float TimeLapseCoachmarkVerticalOffset = -12f;
+        private const float StorePointsCoachmarkWidth = 360f;
+        private const float StorePointsCoachmarkHeight = 190f;
+        private const float StorePointsCoachmarkHorizontalOffset = 5f;
+        private const float StorePointsCoachmarkVerticalOffset = -12f;
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager;
@@ -108,6 +112,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel;
         private TextMeshProUGUI timeLapseCoachmarkBodyTextLabel;
         private Button timeLapseCoachmarkCloseButton;
+        private RectTransform storePointsCoachmarkRoot;
+        private CanvasGroup storePointsCoachmarkCanvasGroup;
+        private TextMeshProUGUI storePointsCoachmarkTitleTextLabel;
+        private TextMeshProUGUI storePointsCoachmarkBodyTextLabel;
+        private Button storePointsCoachmarkCloseButton;
         private RectTransform headerControlsRowRect;
         private RectTransform headerLeftSlotRect;
         private RectTransform headerCenterSlotRect;
@@ -124,6 +133,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private int lastKnownScreenWidth = -1;
         private int lastKnownScreenHeight = -1;
         private bool hasDismissedTimeLapseCoachmarkThisGame;
+        private bool hasDismissedStorePointsCoachmarkThisGame;
 
         private sealed class PendingTargetedSurgeSelection
         {
@@ -169,6 +179,7 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             HideTimeLapseCoachmarkImmediate(false);
+            HideStorePointsCoachmarkImmediate(false);
             SetDockButtonVisible(false);
         }
 
@@ -253,7 +264,9 @@ namespace FungusToast.Unity.UI.MutationTree
             pendingTargetedSurgeSelection = null;
             hasDismissedTreeGuidanceThisGame = false;
             hasDismissedTimeLapseCoachmarkThisGame = false;
+            hasDismissedStorePointsCoachmarkThisGame = false;
             HideTimeLapseCoachmarkImmediate(true);
+            HideStorePointsCoachmarkImmediate(true);
 
             if (mutationTreePanel != null)
             {
@@ -776,6 +789,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             ShowFirstTreeGuidanceToast();
             TryShowTimeLapseCoachmark();
+            TryShowStorePointsCoachmark();
         }
 
         private IEnumerator SlideOutTree()
@@ -799,6 +813,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationTreeRect.anchoredPosition = targetHiddenPosition;
             mutationTreePanel.SetActive(false);
             HideTimeLapseCoachmarkImmediate(false);
+            HideStorePointsCoachmarkImmediate(false);
 
             if (dockButtonText != null)
                 dockButtonText.text = ">";
@@ -1122,6 +1137,11 @@ namespace FungusToast.Unity.UI.MutationTree
             if (IsTimeLapseCoachmarkVisible())
             {
                 PositionTimeLapseCoachmark();
+            }
+
+            if (IsStorePointsCoachmarkVisible())
+            {
+                PositionStorePointsCoachmark();
             }
 
             CaptureResponsiveMutationPanelLayoutState();
@@ -1724,6 +1744,43 @@ namespace FungusToast.Unity.UI.MutationTree
             timeLapseCoachmarkCanvasGroup.interactable = true;
         }
 
+        private void TryShowStorePointsCoachmark()
+        {
+            if (!isTreeOpen || mutationTreePanel == null || !mutationTreePanel.activeInHierarchy || storePointsButton == null)
+            {
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            int currentRound = gameManager?.Board?.CurrentRound ?? 0;
+            if (!NewPlayerTooltipRules.ShouldShowStoreMutationPointsIntro(
+                    forceFirstGame,
+                    currentRound,
+                    hasDismissedStorePointsCoachmarkThisGame,
+                    isFastForwarding))
+            {
+                return;
+            }
+
+            EnsureStorePointsCoachmarkUi();
+            if (storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.StoreMutationPointsIntro);
+            storePointsCoachmarkTitleTextLabel.text = definition.Title;
+            storePointsCoachmarkBodyTextLabel.text = definition.Body;
+            PositionStorePointsCoachmark();
+            storePointsCoachmarkRoot.gameObject.SetActive(true);
+            storePointsCoachmarkRoot.SetAsLastSibling();
+            storePointsCoachmarkCanvasGroup.alpha = 1f;
+            storePointsCoachmarkCanvasGroup.blocksRaycasts = true;
+            storePointsCoachmarkCanvasGroup.interactable = true;
+        }
+
         private void EnsureTimeLapseCoachmarkUi()
         {
             if (timeLapseCoachmarkRoot != null)
@@ -1841,6 +1898,123 @@ namespace FungusToast.Unity.UI.MutationTree
             rootObject.SetActive(false);
         }
 
+        private void EnsureStorePointsCoachmarkUi()
+        {
+            if (storePointsCoachmarkRoot != null)
+            {
+                return;
+            }
+
+            Transform parent = rootCanvas != null
+                ? rootCanvas.transform
+                : mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas?.transform;
+            if (parent == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_StorePointsCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(parent, false);
+
+            storePointsCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            storePointsCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            storePointsCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            storePointsCoachmarkRoot.pivot = new Vector2(0f, 1f);
+            storePointsCoachmarkRoot.sizeDelta = new Vector2(StorePointsCoachmarkWidth, StorePointsCoachmarkHeight);
+
+            storePointsCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            storePointsCoachmarkCanvasGroup.alpha = 0f;
+            storePointsCoachmarkCanvasGroup.blocksRaycasts = false;
+            storePointsCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
+            backgroundColor.a = 0.97f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            storePointsCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            storePointsCoachmarkTitleTextLabel.text = string.Empty;
+            storePointsCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            storePointsCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            storePointsCoachmarkTitleTextLabel.fontSize = 22f;
+            storePointsCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            storePointsCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            storePointsCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            storePointsCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            storePointsCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            storePointsCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            storePointsCoachmarkBodyTextLabel.fontSize = 17f;
+            storePointsCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            storePointsCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            storePointsCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            storePointsCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            storePointsCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(storePointsCoachmarkCloseButton);
+            storePointsCoachmarkCloseButton.onClick.RemoveAllListeners();
+            storePointsCoachmarkCloseButton.onClick.AddListener(OnStorePointsCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                storePointsCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                storePointsCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
         private void PositionTimeLapseCoachmark()
         {
             RectTransform anchorRect = presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null;
@@ -1866,6 +2040,31 @@ namespace FungusToast.Unity.UI.MutationTree
                 CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
+        private void PositionStorePointsCoachmark()
+        {
+            RectTransform anchorRect = storePointsButton != null ? storePointsButton.transform as RectTransform : null;
+            RectTransform parentRect = storePointsCoachmarkRoot != null ? storePointsCoachmarkRoot.parent as RectTransform : null;
+            Canvas canvas = rootCanvas != null ? rootCanvas.rootCanvas : storePointsButton?.GetComponentInParent<Canvas>()?.rootCanvas;
+            if (anchorRect == null || parentRect == null || canvas == null || storePointsCoachmarkRoot == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            anchorRect.GetWorldCorners(corners);
+            Vector3 rightCenterWorld = (corners[2] + corners[3]) * 0.5f;
+
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                storePointsCoachmarkRoot,
+                parentRect,
+                canvas,
+                rightCenterWorld,
+                new Vector2(StorePointsCoachmarkHorizontalOffset, StorePointsCoachmarkVerticalOffset),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
+        }
+
         private void OnTimeLapseCoachmarkDismissed()
         {
             hasDismissedTimeLapseCoachmarkThisGame = true;
@@ -1876,6 +2075,18 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             HideTimeLapseCoachmarkImmediate(false);
+        }
+
+        private void OnStorePointsCoachmarkDismissed()
+        {
+            hasDismissedStorePointsCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.StoreMutationPointsIntro);
+            }
+
+            HideStorePointsCoachmarkImmediate(false);
         }
 
         private void HideTimeLapseCoachmarkImmediate(bool resetSessionDismissal)
@@ -1898,12 +2109,40 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        private void HideStorePointsCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedStorePointsCoachmarkThisGame = false;
+            }
+
+            if (storePointsCoachmarkCanvasGroup != null)
+            {
+                storePointsCoachmarkCanvasGroup.alpha = 0f;
+                storePointsCoachmarkCanvasGroup.blocksRaycasts = false;
+                storePointsCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (storePointsCoachmarkRoot != null)
+            {
+                storePointsCoachmarkRoot.gameObject.SetActive(false);
+            }
+        }
+
         private bool IsTimeLapseCoachmarkVisible()
         {
             return timeLapseCoachmarkRoot != null
                 && timeLapseCoachmarkCanvasGroup != null
                 && timeLapseCoachmarkRoot.gameObject.activeSelf
                 && timeLapseCoachmarkCanvasGroup.alpha > 0f;
+        }
+
+        private bool IsStorePointsCoachmarkVisible()
+        {
+            return storePointsCoachmarkRoot != null
+                && storePointsCoachmarkCanvasGroup != null
+                && storePointsCoachmarkRoot.gameObject.activeSelf
+                && storePointsCoachmarkCanvasGroup.alpha > 0f;
         }
 
         /// <summary>
