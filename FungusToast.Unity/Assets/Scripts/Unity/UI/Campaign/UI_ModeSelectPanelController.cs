@@ -84,6 +84,10 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI settingsTutorialStatusText;
         private TextMeshProUGUI settingsResetStatusText;
         private TextMeshProUGUI settingsResetPromptLabel;
+        private GameObject compatibilityNoticeModalRoot;
+        private TextMeshProUGUI compatibilityNoticeTitleText;
+        private TextMeshProUGUI compatibilityNoticeBodyText;
+        private Button compatibilityNoticeCloseButton;
         private bool isConfirmingCampaignReset;
 
         private void Awake()
@@ -184,6 +188,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (campaignPanel != null) campaignPanel.SetActive(false);
 
             RefreshResponsiveLayout();
+            TryShowPendingCompatibilityNotice();
         }
 
         private void OnRectTransformDimensionsChange()
@@ -453,6 +458,118 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 versionText.text = BuildVersionLabel();
             }
+        }
+
+        private void TryShowPendingCompatibilityNotice()
+        {
+            if (!BoardLayoutCompatibilityService.TryConsumePendingRestartNotice(out string title, out string body))
+            {
+                return;
+            }
+
+            EnsureCompatibilityNoticeModal();
+            if (compatibilityNoticeModalRoot == null || compatibilityNoticeTitleText == null || compatibilityNoticeBodyText == null)
+            {
+                return;
+            }
+
+            compatibilityNoticeTitleText.text = title;
+            compatibilityNoticeBodyText.text = body;
+            compatibilityNoticeModalRoot.SetActive(true);
+            compatibilityNoticeModalRoot.transform.SetAsLastSibling();
+            RefreshResponsiveLayout();
+        }
+
+        private void HideCompatibilityNotice()
+        {
+            if (compatibilityNoticeModalRoot != null)
+            {
+                compatibilityNoticeModalRoot.SetActive(false);
+            }
+        }
+
+        private void EnsureCompatibilityNoticeModal()
+        {
+            if (compatibilityNoticeModalRoot != null)
+            {
+                return;
+            }
+
+            GameObject modalRoot = new GameObject("UI_ModeSelectCompatibilityNotice", typeof(RectTransform), typeof(Image));
+            modalRoot.transform.SetParent(transform, false);
+            modalRoot.layer = gameObject.layer;
+            compatibilityNoticeModalRoot = modalRoot;
+
+            RectTransform modalRootRect = modalRoot.GetComponent<RectTransform>();
+            modalRootRect.anchorMin = Vector2.zero;
+            modalRootRect.anchorMax = Vector2.one;
+            modalRootRect.offsetMin = Vector2.zero;
+            modalRootRect.offsetMax = Vector2.zero;
+
+            Image modalRootImage = modalRoot.GetComponent<Image>();
+            modalRootImage.color = UIStyleTokens.Surface.OverlayDim;
+            modalRootImage.raycastTarget = true;
+
+            GameObject panelObject = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement), typeof(Outline));
+            panelObject.transform.SetParent(modalRoot.transform, false);
+            panelObject.layer = gameObject.layer;
+
+            RectTransform panelRect = panelObject.GetComponent<RectTransform>();
+            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+            panelRect.pivot = new Vector2(0.5f, 0.5f);
+            panelRect.anchoredPosition = Vector2.zero;
+            panelRect.sizeDelta = new Vector2(760f, 0f);
+
+            Image panelImage = panelObject.GetComponent<Image>();
+            panelImage.color = UIStyleTokens.Surface.PanelPrimary;
+            panelImage.raycastTarget = true;
+
+            Outline panelOutline = panelObject.GetComponent<Outline>();
+            panelOutline.effectColor = new Color(UIStyleTokens.Accent.Spore.r, UIStyleTokens.Accent.Spore.g, UIStyleTokens.Accent.Spore.b, UIStyleTokens.Alpha.FocusOutline);
+            panelOutline.effectDistance = new Vector2(1f, -1f);
+
+            VerticalLayoutGroup panelLayout = panelObject.GetComponent<VerticalLayoutGroup>();
+            panelLayout.padding = new RectOffset(32, 32, 28, 28);
+            panelLayout.spacing = 18f;
+            panelLayout.childAlignment = TextAnchor.UpperCenter;
+            panelLayout.childControlWidth = true;
+            panelLayout.childControlHeight = true;
+            panelLayout.childForceExpandWidth = false;
+            panelLayout.childForceExpandHeight = false;
+
+            ContentSizeFitter panelFitter = panelObject.GetComponent<ContentSizeFitter>();
+            panelFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            panelFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            LayoutElement panelLayoutElement = panelObject.GetComponent<LayoutElement>();
+            panelLayoutElement.preferredWidth = 760f;
+            panelLayoutElement.minWidth = 760f;
+            panelLayoutElement.flexibleWidth = 0f;
+
+            compatibilityNoticeTitleText = CreateCompatibilityNoticeLabel(
+                panelObject.transform,
+                "Title",
+                30f,
+                FontStyles.Bold,
+                UIStyleTokens.Text.Primary,
+                TextAlignmentOptions.Center,
+                680f);
+
+            compatibilityNoticeBodyText = CreateCompatibilityNoticeLabel(
+                panelObject.transform,
+                "Body",
+                22f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                TextAlignmentOptions.Left,
+                680f);
+
+            compatibilityNoticeCloseButton = CreateButtonCore(panelObject.transform, "CloseButton", "Close", 24f, FontStyles.Bold);
+            compatibilityNoticeCloseButton.onClick.AddListener(HideCompatibilityNotice);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(compatibilityNoticeCloseButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+
+            compatibilityNoticeModalRoot.SetActive(false);
         }
 
         private void RefreshCampaignButtonState()
@@ -964,6 +1081,41 @@ namespace FungusToast.Unity.UI.Campaign
             button.onClick.AddListener(OnCreditsBackClicked);
             UIStyleTokens.Button.ApplySecondaryMenuAction(button, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             return button;
+        }
+
+        private TextMeshProUGUI CreateCompatibilityNoticeLabel(
+            Transform parent,
+            string objectName,
+            float fontSize,
+            FontStyles fontStyle,
+            Color color,
+            TextAlignmentOptions alignment,
+            float preferredWidth)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObject.transform.SetParent(parent, false);
+            labelObject.layer = gameObject.layer;
+
+            LayoutElement layoutElement = labelObject.GetComponent<LayoutElement>();
+            layoutElement.preferredWidth = preferredWidth;
+            layoutElement.minWidth = preferredWidth;
+            layoutElement.flexibleWidth = 0f;
+            layoutElement.flexibleHeight = 0f;
+
+            RectTransform rectTransform = labelObject.GetComponent<RectTransform>();
+            rectTransform.sizeDelta = new Vector2(preferredWidth, 0f);
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.font = ResolveSharedFont();
+            label.fontSize = fontSize;
+            label.fontStyle = fontStyle;
+            label.color = color;
+            label.alignment = alignment;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.raycastTarget = false;
+
+            return label;
         }
 
         private Button CreateSettingsButton(Transform parent, string objectName, string labelText, Sprite icon = null)

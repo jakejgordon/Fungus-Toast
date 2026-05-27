@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: 20x20 2 AI
   m_EditorClassIdentifier: 
   presetId: Campaign2
-  boardWidth: 20
-  boardHeight: 20
+  boardWidth: 10
+  boardHeight: 10
   aiPlayers:
   - strategyName: CMP_Mobility_Overextender_Training
     startingAdaptationIds: []

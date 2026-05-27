@@ -334,9 +334,10 @@ namespace FungusToast.Unity.Campaign
             snapshot = State.inLevelRuntimeSnapshot;
             randomState = State.inLevelRandomState;
 
-            if (!IsValidGameplayCheckpoint(snapshot))
+            if (!IsValidGameplayCheckpoint(snapshot, out string failureReason))
             {
-                Debug.LogWarning("[CampaignController] Ignoring invalid saved gameplay checkpoint and starting the level fresh.");
+                Debug.LogWarning($"[CampaignController] Ignoring invalid saved gameplay checkpoint and starting the level fresh. Reason: {failureReason}");
+                BoardLayoutCompatibilityService.RecoverCampaignCheckpoint(this, failureReason);
                 ClearGameplayCheckpoint();
                 snapshot = null;
                 randomState = null;
@@ -362,24 +363,9 @@ namespace FungusToast.Unity.Campaign
             }
         }
 
-        private static bool IsValidGameplayCheckpoint(RoundStartRuntimeSnapshot snapshot)
+        private static bool IsValidGameplayCheckpoint(RoundStartRuntimeSnapshot snapshot, out string failureReason)
         {
-            if (snapshot == null)
-            {
-                return false;
-            }
-
-            if (snapshot.BoardWidth <= 0 || snapshot.BoardHeight <= 0)
-            {
-                return false;
-            }
-
-            if (snapshot.Players == null || snapshot.Players.Count == 0)
-            {
-                return false;
-            }
-
-            return snapshot.Players.Any(player => player != null && player.PlayerType == PlayerTypeEnum.Human);
+            return BoardLayoutCompatibilityService.TryValidateRuntimeSnapshot(snapshot, out failureReason);
         }
 
         public void Delete()

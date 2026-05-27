@@ -832,6 +832,7 @@ namespace FungusToast.Unity
         private readonly Action<int> initializeGame;
         private readonly Action<RoundStartRuntimeSnapshot, RandomStateSnapshot, int> initializeRestoredGame;
         private readonly Action stopAllCoroutines;
+        private readonly Action recoverToMenuSurface;
 
         public GameStartService(
             Func<CampaignController> getCampaignController,
@@ -853,7 +854,8 @@ namespace FungusToast.Unity
             Action<int> setPendingGameplaySeed,
             Action<int> initializeGame,
             Action<RoundStartRuntimeSnapshot, RandomStateSnapshot, int> initializeRestoredGame,
-            Action stopAllCoroutines)
+            Action stopAllCoroutines,
+            Action recoverToMenuSurface)
         {
             this.getCampaignController = getCampaignController;
             this.gridVisualizer = gridVisualizer;
@@ -875,6 +877,7 @@ namespace FungusToast.Unity
             this.initializeGame = initializeGame;
             this.initializeRestoredGame = initializeRestoredGame;
             this.stopAllCoroutines = stopAllCoroutines;
+            this.recoverToMenuSurface = recoverToMenuSurface;
         }
 
         public bool HasSoloSave()
@@ -1016,13 +1019,31 @@ namespace FungusToast.Unity
                 return;
             }
 
+            if (!BoardLayoutCompatibilityService.TryValidateRuntimeSnapshot(soloSave.runtimeSnapshot, out string failureReason))
+            {
+                Debug.LogWarning($"[GameManager] Ignoring invalid hotseat save checkpoint. Reason: {failureReason}");
+                BoardLayoutCompatibilityService.RecoverSoloSave(failureReason);
+                RecoverToMenuSurface();
+                return;
+            }
+
             setGameMode(GameMode.Hotseat);
             gridVisualizer?.ClearBoardMediumOverride();
             gridVisualizer?.ClearPlayerMoldAssignments();
-            setBoardDimensions(soloSave.boardWidth, soloSave.boardHeight);
+            setBoardDimensions(soloSave.runtimeSnapshot.BoardWidth, soloSave.runtimeSnapshot.BoardHeight);
             setHotseatConfig(soloSave.humanPlayerCount, soloSave.humanMoldIndices ?? new List<int>());
             setPendingGameplaySeed(soloSave.gameplaySeed);
-            initializeRestoredGame(soloSave.runtimeSnapshot, soloSave.randomState, soloSave.gameplaySeed);
+
+            try
+            {
+                initializeRestoredGame(soloSave.runtimeSnapshot, soloSave.randomState, soloSave.gameplaySeed);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"[GameManager] Failed to restore hotseat save safely: {exception.Message}\n{exception}");
+                BoardLayoutCompatibilityService.RecoverSoloSave(exception.Message);
+                RecoverToMenuSurface();
+            }
         }
 
         public void StartCampaignNew(int humanMoldIndex = 0, int? startLevelIndex = null)
@@ -1114,11 +1135,32 @@ namespace FungusToast.Unity
 
                 setHotseatConfig(1, new[] { campaignController.HumanMoldIndex });
                 setPendingGameplaySeed(campaignController.CurrentLevelGameplaySeed);
-                initializeRestoredGame(gameplaySnapshot, randomState, campaignController.CurrentLevelGameplaySeed);
+                try
+                {
+                    initializeRestoredGame(gameplaySnapshot, randomState, campaignController.CurrentLevelGameplaySeed);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"[GameManager] Failed to restore campaign checkpoint safely: {exception.Message}\n{exception}");
+                    BoardLayoutCompatibilityService.RecoverCampaignCheckpoint(campaignController, exception.Message);
+                    RecoverToMenuSurface();
+                }
+                return;
+            }
+
+            if (BoardLayoutCompatibilityService.HasPendingRestartNotice())
+            {
+                RecoverToMenuSurface();
                 return;
             }
 
             StartCampaignGameplay(campaignController);
+        }
+
+        private void RecoverToMenuSurface()
+        {
+            stopAllCoroutines?.Invoke();
+            recoverToMenuSurface?.Invoke();
         }
 
         private void StartCampaignGameplay(CampaignController campaignController)
