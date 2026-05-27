@@ -5,7 +5,8 @@ using UnityEngine;
 namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
 {
     /// <summary>
-    /// Supplies per-mold starting adaptation tooltip text to the auto-resolved TooltipTrigger.
+    /// Supplies simple string or resolver-based tooltip text to the auto-resolved TooltipTrigger.
+    /// Despite the legacy name, this is safe to reuse for lightweight runtime button tooltips.
     /// Add this before TooltipTrigger so Awake() can discover it as the dynamic provider.
     /// </summary>
     public class MoldButtonTooltipProvider : MonoBehaviour, ITooltipContentProvider

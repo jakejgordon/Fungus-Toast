@@ -924,10 +924,15 @@ namespace FungusToast.Unity
                 return false;
             }
 
-            campaignController.Resume();
-            return campaignController.HasPendingMoldinessUnlockChoice
-                && campaignController.TryGetPendingMoldinessRewardSnapshot(out var pendingSnapshot)
-                && pendingSnapshot != null;
+            var savedState = CampaignSaveService.Load();
+            if (savedState == null)
+            {
+                return false;
+            }
+
+            savedState.moldiness ??= MoldinessProgression.CreateDefaultState();
+            MoldinessUnlockService.NormalizeProgressionState(savedState.moldiness);
+            return savedState.moldiness.pendingUnlockTriggers.Count > 0;
         }
 
         public bool TryStartCampaignAdaptationDraft(Action onSelectionComplete)

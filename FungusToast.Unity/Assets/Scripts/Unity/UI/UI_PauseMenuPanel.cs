@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
 namespace FungusToast.Unity.UI
 {
@@ -398,15 +399,19 @@ namespace FungusToast.Unity.UI
 
             Button resumeButton = CreateActionButton(primaryActionsRoot.transform, "Resume", width: PauseMenuPrimaryButtonWidth, useSelectedAsNormal: true);
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
+            EnsureTooltip(resumeButton, "Close the pause menu and return to the current game.");
 
             Button restartButton = CreateActionButton(primaryActionsRoot.transform, "Restart Level", width: PauseMenuPrimaryButtonWidth);
             restartButton.onClick.AddListener(RequestRestartConfirmation);
+            EnsureTooltip(restartButton, "Restart the current level from its original seed after confirmation.");
 
             Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null, PauseMenuPrimaryButtonWidth);
             mainMenuButton.onClick.AddListener(RequestMainMenuConfirmation);
+            EnsureTooltip(mainMenuButton, "Return to the main menu after saving the current run.");
 
             Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game", width: PauseMenuPrimaryButtonWidth);
             exitButton.onClick.AddListener(RequestExitConfirmation);
+            EnsureTooltip(exitButton, "Exit the game after saving the current run.");
 
             tutorialHelpRoot = CreateVerticalSection(contentRoot.transform, "TutorialHelp", 8f);
 
@@ -416,6 +421,7 @@ namespace FungusToast.Unity.UI
 
             tutorialReplayButton = CreateActionButton(tutorialHelpRoot.transform, "Replay Tutorial Tips", width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             tutorialReplayButton.onClick.AddListener(OnReplayTutorialTipsClicked);
+            EnsureTooltip(tutorialReplayButton, "Re-enable tutorial hints for the current profile.");
 
             tutorialStatusLabel = CreateLabel(tutorialHelpRoot.transform, string.Empty, 18f, FontStyles.Normal);
             tutorialStatusLabel.alignment = TextAlignmentOptions.Center;
@@ -430,12 +436,15 @@ namespace FungusToast.Unity.UI
 
             soundEffectsToggleButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             soundEffectsToggleButton.onClick.AddListener(OnSoundEffectsToggleClicked);
+            EnsureTooltip(soundEffectsToggleButton, "Turn sound effects on or off.");
 
             soundEffectsVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             soundEffectsVolumeButton.onClick.AddListener(OnSoundEffectsVolumeClicked);
+            EnsureTooltip(soundEffectsVolumeButton, "Cycle the sound effects volume to the next preset.");
 
             musicVolumeButton = CreateActionButton(soundSettingsRoot.transform, string.Empty, width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
             musicVolumeButton.onClick.AddListener(OnMusicVolumeClicked);
+            EnsureTooltip(musicVolumeButton, "Cycle the music volume to the next preset.");
 
             nextTrackMenuButton = CreateActionButton(
                 soundSettingsRoot.transform,
@@ -467,9 +476,11 @@ namespace FungusToast.Unity.UI
 
             Button confirmButton = CreateActionButton(confirmationButtons.transform, "Confirm", width: PauseMenuConfirmationButtonWidth, useSelectedAsNormal: true);
             confirmButton.onClick.AddListener(ConfirmPendingAction);
+            EnsureTooltip(confirmButton, GetConfirmTooltipText);
 
             Button cancelButton = CreateActionButton(confirmationButtons.transform, "Cancel", width: PauseMenuConfirmationButtonWidth, secondaryStyle: true);
             cancelButton.onClick.AddListener(CancelPendingAction);
+            EnsureTooltip(cancelButton, "Cancel this confirmation and return to the pause menu.");
 
             RefreshTutorialControls(clearStatus: true);
             RefreshSoundSettingsButtons();
@@ -619,6 +630,46 @@ namespace FungusToast.Unity.UI
         private static string FormatTrackName(string trackName, string fallback)
         {
             return string.IsNullOrWhiteSpace(trackName) ? fallback : trackName;
+        }
+
+        private static void EnsureTooltip(Button button, string text)
+        {
+            EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Button button, Func<string> resolver)
+        {
+            if (button == null || resolver == null)
+            {
+                return;
+            }
+
+            var provider = button.GetComponent<MoldButtonTooltipProvider>();
+            if (provider == null)
+            {
+                provider = button.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            }
+
+            provider.Initialize(resolver);
+
+            var trigger = button.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = button.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private string GetConfirmTooltipText()
+        {
+            return pendingAction switch
+            {
+                PendingAction.RestartLevel => "Confirm restarting this level from its original seed.",
+                PendingAction.ReturnToMainMenu => "Confirm returning to the main menu and saving this run.",
+                PendingAction.ExitGame => "Confirm exiting the game and saving this run.",
+                _ => "Confirm the current pause menu action."
+            };
         }
 
         private static void SetButtonLabel(Button button, string labelText)

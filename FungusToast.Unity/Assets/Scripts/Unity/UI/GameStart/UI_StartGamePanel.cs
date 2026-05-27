@@ -120,6 +120,7 @@ namespace FungusToast.Unity.UI.GameStart
                 backButton.onClick.AddListener(OnBackPressed);
 
             startGameButton.interactable = false;
+            ApplyMenuTooltips();
             InitializeHumanPlayerUI();
             EnsureMoldSelectionSection();
             EnsureResumeSavedGameButton();
@@ -1091,6 +1092,16 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.NarrowMenuActionWidth,
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
+
+            if (string.Equals(objectName, "UI_StartGameSoundEffectsVolumeButton", StringComparison.Ordinal))
+            {
+                EnsureTooltip(button, "Cycle the sound effects volume to the next preset.");
+            }
+            else if (string.Equals(objectName, "UI_StartGameMusicVolumeButton", StringComparison.Ordinal))
+            {
+                EnsureTooltip(button, "Cycle the music volume to the next preset.");
+            }
+
             return button;
         }
 
@@ -1125,6 +1136,7 @@ namespace FungusToast.Unity.UI.GameStart
                 StartMenuDevelopmentRailWidth,
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
+            EnsureTooltip(button, GetAdvancedSettingsTooltipText);
             return button;
         }
 
@@ -1476,6 +1488,7 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
             SetButtonText(resumeSavedGameButton, "Resume Saved Game");
+            EnsureTooltip(resumeSavedGameButton, "Resume the saved solo or hotseat game from its last saved state.");
         }
 
         private void EnsurePlainClonedButtonContent(Button button)
@@ -2290,6 +2303,76 @@ namespace FungusToast.Unity.UI.GameStart
         private string GetMoldStepPrimaryButtonText()
         {
             return currentHumanMoldSelectionIndex >= selectedHumanPlayerCount - 1 ? "Start Game" : "Next Player";
+        }
+
+        private void ApplyMenuTooltips()
+        {
+            EnsureTooltip(startGameButton, GetStartGameTooltipText);
+            EnsureTooltip(backButton, GetBackTooltipText);
+            EnsureTooltip(resumeSavedGameButton, "Resume the saved solo or hotseat game from its last saved state.");
+            EnsureTooltip(soundEffectsVolumeButton, "Cycle the sound effects volume to the next preset.");
+            EnsureTooltip(musicVolumeButton, "Cycle the music volume to the next preset.");
+            EnsureTooltip(advancedSettingsToggleButton, GetAdvancedSettingsTooltipText);
+        }
+
+        private static void EnsureTooltip(Button button, string text)
+        {
+            EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Button button, Func<string> resolver)
+        {
+            if (button == null || resolver == null)
+            {
+                return;
+            }
+
+            var provider = button.GetComponent<MoldButtonTooltipProvider>();
+            if (provider == null)
+            {
+                provider = button.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            }
+
+            provider.Initialize(resolver);
+
+            var trigger = button.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = button.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private string GetStartGameTooltipText()
+        {
+            if (currentStep == SetupStep.CountSelection)
+            {
+                return "Continue to mold selection for each human player before the match begins.";
+            }
+
+            return currentHumanMoldSelectionIndex >= selectedHumanPlayerCount - 1
+                ? "Start the hotseat game with the selected player count, human seats, board size, and mold picks."
+                : "Lock this human player's mold icon and move to the next human player.";
+        }
+
+        private string GetBackTooltipText()
+        {
+            if (currentStep != SetupStep.MoldSelection)
+            {
+                return "Return to the mode select menu.";
+            }
+
+            return currentHumanMoldSelectionIndex > 0
+                ? "Go back to the previous human player's mold selection."
+                : "Return to player-count and setup selection.";
+        }
+
+        private string GetAdvancedSettingsTooltipText()
+        {
+            return isAdvancedOptionsExpanded
+                ? "Hide the development testing controls for this setup screen."
+                : "Show the development testing controls for this setup screen.";
         }
 
         private void SetButtonText(Button button, string text)

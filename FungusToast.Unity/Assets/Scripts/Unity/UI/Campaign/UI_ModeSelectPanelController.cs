@@ -1,9 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System;
 using System.IO;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.GameStart; // for UI_StartGamePanel
+using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
 namespace FungusToast.Unity.UI.Campaign
 {
@@ -93,6 +96,8 @@ namespace FungusToast.Unity.UI.Campaign
             if (hotseatButton != null) hotseatButton.onClick.AddListener(OnHotseatClicked);
             if (campaignButton != null) campaignButton.onClick.AddListener(OnCampaignClicked);
             if (quitButton != null) quitButton.onClick.AddListener(OnQuitClicked);
+
+            ApplyTooltips();
         }
 
         private void ResolveSceneReferences()
@@ -460,6 +465,81 @@ namespace FungusToast.Unity.UI.Campaign
             GameManager manager = FindAnyObjectByType<GameManager>();
             bool hasPendingReward = manager != null && manager.HasPendingCampaignMoldinessUnlockOnSavedRun();
             SetButtonLabel(campaignButton, hasPendingReward ? "Campaign (Pending Reward)" : "Campaign");
+        }
+
+        private void ApplyTooltips()
+        {
+            EnsureTooltip(hotseatButton, GetHotseatTooltipText);
+            EnsureTooltip(campaignButton, GetCampaignTooltipText);
+            EnsureTooltip(creditsButton, "Open the credits panel.");
+            EnsureTooltip(settingsButton, "Open audio, tutorial, and campaign reset settings.");
+            EnsureTooltip(quitButton, "Close Fungus Toast and return to desktop.");
+            EnsureTooltip(creditsBackButton, "Return to the main menu.");
+            EnsureTooltip(settingsBackButton, "Return to the main menu.");
+            EnsureTooltip(settingsSoundEffectsButton, "Cycle the sound effects volume to the next preset.");
+            EnsureTooltip(settingsMusicButton, "Cycle the music volume to the next preset.");
+            EnsureTooltip(settingsTutorialReplayButton, "Re-enable tutorial popups and onboarding hints you dismissed earlier.");
+            EnsureTooltip(settingsResetButton, GetSettingsResetTooltipText);
+            EnsureTooltip(settingsResetCancelButton, "Cancel the campaign reset prompt.");
+        }
+
+        private static void EnsureTooltip(Button button, string text)
+        {
+            EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Button button, Func<string> resolver)
+        {
+            if (button == null || resolver == null)
+            {
+                return;
+            }
+
+            var provider = button.GetComponent<MoldButtonTooltipProvider>();
+            if (provider == null)
+            {
+                provider = button.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            }
+
+            provider.Initialize(resolver);
+
+            var trigger = button.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = button.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private static string GetHotseatTooltipText()
+        {
+            return "Start a local hotseat game on this machine. You will choose player count, human seats, and setup options next.";
+        }
+
+        private string GetCampaignTooltipText()
+        {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            bool hasPendingReward = manager != null && manager.HasPendingCampaignMoldinessUnlockOnSavedRun();
+
+            return hasPendingReward
+                ? "Open the campaign flow and claim the pending moldiness reward from your saved run before normal campaign choices."
+                : "Open the campaign menu to resume an existing run or start a new one.";
+        }
+
+        private string GetSettingsResetTooltipText()
+        {
+            GameManager manager = FindAnyObjectByType<GameManager>();
+            bool hasCampaignSave = manager != null && manager.HasCampaignSave();
+
+            if (!hasCampaignSave)
+            {
+                return "Campaign reset is unavailable until a campaign save exists.";
+            }
+
+            return isConfirmingCampaignReset
+                ? "Confirm wiping campaign rewards, moldiness progression, and pending moldiness reward choices."
+                : "Begin resetting campaign rewards, moldiness progression, and pending moldiness reward choices.";
         }
 
         private static void ResizeRectTransform(RectTransform rectTransform, float width, float height)

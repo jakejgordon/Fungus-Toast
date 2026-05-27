@@ -130,6 +130,8 @@ namespace FungusToast.Unity.UI.Campaign
             if (resumeButton != null) resumeButton.onClick.AddListener(OnResumeClicked);
             if (newButton != null) newButton.onClick.AddListener(OnNewClicked);
             if (backButton != null) backButton.onClick.AddListener(OnBackClicked);
+
+            ApplyMenuTooltips();
         }
 
         private void OnEnable()
@@ -1924,6 +1926,68 @@ namespace FungusToast.Unity.UI.Campaign
                 + "This does <b>not</b> currently apply a separate global stat multiplier or a special ruleset. Right now it is a lighter progression shortcut that starts a little deeper into the existing campaign.\n\n"
                 + "You also do <b>not</b> retroactively earn the skipped levels' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n"
                 + availability;
+        }
+
+        private void ApplyMenuTooltips()
+        {
+            EnsureTooltip(resumeButton, GetResumeTooltipText);
+            EnsureTooltip(newButton, GetNewButtonTooltipText);
+            EnsureTooltip(backButton, GetBackButtonTooltipText);
+        }
+
+        private static void EnsureTooltip(Button button, string text)
+        {
+            EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Button button, Func<string> resolver)
+        {
+            if (button == null || resolver == null)
+            {
+                return;
+            }
+
+            var provider = button.GetComponent<MoldButtonTooltipProvider>();
+            if (provider == null)
+            {
+                provider = button.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            }
+
+            provider.Initialize(resolver);
+
+            var trigger = button.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = button.gameObject.AddComponent<TooltipTrigger>();
+            }
+
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private static string GetResumeTooltipText()
+        {
+            return "Resume the current campaign save.";
+        }
+
+        private string GetNewButtonTooltipText()
+        {
+            if (currentStep == CampaignPanelStep.MainActions)
+            {
+                return HasPendingSporePreservation()
+                    ? "Resume the saved campaign so you can resolve the pending preserve-spores choice first."
+                    : "Start a new campaign. You will pick a mold icon and starting difficulty next.";
+            }
+
+            return selectedCampaignMoldIndex.HasValue
+                ? "Start a new campaign with the selected mold icon and starting difficulty."
+                : "Choose a mold icon before starting the campaign.";
+        }
+
+        private string GetBackButtonTooltipText()
+        {
+            return currentStep == CampaignPanelStep.MoldSelection
+                ? "Return to the main campaign action menu."
+                : "Back to the mode select menu.";
         }
 
         private void RebuildMoldSelectionButtons()

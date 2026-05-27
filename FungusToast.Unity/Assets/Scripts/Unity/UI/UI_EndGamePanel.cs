@@ -414,10 +414,11 @@ namespace FungusToast.Unity.UI
 
         private void ApplyTooltips()
         {
-            EnsureTooltip(playAgainButton, "Return to the main menu to start a new game.");
-            EnsureTooltip(exitButton, "Close the game.");
-            EnsureTooltip(continueButton, "Advance to the next campaign level.");
+            EnsureTooltip(playAgainButton, GetPlayAgainTooltipText);
+            EnsureTooltip(exitButton, GetExitButtonTooltipText);
+            EnsureTooltip(continueButton, GetContinueButtonTooltipText);
             EnsureDockedResultsControls();
+            EnsureTooltip(toggleResultsDockButton, GetDockToggleTooltipText);
             UpdateDockedResultsCopy();
         }
 
@@ -580,9 +581,6 @@ namespace FungusToast.Unity.UI
             if (toggleResultsDockButton != null)
             {
                 SetButtonLabel(toggleResultsDockButton, isEndGameResultsDocked ? "Show Results" : "Inspect Board");
-                EnsureTooltip(toggleResultsDockButton, isEndGameResultsDocked
-                    ? "Restore the full endgame results screen. Press Tab to toggle."
-                    : "Hide the full endgame screen so you can inspect the board. Press Tab to toggle.");
             }
 
             RefreshActionButtonIconState();
@@ -5905,10 +5903,23 @@ namespace FungusToast.Unity.UI
 
         private static void EnsureTooltip(Button button, string text)
         {
+            EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Button button, Func<string> resolver)
+        {
             if (button == null)
             {
                 return;
             }
+
+            var provider = button.GetComponent<MoldButtonTooltipProvider>();
+            if (provider == null)
+            {
+                provider = button.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            }
+
+            provider.Initialize(resolver);
 
             var trigger = button.GetComponent<TooltipTrigger>();
             if (trigger == null)
@@ -5916,7 +5927,63 @@ namespace FungusToast.Unity.UI
                 trigger = button.gameObject.AddComponent<TooltipTrigger>();
             }
 
-            trigger.SetStaticText(text);
+            trigger.SetDynamicProvider(provider);
+        }
+
+        private string GetContinueButtonTooltipText()
+        {
+            string label = GetButtonLabelText(continueButton);
+            return label switch
+            {
+                "Continue Campaign" => "Advance to the next campaign level.",
+                "Select Adaptation" => "Open the adaptation draft required before the campaign can continue.",
+                "Claim Moldiness Rewards" => "Open the pending moldiness reward choices before the normal adaptation draft.",
+                "Choose Moldiness Reward" => "Choose one of the offered moldiness rewards to continue.",
+                "Preserve Spores for Next Run" => "Carry selected spores into the next campaign run.",
+                "Confirm Carryover" => "Confirm the selected carryover perks for the next run.",
+                "Continue" => "Continue from this endgame result.",
+                _ => "Advance with this endgame result."
+            };
+        }
+
+        private string GetPlayAgainTooltipText()
+        {
+            string label = GetButtonLabelText(playAgainButton);
+            return string.Equals(label, "Main Menu", StringComparison.Ordinal)
+                ? "Return to the mode select menu."
+                : "Return to the main menu to start a new game.";
+        }
+
+        private string GetExitButtonTooltipText()
+        {
+            string label = GetButtonLabelText(exitButton);
+            return string.Equals(label, "Exit Game", StringComparison.Ordinal)
+                ? "Close Fungus Toast."
+                : "Return to the mode select menu.";
+        }
+
+        private string GetDockToggleTooltipText()
+        {
+            return isEndGameResultsDocked
+                ? "Restore the full endgame results screen. Press Tab to toggle."
+                : "Hide the full endgame screen so you can inspect the board. Press Tab to toggle.";
+        }
+
+        private static string GetButtonLabelText(Button button)
+        {
+            if (button == null)
+            {
+                return string.Empty;
+            }
+
+            var tmpLabel = button.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (tmpLabel != null)
+            {
+                return tmpLabel.text ?? string.Empty;
+            }
+
+            var legacyLabel = button.GetComponentInChildren<Text>(true);
+            return legacyLabel != null ? legacyLabel.text ?? string.Empty : string.Empty;
         }
 
         private static string ToHex(Color color)
