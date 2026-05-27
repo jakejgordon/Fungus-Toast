@@ -36,6 +36,7 @@ namespace FungusToast.Unity.UI
         private Action onRestartLevelRequested;
         private Action onExitRequested;
         private Action onNextTrackRequested;
+        private Action onReplayTutorialTipsRequested;
         private Func<string> getCurrentTrackName;
         private Func<string> getNextTrackName;
 
@@ -54,6 +55,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI titleLabel;
         private TextMeshProUGUI subtitleLabel;
         private GameObject primaryActionsRoot;
+        private GameObject tutorialHelpRoot;
         private GameObject soundSettingsRoot;
         private GameObject confirmationRoot;
         private TextMeshProUGUI confirmationLabel;
@@ -61,6 +63,8 @@ namespace FungusToast.Unity.UI
         private Button soundEffectsVolumeButton;
         private Button musicVolumeButton;
         private Button nextTrackMenuButton;
+        private Button tutorialReplayButton;
+        private TextMeshProUGUI tutorialStatusLabel;
 
         private PendingAction pendingAction;
         private bool gameplayVisible;
@@ -76,6 +80,7 @@ namespace FungusToast.Unity.UI
             Action restartLevelRequested,
             Action exitRequested,
             Action nextTrackRequested,
+            Action replayTutorialTipsRequested,
             Func<string> currentTrackNameProvider,
             Func<string> nextTrackNameProvider)
         {
@@ -86,6 +91,7 @@ namespace FungusToast.Unity.UI
             onRestartLevelRequested = restartLevelRequested;
             onExitRequested = exitRequested;
             onNextTrackRequested = nextTrackRequested;
+            onReplayTutorialTipsRequested = replayTutorialTipsRequested;
             getCurrentTrackName = currentTrackNameProvider;
             getNextTrackName = nextTrackNameProvider;
 
@@ -134,6 +140,7 @@ namespace FungusToast.Unity.UI
             overlayCanvasGroup.alpha = 1f;
             overlayCanvasGroup.interactable = true;
             overlayCanvasGroup.blocksRaycasts = true;
+            RefreshTutorialControls(clearStatus: true);
             RefreshSoundSettingsButtons();
             IsOpen = true;
         }
@@ -401,6 +408,20 @@ namespace FungusToast.Unity.UI
             Button exitButton = CreateActionButton(primaryActionsRoot.transform, "Exit Game", width: PauseMenuPrimaryButtonWidth);
             exitButton.onClick.AddListener(RequestExitConfirmation);
 
+            tutorialHelpRoot = CreateVerticalSection(contentRoot.transform, "TutorialHelp", 8f);
+
+            TextMeshProUGUI tutorialLabel = CreateLabel(tutorialHelpRoot.transform, "Tutorial Tips", 22f, FontStyles.Bold);
+            tutorialLabel.alignment = TextAlignmentOptions.Center;
+            tutorialLabel.color = UIStyleTokens.Text.Primary;
+
+            tutorialReplayButton = CreateActionButton(tutorialHelpRoot.transform, "Replay Tutorial Tips", width: PauseMenuPrimaryButtonWidth, secondaryStyle: true);
+            tutorialReplayButton.onClick.AddListener(OnReplayTutorialTipsClicked);
+
+            tutorialStatusLabel = CreateLabel(tutorialHelpRoot.transform, string.Empty, 18f, FontStyles.Normal);
+            tutorialStatusLabel.alignment = TextAlignmentOptions.Center;
+            tutorialStatusLabel.color = UIStyleTokens.Text.Secondary;
+            ConfigureDynamicWrappedLabel(tutorialStatusLabel);
+
             soundSettingsRoot = CreateVerticalSection(contentRoot.transform, "SoundSettings", 10f);
 
             TextMeshProUGUI soundLabel = CreateLabel(soundSettingsRoot.transform, "Audio", 22f, FontStyles.Bold);
@@ -450,6 +471,7 @@ namespace FungusToast.Unity.UI
             Button cancelButton = CreateActionButton(confirmationButtons.transform, "Cancel", width: PauseMenuConfirmationButtonWidth, secondaryStyle: true);
             cancelButton.onClick.AddListener(CancelPendingAction);
 
+            RefreshTutorialControls(clearStatus: true);
             RefreshSoundSettingsButtons();
             RefreshCardLayout();
         }
@@ -463,6 +485,7 @@ namespace FungusToast.Unity.UI
 
             bool showConfirmation = pendingAction != PendingAction.None;
             primaryActionsRoot.SetActive(!showConfirmation);
+            tutorialHelpRoot.SetActive(!showConfirmation);
             soundSettingsRoot.SetActive(!showConfirmation);
             confirmationRoot.SetActive(showConfirmation);
 
@@ -548,6 +571,41 @@ namespace FungusToast.Unity.UI
         private void OnNextTrackClicked()
         {
             onNextTrackRequested?.Invoke();
+        }
+
+        private void OnReplayTutorialTipsClicked()
+        {
+            if (onReplayTutorialTipsRequested == null)
+            {
+                SetTutorialStatus("Tutorial tips are unavailable right now.", UIStyleTokens.State.Warning);
+                return;
+            }
+
+            onReplayTutorialTipsRequested.Invoke();
+            SetTutorialStatus("Tutorial tips re-enabled.", UIStyleTokens.State.Success);
+        }
+
+        private void RefreshTutorialControls(bool clearStatus)
+        {
+            SetButtonLabel(tutorialReplayButton, "Replay Tutorial Tips");
+
+            if (clearStatus)
+            {
+                SetTutorialStatus(string.Empty, UIStyleTokens.Text.Secondary);
+            }
+        }
+
+        private void SetTutorialStatus(string statusText, Color statusColor)
+        {
+            if (tutorialStatusLabel == null)
+            {
+                return;
+            }
+
+            tutorialStatusLabel.text = statusText;
+            tutorialStatusLabel.color = statusColor;
+            tutorialStatusLabel.gameObject.SetActive(!string.IsNullOrWhiteSpace(statusText));
+            RefreshCardLayout();
         }
 
         private void RefreshSoundSettingsButtons()

@@ -599,6 +599,7 @@ namespace FungusToast.Unity
                 RestartCurrentLevel,
                 QuitGame,
                 SkipToNextTrack,
+                ResetDismissedTutorialTips,
                 GetCurrentGameplayTrackName,
                 GetNextGameplayTrackName);
             pauseMenuService.Initialize();

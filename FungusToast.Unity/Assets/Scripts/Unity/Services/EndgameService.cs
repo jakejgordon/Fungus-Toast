@@ -326,6 +326,7 @@ namespace FungusToast.Unity
         private readonly Action onRestartLevelRequested;
         private readonly Action onExitRequested;
         private readonly Action onNextTrackRequested;
+        private readonly Action onReplayTutorialTipsRequested;
         private readonly Func<string> getCurrentTrackName;
         private readonly Func<string> getNextTrackName;
 
@@ -341,6 +342,7 @@ namespace FungusToast.Unity
             Action onRestartLevelRequested,
             Action onExitRequested,
             Action onNextTrackRequested,
+            Action onReplayTutorialTipsRequested,
             Func<string> getCurrentTrackName,
             Func<string> getNextTrackName)
         {
@@ -353,6 +355,7 @@ namespace FungusToast.Unity
             this.onRestartLevelRequested = onRestartLevelRequested;
             this.onExitRequested = onExitRequested;
             this.onNextTrackRequested = onNextTrackRequested;
+            this.onReplayTutorialTipsRequested = onReplayTutorialTipsRequested;
             this.getCurrentTrackName = getCurrentTrackName;
             this.getNextTrackName = getNextTrackName;
         }
@@ -375,6 +378,7 @@ namespace FungusToast.Unity
                 onRestartLevelRequested,
                 onExitRequested,
                 onNextTrackRequested,
+                onReplayTutorialTipsRequested,
                 getCurrentTrackName,
                 getNextTrackName);
 
