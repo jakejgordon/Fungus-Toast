@@ -85,7 +85,12 @@ namespace FungusToast.Unity.UI
             Vector2 anchor = coachmarkRect.anchorMin;
             if ((coachmarkRect.anchorMax - coachmarkRect.anchorMin).sqrMagnitude > 0.0001f)
             {
-                anchor = Vector2.Lerp(coachmarkRect.anchorMin, coachmarkRect.anchorMax, coachmarkRect.pivot);
+                Vector2 anchorMin = coachmarkRect.anchorMin;
+                Vector2 anchorMax = coachmarkRect.anchorMax;
+                Vector2 pivot = coachmarkRect.pivot;
+                anchor = new Vector2(
+                    Mathf.Lerp(anchorMin.x, anchorMax.x, pivot.x),
+                    Mathf.Lerp(anchorMin.y, anchorMax.y, pivot.y));
             }
 
             return new Vector2(
