@@ -473,6 +473,7 @@ namespace FungusToast.Unity
             }
             Instance = this;
             AlphaDataResetService.ApplyIfNeeded();
+            BoardLayoutCompatibilityService.ApplyIfNeeded();
             rng = new System.Random();
             BootstrapServices();
             // Create campaign controller if progression present
@@ -660,7 +661,15 @@ namespace FungusToast.Unity
                 seed => pendingGameplaySeed = seed,
                 InitializeGame,
                 InitializeRestoredGame,
-                StopAllCoroutines);
+                StopAllCoroutines,
+                () =>
+                {
+                    gameTransitionService?.ResetRuntimeStateForGameTransition();
+                    ResetManagerStateForMainMenuReturn();
+                    gridVisualizer?.ClearAllHighlights();
+                    gridVisualizer?.ClearHoverEffect();
+                    gameTransitionService?.ShowStartGamePanel();
+                });
             playerPerspectiveService = new PlayerPerspectiveService(gameUIManager);
             playerMoldAssignmentService = new PlayerMoldAssignmentService(
                 gridVisualizer,

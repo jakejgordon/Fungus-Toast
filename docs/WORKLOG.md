@@ -47,6 +47,23 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - Do an in-Unity visual pass across white bread, cheese, both crackers, and pita to confirm the silhouette-aligned faint playable overlay, edge fade, masked hover/highlight layers, and the new pita ellipse footprint all visually agree with the bread art.
 
+## Compatibility Follow-up
+
+- **Focus:** board-size / board-shape metadata compatibility when a new published build ships with changed board background metadata.
+- **Evaluation:** current campaign checkpoint validation is too shallow for this risk. `CampaignController.TryGetGameplayCheckpoint(...)` only rejects missing snapshots, non-positive dimensions, or snapshots with no human player; it does not validate saved tile ids, blocked-tile ranges, or board-metadata compatibility before resume. `RoundStartRuntimeSnapshotFactory.Restore(...)` then rebuilds the board directly from the saved snapshot, and `GameBoard.PlaceFungalCell(...)` indexes `Grid[x, y]` from the saved `cell.TileId` without a bounds guard. That means a malformed or incompatible resumed snapshot can still hard-fail instead of degrading cleanly. By contrast, campaign-level preset lookup already has a soft fallback for missing `boardPresetId` values, so the highest crash risk is the in-level resume path, not the higher-level campaign meta save. There is already a startup reset precedent in `AlphaDataResetService`, but it is a hard-coded silent wipe with no player-facing post-restart explanation, which is not the behavior we want here.
+- **Plan:**
+  1. Add an explicit board-layout compatibility token for save/resume, scoped to board metadata compatibility rather than general app versioning. Bump it whenever board background metadata changes can invalidate old blocked-tile or tile-id assumptions.
+  2. Apply that token during startup before resume UI is shown. On mismatch, invalidate only affected in-progress gameplay state: clear the campaign in-level checkpoint and delete the solo/hotseat save, while preserving durable campaign meta progression when it remains honest to do so.
+  3. Persist a one-shot post-restart notice payload alongside the invalidation so the next boot can show a dismissable modal explaining that an update changed board layout data and the in-progress run had to restart from a safe state.
+  4. Strengthen resume validation beyond the current width/height/player check: reject snapshots with out-of-range tile ids, impossible player references, or other structural inconsistencies before they reach `RoundStartRuntimeSnapshotFactory.Restore(...)`.
+  5. Wrap actual restore entry points so any remaining restore exception degrades to deliberate invalidation + restart/notice instead of crashing the build.
+  6. Add compatibility smoke coverage for both campaign and solo resume so future board metadata changes have an explicit checklist instead of relying on memory.
+- **Pending implementation tasks:**
+  - implement the board-metadata compatibility token + startup invalidation flow
+  - add a dismissable post-restart popup on the start/menu surface for compatibility-triggered restarts
+  - harden campaign and solo resume validation around saved snapshot tile ids and restore exceptions
+- **Update:** those implementation tasks are now complete in code. Remaining follow-up is an in-Unity validation pass for the compatibility-restart UX and the new popup/menu flow.
+
 ## Current Handoff
 
 - `WORKLOG.md` is intentionally present-tense only. Historical task logs and stale tuning notes have been removed.
