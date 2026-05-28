@@ -23,7 +23,8 @@ public class Tier5MutationTests
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 1);
-        Assert.Contains("chain into another adjacent dead cell", mutation.Description);
+        Assert.Contains("fails to expand normally", mutation.Description);
+        Assert.Contains("chain into another adjacent dead enemy cell", mutation.Description);
     }
 
     [Fact]

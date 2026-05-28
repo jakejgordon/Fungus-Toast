@@ -547,6 +547,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 case MutationIds.HomeostaticHarmony:
                     AppendHomeostaticHarmonyDetails(sb, currentLevel);
                     break;
+                case MutationIds.ChronoresilientCytoplasm:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildChronoresilientCytoplasmSummary);
+                    break;
+                case MutationIds.Necrosporulation:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrosporulationSummary);
+                    break;
+                case MutationIds.NecrohyphalInfiltration:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrohyphalInfiltrationSummary);
+                    break;
+                case MutationIds.CatabolicRebirth:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildCatabolicRebirthSummary);
+                    break;
+                case MutationIds.HypersystemicRegeneration:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildHypersystemicRegenerationSummary);
+                    break;
                 case MutationIds.MycelialBloom:
                     AppendLevelSummaryBlock(sb, currentLevel, BuildMycelialBloomSummary);
                     break;
@@ -576,11 +591,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private void AppendLevelSummaryBlock(StringBuilder sb, int currentLevel, System.Func<int, string> buildSummary)
         {
             sb.AppendLine();
-            sb.AppendLine($"<b>Current Level:</b> {buildSummary(currentLevel)}");
+            sb.AppendLine($"<b>Current Level ({currentLevel})</b> - {buildSummary(currentLevel)}");
 
             if (currentLevel < mutation.MaxLevel)
             {
-                sb.AppendLine($"<b>Next Level:</b> {buildSummary(currentLevel + 1)}");
+                sb.AppendLine($"<b>Next Level ({currentLevel + 1})</b> - {buildSummary(currentLevel + 1)}");
             }
         }
 
@@ -588,76 +603,133 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (level <= 0)
             {
-                return "Level 0 - No reduction yet.";
+                return "No reduction yet.";
             }
 
             float reductionPercent = mutation.GetTotalEffect(level) * 100f;
-            return $"Level {level} - Random decay -{reductionPercent:0.00}%, age-based decay -{reductionPercent:0.00}%";
+            return $"Random decay -{reductionPercent:0.00}%, age-based decay -{reductionPercent:0.00}%";
+        }
+
+        private string BuildChronoresilientCytoplasmSummary(int level)
+        {
+            float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + mutation.GetTotalEffect(level);
+            return $"Age-based decay starts after {ageThreshold:0} growth cycles";
+        }
+
+        private string BuildNecrosporulationSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No spore-on-death chance yet.";
+            }
+
+            float chancePercent = mutation.GetTotalEffect(level) * 100f;
+            return $"{chancePercent:0.00}% chance to spawn a new cell on a random open tile when one of your cells dies";
+        }
+
+        private string BuildNecrohyphalInfiltrationSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No infiltration or cascade chance yet.";
+            }
+
+            float invadeChancePercent = level * GameBalance.NecrohyphalInfiltrationChancePerLevel * 100f;
+            float cascadeChancePercent = level * GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel * 100f;
+            return $"Invade adjacent dead enemy cell {invadeChancePercent:0.00}%, cascade from each successful reclaim {cascadeChancePercent:0.00}%";
+        }
+
+        private string BuildCatabolicRebirthSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No resurrection chance when toxins expire.";
+            }
+
+            float chancePercent = mutation.GetTotalEffect(level) * 100f;
+            if (level >= GameBalance.CatabolicRebirthMaxLevel)
+            {
+                return $"Revive adjacent dead cell on toxin expiration {chancePercent:0.00}%; enemy toxins next to your dead cells age twice as fast";
+            }
+
+            return $"Revive adjacent dead cell on toxin expiration {chancePercent:0.00}%";
+        }
+
+        private string BuildHypersystemicRegenerationSummary(int level)
+        {
+            float effectivenessPercent = level * GameBalance.HypersystemicRegenerationEffectivenessBonus * 100f;
+            float resistanceChancePercent = level * GameBalance.HypersystemicRegenerationResistanceChance * 100f;
+            if (level >= GameBalance.HypersystemicRegenerationMaxLevel)
+            {
+                return $"Regenerative Hyphae effectiveness +{effectivenessPercent:0.00}%, reclaimed-cell resistance {resistanceChancePercent:0.00}%, diagonal reclaim unlocked";
+            }
+
+            return $"Regenerative Hyphae effectiveness +{effectivenessPercent:0.00}%, reclaimed-cell resistance {resistanceChancePercent:0.00}%";
         }
 
         private string BuildMycelialBloomSummary(int level)
         {
             if (level <= 0)
             {
-                return "Level 0 - No extra cardinal growth (up / down / left / right) or random decay.";
+                return "No extra cardinal growth (up / down / left / right) or random decay.";
             }
 
             float orthogonalGrowthPercent = mutation.GetTotalEffect(level) * 100f;
             float randomDecayPercent = level * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel * 100f;
-            return $"Level {level} - Cardinal growth +{orthogonalGrowthPercent:0.00}%, random decay +{randomDecayPercent:0.00}%";
+            return $"Cardinal growth +{orthogonalGrowthPercent:0.00}%, random decay +{randomDecayPercent:0.00}%";
         }
 
         private string BuildTendrilSummary(int level)
         {
             if (level <= 0)
             {
-                return $"Level 0 - No diagonal growth bonus or cardinal penalty contribution ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor).";
+                return $"No diagonal growth bonus or cardinal penalty contribution ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor).";
             }
 
             float diagonalGrowthPercent = mutation.GetTotalEffect(level) * 100f;
             float orthogonalPenaltyPercent = level * GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel * 100f;
-            return $"Level {level} - Diagonal growth +{diagonalGrowthPercent:0.00}%, cardinal penalty contribution -{orthogonalPenaltyPercent:0.00}% ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor)";
+            return $"Diagonal growth +{diagonalGrowthPercent:0.00}%, cardinal penalty contribution -{orthogonalPenaltyPercent:0.00}% ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor)";
         }
 
         private string BuildMycotropicInductionSummary(int level)
         {
             float bonusPercent = mutation.GetTotalEffect(level) * 100f;
             float multiplier = 1f + mutation.GetTotalEffect(level);
-            return $"Level {level} - Tendril diagonal multiplier x{multiplier:0.00} (+{bonusPercent:0.00}% of each Tendril's own chance)";
+            return $"Tendril diagonal multiplier x{multiplier:0.00} (+{bonusPercent:0.00}% of each Tendril's own chance)";
         }
 
         private string BuildRegenerativeHyphaeSummary(int level)
         {
             if (level <= 0)
             {
-                return "Level 0 - No reclaim roll yet.";
+                return "No reclaim roll yet.";
             }
 
             float baseChancePercent = mutation.GetTotalEffect(level) * 100f;
             int hypersystemicLevel = player.GetMutationLevel(MutationIds.HypersystemicRegeneration);
             if (hypersystemicLevel <= 0)
             {
-                return $"Level {level} - {baseChancePercent:0.00}% reclaim roll per living cell after growth";
+                return $"{baseChancePercent:0.00}% reclaim roll per living cell after growth";
             }
 
             float effectiveChancePercent = (mutation.GetTotalEffect(level) * (1f + (hypersystemicLevel * GameBalance.HypersystemicRegenerationEffectivenessBonus))) * 100f;
-            return $"Level {level} - {baseChancePercent:0.00}% reclaim roll per living cell after growth ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
+            return $"{baseChancePercent:0.00}% reclaim roll per living cell after growth ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
         }
 
         private string BuildCreepingMoldSummary(int level)
         {
             if (level <= 0)
             {
-                return "Level 0 - No failed-growth move chance yet.";
+                return "No failed-growth move chance yet.";
             }
 
             float moveChancePercent = mutation.GetTotalEffect(level) * 100f;
             if (level >= GameBalance.CreepingMoldMaxLevel)
             {
-                return $"Level {level} - {moveChancePercent:0.00}% move chance after a failed growth if the target is open enough; toxin jump unlocked";
+                return $"{moveChancePercent:0.00}% move chance after a failed growth if the target is open enough; toxin jump unlocked";
             }
 
-            return $"Level {level} - {moveChancePercent:0.00}% move chance after a failed growth if the target is open enough";
+            return $"{moveChancePercent:0.00}% move chance after a failed growth if the target is open enough";
         }
 
         public void DisableUpgrade()
