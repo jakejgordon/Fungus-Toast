@@ -149,10 +149,21 @@ namespace FungusToast.Unity.UI.Tooltips
             Canvas.ForceUpdateCanvases();
             LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRect);
 
-            // ── Tooltip size in screen pixels after canvas scaling ──
-            Rect tooltipPixelRect = RectTransformUtility.PixelAdjustRect(tooltipRect, rootCanvas);
-            float ttW = tooltipPixelRect.width;
-            float ttH = tooltipPixelRect.height;
+            // ── Tooltip size in screen pixels after runtime layout/scaling ──
+            Vector3[] tooltipCorners = new Vector3[4];
+            tooltipRect.GetWorldCorners(tooltipCorners);
+
+            Vector2 tooltipScreenCorner0 = RectTransformUtility.WorldToScreenPoint(cam, tooltipCorners[0]);
+            Vector2 tooltipScreenCorner1 = RectTransformUtility.WorldToScreenPoint(cam, tooltipCorners[1]);
+            Vector2 tooltipScreenCorner2 = RectTransformUtility.WorldToScreenPoint(cam, tooltipCorners[2]);
+            Vector2 tooltipScreenCorner3 = RectTransformUtility.WorldToScreenPoint(cam, tooltipCorners[3]);
+
+            float ttW = Mathf.Max(
+                Mathf.Abs(tooltipScreenCorner2.x - tooltipScreenCorner1.x),
+                Mathf.Abs(tooltipScreenCorner3.x - tooltipScreenCorner0.x));
+            float ttH = Mathf.Max(
+                Mathf.Abs(tooltipScreenCorner1.y - tooltipScreenCorner0.y),
+                Mathf.Abs(tooltipScreenCorner2.y - tooltipScreenCorner3.y));
 
             // ── Screen safe bounds (in screen pixels) ──
             float sL = screenPadding.x;
@@ -192,7 +203,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 if (RectTransformUtility.ScreenPointToLocalPointInRectangle(
                         canvasRect, screenPos, cam, out Vector2 localPos))
                 {
-                    tooltipRect.anchoredPosition = localPos;
+                    tooltipRect.anchoredPosition = localPos - GetAnchorReference(tooltipRect, canvasRect);
                 }
             }
 
@@ -330,6 +341,24 @@ namespace FungusToast.Unity.UI.Tooltips
             }
 
             PlaceAtScreen(ClampScreen(targetScreen + appliedOffset, pivot), pivot);
+        }
+
+        private static Vector2 GetAnchorReference(RectTransform childRect, RectTransform parentRect)
+        {
+            Rect bounds = parentRect.rect;
+            Vector2 anchor = childRect.anchorMin;
+
+            if ((childRect.anchorMax - childRect.anchorMin).sqrMagnitude > 0.0001f)
+            {
+                Vector2 pivot = childRect.pivot;
+                anchor = new Vector2(
+                    Mathf.Lerp(childRect.anchorMin.x, childRect.anchorMax.x, pivot.x),
+                    Mathf.Lerp(childRect.anchorMin.y, childRect.anchorMax.y, pivot.y));
+            }
+
+            return new Vector2(
+                bounds.xMin + (bounds.width * anchor.x),
+                bounds.yMin + (bounds.height * anchor.y));
         }
     }
 }

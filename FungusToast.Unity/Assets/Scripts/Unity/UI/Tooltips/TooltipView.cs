@@ -88,6 +88,32 @@ namespace FungusToast.Unity.UI.Tooltips
                     layoutElement.enabled = false;
                 }
             }
+
+            RefreshLayoutImmediate();
+        }
+
+        private void RefreshLayoutImmediate()
+        {
+            RectTransform rootRect = RectTransform;
+
+            Canvas.ForceUpdateCanvases();
+
+            if (text != null)
+            {
+                text.ForceMeshUpdate(ignoreActiveState: true, forceTextReparsing: true);
+                LayoutRebuilder.ForceRebuildLayoutImmediate(text.rectTransform);
+            }
+
+            if (background != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(background);
+            }
+
+            if (rootRect != null)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            }
+
             Canvas.ForceUpdateCanvases();
         }
 
