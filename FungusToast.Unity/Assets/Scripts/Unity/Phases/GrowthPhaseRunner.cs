@@ -193,11 +193,6 @@ namespace FungusToast.Unity.Phases
                 {
                     return;
                 }
-
-                if (gameManager.IsFastRoundPresentationMode && phaseCycle > 1)
-                {
-                    return;
-                }
             }
 
             if (growthCycleStartClip == null)
