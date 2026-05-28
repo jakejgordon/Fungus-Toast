@@ -734,7 +734,40 @@ namespace FungusToast.Unity.UI.MutationTree
             formatted = formatted.Replace("\nBuffed by:", "\n[[BUFFED_BY]]");
             formatted = formatted.Replace("Buffed by:", "[[BUFFED_BY]]");
             formatted = formatted.Replace("[[BUFFED_BY]]", BuildSectionLabel("Buffed by", TooltipSectionLabelColor));
-            return formatted;
+            return CollapseConsecutiveDuplicateLines(formatted);
+        }
+
+        private static string CollapseConsecutiveDuplicateLines(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return string.Empty;
+            }
+
+            string[] lines = text.Split('\n');
+            var builder = new StringBuilder(text.Length);
+            string previousLine = string.Empty;
+            bool hasPreviousLine = false;
+
+            for (int index = 0; index < lines.Length; index++)
+            {
+                string line = lines[index];
+                if (hasPreviousLine && !string.IsNullOrEmpty(line) && line == previousLine)
+                {
+                    continue;
+                }
+
+                if (index > 0)
+                {
+                    builder.Append('\n');
+                }
+
+                builder.Append(line);
+                previousLine = line;
+                hasPreviousLine = true;
+            }
+
+            return builder.ToString();
         }
 
         private static string BuildSectionLabel(string label, Color color)

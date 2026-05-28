@@ -55,7 +55,8 @@ public class Tier6MutationTests
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.HomeostaticHarmony && p.RequiredLevel == 10);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 10);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MutatorPhenotype && p.RequiredLevel == 10);
-        Assert.Contains("Triggers twice", mutation.Description);
+        Assert.Contains("Rolls twice", mutation.Description);
+        Assert.Contains("every 5 kills reduces the Tier 1 levels consumed by 1", mutation.Description);
     }
 
     [Fact]

@@ -61,8 +61,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MimeticResilience,
                 name: "Mimetic Resilience",
                 description:
-                    $"Lets you copy resistant footholds from stronger rivals.\n\n" +
-                    $"<b>Technical:</b> While active, target rival players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their resistant living cells, place one of your own resistant cells within level + 1 tiles, preferring enemy living cells, then enemy toxins, then empty tiles, then dead cells. Each success makes later placements against that same rival 5% less likely. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
+                    $"Lets you try to copy resistant footholds from stronger rivals.\n\n" +
+                    $"<b>Technical:</b> While active, target rival players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their resistant living cells, attempt to place one of your own resistant cells within level + 1 tiles, preferring enemy living cells, then enemy toxins, then empty tiles, then dead cells. Each success makes later attempts against that same rival 5% less likely, and the effect stops after 20 successes against one rival in the same Growth Phase. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
                 flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
                 type: MutationType.MimeticResilience,
                 effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
@@ -106,8 +106,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
                 description:
-                    $"Temporarily hardens part of your colony so those cells cannot be killed or replaced.\n\n" +
-                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-resistant living cells per level gain Resistant. Resistant living cells cannot be killed or replaced. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
+                    $"While the surge is active, it permanently gives resistance to part of your colony each Growth Phase.\n\n" +
+                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-resistant living cells per level permanently gain Resistant. Resistant living cells cannot be killed or replaced, and they stay resistant after the surge ends. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
                 flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
                 type: MutationType.ChitinFortification,
                 effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,

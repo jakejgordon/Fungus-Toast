@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MutatorPhenotype,
                 name: "Mutator Phenotype",
-                description: $"Can hand you a free Tier 1 mutation upgrade at the start of Mutation Phase.\n\n" +
+                description: $"Grants a chance of generating a free Tier 1 mutation upgrade at the start of the Mutation Phase.\n\n" +
                              $"<b>Technical:</b> Each level gives a {helper.FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel, 1)} chance to automatically upgrade one random Tier 1 mutation at Mutation Phase start.",
                 flavorText: "Transposons disrupt regulatory silencing, igniting stochastic trait amplification.",
                 type: MutationType.AutoUpgradeRandom,
@@ -119,7 +119,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Ontogenic Regression",
                 description: $"Can trade away early mutations to force a late-game upgrade.\n\n" +
                              $"<b>Technical:</b> At Mutation Phase start, each level gives a {helper.FormatPercent(GameBalance.OntogenicRegressionChancePerLevel, 1)} chance to remove {GameBalance.OntogenicRegressionTier1LevelsToConsume} levels from a random Tier 1 mutation and add 1 level to a random Tier 5 or 6 mutation, ignoring prerequisites. If the roll fails or no valid source or target exists, gain {GameBalance.OntogenicRegressionFailureConsolationPoints} mutation points instead.\n" +
-                             $"<b>Max Level Bonus:</b> Triggers twice, and can kill adjacent non-resistant enemy living cells to reduce the Tier 1 levels consumed by 1 per {GameBalance.OntogenicRegressionEnemyKillsPerLevelReduction} kills, to a minimum of 1.",
+                             $"<b>Max Level Bonus:</b> Rolls twice. Before each successful mutation swap, it can also kill adjacent non-resistant enemy living cells touching your colony; every {GameBalance.OntogenicRegressionEnemyKillsPerLevelReduction} kills reduces the Tier 1 levels consumed by 1, down to a minimum cost of 1.",
                 flavorText: "Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence through ontogenic reversal.",
                 type: MutationType.OntogenicRegression,
                 effectPerLevel: GameBalance.OntogenicRegressionChancePerLevel,
