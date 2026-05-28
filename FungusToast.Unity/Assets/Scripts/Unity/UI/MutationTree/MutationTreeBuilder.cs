@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Unity.UI.Tooltips;
 using UnityEngine.UI;
 using TMPro;
 
@@ -15,6 +16,14 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HeaderInvestmentSummaryHeight = 20f;
         private const float DefaultColumnWidth = 200f;
         private const float GrowthColumnWidth = 220f;
+        private static readonly IReadOnlyDictionary<MutationCategory, string> CategoryHeaderTooltipText = new Dictionary<MutationCategory, string>
+        {
+            { MutationCategory.Growth, "<b>Growth</b>\nMutations that help your colony spread faster across the toast." },
+            { MutationCategory.CellularResilience, "<b>Cellular Resilience</b>\nMutations that help your mold endure damage and reclaim dead cells." },
+            { MutationCategory.Fungicide, "<b>Fungicide</b>\nAggressive mutations that harry rival molds and weaken their foothold." },
+            { MutationCategory.GeneticDrift, "<b>Genetic Drift</b>\nMutations that warp your evolution, granting extra mutation points or unexpected gifts." },
+            { MutationCategory.MycelialSurges, "<b>Mycelial Surges</b>\nMutations that unleash brief but potent bursts of colony strength." },
+        };
 
         [Header("Prefabs")]
         [SerializeField] private GameObject categoryHeaderPrefab;
@@ -147,6 +156,8 @@ namespace FungusToast.Unity.UI.MutationTree
                     headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, columnWidth);
                 }
 
+                AttachHeaderTooltip(headerGO, category);
+
                 // ── Investment summary label (child text, created dynamically) ──
                 var summaryGO = new GameObject("InvestmentSummary");
                 summaryGO.transform.SetParent(headerGO.transform, false);
@@ -259,6 +270,23 @@ namespace FungusToast.Unity.UI.MutationTree
                 else
                     kvp.Value.text = "";
             }
+        }
+
+        private static void AttachHeaderTooltip(GameObject headerGO, MutationCategory category)
+        {
+            if (headerGO == null || !CategoryHeaderTooltipText.TryGetValue(category, out string tooltipText))
+            {
+                return;
+            }
+
+            var tooltipTrigger = headerGO.GetComponent<TooltipTrigger>();
+            if (tooltipTrigger == null)
+            {
+                tooltipTrigger = headerGO.AddComponent<TooltipTrigger>();
+            }
+
+            tooltipTrigger.SetStaticText(tooltipText);
+            tooltipTrigger.SetAutoPlacementOffsetX(12f);
         }
 
         private void ApplyColumnWidth(MutationCategory category, RectTransform column)
