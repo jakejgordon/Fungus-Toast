@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycelialBloom,
                 name: "Mycelial Bloom",
-                description: $"Expands your colony faster in the four cardinal directions (up / down / left / right), but makes it more vulnerable during decay.\n\n" +
+                description: $"Expands your colony faster in the four cardinal directions (up / down / left / right), but makes it more vulnerable during the Decay Phase.\n\n" +
                              $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.MycelialBloomEffectPerLevel)} cardinal growth chance (up / down / left / right) and {helper.FormatPercent(GameBalance.MycelialBloomRandomDecayPenaltyPerLevel)} random decay chance.",
                 flavorText: "Hyphal strands thicken and surge outward, driven by nutrient cues and quorum signals.",
                 type: MutationType.GrowthChance,
@@ -57,8 +57,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
-                description: $"Brings your own dead cells back at the edge of a living colony.\n\n" +
-                             $"<b>Technical:</b> After growth and before decay, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned adjacent in a cardinal direction (up / down / left / right). Each dead cell is checked at most once per round.",
+                description: $"Brings your own dead cells back near your living colony.\n\n" +
+                             $"<b>Technical:</b> After the Growth Phase and before the Decay Phase, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned adjacent in a cardinal direction (up / down / left / right). Each dead cell is checked at most once per round.",
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,
                 effectPerLevel: GameBalance.RegenerativeHyphaeReclaimChance,

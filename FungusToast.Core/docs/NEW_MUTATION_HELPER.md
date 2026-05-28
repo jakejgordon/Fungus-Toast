@@ -30,12 +30,30 @@ All mutation copy (name, description, flavor text) must follow these rules to ke
 
 | Rule | Detail |
 |------|--------|
-| **Length** | 1–3 sentences, **≤ 220 rendered characters** (interpolated values count toward the cap) |
-| **Sentence order** | **Trigger / timing → Effect / scaling → Max-level bonus** |
-| **Max-level clause** | Use `<b>Max Level Bonus:</b>` on a new line when the max-level effect is mechanically distinct. Example from Necrophytic Bloom: `"...\n<b>Max Level Bonus:</b> Can also create Hypervariation Development patches."` |
-| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Description |
-| **Formatting** | Use `<b>…</b>` for emphasis on key numbers/bonuses; use `\n` for line breaks before Max Level Bonus; avoid bullet lists and multi-paragraph blocks |
+| **Structure** | Use the tooltip-first template: **plain-language summary** → blank line → **`<b>Technical:</b>`** details → optional **`<b>Max Level Bonus:</b>`** line → optional **`Buffed by:`** line |
+| **Summary sentence** | Start with one plain-language sentence about what the player gets. Avoid code words, phase jargon, and raw formulas unless they are essential to comprehension |
+| **Technical block** | After `\n\n`, explain the real trigger/timing, target restrictions, scaling, and important limits using implementation-accurate terms |
+| **Max-level clause** | Use `<b>Max Level Bonus:</b>` on its own new line only when the max-level effect is mechanically distinct |
+| **Synergy clause** | Use `Buffed by: Mutation Name.` only for important implemented cross-mutation synergies that materially change the effect |
+| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Summary sentence |
+| **Formatting** | Use ASCII punctuation, `\n\n` before `Technical`, and `\n` before optional follow-up lines. Avoid bullet lists inside descriptions |
 | **Encoding** | No special Unicode bullets or en-dashes that can corrupt — use plain hyphens and standard ASCII punctuation |
+
+### **Description Template**
+
+Use this authored-description shape for new and revised mutation copy:
+
+```csharp
+description: "Plain-language one-sentence summary.\n\n"
+    + "<b>Technical:</b> Trigger/timing, effect, scaling, and important limits.\n"
+    + "<b>Max Level Bonus:</b> Distinct max-level effect.\n"
+    + "Buffed by: Related Mutation.",
+```
+
+Notes:
+- Omit the max-level line when there is no distinct max-level effect.
+- Omit the `Buffed by:` line unless the synergy is real in code and important for player understanding.
+- Keep the summary readable on its own; a player should understand the headline effect before they reach the technical copy.
 
 ### **FlavorText Rules** *(separate policy)*
 
@@ -49,12 +67,12 @@ All mutation copy (name, description, flavor text) must follow these rules to ke
 ### **Copy Review Checklist** *(run before every PR that adds or changes mutation text)*
 
 1. Name ≤ 28 chars and 2–3 words?
-2. Description ≤ 220 rendered chars?
-3. Description follows Trigger → Effect → Max-Level order?
-4. No unexplained jargon in Description?
-5. `<b>Max Level Bonus:</b>` used for distinct max-level effects?
-6. No encoding artifacts (replacement chars, smart quotes, Unicode bullets)?
-7. FlavorText does not restate or contradict mechanics?
+2. Description starts with a plain-language summary sentence?
+3. Description uses `\n\n<b>Technical:</b>` for the implementation-accurate detail block?
+4. Technical copy matches the real trigger/timing, target rules, scaling, and limits in code?
+5. `<b>Max Level Bonus:</b>` appears only when there is a distinct max-level effect?
+6. `Buffed by:` appears only for real implemented synergy notes worth surfacing?
+7. No unexplained jargon, encoding artifacts, or contradictory flavor text?
 
 ---
 
@@ -122,7 +140,9 @@ If the mutation is a surge, also consider adding backbone suggestions in `Mutati
 helper.MakeChild(new Mutation(
     id: MutationIds.NewMutationName,
     name: "New Mutation Name",
-    description: $"Each level grants...",
+    description: "Short plain-language summary.\n\n"
+        + $"<b>Technical:</b> Trigger/timing. Each level grants {helper.FormatPercent(GameBalance.NewMutationEffectPerLevel)} ...\n"
+        + "<b>Max Level Bonus:</b> Distinct max-level effect.",
     flavorText: "Scientific flavor text...",
     type: MutationType.NewMutationType,
     effectPerLevel: GameBalance.NewMutationEffectPerLevel,

@@ -182,7 +182,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.ChemotacticMycotoxinsId,
             Name = "Chemotactic Mycotoxins",
-            Description = $"For the rest of the game, at the end of each decay phase, each isolated toxin may drift to a living enemy with X% chance (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} × Mycotoxin Tracer level; standard targeting rules).",
+            Description = $"For the rest of the game, at the end of each Decay Phase, each isolated toxin may drift to a living enemy with X% chance (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} × Mycotoxin Tracer level; standard targeting rules).",
             FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,

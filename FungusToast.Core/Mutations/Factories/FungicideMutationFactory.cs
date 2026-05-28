@@ -17,7 +17,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycotoxinTracer,
                 name: "Mycotoxin Tracer",
-                description: "At the start of each Decay Phase, scatter toxin tiles along enemy borders to block expansion. Each level increases expected toxin output: failed growths generate more tracer spores, and you gain an additional boost when your colony is small and struggling to spread. Baseline toxin output also rises at key level milestones. Toxins land on random empty tiles next to living enemies, are capped by board size, block normal growth, and cannot be reclaimed.",
+                description: "Scatters toxin tiles along enemy borders to slow expansion.\n\n" +
+                             "<b>Technical:</b> At the start of each Decay Phase, place toxin tiles on random empty tiles next to living enemies. Higher levels increase expected toxin output through stronger base rolls, more spillover from failed Growth Phases, and an extra boost when your colony has few living cells. Output is capped by board size, and toxin tiles block normal growth and cannot be reclaimed.",
                 flavorText: "Microscopic chemical trails seep outward, clouding enemy borders in dormant inhibition fields.",
                 type: MutationType.FungicideToxinSpores,
                 effectPerLevel: GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel,
@@ -31,7 +32,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.MycotoxinPotentiation,
                 name: "Mycotoxin Potentiation",
-                description: $"Each level extends the lifespan of new toxin tiles by {helper.FormatFloat(GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel)} growth cycle(s), " +
+                description: $"Each level extends the lifespan of new toxin tiles by {helper.FormatFloat(GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel)} Growth Cycle(s), " +
                              $"and grants a {helper.FormatPercent(GameBalance.MycotoxinPotentiationKillChancePerLevel)} chance per level to kill an enemy fungal cell adjacent in a cardinal direction (up / down / left / right) from each toxin tile during the Decay Phase.",
                 flavorText: "Toxins thicken with stabilizing glycoproteins, lingering longer and lashing out at encroaching invaders.",
                 type: MutationType.ToxinKillAura,

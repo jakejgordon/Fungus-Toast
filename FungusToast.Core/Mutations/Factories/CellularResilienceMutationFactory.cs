@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.HomeostaticHarmony,
                 name: "Homeostatic Harmony",
-                description: $"Keeps more of your colony alive through the decay phase.\n\n" +
+                description: $"Keeps more of your colony alive through the Decay Phase.\n\n" +
                              $"<b>Technical:</b> Each level reduces random decay chance by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)} and age-based decay chance by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)}.",
                 flavorText: "Oscillatory homeostasis stabilizes intracellular pressure and toxin accumulation.",
                 type: MutationType.DefenseSurvival,
@@ -33,7 +33,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChronoresilientCytoplasm,
                 name: "Chronoresilient Cytoplasm",
                 description: $"Lets your older cells stay stable longer before age-based decay starts.\n\n" +
-                             $"<b>Technical:</b> Each level delays the start of age-based decay by {helper.FormatFloat(GameBalance.ChronoresilientCytoplasmEffectPerLevel)} growth cycles.",
+                             $"<b>Technical:</b> Each level delays the start of age-based decay by {helper.FormatFloat(GameBalance.ChronoresilientCytoplasmEffectPerLevel)} Growth Cycles.",
                 flavorText: "Temporal buffering vesicles shield core organelles from oxidative stress.",
                 type: MutationType.AgeAndRandomnessDecayResistance,
                 effectPerLevel: GameBalance.ChronoresilientCytoplasmEffectPerLevel,

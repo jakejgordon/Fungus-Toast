@@ -34,7 +34,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
         }
 
         private GameBoard board;
-        private Player player; // perspective player
+        private int? perspectivePlayerId;
 
         public static RandomDecayChanceBreakdown BuildBreakdown(GameBoard board, Player player)
         {
@@ -52,7 +52,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
         public void Initialize(GameBoard gameBoard, Player perspectivePlayer)
         {
             board = gameBoard;
-            player = perspectivePlayer;
+            perspectivePlayerId = perspectivePlayer?.PlayerId;
         }
 
         public string GetTooltipText()
@@ -62,6 +62,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             int currentRound = board.CurrentRound;
             int scalingStart = GameBalance.RandomDecayScalingStartRound;
             float perRound = GameBalance.RandomDecayAdditionalChancePerRound; // fraction per round after start
+            Player player = ResolvePerspectivePlayer();
             int bloomLevel = player != null ? player.GetMutationLevel(MutationIds.MycelialBloom) : 0;
             int harmonyLevel = player != null ? player.GetMutationLevel(MutationIds.HomeostaticHarmony) : 0;
             RandomDecayChanceBreakdown breakdown = BuildBreakdown(board, player);
@@ -69,7 +70,7 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             var sb = new StringBuilder();
             string warningHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Warning);
             sb.AppendLine($"<b><color=#{warningHex}>Random Decay Chance</color></b>");
-            sb.AppendLine("Chance that a living, non-resistant cell dies randomly during each decay phase.");
+            sb.AppendLine("Chance that a living, non-resistant cell dies randomly during each Decay Phase.");
             sb.AppendLine();
 
             if (currentRound < scalingStart)
@@ -92,6 +93,16 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             sb.AppendLine($"Homeostatic Harmony Reduction: <b>-{breakdown.HarmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
             sb.AppendLine($"Effective Chance: <b>{breakdown.EffectiveChance * 100f:0.###}%</b>");
             return sb.ToString();
+        }
+
+        private Player ResolvePerspectivePlayer()
+        {
+            if (board == null || !perspectivePlayerId.HasValue)
+            {
+                return null;
+            }
+
+            return board.Players.Find(candidate => candidate.PlayerId == perspectivePlayerId.Value);
         }
     }
 }

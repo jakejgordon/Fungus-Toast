@@ -76,7 +76,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
                 "Time-Lapse Mode",
-                "Time-Lapse mode skips most animations so you can fly through the growth and decay phases. Toggle it here whenever you want a faster pace.",
+                "Time-Lapse mode skips most animations so you can fly through the Growth and Decay Phases. Toggle it here whenever you want a faster pace.",
                 NewPlayerTooltipSurface.MutationTreeCoachmark,
                 "Show when the mutation tree opens on round 5 unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(

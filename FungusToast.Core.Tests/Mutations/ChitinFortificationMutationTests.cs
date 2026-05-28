@@ -22,7 +22,8 @@ public class ChitinFortificationMutationTests
         var prereq = Assert.Single(mutation.Prerequisites);
         Assert.Equal(MutationIds.HomeostaticHarmony, prereq.MutationId);
         Assert.Equal(5, prereq.RequiredLevel);
-        Assert.Contains("random living cell(s) per level gain Resistant", mutation.Description);
+        Assert.Contains("Temporarily hardens part of your colony", mutation.Description);
+        Assert.Contains("random non-resistant living cells per level gain Resistant", mutation.Description);
         Assert.Contains("Resistant living cells cannot be killed or replaced", mutation.Description);
     }
 

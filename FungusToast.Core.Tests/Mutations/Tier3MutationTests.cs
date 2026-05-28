@@ -299,9 +299,9 @@ public class Tier3MutationTests
         var prereq = Assert.Single(mutation.Prerequisites);
         Assert.Equal(MutationIds.AdaptiveExpression, prereq.MutationId);
         Assert.Equal(3, prereq.RequiredLevel);
-        Assert.Contains("When you trail in living cells", mutation.Description);
-        Assert.Contains("Max Level Bonus", mutation.Description);
-        Assert.Contains("Mycotoxin Catabolism", mutation.Description);
+        Assert.Contains("Falling behind can turn into a burst of mutation points", mutation.Description);
+        Assert.Contains("when you trail in living cells", mutation.Description);
+        Assert.Contains("gain 1-5 bonus mutation points", mutation.Description);
     }
 
     [Fact]
@@ -319,7 +319,7 @@ public class Tier3MutationTests
         Assert.Contains("20.0%+ more living cells", mutation.Description);
         Assert.Contains("1.0%+ board control", mutation.Description);
         Assert.DoesNotContain(" %", mutation.Description);
-        Assert.Contains("Prefers infesting enemy cells over empty placement", mutation.Description);
+        Assert.Contains("preferring enemy living cells, then enemy toxins, then empty tiles, then dead cells", mutation.Description);
     }
 
     [Fact]

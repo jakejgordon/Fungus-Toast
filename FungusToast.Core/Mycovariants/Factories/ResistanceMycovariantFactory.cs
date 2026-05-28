@@ -103,7 +103,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.HyphalResistanceTransferId,
             Name = "Hyphal Resistance Transfer",
-            Description = $"For the rest of the game, after each growth phase, each of your living cells adjacent (including diagonally) to a Resistant cell becomes Resistant with {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance.",
+            Description = $"For the rest of the game, after each Growth Phase, each of your living cells adjacent (including diagonally) to a Resistant cell becomes Resistant with {MycovariantGameBalance.HyphalResistanceTransferChance * 100f:0}% chance.",
             FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Resistance,

@@ -362,9 +362,10 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            RandomDecayChanceTooltipProvider.RandomDecayChanceBreakdown breakdown = RandomDecayChanceTooltipProvider.BuildBreakdown(board, trackedPlayer);
+            Player perspectivePlayer = ResolveTrackedPlayer(board);
+            RandomDecayChanceTooltipProvider.RandomDecayChanceBreakdown breakdown = RandomDecayChanceTooltipProvider.BuildBreakdown(board, perspectivePlayer);
             randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(breakdown.EffectiveChance * 100f):0.0}% effective";
-            InitializeRandomDecayChanceTooltip(board, trackedPlayer);
+            InitializeRandomDecayChanceTooltip(board, perspectivePlayer);
         }
 
         public void TryShowAdaptationCoachmark(int currentRound)
@@ -1037,6 +1038,16 @@ namespace FungusToast.Unity.UI
             }
 
             trigger.SetDynamicProvider(provider);
+        }
+
+        private Player ResolveTrackedPlayer(GameBoard board)
+        {
+            if (trackedPlayer == null || board == null)
+            {
+                return trackedPlayer;
+            }
+
+            return board.Players.Find(candidate => candidate.PlayerId == trackedPlayer.PlayerId) ?? trackedPlayer;
         }
 
         private static RectTransform FindNamedChild(RectTransform parent, string childName)

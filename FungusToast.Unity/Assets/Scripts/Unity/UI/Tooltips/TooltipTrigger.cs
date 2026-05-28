@@ -18,6 +18,7 @@ namespace FungusToast.Unity.UI.Tooltips
         [SerializeField] private float hoverDelay = 0.38f;
         [SerializeField] private bool useCustomDelay = false;
         [SerializeField] private int maxWidth = 400;
+        private const float TooltipWidthScale = 1.2f;
         [SerializeField] private bool isHelpIcon = false; // tap toggles on touch
         [SerializeField] private bool followPointer = false; // reserved for future use
         [SerializeField] private TooltipPlacement placement = TooltipPlacement.Auto; // NEW: developer-selected placement
@@ -206,7 +207,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 Anchor = transform as RectTransform,
                 DynamicTextFunc = dyn,
                 StaticText = staticText,
-                MaxWidth = maxWidth > 0 ? maxWidth : (int?)null,
+                MaxWidth = maxWidth > 0 ? Mathf.RoundToInt(maxWidth * TooltipWidthScale) : (int?)null,
                 FollowPointer = followPointer,
                 PivotPreference = new Vector2(0f, 1f),
                 Placement = placement,

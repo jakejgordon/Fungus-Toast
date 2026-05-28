@@ -69,7 +69,8 @@ public class Tier5MutationTests
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.AdaptiveExpression && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChronoresilientCytoplasm && p.RequiredLevel == 1);
-        Assert.Contains("Also upgrades an additional Tier 1 mutation", mutation.Description);
+        Assert.Contains("target a Tier 2-4 non-surge mutation", mutation.Description);
+        Assert.Contains("one extra Tier 1 upgrade attempt on a second mutation", mutation.Description);
     }
 
     [Fact]

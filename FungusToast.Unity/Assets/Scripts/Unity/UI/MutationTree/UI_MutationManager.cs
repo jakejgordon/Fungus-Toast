@@ -24,7 +24,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string StorePointsTooltipText = "Store your unspent mutation points.\nThey carry over to the next turn,\nso you can save for stronger upgrades.";
         private const string NormalSpeedTooltipText = "Standard pacing keeps the full growth and decay presentation sequence.";
-        private const string TimeLapseTooltipText = "Skips most animations and speeds up growth cycles to reduce time between turns.";
+        private const string TimeLapseTooltipText = "Skips most animations and speeds up Growth Cycles to reduce time between turns.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;

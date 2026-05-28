@@ -17,7 +17,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MutatorPhenotype,
                 name: "Mutator Phenotype",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel, 1)} chance to automatically upgrade a random mutation at the start of each Mutation Phase.",
+                description: $"Can hand you a free Tier 1 mutation upgrade at the start of Mutation Phase.\n\n" +
+                             $"<b>Technical:</b> Each level gives a {helper.FormatPercent(GameBalance.MutatorPhenotypeEffectPerLevel, 1)} chance to automatically upgrade one random Tier 1 mutation at Mutation Phase start.",
                 flavorText: "Transposons disrupt regulatory silencing, igniting stochastic trait amplification.",
                 type: MutationType.AutoUpgradeRandom,
                 effectPerLevel: GameBalance.MutatorPhenotypeEffectPerLevel,
@@ -31,7 +32,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.AdaptiveExpression,
                 name: "Adaptive Expression",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel, 1)} chance to gain an additional mutation point at the start of each Mutation Phase. If the first point is awarded, each level also grants a {helper.FormatPercent(GameBalance.AdaptiveExpressionSecondPointChancePerLevel, 1)} chance to earn a second mutation point.",
+                description: $"Can generate extra mutation points at the start of Mutation Phase.\n\n" +
+                             $"<b>Technical:</b> Each level gives a {helper.FormatPercent(GameBalance.AdaptiveExpressionEffectPerLevel, 1)} chance to gain 1 bonus mutation point at Mutation Phase start. If that point is awarded, each level also gives a {helper.FormatPercent(GameBalance.AdaptiveExpressionSecondPointChancePerLevel, 1)} chance to gain a second bonus mutation point.",
                 flavorText: "Epigenetic drift activates opportunistic transcription bursts in volatile environments.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AdaptiveExpressionEffectPerLevel,
@@ -44,8 +46,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.MycotoxinCatabolism,
                 name: "Mycotoxin Catabolism",
-                description: $"At growth start, each level grants a {helper.FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel, 1)} chance for living cells to consume each adjacent toxin tile. " +
-                             $"Each consumed toxin has a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to award a bonus mutation point (max {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound} per round).",
+                description: $"Lets living cells break down nearby toxins for cleanup and occasional mutation points.\n\n" +
+                             $"<b>Technical:</b> At growth start, each living cell rolls {helper.FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel, 1)} per level to consume each adjacent toxin in a cardinal direction (up / down / left / right). Each toxin consumed this way has a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to award 1 bonus mutation point, up to {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound} per round.",
                 flavorText: "Evolved metabolic pathways enable the breakdown of toxic compounds, reclaiming nutrients from chemical hazards and occasionally triggering adaptive bursts of mutation.",
                 type: MutationType.ToxinCleanupAndMPBonus,
                 effectPerLevel: GameBalance.MycotoxinCatabolismCleanupChancePerLevel,
@@ -59,8 +61,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.AnabolicInversion,
                 name: "Anabolic Inversion",
-                description: $"When you trail in living cells, each level adds a {helper.FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel, 1)} chance to earn 1-5 bonus mutation points at Mutation Phase start. Larger deficits raise both odds and payout size.\n" +
-                    $"<b>Max Level Bonus:</b> Boosts Mycotoxin Catabolism cleanup chance by {helper.FormatPercent(GameBalance.AnabolicInversionCatabolismCleanupMultiplier)} against players with more living cells.",
+                description: $"Falling behind can turn into a burst of mutation points.\n\n" +
+                    $"<b>Technical:</b> At Mutation Phase start, when you trail in living cells, each level adds a {helper.FormatPercent(GameBalance.AnabolicInversionGapBonusPerLevel, 1)} chance to gain 1-5 bonus mutation points. Larger living-cell deficits increase both the odds and the payout.",
                 flavorText: "Under metabolic duress, anabolism inverts into compensatory feedback loops, prioritizing genomic plasticity.",
                 type: MutationType.BonusMutationPointChance,
                 effectPerLevel: GameBalance.AnabolicInversionGapBonusPerLevel,
@@ -75,8 +77,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecrophyticBloom,
                 name: "Necrophytic Bloom",
                 description:
-                    $"At Decay Phase end, dead non-toxin regions of at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells have a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to compost into a neutral nutrient patch (max {GameBalance.NecrophyticBloomMaxPatchSize} tiles; max {GameBalance.NecrophyticBloomMaxPatchesPerRound} per round). " +
-                    $"Each level reduces the minimum size by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and raises the chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}.\n" +
+                    $"Large clusters of your dead cells can compost into neutral nutrient patches.\n\n" +
+                    $"<b>Technical:</b> At Decay Phase end, each dead non-toxin cluster of at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells has a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to convert into a neutral nutrient patch, up to {GameBalance.NecrophyticBloomMaxPatchSize} tiles and {GameBalance.NecrophyticBloomMaxPatchesPerRound} patches per round. Each level lowers the cluster requirement by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and increases compost chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}.\n" +
                     $"<b>Max Level Bonus:</b> Can also create Hypervariation Development patches.",
                 flavorText: "The colony learns to compost its dead into concentrated nourishment, turning loss into contested resources.",
                 type: MutationType.NecrophyticBloomSporeDrop,
@@ -94,9 +96,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.HyperadaptiveDrift,
                 name: "Hyperadaptive Drift",
                 description:
-                    $"Enhances Mutator Phenotype. Each level grants a {helper.FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, 1)} chance to auto-upgrade a Tier 2-4 mutation instead of Tier 1. " +
-                    $"On Tier 1 fallback, each level has a {helper.FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel, 1)} chance to upgrade it {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} extra times.\n" +
-                    $"<b>Max Level Bonus:</b> Also upgrades an additional Tier 1 mutation {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} times.",
+                    $"Makes Mutator Phenotype reach further up your tree and sometimes chain extra Tier 1 upgrades.\n\n" +
+                    $"<b>Technical:</b> When Mutator Phenotype triggers, each level gives a {helper.FormatPercent(GameBalance.HyperadaptiveDriftHigherTierChancePerLevel, 1)} chance to target a Tier 2-4 non-surge mutation instead of Tier 1. If it falls back to Tier 1, each level also gives a {helper.FormatPercent(GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel, 1)} chance to make up to {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} total upgrade attempts on that mutation.\n" +
+                    $"<b>Max Level Bonus:</b> Also makes one extra Tier 1 upgrade attempt on a second mutation.",
                 flavorText: "The colony achieves a state of hyperplasticity, capable of instantaneous genomic restructuring and parallel mutation cascades.",
                 type: MutationType.FreeMutationUpgrade,
                 effectPerLevel: 1.0f,
@@ -115,8 +117,9 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.OntogenicRegression,
                 name: "Ontogenic Regression",
-                description: $"Each level grants a {helper.FormatPercent(GameBalance.OntogenicRegressionChancePerLevel, 1)} chance at Mutation Phase start to consume {GameBalance.OntogenicRegressionTier1LevelsToConsume} levels from a Tier 1 mutation and convert them into a random Tier 5 or 6 upgrade, ignoring prerequisites.\n" +
-                             $"<b>Max Level Bonus:</b> Triggers twice.",
+                description: $"Can trade away early mutations to force a late-game upgrade.\n\n" +
+                             $"<b>Technical:</b> At Mutation Phase start, each level gives a {helper.FormatPercent(GameBalance.OntogenicRegressionChancePerLevel, 1)} chance to remove {GameBalance.OntogenicRegressionTier1LevelsToConsume} levels from a random Tier 1 mutation and add 1 level to a random Tier 5 or 6 mutation, ignoring prerequisites. If the roll fails or no valid source or target exists, gain {GameBalance.OntogenicRegressionFailureConsolationPoints} mutation points instead.\n" +
+                             $"<b>Max Level Bonus:</b> Triggers twice, and can kill adjacent non-resistant enemy living cells to reduce the Tier 1 levels consumed by 1 per {GameBalance.OntogenicRegressionEnemyKillsPerLevelReduction} kills, to a minimum of 1.",
                 flavorText: "Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence through ontogenic reversal.",
                 type: MutationType.OntogenicRegression,
                 effectPerLevel: GameBalance.OntogenicRegressionChancePerLevel,

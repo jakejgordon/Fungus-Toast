@@ -24,7 +24,8 @@ public class Tier4MutationTests
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 2);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotropicInduction && p.RequiredLevel == 1);
-        Assert.Contains("After growth and before decay", mutation.Description);
+        Assert.Contains("Brings your own dead cells back near your living colony", mutation.Description);
+        Assert.Contains("After the Growth Phase and before the Decay Phase", mutation.Description);
         Assert.Contains("checked at most once per round", mutation.Description);
     }
 

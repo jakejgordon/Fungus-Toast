@@ -21,6 +21,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
         private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
+        private static readonly Color TooltipSectionLabelColor = UIStyleTokens.Accent.Spore;
+        private static readonly Color TooltipBonusLabelColor = UIStyleTokens.State.Warning;
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
@@ -457,9 +459,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private string BuildTooltip()
         {
             StringBuilder sb = new StringBuilder();
+            string categoryDisplayName = GetMutationCategoryDisplayName(mutation.Category);
 
             sb.AppendLine($"<b>{mutation.Name}</b>");
-            sb.AppendLine($"<i>(Tier {mutation.TierNumber} • {mutation.Category})</i>");
+            sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>(Tier {mutation.TierNumber} • {categoryDisplayName})</color></i>");
             sb.AppendLine();
 
             int currentLevel = player.GetMutationLevel(mutation.Id);
@@ -489,7 +492,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (mutation.Prerequisites.Count > 0)
             {
-                sb.AppendLine("<i>Requires:</i>");
+                sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Requires:</color></i>");
                 foreach (var prereq in mutation.Prerequisites)
                 {
                     int ownedLevel = player.GetMutationLevel(prereq.MutationId);
@@ -513,7 +516,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
-            sb.AppendLine(mutation.Description);
+            sb.AppendLine(FormatMutationDescription(mutation.Description));
 
             AppendDynamicMutationDetails(sb, currentLevel);
 
@@ -591,11 +594,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private void AppendLevelSummaryBlock(StringBuilder sb, int currentLevel, System.Func<int, string> buildSummary)
         {
             sb.AppendLine();
-            sb.AppendLine($"<b>Current Level ({currentLevel})</b> - {buildSummary(currentLevel)}");
+            sb.AppendLine($"{BuildSectionLabel($"Current Level ({currentLevel})", TooltipSectionLabelColor)} {buildSummary(currentLevel)}");
 
             if (currentLevel < mutation.MaxLevel)
             {
-                sb.AppendLine($"<b>Next Level ({currentLevel + 1})</b> - {buildSummary(currentLevel + 1)}");
+                sb.AppendLine($"{BuildSectionLabel($"Next Level ({currentLevel + 1})", TooltipSectionLabelColor)} {buildSummary(currentLevel + 1)}");
             }
         }
 
@@ -613,7 +616,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private string BuildChronoresilientCytoplasmSummary(int level)
         {
             float ageThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + mutation.GetTotalEffect(level);
-            return $"Age-based decay starts after {ageThreshold:0} growth cycles";
+            return $"Age-based decay starts after {ageThreshold:0} Growth Cycles";
         }
 
         private string BuildNecrosporulationSummary(int level)
@@ -709,11 +712,43 @@ namespace FungusToast.Unity.UI.MutationTree
             int hypersystemicLevel = player.GetMutationLevel(MutationIds.HypersystemicRegeneration);
             if (hypersystemicLevel <= 0)
             {
-                return $"{baseChancePercent:0.00}% reclaim roll per living cell after growth";
+                return $"{baseChancePercent:0.00}% reclaim roll per living cell after the Growth Phase";
             }
 
             float effectiveChancePercent = (mutation.GetTotalEffect(level) * (1f + (hypersystemicLevel * GameBalance.HypersystemicRegenerationEffectivenessBonus))) * 100f;
-            return $"{baseChancePercent:0.00}% reclaim roll per living cell after growth ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
+            return $"{baseChancePercent:0.00}% reclaim roll per living cell after the Growth Phase ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
+        }
+
+        private string FormatMutationDescription(string description)
+        {
+            if (string.IsNullOrEmpty(description))
+            {
+                return string.Empty;
+            }
+
+            string formatted = description;
+            formatted = formatted.Replace("\n<b>Max Level Bonus:</b>", "\n[[MAX_LEVEL_BONUS]]");
+            formatted = formatted.Replace("<b>Max Level Bonus:</b>", "\n[[MAX_LEVEL_BONUS]]");
+            formatted = formatted.Replace("<b>Technical:</b>", BuildSectionLabel("Technical", TooltipSectionLabelColor));
+            formatted = formatted.Replace("[[MAX_LEVEL_BONUS]]", BuildSectionLabel("Max Level Bonus", TooltipBonusLabelColor));
+            formatted = formatted.Replace("\nBuffed by:", "\n[[BUFFED_BY]]");
+            formatted = formatted.Replace("Buffed by:", "[[BUFFED_BY]]");
+            formatted = formatted.Replace("[[BUFFED_BY]]", BuildSectionLabel("Buffed by", TooltipSectionLabelColor));
+            return formatted;
+        }
+
+        private static string BuildSectionLabel(string label, Color color)
+            => $"<color=#{ToHex(color)}><b>{label}:</b></color>";
+
+        private static string GetMutationCategoryDisplayName(MutationCategory category)
+        {
+            return category switch
+            {
+                MutationCategory.CellularResilience => "Cellular Resilience",
+                MutationCategory.GeneticDrift => "Genetic Drift",
+                MutationCategory.MycelialSurges => "Mycelial Surges",
+                _ => category.ToString()
+            };
         }
 
         private string BuildCreepingMoldSummary(int level)
