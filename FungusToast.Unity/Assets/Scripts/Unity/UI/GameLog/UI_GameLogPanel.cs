@@ -197,11 +197,19 @@ namespace FungusToast.Unity.UI.GameLog
                     if (e != null) entryPool.Release(e);
                 entryUIs.Clear();
 
-                // Populate with current history once
-                foreach (var entry in logManager.GetRecentEntries(maxVisibleEntries))
+                if (isPlayerSpecificPanel && activePlayerId >= 0)
                 {
-                    AddLogEntry(entry);
+                    RebuildForPlayerEntries(logManager.GetRecentEntries(maxVisibleEntries));
                 }
+                else
+                {
+                    // Populate with current history once
+                    foreach (var entry in logManager.GetRecentEntries(maxVisibleEntries))
+                    {
+                        AddLogEntry(entry);
+                    }
+                }
+
                 QueueLayoutRefresh();
                 QueueBottomScrollFollowup();
             }
@@ -261,6 +269,12 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 if (activePlayerId < 0) return; // not yet bound
                 if (entry.PlayerId.HasValue && entry.PlayerId.Value != activePlayerId) return;
+
+                if (logManager != null)
+                {
+                    RebuildForPlayerEntries(logManager.GetRecentEntries(maxVisibleEntries));
+                    return;
+                }
             }
 
             CreateVisualEntry(entry);
@@ -269,6 +283,8 @@ namespace FungusToast.Unity.UI.GameLog
         private void CreateVisualEntry(GameLogEntry entry)
         {
             var entryUI = entryPool.Get();
+            entryUI.transform.SetParent(contentParent, false);
+            entryUI.transform.SetAsLastSibling();
             entryUI.SetEntry(entry);
             entryUIs.Add(entryUI);
             entryUI.FadeIn();

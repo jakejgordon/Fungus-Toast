@@ -1454,7 +1454,7 @@ namespace FungusToast.Unity
                     customDraftOrder: new List<Player> { draftPlayer },
                     phaseBannerMessage: "Hypervariation Draft!",
                     draftTitle: "Hypervariation Draft",
-                    draftBlurb: "Hypervariation has destabilized this colony. Draft one mycovariant for the player who claimed the patch.",
+                    draftBlurb: "Hypervariation destabilized the colony. The patch claimer drafts one mycovariant.",
                     draftStartMessage: $"Hypervariation draft triggered. Only {draftPlayer.PlayerName} drafts this round.",
                     humanTurnBannerText: "Your Hypervariation draft awaits!",
                     aiTurnBannerPrefix: "Hypervariation Drafting",

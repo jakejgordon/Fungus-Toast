@@ -19,8 +19,12 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private float minimumReservedTimestampWidth = 34f;
         private bool deferredScheduled = false;
 
+        public int DisplayedRound { get; private set; }
+
         public void SetEntry(GameLogEntry entry)
         {
+            DisplayedRound = entry.Round;
+
             if (messageText != null)
             {
                 messageText.text = entry.Message;
@@ -152,6 +156,8 @@ namespace FungusToast.Unity.UI.GameLog
                 messageText.text = string.Empty;
             if (timestampText != null)
                 timestampText.text = string.Empty;
+
+            DisplayedRound = 0;
 
             var canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup != null)

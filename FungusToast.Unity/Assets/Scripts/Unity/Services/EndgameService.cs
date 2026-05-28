@@ -1403,15 +1403,13 @@ namespace FungusToast.Unity
             var logManager = gameUIManager?.GameLogManager;
             var playerLogPanel = gameUIManager?.GameLogPanel;
 
+            // The player activity log needs player-specific rebuild behavior even in single-human games,
+            // because delayed round summaries can arrive after newer-round entries.
+            playerLogPanel?.EnablePlayerSpecificFiltering();
+
             logManager?.SetActiveHumanPlayer(player.PlayerId, board);
-            logManager?.EmitPendingSegmentSummariesFor(player.PlayerId);
-
-            if (humanPlayerCount > 1)
-            {
-                playerLogPanel?.EnablePlayerSpecificFiltering();
-            }
-
             playerLogPanel?.SetActivePlayer(player.PlayerId, player.PlayerName);
+            logManager?.EmitPendingSegmentSummariesFor(player.PlayerId);
             setPrimaryHuman?.Invoke(player);
             gameUIManager?.RightSidebar?.SetPerspectivePlayer(player);
         }

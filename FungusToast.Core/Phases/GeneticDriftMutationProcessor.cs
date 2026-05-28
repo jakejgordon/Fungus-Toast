@@ -628,15 +628,7 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
-                List<FungalCell> sacrificed = new();
                 int effectiveLevelsToConsume = GameBalance.OntogenicRegressionTier1LevelsToConsume;
-                int reductionsAchieved = 0;
-                if (atMaxLevel)
-                {
-                    sacrificed = CollectOntogenicRegressionSacrifices(player, board, rng, effectiveLevelsToConsume, out reductionsAchieved);
-                    if (reductionsAchieved > 0)
-                        effectiveLevelsToConsume = Math.Max(1, effectiveLevelsToConsume - reductionsAchieved);
-                }
 
                 var tier1Mutations = allMutations
                     .Where(m => m.Tier == MutationTier.Tier1)
@@ -652,9 +644,18 @@ namespace FungusToast.Core.Phases
                     continue;
                 }
 
-                var targetMutations = allMutations
-                    .Where(m => m.Tier == MutationTier.Tier5 || m.Tier == MutationTier.Tier6)
+                var tier5TargetMutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier5)
                     .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
+                    .ToList();
+
+                var tier6TargetMutations = allMutations
+                    .Where(m => m.Tier == MutationTier.Tier6)
+                    .Where(m => player.GetMutationLevel(m.Id) < m.MaxLevel)
+                    .ToList();
+
+                var targetMutations = tier5TargetMutations
+                    .Concat(tier6TargetMutations)
                     .ToList();
 
                 if (!targetMutations.Any())
@@ -667,7 +668,12 @@ namespace FungusToast.Core.Phases
                 }
 
                 var sourceMutation = tier1Mutations[rng.Next(tier1Mutations.Count)];
-                var targetMutation = targetMutations[rng.Next(targetMutations.Count)];
+                var targetMutation = SelectOntogenicRegressionTargetMutation(
+                    tier5TargetMutations,
+                    tier6TargetMutations,
+                    targetMutations,
+                    atMaxLevel,
+                    rng);
                 if (sourceMutation == null || targetMutation == null)
                     continue;
 
@@ -679,53 +685,24 @@ namespace FungusToast.Core.Phases
                 player.SetMutationLevel(targetMutation.Id, currentTargetLevel + 1, board.CurrentRound, observer);
 
                 observer.RecordOntogenicRegressionEffect(player.PlayerId, sourceMutation.Name, effectiveLevelsToConsume, targetMutation.Name, 1);
-                if (sacrificed.Count > 0)
-                {
-                    observer.RecordOntogenicRegressionSacrifices(player.PlayerId, sacrificed.Count, reductionsAchieved);
-                }
             }
         }
 
-        private static List<FungalCell> CollectOntogenicRegressionSacrifices(Player player, GameBoard board, Random rng, int baseLevelsToConsume, out int levelReductions)
+        private static Mutation SelectOntogenicRegressionTargetMutation(
+            List<Mutation> tier5TargetMutations,
+            List<Mutation> tier6TargetMutations,
+            List<Mutation> targetMutations,
+            bool atMaxLevel,
+            Random rng)
         {
-            levelReductions = 0;
-            var enemyCells = new HashSet<FungalCell>();
-            foreach (var myCell in board.GetAllCellsOwnedBy(player.PlayerId))
+            if (!atMaxLevel || tier5TargetMutations.Count == 0 || tier6TargetMutations.Count == 0)
             {
-                if (!myCell.IsAlive) continue;
-                foreach (var neighbor in board.GetOrthogonalNeighbors(myCell.TileId))
-                {
-                    var c = neighbor.FungalCell;
-                    if (c != null && c.IsAlive && c.OwnerPlayerId.HasValue && c.OwnerPlayerId.Value != player.PlayerId && !c.IsResistant)
-                    {
-                        enemyCells.Add(c);
-                    }
-                }
-            }
-            if (enemyCells.Count == 0) return new();
-
-            var list = enemyCells.ToList();
-            // Shuffle
-            for (int i = list.Count - 1; i > 0; i--)
-            {
-                int j = rng.Next(i + 1);
-                (list[i], list[j]) = (list[j], list[i]);
+                return targetMutations[rng.Next(targetMutations.Count)];
             }
 
-            int killsPerReduction = GameBalance.OntogenicRegressionEnemyKillsPerLevelReduction;
-            int maxKillsNeeded = (baseLevelsToConsume - 1) * killsPerReduction;
-            int killsPerformed = 0;
-            var sacrificed = new List<FungalCell>();
-            foreach (var enemy in list)
-            {
-                if (killsPerformed >= maxKillsNeeded) break;
-                // Execute normal kill pipeline so other effects can react
-                board.KillFungalCell(enemy, Death.DeathReason.CytolyticBurst, player.PlayerId); // reuse a reason; ideally add new reason later
-                sacrificed.Add(enemy);
-                killsPerformed++;
-            }
-            levelReductions = killsPerformed / killsPerReduction;
-            return sacrificed;
+            bool chooseTier6 = rng.NextDouble() < GameBalance.OntogenicRegressionMaxLevelTier6Bias;
+            var preferredTargets = chooseTier6 ? tier6TargetMutations : tier5TargetMutations;
+            return preferredTargets[rng.Next(preferredTargets.Count)];
         }
 
         public static void TryApplyAdaptiveExpression(

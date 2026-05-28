@@ -56,7 +56,7 @@ public class Tier6MutationTests
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 10);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MutatorPhenotype && p.RequiredLevel == 10);
         Assert.Contains("Rolls twice", mutation.Description);
-        Assert.Contains("every 5 kills reduces the Tier 1 levels consumed by 1", mutation.Description);
+        Assert.Contains("70% chance to target a Tier 6 mutation instead of Tier 5", mutation.Description);
     }
 
     [Fact]
@@ -170,6 +170,64 @@ public class Tier6MutationTests
             "Expected Ontogenic Regression to upgrade a tier 5 or tier 6 mutation.");
         Assert.Equal(3, observer.OntogenicRegressionSourceLevelsLost);
         Assert.Equal(1, observer.OntogenicRegressionTargetLevelsGained);
+    }
+
+    [Fact]
+    public void TryApplyOntogenicRegression_at_max_level_biases_selection_toward_tier6_when_bias_roll_hits()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = CreatePlayer(0);
+        board.Players.Add(player);
+        for (int i = 0; i < 5; i++) board.IncrementRound();
+        player.SetMutationLevel(MutationIds.OntogenicRegression, newLevel: GameBalance.OntogenicRegressionMaxLevel, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 6, currentRound: 1);
+
+        var allMutations = new List<Mutation>
+        {
+            RequireMutation(MutationIds.MycelialBloom),
+            RequireMutation(MutationIds.HyperadaptiveDrift),
+            RequireMutation(MutationIds.CatabolicRebirth)
+        };
+
+        GeneticDriftMutationProcessor.TryApplyOntogenicRegression(
+            player,
+            allMutations,
+            new IndexedSequenceRandom(doubleValues: new[] { 0.0, 0.0, 0.999999 }, intValues: new[] { 0, 0 }),
+            board,
+            new CountingObserver());
+
+        Assert.Equal(3, player.GetMutationLevel(MutationIds.MycelialBloom));
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.HyperadaptiveDrift));
+        Assert.Equal(1, player.GetMutationLevel(MutationIds.CatabolicRebirth));
+    }
+
+    [Fact]
+    public void TryApplyOntogenicRegression_at_max_level_can_still_select_tier5_when_bias_roll_misses()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = CreatePlayer(0);
+        board.Players.Add(player);
+        for (int i = 0; i < 5; i++) board.IncrementRound();
+        player.SetMutationLevel(MutationIds.OntogenicRegression, newLevel: GameBalance.OntogenicRegressionMaxLevel, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycelialBloom, newLevel: 6, currentRound: 1);
+
+        var allMutations = new List<Mutation>
+        {
+            RequireMutation(MutationIds.MycelialBloom),
+            RequireMutation(MutationIds.HyperadaptiveDrift),
+            RequireMutation(MutationIds.CatabolicRebirth)
+        };
+
+        GeneticDriftMutationProcessor.TryApplyOntogenicRegression(
+            player,
+            allMutations,
+            new IndexedSequenceRandom(doubleValues: new[] { 0.0, 0.8, 0.999999 }, intValues: new[] { 0, 0 }),
+            board,
+            new CountingObserver());
+
+        Assert.Equal(3, player.GetMutationLevel(MutationIds.MycelialBloom));
+        Assert.Equal(1, player.GetMutationLevel(MutationIds.HyperadaptiveDrift));
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.CatabolicRebirth));
     }
 
     [Fact]
@@ -306,6 +364,48 @@ public class Tier6MutationTests
         protected override double Sample()
         {
             return values.Count > 0 ? values.Dequeue() : 0.0;
+        }
+    }
+
+    private sealed class IndexedSequenceRandom : Random
+    {
+        private readonly Queue<double> doubleValues;
+        private readonly Queue<int> intValues;
+
+        public IndexedSequenceRandom(IEnumerable<double> doubleValues, IEnumerable<int> intValues)
+        {
+            this.doubleValues = new Queue<double>(doubleValues);
+            this.intValues = new Queue<int>(intValues);
+        }
+
+        protected override double Sample()
+        {
+            return doubleValues.Count > 0 ? doubleValues.Dequeue() : 0.0;
+        }
+
+        public override int Next(int maxValue)
+        {
+            if (maxValue <= 1)
+            {
+                return 0;
+            }
+
+            if (intValues.Count == 0)
+            {
+                return 0;
+            }
+
+            return Math.Clamp(intValues.Dequeue(), 0, maxValue - 1);
+        }
+
+        public override int Next(int minValue, int maxValue)
+        {
+            if (maxValue <= minValue)
+            {
+                return minValue;
+            }
+
+            return minValue + Next(maxValue - minValue);
         }
     }
 

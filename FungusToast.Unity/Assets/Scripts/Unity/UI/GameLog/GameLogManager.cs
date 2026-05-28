@@ -46,7 +46,13 @@ namespace FungusToast.Unity.UI.GameLog
 
             public void Add(PlayerLogEvent e) => _events.Add(e);
 
-            public IEnumerable<PlayerLogEvent> GetLast(int count) => _events.TakeLast(count);
+            public IEnumerable<PlayerLogEvent> GetLast(int count)
+            {
+                return _events
+                    .OrderBy(e => e.Round)
+                    .ThenBy(e => e.Timestamp)
+                    .TakeLast(count);
+            }
 
             public void Clear(int round)
             {
@@ -910,7 +916,21 @@ namespace FungusToast.Unity.UI.GameLog
                 $"Perispore Crown triggered on draft, granting {mutationPointsAwarded} mutation {pointsLabel}",
                 GameLogCategory.Lucky);
         }
-        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints) { if (bonusPoints > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Ontogenic Regression", bonusPoints); }
+        public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
+        {
+            if (!IsHuman(playerId) || bonusPoints <= 0)
+            {
+                return;
+            }
+
+            AddFreePoints(playerId, "Ontogenic Regression", bonusPoints);
+
+            string pointsLabel = bonusPoints == 1 ? "point" : "points";
+            AddPlayerEvent(
+                playerId,
+                $"Ontogenic Regression failed to find a valid swap and granted {bonusPoints} mutation {pointsLabel}",
+                GameLogCategory.Lucky);
+        }
         public void RecordOntogenicRegressionSacrifices(int playerId, int cellsKilled, int levelsOffset) { }
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
@@ -982,7 +1002,23 @@ namespace FungusToast.Unity.UI.GameLog
                 GameLogCategory.Lucky);
         }
         public void RecordMutationUpgradeEvent(int playerId, int mutationId, string mutationName, MutationTier mutationTier, int oldLevel, int newLevel, int round, int mutationPointsBefore, int mutationPointsAfter, int pointsSpent, string upgradeSource) { }
-        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained) { if (IsHuman(playerId) && targetLevelsGained > 0 && !string.IsNullOrEmpty(targetMutationName)) AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained); }
+        public void RecordOntogenicRegressionEffect(int playerId, string sourceMutationName, int sourceLevelsLost, string targetMutationName, int targetLevelsGained)
+        {
+            if (!IsHuman(playerId) || targetLevelsGained <= 0 || string.IsNullOrWhiteSpace(targetMutationName))
+            {
+                return;
+            }
+
+            AddFreeUpgrade(playerId, "Ontogenic Regression", targetMutationName, targetLevelsGained);
+
+            string sourceLabel = string.IsNullOrWhiteSpace(sourceMutationName) ? "a Tier 1 mutation" : sourceMutationName;
+            string lostLevelsLabel = sourceLevelsLost == 1 ? "level" : "levels";
+            string gainedLevelsLabel = targetLevelsGained == 1 ? "level" : "levels";
+            AddPlayerEvent(
+                playerId,
+                $"Ontogenic Regression consumed {sourceLevelsLost} {lostLevelsLabel} of {sourceLabel} to grant {targetLevelsGained} free {gainedLevelsLabel} of {targetMutationName}",
+                GameLogCategory.Lucky);
+        }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned, bool deprecated = true) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
         public void RecordChemotacticMycotoxinsRelocations(int playerId, int relocations) { }
         public void RecordConidialRelayRelocation(int playerId) { if (IsHuman(playerId)) AddPlayerEvent(playerId, "Starting cell relocated via Conidial Relay", GameLogCategory.Lucky); }

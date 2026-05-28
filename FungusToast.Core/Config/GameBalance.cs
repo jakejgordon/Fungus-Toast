@@ -247,7 +247,7 @@ namespace FungusToast.Core.Config
         public const int OntogenicRegressionTier1LevelsToConsume = 3;
         public const int OntogenicRegressionMaxLevel = 3;
         public const int OntogenicRegressionFailureConsolationPoints = 3; // Points awarded when regression fails
-        public const int OntogenicRegressionEnemyKillsPerLevelReduction = 5; // NEW: enemy living cells killed per tier1 level offset at max level
+        public const float OntogenicRegressionMaxLevelTier6Bias = 0.70f; // 20-point max-level bias toward Tier 6 targets when both Tier 5 and Tier 6 are available
 
         // Hypersystemic Regeneration (Tier 7 CellularResilience)
         public const float HypersystemicRegenerationEffectivenessBonus = 0.015f; // X% per level boost to Regenerative Hyphae
