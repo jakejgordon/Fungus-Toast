@@ -24,7 +24,8 @@ public class Tier4MutationTests
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 2);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotropicInduction && p.RequiredLevel == 1);
-        Assert.Contains("Only one attempt can be made on each dead cell per round", mutation.Description);
+        Assert.Contains("After growth and before decay", mutation.Description);
+        Assert.Contains("checked at most once per round", mutation.Description);
     }
 
     [Fact]

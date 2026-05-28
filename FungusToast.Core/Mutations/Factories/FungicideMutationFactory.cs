@@ -32,7 +32,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MycotoxinPotentiation,
                 name: "Mycotoxin Potentiation",
                 description: $"Each level extends the lifespan of new toxin tiles by {helper.FormatFloat(GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel)} growth cycle(s), " +
-                             $"and grants a {helper.FormatPercent(GameBalance.MycotoxinPotentiationKillChancePerLevel)} chance per level to kill an orthogonally adjacent enemy fungal cell from each toxin tile during the Decay Phase.",
+                             $"and grants a {helper.FormatPercent(GameBalance.MycotoxinPotentiationKillChancePerLevel)} chance per level to kill an enemy fungal cell adjacent in a cardinal direction (up / down / left / right) from each toxin tile during the Decay Phase.",
                 flavorText: "Toxins thicken with stabilizing glycoproteins, lingering longer and lashing out at encroaching invaders.",
                 type: MutationType.ToxinKillAura,
                 effectPerLevel: GameBalance.MycotoxinPotentiationKillChancePerLevel,
@@ -47,7 +47,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveMycotoxin,
                 name: "Putrefactive Mycotoxin",
-                description: $"Each level adds a {helper.FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells orthogonally adjacent to your living fungal cells.\n" +
+                description: $"Each level adds a {helper.FormatPercent(GameBalance.PutrefactiveMycotoxinEffectPerLevel)} death chance to enemy cells adjacent to your living fungal cells in a cardinal direction (up / down / left / right).\n" +
                              $"<b>Max Level Bonus:</b> Your active Chemotactic Beacon also applies this kill chance within <b>2 tiles</b>, including diagonals.",
                 flavorText: "Secretes lipid-bound mycotoxins through adjacent cell walls, disrupting membrane integrity.",
                 type: MutationType.AdjacentFungicide,

@@ -17,7 +17,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.HomeostaticHarmony,
                 name: "Homeostatic Harmony",
-                description: $"Each level reduces the chance of random and age-based deaths by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)}.",
+                description: $"Keeps more of your colony alive through the decay phase.\n\n" +
+                             $"<b>Technical:</b> Each level reduces random decay chance by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)} and age-based decay chance by {helper.FormatPercent(GameBalance.HomeostaticHarmonyEffectPerLevel)}.",
                 flavorText: "Oscillatory homeostasis stabilizes intracellular pressure and toxin accumulation.",
                 type: MutationType.DefenseSurvival,
                 effectPerLevel: GameBalance.HomeostaticHarmonyEffectPerLevel,
@@ -60,7 +61,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecrohyphalInfiltration,
                 name: "Necrohyphal Infiltration",
                 description:
-                    $"Each level grants a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance for living cells to invade an orthogonally adjacent dead enemy cell. " +
+                    $"Each level grants a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance for living cells to invade a dead enemy cell adjacent in a cardinal direction (up / down / left / right). " +
                     $"On success, each level also grants a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to chain into another adjacent dead cell.",
                 flavorText: "Necrohyphae tunnel through decaying rivals, infiltrating their remains and reawakening them as loyal extensions of the colony. On rare occasions, this necrotic surge propagates, consuming entire graveyards in a wave of resurrection.",
                 type: MutationType.NecrohyphalInfiltration,

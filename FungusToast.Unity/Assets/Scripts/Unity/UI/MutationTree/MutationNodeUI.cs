@@ -10,6 +10,7 @@ using System.Linq;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Config;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
@@ -514,6 +515,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             sb.AppendLine(mutation.Description);
 
+            AppendDynamicMutationDetails(sb, currentLevel);
+
             if (!string.IsNullOrEmpty(mutation.FlavorText))
             {
                 sb.AppendLine();
@@ -535,6 +538,126 @@ namespace FungusToast.Unity.UI.MutationTree
 
             string sourceName = player.GetAdaptation(AdaptationIds.HyphalEcho)?.Adaptation?.Name ?? "Hyphal Echo";
             return $"<b>Round Duration:</b> {totalDuration} (including +{durationBonus} bonus from {sourceName})";
+        }
+
+        private void AppendDynamicMutationDetails(StringBuilder sb, int currentLevel)
+        {
+            switch (mutation.Id)
+            {
+                case MutationIds.HomeostaticHarmony:
+                    AppendHomeostaticHarmonyDetails(sb, currentLevel);
+                    break;
+                case MutationIds.MycelialBloom:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycelialBloomSummary);
+                    break;
+                case MutationIds.TendrilNorthwest:
+                case MutationIds.TendrilNortheast:
+                case MutationIds.TendrilSoutheast:
+                case MutationIds.TendrilSouthwest:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildTendrilSummary);
+                    break;
+                case MutationIds.MycotropicInduction:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotropicInductionSummary);
+                    break;
+                case MutationIds.RegenerativeHyphae:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildRegenerativeHyphaeSummary);
+                    break;
+                case MutationIds.CreepingMold:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildCreepingMoldSummary);
+                    break;
+            }
+        }
+
+        private void AppendHomeostaticHarmonyDetails(StringBuilder sb, int currentLevel)
+        {
+            AppendLevelSummaryBlock(sb, currentLevel, BuildHomeostaticHarmonySummary);
+        }
+
+        private void AppendLevelSummaryBlock(StringBuilder sb, int currentLevel, System.Func<int, string> buildSummary)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"<b>Current Level:</b> {buildSummary(currentLevel)}");
+
+            if (currentLevel < mutation.MaxLevel)
+            {
+                sb.AppendLine($"<b>Next Level:</b> {buildSummary(currentLevel + 1)}");
+            }
+        }
+
+        private string BuildHomeostaticHarmonySummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "Level 0 - No reduction yet.";
+            }
+
+            float reductionPercent = mutation.GetTotalEffect(level) * 100f;
+            return $"Level {level} - Random decay -{reductionPercent:0.00}%, age-based decay -{reductionPercent:0.00}%";
+        }
+
+        private string BuildMycelialBloomSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "Level 0 - No extra cardinal growth (up / down / left / right) or random decay.";
+            }
+
+            float orthogonalGrowthPercent = mutation.GetTotalEffect(level) * 100f;
+            float randomDecayPercent = level * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel * 100f;
+            return $"Level {level} - Cardinal growth +{orthogonalGrowthPercent:0.00}%, random decay +{randomDecayPercent:0.00}%";
+        }
+
+        private string BuildTendrilSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return $"Level 0 - No diagonal growth bonus or cardinal penalty contribution ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor).";
+            }
+
+            float diagonalGrowthPercent = mutation.GetTotalEffect(level) * 100f;
+            float orthogonalPenaltyPercent = level * GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel * 100f;
+            return $"Level {level} - Diagonal growth +{diagonalGrowthPercent:0.00}%, cardinal penalty contribution -{orthogonalPenaltyPercent:0.00}% ({GameBalance.TendrilOrthogonalGrowthMinimumChance * 100f:0.00}% floor)";
+        }
+
+        private string BuildMycotropicInductionSummary(int level)
+        {
+            float bonusPercent = mutation.GetTotalEffect(level) * 100f;
+            float multiplier = 1f + mutation.GetTotalEffect(level);
+            return $"Level {level} - Tendril diagonal multiplier x{multiplier:0.00} (+{bonusPercent:0.00}% of each Tendril's own chance)";
+        }
+
+        private string BuildRegenerativeHyphaeSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "Level 0 - No reclaim roll yet.";
+            }
+
+            float baseChancePercent = mutation.GetTotalEffect(level) * 100f;
+            int hypersystemicLevel = player.GetMutationLevel(MutationIds.HypersystemicRegeneration);
+            if (hypersystemicLevel <= 0)
+            {
+                return $"Level {level} - {baseChancePercent:0.00}% reclaim roll per living cell after growth";
+            }
+
+            float effectiveChancePercent = (mutation.GetTotalEffect(level) * (1f + (hypersystemicLevel * GameBalance.HypersystemicRegenerationEffectivenessBonus))) * 100f;
+            return $"Level {level} - {baseChancePercent:0.00}% reclaim roll per living cell after growth ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
+        }
+
+        private string BuildCreepingMoldSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "Level 0 - No failed-growth move chance yet.";
+            }
+
+            float moveChancePercent = mutation.GetTotalEffect(level) * 100f;
+            if (level >= GameBalance.CreepingMoldMaxLevel)
+            {
+                return $"Level {level} - {moveChancePercent:0.00}% move chance after a failed growth if the target is open enough; toxin jump unlocked";
+            }
+
+            return $"Level {level} - {moveChancePercent:0.00}% move chance after a failed growth if the target is open enough";
         }
 
         public void DisableUpgrade()

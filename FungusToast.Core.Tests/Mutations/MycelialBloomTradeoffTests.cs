@@ -17,7 +17,8 @@ public class MycelialBloomTradeoffTests
         var mutation = RequireMutation(MutationIds.MycelialBloom);
 
         Assert.Contains("four cardinal directions", mutation.Description);
-        Assert.Contains("random death chance", mutation.Description);
+        Assert.Contains("cardinal growth chance", mutation.Description);
+        Assert.Contains("random decay chance", mutation.Description);
     }
 
     [Fact]
