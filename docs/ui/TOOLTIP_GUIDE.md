@@ -10,7 +10,7 @@ For general Unity UI architecture, also see `../../FungusToast.Core/docs/UI_ARCH
 **Purpose:** teach first-time or returning players something important about the game flow.
 
 **Examples:**
-- mutation phase intro banner
+- mutation phase intro tutorial tooltip
 - mutation tree first-open guidance
 - scoreboard win-condition coachmark
 - camera movement coachmark
@@ -150,7 +150,7 @@ Use this section when you want a quick description of what already exists withou
 
 | Tooltip | Surface | When it appears |
 | --- | --- | --- |
-| `AlphaMutationPhaseIntro` | phase banner | Queued on round 1 for games with at least one human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
+| `AlphaMutationPhaseIntro` | mutation tree toast | Shown the first time the mutation tree opens during round 1 for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
 | `MutationTreeGuidance` | mutation tree toast | Shown when the mutation tree opens, unless the player already dismissed it during the current game. Outside forced first-game experience, it only shows once per profile. |
 | `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

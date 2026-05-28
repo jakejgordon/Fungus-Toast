@@ -21,6 +21,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Coroutine activeRoutine;
         private RectTransform modalRoot;
         private CanvasGroup modalCanvasGroup;
+        private TextMeshProUGUI modalTitleText;
         private TextMeshProUGUI modalMessageText;
         private Button modalCloseButton;
         private Action modalDismissedCallback;
@@ -71,7 +72,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        public void ShowModalIfTreeOpen(string message, Action onDismissed = null)
+        public void ShowModalIfTreeOpen(string title, string message, Action onDismissed = null)
         {
             if (mutationManager == null
                 || !mutationManager.IsTreeOpen
@@ -82,12 +83,23 @@ namespace FungusToast.Unity.UI.MutationTree
 
             EnsureModalUi();
             modalDismissedCallback = onDismissed;
+            if (modalTitleText != null)
+            {
+                modalTitleText.text = string.IsNullOrWhiteSpace(title)
+                    ? "Tutorial"
+                    : title;
+            }
             modalMessageText.text = message;
             modalCanvasGroup.alpha = 1f;
             modalCanvasGroup.blocksRaycasts = true;
             modalCanvasGroup.interactable = true;
             modalRoot.gameObject.SetActive(true);
             modalRoot.SetAsLastSibling();
+        }
+
+        public void ShowModalIfTreeOpen(string message, Action onDismissed = null)
+        {
+            ShowModalIfTreeOpen("Tutorial", message, onDismissed);
         }
 
         private void EnsureToastUi()
@@ -240,13 +252,13 @@ namespace FungusToast.Unity.UI.MutationTree
             titleRect.offsetMin = new Vector2(20f, -64f);
             titleRect.offsetMax = new Vector2(-72f, -20f);
 
-            var titleText = titleObject.GetComponent<TextMeshProUGUI>();
-            titleText.text = "How Mutation Spending Works";
-            titleText.alignment = TextAlignmentOptions.Left;
-            titleText.color = UIStyleTokens.Text.Primary;
-            titleText.fontSize = 29f;
-            titleText.fontStyle = FontStyles.Bold;
-            titleText.raycastTarget = false;
+            modalTitleText = titleObject.GetComponent<TextMeshProUGUI>();
+            modalTitleText.text = "How Mutation Spending Works";
+            modalTitleText.alignment = TextAlignmentOptions.Left;
+            modalTitleText.color = UIStyleTokens.Text.Primary;
+            modalTitleText.fontSize = 29f;
+            modalTitleText.fontStyle = FontStyles.Bold;
+            modalTitleText.raycastTarget = false;
 
             var messageObject = new GameObject("Message", typeof(RectTransform), typeof(TextMeshProUGUI));
             messageObject.transform.SetParent(panelObject.transform, false);
@@ -268,7 +280,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (TMP_Settings.defaultFontAsset != null)
             {
                 modalMessageText.font = TMP_Settings.defaultFontAsset;
-                titleText.font = TMP_Settings.defaultFontAsset;
+                modalTitleText.font = TMP_Settings.defaultFontAsset;
                 closeLabel.font = TMP_Settings.defaultFontAsset;
             }
 
@@ -287,6 +299,11 @@ namespace FungusToast.Unity.UI.MutationTree
             if (modalMessageText != null)
             {
                 modalMessageText.text = string.Empty;
+            }
+
+            if (modalTitleText != null)
+            {
+                modalTitleText.text = string.Empty;
             }
 
             if (modalRoot != null)

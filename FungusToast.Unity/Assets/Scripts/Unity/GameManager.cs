@@ -434,7 +434,6 @@ namespace FungusToast.Unity
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
         private bool skipMutationPointAssignmentForRoundStart;
-        private bool pendingAlphaMutationOnboarding;
         private int suppressedPhaseIntroFeedbackCount;
         private float nextUiStuckCheckTime;
         private bool hasApplicationFocus = true;
@@ -1328,8 +1327,6 @@ namespace FungusToast.Unity
                 ui.GameLogManager?.EmitPendingSegmentSummariesFor(activeHuman.PlayerId);
             }
 
-            pendingAlphaMutationOnboarding = ShouldQueueAlphaMutationOnboarding();
-
             hotseatTurnManager.BeginHumanMutationPhase();
 
             // Fail-safe: campaign continuation can traverse custom UI steps; ensure mutation controls are re-armed.
@@ -1349,10 +1346,10 @@ namespace FungusToast.Unity
             ui.MoldProfileRoot?.RefreshRandomDecayChance();
             ui.GameLogRouter?.OnPhaseStart("Mutation");
             bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
-            if (!pendingAlphaMutationOnboarding && !suppressIntroFeedback)
+            if (!suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
-            gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
+                gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
             }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {
@@ -1415,36 +1412,6 @@ namespace FungusToast.Unity
         public void SpendAllMutationPointsForAIPlayers()
         {
             mutationPointService.SpendAllMutationPointsForAIPlayers();
-        }
-
-        public void TryShowPendingAlphaMutationOnboarding(Player player)
-        {
-            if (!pendingAlphaMutationOnboarding || player == null || player.MutationPoints <= 0)
-            {
-                return;
-            }
-
-            pendingAlphaMutationOnboarding = false;
-            gameUIManager.PhaseBanner.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AlphaMutationPhaseIntro).Body, 5.5f);
-            if (!ShouldForceFirstGameExperience)
-            {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
-            }
-        }
-
-        private bool ShouldQueueAlphaMutationOnboarding()
-        {
-            if (Board == null)
-            {
-                return false;
-            }
-
-            return NewPlayerTooltipRules.ShouldQueueAlphaMutationPhaseIntro(
-                ShouldForceFirstGameExperience,
-                Board.CurrentRound,
-                humanPlayers.Count,
-                isFastForwarding,
-                testingModeEnabled);
         }
 
         #endregion

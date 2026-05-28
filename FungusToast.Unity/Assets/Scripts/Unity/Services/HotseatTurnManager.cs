@@ -92,8 +92,6 @@ namespace FungusToast.Unity
             }
             ui.MutationUIManager.SetSpendPointsButtonInteractable(true);
             GameManager.Instance?.SetActiveHumanPlayer(hp);
-            GameManager.Instance?.TryShowPendingAlphaMutationOnboarding(hp);
-
             // Safety: if a human begins mutation phase with no points, auto-advance their turn.
             // Otherwise the UI is non-interactable and the round can deadlock.
             if (hp.MutationPoints <= 0)

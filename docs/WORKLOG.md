@@ -63,6 +63,7 @@ Use the following minimal workflow to preserve working memory across sessions:
   - add a dismissable post-restart popup on the start/menu surface for compatibility-triggered restarts
   - harden campaign and solo resume validation around saved snapshot tile ids and restore exceptions
 - **Update:** those implementation tasks are now complete in code. Remaining follow-up is an in-Unity validation pass for the compatibility-restart UX and the new popup/menu flow.
+- **UI follow-up completed:** the old round-1 mutation-phase onboarding copy no longer hijacks the temporary phase banner. It now appears through the standard mutation-tree tutorial tooltip flow so phase banners stay status-oriented and the explanatory copy is shown at the point of action.
 
 ## Current Handoff
 

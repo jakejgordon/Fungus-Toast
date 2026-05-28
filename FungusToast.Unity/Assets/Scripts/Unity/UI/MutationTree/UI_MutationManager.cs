@@ -99,6 +99,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
+        private bool hasDismissedAlphaMutationIntroThisGame;
         private bool hasDismissedTreeGuidanceThisGame;
         private TooltipTrigger spendPointsTooltipTrigger;
         private TooltipTrigger presentationSpeedTooltipTrigger;
@@ -262,6 +263,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationButtons.Clear();
             directDependentsByMutationId.Clear();
             pendingTargetedSurgeSelection = null;
+            hasDismissedAlphaMutationIntroThisGame = false;
             hasDismissedTreeGuidanceThisGame = false;
             hasDismissedTimeLapseCoachmarkThisGame = false;
             hasDismissedStorePointsCoachmarkThisGame = false;
@@ -1680,20 +1682,54 @@ namespace FungusToast.Unity.UI.MutationTree
         private void ShowFirstTreeGuidanceToast()
         {
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
-            if (!NewPlayerTooltipRules.ShouldShowMutationTreeGuidance(forceFirstGame, hasDismissedTreeGuidanceThisGame))
-            {
-                return;
-            }
-
             var toastPresenter = GameManager.Instance?.GameUI?.MutationTreeToastPresenter;
             if (toastPresenter == null)
             {
                 return;
             }
 
+            GameManager gameManager = GameManager.Instance;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            int currentRound = gameManager?.Board?.CurrentRound ?? 0;
+            bool shouldShowAlphaMutationIntro = NewPlayerTooltipRules.ShouldQueueAlphaMutationPhaseIntro(
+                forceFirstGame,
+                currentRound,
+                humanPlayer != null ? 1 : 0,
+                isFastForwarding,
+                gameManager != null && gameManager.IsTestingModeEnabled)
+                && !hasDismissedAlphaMutationIntroThisGame;
+
+            if (shouldShowAlphaMutationIntro)
+            {
+                NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AlphaMutationPhaseIntro);
+                toastPresenter.ShowModalIfTreeOpen(
+                    definition.Title,
+                    definition.Body,
+                    OnAlphaMutationIntroDismissed);
+                return;
+            }
+
+            if (!NewPlayerTooltipRules.ShouldShowMutationTreeGuidance(forceFirstGame, hasDismissedTreeGuidanceThisGame))
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition treeGuidanceDefinition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationTreeGuidance);
             toastPresenter.ShowModalIfTreeOpen(
-                NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationTreeGuidance).Body,
+                treeGuidanceDefinition.Title,
+                treeGuidanceDefinition.Body,
                 OnFirstTreeGuidanceDismissed);
+        }
+
+        private void OnAlphaMutationIntroDismissed()
+        {
+            hasDismissedAlphaMutationIntroThisGame = true;
+
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
+            }
         }
 
         private void OnFirstTreeGuidanceDismissed()

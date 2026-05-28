@@ -63,8 +63,8 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Onboarding.AlphaMutationPhaseSeen",
                 "Mutation Phase",
                 "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.",
-                NewPlayerTooltipSurface.PhaseBanner,
-                "Queue on round 1 when at least one human player is present and the game is not fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
+                NewPlayerTooltipSurface.MutationTreeToast,
+                "Show the first time the mutation tree opens during round 1 for a human player unless the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.MutationTreeGuidance,
                 "Onboarding.AlphaMutationTreeGuidanceSeen",
