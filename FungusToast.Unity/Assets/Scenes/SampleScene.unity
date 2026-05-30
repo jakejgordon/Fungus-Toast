@@ -111969,6 +111969,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: dd331ca625e554a46ae48a1d0a3f205d, type: 2}
   - {fileID: 11400000, guid: b8298f4a214901048a20b4ba42e80599, type: 2}
   - {fileID: 11400000, guid: 79dc2f3c008fbc6499c900917e11cb93, type: 2}
+  playerMoldAliveVariantTiles:
+  - isolatedTile: {fileID: 11400000, guid: 9f4d3d8b6ea44c1cb9cbe5c6f2fb7a11, type: 2}
+    clusteredTile: {fileID: 11400000, guid: 5aa7d3441d244c37b7314a183b9d1464, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 0c4787dbb7b6480da4c650c0d2ae4be4, type: 2}
+    denseTile: {fileID: 11400000, guid: e2e9aef17f0d4434b0cf8a52e85b2d7c, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: c742f38a8a6e42f9b0b031be1e8823e6, type: 2}
+  isolatedMoldVisualScale: 1
+  clusteredMoldVisualScale: 1.1
+  denseMoldVisualScale: 1.2
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
   goldShieldOverlayTile: {fileID: 11400000, guid: c263d2624d4a84043852764dbdb51385, type: 2}

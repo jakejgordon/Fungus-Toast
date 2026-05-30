@@ -333,7 +333,7 @@ namespace FungusToast.Unity.UI.MutationTree
             humanPlayer = player;
             RefreshSpendPointsButtonUI();
 
-            Tile tile = gridVisualizer.GetTileForPlayer(player.PlayerId);
+            Tile tile = gridVisualizer.GetMoldIconTileForPlayer(player.PlayerId);
             if (tile != null && tile.sprite != null)
             {
                 playerMoldIcon.sprite = tile.sprite;
@@ -1344,7 +1344,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // Update icon
             if (gridVisualizer != null)
             {
-                Tile tile = gridVisualizer.GetTileForPlayer(player.PlayerId);
+                Tile tile = gridVisualizer.GetMoldIconTileForPlayer(player.PlayerId);
                 if (tile != null && tile.sprite != null)
                 {
                     playerMoldIcon.sprite = tile.sprite;

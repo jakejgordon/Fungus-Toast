@@ -5,9 +5,28 @@ using UnityEngine.Tilemaps;
 
 public class MoldSpriteImporter : AssetPostprocessor
 {
+    private const string MoldTileFolderSegment = "/Sprites/Tiles/Mold/";
+    private const string LegacyMoldTileFolder = "Assets/Tiles/Mold";
+
+    private static bool IsMoldTileAsset(string path)
+        => path.Replace("\\", "/").Contains(MoldTileFolderSegment);
+
+    private static string ResolveTilePath(string spritePath)
+    {
+        string spriteName = Path.GetFileNameWithoutExtension(spritePath);
+        string spriteDir = Path.GetDirectoryName(spritePath) ?? string.Empty;
+        string sameFolderTilePath = Path.Combine(spriteDir, spriteName + ".asset").Replace("\\", "/");
+        if (File.Exists(sameFolderTilePath))
+        {
+            return sameFolderTilePath;
+        }
+
+        return Path.Combine(LegacyMoldTileFolder, spriteName + ".asset").Replace("\\", "/");
+    }
+
     void OnPreprocessTexture()
     {
-        if (!assetPath.Contains("MoldSprites")) return;
+        if (!IsMoldTileAsset(assetPath)) return;
 
         TextureImporter importer = (TextureImporter)assetImporter;
 
@@ -29,12 +48,10 @@ public class MoldSpriteImporter : AssetPostprocessor
 
     void OnPostprocessTexture(Texture2D texture)
     {
-        if (!assetPath.Contains("MoldSprites")) return;
+        if (!IsMoldTileAsset(assetPath)) return;
 
         string spritePath = assetPath;
-        string spriteName = Path.GetFileNameWithoutExtension(spritePath);
-        string spriteDir = Path.GetDirectoryName(spritePath);
-        string tilePath = Path.Combine(spriteDir, spriteName + ".asset").Replace("\\", "/");
+        string tilePath = ResolveTilePath(spritePath);
 
         Tile tile = AssetDatabase.LoadAssetAtPath<Tile>(tilePath);
         if (tile != null)

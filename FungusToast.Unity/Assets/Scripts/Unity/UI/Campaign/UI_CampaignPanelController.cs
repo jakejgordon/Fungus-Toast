@@ -2157,12 +2157,7 @@ namespace FungusToast.Unity.UI.Campaign
         private Tile GetMoldTileAtIndex(int moldIndex)
         {
             var visualizer = GameManager.Instance?.gridVisualizer;
-            if (visualizer?.playerMoldTiles == null || moldIndex < 0 || moldIndex >= visualizer.playerMoldTiles.Length)
-            {
-                return null;
-            }
-
-            return visualizer.playerMoldTiles[moldIndex];
+            return visualizer?.GetMoldIconTileForMoldIndex(moldIndex);
         }
 
         private void SetButtonText(Button button, string text)

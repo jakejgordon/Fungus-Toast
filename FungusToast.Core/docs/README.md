@@ -21,6 +21,7 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `DOMINANCE_DIAGNOSIS_WORKFLOW.md` — controlled analysis workflow for explaining dominance
 - `GAME_BALANCE_CONSTANTS.md` — canonical gameplay balance levers and tuning guidance
 - `SOUNDS.md` — sound trigger planning, storage conventions, and audio implementation guidance
+- `MOLD_ICON_HELPER.md` — board mold icon generation, naming, review, and iteration workflow
 - `UI_ARCHITECTURE_HELPER.md` — Unity UI architecture, service extraction, tooltips, and pooling
 - `UI_STYLE_GUIDE.md` — UI semantic styling rules
 - `ARCHITECTURE_OVERVIEW.md` — technical architecture, layer ownership, and runtime patterns

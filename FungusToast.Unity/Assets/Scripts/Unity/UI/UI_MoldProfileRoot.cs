@@ -415,7 +415,7 @@ namespace FungusToast.Unity.UI
             try
             {
                 var grid = GameManager.Instance?.gridVisualizer;
-                var sprite = grid?.GetTileForPlayer(player.PlayerId)?.sprite;
+                var sprite = grid?.GetMoldIconTileForPlayer(player.PlayerId)?.sprite;
                 centerPlayerIcon.sprite = sprite;
                 centerPlayerIcon.enabled = sprite != null;
 

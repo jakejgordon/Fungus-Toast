@@ -130,7 +130,7 @@ namespace FungusToast.Unity.UI.Hotseat
                 iconSprite = binder != null ? binder.GetPlayerIcon(player.PlayerId) : null;
                 if (iconSprite == null)
                 {
-                    iconSprite = GameManager.Instance?.gridVisualizer?.GetTileForPlayer(player.PlayerId)?.sprite;
+                    iconSprite = GameManager.Instance?.gridVisualizer?.GetMoldIconTileForPlayer(player.PlayerId)?.sprite;
                 }
             }
             catch { }

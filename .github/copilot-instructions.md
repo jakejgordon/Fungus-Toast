@@ -26,6 +26,7 @@ If a task is unclear, use this routing order before making changes:
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
 - **Sound design, storage, and trigger guidance:** `FungusToast.Core/docs/SOUNDS.md`
+- **Mold icon art generation and board-visual iteration workflow:** `FungusToast.Core/docs/MOLD_ICON_HELPER.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
 - **Git worktree / branch workflow for isolated task checkouts:** `docs/GIT_WORKTREE_WORKFLOW.md`

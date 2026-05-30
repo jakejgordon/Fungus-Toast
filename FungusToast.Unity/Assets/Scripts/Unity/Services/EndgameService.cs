@@ -1360,7 +1360,7 @@ namespace FungusToast.Unity
 
             foreach (var row in snapshot.rows)
             {
-                var icon = gridVisualizer.GetTileForPlayer(row.playerId)?.sprite;
+                var icon = gridVisualizer.GetMoldIconTileForPlayer(row.playerId)?.sprite;
                 if (icon != null)
                 {
                     playerBinder?.AssignIcon(row.playerId, icon);

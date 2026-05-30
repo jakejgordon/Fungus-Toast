@@ -16,6 +16,24 @@ namespace FungusToast.Unity.Grid
 {
     public partial class GridVisualizer : MonoBehaviour
     {
+        [Serializable]
+        public sealed class MoldAliveVisualTiles
+        {
+            public Tile isolatedTile;
+            public Tile clusteredTile;
+            public Tile clusteredAlternateTile;
+            public Tile denseTile;
+            public Tile denseAlternateTile;
+        }
+
+        private enum MoldAliveVisualState
+        {
+            Base,
+            Isolated,
+            Clustered,
+            Dense
+        }
+
         // Timing context passed in from GameManager per post-growth sequence
         private PostGrowthPhaseTiming _timingContext; // default values = 0 => fallback to constants
         public void SetPostGrowthTiming(PostGrowthPhaseTiming timing) => _timingContext = timing;
@@ -43,6 +61,15 @@ namespace FungusToast.Unity.Grid
         public Tile baseTile;
         public Tile deadTile;
         public Tile[] playerMoldTiles;
+        [Tooltip("Optional alive-state pilot variants per mold index. Falls back to Player Mold Tiles when a state tile is unassigned.")]
+        public MoldAliveVisualTiles[] playerMoldAliveVariantTiles;
+        [Header("Mold Visual Scaling")]
+        [Tooltip("Baseline scale for isolated alive cells.")]
+        [Range(1f, 1.25f)] public float isolatedMoldVisualScale = 1f;
+        [Tooltip("Baseline scale for clustered alive cells to help neighboring colonies read as a tighter patch.")]
+        [Range(1f, 1.25f)] public float clusteredMoldVisualScale = 1.1f;
+        [Tooltip("Baseline scale for dense alive cells to reduce visible gaps between mature neighboring colonies.")]
+        [Range(1f, 1.25f)] public float denseMoldVisualScale = 1.2f;
         public Tile toxinOverlayTile;
         [SerializeField] private Tile solidHighlightTile;
         public Tile goldShieldOverlayTile;
@@ -230,6 +257,7 @@ namespace FungusToast.Unity.Grid
                 () => toxinOverlayTile,
                 GetPositionForTileId,
                 GetTileForPlayer,
+                GetAliveTileForBoardTile,
                 (tileId, cell) => ShouldRenderResistanceOverlay(tileId, cell),
                 (tileId, cell) => cellStateAnimationController != null ? cellStateAnimationController.GetAliveCellAlpha(tileId, cell) : 1f,
                 tileId => preAnimationHiddenPreviewTileIds.Contains(tileId),
@@ -499,17 +527,21 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        private void ResetMoldIdleTransform(Vector3Int pos, Tilemap activeMoldTilemap)
+        private void ResetMoldIdleTransform(int tileId, Vector3Int pos, Tilemap activeMoldTilemap)
         {
+            Matrix4x4 baseMatrix = GetBaseMoldVisualMatrix(tileId);
             if (activeMoldTilemap.HasTile(pos))
             {
-                activeMoldTilemap.SetTransformMatrix(pos, IdentityMatrix);
+                activeMoldTilemap.SetTransformMatrix(pos, baseMatrix);
             }
 
             var activeOverlayTilemap = overlayTilemap;
             if (activeOverlayTilemap != null && activeOverlayTilemap.HasTile(pos))
             {
-                activeOverlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
+                BoardTile tile = ActiveBoard?.GetTileById(tileId);
+                activeOverlayTilemap.SetTransformMatrix(
+                    pos,
+                    ShouldAnimateMoldIdleResistanceOverlay(tile, activeOverlayTilemap, pos) ? baseMatrix : IdentityMatrix);
             }
         }
 
@@ -609,7 +641,7 @@ namespace FungusToast.Unity.Grid
             moldIdleUpdateSteps.Remove(tileId);
 
             Vector3Int pos = GetPositionForTileId(tileId);
-            ResetMoldIdleTransform(pos, activeMoldTilemap);
+            ResetMoldIdleTransform(tileId, pos, activeMoldTilemap);
         }
 
         private int GetMoldIdleCohortIndex(int tileId)
@@ -650,7 +682,7 @@ namespace FungusToast.Unity.Grid
             return Mathf.Lerp(minSeconds, maxSeconds, GetMoldIdleNoise01(tileId, updateStep, 23u));
         }
 
-        private static Matrix4x4 GetMoldIdleStepMatrix(int tileId, int updateStep, Vector3 cellSize)
+        private Matrix4x4 GetMoldIdleStepMatrix(int tileId, int updateStep, Vector3 cellSize)
         {
             float primaryPhase = (GetMoldIdleNoise01(tileId, updateStep, 41u) * Mathf.PI * 2f)
                 + (tileId * UIEffectConstants.MoldIdleDriftPhaseOffsetRadians);
@@ -662,7 +694,8 @@ namespace FungusToast.Unity.Grid
             float offsetY = cellSize.y * UIEffectConstants.MoldIdleDriftAmplitudeYCellFraction
                 * (Mathf.Cos(secondaryPhase) + (Mathf.Sin(primaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
 
-            return Matrix4x4.TRS(new Vector3(offsetX, offsetY, 0f), Quaternion.identity, Vector3.one);
+            float scale = GetAliveVisualScaleForTile(tileId);
+            return Matrix4x4.TRS(new Vector3(offsetX, offsetY, 0f), Quaternion.identity, new Vector3(scale, scale, 1f));
         }
 
         private static float GetMoldIdleNoise01(int tileId, int updateStep, uint salt)
@@ -717,7 +750,7 @@ namespace FungusToast.Unity.Grid
             for (int i = 0; i < tileIds.Count; i++)
             {
                 Vector3Int pos = GetPositionForTileId(tileIds[i]);
-                ResetMoldIdleTransform(pos, activeMoldTilemap);
+                ResetMoldIdleTransform(tileIds[i], pos, activeMoldTilemap);
             }
         }
 
@@ -934,7 +967,11 @@ namespace FungusToast.Unity.Grid
         private static bool ShouldSuppressBoardEventPresentation()
             => GameManager.Instance != null && GameManager.Instance.IsFastForwarding;
 
-        private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos) => boardStateRenderer?.RenderFungalCellOverlay(tile, pos);
+        private void RenderFungalCellOverlay(BoardTile tile, Vector3Int pos)
+        {
+            boardStateRenderer?.RenderFungalCellOverlay(tile, pos);
+            ApplyBaseMoldVisualTransform(tile, pos);
+        }
 
         private void RenderNutrientPatchOverlay(BoardTile tile, Vector3Int pos) => overlayRenderer?.RenderNutrientPatchOverlay(tile, pos);
 
@@ -960,6 +997,27 @@ namespace FungusToast.Unity.Grid
 
         private bool ShouldRenderResistanceOverlay(int tileId, FungalCell cell)
             => resistanceOverlayController?.ShouldRenderResistanceOverlay(tileId, cell) == true;
+
+        private void ApplyBaseMoldVisualTransform(BoardTile tile, Vector3Int pos)
+        {
+            var cell = tile?.FungalCell;
+            var activeMoldTilemap = moldTilemap;
+            if (cell?.CellType != FungalCellType.Alive || activeMoldTilemap == null || !activeMoldTilemap.HasTile(pos))
+            {
+                return;
+            }
+
+            Matrix4x4 baseMatrix = GetBaseMoldVisualMatrix(tile);
+            activeMoldTilemap.SetTransformMatrix(pos, baseMatrix);
+
+            var activeOverlayTilemap = overlayTilemap;
+            if (activeOverlayTilemap != null
+                && activeOverlayTilemap.HasTile(pos)
+                && ShouldRenderResistanceOverlay(tile.TileId, cell))
+            {
+                activeOverlayTilemap.SetTransformMatrix(pos, baseMatrix);
+            }
+        }
 
         private Vector3Int GetPositionForTileId(int tileId)
         {
@@ -998,6 +1056,86 @@ namespace FungusToast.Unity.Grid
             Debug.LogWarning($"No tile found for Player ID {playerId}.");
             return null;
         }
+
+        public Tile GetMoldIconTileForPlayer(int playerId)
+        {
+            if (playerId < 0)
+            {
+                return null;
+            }
+
+            int moldIndex = ResolvePlayerMoldIndex(playerId);
+            return GetMoldIconTileForMoldIndex(moldIndex);
+        }
+
+        public Tile GetMoldIconTileForMoldIndex(int moldIndex)
+        {
+            if (moldIndex < 0)
+            {
+                return null;
+            }
+
+            if (playerMoldAliveVariantTiles != null
+                && moldIndex < playerMoldAliveVariantTiles.Length
+                && playerMoldAliveVariantTiles[moldIndex] != null)
+            {
+                MoldAliveVisualTiles variantTiles = playerMoldAliveVariantTiles[moldIndex];
+                if (variantTiles.clusteredTile != null)
+                {
+                    return variantTiles.clusteredTile;
+                }
+
+                if (variantTiles.clusteredAlternateTile != null)
+                {
+                    return variantTiles.clusteredAlternateTile;
+                }
+
+                if (variantTiles.isolatedTile != null)
+                {
+                    return variantTiles.isolatedTile;
+                }
+
+                if (variantTiles.denseTile != null)
+                {
+                    return variantTiles.denseTile;
+                }
+            }
+
+            if (playerMoldTiles != null && moldIndex < playerMoldTiles.Length)
+            {
+                return playerMoldTiles[moldIndex];
+            }
+
+            return null;
+        }
+
+        public Tile GetAliveTileForBoardTile(BoardTile tile)
+        {
+            if (tile?.FungalCell?.CellType != FungalCellType.Alive || tile.FungalCell.OwnerPlayerId is not int ownerPlayerId)
+            {
+                return null;
+            }
+
+            Tile baseTileForPlayer = GetTileForPlayer(ownerPlayerId);
+            if (baseTileForPlayer == null || playerMoldAliveVariantTiles == null || playerMoldAliveVariantTiles.Length == 0)
+            {
+                return baseTileForPlayer;
+            }
+
+            int moldIndex = ResolvePlayerMoldIndex(ownerPlayerId);
+            if (moldIndex < 0 || moldIndex >= playerMoldAliveVariantTiles.Length)
+            {
+                return baseTileForPlayer;
+            }
+
+            MoldAliveVisualTiles variantTiles = playerMoldAliveVariantTiles[moldIndex];
+            if (variantTiles == null)
+            {
+                return baseTileForPlayer;
+            }
+
+            return ResolveAliveVariantTile(tile, variantTiles) ?? baseTileForPlayer;
+        }
         public void RegisterPreAnimationHiddenPreviewTiles(IEnumerable<int> tileIds)
         {
             if (tileIds == null)
@@ -1035,9 +1173,128 @@ namespace FungusToast.Unity.Grid
             return playerId;
         }
 
+        private Tile ResolveAliveVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
+        {
+            return ClassifyAliveVisualState(tile) switch
+            {
+                MoldAliveVisualState.Isolated => variantTiles.isolatedTile,
+                MoldAliveVisualState.Clustered => ResolveClusteredVariantTile(tile, variantTiles),
+                MoldAliveVisualState.Dense => ResolveDenseVariantTile(tile, variantTiles),
+                _ => null,
+            };
+        }
+
+        private static Tile ResolveClusteredVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
+        {
+            if (variantTiles == null)
+            {
+                return null;
+            }
+
+            if (variantTiles.clusteredTile == null)
+            {
+                return variantTiles.clusteredAlternateTile;
+            }
+
+            if (variantTiles.clusteredAlternateTile == null)
+            {
+                return variantTiles.clusteredTile;
+            }
+
+            return ShouldUseAlternateVariantTile(tile?.TileId ?? -1, 73u)
+                ? variantTiles.clusteredAlternateTile
+                : variantTiles.clusteredTile;
+        }
+
+        private static Tile ResolveDenseVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
+        {
+            if (variantTiles == null)
+            {
+                return null;
+            }
+
+            if (variantTiles.denseTile == null)
+            {
+                return variantTiles.denseAlternateTile;
+            }
+
+            if (variantTiles.denseAlternateTile == null)
+            {
+                return variantTiles.denseTile;
+            }
+
+            return ShouldUseAlternateVariantTile(tile?.TileId ?? -1, 97u)
+                ? variantTiles.denseAlternateTile
+                : variantTiles.denseTile;
+        }
+
+        private static bool ShouldUseAlternateVariantTile(int tileId, uint salt)
+        {
+            unchecked
+            {
+                uint hash = 2166136261u;
+                hash = (hash ^ (uint)tileId) * 16777619u;
+                hash = (hash ^ salt) * 16777619u;
+                return (hash & 1u) == 0u;
+            }
+        }
+
+        private Matrix4x4 GetBaseMoldVisualMatrix(int tileId)
+            => GetBaseMoldVisualMatrix(ActiveBoard?.GetTileById(tileId));
+
+        private Matrix4x4 GetBaseMoldVisualMatrix(BoardTile tile)
+        {
+            float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile));
+            return Mathf.Approximately(scale, 1f)
+                ? IdentityMatrix
+                : Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+        }
+
+        private float GetAliveVisualScaleForTile(int tileId)
+            => GetAliveVisualScale(ClassifyAliveVisualState(ActiveBoard?.GetTileById(tileId)));
+
+        private float GetAliveVisualScale(MoldAliveVisualState state)
+        {
+            return state switch
+            {
+                MoldAliveVisualState.Clustered => clusteredMoldVisualScale,
+                MoldAliveVisualState.Dense => denseMoldVisualScale,
+                MoldAliveVisualState.Isolated => isolatedMoldVisualScale,
+                _ => 1f,
+            };
+        }
+
+        private MoldAliveVisualState ClassifyAliveVisualState(BoardTile tile)
+        {
+            var activeBoard = ActiveBoard;
+            var cell = tile?.FungalCell;
+            if (activeBoard == null || cell?.CellType != FungalCellType.Alive || cell.OwnerPlayerId is not int ownerPlayerId)
+            {
+                return MoldAliveVisualState.Base;
+            }
+
+            int friendlyOrthogonalNeighborCount = 0;
+            foreach (BoardTile neighbor in activeBoard.GetOrthogonalNeighbors(tile.TileId))
+            {
+                var neighborCell = neighbor?.FungalCell;
+                if (neighborCell?.CellType == FungalCellType.Alive && neighborCell.OwnerPlayerId == ownerPlayerId)
+                {
+                    friendlyOrthogonalNeighborCount++;
+                }
+            }
+
+            return friendlyOrthogonalNeighborCount switch
+            {
+                <= 0 => MoldAliveVisualState.Isolated,
+                <= 2 => MoldAliveVisualState.Clustered,
+                _ => MoldAliveVisualState.Dense,
+            };
+        }
+
         public void RenderTileFromBoard(int tileId)
         {
             boardStateRenderer?.RenderTileFromBoard(tileId);
+            ApplyBaseMoldVisualTransform(ActiveBoard?.GetTileById(tileId), GetPositionForTileId(tileId));
             RefreshMoldIdleCacheForTile(tileId);
         }
 

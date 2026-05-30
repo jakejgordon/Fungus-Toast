@@ -105,7 +105,7 @@ namespace FungusToast.Unity
             // Icons
             foreach (var p in players)
             {
-                var icon = gridVisualizer.GetTileForPlayer(p.PlayerId)?.sprite;
+                var icon = gridVisualizer.GetMoldIconTileForPlayer(p.PlayerId)?.sprite;
                 if (icon != null) ui.PlayerUIBinder.AssignIcon(p, icon);
             }
 

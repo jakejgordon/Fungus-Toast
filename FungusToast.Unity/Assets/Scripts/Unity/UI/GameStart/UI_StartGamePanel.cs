@@ -2286,12 +2286,7 @@ namespace FungusToast.Unity.UI.GameStart
         private Tile GetMoldTileAtIndex(int moldIndex)
         {
             var visualizer = GameManager.Instance != null ? GameManager.Instance.gridVisualizer : null;
-            if (visualizer?.playerMoldTiles == null || moldIndex < 0 || moldIndex >= visualizer.playerMoldTiles.Length)
-            {
-                return null;
-            }
-
-            return visualizer.playerMoldTiles[moldIndex];
+            return visualizer?.GetMoldIconTileForMoldIndex(moldIndex);
         }
 
         private int GetAvailableMoldCount()

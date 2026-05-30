@@ -2112,7 +2112,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
 
             var sprite = gridVisualizer != null
-                ? gridVisualizer.GetTileForPlayer(player.PlayerId)?.sprite
+                ? gridVisualizer.GetMoldIconTileForPlayer(player.PlayerId)?.sprite
                 : null;
 
             var row = CreateFeedRow(sprite, message);
@@ -2554,7 +2554,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             rowFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var iconSprite = gridVisualizer != null
-                ? gridVisualizer.GetTileForPlayer(entry.PlayerId)?.sprite
+                ? gridVisualizer.GetMoldIconTileForPlayer(entry.PlayerId)?.sprite
                 : null;
 
             if (iconSprite != null)

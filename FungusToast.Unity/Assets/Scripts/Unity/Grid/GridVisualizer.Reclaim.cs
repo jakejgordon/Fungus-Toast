@@ -3266,6 +3266,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<TileBase> _getToxinOverlayTile;
 		private readonly Func<int, Vector3Int> _getPositionForTileId;
 		private readonly Func<int, Tile> _getTileForPlayer;
+		private readonly Func<BoardTile, Tile> _getAliveTileForBoardTile;
 		private readonly Func<int, FungalCell, bool> _shouldRenderResistanceOverlay;
 		private readonly Func<int, FungalCell, float> _getAliveCellAlpha;
 		private readonly Func<int, bool> _isPreviewHiddenTile;
@@ -3281,6 +3282,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<TileBase> getToxinOverlayTile,
 			Func<int, Vector3Int> getPositionForTileId,
 			Func<int, Tile> getTileForPlayer,
+			Func<BoardTile, Tile> getAliveTileForBoardTile,
 			Func<int, FungalCell, bool> shouldRenderResistanceOverlay,
 			Func<int, FungalCell, float> getAliveCellAlpha,
 			Func<int, bool> isPreviewHiddenTile,
@@ -3295,6 +3297,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getToxinOverlayTile = getToxinOverlayTile;
 			_getPositionForTileId = getPositionForTileId;
 			_getTileForPlayer = getTileForPlayer;
+			_getAliveTileForBoardTile = getAliveTileForBoardTile;
 			_shouldRenderResistanceOverlay = shouldRenderResistanceOverlay;
 			_getAliveCellAlpha = getAliveCellAlpha;
 			_isPreviewHiddenTile = isPreviewHiddenTile;
@@ -3327,7 +3330,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				case FungalCellType.Alive:
 					if (cell.OwnerPlayerId is int aliveOwnerId)
 					{
-						moldTile = _getTileForPlayer(aliveOwnerId);
+						moldTile = _getAliveTileForBoardTile != null
+							? _getAliveTileForBoardTile(tile)
+							: _getTileForPlayer(aliveOwnerId);
 						moldColor = new Color(1f, 1f, 1f, _getAliveCellAlpha(tile.TileId, cell));
 					}
 
