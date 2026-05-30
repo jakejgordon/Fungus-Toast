@@ -1201,7 +1201,7 @@ namespace FungusToast.Unity.Grid
                 return variantTiles.clusteredTile;
             }
 
-            return ShouldUseAlternateVariantTile(tile?.TileId ?? -1, 73u)
+            return ShouldUseAlternateVariantTile(tile, 73u)
                 ? variantTiles.clusteredAlternateTile
                 : variantTiles.clusteredTile;
         }
@@ -1223,18 +1223,38 @@ namespace FungusToast.Unity.Grid
                 return variantTiles.denseTile;
             }
 
-            return ShouldUseAlternateVariantTile(tile?.TileId ?? -1, 97u)
+            return ShouldUseAlternateVariantTile(tile, 97u)
                 ? variantTiles.denseAlternateTile
                 : variantTiles.denseTile;
         }
 
-        private static bool ShouldUseAlternateVariantTile(int tileId, uint salt)
+        private static bool ShouldUseAlternateVariantTile(BoardTile tile, uint salt)
         {
+            if (tile == null)
+            {
+                return false;
+            }
+
             unchecked
             {
-                uint hash = 2166136261u;
-                hash = (hash ^ (uint)tileId) * 16777619u;
-                hash = (hash ^ salt) * 16777619u;
+                // Use a stronger deterministic coordinate hash so variant selection stays stable
+                // without collapsing into visible row/column/checkerboard patterns.
+                uint hash = salt;
+                hash ^= (uint)tile.X * 0x9E3779B9u;
+                hash = (hash << 17) | (hash >> 15);
+                hash *= 0x85EBCA6Bu;
+
+                hash ^= (uint)tile.Y * 0xC2B2AE35u;
+                hash = (hash << 16) | (hash >> 16);
+                hash *= 0x27D4EB2Fu;
+
+                hash ^= (uint)tile.TileId * 0x165667B1u;
+                hash ^= hash >> 15;
+                hash *= 0x85EBCA6Bu;
+                hash ^= hash >> 13;
+                hash *= 0xC2B2AE35u;
+                hash ^= hash >> 16;
+
                 return (hash & 1u) == 0u;
             }
         }
