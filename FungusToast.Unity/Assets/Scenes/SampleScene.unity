@@ -111975,6 +111975,11 @@ MonoBehaviour:
     clusteredAlternateTile: {fileID: 11400000, guid: 0c4787dbb7b6480da4c650c0d2ae4be4, type: 2}
     denseTile: {fileID: 11400000, guid: e2e9aef17f0d4434b0cf8a52e85b2d7c, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: c742f38a8a6e42f9b0b031be1e8823e6, type: 2}
+  - isolatedTile: {fileID: 11400000, guid: cfa506b260464509ae238968b14b4d49, type: 2}
+    clusteredTile: {fileID: 11400000, guid: adca0c3d13e543ae9379da0238d9fb0a, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 1267aa475eab48c4840463306200772e, type: 2}
+    denseTile: {fileID: 11400000, guid: 7ef0e5f0ffd44b05b6491c26455d06e3, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: 054ab5a50c924c7da3cd3295be02d782, type: 2}
   isolatedMoldVisualScale: 1
   clusteredMoldVisualScale: 1.1
   denseMoldVisualScale: 1.2
@@ -117976,7 +117981,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2143743642}
   m_HandleRect: {fileID: 2143743641}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
