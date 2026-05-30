@@ -13,9 +13,12 @@ This helper covers:
 
 The current pilot is the red mold in mold slot 0.
 
+This pilot is now the baseline template for the remaining 7 molds.
+
 The runtime currently supports these alive-state variants for the pilot mold:
 - `isolatedTile`
 - `clusteredTile`
+- `clusteredAlternateTile`
 - `denseTile`
 - `denseAlternateTile`
 
@@ -29,8 +32,13 @@ Current state classification:
 - `1-2` friendly orthogonal neighbors -> clustered
 - `3+` friendly orthogonal neighbors -> dense
 
-Current dense variation behavior:
-- dense cells alternate stably between `denseTile` and `denseAlternateTile` using a deterministic tile-id hash
+Current variation behavior:
+- clustered cells can alternate stably between `clusteredTile` and `clusteredAlternateTile` using a deterministic tile-id hash
+- dense cells can alternate stably between `denseTile` and `denseAlternateTile` using a deterministic tile-id hash
+
+Current non-board UI icon behavior:
+- representative player mold icons are sourced from `GridVisualizer.GetMoldIconTileForPlayer` and `GridVisualizer.GetMoldIconTileForMoldIndex`
+- UI currently prefers the clustered representative tile for mold icons and falls back to the legacy base tile if no alive-state variant is configured
 
 ## Canonical Files
 
@@ -40,9 +48,16 @@ Core runtime / wiring files:
 - `FungusToast.Unity/Assets/Editor/MoldSpriteImporter.cs`
 - `FungusToast.Unity/Assets/Scenes/SampleScene.unity`
 
+Representative UI icon consumers:
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/UI_MutationManager.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/UI_MoldProfileRoot.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/GameStart/UI_StartGamePanel.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/Campaign/UI_CampaignPanelController.cs`
+
 Current pilot tile assets:
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_isolated_64x64.asset`
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_alt_64x64.asset`
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_dense_64x64.asset`
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_dense_alt_64x64.asset`
 
@@ -65,12 +80,14 @@ Place gameplay PNGs under:
 Preferred runtime naming pattern:
 - `{mold_name}_pilot_{state}_64x64.png`
 
+For the remaining 7-mold rollout, keep the `_pilot_` infix for consistency with the red baseline unless the whole set is renamed in one deliberate cleanup.
+
 Examples:
 - `red_mold_pilot_isolated_64x64.png`
 - `red_mold_pilot_clustered_64x64.png`
+- `red_mold_pilot_clustered_alt_64x64.png`
 - `red_mold_pilot_dense_64x64.png`
 - `red_mold_pilot_dense_alt_64x64.png`
-- future example: `red_mold_pilot_clustered_alt_64x64.png`
 
 ### Tile assets
 
@@ -80,6 +97,7 @@ Keep matching Tile assets under:
 Examples:
 - `red_mold_pilot_isolated_64x64.asset`
 - `red_mold_pilot_clustered_64x64.asset`
+- `red_mold_pilot_clustered_alt_64x64.asset`
 - `red_mold_pilot_dense_64x64.asset`
 - `red_mold_pilot_dense_alt_64x64.asset`
 
@@ -91,10 +109,10 @@ Correct workflow:
 1. Generate a transparent-background square sprite at `512x512` or `1024x1024`.
 2. Tell the model explicitly the sprite must remain readable at `64x64`.
 3. Tell the model explicitly to output a real alpha channel, not a checkerboard preview.
-3. Download the large version.
-4. Resize to `64x64`.
-5. Judge the `64x64`, not just the large original.
-6. If the `64x64` is muddy, regenerate with fewer details and a stronger silhouette.
+4. Download the large version.
+5. Resize to `64x64`.
+6. Judge the `64x64`, not just the large original.
+7. If the `64x64` is muddy, regenerate with fewer details and a stronger silhouette.
 
 Wrong workflow:
 1. Generate a beautiful high-detail mold image.
@@ -178,9 +196,9 @@ Keep a candidate if:
 - it looks like the same species as the other states
 - dense areas visually fuse into a patch instead of a grid of icons
 
-## Current Pilot Prompt: Clustered Alt
+## Reusable Prompt Template: Clustered Alt
 
-Use this when generating the next clustered variation for the red pilot mold.
+Use this when generating a clustered alternate for any mold after the main clustered tile is working.
 
 Recommended filename:
 - `red_mold_pilot_clustered_alt_64x64.png`
@@ -200,14 +218,15 @@ Do not generate any background of any kind. Do not show bread, toast, table, pla
 ## Delivery Checklist For A New Mold Iteration
 
 When iterating on a mold:
-1. Start with one mold slot only.
+1. Work one mold slot at a time.
 2. Build isolated, clustered, and dense first.
-3. If the patch still looks repetitive, add `denseAlternateTile` before doing a full mold rollout.
-4. Only after dense repetition is under control should you consider a clustered alternate.
+3. Add `denseAlternateTile` if dense patches still read as repeated stamps.
+4. Add `clusteredAlternateTile` if the medium-density transition band still looks repetitive.
 5. Save PNGs under `Assets/Sprites/Tiles/Mold`.
-6. Ask Copilot to wire the new tile asset or variant slot if runtime support is not already present.
-7. Playtest in Unity and review screenshots at real gameplay scale.
-8. Judge patch readability, not just close-up beauty.
+6. Create matching Tile assets under `Assets/Tiles/Mold`.
+7. Wire the mold slot in `playerMoldAliveVariantTiles`.
+8. Playtest in Unity and review both board cells and shared UI icons at real gameplay scale.
+9. Judge patch readability, not just close-up beauty.
 
 ## How To Ask Copilot For The Next Wiring Step
 
@@ -219,10 +238,9 @@ Useful examples:
 
 ## Future Expansion Notes
 
-The current pilot system is intentionally narrow. It proves the workflow before rolling out all 8 molds.
+The runtime is now ready for a full 8-mold rollout.
 
-Good next expansions, in order:
-1. `clusteredAlternateTile`
-2. more visually distinct dense alternates
-3. enemy-contested border state if needed
-4. rollout to additional molds only after the red pilot feels stable
+Recommended next expansions, in order:
+1. roll out the remaining 7 molds using the red baseline as the quality bar
+2. add more visually distinct dense alternates only for molds that still read repetitively in screenshots
+3. consider an enemy-contested border state only if playtests show that adjacency readability still needs more help

@@ -8,7 +8,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 1. **Session anchor**
    - At the start of a Fungus-Toast session, explicitly say to work in:
-     - `/home/jakejgordon/Fungus-Toast`
+       - `c:/Users/jakej/FungusToast`
    - Also name the current thread of work when helpful.
 
 2. **Canonical task list**
@@ -32,15 +32,40 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Active Thread
 
-- **Repo:** `/home/jakejgordon/Fungus-Toast`
-- **Current focus:** none
-- **Current state:** no open major tasks or active documentation threads need to be carried in this file right now.
+- **Repo:** `c:/Users/jakej/FungusToast`
+- **Current focus:** realistic mold icon overhaul rollout for the remaining 7 molds
+- **Current state:**
+   - Red mold slot 0 is the completed baseline.
+   - Board rendering now supports `isolatedTile`, `clusteredTile`, `clusteredAlternateTile`, `denseTile`, and `denseAlternateTile`.
+   - Shared non-board UI icons now use the representative mold icon path in `GridVisualizer` rather than reading only the old base tile.
+   - `FungusToast.Core/docs/MOLD_ICON_HELPER.md` is the canonical workflow doc for prompts, filenames, wiring, and evaluation.
 
 ## Pending Tasks
 
-- None.
+- Roll out the remaining 7 mold slots one at a time using the red slot 0 baseline as the reference quality bar.
+- Slot 1: `yellow_mold_64x64_0.asset` -> use prefix `yellow_mold_pilot`
+- Slot 2: `cyan_mold_64x64.asset` -> use prefix `cyan_mold_pilot`
+- Slot 3: `aqua_mold_64x64_0.asset` -> use prefix `aqua_mold_pilot`
+- Slot 4: `green_mold_64x64.asset` -> use prefix `green_mold_pilot`
+- Slot 5: `dark_blue_mold_64x64_0.asset` -> use prefix `dark_blue_mold_pilot`
+- Slot 6: `purple_mold_new_64x64_0.asset` -> use prefix `purple_mold_pilot`
+- Slot 7: `orange_red_mold_64x64_0.asset` -> use prefix `orange_red_mold_pilot`
+- For each remaining slot, target this asset set unless playtest evidence says a simpler set is sufficient:
+   - `{prefix}_isolated_64x64.png`
+   - `{prefix}_clustered_64x64.png`
+   - `{prefix}_clustered_alt_64x64.png`
+   - `{prefix}_dense_64x64.png`
+   - `{prefix}_dense_alt_64x64.png`
+- For each slot, follow the same execution loop:
+   - generate PNGs with the real-alpha prompt requirements from `MOLD_ICON_HELPER.md`
+   - create matching Tile assets in `Assets/Tiles/Mold`
+   - wire the slot in `SampleScene` under `playerMoldAliveVariantTiles`
+   - build `FungusToast.Unity/Assembly-CSharp.csproj --no-restore`
+   - review in Unity on both the board and the shared UI icon surfaces
 
 ## Next Handoff
 
-- Start the next Fungus-Toast session from the current user request rather than from this file.
-- Add a new active thread or pending task here only when work is actually in progress and needs continuity.
+- Start tomorrow with slot 1 `yellow_mold_pilot` unless the user explicitly wants a different color order.
+- Use the red slot 0 mold as the frozen baseline for silhouette density, clustered/dense alternation, and UI icon selection.
+- Suggested tomorrow scope: finish slot 1 end-to-end, including art generation prompts, Tile assets, scene wiring, compile validation, and screenshot review before touching slot 2.
+- If slot 1 goes smoothly, continue to slot 2 `cyan_mold_pilot`; otherwise capture any new art-direction rule back into `MOLD_ICON_HELPER.md` before ending the session.
