@@ -9,11 +9,43 @@ This helper covers:
 - how the current pilot runtime wiring works in Unity
 - how to iterate from one mold to the next without re-learning the workflow
 
+## Per-Mold Species Identity Rule
+
+Do not treat the remaining molds as palette swaps of the red pilot.
+
+For each new mold set, decide one species identity before writing prompts and keep that identity consistent across all five states.
+
+That species identity should define:
+- the dominant macro silhouette family
+- the typical edge rhythm
+- the interior texture language
+- the growth habit that distinguishes isolated, clustered, and dense forms
+
+Examples of acceptable species-identity differences:
+- lobed velvet rosettes
+- branching fronds or fern-like tendrils
+- coral-like lace fans
+- chunky blistered pads
+- threadlike radial mats
+
+Examples of unacceptable differences:
+- same red-pilot rosette silhouette with only a different color
+- same clustered stamp shape with minor texture swaps
+- same dense medallion perimeter repeated across colors
+
+Important rule for prompts:
+- explicitly tell the model that all five images for the current mold must look like the same species
+- explicitly tell the model what makes this species different from the previously completed molds
+
+Current lesson from rollout:
+- yellow passed gameplay readability, but it stayed somewhat close to the red mold in silhouette language
+- future prompts should push harder on species-specific structure so each mold reads as its own organism family at a glance
+
 ## Current Pilot Status
 
 The current pilot is the red mold in mold slot 0.
 
-This pilot is now the baseline template for the remaining 7 molds.
+This pilot is now the baseline template for the remaining rollout molds, with yellow slot 1 already completed.
 
 The runtime currently supports these alive-state variants for the pilot mold:
 - `isolatedTile`
@@ -80,7 +112,7 @@ Place gameplay PNGs under:
 Preferred runtime naming pattern:
 - `{mold_name}_pilot_{state}_64x64.png`
 
-For the remaining 7-mold rollout, keep the `_pilot_` infix for consistency with the red baseline unless the whole set is renamed in one deliberate cleanup.
+For the remaining rollout, keep the `_pilot_` infix for consistency with the red baseline unless the whole set is renamed in one deliberate cleanup.
 
 Examples:
 - `red_mold_pilot_isolated_64x64.png`
@@ -140,6 +172,7 @@ Prefer:
 - realism only insofar as it improves small-size readability
 - asymmetry in every variant
 - species consistency across isolated, clustered, and dense states
+- a distinct species identity per mold slot, not just a color change
 
 Required transparency instruction for prompts:
 - `Generate as a PNG with a real alpha channel. The background must be fully transparent alpha, not a checkerboard transparency preview. Do not render gray-and-white checker squares. Only the mold pixels should be opaque; all non-mold pixels must have 0% opacity.`
@@ -219,14 +252,15 @@ Do not generate any background of any kind. Do not show bread, toast, table, pla
 
 When iterating on a mold:
 1. Work one mold slot at a time.
-2. Build isolated, clustered, and dense first.
-3. Add `denseAlternateTile` if dense patches still read as repeated stamps.
-4. Add `clusteredAlternateTile` if the medium-density transition band still looks repetitive.
-5. Save PNGs under `Assets/Sprites/Tiles/Mold`.
-6. Create matching Tile assets under `Assets/Tiles/Mold`.
-7. Wire the mold slot in `playerMoldAliveVariantTiles`.
-8. Playtest in Unity and review both board cells and shared UI icons at real gameplay scale.
-9. Judge patch readability, not just close-up beauty.
+2. Define the mold's species identity in one sentence before prompting.
+3. Build isolated, clustered, and dense first.
+4. Add `denseAlternateTile` if dense patches still read as repeated stamps.
+5. Add `clusteredAlternateTile` if the medium-density transition band still looks repetitive.
+6. Save PNGs under `Assets/Sprites/Tiles/Mold`.
+7. Create matching Tile assets under `Assets/Tiles/Mold`.
+8. Wire the mold slot in `playerMoldAliveVariantTiles`.
+9. Playtest in Unity and review both board cells and shared UI icons at real gameplay scale.
+10. Judge patch readability and cross-mold distinctness, not just close-up beauty.
 
 ## How To Ask Copilot For The Next Wiring Step
 

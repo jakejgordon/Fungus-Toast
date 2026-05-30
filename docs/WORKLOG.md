@@ -33,17 +33,18 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `c:/Users/jakej/FungusToast`
-- **Current focus:** realistic mold icon overhaul rollout for the remaining 7 molds
+- **Current focus:** realistic mold icon overhaul rollout for the remaining 6 molds
 - **Current state:**
    - Red mold slot 0 is the completed baseline.
+   - Yellow mold slot 1 is wired, visually accepted, and now part of the completed baseline set.
    - Board rendering now supports `isolatedTile`, `clusteredTile`, `clusteredAlternateTile`, `denseTile`, and `denseAlternateTile`.
    - Shared non-board UI icons now use the representative mold icon path in `GridVisualizer` rather than reading only the old base tile.
    - `FungusToast.Core/docs/MOLD_ICON_HELPER.md` is the canonical workflow doc for prompts, filenames, wiring, and evaluation.
+   - New prompt rule: each mold must have its own species identity and macro-structure motif, not just a palette shift from red.
 
 ## Pending Tasks
 
-- Roll out the remaining 7 mold slots one at a time using the red slot 0 baseline as the reference quality bar.
-- Slot 1: `yellow_mold_64x64_0.asset` -> use prefix `yellow_mold_pilot`
+- Roll out the remaining 6 mold slots one at a time using the red and yellow completed molds as the current reference bar.
 - Slot 2: `cyan_mold_64x64.asset` -> use prefix `cyan_mold_pilot`
 - Slot 3: `aqua_mold_64x64_0.asset` -> use prefix `aqua_mold_pilot`
 - Slot 4: `green_mold_64x64.asset` -> use prefix `green_mold_pilot`
@@ -65,7 +66,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Next Handoff
 
-- Start tomorrow with slot 1 `yellow_mold_pilot` unless the user explicitly wants a different color order.
-- Use the red slot 0 mold as the frozen baseline for silhouette density, clustered/dense alternation, and UI icon selection.
-- Suggested tomorrow scope: finish slot 1 end-to-end, including art generation prompts, Tile assets, scene wiring, compile validation, and screenshot review before touching slot 2.
-- If slot 1 goes smoothly, continue to slot 2 `cyan_mold_pilot`; otherwise capture any new art-direction rule back into `MOLD_ICON_HELPER.md` before ending the session.
+- Start the next mold with slot 2 `cyan_mold_pilot`.
+- Use red and yellow as quality baselines for readability, but do not reuse their rounded rosette silhouette language.
+- Push cyan toward a more distinctive branching or frond-based species identity so it reads as a different organism family at a glance.
+- Suggested next scope: generate all five cyan prompts with explicit same-species language, distinct macro-structure guidance, and the standard alpha/channel constraints before moving into wiring.
