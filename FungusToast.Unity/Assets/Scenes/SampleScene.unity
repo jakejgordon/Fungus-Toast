@@ -108556,7 +108556,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1313153708}
   m_HandleRect: {fileID: 1313153707}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -112000,6 +112000,16 @@ MonoBehaviour:
     clusteredAlternateTile: {fileID: 11400000, guid: 2113917257034645b0f1235140a31f1b, type: 2}
     denseTile: {fileID: 11400000, guid: 665db9ec49fe4514a1dcbb2fc5289778, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: f895289ff4734ecf9075f678052a2a0c, type: 2}
+  - isolatedTile: {fileID: 11400000, guid: 96d282d2aa1b474a8c02dc7ae854be38, type: 2}
+    clusteredTile: {fileID: 11400000, guid: e8724477a5d24bd4b35eb1f37448cb91, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 3d684de19d5042ceb9af0c998cc730ef, type: 2}
+    denseTile: {fileID: 11400000, guid: 860f33d8a2c945d9b0d26c3576fb2dbb, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: 23276842635842298b7587ccf5ebf10d, type: 2}
+  - isolatedTile: {fileID: 11400000, guid: 547e14cf429b4f42a6fcd0f6f4a6de5a, type: 2}
+    clusteredTile: {fileID: 11400000, guid: c5682b28214a4db8a233f0523051a158, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 1ff0cc8041bf4a5aaee6d5fb0fc7f7db, type: 2}
+    denseTile: {fileID: 11400000, guid: 6d7f67c34af74ef8bb97f1b60b298f30, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: 5374f6fe22d34507a69bf84fb2d62ee3, type: 2}
   isolatedMoldVisualScale: 1
   clusteredMoldVisualScale: 1.1
   denseMoldVisualScale: 1.2
@@ -118001,7 +118011,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2143743642}
   m_HandleRect: {fileID: 2143743641}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -125272,7 +125282,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 853.7145
+      value: 853.8352
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -125280,7 +125290,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 474.85724
+      value: 474.9176
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.y
