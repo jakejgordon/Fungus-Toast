@@ -108556,7 +108556,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1313153708}
   m_HandleRect: {fileID: 1313153707}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -111995,6 +111995,11 @@ MonoBehaviour:
     clusteredAlternateTile: {fileID: 11400000, guid: 8e985f7c7dd5447bb4c9d8dbe7f9a641, type: 2}
     denseTile: {fileID: 11400000, guid: 84ed4ef52d3745c88c3d6145b5bf4d3e, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 2af2e0f65017434ea8d2b460d29a0d88, type: 2}
+  - isolatedTile: {fileID: 11400000, guid: 06e3782b85a5404e8f50a46da5a14022, type: 2}
+    clusteredTile: {fileID: 11400000, guid: 49a36337ee19444e8a65520400810f81, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 2113917257034645b0f1235140a31f1b, type: 2}
+    denseTile: {fileID: 11400000, guid: 665db9ec49fe4514a1dcbb2fc5289778, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: f895289ff4734ecf9075f678052a2a0c, type: 2}
   isolatedMoldVisualScale: 1
   clusteredMoldVisualScale: 1.1
   denseMoldVisualScale: 1.2
@@ -117996,7 +118001,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2143743642}
   m_HandleRect: {fileID: 2143743641}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -125267,7 +125272,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 854
+      value: 853.7145
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -125275,7 +125280,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 475
+      value: 474.85724
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.y
