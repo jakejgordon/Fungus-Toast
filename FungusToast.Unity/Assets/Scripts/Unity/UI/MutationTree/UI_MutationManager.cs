@@ -1030,6 +1030,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private float GetMutationPanelTopInset()
         {
+            float headerTopInset = GetKnownHeaderTopInset();
+            if (headerTopInset > 0f)
+            {
+                return headerTopInset + MutationPanelTopInsetPadding;
+            }
+
             if (mutationTreeRect == null)
             {
                 return 45f;
@@ -1062,6 +1068,45 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             return topInset > 0f ? topInset + MutationPanelTopInsetPadding : 45f;
+        }
+
+        private float GetKnownHeaderTopInset()
+        {
+            if (TryGetTopInsetForRect(headerControlsRowRect, HeaderControlsHeight, out float headerRowInset))
+            {
+                return headerRowInset;
+            }
+
+            float legacyInset = 0f;
+            if (TryGetTopInsetForRect(mutationPointsCounterText != null ? mutationPointsCounterText.rectTransform : null, fallbackHeight: 40f, out float pointsInset))
+            {
+                legacyInset = Mathf.Max(legacyInset, pointsInset);
+            }
+
+            if (TryGetTopInsetForRect(storePointsButton != null ? storePointsButton.transform as RectTransform : null, fallbackHeight: StoreButtonMinHeight, out float storeInset))
+            {
+                legacyInset = Mathf.Max(legacyInset, storeInset);
+            }
+
+            if (TryGetTopInsetForRect(presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null, fallbackHeight: PresentationSpeedButtonMinHeight, out float timeLapseInset))
+            {
+                legacyInset = Mathf.Max(legacyInset, timeLapseInset);
+            }
+
+            return legacyInset;
+        }
+
+        private static bool TryGetTopInsetForRect(RectTransform rectTransform, float fallbackHeight, out float topInset)
+        {
+            topInset = 0f;
+            if (rectTransform == null || !rectTransform.gameObject.activeInHierarchy)
+            {
+                return false;
+            }
+
+            float rectHeight = rectTransform.rect.height > 0f ? rectTransform.rect.height : fallbackHeight;
+            topInset = Mathf.Max(0f, -rectTransform.anchoredPosition.y + (rectHeight * rectTransform.pivot.y));
+            return topInset > 0f;
         }
 
         private Vector2 GetVisiblePosition()
