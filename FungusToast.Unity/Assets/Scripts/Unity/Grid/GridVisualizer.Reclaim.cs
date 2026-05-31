@@ -3346,8 +3346,14 @@ namespace FungusToast.Unity.Grid.Helpers
 				case FungalCellType.Dead:
 					if (cell.OwnerPlayerId is int deadOwnerId)
 					{
+						TileBase deadMoldTile = _getAliveTileForBoardTile?.Invoke(tile);
+						if (deadMoldTile == null)
+						{
+							deadMoldTile = _getTileForPlayer(deadOwnerId);
+						}
+
 						moldTilemap.SetTileFlags(pos, TileFlags.None);
-						moldTilemap.SetTile(pos, _getTileForPlayer(deadOwnerId));
+						moldTilemap.SetTile(pos, deadMoldTile);
 
 						if (cell.IsDying)
 						{
@@ -3478,7 +3484,15 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			if (cell.OwnerPlayerId is int ownerPlayerId)
 			{
-				moldTile = _getTileForPlayer(ownerPlayerId);
+				BoardTile ownerTile = _getActiveBoard()?.GetTileById(cell.TileId);
+				moldTile = ownerTile != null
+					? _getAliveTileForBoardTile?.Invoke(ownerTile)
+					: null;
+				if (moldTile == null)
+				{
+					moldTile = _getTileForPlayer(ownerPlayerId);
+				}
+
 				if (moldTile != null)
 				{
 					return true;

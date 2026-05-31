@@ -1111,7 +1111,7 @@ namespace FungusToast.Unity.Grid
 
         public Tile GetAliveTileForBoardTile(BoardTile tile)
         {
-            if (tile?.FungalCell?.CellType != FungalCellType.Alive || tile.FungalCell.OwnerPlayerId is not int ownerPlayerId)
+            if (tile?.FungalCell?.OwnerPlayerId is not int ownerPlayerId)
             {
                 return null;
             }
@@ -1288,7 +1288,7 @@ namespace FungusToast.Unity.Grid
         {
             var activeBoard = ActiveBoard;
             var cell = tile?.FungalCell;
-            if (activeBoard == null || cell?.CellType != FungalCellType.Alive || cell.OwnerPlayerId is not int ownerPlayerId)
+            if (activeBoard == null || cell?.OwnerPlayerId is not int ownerPlayerId)
             {
                 return MoldAliveVisualState.Base;
             }
@@ -1297,7 +1297,7 @@ namespace FungusToast.Unity.Grid
             foreach (BoardTile neighbor in activeBoard.GetOrthogonalNeighbors(tile.TileId))
             {
                 var neighborCell = neighbor?.FungalCell;
-                if (neighborCell?.CellType == FungalCellType.Alive && neighborCell.OwnerPlayerId == ownerPlayerId)
+                if (neighborCell?.OwnerPlayerId == ownerPlayerId && neighborCell.CellType != FungalCellType.None)
                 {
                     friendlyOrthogonalNeighborCount++;
                 }
