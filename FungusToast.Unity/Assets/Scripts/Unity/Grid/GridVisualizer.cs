@@ -257,6 +257,7 @@ namespace FungusToast.Unity.Grid
                 () => toxinOverlayTile,
                 GetPositionForTileId,
                 GetTileForPlayer,
+                GetDenseMoldTileForPlayer,
                 GetAliveTileForBoardTile,
                 (tileId, cell) => ShouldRenderResistanceOverlay(tileId, cell),
                 (tileId, cell) => cellStateAnimationController != null ? cellStateAnimationController.GetAliveCellAlpha(tileId, cell) : 1f,
@@ -1066,6 +1067,43 @@ namespace FungusToast.Unity.Grid
 
             int moldIndex = ResolvePlayerMoldIndex(playerId);
             return GetMoldIconTileForMoldIndex(moldIndex);
+        }
+
+        public Tile GetDenseMoldTileForPlayer(int playerId)
+        {
+            if (playerId < 0)
+            {
+                return null;
+            }
+
+            int moldIndex = ResolvePlayerMoldIndex(playerId);
+            if (moldIndex < 0)
+            {
+                return null;
+            }
+
+            if (playerMoldAliveVariantTiles != null
+                && moldIndex < playerMoldAliveVariantTiles.Length
+                && playerMoldAliveVariantTiles[moldIndex] != null)
+            {
+                MoldAliveVisualTiles variantTiles = playerMoldAliveVariantTiles[moldIndex];
+                if (variantTiles.denseTile != null)
+                {
+                    return variantTiles.denseTile;
+                }
+
+                if (variantTiles.denseAlternateTile != null)
+                {
+                    return variantTiles.denseAlternateTile;
+                }
+            }
+
+            if (playerMoldTiles != null && moldIndex < playerMoldTiles.Length)
+            {
+                return playerMoldTiles[moldIndex];
+            }
+
+            return null;
         }
 
         public Tile GetMoldIconTileForMoldIndex(int moldIndex)

@@ -3266,6 +3266,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<TileBase> _getToxinOverlayTile;
 		private readonly Func<int, Vector3Int> _getPositionForTileId;
 		private readonly Func<int, Tile> _getTileForPlayer;
+		private readonly Func<int, Tile> _getDenseTileForPlayer;
 		private readonly Func<BoardTile, Tile> _getAliveTileForBoardTile;
 		private readonly Func<int, FungalCell, bool> _shouldRenderResistanceOverlay;
 		private readonly Func<int, FungalCell, float> _getAliveCellAlpha;
@@ -3282,6 +3283,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<TileBase> getToxinOverlayTile,
 			Func<int, Vector3Int> getPositionForTileId,
 			Func<int, Tile> getTileForPlayer,
+			Func<int, Tile> getDenseTileForPlayer,
 			Func<BoardTile, Tile> getAliveTileForBoardTile,
 			Func<int, FungalCell, bool> shouldRenderResistanceOverlay,
 			Func<int, FungalCell, float> getAliveCellAlpha,
@@ -3297,6 +3299,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getToxinOverlayTile = getToxinOverlayTile;
 			_getPositionForTileId = getPositionForTileId;
 			_getTileForPlayer = getTileForPlayer;
+			_getDenseTileForPlayer = getDenseTileForPlayer;
 			_getAliveTileForBoardTile = getAliveTileForBoardTile;
 			_shouldRenderResistanceOverlay = shouldRenderResistanceOverlay;
 			_getAliveCellAlpha = getAliveCellAlpha;
@@ -3484,10 +3487,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			if (cell.OwnerPlayerId is int ownerPlayerId)
 			{
-				BoardTile ownerTile = _getActiveBoard()?.GetTileById(cell.TileId);
-				moldTile = ownerTile != null
-					? _getAliveTileForBoardTile?.Invoke(ownerTile)
-					: null;
+				moldTile = _getDenseTileForPlayer?.Invoke(ownerPlayerId);
 				if (moldTile == null)
 				{
 					moldTile = _getTileForPlayer(ownerPlayerId);
@@ -3501,7 +3501,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			if (cell.LastOwnerPlayerId is int lastOwnerPlayerId)
 			{
-				moldTile = _getTileForPlayer(lastOwnerPlayerId);
+				moldTile = _getDenseTileForPlayer?.Invoke(lastOwnerPlayerId) ?? _getTileForPlayer(lastOwnerPlayerId);
 			}
 
 			return moldTile != null;
