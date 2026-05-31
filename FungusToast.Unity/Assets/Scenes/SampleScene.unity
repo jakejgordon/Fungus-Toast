@@ -111990,6 +111990,11 @@ MonoBehaviour:
     clusteredAlternateTile: {fileID: 11400000, guid: ffad133f15e94b12bb87d3c616e6b01f, type: 2}
     denseTile: {fileID: 11400000, guid: 4f4bff99cfa049b7be5c3e96c27a82be, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 84e5364e6e584697a59eb8614709d6a8, type: 2}
+  - isolatedTile: {fileID: 11400000, guid: a1d642e9cf4e4ed9a6b77925f0f6e721, type: 2}
+    clusteredTile: {fileID: 11400000, guid: 5d8b28c0a4c24d14b63f1a8f16245ec3, type: 2}
+    clusteredAlternateTile: {fileID: 11400000, guid: 8e985f7c7dd5447bb4c9d8dbe7f9a641, type: 2}
+    denseTile: {fileID: 11400000, guid: 84ed4ef52d3745c88c3d6145b5bf4d3e, type: 2}
+    denseAlternateTile: {fileID: 11400000, guid: 2af2e0f65017434ea8d2b460d29a0d88, type: 2}
   isolatedMoldVisualScale: 1
   clusteredMoldVisualScale: 1.1
   denseMoldVisualScale: 1.2

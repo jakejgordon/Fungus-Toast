@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using System.IO;
+using System.Linq;
 using UnityEngine.Tilemaps;
 
 public class MoldSpriteImporter : AssetPostprocessor
@@ -56,8 +57,15 @@ public class MoldSpriteImporter : AssetPostprocessor
         Tile tile = AssetDatabase.LoadAssetAtPath<Tile>(tilePath);
         if (tile != null)
         {
-            // Assign the reimported sprite to the tile
-            tile.sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath);
+            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(spritePath)
+                ?? AssetDatabase.LoadAllAssetsAtPath(spritePath).OfType<Sprite>().FirstOrDefault();
+            if (sprite == null)
+            {
+                return;
+            }
+
+            // Assign the reimported sprite to the tile only when Unity has resolved the sprite.
+            tile.sprite = sprite;
             EditorUtility.SetDirty(tile);
             AssetDatabase.SaveAssets();
         }
