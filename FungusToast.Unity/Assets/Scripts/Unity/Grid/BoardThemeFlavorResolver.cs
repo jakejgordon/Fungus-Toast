@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 namespace FungusToast.Unity.Grid
 {
@@ -7,7 +8,25 @@ namespace FungusToast.Unity.Grid
         public static (string themeLabel, string themeNoun) Resolve(BoardMediumConfig medium, int width, int height)
         {
             string mediumId = medium?.mediumId?.Trim() ?? string.Empty;
-            string spriteName = medium?.GetResolvedBoardBackgroundSettings(width, height).BackgroundSprite?.name?.Trim() ?? string.Empty;
+            string spriteName = string.Empty;
+
+            if (medium != null)
+            {
+                var resolvedSettings = medium.GetResolvedBoardBackgroundSettings(width, height);
+                var backgroundSprite = resolvedSettings.BackgroundSprite;
+                if (backgroundSprite != null)
+                {
+                    try
+                    {
+                        spriteName = backgroundSprite.name?.Trim() ?? string.Empty;
+                    }
+                    catch (MissingReferenceException)
+                    {
+                        spriteName = string.Empty;
+                    }
+                }
+            }
+
             string source = string.IsNullOrWhiteSpace(spriteName) ? mediumId : spriteName;
 
             if (source.IndexOf("seed", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -28,6 +47,12 @@ namespace FungusToast.Unity.Grid
             if (source.IndexOf("pita", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return ("Pita Bread", "Pocket");
+            }
+
+            if (source.IndexOf("kaiser", StringComparison.OrdinalIgnoreCase) >= 0
+                || source.IndexOf("kaizer", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Kaiser Bun", "Crust");
             }
 
             if (source.IndexOf("white_bread", StringComparison.OrdinalIgnoreCase) >= 0

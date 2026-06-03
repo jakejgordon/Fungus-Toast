@@ -123,6 +123,87 @@ MonoBehaviour:
     maxBoardWidth: 85
     maxBoardHeight: 85
     renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: 9a53239843f1dc34993dd627b7a63704, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 1
+    backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
+    backgroundMaxTileClipFraction: 0
+    backgroundTileClipSampleResolution: 5
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
+    backgroundInsetLeftNormalized: 0.02
+    backgroundInsetRightNormalized: 0.02
+    backgroundInsetBottomNormalized: 0.02
+    backgroundInsetTopNormalized: 0.02
+    composeSafeAreaWithBoardBoundsMetadata: 0
+    backgroundScaleMultiplier: 1
+    renderPlayableAreaOverlay: 1
+    playableAreaOverlayColor: {r: 0.82, g: 0.68, b: 0.42, a: 0.18}
+    renderBoardEdgeFade: 1
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
+    boardEdgeFadeWidthTiles: 1.6
+    boardEdgeFadeNoiseStrength: 0.015
+  - minBoardWidth: 90
+    minBoardHeight: 90
+    maxBoardWidth: 90
+    maxBoardHeight: 90
+    renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: 9a53239843f1dc34993dd627b7a63704, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 1
+    backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
+    backgroundMaxTileClipFraction: 0
+    backgroundTileClipSampleResolution: 5
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
+    backgroundInsetLeftNormalized: 0.02
+    backgroundInsetRightNormalized: 0.02
+    backgroundInsetBottomNormalized: 0.02
+    backgroundInsetTopNormalized: 0.02
+    composeSafeAreaWithBoardBoundsMetadata: 0
+    backgroundScaleMultiplier: 1
+    renderPlayableAreaOverlay: 1
+    playableAreaOverlayColor: {r: 0.82, g: 0.68, b: 0.42, a: 0.18}
+    renderBoardEdgeFade: 1
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
+    boardEdgeFadeWidthTiles: 1.6
+    boardEdgeFadeNoiseStrength: 0.015
+  - minBoardWidth: 95
+    minBoardHeight: 95
+    maxBoardWidth: 95
+    maxBoardHeight: 95
+    renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: 9a53239843f1dc34993dd627b7a63704, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 1
+    backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0
+    backgroundMaxTileClipFraction: 0
+    backgroundTileClipSampleResolution: 5
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
+    backgroundInsetLeftNormalized: 0.02
+    backgroundInsetRightNormalized: 0.02
+    backgroundInsetBottomNormalized: 0.02
+    backgroundInsetTopNormalized: 0.02
+    composeSafeAreaWithBoardBoundsMetadata: 0
+    backgroundScaleMultiplier: 1
+    renderPlayableAreaOverlay: 1
+    playableAreaOverlayColor: {r: 0.82, g: 0.68, b: 0.42, a: 0.18}
+    renderBoardEdgeFade: 1
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
+    boardEdgeFadeWidthTiles: 1.6
+    boardEdgeFadeNoiseStrength: 0.015
+  - minBoardWidth: 100
+    minBoardHeight: 100
+    maxBoardWidth: 100
+    maxBoardHeight: 100
+    renderBoardBackground: 1
     backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
     hidePlayableSurfaceTiles: 1
@@ -145,10 +226,37 @@ MonoBehaviour:
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
     boardEdgeFadeWidthTiles: 1.6
     boardEdgeFadeNoiseStrength: 0.015
-  - minBoardWidth: 95
-    minBoardHeight: 95
-    maxBoardWidth: 95
-    maxBoardHeight: 95
+  - minBoardWidth: 105
+    minBoardHeight: 105
+    maxBoardWidth: 105
+    maxBoardHeight: 105
+    renderBoardBackground: 1
+    backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
+    backgroundColor: {r: 1, g: 1, b: 1, a: 1}
+    hidePlayableSurfaceTiles: 1
+    deriveBlockedTilesFromBackgroundAlpha: 1
+    backgroundAlphaPlayableThreshold: 0.1
+    backgroundMinTileCoverage: 0.12
+    backgroundMaxTileClipFraction: 0
+    backgroundTileClipSampleResolution: 5
+    useExplicitBlockedTileIds: 0
+    explicitBlockedTileIds: []
+    backgroundInsetLeftNormalized: 0.02
+    backgroundInsetRightNormalized: 0.02
+    backgroundInsetBottomNormalized: 0.02
+    backgroundInsetTopNormalized: 0.02
+    composeSafeAreaWithBoardBoundsMetadata: 1
+    backgroundScaleMultiplier: 1
+    renderPlayableAreaOverlay: 1
+    playableAreaOverlayColor: {r: 0.82, g: 0.68, b: 0.42, a: 0.18}
+    renderBoardEdgeFade: 1
+    boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.1}
+    boardEdgeFadeWidthTiles: 1.6
+    boardEdgeFadeNoiseStrength: 0.015
+  - minBoardWidth: 110
+    minBoardHeight: 110
+    maxBoardWidth: 110
+    maxBoardHeight: 110
     renderBoardBackground: 1
     backgroundSprite: {fileID: 21300000, guid: bcbf244cff6779842b733307ec77410d, type: 3}
     backgroundColor: {r: 1, g: 1, b: 1, a: 1}
@@ -303,6 +411,21 @@ MonoBehaviour:
     hasPlayableEllipse: 1
     playableEllipseCenterNormalized: {x: 0.494876, y: 0.502903}
     playableEllipseRadiiNormalized: {x: 0.478333, y: 0.478333}
+  - backgroundSprite: {fileID: 21300000, guid: 9a53239843f1dc34993dd627b7a63704, type: 3}
+    hasVisibleAlphaBounds: 1
+    visibleAlphaBoundsNormalized:
+      serializedVersion: 2
+      x: 0.031308
+      y: 0.130525
+      width: 0.922652
+      height: 0.713398
+    hasBoardBounds: 0
+    boardBoundsNormalized:
+      serializedVersion: 2
+      x: 0.031308
+      y: 0.130525
+      width: 0.922652
+      height: 0.713398
   renderCrust: 0
   crustEdgeTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}
   crustCornerTile: {fileID: 11400000, guid: a2c1abe15abab7e47b13da82b9a1deed, type: 2}

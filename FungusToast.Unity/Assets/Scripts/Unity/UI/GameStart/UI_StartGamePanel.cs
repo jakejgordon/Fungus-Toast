@@ -193,11 +193,18 @@ namespace FungusToast.Unity.UI.GameStart
             var sectionRoot = testingOptionsSectionRoot;
             if (sectionRoot == null)
             {
-                var found = transform.Find("UI_TestingOptionsSection");
-                if (found != null)
+                var allChildren = GetComponentsInChildren<Transform>(true);
+                for (int index = 0; index < allChildren.Length; index++)
                 {
-                    sectionRoot = found.gameObject;
+                    var child = allChildren[index];
+                    if (child == null || !string.Equals(child.name, "UI_TestingOptionsSection", StringComparison.Ordinal))
+                    {
+                        continue;
+                    }
+
+                    sectionRoot = child.gameObject;
                     testingOptionsSectionRoot = sectionRoot;
+                    break;
                 }
             }
 
@@ -2780,8 +2787,18 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             selectedBoardSize = DevelopmentTestingBoardSizePresets.ClampToSupportedSize(selectedBoardSize);
+            List<string> labels;
+            try
+            {
+                labels = DevelopmentTestingBoardSizePresets.BuildLabels(ResolveSoloBoardMedium());
+            }
+            catch (MissingReferenceException)
+            {
+                labels = DevelopmentTestingBoardSizePresets.BuildLabels();
+            }
+
             boardSizeDropdown.ClearOptions();
-            boardSizeDropdown.AddOptions(DevelopmentTestingBoardSizePresets.BuildLabels(ResolveSoloBoardMedium()));
+            boardSizeDropdown.AddOptions(labels);
             boardSizeDropdown.value = DevelopmentTestingBoardSizePresets.GetIndex(selectedBoardSize);
             boardSizeDropdown.RefreshShownValue();
             ApplyDropdownReadability(boardSizeDropdown);
