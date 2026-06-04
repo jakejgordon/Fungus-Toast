@@ -378,7 +378,7 @@ namespace FungusToast.Unity.UI
                 endGameDockSummaryLabel.fontSizeMax = 19f;
                 endGameDockSummaryLabel.fontSizeMin = 14f;
                 endGameDockSummaryLabel.textWrappingMode = TextWrappingModes.Normal;
-                endGameDockSummaryLabel.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(endGameDockSummaryLabel);
             }
 
             UpdateDockedResultsCopy();
@@ -2065,7 +2065,7 @@ namespace FungusToast.Unity.UI
             title.fontSizeMax = 22f;
             title.fontSizeMin = 18f;
             title.textWrappingMode = TextWrappingModes.NoWrap;
-            title.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(title);
             title.maxVisibleLines = 1;
 
             var descriptionObject = new GameObject("Description", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -2086,7 +2086,7 @@ namespace FungusToast.Unity.UI
             description.fontSizeMax = 17f;
             description.fontSizeMin = 16f;
             description.textWrappingMode = TextWrappingModes.Normal;
-            description.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(description);
             description.maxVisibleLines = 2;
 
             var tooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
@@ -2951,7 +2951,7 @@ namespace FungusToast.Unity.UI
                 label.gameObject.name = "Label";
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.margin = Vector4.zero;
                 label.raycastTarget = false;
 
@@ -3773,7 +3773,7 @@ namespace FungusToast.Unity.UI
             text.color = color;
             text.alignment = alignment;
             text.textWrappingMode = TextWrappingModes.NoWrap;
-            text.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(text);
             return text;
         }
 
@@ -4199,7 +4199,7 @@ namespace FungusToast.Unity.UI
             legacyResultsTitleText.fontSizeMin = 22f;
             legacyResultsTitleText.alignment = TextAlignmentOptions.Center;
             legacyResultsTitleText.textWrappingMode = TextWrappingModes.NoWrap;
-            legacyResultsTitleText.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(legacyResultsTitleText);
 
             var element = legacyResultsTitleText.GetComponent<LayoutElement>();
             if (element == null)
@@ -4688,7 +4688,7 @@ namespace FungusToast.Unity.UI
             label.fontSizeMax = 20f;
             label.fontSizeMin = 14f;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
         }
 
         private static void EnsureButtonLayout(Button button)
@@ -5760,7 +5760,7 @@ namespace FungusToast.Unity.UI
             if (label != null)
             {
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.enableAutoSizing = true;
                 label.fontSizeMax = 28f;
                 label.fontSizeMin = 16f;
@@ -5789,7 +5789,7 @@ namespace FungusToast.Unity.UI
             if (label != null)
             {
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.enableAutoSizing = true;
                 label.fontSizeMax = 22f;
                 label.fontSizeMin = 13f;

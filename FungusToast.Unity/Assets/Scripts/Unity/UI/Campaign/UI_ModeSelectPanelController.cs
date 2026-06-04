@@ -1221,7 +1221,7 @@ namespace FungusToast.Unity.UI.Campaign
             label.fontStyle = fontStyle;
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.margin = Vector4.zero;
             label.raycastTarget = false;
 

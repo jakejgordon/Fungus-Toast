@@ -1521,7 +1521,7 @@ namespace FungusToast.Unity.UI.GameStart
                     NormalizePlainButtonLabel(compoundLabel.rectTransform);
                     compoundLabel.alignment = TextAlignmentOptions.Center;
                     compoundLabel.textWrappingMode = TextWrappingModes.NoWrap;
-                    compoundLabel.overflowMode = TextOverflowModes.Ellipsis;
+                    TMPOverflowUtility.SetSafeEllipsis(compoundLabel);
                     compoundLabel.margin = Vector4.zero;
                 }
 
@@ -2148,7 +2148,7 @@ namespace FungusToast.Unity.UI.GameStart
             label.fontSizeMin = 10f;
             label.fontSizeMax = 14f;
             label.alignment = TextAlignmentOptions.Center;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.color = UIStyleTokens.Button.TextDefault;
             label.fontStyle = FontStyles.Bold;
             label.raycastTarget = false;
@@ -2418,7 +2418,7 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.margin = icon == null
                     ? Vector4.zero
                     : iconOnRight
@@ -2471,7 +2471,7 @@ namespace FungusToast.Unity.UI.GameStart
                 label.text = text;
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.margin = Vector4.zero;
 
                 RectTransform labelRect = label.rectTransform;

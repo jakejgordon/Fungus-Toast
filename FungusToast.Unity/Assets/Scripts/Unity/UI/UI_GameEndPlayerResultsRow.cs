@@ -188,7 +188,7 @@ namespace FungusToast.Unity.UI
             label.fontSizeMax = 20f;
             label.fontSizeMin = 13f;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.raycastTarget = false;
 
             ApplyDetailsButtonStyle(detailsButton);
@@ -307,7 +307,7 @@ namespace FungusToast.Unity.UI
             {
                 label.fontSize = fontSize;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
             }
         }
     }
