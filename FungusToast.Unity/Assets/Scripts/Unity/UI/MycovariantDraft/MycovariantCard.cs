@@ -76,7 +76,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 nameText.fontSizeMin = TitleFontSizeMin;
                 nameText.fontSizeMax = TitleFontSizeMax;
                 nameText.textWrappingMode = TextWrappingModes.Normal;
-                nameText.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(nameText);
                 nameText.alignment = TextAlignmentOptions.MidlineLeft;
                 nameText.text = title;
             }
@@ -87,7 +87,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 effectText.fontSizeMin = 14f;
                 effectText.fontSizeMax = 18f;
                 effectText.textWrappingMode = TextWrappingModes.Normal;
-                effectText.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(effectText);
                 effectText.alignment = TextAlignmentOptions.TopLeft;
                 effectText.text = description;
             }

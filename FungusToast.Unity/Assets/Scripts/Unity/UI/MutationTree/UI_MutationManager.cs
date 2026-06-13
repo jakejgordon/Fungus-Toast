@@ -1643,7 +1643,7 @@ namespace FungusToast.Unity.UI.MutationTree
             labelRect.sizeDelta = Vector2.zero;
             mutationPointsCounterText.alignment = TextAlignmentOptions.MidlineLeft;
             mutationPointsCounterText.enableAutoSizing = false;
-            mutationPointsCounterText.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(mutationPointsCounterText);
             mutationPointsCounterText.raycastTarget = false;
         }
 
@@ -1917,7 +1917,7 @@ namespace FungusToast.Unity.UI.MutationTree
             timeLapseCoachmarkTitleTextLabel.fontSize = 22f;
             timeLapseCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             timeLapseCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            timeLapseCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(timeLapseCoachmarkTitleTextLabel);
             timeLapseCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -2034,7 +2034,7 @@ namespace FungusToast.Unity.UI.MutationTree
             storePointsCoachmarkTitleTextLabel.fontSize = 22f;
             storePointsCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             storePointsCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            storePointsCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(storePointsCoachmarkTitleTextLabel);
             storePointsCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -2389,7 +2389,9 @@ namespace FungusToast.Unity.UI.MutationTree
             Canvas.ForceUpdateCanvases();
 
             float preferredWidth = SpendButtonMinWidth;
-            float labelWidth = spendPointsButtonText.GetPreferredValues(spendPointsButtonText.text).x;
+            float labelWidth = FungusToast.Unity.UI.TMPOverflowUtility.GetPreferredWidthWithoutEllipsis(
+                spendPointsButtonText,
+                spendPointsButtonText.text);
             preferredWidth = Mathf.Max(preferredWidth, Mathf.Ceil(labelWidth) + (HeaderButtonHorizontalPadding * 2f));
 
             var layout = spendPointsButton.GetComponent<LayoutElement>();
@@ -2430,7 +2432,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 var label = contentRoot.GetComponentInChildren<TextMeshProUGUI>(true);
                 if (label != null)
                 {
-                    contentWidth += label.GetPreferredValues(label.text).x;
+                    contentWidth += FungusToast.Unity.UI.TMPOverflowUtility.GetPreferredWidthWithoutEllipsis(
+                        label,
+                        label.text);
                 }
 
                 var icon = contentRoot.GetComponentInChildren<Image>(true);
@@ -2568,7 +2572,7 @@ namespace FungusToast.Unity.UI.MutationTree
             label.fontStyle = FontStyles.Bold;
             label.characterSpacing = 0.5f;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(label);
             label.alignment = TextAlignmentOptions.Center;
             label.color = labelColor;
             label.margin = Vector4.zero;

@@ -2100,7 +2100,7 @@ namespace FungusToast.Unity.UI.Campaign
             label.fontSizeMin = 10f;
             label.fontSizeMax = 14f;
             label.alignment = TextAlignmentOptions.Center;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.color = UIStyleTokens.Button.TextDefault;
             label.raycastTarget = false;
 
@@ -2201,7 +2201,7 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.margin = icon == null
                     ? Vector4.zero
                     : new Vector4(ActionButtonIconSize + ActionButtonContentSpacing + ActionButtonHorizontalPadding, 0f, 0f, 0f);
@@ -2252,7 +2252,7 @@ namespace FungusToast.Unity.UI.Campaign
                 label.text = text;
                 label.alignment = TextAlignmentOptions.Center;
                 label.textWrappingMode = TextWrappingModes.NoWrap;
-                label.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(label);
                 label.margin = Vector4.zero;
 
                 RectTransform labelRect = label.rectTransform;

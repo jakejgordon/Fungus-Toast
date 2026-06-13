@@ -764,7 +764,7 @@ namespace FungusToast.Unity.UI
             randomDecayChanceText.fontSizeMin = 13f;
             randomDecayChanceText.fontSizeMax = RandomDecayChanceFontSize;
             randomDecayChanceText.textWrappingMode = TextWrappingModes.NoWrap;
-            randomDecayChanceText.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(randomDecayChanceText);
             randomDecayChanceText.alignment = TextAlignmentOptions.Left;
         }
 
@@ -1200,7 +1200,7 @@ namespace FungusToast.Unity.UI
             adaptationCoachmarkTitleTextLabel.fontSize = 22f;
             adaptationCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             adaptationCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            adaptationCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(adaptationCoachmarkTitleTextLabel);
             adaptationCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));

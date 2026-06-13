@@ -100,7 +100,7 @@ namespace FungusToast.Unity.UI
 
             float targetSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.enableAutoSizing = true;
             label.fontSizeMax = targetSize;
             label.fontSizeMin = Mathf.Max(10f, targetSize * 0.70f);

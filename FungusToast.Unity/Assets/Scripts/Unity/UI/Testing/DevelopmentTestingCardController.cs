@@ -930,7 +930,7 @@ namespace FungusToast.Unity.UI.Testing
                     NormalizePlainButtonLabel(compoundLabel.rectTransform);
                     compoundLabel.alignment = TextAlignmentOptions.Center;
                     compoundLabel.textWrappingMode = TextWrappingModes.NoWrap;
-                    compoundLabel.overflowMode = TextOverflowModes.Ellipsis;
+                    TMPOverflowUtility.SetSafeEllipsis(compoundLabel);
                     compoundLabel.margin = Vector4.zero;
                     compoundLabel.gameObject.SetActive(true);
                 }
@@ -1096,7 +1096,7 @@ namespace FungusToast.Unity.UI.Testing
             label.enableAutoSizing = false;
             label.fontSize = 15f;
             label.alignment = TextAlignmentOptions.Left;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
 
             var labelElement = labelObject.GetComponent<LayoutElement>();
             labelElement.minHeight = DropdownLabelMinHeight;
@@ -1228,7 +1228,7 @@ namespace FungusToast.Unity.UI.Testing
                 toggleLabel.enableAutoSizing = false;
                 toggleLabel.fontSize = 15f;
                 toggleLabel.alignment = TextAlignmentOptions.Left;
-                toggleLabel.overflowMode = TextOverflowModes.Ellipsis;
+                TMPOverflowUtility.SetSafeEllipsis(toggleLabel);
 
                 var textElement = toggleLabelObject.GetComponent<LayoutElement>();
                 textElement.minWidth = options.SettingWidth - 56f;

@@ -1182,7 +1182,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             mycovariantDraftCoachmarkTitleTextLabel.fontSize = 22f;
             mycovariantDraftCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             mycovariantDraftCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            mycovariantDraftCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(mycovariantDraftCoachmarkTitleTextLabel);
             mycovariantDraftCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -1502,7 +1502,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             campaignAdaptationRedrawButtonText.fontSizeMin = 13f;
             campaignAdaptationRedrawButtonText.fontSizeMax = 16f;
             campaignAdaptationRedrawButtonText.textWrappingMode = TextWrappingModes.NoWrap;
-            campaignAdaptationRedrawButtonText.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(campaignAdaptationRedrawButtonText);
             campaignAdaptationRedrawButtonText.color = UIStyleTokens.Text.Primary;
             campaignAdaptationRedrawButtonText.raycastTarget = false;
             UIStyleTokens.Button.SetButtonLabelColor(campaignAdaptationRedrawButton, UIStyleTokens.Text.Primary);

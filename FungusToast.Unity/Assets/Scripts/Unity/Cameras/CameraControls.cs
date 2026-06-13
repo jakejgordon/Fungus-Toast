@@ -307,7 +307,7 @@ namespace FungusToast.Unity.Cameras
             cameraPanCoachmarkTitleTextLabel.fontSize = 22f;
             cameraPanCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             cameraPanCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            cameraPanCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(cameraPanCoachmarkTitleTextLabel);
             cameraPanCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));

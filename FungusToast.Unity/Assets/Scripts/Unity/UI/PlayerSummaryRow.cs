@@ -93,7 +93,7 @@ namespace FungusToast.Unity.UI
 
             label.alignment = TextAlignmentOptions.MidlineRight;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             float maxSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
             label.enableAutoSizing = true;
             label.fontSizeMax = maxSize;

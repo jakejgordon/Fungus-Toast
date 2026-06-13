@@ -248,7 +248,7 @@ namespace FungusToast.Unity.UI
 
             float targetSize = label.enableAutoSizing ? label.fontSizeMax : label.fontSize;
             label.textWrappingMode = TextWrappingModes.NoWrap;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.enableAutoSizing = true;
             label.fontSizeMax = targetSize;
             label.fontSizeMin = Mathf.Max(10f, targetSize * 0.70f);
@@ -539,7 +539,7 @@ namespace FungusToast.Unity.UI
             scoreboardCoachmarkTitleTextLabel.fontSize = 24f;
             scoreboardCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             scoreboardCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            scoreboardCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(scoreboardCoachmarkTitleTextLabel);
             scoreboardCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -690,7 +690,7 @@ namespace FungusToast.Unity.UI
             endgameCountdownCoachmarkTitleTextLabel.fontSize = 24f;
             endgameCountdownCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
             endgameCountdownCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            endgameCountdownCoachmarkTitleTextLabel.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(endgameCountdownCoachmarkTitleTextLabel);
             endgameCountdownCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));

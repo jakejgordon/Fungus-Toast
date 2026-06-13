@@ -151,7 +151,7 @@ namespace FungusToast.Unity.UI.MutationTree
             messageText.fontSize = 23f;
             messageText.fontStyle = FontStyles.Bold;
             messageText.textWrappingMode = TextWrappingModes.NoWrap;
-            messageText.overflowMode = TextOverflowModes.Ellipsis;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(messageText);
             messageText.raycastTarget = false;
 
             if (TMP_Settings.defaultFontAsset != null)
