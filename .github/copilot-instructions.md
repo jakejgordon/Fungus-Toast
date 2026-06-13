@@ -15,6 +15,7 @@ If a task is unclear, use this routing order before making changes:
 - **Local Windows itch.io release workflow:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
 - **Unit test stack and canonical test commands:** `FungusToast.Core/docs/TESTING_HELPER.md`
 - **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md` (final balance/campaign calls must be artifact-backed, not console-only)
+- **Board background authoring and irregular silhouette baking:** `FungusToast.Core/docs/NEW_BACKGROUND_HELPER.md`
 - **AI strategy authoring and roster metadata:** `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`
 - **Mutation authoring:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
 - **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
@@ -123,11 +124,12 @@ Use this precedence order when multiple docs seem relevant:
 ## Search Guidance
 
 - Simulation/balance tasks → `SIMULATION_HELPER.md`
+- Board background tasks → `NEW_BACKGROUND_HELPER.md`
 - Mutation work → `NEW_MUTATION_HELPER.md`
 - Mycovariant work → `MYCOVARIANT_HELPER.md`
 - Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, `SAVE_COMPATIBILITY.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
-- UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md`, `docs/ui/TOOLTIP_GUIDE.md`, and `UI_STYLE_GUIDE.md`
+- UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md`, `NEW_BACKGROUND_HELPER.md` for board-background silhouette work, `docs/ui/TOOLTIP_GUIDE.md`, and `UI_STYLE_GUIDE.md`
 - Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`
 - Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
 - Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`

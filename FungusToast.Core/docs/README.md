@@ -12,6 +12,7 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `BUILD_INSTRUCTIONS.md` — canonical CLI build commands and platform notes
 - `TESTING_HELPER.md` — unit test stack, testing conventions, and canonical test commands
 - `SIMULATION_HELPER.md` — simulation workflows, reproducibility, fairness testing, and output conventions
+- `NEW_BACKGROUND_HELPER.md` — board background authoring, contour-to-square baking, and irregular silhouette workflow
 - `AI_STRATEGY_AUTHORING.md` — AI roster organization, metadata, and strategy authoring patterns
 - `NEW_MUTATION_HELPER.md` — mutation authoring workflow
 - `MYCOVARIANT_HELPER.md` — entry point for all Mycovariant work

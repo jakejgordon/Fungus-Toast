@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import math
 import struct
 import sys
@@ -63,6 +64,16 @@ class SpriteMetadata:
     playable_horizontal_span_profile_min_y: float
     playable_horizontal_span_profile_max_y: float
     playable_horizontal_span_profile: list[tuple[float, float, float]]
+    baked_blocked_tile_masks: list["BakedBlockedTileMask"]
+
+
+@dataclass(frozen=True)
+class BakedBlockedTileMask:
+    board_width: int
+    board_height: int
+    bake_version: str
+    sprite_content_hash: str
+    blocked_tile_ids: list[int]
 
 
 @dataclass(frozen=True)
@@ -130,6 +141,24 @@ def main() -> int:
         type=int,
         default=0,
         help="If set, validate every square board from 1..N in addition to the representative probes.",
+    )
+    parser.add_argument(
+        "--emit-baked-mask-sprite",
+        type=str,
+        default="",
+        help="Optional sprite file name, stem, or guid to emit canonical square bounds and baked-mask YAML snippets for.",
+    )
+    parser.add_argument(
+        "--emit-baked-mask-sizes",
+        type=str,
+        default="",
+        help="Comma-separated board sizes for baked-mask emission, for example '85x85,90x90,95x95'.",
+    )
+    parser.add_argument(
+        "--emit-baked-mask-version",
+        type=str,
+        default="contour-square-v1",
+        help="Version label stored with emitted baked masks.",
     )
     args = parser.parse_args()
 
@@ -203,7 +232,8 @@ def main() -> int:
             f"visible={format_rect(metadata.visible_alpha_bounds)} "
             f"board={'none' if not metadata.has_board_bounds else format_rect(metadata.board_bounds)} "
             f"ellipse={'none' if not metadata.has_playable_ellipse else format_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)} "
-            f"profile={'none' if not metadata.has_playable_horizontal_span_profile else format_horizontal_span_profile(metadata.playable_horizontal_span_profile, metadata.playable_horizontal_span_profile_min_y, metadata.playable_horizontal_span_profile_max_y)}"
+            f"profile={'none' if not metadata.has_playable_horizontal_span_profile else format_horizontal_span_profile(metadata.playable_horizontal_span_profile, metadata.playable_horizontal_span_profile_min_y, metadata.playable_horizontal_span_profile_max_y)} "
+            f"baked={'none' if not metadata.baked_blocked_tile_masks else format_baked_mask_summary(metadata.baked_blocked_tile_masks)}"
         )
 
     print("")
@@ -224,6 +254,29 @@ def main() -> int:
         print("Notes:")
         for note in notes:
             print(f"  - {note}")
+
+    if args.emit_baked_mask_sprite:
+        try:
+            requested_sizes = parse_board_sizes(args.emit_baked_mask_sizes)
+        except ValueError as exc:
+            errors.append(str(exc))
+            requested_sizes = []
+
+        if not requested_sizes:
+            errors.append("--emit-baked-mask-sizes requires at least one board size such as 85x85,90x90,95x95.")
+        else:
+            print("")
+            print("Baked mask emission:")
+            emit_baked_mask_snippet(
+                args.emit_baked_mask_sprite,
+                requested_sizes,
+                args.emit_baked_mask_version,
+                metadata_by_guid,
+                sprite_images,
+                default_settings,
+                overrides,
+                errors,
+            )
 
     if errors:
         print("")
@@ -303,6 +356,7 @@ def build_metadata_map(asset: dict, sprite_guid_map: dict[str, Path]) -> dict[st
             playable_horizontal_span_profile_min_y=float(entry.get("playableHorizontalSpanProfileMinYNormalized", 0.0)),
             playable_horizontal_span_profile_max_y=float(entry.get("playableHorizontalSpanProfileMaxYNormalized", 1.0)),
             playable_horizontal_span_profile=horizontal_span_profile_from_yaml(entry.get("playableHorizontalSpanProfile")),
+            baked_blocked_tile_masks=baked_blocked_tile_masks_from_yaml(entry.get("bakedBlockedTileMasks")),
         )
     return metadata_by_guid
 
@@ -432,6 +486,21 @@ def validate_metadata(
                         f"y={stop.normalized_y:.6f} span=({stop.min_x:.6f}, {stop.max_x:.6f})"
                     )
 
+        baked_mask_sizes: set[tuple[int, int]] = set()
+        for baked_mask in metadata.baked_blocked_tile_masks:
+            if baked_mask.board_width <= 0 or baked_mask.board_height <= 0:
+                errors.append(
+                    f"{metadata.sprite_path.name} baked blocked-tile mask has invalid size {baked_mask.board_width}x{baked_mask.board_height}."
+                )
+                continue
+
+            size_key = (baked_mask.board_width, baked_mask.board_height)
+            if size_key in baked_mask_sizes:
+                errors.append(
+                    f"{metadata.sprite_path.name} has duplicate baked blocked-tile masks for {baked_mask.board_width}x{baked_mask.board_height}."
+                )
+            baked_mask_sizes.add(size_key)
+
 
 def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
     metadata = settings.metadata
@@ -481,6 +550,10 @@ def collect_override_notes(settings: BackgroundSettings, notes: list[str]) -> No
             f"{settings.sprite_path.name} {settings.override_description}: backgroundScaleMultiplier={settings.background_scale_multiplier:.3f}; "
             "keep visually verifying this because it changes render framing and mask derivation together."
         )
+    if settings.metadata and settings.metadata.baked_blocked_tile_masks:
+        notes.append(
+            f"{settings.sprite_path.name} {settings.override_description}: baked blocked-tile masks are present; validation prefers those exact masks when a size match exists."
+        )
 
 
 def evaluate_probe(
@@ -501,16 +574,20 @@ def evaluate_probe(
 
     blocked_tiles = 0
     explicit_blocked_tile_ids = sanitize_explicit_blocked_tile_ids(settings.explicit_blocked_tile_ids, width, height) if settings.use_explicit_blocked_tile_ids else set()
+    baked_blocked_tile_ids = get_matching_baked_blocked_tile_ids(settings.metadata, width, height)
     alpha_threshold = clamp01(settings.alpha_playable_threshold)
     minimum_tile_coverage = clamp01(settings.min_tile_coverage)
     for tile_y in range(height):
         for tile_x in range(width):
             tile_id = (tile_y * width) + tile_x
-            if tile_id in explicit_blocked_tile_ids:
+            if tile_id in explicit_blocked_tile_ids or tile_id in baked_blocked_tile_ids:
                 blocked_tiles += 1
                 continue
 
-            if effective_horizontal_span_profile is not None:
+            if baked_blocked_tile_ids:
+                satisfies_clip_budget = True
+                satisfies_coverage = True
+            elif effective_horizontal_span_profile is not None:
                 satisfies_clip_budget = (
                     not clip_offsets
                     or evaluate_tile_horizontal_span_profile_clip_budget(
@@ -599,13 +676,25 @@ def evaluate_probe(
         total_tiles=total_tiles,
         effective_safe_area=effective_safe_area,
         effective_area_transparency_fraction=effective_area_transparency_fraction,
-        shape_source="profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area")),
+        shape_source="baked-mask" if baked_blocked_tile_ids else ("profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area"))),
     )
 
 
 def sanitize_explicit_blocked_tile_ids(blocked_tile_ids: list[int], board_width: int, board_height: int) -> set[int]:
     total_tiles = board_width * board_height
     return {tile_id for tile_id in blocked_tile_ids if 0 <= tile_id < total_tiles}
+
+
+def get_matching_baked_blocked_tile_ids(metadata: SpriteMetadata | None, board_width: int, board_height: int) -> set[int]:
+    if metadata is None:
+        return set()
+
+    total_tiles = board_width * board_height
+    for baked_mask in metadata.baked_blocked_tile_masks:
+        if baked_mask.board_width != board_width or baked_mask.board_height != board_height:
+            continue
+        return {tile_id for tile_id in baked_mask.blocked_tile_ids if 0 <= tile_id < total_tiles}
+    return set()
 
 
 def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> None:
@@ -635,6 +724,10 @@ def validate_probe_results(results: list[ProbeResult], errors: list[str]) -> Non
             errors.append(
                 "95x95 default white bread produced a fully playable inner rectangle; "
                 "the toast silhouette should still clip rounded-corner edge tiles at that size."
+            )
+        if result.shape_source == "baked-mask" and result.blocked_tiles == 0 and max(result.width, result.height) >= 10:
+            errors.append(
+                f"{result.width}x{result.height} on {result.settings.sprite_path.name} uses a baked mask but blocks no tiles."
             )
 
 
@@ -975,6 +1068,26 @@ def horizontal_span_profile_from_yaml(data: list[dict] | None) -> list[tuple[flo
     return profile
 
 
+def baked_blocked_tile_masks_from_yaml(data: list[dict] | None) -> list[BakedBlockedTileMask]:
+    if not data:
+        return []
+
+    masks: list[BakedBlockedTileMask] = []
+    for entry in data:
+        if not entry:
+            continue
+        masks.append(
+            BakedBlockedTileMask(
+                board_width=int(entry.get("boardWidth", 0)),
+                board_height=int(entry.get("boardHeight", 0)),
+                bake_version=str(entry.get("bakeVersion", "") or ""),
+                sprite_content_hash=str(entry.get("spriteContentHash", "") or ""),
+                blocked_tile_ids=[int(tile_id) for tile_id in entry.get("blockedTileIds", [])],
+            )
+        )
+    return masks
+
+
 def build_safe_area(left: float, right: float, bottom: float, top: float) -> Rect:
     left = clamp01(left)
     right = clamp01(right)
@@ -1142,6 +1255,216 @@ def format_horizontal_span_profile(profile: list[tuple[float, float, float]], mi
     if sanitized is None:
         return "empty"
     return f"{len(sanitized.stops)} stops y=({sanitized.min_y:.3f},{sanitized.max_y:.3f})"
+
+
+def format_baked_mask_summary(masks: list[BakedBlockedTileMask]) -> str:
+    ordered = sorted(masks, key=lambda mask: (mask.board_width, mask.board_height))
+    return ", ".join(f"{mask.board_width}x{mask.board_height}" for mask in ordered)
+
+
+def parse_board_sizes(raw_value: str) -> list[tuple[int, int]]:
+    sizes: list[tuple[int, int]] = []
+    if not raw_value.strip():
+        return sizes
+
+    for chunk in raw_value.split(","):
+        token = chunk.strip().lower()
+        if not token:
+            continue
+        width_str, separator, height_str = token.partition("x")
+        if separator != "x":
+            raise ValueError(f"Invalid board size '{chunk}'. Expected WIDTHxHEIGHT.")
+        width = int(width_str)
+        height = int(height_str)
+        if width <= 0 or height <= 0:
+            raise ValueError(f"Invalid board size '{chunk}'. Dimensions must be positive.")
+        sizes.append((width, height))
+    return sizes
+
+
+def resolve_sprite_metadata(sprite_identifier: str, metadata_by_guid: dict[str, SpriteMetadata]) -> SpriteMetadata | None:
+    lookup = sprite_identifier.strip().lower()
+    if not lookup:
+        return None
+
+    for guid, metadata in metadata_by_guid.items():
+        if guid.lower() == lookup:
+            return metadata
+        if metadata.sprite_path.name.lower() == lookup or metadata.sprite_path.stem.lower() == lookup:
+            return metadata
+    return None
+
+
+def build_square_board_bounds(bounds: Rect, image: SpriteImage) -> Rect:
+    sanitized = sanitize_rect(bounds)
+    image_width = max(1, image.width)
+    image_height = max(1, image.height)
+
+    width_px = sanitized.width * image_width
+    height_px = sanitized.height * image_height
+    side_px = max(width_px, height_px)
+
+    center_x_px = (sanitized.x * image_width) + (width_px * 0.5)
+    center_y_px = (sanitized.y * image_height) + (height_px * 0.5)
+
+    x_min_px = center_x_px - (side_px * 0.5)
+    y_min_px = center_y_px - (side_px * 0.5)
+    x_min_px = min(max(0.0, x_min_px), max(0.0, image_width - side_px))
+    y_min_px = min(max(0.0, y_min_px), max(0.0, image_height - side_px))
+
+    return sanitize_rect(
+        Rect(
+            x_min_px / image_width,
+            y_min_px / image_height,
+            side_px / image_width,
+            side_px / image_height,
+        )
+    )
+
+
+def build_baked_mask_from_square_bounds(
+    image: SpriteImage,
+    square_bounds: Rect,
+    board_width: int,
+    board_height: int,
+    alpha_threshold: float,
+    minimum_tile_coverage: float,
+    max_tile_clip_fraction: float,
+    tile_clip_sample_resolution: int,
+) -> list[int]:
+    clip_offsets = build_clip_budget_sample_offsets(
+        PLAYABLE_SURFACE_TILE_SCALE,
+        max_tile_clip_fraction,
+        tile_clip_sample_resolution,
+    )
+    blocked_tile_ids: list[int] = []
+    clamped_alpha_threshold = clamp01(alpha_threshold)
+    clamped_minimum_tile_coverage = clamp01(minimum_tile_coverage)
+
+    for tile_y in range(board_height):
+        for tile_x in range(board_width):
+            satisfies_clip_budget = (
+                not clip_offsets
+                or evaluate_tile_clip_budget(
+                    image,
+                    square_bounds,
+                    board_width,
+                    board_height,
+                    tile_x,
+                    tile_y,
+                    clamped_alpha_threshold,
+                    clip_offsets,
+                )
+            )
+            satisfies_coverage = (
+                clamped_minimum_tile_coverage <= 0.0
+                or evaluate_tile_coverage(
+                    image,
+                    square_bounds,
+                    board_width,
+                    board_height,
+                    tile_x,
+                    tile_y,
+                    clamped_alpha_threshold,
+                    clamped_minimum_tile_coverage,
+                )
+            )
+            if not (satisfies_clip_budget and satisfies_coverage):
+                blocked_tile_ids.append((tile_y * board_width) + tile_x)
+
+    return blocked_tile_ids
+
+
+def compute_sprite_content_hash(image: SpriteImage) -> str:
+    digest = hashlib.sha256()
+    digest.update(f"{image.width}x{image.height}|".encode("utf-8"))
+    for row in image.alpha_rows:
+        digest.update(bytes(row))
+    return digest.hexdigest()[:16]
+
+
+def resolve_settings_for_sprite_and_size(
+    sprite_guid: str,
+    board_width: int,
+    board_height: int,
+    default_settings: BackgroundSettings,
+    overrides: list[BackgroundSettings],
+) -> BackgroundSettings | None:
+    for override in overrides:
+        if override.sprite_guid != sprite_guid:
+            continue
+        if override.min_board_width <= board_width <= override.max_board_width and override.min_board_height <= board_height <= override.max_board_height:
+            return override
+    if default_settings.sprite_guid == sprite_guid:
+        return default_settings
+    return None
+
+
+def emit_baked_mask_snippet(
+    sprite_identifier: str,
+    board_sizes: list[tuple[int, int]],
+    bake_version: str,
+    metadata_by_guid: dict[str, SpriteMetadata],
+    sprite_images: dict[str, SpriteImage],
+    default_settings: BackgroundSettings,
+    overrides: list[BackgroundSettings],
+    errors: list[str],
+) -> None:
+    metadata = resolve_sprite_metadata(sprite_identifier, metadata_by_guid)
+    if metadata is None:
+        errors.append(f"No sprite metadata entry matched '{sprite_identifier}'.")
+        return
+
+    image = sprite_images.get(metadata.sprite_guid)
+    if image is None:
+        errors.append(f"No readable sprite image found for {metadata.sprite_path.name}.")
+        return
+
+    source_bounds = metadata.visible_alpha_bounds if metadata.has_visible_alpha_bounds else measure_visible_alpha_bounds(image)
+    square_bounds = build_square_board_bounds(source_bounds, image)
+    sprite_content_hash = compute_sprite_content_hash(image)
+
+    print(f"  Sprite: {metadata.sprite_path.name}")
+    print(f"  Source visible bounds: {format_rect(source_bounds)}")
+    print(f"  Recommended square boardBoundsNormalized: {format_rect(square_bounds)}")
+    print("  YAML snippet:")
+    print("    hasBoardBounds: 1")
+    print("    boardBoundsNormalized:")
+    print("      serializedVersion: 2")
+    print(f"      x: {square_bounds.x:.6f}")
+    print(f"      y: {square_bounds.y:.6f}")
+    print(f"      width: {square_bounds.width:.6f}")
+    print(f"      height: {square_bounds.height:.6f}")
+    print("    bakedBlockedTileMasks:")
+
+    for board_width, board_height in board_sizes:
+        settings = resolve_settings_for_sprite_and_size(metadata.sprite_guid, board_width, board_height, default_settings, overrides)
+        if settings is None:
+            errors.append(
+                f"No board background override/default settings matched {metadata.sprite_path.name} at {board_width}x{board_height}."
+            )
+            continue
+
+        blocked_tile_ids = build_baked_mask_from_square_bounds(
+            image,
+            square_bounds,
+            board_width,
+            board_height,
+            settings.alpha_playable_threshold,
+            settings.min_tile_coverage,
+            settings.max_tile_clip_fraction,
+            settings.tile_clip_sample_resolution,
+        )
+        print(f"    - boardWidth: {board_width}")
+        print(f"      boardHeight: {board_height}")
+        print(f"      bakeVersion: {bake_version}")
+        print(f"      spriteContentHash: {sprite_content_hash}")
+        print("      blockedTileIds:")
+        if blocked_tile_ids:
+            for tile_id in blocked_tile_ids:
+                print(f"      - {tile_id}")
+        else:
+            print("      []")
 
 
 def clamp01(value: float) -> float:

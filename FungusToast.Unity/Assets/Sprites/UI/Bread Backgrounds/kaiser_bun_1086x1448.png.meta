@@ -4,7 +4,7 @@ TextureImporter:
   internalIDToNameTable:
   - first:
       213: 1556320028887576885
-    second: kaizer_bun_1086x1448_0
+    second: kaiser_bun_1086x1448_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,7 +46,7 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: kaizer_bun_1086x1448_0
+      name: kaiser_bun_1086x1448_0
       rect:
         serializedVersion: 2
-        x: 33
-        y: 225
-        width: 1004
-        height: 1035
+        x: 0
+        y: 0
+        width: 1086
+        height: 1448
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      kaizer_bun_1086x1448_0: 1556320028887576885
+      kaiser_bun_1086x1448_0: 1556320028887576885
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

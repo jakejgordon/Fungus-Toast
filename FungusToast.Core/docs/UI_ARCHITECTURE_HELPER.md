@@ -1,6 +1,6 @@
 # Unity UI Architecture Helper
 
-> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For visual tokens, component recipes, and screen-level styling rules, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For tooltip taxonomy and when to use onboarding vs hover vs board-inspection tooltips, see [../../docs/ui/TOOLTIP_GUIDE.md](../../docs/ui/TOOLTIP_GUIDE.md). For naming new Unity sprites, icons, and other source assets, see [second-level/UNIT_ASSET_NAMING_CONVENTIONS.md](second-level/UNIT_ASSET_NAMING_CONVENTIONS.md). For the full documentation hierarchy, see [README.md](README.md).
+> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For visual tokens, component recipes, and screen-level styling rules, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For tooltip taxonomy and when to use onboarding vs hover vs board-inspection tooltips, see [../../docs/ui/TOOLTIP_GUIDE.md](../../docs/ui/TOOLTIP_GUIDE.md). For naming new Unity sprites, icons, and other source assets, see [second-level/UNIT_ASSET_NAMING_CONVENTIONS.md](second-level/UNIT_ASSET_NAMING_CONVENTIONS.md). For board-background silhouette authoring and contour-to-square baking, see [NEW_BACKGROUND_HELPER.md](NEW_BACKGROUND_HELPER.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document describes the established UI patterns in FungusToast.Unity. Follow these conventions when adding or modifying UI components.
 
@@ -233,14 +233,14 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
     - inscribe the requested board aspect ratio inside visible-alpha-derived safe areas before placement/mask sampling so square boards do not inherit rectangular alpha slack
     - start with `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune safe-area insets before considering anything looser
 12. When alpha-derived geometry keeps drifting from the actual intended board shape, add explicit authored shape metadata for that sprite instead of continuing to infer the shape from art alpha.
-13. Use `hasPlayableEllipse` when the intended shape is genuinely ellipse-like, but use an authored horizontal-span profile when the shape needs asymmetric per-row trimming such as cheese's fuller square with a top-left notch.
+13. Use `hasPlayableEllipse` when the intended shape is genuinely ellipse-like, use an authored horizontal-span profile when the shape needs stable row-wise trimming such as cheese, and use `bakedBlockedTileMasks` when an irregular silhouette needs an exact contour bake against a deliberate square gameplay envelope. See `NEW_BACKGROUND_HELPER.md` for the baked-mask workflow.
 
 ### Add A New Background
 
 1. Import the sprite and keep it square unless there is a clear reason not to.
 2. Open `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`.
 3. If the new image is the general fallback background, replace the medium's default `backgroundSprite`. If it only applies to a size band, add or update a `boardBackgroundOverrides` entry in the correct matching order.
-4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using explicit geometry instead. If a background needs explicit geometry, prefer `hasPlayableEllipse` for circular shapes or an authored horizontal-span profile for asymmetric silhouettes instead of widening clip budgets.
+4. Enable `deriveBlockedTilesFromBackgroundAlpha` for bread-photo backgrounds unless the image is intentionally using explicit geometry instead. If a background needs explicit geometry, prefer `hasPlayableEllipse` for circular shapes, an authored horizontal-span profile for stable row-wise silhouettes, or `bakedBlockedTileMasks` for irregular contour-baked boards.
 5. Add a `boardBackgroundSpriteMetadata` entry for the sprite.
 6. Set `visibleAlphaBoundsNormalized` to the measured normalized bounds of the sprite's visible non-transparent pixels.
 7. Leave `boardBoundsNormalized` off unless visual verification proves the playable board needs a different canonical footprint than the visible-alpha envelope.
@@ -249,6 +249,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 10. If the image still needs fit adjustment, prefer retuning `backgroundInset*Normalized`, edge-fade values, or override bands before introducing `boardBoundsNormalized` or a non-`1.0` scale multiplier.
 11. If the new background should participate in background-themed startup flavor text, update the mapping logic in `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` as well. The current non-campaign intro generator keys off `ResolveBoardThemeFlavor()` and the resolved background sprite name, so a newly added bread photo will otherwise fall back to generic wording.
 12. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
+13. If the sprite needs a centered square gameplay envelope with exact conservative trimming, follow `NEW_BACKGROUND_HELPER.md` instead of hand-authoring blocked IDs or continuing to widen insets.
 
 ### Metadata Field Intent
 
@@ -256,6 +257,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite. For alpha-masked backgrounds, this footprint may intentionally extend beyond the visible art when you want a larger behind-the-scenes square and expect alpha masking to trim the overhang.
 - `hasPlayableEllipse` + `playableEllipseCenterNormalized` + `playableEllipseRadiiNormalized`: optional explicit geometric shape metadata. When present, runtime placement and blocked-tile derivation use the ellipse bounds instead of visible-alpha fitting for that sprite.
 - `hasPlayableHorizontalSpanProfile` + `playableHorizontalSpanProfile`: optional explicit non-elliptical shape metadata. Each stop defines a normalized board-space row and the playable horizontal span for that row, which lets runtime interpolate asymmetric shapes such as cheese's side trims and top-left notch.
+- `bakedBlockedTileMasks`: optional exact blocked-tile footprints for specific board sizes. Use these when a sprite needs a reproducible explicit contour bake rather than a parametric ellipse/profile.
 - If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 - If `hasPlayableEllipse` is present, that ellipse becomes the source-of-truth footprint for placement and mask derivation, and the configured safe area composes inside the ellipse bounds.
