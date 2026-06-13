@@ -422,10 +422,10 @@ MonoBehaviour:
     hasBoardBounds: 1
     boardBoundsNormalized:
       serializedVersion: 2
-      x: 0.031308
-      y: 0.025898
-      width: 0.922652
-      height: 0.922652
+      x: 0.017035
+      y: 0.130525
+      width: 0.951197
+      height: 0.713398
     hasPlayableHorizontalSpanProfile: 0
     playableHorizontalSpanProfileMinYNormalized: 0
     playableHorizontalSpanProfileMaxYNormalized: 1

@@ -254,7 +254,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 ### Metadata Field Intent
 
 - `visibleAlphaBoundsNormalized`: the measured raw visible-pixel envelope for the sprite.
-- `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite. For alpha-masked backgrounds, this footprint may intentionally extend beyond the visible art when you want a larger behind-the-scenes square and expect alpha masking to trim the overhang.
+- `boardBoundsNormalized`: an optional hard override for the playable-board footprint inside the sprite. For alpha-masked backgrounds, this footprint may intentionally extend beyond the visible art when you want a larger behind-the-scenes square and expect alpha masking to trim the overhang. On non-square sprites, author it from the intended pixel-space footprint rather than by forcing equal normalized width and height.
 - `hasPlayableEllipse` + `playableEllipseCenterNormalized` + `playableEllipseRadiiNormalized`: optional explicit geometric shape metadata. When present, runtime placement and blocked-tile derivation use the ellipse bounds instead of visible-alpha fitting for that sprite.
 - `hasPlayableHorizontalSpanProfile` + `playableHorizontalSpanProfile`: optional explicit non-elliptical shape metadata. Each stop defines a normalized board-space row and the playable horizontal span for that row, which lets runtime interpolate asymmetric shapes such as cheese's side trims and top-left notch.
 - `bakedBlockedTileMasks`: optional exact blocked-tile footprints for specific board sizes. Use these when a sprite needs a reproducible explicit contour bake rather than a parametric ellipse/profile.

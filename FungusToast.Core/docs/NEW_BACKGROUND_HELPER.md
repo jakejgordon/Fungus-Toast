@@ -39,14 +39,15 @@ Treat this as source-of-truth input data, not the final gameplay footprint.
 
 ### 2. Build The Square Gameplay Envelope
 
-Create a centered square from the visible bounds:
+Create a centered square from the visible bounds in source-image pixels:
 
 1. Compute `squareSize = max(visibleWidth, visibleHeight)`.
 2. Keep the square centered on the visible-bounds midpoint.
 3. Clamp only if needed to stay within the sprite rect.
-4. Write that square to `boardBoundsNormalized`.
+4. Convert that pixel square back into normalized sprite coordinates and write the resulting rect to `boardBoundsNormalized`.
 
 This square is the canonical gameplay envelope for the bake. It intentionally may extend beyond visible alpha when the art is shorter or narrower than the requested board shape.
+On non-square sprites, the serialized `boardBoundsNormalized.width` and `.height` will usually differ even though the underlying pixel-space gameplay envelope is square.
 
 ### 3. Decide Which Board Sizes Need Exact Masks
 
@@ -64,7 +65,7 @@ Run the validator with the workspace virtual environment on Windows:
 
 The emitted snippet includes:
 
-- the recommended square `boardBoundsNormalized`
+- the recommended pixel-square `boardBoundsNormalized`
 - `spriteContentHash`
 - `bakedBlockedTileMasks` entries for each requested board size
 
@@ -75,7 +76,7 @@ Do not hand-author blocked-tile ID lists. Regenerate them from the tool whenever
 In `ToastBoardMedium.asset` or the relevant medium asset:
 
 1. Keep `visibleAlphaBoundsNormalized` as the measured visible bounds.
-2. Set `boardBoundsNormalized` to the square gameplay envelope from the tool.
+2. Set `boardBoundsNormalized` to the normalized rect emitted from the tool's pixel-square gameplay envelope.
 3. Disable incompatible explicit-shape metadata if the baked mask is now authoritative:
    - `hasPlayableEllipse: 0`
    - `hasPlayableHorizontalSpanProfile: 0`
@@ -98,7 +99,7 @@ If you need band-specific extra inset after baking, compose it deliberately insi
 ## Metadata Intent
 
 - `visibleAlphaBoundsNormalized`: measured visible-pixel envelope from the source sprite.
-- `boardBoundsNormalized`: canonical gameplay envelope inside the sprite; for contour-square bakes this is usually the centered square derived from visible bounds.
+- `boardBoundsNormalized`: canonical gameplay envelope inside the sprite; for contour-square bakes this is the normalized rect produced from the centered pixel-space square derived from visible bounds.
 - `bakedBlockedTileMasks`: exact blocked-tile sets keyed by `boardWidth`, `boardHeight`, bake version, and sprite content hash.
 - `spriteContentHash`: guardrail that ties a baked mask to the exact sprite pixels used to generate it.
 
@@ -112,7 +113,7 @@ After editing the asset, run:
 
 Do not stop at a green exit code. Confirm the output also says all of the following:
 
-1. The sprite metadata summary shows the expected `boardBoundsNormalized` square.
+1. The sprite metadata summary shows the expected pixel-square `boardBoundsNormalized`.
 2. The sprite metadata summary lists the expected baked sizes, for example `baked=85x85, 90x90, 95x95`.
 3. The probe summary reports `baked-mask` for those exact target sizes rather than `alpha-shape`.
 
@@ -140,6 +141,6 @@ Do not preserve old blocked-tile lists after a sprite-content change just becaus
 Kaiser Bun is the reference implementation for this workflow:
 
 1. visible alpha stays recorded as the measured bun silhouette
-2. `boardBoundsNormalized` is a centered square derived from `max(width, height)`
+2. `boardBoundsNormalized` is the normalized rect emitted from the centered pixel-space square derived from `max(width, height)`
 3. the size bands `85x85`, `90x90`, and `95x95` use `bakedBlockedTileMasks`
 4. band insets are zeroed so the square envelope, blocked tiles, and rendered art all line up

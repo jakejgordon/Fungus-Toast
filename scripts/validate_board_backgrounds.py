@@ -292,7 +292,7 @@ def main() -> int:
 
 def build_probe_sizes(full_square_max: int) -> list[tuple[int, int]]:
     squares = list(range(1, 21))
-    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 90, 95, 99, 100, 101, 120, 140, 160, 180, 200])
+    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 85, 90, 95, 99, 100, 101, 120, 140, 160, 180, 200])
     if full_square_max > 0:
         squares.extend(range(1, full_square_max + 1))
 
@@ -455,6 +455,20 @@ def validate_metadata(
                     f"board={format_rect(board_bounds)}"
                 )
 
+            contour_square_masks = [mask for mask in metadata.baked_blocked_tile_masks if mask.bake_version.startswith("contour-square")]
+            if contour_square_masks:
+                expected_square_bounds = build_square_board_bounds(
+                    metadata.visible_alpha_bounds if metadata.has_visible_alpha_bounds else measured,
+                    image,
+                )
+                tolerance_x = 1.0 / image.width
+                tolerance_y = 1.0 / image.height
+                if not rects_close(board_bounds, expected_square_bounds, tolerance_x, tolerance_y):
+                    errors.append(
+                        f"{metadata.sprite_path.name} contour-square boardBoundsNormalized mismatch: "
+                        f"serialized={format_rect(board_bounds)} expected={format_rect(expected_square_bounds)}"
+                    )
+
         if metadata.has_playable_ellipse:
             center, radii = sanitize_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)
             ellipse_bounds = build_ellipse_bounds(center, radii)
@@ -487,6 +501,7 @@ def validate_metadata(
                     )
 
         baked_mask_sizes: set[tuple[int, int]] = set()
+        sprite_content_hash = compute_sprite_content_hash(image)
         for baked_mask in metadata.baked_blocked_tile_masks:
             if baked_mask.board_width <= 0 or baked_mask.board_height <= 0:
                 errors.append(
@@ -500,6 +515,11 @@ def validate_metadata(
                     f"{metadata.sprite_path.name} has duplicate baked blocked-tile masks for {baked_mask.board_width}x{baked_mask.board_height}."
                 )
             baked_mask_sizes.add(size_key)
+            if baked_mask.sprite_content_hash and baked_mask.sprite_content_hash != sprite_content_hash:
+                errors.append(
+                    f"{metadata.sprite_path.name} baked blocked-tile mask {baked_mask.board_width}x{baked_mask.board_height} "
+                    f"hash mismatch: serialized={baked_mask.sprite_content_hash} expected={sprite_content_hash}"
+                )
 
 
 def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
@@ -1426,7 +1446,7 @@ def emit_baked_mask_snippet(
 
     print(f"  Sprite: {metadata.sprite_path.name}")
     print(f"  Source visible bounds: {format_rect(source_bounds)}")
-    print(f"  Recommended square boardBoundsNormalized: {format_rect(square_bounds)}")
+    print(f"  Recommended pixel-square boardBoundsNormalized: {format_rect(square_bounds)}")
     print("  YAML snippet:")
     print("    hasBoardBounds: 1")
     print("    boardBoundsNormalized:")
