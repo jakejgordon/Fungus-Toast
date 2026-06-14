@@ -83,6 +83,10 @@ In `ToastBoardMedium.asset` or the relevant medium asset:
    - `playableHorizontalSpanProfile: []`
 4. Add the emitted `bakedBlockedTileMasks` entries.
 5. Keep `deriveBlockedTilesFromBackgroundAlpha` enabled unless there is a reason to stop using alpha for non-baked fallback sizes.
+6. Keep `blockedTileIds` in Unity's normal block-list YAML form:
+   - `blockedTileIds:`
+   - `  - 123`
+   - not a single inline flow list wrapped across lines
 
 ### 6. Align Override Placement
 

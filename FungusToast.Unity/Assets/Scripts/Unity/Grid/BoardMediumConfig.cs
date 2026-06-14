@@ -219,7 +219,17 @@ namespace FungusToast.Unity.Grid
 
             public bool ShouldRenderBoardBackground => RenderBoardBackground && BackgroundSprite != null;
             public bool ShouldHidePlayableSurfaceTiles => ShouldRenderBoardBackground && HidePlayableSurfaceTiles;
-            public bool ShouldUseBackgroundPlayableMask => ShouldRenderBoardBackground && BackgroundSprite != null && (DeriveBlockedTilesFromBackgroundAlpha || HasPlayableEllipseMetadata || HasPlayableHorizontalSpanProfileMetadata || BakedBlockedTileMasksMetadata.Count > 0);
+            public bool ShouldUseBackgroundPlayableMask => ShouldRenderBoardBackground
+                && BackgroundSprite != null
+                && (DeriveBlockedTilesFromBackgroundAlpha
+                    || HasPlayableEllipseMetadata
+                    || HasPlayableHorizontalSpanProfileMetadata
+                    || BakedBlockedTileMasksMetadata.Count > 0
+                    || RequiresImplicitAlphaTrimFallback(
+                        HasVisibleAlphaBoundsMetadata,
+                        VisibleAlphaBoundsNormalizedMetadata,
+                        HasBoardBoundsMetadata,
+                        BoardBoundsNormalizedMetadata));
             public bool ShouldRenderPlayableAreaOverlay => ShouldUseBackgroundPlayableMask && RenderPlayableAreaOverlay && PlayableAreaOverlayColor.a > 0f;
             public bool ShouldRenderBoardEdgeFade => ShouldRenderBoardBackground && RenderBoardEdgeFade && BoardEdgeFadeColor.a > 0f && BoardEdgeFadeWidthTiles > 0f;
         }
@@ -530,6 +540,22 @@ namespace FungusToast.Unity.Grid
                     boardHeight);
             }
 
+            bool usingImplicitAlphaTrimFallback = !settings.DeriveBlockedTilesFromBackgroundAlpha
+                && settings.BakedBlockedTileMasksMetadata.Count == 0
+                && !settings.HasPlayableEllipseMetadata
+                && !settings.HasPlayableHorizontalSpanProfileMetadata
+                && RequiresImplicitAlphaTrimFallback(
+                    settings.HasVisibleAlphaBoundsMetadata,
+                    settings.VisibleAlphaBoundsNormalizedMetadata,
+                    settings.HasBoardBoundsMetadata,
+                    settings.BoardBoundsNormalizedMetadata);
+
+            if (usingImplicitAlphaTrimFallback)
+            {
+                Debug.LogWarning(
+                    $"Board medium '{mediumId}' is falling back to alpha-derived blocked tiles for {boardWidth}x{boardHeight} because the authored board bounds extend past visible alpha bounds but no baked/profile/ellipse mask metadata was available at runtime.");
+            }
+
             Texture2D samplingTexture = null;
             bool ownsSamplingTexture = false;
             try
@@ -691,6 +717,26 @@ namespace FungusToast.Unity.Grid
             float xMax = Mathf.Clamp(rect.xMax, xMin + 0.001f, 1f);
             float yMax = Mathf.Clamp(rect.yMax, yMin + 0.001f, 1f);
             return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
+        }
+
+        private static bool RequiresImplicitAlphaTrimFallback(
+            bool hasVisibleAlphaBoundsMetadata,
+            Rect visibleAlphaBoundsNormalizedMetadata,
+            bool hasBoardBoundsMetadata,
+            Rect boardBoundsNormalizedMetadata)
+        {
+            if (!hasVisibleAlphaBoundsMetadata || !hasBoardBoundsMetadata)
+            {
+                return false;
+            }
+
+            Rect visibleAlphaBounds = SanitizeNormalizedRect(visibleAlphaBoundsNormalizedMetadata);
+            Rect boardBounds = SanitizeNormalizedRect(boardBoundsNormalizedMetadata);
+            const float tolerance = 0.0005f;
+            return boardBounds.xMin < visibleAlphaBounds.xMin - tolerance
+                || boardBounds.yMin < visibleAlphaBounds.yMin - tolerance
+                || boardBounds.xMax > visibleAlphaBounds.xMax + tolerance
+                || boardBounds.yMax > visibleAlphaBounds.yMax + tolerance;
         }
 
         private bool TryGetBackgroundSpriteMetadataVisibleAlphaBoundsNormalized(Sprite sprite, out Rect visibleAlphaBoundsNormalized)

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import math
+import re
 import struct
 import sys
 import zlib
@@ -206,6 +207,7 @@ def main() -> int:
     errors: list[str] = []
     notes: list[str] = []
 
+    validate_asset_text(asset_path, errors)
     validate_metadata(metadata_by_guid, sprite_images, errors)
     validate_settings(default_settings, errors)
     for override in overrides:
@@ -322,6 +324,15 @@ def load_unity_yaml(path: Path) -> dict:
         if not line.startswith("%") and not line.startswith("--- !u!")
     ]
     return yaml.safe_load("\n".join(cleaned_lines))
+
+
+def validate_asset_text(asset_path: Path, errors: list[str]) -> None:
+    text = asset_path.read_text(encoding="utf-8")
+    if re.search(r"blockedTileIds:\s*\n\s*\[", text):
+        errors.append(
+            "ToastBoardMedium.asset stores baked blockedTileIds using an inline flow list. "
+            "Use Unity-style block YAML (`blockedTileIds:` followed by `- <tileId>` lines) so Unity deserializes the masks reliably."
+        )
 
 
 def build_sprite_guid_map(sprite_dir: Path) -> dict[str, Path]:
@@ -1482,9 +1493,9 @@ def emit_baked_mask_snippet(
         print("      blockedTileIds:")
         if blocked_tile_ids:
             for tile_id in blocked_tile_ids:
-                print(f"      - {tile_id}")
+                print(f"        - {tile_id}")
         else:
-            print("      []")
+            print("        []")
 
 
 def clamp01(value: float) -> float:
