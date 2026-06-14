@@ -24,6 +24,9 @@ namespace FungusToast.Unity.Campaign
         [Header("Board Visuals")]
         public BoardMediumConfig boardMedium;
 
+        [Header("Human Starting Position Overrides")]
+        public List<Vector2Int> humanStartingCoordinatePool = new();
+
         [Header("Fixed AI Lineup")]
         public List<AIPlayerSpec> aiPlayers = new(); // ordered AI specifications; preferred when populated
 

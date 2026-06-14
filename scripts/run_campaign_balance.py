@@ -55,12 +55,15 @@ def build_guid_map(directory: Path) -> Dict[str, Path]:
 def parse_board_preset(path: Path) -> dict:
     preset = {
         "path": str(path),
+        "humanStartingCoordinatePool": [],
         "aiPlayers": [],
         "aiPlayerAdaptations": [],  # list of lists, aligned with aiPlayers
         "aiStrategyPool": [],
         "pooledAiPlayerCount": 0,
         "poolAdaptationOverrides": {},  # dict: strategyName -> [adaptation_ids]
     }
+    in_human_start_pool = False
+    pending_human_start_x: Optional[int] = None
     in_ai_players = False
     in_ai_player_adaptations = False
     in_ai_pool = False
@@ -89,12 +92,22 @@ def parse_board_preset(path: Path) -> dict:
             in_pool_override_adaptations = False
         elif line.startswith("boardHeight:"):
             preset["boardHeight"] = int(line.split(":", 1)[1].strip())
+            in_human_start_pool = False
             in_ai_players = False
             in_ai_pool = False
             in_pool_overrides = False
             in_ai_player_adaptations = False
             in_pool_override_adaptations = False
+        elif line.startswith("humanStartingCoordinatePool:"):
+            in_human_start_pool = True
+            pending_human_start_x = None
+            in_ai_players = False
+            in_ai_player_adaptations = False
+            in_ai_pool = False
+            in_pool_overrides = False
+            in_pool_override_adaptations = False
         elif line.startswith("aiPlayers:"):
+            in_human_start_pool = False
             in_ai_players = True
             in_ai_player_adaptations = False
             in_ai_pool = False
@@ -102,18 +115,21 @@ def parse_board_preset(path: Path) -> dict:
             in_pool_override_adaptations = False
         elif line.startswith("pooledAiPlayerCount:"):
             preset["pooledAiPlayerCount"] = int(line.split(":", 1)[1].strip())
+            in_human_start_pool = False
             in_ai_players = False
             in_ai_player_adaptations = False
             in_ai_pool = False
             in_pool_overrides = False
             in_pool_override_adaptations = False
         elif line.startswith("aiStrategyPool:"):
+            in_human_start_pool = False
             in_ai_players = False
             in_ai_player_adaptations = False
             in_ai_pool = True
             in_pool_overrides = False
             in_pool_override_adaptations = False
         elif line.startswith("poolAdaptationOverrides:"):
+            in_human_start_pool = False
             in_ai_players = False
             in_ai_player_adaptations = False
             in_ai_pool = False
@@ -122,6 +138,11 @@ def parse_board_preset(path: Path) -> dict:
             if current_pool_override:
                 preset["poolAdaptationOverrides"][current_pool_override["name"]] = current_pool_override["ids"]
                 current_pool_override = None
+        elif in_human_start_pool and line.startswith("- x:"):
+            pending_human_start_x = int(line.split(":", 1)[1].strip())
+        elif in_human_start_pool and line.startswith("y:") and pending_human_start_x is not None:
+            preset["humanStartingCoordinatePool"].append((pending_human_start_x, int(line.split(":", 1)[1].strip())))
+            pending_human_start_x = None
         elif in_ai_players and line.startswith("- strategyName:"):
             preset["aiPlayers"].append(line.split(":", 1)[1].strip())
             preset["aiPlayerAdaptations"].append([])
@@ -149,6 +170,7 @@ def parse_board_preset(path: Path) -> dict:
             if value:
                 preset["aiStrategyPool"].append(value)
         elif not raw.startswith(" ") and not raw.startswith("\t"):
+            in_human_start_pool = False
             in_ai_players = False
             in_ai_pool = False
             in_ai_player_adaptations = False
@@ -226,6 +248,7 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
     proxy_adaptations = proxy_adaptations_for_level(level["levelIndex"])
     ai_adaptations = resolve_ai_adaptations(level["levelIndex"], preset, resolved_ai)
     full_adaptations = [proxy_adaptations] + ai_adaptations
+    human_start_pool = preset.get("humanStartingCoordinatePool", [])
 
     experiment_id = f"campaign_balance_lvl{level['levelIndex']:02d}_{preset['presetId']}_g{games}_seed{seed}"
     cmd = [
@@ -259,6 +282,9 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
     if any(ids for ids in full_adaptations):
         adaptation_arg = "|".join(",".join(ids) for ids in full_adaptations)
         cmd.extend(["--starting-adaptations", adaptation_arg])
+    if human_start_pool:
+        pool_arg = ";".join(f"{x}:{y}" for x, y in human_start_pool)
+        cmd.extend(["--preferred-starting-position-pools", f"0={pool_arg}"])
 
     print(f"\n=== Campaign level {level['levelIndex']} :: {preset['presetId']} ===")
     print(f"Board: {preset['boardWidth']}x{preset['boardHeight']} | Players: {len(lineup)} | Nutrients: {'On' if level.get('enableNutrientPatches', True) else 'Off'}")

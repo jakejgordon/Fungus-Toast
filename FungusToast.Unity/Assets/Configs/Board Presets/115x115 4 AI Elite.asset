@@ -15,6 +15,15 @@ MonoBehaviour:
   presetId: Campaign10
   boardWidth: 115
   boardHeight: 115
+  humanStartingCoordinatePool:
+  - x: 66
+    y: 90
+  - x: 27
+    y: 88
+  - x: 49
+    y: 24
+  - x: 88
+    y: 27
   aiPlayers:
   - strategyName: CMP_AnabolicBeaconRhizolith_Elite
     startingAdaptationIds:

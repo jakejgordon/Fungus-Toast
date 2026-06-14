@@ -85,7 +85,8 @@ namespace FungusToast.Simulation
                 enableNutrientPatches: config.EnableNutrientPatches,
                 enableMycovariantDraft: config.EnableMycovariantDraft,
                 startingPositionOverride: config.StartingPositionOverride,
-                startingAdaptationIds: config.StartingAdaptationIds);
+                startingAdaptationIds: config.StartingAdaptationIds,
+                preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, string experimentId)
@@ -301,7 +302,8 @@ namespace FungusToast.Simulation
                 BoardSizes = null,
                 StrategySets = null,
                 StrategyFilter = new StrategyCatalogFilter(),
-                StartingAdaptationIds = null
+                StartingAdaptationIds = null,
+                PreferredStartingPositionPoolsByPlayerId = null
             };
 
             for (int i = 0; i < args.Length; i++)
@@ -607,6 +609,21 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--preferred-starting-position-pools":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParsePreferredStartingPositionPools(args[i + 1]);
+                            if (parsed == null)
+                            {
+                                Console.WriteLine($"Invalid --preferred-starting-position-pools value: {args[i + 1]}");
+                                Console.WriteLine("Expected format: playerId=x:y;x:y,playerId=x:y");
+                                return null;
+                            }
+
+                            config.PreferredStartingPositionPoolsByPlayerId = parsed;
+                            i++;
+                        }
+                        break;
                 }
             }
 
@@ -665,6 +682,18 @@ namespace FungusToast.Simulation
             {
                 Console.WriteLine($"--starting-positions count ({config.StartingPositionOverride.Count}) must match player count ({config.NumberOfPlayers}).");
                 return null;
+            }
+
+            if (config.PreferredStartingPositionPoolsByPlayerId is { Count: > 0 })
+            {
+                foreach (var playerId in config.PreferredStartingPositionPoolsByPlayerId.Keys)
+                {
+                    if (playerId < 0 || playerId >= config.NumberOfPlayers)
+                    {
+                        Console.WriteLine($"--preferred-starting-position-pools contains out-of-range player id {playerId} for player count {config.NumberOfPlayers}.");
+                        return null;
+                    }
+                }
             }
 
             if ((config.StrategyFilter?.IsEmpty ?? true) == false)
@@ -745,6 +774,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --rotate-slots --games 100 --no-keyboard  # Rotate slot assignment per game");
             Console.WriteLine("  dotnet run --games 100 --fixed-slots --no-nutrient-patches --no-mycovariants --no-keyboard");
             Console.WriteLine("  dotnet run --games 20 --starting-positions 136:95,92:126,37:123,24:65,68:34,123:37 --no-keyboard");
+            Console.WriteLine("  dotnet run --games 20 --preferred-starting-position-pools \"0=66:90;27:88;49:24;88:27\" --no-keyboard");
             Console.WriteLine("  dotnet run --games 1 --no-keyboard  # Run non-interactive (no Q/Escape listener)");
         }
 
@@ -771,6 +801,7 @@ namespace FungusToast.Simulation
             public List<string>? ExplicitStrategyNames { get; set; }
             public StrategyCatalogFilter StrategyFilter { get; set; } = new();
             public List<List<string>>? StartingAdaptationIds { get; set; } // per-slot; outer index = player slot 0..N-1
+            public Dictionary<int, IReadOnlyList<(int x, int y)>>? PreferredStartingPositionPoolsByPlayerId { get; set; }
 
             public bool IsBatchMode =>
                 (PlayerCounts != null && PlayerCounts.Count > 0) ||
@@ -811,6 +842,48 @@ namespace FungusToast.Simulation
             }
 
             return result.Distinct().ToList();
+        }
+
+        private static Dictionary<int, IReadOnlyList<(int x, int y)>>? ParsePreferredStartingPositionPools(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return new Dictionary<int, IReadOnlyList<(int x, int y)>>();
+            }
+
+            var result = new Dictionary<int, IReadOnlyList<(int x, int y)>>();
+            var playerGroups = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var playerGroup in playerGroups)
+            {
+                var parts = playerGroup.Split('=', 2, StringSplitOptions.TrimEntries);
+                if (parts.Length != 2 || !int.TryParse(parts[0], out int playerId))
+                {
+                    return null;
+                }
+
+                var positions = new List<(int x, int y)>();
+                foreach (var token in parts[1].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    var coordinate = token.Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    if (coordinate.Length != 2
+                        || !int.TryParse(coordinate[0], out int x)
+                        || !int.TryParse(coordinate[1], out int y))
+                    {
+                        return null;
+                    }
+
+                    positions.Add((x, y));
+                }
+
+                if (positions.Count == 0)
+                {
+                    return null;
+                }
+
+                result[playerId] = positions;
+            }
+
+            return result;
         }
 
         private static List<(int x, int y)> ParseStartingPositions(string csv)

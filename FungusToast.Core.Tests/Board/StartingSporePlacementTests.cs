@@ -109,6 +109,43 @@ public class StartingSporePlacementTests
     }
 
     [Fact]
+    public void PlaceStartingSpores_with_preferred_player_positions_reserves_that_slot_for_the_requested_player()
+    {
+        var board = CreateBoard(width: 20, height: 20, playerCount: 4);
+        var players = board.Players;
+        var rng = new Random(12345);
+        var overridePositions = new[]
+        {
+            (1, 1),
+            (18, 1),
+            (1, 18),
+            (18, 18),
+        };
+
+        StartingSporeUtility.PlaceStartingSpores(
+            board,
+            players,
+            rng,
+            shufflePlayerOrder: true,
+            overridePositions: overridePositions,
+            preferredPositionsByPlayerId: new Dictionary<int, (int x, int y)>
+            {
+                [0] = overridePositions[1]
+            });
+
+        var humanStartTileId = Assert.IsType<int>(players[0].StartingTileId);
+        Assert.Equal((18, 1), (humanStartTileId % board.Width, humanStartTileId / board.Width));
+
+        var occupiedTiles = overridePositions
+            .Select(position => board.GetTile(position.Item1, position.Item2))
+            .Where(tile => tile is { IsOccupied: true })
+            .ToArray();
+
+        Assert.Equal(4, occupiedTiles.Length);
+        Assert.Equal(4, players.Select(player => player.StartingTileId).Distinct().Count());
+    }
+
+    [Fact]
     public void PlaceStartingSpores_relocates_blocked_slots_to_nearest_playable_tiles()
     {
         var blockedTileIds = new[] { 0, 4, 20, 24 };

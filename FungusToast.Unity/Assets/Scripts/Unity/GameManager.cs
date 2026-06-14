@@ -1058,7 +1058,12 @@ namespace FungusToast.Unity
             var edgeOffsets = players
                 .Select(player => player.MutationStrategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
                 .ToArray();
-            StartingSporeUtility.PlaceStartingSpores(Board, players, rng, edgeOffsets: edgeOffsets);
+            StartingSporeUtility.PlaceStartingSpores(
+                Board,
+                players,
+                rng,
+                edgeOffsets: edgeOffsets,
+                preferredPositionsByPlayerId: GetCampaignPreferredStartingPositionsByPlayerId());
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
@@ -1072,6 +1077,27 @@ namespace FungusToast.Unity
             int round = Board.CurrentRound;
             float occ = Board.GetOccupiedTileRatio() *100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
+        }
+
+        private IReadOnlyDictionary<int, (int x, int y)>? GetCampaignPreferredStartingPositionsByPlayerId()
+        {
+            if (CurrentGameMode != GameMode.Campaign || humanPlayers.Count != 1)
+            {
+                return null;
+            }
+
+            var preset = campaignController?.CurrentBoardPreset;
+            if (preset?.humanStartingCoordinatePool == null || preset.humanStartingCoordinatePool.Count == 0)
+            {
+                return null;
+            }
+
+            int selectedIndex = rng.Next(preset.humanStartingCoordinatePool.Count);
+            var selectedCoordinate = preset.humanStartingCoordinatePool[selectedIndex];
+            return new Dictionary<int, (int x, int y)>
+            {
+                [humanPlayers[0].PlayerId] = (selectedCoordinate.x, selectedCoordinate.y)
+            };
         }
 
         private bool ShouldPlaceStartingNutrientPatches()

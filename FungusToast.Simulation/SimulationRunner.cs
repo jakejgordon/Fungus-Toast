@@ -24,7 +24,8 @@ namespace FungusToast.Simulation
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
-            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null)
+            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
+            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -46,7 +47,8 @@ namespace FungusToast.Simulation
                 enableNutrientPatches: enableNutrientPatches,
                 enableMycovariantDraft: enableMycovariantDraft,
                 startingPositionOverride: startingPositionOverride,
-                startingAdaptationIds: startingAdaptationIds);
+                startingAdaptationIds: startingAdaptationIds,
+                preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId);
 
             PrintParityInvariantSummary(results.GameResults);
 

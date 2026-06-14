@@ -249,11 +249,34 @@ namespace FungusToast.Core.Board
         /// <summary>
         /// Places starting spores for all players using the shared layout.
         /// </summary>
-        public static void PlaceStartingSpores(GameBoard board, List<Player> players, Random rng, bool shufflePlayerOrder = true, IReadOnlyList<(int x, int y)>? overridePositions = null, IReadOnlyList<int>? edgeOffsets = null)
+        public static void PlaceStartingSpores(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            bool shufflePlayerOrder = true,
+            IReadOnlyList<(int x, int y)>? overridePositions = null,
+            IReadOnlyList<int>? edgeOffsets = null,
+            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null)
         {
             var basePositions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions);
+            var normalizedPreferredPositions = NormalizePreferredPositions(preferredPositionsByPlayerId, board.Width, board.Height);
+            var availablePositionIndices = Enumerable.Range(0, basePositions.Count).ToList();
+
+            foreach (var preferredPosition in normalizedPreferredPositions.Values)
+            {
+                int matchedIndex = availablePositionIndices.FindIndex(index => basePositions[index] == preferredPosition);
+                if (matchedIndex >= 0)
+                {
+                    availablePositionIndices.RemoveAt(matchedIndex);
+                }
+            }
 
             var playerIndices = Enumerable.Range(0, players.Count).ToList();
+            if (normalizedPreferredPositions.Count > 0)
+            {
+                playerIndices.RemoveAll(playerId => normalizedPreferredPositions.ContainsKey(playerId));
+            }
+
             if (shufflePlayerOrder)
             {
                 playerIndices = playerIndices
@@ -261,25 +284,69 @@ namespace FungusToast.Core.Board
                     .ToList();
             }
 
-            for (int i = 0; i < basePositions.Count; i++)
+            foreach (var kvp in normalizedPreferredPositions.OrderBy(entry => entry.Key))
+            {
+                PlaceStartingSporeForPlayer(board, players, kvp.Key, kvp.Value, edgeOffsets);
+            }
+
+            int placements = Math.Min(playerIndices.Count, availablePositionIndices.Count);
+            for (int i = 0; i < placements; i++)
             {
                 int pid = playerIndices[i];
-                var player = players.FirstOrDefault(p => p.PlayerId == pid);
-                var (x, y) = basePositions[i];
+                PlaceStartingSporeForPlayer(board, players, pid, basePositions[availablePositionIndices[i]], edgeOffsets);
+            }
+        }
 
-                int offset = pid < edgeOffsets?.Count ? edgeOffsets[pid] : 0;
-                if (offset != 0)
+        private static IReadOnlyDictionary<int, (int x, int y)> NormalizePreferredPositions(
+            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId,
+            int boardWidth,
+            int boardHeight)
+        {
+            if (preferredPositionsByPlayerId == null || preferredPositionsByPlayerId.Count == 0)
+            {
+                return new Dictionary<int, (int x, int y)>();
+            }
+
+            var normalized = new Dictionary<int, (int x, int y)>();
+            foreach (var kvp in preferredPositionsByPlayerId)
+            {
+                if (kvp.Key < 0)
                 {
-                    (x, y) = ApplyEdgeOffset(x, y, board.Width, board.Height, offset);
+                    continue;
                 }
 
-                if (player?.HasAdaptation(AdaptationIds.CentripetalGermination) == true)
-                    (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
+                normalized[kvp.Key] = (
+                    Math.Clamp(kvp.Value.x, 0, boardWidth - 1),
+                    Math.Clamp(kvp.Value.y, 0, boardHeight - 1));
+            }
 
-                if (TryResolvePlayableStartingPosition(board, x, y, out var resolvedPosition))
-                {
-                    board.PlaceInitialSpore(pid, resolvedPosition.x, resolvedPosition.y);
-                }
+            return normalized;
+        }
+
+        private static void PlaceStartingSporeForPlayer(
+            GameBoard board,
+            List<Player> players,
+            int playerId,
+            (int x, int y) preferredPosition,
+            IReadOnlyList<int>? edgeOffsets)
+        {
+            var player = players.FirstOrDefault(p => p.PlayerId == playerId);
+            var (x, y) = preferredPosition;
+
+            int offset = playerId < edgeOffsets?.Count ? edgeOffsets[playerId] : 0;
+            if (offset != 0)
+            {
+                (x, y) = ApplyEdgeOffset(x, y, board.Width, board.Height, offset);
+            }
+
+            if (player?.HasAdaptation(AdaptationIds.CentripetalGermination) == true)
+            {
+                (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
+            }
+
+            if (TryResolvePlayableStartingPosition(board, x, y, out var resolvedPosition))
+            {
+                board.PlaceInitialSpore(playerId, resolvedPosition.x, resolvedPosition.y);
             }
         }
 

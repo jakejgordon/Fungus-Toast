@@ -78,7 +78,8 @@ namespace FungusToast.Simulation.Analysis
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
-            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null)
+            IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
+            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
         {
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
@@ -106,6 +107,7 @@ namespace FungusToast.Simulation.Analysis
 
                 var context = new SimulationTrackingContext();
                 int gameSeed = unchecked(baseSeed + i);
+                var preferredPositionsByPlayerId = SelectPreferredStartingPositions(preferredStartingPositionPoolsByPlayerId, gameSeed);
 
                 var result = GameSimulator.RunSimulation(
                     assigned,
@@ -120,7 +122,8 @@ namespace FungusToast.Simulation.Analysis
                     enableNutrientPatches: enableNutrientPatches,
                     enableMycovariantDraft: enableMycovariantDraft,
                     startingPositionOverride: startingPositionOverride,
-                    startingAdaptationIds: startingAdaptationIds
+                    startingAdaptationIds: startingAdaptationIds,
+                    preferredPositionsByPlayerId: preferredPositionsByPlayerId
                 );
 
                 results.Add(result);
@@ -179,6 +182,30 @@ namespace FungusToast.Simulation.Analysis
             }
 
             return strategies;
+        }
+
+        private static IReadOnlyDictionary<int, (int x, int y)>? SelectPreferredStartingPositions(
+            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId,
+            int gameSeed)
+        {
+            if (preferredStartingPositionPoolsByPlayerId == null || preferredStartingPositionPoolsByPlayerId.Count == 0)
+            {
+                return null;
+            }
+
+            var rng = new Random(gameSeed);
+            var selected = new Dictionary<int, (int x, int y)>();
+            foreach (var kvp in preferredStartingPositionPoolsByPlayerId)
+            {
+                if (kvp.Value == null || kvp.Value.Count == 0)
+                {
+                    continue;
+                }
+
+                selected[kvp.Key] = kvp.Value[rng.Next(kvp.Value.Count)];
+            }
+
+            return selected.Count > 0 ? selected : null;
         }
 
 
