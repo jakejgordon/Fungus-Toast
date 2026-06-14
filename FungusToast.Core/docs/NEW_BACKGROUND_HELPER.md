@@ -4,6 +4,25 @@ This document is the canonical workflow for adding or reauthoring board backgrou
 
 Use this helper when a background image affects playable footprint, blocked tiles, or board placement. For broader Unity UI/service patterns, see `UI_ARCHITECTURE_HELPER.md`.
 
+## Quick Start
+
+Use this checklist when adding a brand-new board background:
+
+1. Pick the intended shape source before tuning anything:
+   - plain alpha when the sprite alpha already matches the playable shape
+   - ellipse metadata for genuinely round/oval boards such as pita
+   - horizontal span profile for stable row-by-row authored trims such as cheese
+   - baked masks for irregular photo silhouettes that need an exact square gameplay envelope such as Kaiser Bun
+2. Import the sprite and add or update the background entry in `ToastBoardMedium.asset`.
+3. Add a matching `boardBackgroundSpriteMetadata` entry for the sprite.
+4. Start from the conservative baseline:
+   - `deriveBlockedTilesFromBackgroundAlpha: 1` when alpha is still part of the fallback path
+   - `backgroundScaleMultiplier: 1.0`
+   - `backgroundMaxTileClipFraction: 0.0`
+   - `backgroundTileClipSampleResolution: 5`
+5. If the shape is irregular and should still play as a square board, follow the baked-mask workflow below instead of widening insets until it "looks close enough".
+6. Run the validator, then do the Unity visual pass. Do not treat validator success as sufficient by itself.
+
 ## When To Use Which Shape Source
 
 Pick the simplest shape model that matches the intended playable silhouette.
@@ -14,6 +33,15 @@ Pick the simplest shape model that matches the intended playable silhouette.
 4. Use `bakedBlockedTileMasks` when the intended silhouette is irregular enough that row spans are brittle or when non-square source art needs a deliberately centered square gameplay envelope with conservative trimming.
 
 The baked-mask path is the preferred workflow for irregular bread-photo boards like Kaiser Bun.
+
+## Before You Start Tuning
+
+Use these guardrails up front:
+
+1. Treat `visibleAlphaBoundsNormalized` as measured input, not as a creative tuning knob.
+2. Treat `boardBoundsNormalized` as canonical gameplay geometry once authored. Do not casually add it "just to fix framing".
+3. Keep `backgroundScaleMultiplier` at `1.0` unless a validated shape still needs a render-only framing adjustment after the footprint is already correct.
+4. Prefer changing the shape model over stacking compensating tweaks. Repeated inset/scale/clip adjustments usually mean the chosen model is wrong.
 
 ## Owning Files
 
@@ -57,10 +85,18 @@ Bake exact masks for each of those target sizes instead of relying on interpolat
 
 ### 4. Emit The Baked Masks
 
-Run the validator with the workspace virtual environment on Windows:
+Run the validator from the repo root:
+
+Windows:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/validate_board_backgrounds.py --emit-baked-mask-sprite <sprite-name> --emit-baked-mask-sizes 85x85,90x90,95x95 --emit-baked-mask-version contour-square-v1
+```
+
+POSIX:
+
+```bash
+python3 scripts/validate_board_backgrounds.py --emit-baked-mask-sprite <sprite-name> --emit-baked-mask-sizes 85x85,90x90,95x95 --emit-baked-mask-version contour-square-v1
 ```
 
 The emitted snippet includes:
@@ -113,8 +149,16 @@ If you need band-specific extra inset after baking, compose it deliberately insi
 
 After editing the asset, run:
 
+Windows:
+
 ```powershell
 .\.venv\Scripts\python.exe scripts/validate_board_backgrounds.py
+```
+
+POSIX:
+
+```bash
+python3 scripts/validate_board_backgrounds.py
 ```
 
 Do not stop at a green exit code. Confirm the output also says all of the following:
@@ -131,6 +175,22 @@ Then do an in-Unity visual pass at the affected board sizes and verify:
 3. hover / inspection / magnifier alignment
 4. highlight and overlay clipping
 5. board-edge fade and playable-area tint alignment
+
+## Common Failure Modes
+
+If a new background still looks wrong, check these before inventing more tuning:
+
+1. Square-inside-the-shape look:
+   - usually means `boardBoundsNormalized` or safe-area insets are keeping the board inside a conservative inner box instead of letting the intended shape own the footprint
+2. Shape looks vertically mirrored on one side:
+   - suspect a Y-axis mismatch between validator output and Unity runtime sampling
+3. Baked sizes validate, but Unity still uses the wrong contour:
+   - confirm the target board size exactly matches a baked `boardWidth`/`boardHeight` entry
+   - confirm the sprite pixels and `spriteContentHash` still match the baked data
+4. Visual framing improves but playable tiles regress:
+   - a scale multiplier or inset tweak may have moved rendering without fixing the canonical footprint model
+5. One override band looks correct while neighboring sizes drift:
+   - check override ordering and whether only some sizes got baked masks while adjacent sizes still fall back to alpha
 
 ## Regeneration Rules
 
