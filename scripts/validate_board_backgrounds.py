@@ -893,10 +893,11 @@ def measure_visible_alpha_bounds(image: SpriteImage) -> Rect:
             if alpha <= 0:
                 continue
             found = True
+            unity_y = (image.height - 1) - y
             min_x = min(min_x, x)
             max_x = max(max_x, x)
-            min_y = min(min_y, y)
-            max_y = max(max_y, y)
+            min_y = min(min_y, unity_y)
+            max_y = max(max_y, unity_y)
 
     if not found:
         return Rect(0.0, 0.0, 1.0, 1.0)
@@ -1072,10 +1073,12 @@ def sample_alpha_bilinear(image: SpriteImage, normalized_x: float, normalized_y:
     y1 = min(y0 + 1, image.height - 1)
     tx = x - x0
     ty = y - y0
-    a00 = image.alpha_rows[y0][x0] / 255.0
-    a10 = image.alpha_rows[y0][x1] / 255.0
-    a01 = image.alpha_rows[y1][x0] / 255.0
-    a11 = image.alpha_rows[y1][x1] / 255.0
+    row0 = (image.height - 1) - y0
+    row1 = (image.height - 1) - y1
+    a00 = image.alpha_rows[row0][x0] / 255.0
+    a10 = image.alpha_rows[row0][x1] / 255.0
+    a01 = image.alpha_rows[row1][x0] / 255.0
+    a11 = image.alpha_rows[row1][x1] / 255.0
     top = a00 + ((a10 - a00) * tx)
     bottom = a01 + ((a11 - a01) * tx)
     return top + ((bottom - top) * ty)
