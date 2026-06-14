@@ -129,6 +129,48 @@ public class StartingSporePlacementTests
         Assert.All(players, player => Assert.False(board.GetTileById(player.StartingTileId!.Value)!.IsBlocked));
     }
 
+    [Fact]
+    public void PlaceStartingSpores_keeps_all_players_inside_a_narrow_playable_strip()
+    {
+        const int width = 120;
+        const int height = 120;
+
+        var blockedTileIds = Enumerable.Range(0, width * height)
+            .Where(tileId =>
+            {
+                int y = tileId / width;
+                return y < 35 || y > 84;
+            })
+            .ToArray();
+
+        for (int playerCount = 2; playerCount <= 8; playerCount++)
+        {
+            var board = CreateBoard(width, height, playerCount, blockedTileIds);
+            var players = board.Players;
+            var preferredPositions = StartingSporeUtility.GetStartingPositions(width, height, playerCount);
+
+            StartingSporeUtility.PlaceStartingSpores(board, players, new Random(11), shufflePlayerOrder: false);
+
+            Assert.All(players, player => Assert.True(player.StartingTileId.HasValue));
+            Assert.Equal(playerCount, players.Select(player => player.StartingTileId!.Value).Distinct().Count());
+            Assert.All(players, player => Assert.False(board.GetTileById(player.StartingTileId!.Value)!.IsBlocked));
+
+            bool anyRelocated = players
+                .Select((player, index) =>
+                {
+                    int tileId = player.StartingTileId!.Value;
+                    var finalPosition = (tileId % width, tileId / width);
+                    return finalPosition != preferredPositions[index];
+                })
+                .Any(relocated => relocated);
+
+            if (playerCount >= 3)
+            {
+                Assert.True(anyRelocated, $"Expected at least one relocation for player count {playerCount}.");
+            }
+        }
+    }
+
     private static GameBoard CreateBoard(int width, int height, int playerCount, IEnumerable<int>? blockedTileIds = null)
     {
         var board = new GameBoard(width, height, playerCount, blockedTileIds);

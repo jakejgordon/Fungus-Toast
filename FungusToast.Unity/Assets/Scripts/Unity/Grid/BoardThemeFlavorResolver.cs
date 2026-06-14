@@ -55,6 +55,12 @@ namespace FungusToast.Unity.Grid
                 return ("Kaiser Bun", "Crust");
             }
 
+            if (source.IndexOf("hotdog", StringComparison.OrdinalIgnoreCase) >= 0
+                || source.IndexOf("hot dog", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Hot Dog Bun", "Crust");
+            }
+
             if (source.IndexOf("white_bread", StringComparison.OrdinalIgnoreCase) >= 0
                 || source.IndexOf("bread", StringComparison.OrdinalIgnoreCase) >= 0)
             {
