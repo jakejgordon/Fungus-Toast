@@ -16,8 +16,13 @@ MonoBehaviour:
   boardWidth: 40
   boardHeight: 40
   aiPlayers: []
-  pooledAiPlayerCount: 3
+  pooledAiPlayerCount: 4
   aiStrategyPool:
   - TST_Training_ResilientMycelium_Offset1
   - CMP_Mobility_Overextender_Training_Offset1
   - CMP_Attrition_ToxicTurtle_Training_Offset1
+  - CMP_Reclaim_Scavenger_Easy
+  poolAdaptationOverrides:
+  - strategyName: CMP_Attrition_ToxicTurtle_Training_Offset1
+    startingAdaptationIds:
+    - adaptation_1

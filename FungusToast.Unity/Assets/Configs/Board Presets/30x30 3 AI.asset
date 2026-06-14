@@ -16,7 +16,14 @@ MonoBehaviour:
   boardWidth: 30
   boardHeight: 30
   aiPlayers:
-  - strategyName: CMP_Attrition_ToxicTurtle_Training
-    startingAdaptationIds: []
-  pooledAiPlayerCount: 1
+  - strategyName: TST_Training_ResilientMycelium_Offset3
+    startingAdaptationIds:
+    - adaptation_1
+  - strategyName: CMP_Mobility_Overextender_Training_Offset2
+    startingAdaptationIds:
+    - adaptation_1
+  - strategyName: CMP_Attrition_ToxicTurtle_Training_Offset2
+    startingAdaptationIds:
+    - adaptation_1
+  pooledAiPlayerCount: 0
   aiStrategyPool: []
