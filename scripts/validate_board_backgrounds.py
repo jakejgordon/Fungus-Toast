@@ -208,7 +208,7 @@ def main() -> int:
     notes: list[str] = []
 
     validate_asset_text(asset_path, errors)
-    validate_metadata(metadata_by_guid, sprite_images, errors)
+    validate_metadata(metadata_by_guid, sprite_images, default_settings, overrides, errors)
     validate_settings(default_settings, errors)
     for override in overrides:
         validate_settings(override, errors)
@@ -439,6 +439,8 @@ def resolve_settings(
 def validate_metadata(
     metadata_by_guid: dict[str, SpriteMetadata],
     sprite_images: dict[str, SpriteImage],
+    default_settings: BackgroundSettings,
+    overrides: list[BackgroundSettings],
     errors: list[str],
 ) -> None:
     for guid, metadata in sorted(metadata_by_guid.items(), key=lambda item: item[1].sprite_path.name):
@@ -531,6 +533,43 @@ def validate_metadata(
                     f"{metadata.sprite_path.name} baked blocked-tile mask {baked_mask.board_width}x{baked_mask.board_height} "
                     f"hash mismatch: serialized={baked_mask.sprite_content_hash} expected={sprite_content_hash}"
                 )
+
+            if baked_mask.bake_version.startswith("contour-square") and metadata.has_board_bounds:
+                settings = resolve_settings_for_sprite_and_size(
+                    metadata.sprite_guid,
+                    baked_mask.board_width,
+                    baked_mask.board_height,
+                    default_settings,
+                    overrides,
+                )
+                if settings is None:
+                    errors.append(
+                        f"{metadata.sprite_path.name} contour-square baked mask {baked_mask.board_width}x{baked_mask.board_height} "
+                        f"has no matching board background settings."
+                    )
+                    continue
+
+                regenerated_blocked_tile_ids = build_baked_mask_from_square_bounds(
+                    image,
+                    sanitize_rect(metadata.board_bounds),
+                    baked_mask.board_width,
+                    baked_mask.board_height,
+                    settings.alpha_playable_threshold,
+                    settings.min_tile_coverage,
+                    settings.max_tile_clip_fraction,
+                    settings.tile_clip_sample_resolution,
+                )
+                serialized_blocked_tile_ids = [
+                    tile_id
+                    for tile_id in baked_mask.blocked_tile_ids
+                    if 0 <= tile_id < baked_mask.board_width * baked_mask.board_height
+                ]
+                if regenerated_blocked_tile_ids != serialized_blocked_tile_ids:
+                    errors.append(
+                        f"{metadata.sprite_path.name} contour-square baked mask {baked_mask.board_width}x{baked_mask.board_height} "
+                        f"is stale relative to current bake logic: serialized={len(serialized_blocked_tile_ids)} blocked, "
+                        f"regenerated={len(regenerated_blocked_tile_ids)} blocked. Regenerate the baked mask snippet."
+                    )
 
 
 def validate_settings(settings: BackgroundSettings, errors: list[str]) -> None:
