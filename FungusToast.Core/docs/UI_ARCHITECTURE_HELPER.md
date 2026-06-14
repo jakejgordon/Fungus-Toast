@@ -234,6 +234,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
     - start with `backgroundMaxTileClipFraction: 0.0`, `backgroundTileClipSampleResolution: 5`, and `backgroundScaleMultiplier: 1.0`, then only retune safe-area insets before considering anything looser
 12. When alpha-derived geometry keeps drifting from the actual intended board shape, add explicit authored shape metadata for that sprite instead of continuing to infer the shape from art alpha.
 13. Use `hasPlayableEllipse` when the intended shape is genuinely ellipse-like, use an authored horizontal-span profile when the shape needs stable row-wise trimming such as cheese, and use `bakedBlockedTileMasks` when an irregular silhouette needs an exact contour bake against a deliberate square gameplay envelope. See `NEW_BACKGROUND_HELPER.md` for the baked-mask workflow.
+14. Keep tooling and runtime texture sampling in the same Y-axis orientation. Unity texture space is effectively bottom-origin for this workflow, so any validator, preview, or bake step that reads PNG rows top-origin will silently mirror asymmetric contours vertically and produce believable-but-wrong blocked footprints.
 
 ### Add A New Background
 
@@ -250,6 +251,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 11. If the new background should participate in background-themed startup flavor text, update the mapping logic in `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` as well. The current non-campaign intro generator keys off `ResolveBoardThemeFlavor()` and the resolved background sprite name, so a newly added bread photo will otherwise fall back to generic wording.
 12. Run `python3 scripts/validate_board_backgrounds.py` after asset edits, then still do the in-Unity visual pass before considering the change done.
 13. If the sprite needs a centered square gameplay envelope with exact conservative trimming, follow `NEW_BACKGROUND_HELPER.md` instead of hand-authoring blocked IDs or continuing to widen insets.
+14. When investigating a localized overhang on an asymmetric board, compare it against the opposite vertical edge of the source art before retuning insets. If the bad region echoes the top contour at the bottom or vice versa, suspect a Y-axis mismatch in bake/validation first.
 
 ### Metadata Field Intent
 
@@ -258,6 +260,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - `hasPlayableEllipse` + `playableEllipseCenterNormalized` + `playableEllipseRadiiNormalized`: optional explicit geometric shape metadata. When present, runtime placement and blocked-tile derivation use the ellipse bounds instead of visible-alpha fitting for that sprite.
 - `hasPlayableHorizontalSpanProfile` + `playableHorizontalSpanProfile`: optional explicit non-elliptical shape metadata. Each stop defines a normalized board-space row and the playable horizontal span for that row, which lets runtime interpolate asymmetric shapes such as cheese's side trims and top-left notch.
 - `bakedBlockedTileMasks`: optional exact blocked-tile footprints for specific board sizes. Use these when a sprite needs a reproducible explicit contour bake rather than a parametric ellipse/profile.
+- Baked-mask tooling, stored metadata, and runtime blocked-tile sampling must all agree on row orientation. If one stage flips Y while the others do not, the serialized mask can validate structurally yet still clip the wrong side of an asymmetric sprite.
 - If `boardBoundsNormalized` exists, runtime safe-area resolution uses it first. The older inset fields only compose inside it when `composeSafeAreaWithBoardBoundsMetadata` is enabled.
 - If `boardBoundsNormalized` is absent but `visibleAlphaBoundsNormalized` exists, the configured safe area is composed inside the visible-alpha bounds instead of the full `0..1` sprite rect.
 - If `hasPlayableEllipse` is present, that ellipse becomes the source-of-truth footprint for placement and mask derivation, and the configured safe area composes inside the ellipse bounds.

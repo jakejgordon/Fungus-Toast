@@ -71,6 +71,8 @@ The emitted snippet includes:
 
 Do not hand-author blocked-tile ID lists. Regenerate them from the tool whenever the sprite pixels change.
 
+Coordinate-system rule: the validator must interpret source PNG rows in the same bottom-origin orientation Unity uses when sampling textures at runtime. If the tool treats image rows as top-origin, asymmetric bread silhouettes can look almost right but mirror their top contour onto the bottom, which is exactly how the Kaiser Bun bottom-right overhang regression happened.
+
 ### 5. Update The Asset Metadata
 
 In `ToastBoardMedium.asset` or the relevant medium asset:
@@ -120,6 +122,7 @@ Do not stop at a green exit code. Confirm the output also says all of the follow
 1. The sprite metadata summary shows the expected pixel-square `boardBoundsNormalized`.
 2. The sprite metadata summary lists the expected baked sizes, for example `baked=85x85, 90x90, 95x95`.
 3. The probe summary reports `baked-mask` for those exact target sizes rather than `alpha-shape`.
+4. For asymmetric silhouettes, inspect the validator preview or probe data with row orientation in mind. A top/bottom mirror bug usually shows up as a bottom overhang shaped suspiciously like the sprite's top contour.
 
 Then do an in-Unity visual pass at the affected board sizes and verify:
 
@@ -139,6 +142,7 @@ Rebake the masks if any of these change:
 4. the exact board sizes covered by the authored override band
 
 Do not preserve old blocked-tile lists after a sprite-content change just because the silhouette looks similar.
+Do not preserve old baked masks after a validator coordinate-system fix either; regenerate the masks and re-check `visibleAlphaBoundsNormalized`/`boardBoundsNormalized` so the stored metadata stays aligned with the corrected bake.
 
 ## Current Example
 
@@ -148,3 +152,4 @@ Kaiser Bun is the reference implementation for this workflow:
 2. `boardBoundsNormalized` is the normalized rect emitted from the centered pixel-space square derived from `max(width, height)`
 3. the size bands `85x85`, `90x90`, and `95x95` use `bakedBlockedTileMasks`
 4. band insets are zeroed so the square envelope, blocked tiles, and rendered art all line up
+5. the validator/runtime row orientation must stay bottom-origin end-to-end or the bun's top contour will be baked onto the lower rows
