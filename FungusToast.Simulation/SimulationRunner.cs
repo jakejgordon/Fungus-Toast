@@ -23,6 +23,7 @@ namespace FungusToast.Simulation
             bool exportParquet = true,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
+            IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
@@ -46,6 +47,7 @@ namespace FungusToast.Simulation
                 slotAssignmentPolicy: slotAssignmentPolicy,
                 enableNutrientPatches: enableNutrientPatches,
                 enableMycovariantDraft: enableMycovariantDraft,
+                permanentlyBlockedTileIds: permanentlyBlockedTileIds,
                 startingPositionOverride: startingPositionOverride,
                 startingAdaptationIds: startingAdaptationIds,
                 preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId);

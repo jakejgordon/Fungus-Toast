@@ -742,8 +742,10 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     players = pd.read_parquet(run_folder / "players.parquet")
-    mutations = pd.read_parquet(run_folder / "mutations.parquet")
-    mycovariants = pd.read_parquet(run_folder / "mycovariants.parquet")
+    mutations_path = run_folder / "mutations.parquet"
+    mycovariants_path = run_folder / "mycovariants.parquet"
+    mutations = pd.read_parquet(mutations_path) if mutations_path.exists() else pd.DataFrame()
+    mycovariants = pd.read_parquet(mycovariants_path) if mycovariants_path.exists() else pd.DataFrame()
     living_cell_sources_path = run_folder / "living_cell_sources.parquet"
     living_cell_sources = pd.read_parquet(living_cell_sources_path) if living_cell_sources_path.exists() else pd.DataFrame()
 

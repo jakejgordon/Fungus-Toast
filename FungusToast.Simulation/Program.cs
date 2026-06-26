@@ -84,6 +84,7 @@ namespace FungusToast.Simulation
                 exportParquet: config.ExportParquet,
                 enableNutrientPatches: config.EnableNutrientPatches,
                 enableMycovariantDraft: config.EnableMycovariantDraft,
+                permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                 startingPositionOverride: config.StartingPositionOverride,
                 startingAdaptationIds: config.StartingAdaptationIds,
                 preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
@@ -159,6 +160,7 @@ namespace FungusToast.Simulation
                             exportParquet: config.ExportParquet,
                             enableNutrientPatches: config.EnableNutrientPatches,
                             enableMycovariantDraft: config.EnableMycovariantDraft,
+                            permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                             startingPositionOverride: config.StartingPositionOverride);
                     }
                 }
@@ -303,7 +305,8 @@ namespace FungusToast.Simulation
                 StrategySets = null,
                 StrategyFilter = new StrategyCatalogFilter(),
                 StartingAdaptationIds = null,
-                PreferredStartingPositionPoolsByPlayerId = null
+                PreferredStartingPositionPoolsByPlayerId = null,
+                PermanentlyBlockedTileIds = null
             };
 
             for (int i = 0; i < args.Length; i++)
@@ -624,6 +627,21 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--blocked-tiles-file":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseBlockedTileIdsFile(args[i + 1]);
+                            if (parsed == null)
+                            {
+                                Console.WriteLine($"Invalid --blocked-tiles-file value: {args[i + 1]}");
+                                Console.WriteLine("Expected a readable text file containing tile ids separated by commas, spaces, or newlines.");
+                                return null;
+                            }
+
+                            config.PermanentlyBlockedTileIds = parsed;
+                            i++;
+                        }
+                        break;
                 }
             }
 
@@ -749,6 +767,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
             Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
             Console.WriteLine("  --starting-adaptations   Per-slot adaptation IDs; pipe-delimited slots, comma-delimited IDs (e.g. \"|adaptation_3,adaptation_4||adaptation_1\")");
+            Console.WriteLine("  --blocked-tiles-file     Text file with permanently blocked tile ids for shaped boards");
             Console.WriteLine("  --rotate-slots           Rotate strategy-to-player slot assignment each game");
             Console.WriteLine("  --fixed-slots            Keep strategy-to-player slot assignment fixed (default)");
             Console.WriteLine("  --help                   Show this help message");
@@ -775,6 +794,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --games 100 --fixed-slots --no-nutrient-patches --no-mycovariants --no-keyboard");
             Console.WriteLine("  dotnet run --games 20 --starting-positions 136:95,92:126,37:123,24:65,68:34,123:37 --no-keyboard");
             Console.WriteLine("  dotnet run --games 20 --preferred-starting-position-pools \"0=66:90;27:88;49:24;88:27\" --no-keyboard");
+            Console.WriteLine("  dotnet run --games 50 --blocked-tiles-file ../tmp/hotdog_115_blocked.txt --rotate-slots --no-nutrient-patches --no-mycovariants --no-keyboard");
             Console.WriteLine("  dotnet run --games 1 --no-keyboard  # Run non-interactive (no Q/Escape listener)");
         }
 
@@ -802,6 +822,7 @@ namespace FungusToast.Simulation
             public StrategyCatalogFilter StrategyFilter { get; set; } = new();
             public List<List<string>>? StartingAdaptationIds { get; set; } // per-slot; outer index = player slot 0..N-1
             public Dictionary<int, IReadOnlyList<(int x, int y)>>? PreferredStartingPositionPoolsByPlayerId { get; set; }
+            public IReadOnlyCollection<int>? PermanentlyBlockedTileIds { get; set; }
 
             public bool IsBatchMode =>
                 (PlayerCounts != null && PlayerCounts.Count > 0) ||
@@ -884,6 +905,46 @@ namespace FungusToast.Simulation
             }
 
             return result;
+        }
+
+        private static IReadOnlyCollection<int>? ParseBlockedTileIdsFile(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return null;
+            }
+
+            string fullPath = Path.GetFullPath(path);
+            if (!File.Exists(fullPath))
+            {
+                return null;
+            }
+
+            try
+            {
+                var text = File.ReadAllText(fullPath);
+                var parts = text.Split(new[] { ',', ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                var ids = new List<int>(parts.Length);
+                foreach (var part in parts)
+                {
+                    if (!int.TryParse(part, out int tileId) || tileId < 0)
+                    {
+                        return null;
+                    }
+
+                    ids.Add(tileId);
+                }
+
+                return ids.Distinct().OrderBy(tileId => tileId).ToArray();
+            }
+            catch (IOException)
+            {
+                return null;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return null;
+            }
         }
 
         private static List<(int x, int y)> ParseStartingPositions(string csv)

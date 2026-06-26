@@ -30,6 +30,7 @@ namespace FungusToast.Simulation.GameSimulation
             bool shuffleStartingSpores = true,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
+            IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null
@@ -44,6 +45,7 @@ namespace FungusToast.Simulation.GameSimulation
                 boardHeight,
                 shuffleStartingSpores,
                 enableNutrientPatches,
+                permanentlyBlockedTileIds,
                 startingPositionOverride,
                 startingAdaptationIds,
                 preferredPositionsByPlayerId);
@@ -225,6 +227,7 @@ namespace FungusToast.Simulation.GameSimulation
             int boardHeight = GameBalance.BoardHeight,
             bool shuffleStartingSpores = true,
             bool enableNutrientPatches = true,
+            IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null)
@@ -244,7 +247,7 @@ namespace FungusToast.Simulation.GameSimulation
                 players.Add(player);
             }
 
-            var board = new GameBoard(boardWidth, boardHeight, playerCount);
+            var board = new GameBoard(boardWidth, boardHeight, playerCount, permanentlyBlockedTileIds);
 
             GameRulesEventSubscriber.SubscribeAll(board, players, rng, observer);
             AnalyticsEventSubscriber.Subscribe(board, observer);

@@ -77,6 +77,7 @@ namespace FungusToast.Simulation.Analysis
             SlotAssignmentPolicy slotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
             bool enableNutrientPatches = true,
             bool enableMycovariantDraft = true,
+            IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
@@ -121,6 +122,7 @@ namespace FungusToast.Simulation.Analysis
                     shuffleStartingSpores: slotAssignmentPolicy != SlotAssignmentPolicy.Fixed,
                     enableNutrientPatches: enableNutrientPatches,
                     enableMycovariantDraft: enableMycovariantDraft,
+                    permanentlyBlockedTileIds: permanentlyBlockedTileIds,
                     startingPositionOverride: startingPositionOverride,
                     startingAdaptationIds: startingAdaptationIds,
                     preferredPositionsByPlayerId: preferredPositionsByPlayerId
