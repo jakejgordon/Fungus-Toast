@@ -1063,7 +1063,7 @@ namespace FungusToast.Unity
                 players,
                 rng,
                 edgeOffsets: edgeOffsets,
-                preferredPositionsByPlayerId: GetCampaignPreferredStartingPositionsByPlayerId());
+                GetCampaignPreferredStartingPositionsByPlayerId());
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
