@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
@@ -1046,7 +1047,7 @@ namespace FungusToast.Unity
             }
         }
 
-        public void StartCampaignNew(int humanMoldIndex = 0, int? startLevelIndex = null)
+        public void StartCampaignNew(int humanMoldIndex = 0, CampaignDifficulty startDifficulty = CampaignDifficulty.Training, int? startLevelIndex = null)
         {
             var campaignController = getCampaignController();
             if (campaignController == null)
@@ -1078,6 +1079,7 @@ namespace FungusToast.Unity
                 : null;
             campaignController.StartNew(
                 humanMoldIndex,
+                startDifficulty,
                 levelOverride,
                 forcedStartingAdaptationIds,
                 treatLevelOverrideAsFreshRunWithoutPersistentState: isTestingLevelOverride);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Core.AI;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.Campaign;
@@ -2149,6 +2150,20 @@ namespace FungusToast.Unity.UI.Campaign
             return options[resolvedIndex].StartLevelIndex;
         }
 
+        private CampaignDifficulty GetSelectedCampaignStartDifficulty()
+        {
+            var campaignController = GameManager.Instance?.CampaignController;
+            var options = campaignController?.GetCampaignStartDifficultyOptions() ?? Array.Empty<CampaignController.CampaignStartDifficultyOption>();
+            if (options.Count == 0)
+            {
+                return CampaignDifficulty.Training;
+            }
+
+            int highestUnlockedIndex = campaignController?.GetHighestUnlockedCampaignStartDifficultyIndex() ?? 0;
+            int resolvedIndex = Mathf.Clamp(selectedCampaignStartDifficultyIndex, 0, Mathf.Clamp(highestUnlockedIndex, 0, options.Count - 1));
+            return options[resolvedIndex].Difficulty;
+        }
+
         private int GetAvailableMoldCount()
         {
             return GameManager.Instance?.gridVisualizer != null ? GameManager.Instance.gridVisualizer.PlayerMoldTileCount : 0;
@@ -2528,7 +2543,10 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             ApplyTestingModeToGameManager();
-            GameManager.Instance.StartCampaignNew(selectedCampaignMoldIndex.Value, GetSelectedCampaignStartLevelIndex());
+            GameManager.Instance.StartCampaignNew(
+                selectedCampaignMoldIndex.Value,
+                GetSelectedCampaignStartDifficulty(),
+                GetSelectedCampaignStartLevelIndex());
             if (GameManager.Instance.Board != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign)
             {
                 gameObject.SetActive(false);

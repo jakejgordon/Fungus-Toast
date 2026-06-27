@@ -750,9 +750,9 @@ namespace FungusToast.Unity
             gameStartService?.StartHotseatGame(numberOfPlayers);
         }
 
-        public void StartCampaignNew(int humanMoldIndex = 0, int? startLevelIndex = null)
+        public void StartCampaignNew(int humanMoldIndex = 0, CampaignDifficulty startDifficulty = CampaignDifficulty.Training, int? startLevelIndex = null)
         {
-            gameStartService?.StartCampaignNew(humanMoldIndex, startLevelIndex);
+            gameStartService?.StartCampaignNew(humanMoldIndex, startDifficulty, startLevelIndex);
         }
 
         public void StartCampaignResume()
@@ -1087,6 +1087,23 @@ namespace FungusToast.Unity
             }
 
             var preset = campaignController?.CurrentBoardPreset;
+            if (preset != null
+                && CampaignBoardStartingPositionCatalog.TryGetMetadata(preset.presetId, players.Count, out var metadata))
+            {
+                var preferredCoordinates = CampaignStartingPositionDifficultyResolver.GetAllowedStartingPositions(
+                    metadata,
+                    campaignController?.CurrentStartDifficulty ?? CampaignDifficulty.Training);
+
+                if (preferredCoordinates.Count > 0)
+                {
+                    var selectedCoordinate = preferredCoordinates[rng.Next(preferredCoordinates.Count)];
+                    return new Dictionary<int, (int x, int y)>
+                    {
+                        [humanPlayers[0].PlayerId] = selectedCoordinate
+                    };
+                }
+            }
+
             if (preset?.humanStartingCoordinatePool == null || preset.humanStartingCoordinatePool.Count == 0)
             {
                 return null;

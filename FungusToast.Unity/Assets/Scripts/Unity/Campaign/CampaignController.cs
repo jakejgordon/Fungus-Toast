@@ -66,6 +66,7 @@ namespace FungusToast.Unity.Campaign
             }
         }
         public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State != null ? State.resolvedAiStrategyNames : Array.Empty<string>();
+        public CampaignDifficulty CurrentStartDifficulty => State?.startDifficulty ?? CampaignDifficulty.Training;
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
         public bool IsAwaitingDefeatCarryoverSelection => State != null && State.pendingDefeatCarryoverSelection;
         public bool IsCompleted => State != null && State.campaignCompleted;
@@ -144,6 +145,7 @@ namespace FungusToast.Unity.Campaign
 
         public void StartNew(
             int humanMoldIndex = 0,
+            CampaignDifficulty startDifficulty = CampaignDifficulty.Training,
             int? levelIndexOverride = null,
             IReadOnlyList<string> temporaryTestingAdaptationIds = null,
             bool treatLevelOverrideAsFreshRunWithoutPersistentState = false)
@@ -171,6 +173,7 @@ namespace FungusToast.Unity.Campaign
                 seed = newSeed,
                 boardWidth = preset.boardWidth,
                 boardHeight = preset.boardHeight,
+                startDifficulty = startDifficulty,
                 humanMoldIndex = Mathf.Max(0, humanMoldIndex),
                 pendingAdaptationSelection = false,
                 pendingAdaptationDraftChoiceIds = new List<string>(),
@@ -227,6 +230,7 @@ namespace FungusToast.Unity.Campaign
             State.pendingAdaptationDraftChoiceIds ??= new List<string>();
             State.temporaryTestingAdaptationIds ??= new List<string>();
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
+            NormalizeSelectedStartDifficulty();
             if (State.campaignCompleted)
             {
                 State.requiresNewCampaignStart = true;
@@ -251,6 +255,34 @@ namespace FungusToast.Unity.Campaign
                 CampaignSaveService.Save(State);
             }
             Debug.Log($"[CampaignController] Resumed campaign RunId={State.runId} Level={State.levelIndex} PresetId={State.boardPresetId}");
+        }
+
+        private void NormalizeSelectedStartDifficulty()
+        {
+            if (State == null)
+            {
+                return;
+            }
+
+            var options = GetCampaignStartDifficultyOptions();
+            if (options.Count == 0)
+            {
+                State.startDifficulty = CampaignDifficulty.Training;
+                return;
+            }
+
+            if (options.Any(option => option.Difficulty == State.startDifficulty))
+            {
+                return;
+            }
+
+            var fallback = options
+                .Where(option => option.StartLevelIndex <= State.levelIndex)
+                .OrderByDescending(option => option.StartLevelIndex)
+                .ThenByDescending(option => option.Difficulty)
+                .FirstOrDefault();
+
+            State.startDifficulty = fallback.Difficulty;
         }
 
         public bool TryGetPendingVictorySnapshot(out CampaignVictorySnapshot snapshot)

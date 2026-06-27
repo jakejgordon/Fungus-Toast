@@ -33,40 +33,23 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `c:/Users/jakej/FungusToast`
-- **Current focus:** realistic mold icon overhaul rollout for the remaining 6 molds
+- **Current focus:** campaign start difficulty now biases the human starting slot by authored board-position strength
 - **Current state:**
-   - Red mold slot 0 is the completed baseline.
-   - Yellow mold slot 1 is wired, visually accepted, and now part of the completed baseline set.
-   - Board rendering now supports `isolatedTile`, `clusteredTile`, `clusteredAlternateTile`, `denseTile`, and `denseAlternateTile`.
-   - Shared non-board UI icons now use the representative mold icon path in `GridVisualizer` rather than reading only the old base tile.
-   - `FungusToast.Core/docs/MOLD_ICON_HELPER.md` is the canonical workflow doc for prompts, filenames, wiring, and evaluation.
-   - New prompt rule: each mold must have its own species identity and macro-structure motif, not just a palette shift from red.
+   - `CampaignBoardStartingPositionCatalog.g.cs` and `FungusToast.Core/Board/Generated/campaign_board_starting_positions.json` now carry generated per-preset slot metadata keyed by preset and player count.
+   - `CampaignStartingPositionDifficultyResolver` maps `CampaignDifficulty` to a sliding half-window of allowed human spawn coordinates, from strongest slots at `Training` toward weakest slots at `Boss`.
+   - New campaign runs now persist the selected `startDifficulty`, and the Unity campaign start flow forwards that selection into gameplay setup.
+   - `GameManager` now prefers metadata-driven spawn coordinates for campaign humans before falling back to the preset pool.
+   - Targeted resolver tests pass, and Core/Simulation builds are clean in the current checkout.
 
 ## Pending Tasks
 
-- Roll out the remaining 6 mold slots one at a time using the red and yellow completed molds as the current reference bar.
-- Slot 2: `cyan_mold_64x64.asset` -> use prefix `cyan_mold_pilot`
-- Slot 3: `aqua_mold_64x64_0.asset` -> use prefix `aqua_mold_pilot`
-- Slot 4: `green_mold_64x64.asset` -> use prefix `green_mold_pilot`
-- Slot 5: `dark_blue_mold_64x64_0.asset` -> use prefix `dark_blue_mold_pilot`
-- Slot 6: `purple_mold_new_64x64_0.asset` -> use prefix `purple_mold_pilot`
-- Slot 7: `orange_red_mold_64x64_0.asset` -> use prefix `orange_red_mold_pilot`
-- For each remaining slot, target this asset set unless playtest evidence says a simpler set is sufficient:
-   - `{prefix}_isolated_64x64.png`
-   - `{prefix}_clustered_64x64.png`
-   - `{prefix}_clustered_alt_64x64.png`
-   - `{prefix}_dense_64x64.png`
-   - `{prefix}_dense_alt_64x64.png`
-- For each slot, follow the same execution loop:
-   - generate PNGs with the real-alpha prompt requirements from `MOLD_ICON_HELPER.md`
-   - create matching Tile assets in `Assets/Tiles/Mold`
-   - wire the slot in `SampleScene` under `playerMoldAliveVariantTiles`
-   - build `FungusToast.Unity/Assembly-CSharp.csproj --no-restore`
-   - review in Unity on both the board and the shared UI icon surfaces
+- Verify the new spawn-bias flow in Unity Editor because this checkout does not currently include the generated Unity `.csproj` compile proxy.
+- Decide whether `docs/generated/hotdog_115_slot_validation.csv` should be kept as a committed validation artifact for this feature.
+- If campaign-start difficulty behavior feels too subtle in playtests, tune the resolver windowing strategy rather than adding flat stat modifiers first.
+- The mold icon overhaul thread is still parked after the yellow slot baseline; resume from cyan when this campaign work is out of the way.
 
 ## Next Handoff
 
-- Start the next mold with slot 2 `cyan_mold_pilot`.
-- Use red and yellow as quality baselines for readability, but do not reuse their rounded rosette silhouette language.
-- Push cyan toward a more distinctive branching or frond-based species identity so it reads as a different organism family at a glance.
-- Suggested next scope: generate all five cyan prompts with explicit same-species language, distinct macro-structure guidance, and the standard alpha/channel constraints before moving into wiring.
+- In Unity, start new campaign runs at `Training` and `Boss` on the same preset and confirm the human spawn shifts from the strongest half of slots toward the weakest half.
+- If the in-editor behavior matches expectations, keep the feature slice scoped to the current metadata/resolver/start-flow files and exclude local temp outputs such as `tmp/campaign_starting_position_metadata` and the touched `.pyc`.
+- After Unity verification, the next dormant project thread is still the cyan mold rollout from the earlier art pass.

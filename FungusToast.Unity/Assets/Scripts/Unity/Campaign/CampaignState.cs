@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FungusToast.Core.AI;
 using FungusToast.Core.Persistence;
 using FungusToast.Unity.Save;
 
@@ -18,6 +19,7 @@ namespace FungusToast.Unity.Campaign
         public int seed; // RNG seed for reproducibility
         public int boardWidth; // persisted board width for current level
         public int boardHeight; // persisted board height for current level
+        public CampaignDifficulty startDifficulty = CampaignDifficulty.Training; // selected campaign-start difficulty for this run
         public int humanMoldIndex = 0; // selected mold icon for the single campaign human player
         public bool pendingAdaptationSelection; // true when player must pick adaptation before continuing
         public List<string> pendingAdaptationDraftChoiceIds = new(); // persisted adaptation offer shown for the current pending selection
