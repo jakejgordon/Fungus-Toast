@@ -26,12 +26,14 @@ Read these docs first:
 
 ## Reporting
 
-Report from artifacts:
+Report from artifacts using a per-player summary table with these columns:
 
-1. `Win %`
-2. `Avg Living Cells`
-3. `Avg Dead Cells`
-4. `Avg Toxins`
-5. The target band and whether the result lands above, inside, or below it
+1. `Player`
+2. `Win %`
+3. `Avg Living Cells`
+4. `Avg Dead Cells`
+5. `Avg Toxins`
+
+Also report the target band and whether the safe proxy result lands above, inside, or below it.
 
 Include the experiment ID, seed, and the output folder or manifest reference in the summary.
