@@ -1063,7 +1063,7 @@ namespace FungusToast.Unity
                 players,
                 rng,
                 edgeOffsets: edgeOffsets,
-                GetCampaignPreferredStartingPositionsByPlayerId());
+                preferredPositionsByPlayerId: GetCampaignPreferredStartingPositionsByPlayerId());
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
@@ -1110,10 +1110,10 @@ namespace FungusToast.Unity
             }
 
             int selectedIndex = rng.Next(preset.humanStartingCoordinatePool.Count);
-            var selectedCoordinate = preset.humanStartingCoordinatePool[selectedIndex];
+            var fallbackCoordinate = preset.humanStartingCoordinatePool[selectedIndex];
             return new Dictionary<int, (int x, int y)>
             {
-                [humanPlayers[0].PlayerId] = (selectedCoordinate.x, selectedCoordinate.y)
+                [humanPlayers[0].PlayerId] = (fallbackCoordinate.x, fallbackCoordinate.y)
             };
         }
 
