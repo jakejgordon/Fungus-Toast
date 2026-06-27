@@ -22,7 +22,7 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
    - `FungusToast.Core/Mutations/MutationTypeEnum.cs` when a new type is actually needed
    - `FungusToast.Core/Config/GameBalance.cs`
    - the appropriate factory under `FungusToast.Core/Mutations/Factories/`
-4. Follow the helper's naming and description rules exactly. Keep tooltip copy readable first, implementation-accurate second.
+4. Follow the helper's naming workflow and description rules exactly. Keep tooltip copy readable first, implementation-accurate second.
 5. Wire gameplay behavior through the correct processor and coordinator path in `FungusToast.Core`.
 6. Add simulation-tracking hooks when the mutation creates meaningful analytics-visible behavior.
 7. Update Unity mutation-tree placement in `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/UI_MutationLayoutProvider.cs` when the new mutation needs a node.

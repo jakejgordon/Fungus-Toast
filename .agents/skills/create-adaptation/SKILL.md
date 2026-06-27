@@ -19,15 +19,16 @@ Read `FungusToast.Core/docs/SAVE_COMPATIBILITY.md` before changing persistence o
 
 1. Confirm whether the adaptation is a normal campaign reward, a starting adaptation, or a revision to an existing one.
 2. Confirm whether the effect is start-of-level, passive, or both.
-3. Propose the validation plan up front: happy path, edge cases, timing checks, interaction coverage, and campaign-specific regressions.
-4. Update the catalog seams:
+3. Follow the helper's naming workflow exactly before finalizing the chosen name.
+4. Propose the validation plan up front: happy path, edge cases, timing checks, interaction coverage, and campaign-specific regressions.
+5. Update the catalog seams:
    - `FungusToast.Core/Campaign/AdaptationRepository.cs`
    - `AdaptationIds`, `AdaptationGameBalance`, and related helpers when needed
    - `MoldCatalog` when the change affects starting adaptations
-5. Follow the naming and concise copy rules exactly.
-6. Ensure the adaptation has a distinct icon keyed from its `IconId`.
-7. Wire gameplay behavior through the correct campaign startup seam and passive/runtime hooks in Core.
-8. Treat save/resume compatibility as part of the implementation, not an afterthought.
+6. Follow the concise copy rules exactly.
+7. Ensure the adaptation has a distinct icon keyed from its `IconId`.
+8. Wire gameplay behavior through the correct campaign startup seam and passive/runtime hooks in Core.
+9. Treat save/resume compatibility as part of the implementation, not an afterthought.
 
 ## Validation
 

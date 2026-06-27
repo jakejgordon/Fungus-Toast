@@ -16,6 +16,8 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 
 All mutation copy (name, description, flavor text) must follow these rules to keep the UI readable in tooltips and simulation reports.
 
+Before finalizing a new Mutation name, first propose **5 candidate names** that all satisfy the naming rules below. Each candidate should include a short explanation of the biological flavor and the gameplay implication. Then confirm the chosen name is unique across Mutations, Mycovariants, and Adaptations with a repo search.
+
 ### **Name Rules**
 
 | Rule | Detail |

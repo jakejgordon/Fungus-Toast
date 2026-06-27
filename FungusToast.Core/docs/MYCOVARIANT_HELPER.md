@@ -18,8 +18,8 @@ Mycovariants are drafted abilities that either:
 ## Suggested Agent Workflow
 
 1. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
-2. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing any shortlist.
-3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+3. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
 4. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions/flavor text.
 5. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
 6. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
@@ -55,4 +55,3 @@ Mycovariants are drafted abilities that either:
 - Keep Mycovariant logic deterministic and Unity-free in Core.
 - Treat the Mycovariant definition plus its `IconId` as the source of truth for card metadata.
 - Reuse Adaptation guidance for icon distinctness and centralized art lookup patterns where helpful, but do not assume the same runtime flow.
-untime flow.

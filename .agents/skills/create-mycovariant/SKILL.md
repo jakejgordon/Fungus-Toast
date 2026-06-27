@@ -17,7 +17,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
 ## Workflow
 
 1. Confirm whether the mycovariant is draft-time active, passive, or both.
-2. Propose 5 candidate names that satisfy the naming rules, then confirm the chosen name is unique across mutations, mycovariants, and adaptations with a repo search.
+2. Follow the helper's naming workflow exactly before finalizing the chosen name.
 3. Propose the validation plan up front: happy path, edge cases, timing checks, interaction coverage, and likely regressions.
 4. Update the definition seams:
    - `FungusToast.Core/Mycovariants/MycovariantIds.cs`
