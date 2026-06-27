@@ -121,6 +121,12 @@ Use this precedence order when multiple docs seem relevant:
 3. **`FungusToast.Core/docs/README.md`** = complete documentation map / secondary references
 4. **Tracking docs** such as `docs/WORKLOG.md` = current handoff and active thread, not canonical design truth
 
+Documentation strategy:
+- Keep canonical project knowledge in normal Markdown docs that both humans and tools can read.
+- Use repository instructions and path-scoped instructions for routing, guardrails, and file-scope behavior.
+- Use agent skills only for repeatable execution workflows that benefit from an explicit step-by-step operating playbook.
+- Do not migrate general architecture, terminology, or design docs into skills unless the value is primarily workflow execution rather than shared reference.
+
 ## Search Guidance
 
 - Simulation/balance tasks → `SIMULATION_HELPER.md`

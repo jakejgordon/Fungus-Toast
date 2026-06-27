@@ -66,7 +66,20 @@ These are not canonical design docs, but they are useful for active work.
 
 - `../../docs/WORKLOG.md` — current thread, handoff, progress, and next steps
 
-## 5. Documentation Hierarchy Rules
+## 5. Docs vs Instructions vs Skills
+
+Use these roles to keep AI-facing guidance maintainable across GitHub Copilot, OpenClaw, and normal human reading:
+
+- **Markdown docs (`*.md`)** are the canonical source of truth for architecture, terminology, authoring workflows, validation rules, and design intent.
+- **Repository instructions** such as `.github/copilot-instructions.md` are the thin top-level router plus repo-wide guardrails.
+- **Path-scoped instructions** should carry subproject or file-pattern rules when behavior differs by area of the repo.
+- **Skills** should exist only for repeatable agent workflows where an explicit operating procedure improves execution consistency.
+
+Prefer normal docs over skills when the content is primarily shared reference material.
+Prefer skills over normal docs when the content is primarily "do these steps in this order" and is likely to be invoked repeatedly by an agent.
+Avoid duplicating the same canonical guidance in both places; skills should point back to the canonical helper docs instead of replacing them.
+
+## 6. Documentation Hierarchy Rules
 
 - Every important doc should be discoverable from somewhere in the hierarchy.
 - The root router (`.github/copilot-instructions.md`) should list only first-hop entry docs.
