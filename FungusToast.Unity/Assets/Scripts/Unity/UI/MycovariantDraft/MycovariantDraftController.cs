@@ -1,4 +1,5 @@
 using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
