@@ -10,6 +10,25 @@ This guide provides a systematic approach for adding new mutations to Fungus Toa
 
 When creating a new Mutation, proactively list the proposed test cases that should be run to validate the mechanic. Include the expected happy path, key edge cases, important interactions with existing systems, and any likely regression risks so testing can be planned immediately.
 
+## Primary Docs
+
+- **Naming and mutation-copy rules:** `NEW_MUTATION_HELPER.md` section below
+- **Mutation-category philosophy and prerequisite design rules:** [second-level/MUTATION_PREREQUISITE_GUIDELINES.md](second-level/MUTATION_PREREQUISITE_GUIDELINES.md)
+- **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
+- **Simulation tracking implementation details:** [second-level/SIMULATION_TRACKING_IMPLEMENTATION.md](second-level/SIMULATION_TRACKING_IMPLEMENTATION.md)
+
+## Suggested Agent Workflow
+
+1. Confirm the mutation's intent, category, tier, trigger timing, scaling, and expected player-facing summary.
+2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+3. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
+4. Proactively list the proposed test cases for the new Mutation, including happy path behavior, key edge cases, important interactions, and likely regressions.
+5. Read `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` before finalizing prerequisites or mutation-category placement.
+6. Follow the naming and description rules in this document exactly.
+7. Wire gameplay behavior through the correct Core processors, coordinators, and analytics seams.
+8. Update Unity mutation-tree placement when the new mutation needs a node.
+9. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
+
 ---
 
 ## Naming & Description Convention

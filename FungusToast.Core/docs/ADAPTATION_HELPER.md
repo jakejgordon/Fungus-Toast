@@ -19,16 +19,18 @@ Adaptations commonly do one of two things:
 
 ## Suggested Agent Workflow
 
-1. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Adaptation.
-2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
-3. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
-4. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
-5. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
-6. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
-7. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
-8. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
-9. Proactively list the proposed test cases for the new Adaptation, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and campaign-specific validation points.
-10. Validate with Core and Simulation builds for core behavior changes; validate campaign flow in Unity because campaign simulation is not supported yet.
+1. Confirm whether the Adaptation is a normal campaign reward, a starting adaptation, or a revision to an existing one.
+2. Confirm whether the effect is start-of-level, passive, or both.
+3. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Adaptation.
+4. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+5. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
+6. Proactively list the proposed test cases for the new Adaptation, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and campaign-specific validation points.
+7. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
+8. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
+9. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
+10. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
+11. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
+12. Validate with Core and Simulation builds for core behavior changes, and validate campaign flow in Unity because campaign simulation is not supported yet.
 
 ## Common Tasks
 

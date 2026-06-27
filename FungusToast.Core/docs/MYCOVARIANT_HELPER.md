@@ -17,16 +17,17 @@ Mycovariants are drafted abilities that either:
 
 ## Suggested Agent Workflow
 
-1. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
-2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
-3. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
-4. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions/flavor text.
-5. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
-6. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
-7. Implement changes in category factories and processors.
-8. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
-9. Validate with Core + Simulation builds.
-10. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
+1. Confirm whether the Mycovariant is draft-time active, passive, or both.
+2. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
+3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+4. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
+5. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
+6. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions or flavor text.
+7. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
+8. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
+9. Implement changes in category factories and processors.
+10. Validate with Core and Simulation builds when shared gameplay behavior changed.
+11. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
 
 ## Common Tasks
 
