@@ -583,6 +583,48 @@ namespace FungusToast.Unity.UI.MutationTree
                 case MutationIds.CreepingMold:
                     AppendLevelSummaryBlock(sb, currentLevel, BuildCreepingMoldSummary);
                     break;
+                case MutationIds.MycotoxinTracer:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinTracerSummary);
+                    break;
+                case MutationIds.MycotoxinPotentiation:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinPotentiationSummary);
+                    break;
+                case MutationIds.PutrefactiveMycotoxin:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveMycotoxinSummary);
+                    break;
+                case MutationIds.SporicidalBloom:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildSporicidalBloomSummary);
+                    break;
+                case MutationIds.NecrotoxicConversion:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrotoxicConversionSummary);
+                    break;
+                case MutationIds.PutrefactiveRejuvenation:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveRejuvenationSummary);
+                    break;
+                case MutationIds.PutrefactiveCascade:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveCascadeSummary);
+                    break;
+                case MutationIds.MutatorPhenotype:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMutatorPhenotypeSummary);
+                    break;
+                case MutationIds.AdaptiveExpression:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildAdaptiveExpressionSummary);
+                    break;
+                case MutationIds.MycotoxinCatabolism:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinCatabolismSummary);
+                    break;
+                case MutationIds.AnabolicInversion:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildAnabolicInversionSummary);
+                    break;
+                case MutationIds.NecrophyticBloom:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrophyticBloomSummary);
+                    break;
+                case MutationIds.HyperadaptiveDrift:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildHyperadaptiveDriftSummary);
+                    break;
+                case MutationIds.OntogenicRegression:
+                    AppendLevelSummaryBlock(sb, currentLevel, BuildOntogenicRegressionSummary);
+                    break;
             }
         }
 
@@ -798,6 +840,213 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             return $"{moveChancePercent:0.00}% move chance after a failed growth if the target is open enough";
+        }
+
+        private string BuildMycotoxinTracerSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No border-toxin pressure yet.";
+            }
+
+            float failedGrowthWeightPercent = level * GameBalance.MycotoxinTracerFailedGrowthWeightPerLevel * 100f;
+            float lowColonyBonusPercent = level * GameBalance.MycotoxinTracerFailureRateWeightPerLevel * 100f;
+            return $"Failed-growth toxin pressure +{failedGrowthWeightPercent:0.00}%, low-colony bonus +{lowColonyBonusPercent:0.00}%, toxin duration {GameBalance.MycotoxinTracerTileDuration} cycles";
+        }
+
+        private string BuildMycotoxinPotentiationSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No toxin duration or kill aura bonus yet.";
+            }
+
+            int durationBonus = level * GameBalance.MycotoxinPotentiationGrowthCycleExtensionPerLevel;
+            float killChancePercent = level * GameBalance.MycotoxinPotentiationKillChancePerLevel * 100f;
+            return $"New toxins last +{durationBonus} Growth Cycle{(durationBonus == 1 ? string.Empty : "s")}, orthogonal toxin kill chance {killChancePercent:0.00}%";
+        }
+
+        private string BuildPutrefactiveMycotoxinSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No adjacent toxin-kill chance yet.";
+            }
+
+            float killChancePercent = level * GameBalance.PutrefactiveMycotoxinEffectPerLevel * 100f;
+            if (level >= GameBalance.PutrefactiveMycotoxinMaxLevel)
+            {
+                return $"Orthogonal adjacent kill chance {killChancePercent:0.00}%; active Chemotactic Beacon spreads the aura within 2 tiles";
+            }
+
+            return $"Orthogonal adjacent kill chance {killChancePercent:0.00}%";
+        }
+
+        private string BuildSporicidalBloomSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No toxic spore drops yet.";
+            }
+
+            float sporeRatePercent = level * GameBalance.SporicialBloomEffectPerLevel * 100f;
+            if (level >= GameBalance.SporicidalBloomMaxLevel)
+            {
+                return $"Drops spores equal to about {sporeRatePercent:0.00}% of living cells each Decay Phase, toxin duration {GameBalance.SporocidalToxinTileDuration} cycles, empty-tile pool reduced by 25%";
+            }
+
+            return $"Drops spores equal to about {sporeRatePercent:0.00}% of living cells each Decay Phase, toxin duration {GameBalance.SporocidalToxinTileDuration} cycles";
+        }
+
+        private string BuildNecrotoxicConversionSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No toxin-to-reclaim conversion chance yet.";
+            }
+
+            float reclaimChancePercent = level * GameBalance.NecrotoxicConversionReclaimChancePerLevel * 100f;
+            return $"{reclaimChancePercent:0.00}% chance for your toxin kills to convert straight into living cells";
+        }
+
+        private string BuildPutrefactiveRejuvenationSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No rejuvenation pulse or Putrefactive Mycotoxin bonus yet.";
+            }
+
+            int ageReduction = level * GameBalance.PutrefactiveRejuvenationAgeReductionPerLevel;
+            float mycotoxinBonusPercent = level * GameBalance.PutrefactiveRejuvenationMycotoxinBonusPerLevel * 100f;
+            int radius = level >= GameBalance.PutrefactiveRejuvenationMaxLevel
+                ? GameBalance.PutrefactiveRejuvenationEffectRadius * GameBalance.PutrefactiveRejuvenationMaxLevelRangeRadiusMultiplier
+                : GameBalance.PutrefactiveRejuvenationEffectRadius;
+            return $"Putrefactive kills reduce nearby friendly age by {ageReduction} cycles within radius {radius}, Putrefactive Mycotoxin +{mycotoxinBonusPercent:0.00}%";
+        }
+
+        private string BuildPutrefactiveCascadeSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No cascade chance or Putrefactive Mycotoxin bonus yet.";
+            }
+
+            float effectivenessBonusPercent = level * GameBalance.PutrefactiveCascadeEffectivenessBonus * 100f;
+            float cascadeChancePercent = level * GameBalance.PutrefactiveCascadeCascadeChance * 100f;
+            if (level >= GameBalance.PutrefactiveCascadeMaxLevel)
+            {
+                return $"Putrefactive Mycotoxin +{effectivenessBonusPercent:0.00}%, directional cascade chance {cascadeChancePercent:0.00}%, cascades leave toxins";
+            }
+
+            return $"Putrefactive Mycotoxin +{effectivenessBonusPercent:0.00}%, directional cascade chance {cascadeChancePercent:0.00}%";
+        }
+
+        private string BuildMutatorPhenotypeSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No free Tier 1 upgrade chance yet.";
+            }
+
+            float upgradeChancePercent = level * GameBalance.MutatorPhenotypeEffectPerLevel * 100f;
+            return $"{upgradeChancePercent:0.00}% chance to auto-upgrade one random Tier 1 mutation at Mutation Phase start";
+        }
+
+        private string BuildAdaptiveExpressionSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No bonus mutation-point chance yet.";
+            }
+
+            float firstPointChancePercent = level * GameBalance.AdaptiveExpressionEffectPerLevel * 100f;
+            float secondPointChancePercent = level * GameBalance.AdaptiveExpressionSecondPointChancePerLevel * 100f;
+            return $"{firstPointChancePercent:0.00}% chance to gain 1 bonus mutation point, then {secondPointChancePercent:0.00}% chance for a second";
+        }
+
+        private string BuildMycotoxinCatabolismSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No toxin cleanup or mutation-point harvest yet.";
+            }
+
+            float cleanupChancePercent = level * GameBalance.MycotoxinCatabolismCleanupChancePerLevel * 100f;
+            float mutationPointChancePercent = level * GameBalance.MycotoxinCatabolismMutationPointChancePerLevel * 100f;
+            return $"Orthogonal toxin cleanup chance {cleanupChancePercent:0.00}%, mutation-point chance per consumed toxin {mutationPointChancePercent:0.00}% (max {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound}/round)";
+        }
+
+        private string BuildAnabolicInversionSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No catch-up trigger bonus yet.";
+            }
+
+            float triggerBonusPercent = level * GameBalance.AnabolicInversionGapBonusPerLevel * 100f;
+            return $"Adds +{triggerBonusPercent:0.00}% catch-up trigger chance based on living-cell deficit, payout 1-{GameBalance.AnabolicInversionMaxMutationPointsPerRound} mutation points";
+        }
+
+        private string BuildNecrophyticBloomSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No dead-cluster composting yet.";
+            }
+
+            int clusterThreshold = GameBalance.NecrophyticBloomBaseClusterThreshold
+                - ((level - 1) * GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel);
+            if (clusterThreshold < 1)
+            {
+                clusterThreshold = 1;
+            }
+
+            float compostChancePercent = (
+                GameBalance.NecrophyticBloomBaseCompostChance
+                + ((level - 1) * GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel)) * 100f;
+
+            string summary = $"Dead clusters of {clusterThreshold}+ cells compost at {compostChancePercent:0.00}% per cluster, up to {GameBalance.NecrophyticBloomMaxPatchesPerRound} patches of {GameBalance.NecrophyticBloomMaxPatchSize} tiles";
+            if (level >= GameBalance.NecrophyticBloomMaxLevel)
+            {
+                summary += "; Hypervariation patches unlocked";
+            }
+
+            return summary;
+        }
+
+        private string BuildHyperadaptiveDriftSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No higher-tier or chained Mutator Phenotype bonus yet.";
+            }
+
+            float higherTierChancePercent = level * GameBalance.HyperadaptiveDriftHigherTierChancePerLevel * 100f;
+            float bonusTierOneChancePercent = level * GameBalance.HyperadaptiveDriftBonusTierOneMutationChancePerLevel * 100f;
+            string summary = $"Mutator Phenotype gains {higherTierChancePercent:0.00}% Tier 2-4 targeting chance and {bonusTierOneChancePercent:0.00}% chance to chain up to {GameBalance.HyperadaptiveDriftBonusTierOneMutationFreeUpgradeTimes} Tier 1 attempts";
+            if (level >= GameBalance.HyperadaptiveDriftMaxLevel)
+            {
+                summary += "; one second-mutation Tier 1 attempt added";
+            }
+
+            return summary;
+        }
+
+        private string BuildOntogenicRegressionSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No Tier 1 sacrifice roll yet.";
+            }
+
+            float regressionChancePercent = level * GameBalance.OntogenicRegressionChancePerLevel * 100f;
+            string summary = $"{regressionChancePercent:0.00}% chance to trade {GameBalance.OntogenicRegressionTier1LevelsToConsume} Tier 1 levels for +1 Tier 5/6 level; otherwise gain {GameBalance.OntogenicRegressionFailureConsolationPoints} mutation points";
+            if (level >= GameBalance.OntogenicRegressionMaxLevel)
+            {
+                summary += $"; rolls twice with {GameBalance.OntogenicRegressionMaxLevelTier6Bias * 100f:0.00}% Tier 6 bias when both tiers are valid";
+            }
+
+            return summary;
         }
 
         public void DisableUpgrade()
