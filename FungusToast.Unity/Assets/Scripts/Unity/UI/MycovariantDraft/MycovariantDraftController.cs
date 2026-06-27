@@ -468,7 +468,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (currentPlayer.PlayerType == PlayerTypeEnum.AI && playerMyco != null)
             {
-                float score = picked.AIScore != null ? picked.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
+                float score = MycovariantDraftManager.GetRecordedAIDraftScore(
+                    currentPlayer,
+                    picked,
+                    GameManager.Instance.Board,
+                    GetCurrentCampaignStartDifficulty());
                 playerMyco.AIScoreAtDraft = score;
             }
 
@@ -833,25 +837,25 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
             else
             {
-                float maxScore = float.MinValue;
-                List<Mycovariant> bestChoices = new List<Mycovariant>();
-                foreach (var m in eligibleChoices)
-                {
-                    float score = m.AIScore != null ? m.AIScore(currentPlayer, GameManager.Instance.Board) : MycovariantAIGameBalance.DefaultAIScore;
-                    if (score > maxScore)
-                    {
-                        maxScore = score;
-                        bestChoices.Clear();
-                        bestChoices.Add(m);
-                    }
-                    else if (score == maxScore)
-                    {
-                        bestChoices.Add(m);
-                    }
-                }
-                pick = bestChoices[UnityEngine.Random.Range(0, bestChoices.Count)];
+                pick = MycovariantDraftManager.SelectAIDraftPick(
+                    currentPlayer,
+                    eligibleChoices,
+                    GameManager.Instance.Board,
+                    rng,
+                    GetCurrentCampaignStartDifficulty());
             }
             OnChoicePicked(pick);
+        }
+
+        private CampaignDifficulty? GetCurrentCampaignStartDifficulty()
+        {
+            var gameManager = GameManager.Instance;
+            if (gameManager == null || gameManager.CurrentGameMode != FungusToast.Unity.Campaign.GameMode.Campaign)
+            {
+                return null;
+            }
+
+            return gameManager.CampaignController?.CurrentStartDifficulty;
         }
 
         private void SetAllPickButtonsInteractable(bool interactable)

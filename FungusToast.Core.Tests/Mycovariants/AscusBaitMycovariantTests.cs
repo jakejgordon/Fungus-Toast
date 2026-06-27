@@ -1,5 +1,6 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Events;
@@ -634,6 +635,80 @@ public class AscusBaitMycovariantTests
         Assert.False(lastAi.IsLastAiMycovariantDrafterForCurrentDraft);
     }
 
+    [Fact]
+    public void SelectAIDraftPick_training_prefers_bait_over_higher_scoring_non_bait()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var ai = new Player(0, "P0", PlayerTypeEnum.AI);
+        ai.SetMutationStrategy(new ParameterizedSpendingStrategy(
+            strategyName: "Test",
+            prioritizeHighTier: true,
+            preferredMycovariantIds: new List<int> { MycovariantIds.PlasmidBountyId }));
+        board.Players.Add(ai);
+
+        var bait = MycovariantRepository.GetById(MycovariantIds.AscusBaitId);
+        var highScoreNonBait = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
+
+        var picked = MycovariantDraftManager.SelectAIDraftPick(
+            ai,
+            new List<Mycovariant> { highScoreNonBait, bait },
+            board,
+            new FixedRandom(0),
+            CampaignDifficulty.Training);
+
+        Assert.Equal(MycovariantIds.AscusBaitId, picked.Id);
+    }
+
+    [Fact]
+    public void SelectAIDraftPick_training_chooses_random_non_bait_instead_of_using_ai_score()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var ai = new Player(0, "P0", PlayerTypeEnum.AI);
+        ai.SetMutationStrategy(new ParameterizedSpendingStrategy(
+            strategyName: "Test",
+            prioritizeHighTier: true,
+            preferredMycovariantIds: new List<int> { MycovariantIds.PlasmidBountyId }));
+        board.Players.Add(ai);
+
+        var highScoreChoice = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
+        var lowScoreChoice = MycovariantRepository.GetById(MycovariantIds.SeptalSealId);
+
+        var picked = MycovariantDraftManager.SelectAIDraftPick(
+            ai,
+            new List<Mycovariant> { highScoreChoice, lowScoreChoice },
+            board,
+            new FixedRandom(1),
+            CampaignDifficulty.Easy);
+
+        Assert.Equal(MycovariantIds.SeptalSealId, picked.Id);
+        Assert.Equal(0f, MycovariantDraftManager.GetRecordedAIDraftScore(ai, picked, board, CampaignDifficulty.Easy));
+    }
+
+    [Fact]
+    public void SelectAIDraftPick_medium_still_uses_intelligent_selection()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var ai = new Player(0, "P0", PlayerTypeEnum.AI);
+        ai.SetMutationStrategy(new ParameterizedSpendingStrategy(
+            strategyName: "Test",
+            prioritizeHighTier: true,
+            preferredMycovariantIds: new List<int> { MycovariantIds.PlasmidBountyId }));
+        board.Players.Add(ai);
+
+        var highScoreChoice = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
+        var lowScoreChoice = MycovariantRepository.GetById(MycovariantIds.SeptalSealId);
+
+        var picked = MycovariantDraftManager.SelectAIDraftPick(
+            ai,
+            new List<Mycovariant> { highScoreChoice, lowScoreChoice },
+            board,
+            new FixedRandom(1),
+            CampaignDifficulty.Medium);
+
+        Assert.Equal(MycovariantIds.PlasmidBountyId, picked.Id);
+        Assert.Equal(highScoreChoice.GetAIScore(ai, board), MycovariantDraftManager.GetRecordedAIDraftScore(ai, picked, board, CampaignDifficulty.Medium));
+    }
+
     private static List<int> SelectExpectedTileIds(List<int> tileIds, int selectionCount, int seed)
     {
         var rng = new Random(seed);
@@ -667,5 +742,20 @@ public class AscusBaitMycovariantTests
     {
         PlaceLivingCell(board, ownerPlayerId, tileId);
         board.KillFungalCell(Assert.IsType<FungalCell>(board.GetCell(tileId)), DeathReason.Unknown, ownerPlayerId);
+    }
+
+    private sealed class FixedRandom : Random
+    {
+        private readonly int value;
+
+        public FixedRandom(int value)
+        {
+            this.value = value;
+        }
+
+        public override int Next(int maxValue)
+        {
+            return Math.Clamp(value, 0, Math.Max(0, maxValue - 1));
+        }
     }
 }

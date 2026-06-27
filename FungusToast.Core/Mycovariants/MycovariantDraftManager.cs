@@ -13,7 +13,7 @@ namespace FungusToast.Core.Mycovariants
     {
         /// <summary>
         /// Runs the Mycovariant draft phase for all players, in the correct order.
-        /// For AI, picks randomly. For human, calls the selectionCallback (if provided).
+        /// For AI, uses the active drafting rules. For human, calls the selectionCallback (if provided).
         /// </summary>
         /// <param name="players">All players in the game.</param>
         /// <param name="poolManager">The Mycovariant pool manager (should be initialized for this draft).</param>
@@ -32,7 +32,8 @@ namespace FungusToast.Core.Mycovariants
            Random rng,
            ISimulationObserver observer,
            int choicesCount = 3,
-           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null)
+           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
+           CampaignDifficulty? campaignStartDifficulty = null)
         {
             var draftOrder = BuildDraftOrder(players, board);
             MarkLastAiDrafterForCurrentDraft(players, draftOrder);
@@ -50,16 +51,7 @@ namespace FungusToast.Core.Mycovariants
                 }
                 else
                 {
-                    // AI selection - check if player has a mutation strategy with mycovariant preferences
-                    if (player.MutationStrategy is ParameterizedSpendingStrategy paramStrategy)
-                    {
-                        picked = paramStrategy.SelectMycovariantFromChoices(player, choices, board);
-                    }
-                    else
-                    {
-                        // Fallback to random selection for other AI strategies
-                        picked = choices[rng.Next(choices.Count)];
-                    }
+                    picked = SelectAIDraftPick(player, choices, board, rng, campaignStartDifficulty);
                 }
 
                 if (picked == null)
@@ -74,7 +66,7 @@ namespace FungusToast.Core.Mycovariants
                     var aiPlayerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
                     if (aiPlayerMyco != null)
                     {
-                        float score = picked.GetAIScore(player, board);
+                        float score = GetRecordedAIDraftScore(player, picked, board, campaignStartDifficulty);
                         aiPlayerMyco.AIScoreAtDraft = score;
                     }
                 }
@@ -101,6 +93,62 @@ namespace FungusToast.Core.Mycovariants
             poolManager.ReturnUndraftedToPool(allMycovariants, rng);
 
             ClearLastAiDrafterForCurrentDraft(players);
+        }
+
+        public static Mycovariant SelectAIDraftPick(
+            Player player,
+            List<Mycovariant> choices,
+            GameBoard board,
+            Random rng,
+            CampaignDifficulty? campaignStartDifficulty = null)
+        {
+            if (player == null)
+            {
+                throw new ArgumentNullException(nameof(player));
+            }
+
+            if (choices == null || choices.Count == 0)
+            {
+                throw new ArgumentException("AI draft choices cannot be null or empty.", nameof(choices));
+            }
+
+            if (board == null)
+            {
+                throw new ArgumentNullException(nameof(board));
+            }
+
+            if (rng == null)
+            {
+                throw new ArgumentNullException(nameof(rng));
+            }
+
+            if (UsesSimplifiedCampaignDraftAi(campaignStartDifficulty))
+            {
+                var baitChoices = choices.Where(mycovariant => mycovariant.IsBait).ToList();
+                var randomPool = baitChoices.Count > 0 ? baitChoices : choices;
+                return randomPool[rng.Next(randomPool.Count)];
+            }
+
+            if (player.MutationStrategy is ParameterizedSpendingStrategy paramStrategy)
+            {
+                return paramStrategy.SelectMycovariantFromChoices(player, choices, board);
+            }
+
+            return choices[rng.Next(choices.Count)];
+        }
+
+        public static float GetRecordedAIDraftScore(
+            Player player,
+            Mycovariant picked,
+            GameBoard board,
+            CampaignDifficulty? campaignStartDifficulty = null)
+        {
+            if (UsesSimplifiedCampaignDraftAi(campaignStartDifficulty) && !picked.IsBait)
+            {
+                return 0f;
+            }
+
+            return picked.GetAIScore(player, board);
         }
 
         public static void MarkLastAiDrafterForCurrentDraft(IEnumerable<Player> players, IReadOnlyList<Player> draftOrder)
@@ -193,6 +241,12 @@ namespace FungusToast.Core.Mycovariants
         private static bool HasDraftPriorityAdaptation(Player player)
         {
             return player != null && player.HasAdaptation(AdaptationIds.AscusPrimacy);
+        }
+
+        private static bool UsesSimplifiedCampaignDraftAi(CampaignDifficulty? campaignStartDifficulty)
+        {
+            return campaignStartDifficulty == CampaignDifficulty.Training
+                || campaignStartDifficulty == CampaignDifficulty.Easy;
         }
 
         /// <summary>

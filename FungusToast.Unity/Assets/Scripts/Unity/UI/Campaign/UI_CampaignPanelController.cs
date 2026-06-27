@@ -1918,14 +1918,27 @@ namespace FungusToast.Unity.UI.Campaign
             bool isUnlocked,
             bool isSelected)
         {
+            bool isTraining = option.Difficulty == CampaignDifficulty.Training;
+            bool usesRandomMycovariantDrafting = option.Difficulty == CampaignDifficulty.Training
+                || option.Difficulty == CampaignDifficulty.Easy;
             string availability = isUnlocked
                 ? (isSelected ? "Currently selected for this run." : "Unlocked and available now.")
                 : "Locked until you clear the full campaign on your current highest unlocked start.";
 
+            string startSummary = isTraining
+                ? $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards."
+                : $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards for that later point in the campaign.";
+            string mycovariantDraftingSummary = usesRandomMycovariantDrafting
+                ? "AI players draft Mycovariants randomly (instead of intelligently)."
+                : "AI players draft Mycovariants more intelligently.";
+            string skippedRewardsSummary = isTraining
+                ? string.Empty
+                : "You also do <b>not</b> retroactively earn the skipped levels' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n";
+
             return $"<b>{option.Label}</b>\n\n"
-                + $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards for that later point in the campaign.\n\n"
-                + "This does <b>not</b> currently apply a separate global stat multiplier or a special ruleset. Right now it is a lighter progression shortcut that starts a little deeper into the existing campaign.\n\n"
-                + "You also do <b>not</b> retroactively earn the skipped levels' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n"
+                + $"{startSummary}\n\n"
+                + $"{mycovariantDraftingSummary}\n\n"
+                + skippedRewardsSummary
                 + availability;
         }
 

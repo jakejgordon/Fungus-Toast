@@ -129,7 +129,10 @@ namespace FungusToast.Unity
         {
             Func<Player, List<Mycovariant>, Mycovariant>? custom = null; var pool = gameManager.GetPersistentPool(); var rng = gameManager.GetRng();
             if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) { pool.TemporarilyRemoveFromPool(testingMycoId.Value); custom = (player, choices) => choices.Where(c => c.Id != testingMycoId.Value).OrderByDescending(m => m.GetBaseAIScore(player, board)).ThenBy(_ => rng.Next()).FirstOrDefault() ?? choices.First(); } }
-            MycovariantDraftManager.RunDraft(draftPlayers.ToList(), pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom);
+            var campaignStartDifficulty = gameManager.CurrentGameMode == FungusToast.Unity.Campaign.GameMode.Campaign
+                ? gameManager.CampaignController?.CurrentStartDifficulty
+                : null;
+            MycovariantDraftManager.RunDraft(draftPlayers.ToList(), pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom, campaignStartDifficulty);
             if (countsTowardRoundCompletion)
             {
                 gameManager.MarkMycovariantDraftCompleteForRound(board.CurrentRound);
