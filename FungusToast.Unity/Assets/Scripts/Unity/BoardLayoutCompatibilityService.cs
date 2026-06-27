@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using FungusToast.Core.Persistence;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Campaign;
 using FungusToast.Unity.Save;
+using FungusToast.Unity.Grid;
 using UnityEngine;
 
 namespace FungusToast.Unity
@@ -14,18 +16,19 @@ namespace FungusToast.Unity
         private const string AppliedCompatibilityTokenKey = "System.BoardLayoutCompatibilityToken";
         private const string PendingNoticeTitleKey = "System.BoardLayoutCompatibilityNoticeTitle";
         private const string PendingNoticeBodyKey = "System.BoardLayoutCompatibilityNoticeBody";
-        private const string CurrentCompatibilityToken = "board-layout-2026-05-27";
+        private const string CompatibilitySchemaVersion = "board-layout-signature-v1";
         private const string RestartNoticeTitle = "In-Progress Save Restarted";
 
-        public static void ApplyIfNeeded()
+        public static void ApplyIfNeeded(CampaignProgression campaignProgression, BoardMediumConfig defaultSoloBoardMedium)
         {
             if (!Application.isPlaying)
             {
                 return;
             }
 
+            string currentCompatibilityToken = BuildCurrentCompatibilityToken(campaignProgression, defaultSoloBoardMedium);
             string appliedToken = ScopedPlayerPrefs.GetString(AppliedCompatibilityTokenKey, string.Empty);
-            if (string.Equals(appliedToken, CurrentCompatibilityToken, StringComparison.Ordinal))
+            if (string.Equals(appliedToken, currentCompatibilityToken, StringComparison.Ordinal))
             {
                 return;
             }
@@ -38,7 +41,7 @@ namespace FungusToast.Unity
                 Debug.Log("[BoardLayoutCompatibility] Cleared incompatible in-progress saves after board layout token change.");
             }
 
-            ScopedPlayerPrefs.SetString(AppliedCompatibilityTokenKey, CurrentCompatibilityToken);
+            ScopedPlayerPrefs.SetString(AppliedCompatibilityTokenKey, currentCompatibilityToken);
             ScopedPlayerPrefs.Save();
         }
 
@@ -290,6 +293,398 @@ namespace FungusToast.Unity
         private static bool IsTileIdInRange(int tileId, int totalTiles)
         {
             return tileId >= 0 && tileId < totalTiles;
+        }
+
+        private static string BuildCurrentCompatibilityToken(CampaignProgression campaignProgression, BoardMediumConfig defaultSoloBoardMedium)
+        {
+            var signature = new StringBuilder(4096);
+            signature.Append(CompatibilitySchemaVersion);
+            AppendCampaignProgressionSignature(signature, campaignProgression);
+            AppendBoardMediumSignature(signature, defaultSoloBoardMedium, "solo-default");
+            return $"{CompatibilitySchemaVersion}:{Hash128.Compute(signature.ToString())}";
+        }
+
+        private static void AppendCampaignProgressionSignature(StringBuilder signature, CampaignProgression campaignProgression)
+        {
+            signature.Append("|campaign:");
+            if (campaignProgression == null || campaignProgression.levels == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(campaignProgression.levels.Count);
+            for (int i = 0; i < campaignProgression.levels.Count; i++)
+            {
+                CampaignProgression.LevelSpec level = campaignProgression.levels[i];
+                signature.Append("|level:").Append(i);
+                if (level == null)
+                {
+                    signature.Append(":<null>");
+                    continue;
+                }
+
+                signature.Append(":title=").Append(level.levelTitle ?? string.Empty);
+                signature.Append(":preset=");
+                AppendBoardPresetSignature(signature, level.boardPreset);
+                signature.Append(":bossPool=");
+                AppendBoardPresetCollectionSignature(signature, level.bossBoardPresets);
+            }
+        }
+
+        private static void AppendBoardPresetCollectionSignature(StringBuilder signature, IReadOnlyList<BoardPreset> presets)
+        {
+            if (presets == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(presets.Count);
+            for (int i = 0; i < presets.Count; i++)
+            {
+                signature.Append("|poolPreset:").Append(i).Append('=');
+                AppendBoardPresetSignature(signature, presets[i]);
+            }
+        }
+
+        private static void AppendBoardPresetSignature(StringBuilder signature, BoardPreset preset)
+        {
+            if (preset == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(preset.presetId ?? string.Empty);
+            signature.Append("@").Append(preset.boardWidth).Append("x").Append(preset.boardHeight);
+            signature.Append(":humanStarts=");
+            AppendVector2IntList(signature, preset.humanStartingCoordinatePool);
+            signature.Append(":aiStarts=");
+            if (preset.aiPlayers == null)
+            {
+                signature.Append("<null>");
+            }
+            else
+            {
+                signature.Append(preset.aiPlayers.Count);
+                for (int i = 0; i < preset.aiPlayers.Count; i++)
+                {
+                    BoardPreset.AIPlayerSpec aiPlayer = preset.aiPlayers[i];
+                    signature.Append("|ai:").Append(i).Append('=');
+                    if (aiPlayer == null)
+                    {
+                        signature.Append("<null>");
+                        continue;
+                    }
+
+                    signature.Append(aiPlayer.strategyName ?? string.Empty);
+                    signature.Append('@');
+                    if (aiPlayer.startingCoordinate.HasValue)
+                    {
+                        Vector2Int coordinate = aiPlayer.startingCoordinate.Value;
+                        signature.Append(coordinate.x).Append(',').Append(coordinate.y);
+                    }
+                    else
+                    {
+                        signature.Append("<auto>");
+                    }
+                }
+            }
+
+            signature.Append(":medium=");
+            AppendBoardMediumSignature(signature, preset.boardMedium, preset.presetId ?? "preset");
+        }
+
+        private static void AppendBoardMediumSignature(StringBuilder signature, BoardMediumConfig medium, string label)
+        {
+            signature.Append("|medium:").Append(label).Append('=');
+            if (medium == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(medium.mediumId ?? string.Empty);
+            signature.Append(":defaultSizeBands=");
+            AppendBoardBackgroundSettingsSignature(
+                signature,
+                medium.renderBoardBackground,
+                medium.backgroundSprite,
+                medium.backgroundColor,
+                medium.hidePlayableSurfaceTiles,
+                medium.deriveBlockedTilesFromBackgroundAlpha,
+                medium.backgroundAlphaPlayableThreshold,
+                medium.backgroundMinTileCoverage,
+                medium.backgroundMaxTileClipFraction,
+                medium.backgroundTileClipSampleResolution,
+                medium.useExplicitBlockedTileIds,
+                medium.explicitBlockedTileIds,
+                medium.backgroundInsetLeftNormalized,
+                medium.backgroundInsetRightNormalized,
+                medium.backgroundInsetBottomNormalized,
+                medium.backgroundInsetTopNormalized,
+                medium.composeSafeAreaWithBoardBoundsMetadata,
+                medium.backgroundScaleMultiplier,
+                medium.renderPlayableAreaOverlay,
+                medium.playableAreaOverlayColor,
+                medium.renderBoardEdgeFade,
+                medium.boardEdgeFadeColor,
+                medium.boardEdgeFadeWidthTiles,
+                medium.boardEdgeFadeNoiseStrength);
+
+            signature.Append(":overrides=");
+            if (medium.boardBackgroundOverrides == null)
+            {
+                signature.Append("<null>");
+            }
+            else
+            {
+                signature.Append(medium.boardBackgroundOverrides.Count);
+                for (int i = 0; i < medium.boardBackgroundOverrides.Count; i++)
+                {
+                    BoardMediumConfig.BoardBackgroundSizeOverride backgroundOverride = medium.boardBackgroundOverrides[i];
+                    signature.Append("|override:").Append(i).Append('=');
+                    if (backgroundOverride == null)
+                    {
+                        signature.Append("<null>");
+                        continue;
+                    }
+
+                    signature.Append(backgroundOverride.minBoardWidth).Append('x').Append(backgroundOverride.minBoardHeight);
+                    signature.Append('-').Append(backgroundOverride.maxBoardWidth).Append('x').Append(backgroundOverride.maxBoardHeight);
+                    AppendBoardBackgroundSettingsSignature(
+                        signature,
+                        backgroundOverride.renderBoardBackground,
+                        backgroundOverride.backgroundSprite,
+                        backgroundOverride.backgroundColor,
+                        backgroundOverride.hidePlayableSurfaceTiles,
+                        backgroundOverride.deriveBlockedTilesFromBackgroundAlpha,
+                        backgroundOverride.backgroundAlphaPlayableThreshold,
+                        backgroundOverride.backgroundMinTileCoverage,
+                        backgroundOverride.backgroundMaxTileClipFraction,
+                        backgroundOverride.backgroundTileClipSampleResolution,
+                        backgroundOverride.useExplicitBlockedTileIds,
+                        backgroundOverride.explicitBlockedTileIds,
+                        backgroundOverride.backgroundInsetLeftNormalized,
+                        backgroundOverride.backgroundInsetRightNormalized,
+                        backgroundOverride.backgroundInsetBottomNormalized,
+                        backgroundOverride.backgroundInsetTopNormalized,
+                        backgroundOverride.composeSafeAreaWithBoardBoundsMetadata,
+                        backgroundOverride.backgroundScaleMultiplier,
+                        backgroundOverride.renderPlayableAreaOverlay,
+                        backgroundOverride.playableAreaOverlayColor,
+                        backgroundOverride.renderBoardEdgeFade,
+                        backgroundOverride.boardEdgeFadeColor,
+                        backgroundOverride.boardEdgeFadeWidthTiles,
+                        backgroundOverride.boardEdgeFadeNoiseStrength);
+                }
+            }
+
+            signature.Append(":metadata=");
+            if (medium.boardBackgroundSpriteMetadata == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(medium.boardBackgroundSpriteMetadata.Count);
+            for (int i = 0; i < medium.boardBackgroundSpriteMetadata.Count; i++)
+            {
+                BoardMediumConfig.BoardBackgroundSpriteMetadata metadata = medium.boardBackgroundSpriteMetadata[i];
+                signature.Append("|metadata:").Append(i).Append('=');
+                if (metadata == null)
+                {
+                    signature.Append("<null>");
+                    continue;
+                }
+
+                signature.Append(GetSpriteStableId(metadata.backgroundSprite));
+                signature.Append(":visible=").Append(metadata.hasVisibleAlphaBounds);
+                AppendRect(signature, metadata.visibleAlphaBoundsNormalized);
+                signature.Append(":board=").Append(metadata.hasBoardBounds);
+                AppendRect(signature, metadata.boardBoundsNormalized);
+                signature.Append(":ellipse=").Append(metadata.hasPlayableEllipse);
+                AppendVector2(signature, metadata.playableEllipseCenterNormalized);
+                AppendVector2(signature, metadata.playableEllipseRadiiNormalized);
+                signature.Append(":span=").Append(metadata.hasPlayableHorizontalSpanProfile);
+                signature.Append('@').Append(metadata.playableHorizontalSpanProfileMinYNormalized);
+                signature.Append(',').Append(metadata.playableHorizontalSpanProfileMaxYNormalized);
+                AppendPlayableHorizontalSpanProfile(signature, metadata.playableHorizontalSpanProfile);
+                AppendBakedBlockedTileMasks(signature, metadata.bakedBlockedTileMasks);
+            }
+        }
+
+        private static void AppendBoardBackgroundSettingsSignature(
+            StringBuilder signature,
+            bool renderBoardBackground,
+            Sprite backgroundSprite,
+            Color backgroundColor,
+            bool hidePlayableSurfaceTiles,
+            bool deriveBlockedTilesFromBackgroundAlpha,
+            float backgroundAlphaPlayableThreshold,
+            float backgroundMinTileCoverage,
+            float backgroundMaxTileClipFraction,
+            int backgroundTileClipSampleResolution,
+            bool useExplicitBlockedTileIds,
+            IReadOnlyList<int> explicitBlockedTileIds,
+            float backgroundInsetLeftNormalized,
+            float backgroundInsetRightNormalized,
+            float backgroundInsetBottomNormalized,
+            float backgroundInsetTopNormalized,
+            bool composeSafeAreaWithBoardBoundsMetadata,
+            float backgroundScaleMultiplier,
+            bool renderPlayableAreaOverlay,
+            Color playableAreaOverlayColor,
+            bool renderBoardEdgeFade,
+            Color boardEdgeFadeColor,
+            float boardEdgeFadeWidthTiles,
+            float boardEdgeFadeNoiseStrength)
+        {
+            signature.Append(":render=").Append(renderBoardBackground);
+            signature.Append(":sprite=").Append(GetSpriteStableId(backgroundSprite));
+            AppendColor(signature, backgroundColor);
+            signature.Append(":hide=").Append(hidePlayableSurfaceTiles);
+            signature.Append(":alphaMask=").Append(deriveBlockedTilesFromBackgroundAlpha);
+            signature.Append(':').Append(backgroundAlphaPlayableThreshold);
+            signature.Append(':').Append(backgroundMinTileCoverage);
+            signature.Append(':').Append(backgroundMaxTileClipFraction);
+            signature.Append(':').Append(backgroundTileClipSampleResolution);
+            signature.Append(":explicit=").Append(useExplicitBlockedTileIds);
+            AppendIntList(signature, explicitBlockedTileIds);
+            signature.Append(":insets=");
+            signature.Append(backgroundInsetLeftNormalized).Append(',');
+            signature.Append(backgroundInsetRightNormalized).Append(',');
+            signature.Append(backgroundInsetBottomNormalized).Append(',');
+            signature.Append(backgroundInsetTopNormalized);
+            signature.Append(":compose=").Append(composeSafeAreaWithBoardBoundsMetadata);
+            signature.Append(":scale=").Append(backgroundScaleMultiplier);
+            signature.Append(":overlay=").Append(renderPlayableAreaOverlay);
+            AppendColor(signature, playableAreaOverlayColor);
+            signature.Append(":edgeFade=").Append(renderBoardEdgeFade);
+            AppendColor(signature, boardEdgeFadeColor);
+            signature.Append(':').Append(boardEdgeFadeWidthTiles);
+            signature.Append(':').Append(boardEdgeFadeNoiseStrength);
+        }
+
+        private static void AppendVector2IntList(StringBuilder signature, IReadOnlyList<Vector2Int> coordinates)
+        {
+            if (coordinates == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(coordinates.Count);
+            for (int i = 0; i < coordinates.Count; i++)
+            {
+                Vector2Int coordinate = coordinates[i];
+                signature.Append('|').Append(coordinate.x).Append(',').Append(coordinate.y);
+            }
+        }
+
+        private static void AppendPlayableHorizontalSpanProfile(StringBuilder signature, IReadOnlyList<BoardMediumConfig.PlayableHorizontalSpanStop> stops)
+        {
+            signature.Append(":stops=");
+            if (stops == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(stops.Count);
+            for (int i = 0; i < stops.Count; i++)
+            {
+                BoardMediumConfig.PlayableHorizontalSpanStop stop = stops[i];
+                signature.Append('|');
+                if (stop == null)
+                {
+                    signature.Append("<null>");
+                    continue;
+                }
+
+                signature.Append(stop.normalizedY).Append(',');
+                signature.Append(stop.minXNormalized).Append(',');
+                signature.Append(stop.maxXNormalized);
+            }
+        }
+
+        private static void AppendBakedBlockedTileMasks(StringBuilder signature, IReadOnlyList<BoardMediumConfig.BakedBlockedTileMask> masks)
+        {
+            signature.Append(":masks=");
+            if (masks == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(masks.Count);
+            for (int i = 0; i < masks.Count; i++)
+            {
+                BoardMediumConfig.BakedBlockedTileMask mask = masks[i];
+                signature.Append('|');
+                if (mask == null)
+                {
+                    signature.Append("<null>");
+                    continue;
+                }
+
+                signature.Append(mask.boardWidth).Append('x').Append(mask.boardHeight);
+                signature.Append(':').Append(mask.bakeVersion ?? string.Empty);
+                signature.Append(':').Append(mask.spriteContentHash ?? string.Empty);
+                AppendIntList(signature, mask.blockedTileIds);
+            }
+        }
+
+        private static void AppendIntList(StringBuilder signature, IReadOnlyList<int> values)
+        {
+            if (values == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append('[').Append(values.Count);
+            for (int i = 0; i < values.Count; i++)
+            {
+                signature.Append('|').Append(values[i]);
+            }
+
+            signature.Append(']');
+        }
+
+        private static void AppendRect(StringBuilder signature, Rect rect)
+        {
+            signature.Append('@').Append(rect.x);
+            signature.Append(',').Append(rect.y);
+            signature.Append(',').Append(rect.width);
+            signature.Append(',').Append(rect.height);
+        }
+
+        private static void AppendVector2(StringBuilder signature, Vector2 value)
+        {
+            signature.Append('@').Append(value.x).Append(',').Append(value.y);
+        }
+
+        private static void AppendColor(StringBuilder signature, Color color)
+        {
+            signature.Append('@').Append(color.r);
+            signature.Append(',').Append(color.g);
+            signature.Append(',').Append(color.b);
+            signature.Append(',').Append(color.a);
+        }
+
+        private static string GetSpriteStableId(Sprite sprite)
+        {
+            if (sprite == null)
+            {
+                return "<null>";
+            }
+
+            Texture2D texture = sprite.texture;
+            string textureName = texture != null ? texture.name : string.Empty;
+            Rect textureRect = sprite.textureRect;
+            return $"{textureName}/{sprite.name}@{textureRect.x},{textureRect.y},{textureRect.width},{textureRect.height}";
         }
 
         private static void QueueRestartNotice(string body)

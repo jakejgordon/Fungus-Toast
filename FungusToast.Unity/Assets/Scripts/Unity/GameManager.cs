@@ -472,7 +472,7 @@ namespace FungusToast.Unity
             }
             Instance = this;
             AlphaDataResetService.ApplyIfNeeded();
-            BoardLayoutCompatibilityService.ApplyIfNeeded();
+            BoardLayoutCompatibilityService.ApplyIfNeeded(campaignProgression, gridVisualizer != null ? gridVisualizer.ActiveBoardMedium : null);
             rng = new System.Random();
             BootstrapServices();
             // Create campaign controller if progression present
