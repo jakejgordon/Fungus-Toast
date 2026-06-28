@@ -172,12 +172,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                         if (pendingJettingToxinImpactTileIds.Count > 0)
                         {
-                            gridVisualizer.RegisterPreAnimationHiddenPreviewTiles(pendingJettingToxinImpactTileIds);
                             ClearToxinDropFlags(board, pendingJettingToxinImpactTileIds);
                         }
 
                         gridVisualizer.ClearJettingMyceliumPreview();
                         gridVisualizer.RenderBoard(board);
+                        foreach (int toxinTileId in pendingJettingToxinImpactTileIds)
+                        {
+                            gridVisualizer.RenderCapturedToxinImpactSnapshot(toxinTileId);
+                        }
                         gridVisualizer.ClearHighlights();
                         done = true;
                         executed = true;
@@ -223,11 +226,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
                             pendingJettingLaunchOriginTileId,
                             pendingJettingToxinImpactTileIds,
-                            toxinTileId =>
-                            {
-                                gridVisualizer.RevealPreAnimationPreviewTile(toxinTileId);
-                                gridVisualizer.RenderTileFromBoard(toxinTileId);
-                            });
+                            toxinTileId => gridVisualizer.RenderTileFromBoard(toxinTileId));
                         if (toxinVolley != null)
                         {
                             yield return toxinVolley;

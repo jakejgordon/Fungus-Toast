@@ -1708,6 +1708,47 @@ namespace FungusToast.Unity.Grid.Helpers
 			return true;
 		}
 
+		public void RenderCapturedToxinImpactSnapshot(int tileId)
+		{
+			var moldTilemap = _getMoldTilemap();
+			var overlayTilemap = _getOverlayTilemap();
+			if (moldTilemap == null || overlayTilemap == null)
+			{
+				return;
+			}
+
+			var pos = _getPositionForTileId(tileId);
+			moldTilemap.SetTile(pos, null);
+			moldTilemap.SetColor(pos, Color.white);
+			moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			overlayTilemap.SetTile(pos, null);
+			overlayTilemap.SetColor(pos, Color.white);
+			overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+
+			if (!_pendingToxinImpactSnapshots.TryGetValue(tileId, out var impactSnapshot))
+			{
+				return;
+			}
+
+			if (impactSnapshot.MoldTile != null)
+			{
+				moldTilemap.SetTile(pos, impactSnapshot.MoldTile);
+				moldTilemap.SetTileFlags(pos, TileFlags.None);
+				moldTilemap.SetColor(pos, impactSnapshot.MoldColor);
+				moldTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+				moldTilemap.RefreshTile(pos);
+			}
+
+			if (impactSnapshot.OverlayTile != null)
+			{
+				overlayTilemap.SetTile(pos, impactSnapshot.OverlayTile);
+				overlayTilemap.SetTileFlags(pos, TileFlags.None);
+				overlayTilemap.SetColor(pos, impactSnapshot.OverlayColor);
+				overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+				overlayTilemap.RefreshTile(pos);
+			}
+		}
+
 		public void QueuePoisonTransition(int tileId)
 		{
 			QueueTransition(tileId, TileTransitionKind.Poison);

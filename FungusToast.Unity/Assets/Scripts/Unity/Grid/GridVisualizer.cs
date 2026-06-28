@@ -1356,6 +1356,13 @@ namespace FungusToast.Unity.Grid
             RefreshMoldIdleCacheForTile(tileId);
         }
 
+        public void RenderCapturedToxinImpactSnapshot(int tileId)
+        {
+            cellStateAnimationController?.RenderCapturedToxinImpactSnapshot(tileId);
+            ApplyBaseMoldVisualTransform(ActiveBoard?.GetTileById(tileId), GetPositionForTileId(tileId));
+            RefreshMoldIdleCacheForTile(tileId);
+        }
+
         private void ApplyPreAnimationPreviewHiddenState(int tileId, Vector3Int pos) => boardStateRenderer?.ApplyPreAnimationPreviewHiddenState(tileId, pos);
 
         public void ClearNewlyGrownFlagsForNextGrowthPhase()
