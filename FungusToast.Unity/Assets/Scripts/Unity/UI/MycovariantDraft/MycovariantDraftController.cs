@@ -2693,6 +2693,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (playerMyco.EffectCounts == null || playerMyco.EffectCounts.Count == 0)
                 return string.Empty;
 
+            if (TryBuildSpecialEffectCountSummary(playerMyco, out string specialSummary))
+            {
+                return specialSummary;
+            }
+
             var parts = playerMyco.EffectCounts
                 .Where(kvp => kvp.Value > 0)
                 .OrderByDescending(kvp => kvp.Value)
@@ -2701,6 +2706,30 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 .ToList();
 
             return parts.Count == 0 ? string.Empty : string.Join(", ", parts);
+        }
+
+        private static bool TryBuildSpecialEffectCountSummary(PlayerMycovariant playerMyco, out string summary)
+        {
+            summary = string.Empty;
+
+            if (playerMyco.MycovariantId != MycovariantIds.EnduringToxaphoresId
+                || !playerMyco.EffectCounts.TryGetValue(MycovariantEffectType.ExistingExtensions, out int totalExtendedCycles)
+                || totalExtendedCycles <= 0)
+            {
+                return false;
+            }
+
+            int cyclesPerToxin = MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension;
+            if (cyclesPerToxin <= 0 || totalExtendedCycles % cyclesPerToxin != 0)
+            {
+                return false;
+            }
+
+            int toxinCount = totalExtendedCycles / cyclesPerToxin;
+            string toxinLabel = toxinCount == 1 ? "toxin" : "toxins";
+            string cycleLabel = cyclesPerToxin == 1 ? "cycle" : "cycles";
+            summary = $"{toxinCount} {toxinLabel} extended by {cyclesPerToxin} {cycleLabel}";
+            return true;
         }
 
         private static string FormatEffectType(MycovariantEffectType effectType)
