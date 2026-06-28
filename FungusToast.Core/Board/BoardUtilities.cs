@@ -20,12 +20,24 @@ namespace FungusToast.Core.Board
                    (width - tile.X - 1) < distance || (height - tile.Y - 1) < distance;
         }
 
+        public static bool IsWithinEdgeDistance(BoardTile tile, GameBoard board, int distance)
+        {
+            return tile != null
+                && board != null
+                && board.IsWithinPlayableEdgeDistance(tile.TileId, distance);
+        }
+
         /// <summary>
         /// Checks if a tile is exactly on the border of the board.
         /// </summary>
         public static bool IsOnBorder(BoardTile tile, int width, int height)
         {
             return IsWithinEdgeDistance(tile, width, height, 1);
+        }
+
+        public static bool IsOnBorder(BoardTile tile, GameBoard board)
+        {
+            return IsWithinEdgeDistance(tile, board, 1);
         }
 
         /// <summary>

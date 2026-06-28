@@ -15,6 +15,14 @@ namespace FungusToast.Core.Board
     // Game board root – maintains authoritative mapping of tileId -> FungalCell
     public partial class GameBoard
     {
+        public enum BoardCorner
+        {
+            TopLeft = 0,
+            TopRight = 1,
+            BottomRight = 2,
+            BottomLeft = 3
+        }
+
         public sealed class ChemobeaconMarker
         {
             public ChemobeaconMarker(int playerId, int mutationId, int tileId, int turnsRemaining)
@@ -96,6 +104,9 @@ namespace FungusToast.Core.Board
         private readonly Dictionary<int, ChemobeaconMarker> chemobeaconsByPlayerId = new();
         private readonly Queue<int> pendingHypervariationDraftPlayerIds = new();
         private readonly HashSet<int> permanentlyBlockedTileIds = new();
+        private readonly HashSet<int> playableEdgeTileIds = new();
+        private readonly Dictionary<int, int> playableEdgeDistanceByTileId = new();
+        private readonly Dictionary<BoardCorner, int> cornerTileIdsByCorner = new();
 
         public int CurrentRound { get; private set; } = 1;
         public int CurrentGrowthCycle { get; private set; } = 0;
@@ -245,6 +256,7 @@ namespace FungusToast.Core.Board
                     Grid[x, y] = new BoardTile(x, y, width);
 
             ApplyPermanentBlockedTiles(permanentlyBlockedTileIds);
+            RebuildBoardShapeMetadata();
         }
         #endregion
 
@@ -261,7 +273,36 @@ namespace FungusToast.Core.Board
             return permanentlyBlockedTileIds.OrderBy(tileId => tileId).ToList();
         }
 
+        public IReadOnlyCollection<int> GetPlayableEdgeTileIds()
+        {
+            return playableEdgeTileIds.OrderBy(tileId => tileId).ToList();
+        }
+
         public bool IsPermanentlyBlockedTile(int tileId) => permanentlyBlockedTileIds.Contains(tileId);
+        public bool IsPlayableEdgeTile(int tileId) => playableEdgeTileIds.Contains(tileId);
+        public bool IsWithinPlayableEdgeDistance(int tileId, int distance)
+        {
+            if (distance <= 0)
+            {
+                return false;
+            }
+
+            return playableEdgeDistanceByTileId.TryGetValue(tileId, out int edgeDistance)
+                && edgeDistance <= distance;
+        }
+        public int? GetPlayableEdgeDistance(int tileId)
+        {
+            return playableEdgeDistanceByTileId.TryGetValue(tileId, out int distance)
+                ? distance
+                : null;
+        }
+        public int? GetCornerTileId(BoardCorner corner)
+        {
+            return cornerTileIdsByCorner.TryGetValue(corner, out int tileId)
+                ? tileId
+                : null;
+        }
+        public IReadOnlyDictionary<BoardCorner, int> GetCornerTileIds() => cornerTileIdsByCorner;
         public (int x, int y) GetXYFromTileId(int tileId) => (tileId % Width, tileId / Width);
         public BoardTile? GetTile(int x, int y) => (x >= 0 && y >= 0 && x < Width && y < Height) ? Grid[x, y] : null;
         public BoardTile? GetTileById(int tileId) { var (x, y) = GetXYFromTileId(tileId); return GetTile(x, y); }
@@ -920,6 +961,194 @@ namespace FungusToast.Core.Board
                 permanentlyBlockedTileIds.Add(tileId);
                 GetTileById(tileId)?.SetBlocked(true);
             }
+        }
+
+        private void RebuildBoardShapeMetadata()
+        {
+            playableEdgeTileIds.Clear();
+            playableEdgeDistanceByTileId.Clear();
+            cornerTileIdsByCorner.Clear();
+
+            var playableTileIds = AllTiles()
+                .Where(tile => !tile.IsBlocked)
+                .Select(tile => tile.TileId)
+                .ToList();
+
+            if (playableTileIds.Count == 0)
+            {
+                return;
+            }
+
+            bool[,] exteriorBlockedOrVoid = BuildExteriorBlockedOrVoidMap();
+            BuildPlayableEdgeTileIds(exteriorBlockedOrVoid);
+            BuildPlayableEdgeDistances();
+            BuildCornerTileIds(playableTileIds);
+        }
+
+        private bool[,] BuildExteriorBlockedOrVoidMap()
+        {
+            int expandedWidth = Width + 2;
+            int expandedHeight = Height + 2;
+            var visited = new bool[expandedWidth, expandedHeight];
+            var queue = new Queue<(int x, int y)>();
+            queue.Enqueue((0, 0));
+            visited[0, 0] = true;
+
+            int[] dx = { -1, 1, 0, 0 };
+            int[] dy = { 0, 0, -1, 1 };
+
+            while (queue.Count > 0)
+            {
+                var (x, y) = queue.Dequeue();
+                for (int i = 0; i < dx.Length; i++)
+                {
+                    int nx = x + dx[i];
+                    int ny = y + dy[i];
+                    if (nx < 0 || ny < 0 || nx >= expandedWidth || ny >= expandedHeight || visited[nx, ny])
+                    {
+                        continue;
+                    }
+
+                    if (!IsExteriorTraversable(nx, ny))
+                    {
+                        continue;
+                    }
+
+                    visited[nx, ny] = true;
+                    queue.Enqueue((nx, ny));
+                }
+            }
+
+            return visited;
+        }
+
+        private bool IsExteriorTraversable(int expandedX, int expandedY)
+        {
+            int boardX = expandedX - 1;
+            int boardY = expandedY - 1;
+            if (boardX < 0 || boardY < 0 || boardX >= Width || boardY >= Height)
+            {
+                return true;
+            }
+
+            return Grid[boardX, boardY].IsBlocked;
+        }
+
+        private void BuildPlayableEdgeTileIds(bool[,] exteriorBlockedOrVoid)
+        {
+            int[] dx = { -1, 1, 0, 0 };
+            int[] dy = { 0, 0, -1, 1 };
+
+            foreach (var tile in AllTiles())
+            {
+                if (tile.IsBlocked)
+                {
+                    continue;
+                }
+
+                for (int i = 0; i < dx.Length; i++)
+                {
+                    int nx = tile.X + dx[i];
+                    int ny = tile.Y + dy[i];
+                    if (nx < 0 || ny < 0 || nx >= Width || ny >= Height)
+                    {
+                        playableEdgeTileIds.Add(tile.TileId);
+                        break;
+                    }
+
+                    if (Grid[nx, ny].IsBlocked && exteriorBlockedOrVoid[nx + 1, ny + 1])
+                    {
+                        playableEdgeTileIds.Add(tile.TileId);
+                        break;
+                    }
+                }
+            }
+
+            if (playableEdgeTileIds.Count == 0)
+            {
+                foreach (var tile in AllTiles())
+                {
+                    if (!tile.IsBlocked)
+                    {
+                        playableEdgeTileIds.Add(tile.TileId);
+                    }
+                }
+            }
+        }
+
+        private void BuildPlayableEdgeDistances()
+        {
+            var queue = new Queue<int>();
+            foreach (int tileId in playableEdgeTileIds)
+            {
+                playableEdgeDistanceByTileId[tileId] = 1;
+                queue.Enqueue(tileId);
+            }
+
+            while (queue.Count > 0)
+            {
+                int tileId = queue.Dequeue();
+                int nextDistance = playableEdgeDistanceByTileId[tileId] + 1;
+                foreach (var neighbor in GetOrthogonalNeighbors(tileId))
+                {
+                    if (neighbor.IsBlocked || playableEdgeDistanceByTileId.ContainsKey(neighbor.TileId))
+                    {
+                        continue;
+                    }
+
+                    playableEdgeDistanceByTileId[neighbor.TileId] = nextDistance;
+                    queue.Enqueue(neighbor.TileId);
+                }
+            }
+        }
+
+        private void BuildCornerTileIds(IReadOnlyCollection<int> playableTileIds)
+        {
+            var anchorByCorner = new Dictionary<BoardCorner, (int x, int y)>
+            {
+                [BoardCorner.TopLeft] = (0, 0),
+                [BoardCorner.TopRight] = (Width - 1, 0),
+                [BoardCorner.BottomRight] = (Width - 1, Height - 1),
+                [BoardCorner.BottomLeft] = (0, Height - 1)
+            };
+
+            var candidateTileIds = playableEdgeTileIds.Count > 0
+                ? playableEdgeTileIds.ToList()
+                : playableTileIds.ToList();
+            var assigned = new HashSet<int>();
+
+            foreach (BoardCorner corner in Enum.GetValues(typeof(BoardCorner)))
+            {
+                var anchor = anchorByCorner[corner];
+                int chosenTileId = ChooseCornerTileId(candidateTileIds, assigned, anchor);
+                cornerTileIdsByCorner[corner] = chosenTileId;
+                assigned.Add(chosenTileId);
+            }
+        }
+
+        private int ChooseCornerTileId(IReadOnlyCollection<int> candidateTileIds, HashSet<int> assignedTileIds, (int x, int y) anchor)
+        {
+            var preferredCandidateIds = candidateTileIds.Where(tileId => !assignedTileIds.Contains(tileId)).ToList();
+            var searchPool = preferredCandidateIds.Count > 0 ? preferredCandidateIds : candidateTileIds;
+
+            return searchPool
+                .Select(tileId =>
+                {
+                    var (x, y) = GetXYFromTileId(tileId);
+                    int dx = x - anchor.x;
+                    int dy = y - anchor.y;
+                    return new
+                    {
+                        tileId,
+                        squaredDistance = (dx * dx) + (dy * dy),
+                        manhattanDistance = Math.Abs(dx) + Math.Abs(dy)
+                    };
+                })
+                .OrderBy(candidate => candidate.squaredDistance)
+                .ThenBy(candidate => candidate.manhattanDistance)
+                .ThenBy(candidate => candidate.tileId)
+                .First()
+                .tileId;
         }
         public void UpdateCachedDecayPhaseContext() { if (CachedDecayPhaseContext == null) CachedDecayPhaseContext = new DecayPhaseContext(this, Players); }
         public void ClearCachedDecayPhaseContext() => CachedDecayPhaseContext = null;

@@ -1660,27 +1660,32 @@ public static class MycovariantEffectProcessor
     // ================== Corner Conduit (Refactored Helpers) ==================
     private static (int x,int y)? GetNearestCorner(GameBoard board, int sx, int sy)
     {
-        // Tie-break order: TL, TR, BR, BL
-        var corners = new (int x,int y)[]
+        BoardTile? bestCornerTile = null;
+        int bestDistance = int.MaxValue;
+
+        foreach (GameBoard.BoardCorner corner in Enum.GetValues(typeof(GameBoard.BoardCorner)))
         {
-            (0,0),
-            (board.Width-1,0),
-            (board.Width-1,board.Height-1),
-            (0,board.Height-1)
-        };
-        (int x, int y)? bestCorner = null;
-        int bestDist = int.MaxValue;
-        for (int i = 0; i < corners.Length; i++)
-        {
-            var c = corners[i];
-            int dist = Math.Abs(c.x - sx) + Math.Abs(c.y - sy);
-            if (dist < bestDist)
+            int? tileId = board.GetCornerTileId(corner);
+            if (!tileId.HasValue)
             {
-                bestDist = dist;
-                bestCorner = c;
+                continue;
+            }
+
+            var tile = board.GetTileById(tileId.Value);
+            if (tile == null)
+            {
+                continue;
+            }
+
+            int distance = Math.Abs(tile.X - sx) + Math.Abs(tile.Y - sy);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestCornerTile = tile;
             }
         }
-        return bestCorner;
+
+        return bestCornerTile == null ? null : (bestCornerTile.X, bestCornerTile.Y);
     }
 
     private static bool ShouldSkipTile(FungalCell? existing, int playerId)

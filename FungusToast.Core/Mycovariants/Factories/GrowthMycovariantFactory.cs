@@ -30,7 +30,7 @@ namespace FungusToast.Core.Mycovariants
                 int borderCells = 0;
                 foreach (var tile in board.AllTiles())
                 {
-                    if (Board.BoardUtilities.IsWithinEdgeDistance(tile, board.Width, board.Height, MycovariantGameBalance.PerimeterProliferatorEdgeDistance) &&
+                    if (Board.BoardUtilities.IsWithinEdgeDistance(tile, board, MycovariantGameBalance.PerimeterProliferatorEdgeDistance) &&
                         tile.FungalCell?.IsAlive == true &&
                         tile.FungalCell.OwnerPlayerId == player.PlayerId)
                     {
@@ -106,11 +106,33 @@ namespace FungusToast.Core.Mycovariants
         {
             if (!player.StartingTileId.HasValue) return 1f;
             var (sx, sy) = board.GetXYFromTileId(player.StartingTileId.Value);
-            var corners = new System.Collections.Generic.List<(int x,int y)>{(0,0),(board.Width-1,0),(board.Width-1,board.Height-1),(0,board.Height-1)};
-            int bestIndex = 0; int bestDist = int.MaxValue;
-            for(int i=0;i<corners.Count;i++)
-            { var c = corners[i]; int dist = System.Math.Abs(c.x - sx) + System.Math.Abs(c.y - sy); if (dist < bestDist){ bestDist = dist; bestIndex = i; } }
-            var target = corners[bestIndex];
+            Board.BoardTile? targetTile = null;
+            int bestDistance = int.MaxValue;
+            foreach (Board.GameBoard.BoardCorner corner in System.Enum.GetValues(typeof(Board.GameBoard.BoardCorner)))
+            {
+                int? tileId = board.GetCornerTileId(corner);
+                if (!tileId.HasValue)
+                {
+                    continue;
+                }
+
+                var tile = board.GetTileById(tileId.Value);
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                int distance = System.Math.Abs(tile.X - sx) + System.Math.Abs(tile.Y - sy);
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    targetTile = tile;
+                }
+            }
+
+            if (targetTile == null) return 1f;
+
+            var target = (x: targetTile.X, y: targetTile.Y);
             var line = MycovariantEffectProcessor.GenerateBresenhamLine(sx, sy, target.x, target.y);
             if (line.Count <= 1) return 1f;
             int actionable = 0;

@@ -87,9 +87,29 @@ public class MarginalClampAdaptationTests
         Assert.Null(triggeredEvent);
     }
 
-    private static GameBoard CreateBoardWithPlayers(out Player player, out Player enemy)
+    [Fact]
+    public void OnLivingCellEstablished_treats_notch_adjacent_tiles_as_border_threats_on_irregular_boards()
     {
-        var board = new GameBoard(width: 5, height: 5, playerCount: 2);
+        var board = CreateBoardWithPlayers(out var player, out var enemy, permanentlyBlockedTileIds: new[] { 2 });
+        var observer = new TestSimulationObserver();
+        SpecialBoardEventArgs? triggeredEvent = null;
+        board.SpecialBoardEventTriggered += (_, e) => triggeredEvent = e;
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.MarginalClamp));
+
+        board.SpawnSporeForPlayer(player, tileId: 6, GrowthSource.HyphalOutgrowth);
+        board.SpawnSporeForPlayer(enemy, tileId: 7, GrowthSource.HyphalOutgrowth);
+
+        AdaptationEffectProcessor.OnLivingCellEstablished(player.PlayerId, 6, GrowthSource.HyphalOutgrowth, board, board.Players, observer);
+
+        Assert.True(board.IsPlayableEdgeTile(7));
+        Assert.True(board.GetCell(7)!.IsDead);
+        Assert.NotNull(triggeredEvent);
+        Assert.Equal(SpecialBoardEventKind.MarginalClampTriggered, triggeredEvent!.EventKind);
+    }
+
+    private static GameBoard CreateBoardWithPlayers(out Player player, out Player enemy, IEnumerable<int>? permanentlyBlockedTileIds = null)
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 2, permanentlyBlockedTileIds);
         player = new Player(0, "P0", PlayerTypeEnum.AI);
         enemy = new Player(1, "P1", PlayerTypeEnum.AI);
         board.Players.Add(player);

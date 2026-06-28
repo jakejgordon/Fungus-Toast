@@ -514,7 +514,7 @@ namespace FungusToast.Core.Phases
                 || !cell.IsAlive
                 || cell.OwnerPlayerId != player.PlayerId
                 || cell.IsResistant
-                || !BoardUtilities.IsWithinEdgeDistance(tile, board.Width, board.Height, AdaptationGameBalance.CrustalCallusEdgeDistance))
+                || !BoardUtilities.IsWithinEdgeDistance(tile, board, AdaptationGameBalance.CrustalCallusEdgeDistance))
             {
                 return;
             }
@@ -563,7 +563,7 @@ namespace FungusToast.Core.Phases
             }
 
             var borderThreatTiles = board.GetOrthogonalNeighbors(tileId)
-                .Where(tile => BoardUtilities.IsOnBorder(tile, board.Width, board.Height))
+                .Where(tile => BoardUtilities.IsOnBorder(tile, board))
                 .Where(tile => tile.FungalCell != null)
                 .ToList();
 
@@ -1052,15 +1052,8 @@ namespace FungusToast.Core.Phases
             int sourceTileId = player.StartingTileId.Value;
             var (startX, startY) = board.GetXYFromTileId(sourceTileId);
 
-            int[] cornerTileIds =
-            {
-                0,
-                Math.Max(0, board.Width - 1),
-                Math.Max(0, board.Height - 1) * board.Width,
-                (Math.Max(0, board.Height - 1) * board.Width) + Math.Max(0, board.Width - 1)
-            };
-
-            var cornerTile = cornerTileIds
+            var cornerTile = board.GetCornerTileIds()
+                .Values
                 .Distinct()
                 .Select(board.GetTileById)
                 .Where(tile => tile != null && !board.IsTileBlockedForOccupation(tile.TileId))

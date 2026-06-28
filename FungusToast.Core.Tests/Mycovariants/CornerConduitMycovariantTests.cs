@@ -63,4 +63,30 @@ public class CornerConduitMycovariantTests
         Assert.Equal(owner.PlayerId, board.GetCell(12)!.OwnerPlayerId);
         Assert.Equal(owner.PlayerId, board.GetCell(0)!.OwnerPlayerId);
     }
+
+    [Fact]
+    public void OnPreGrowthPhase_CornerConduit_targets_cached_corner_tile_on_irregular_board()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1, permanentlyBlockedTileIds: new[] { 0, 4, 20, 24 });
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 2, y: 2);
+        owner.AddMycovariant(new Mycovariant { Id = MycovariantIds.CornerConduitIIId, Name = "Corner Conduit II" });
+
+        GameBoard.ConduitProjectionEventArgs? projection = null;
+        board.ConduitProjection += e => projection = e;
+
+        MycovariantEffectProcessor.OnPreGrowthPhase_CornerConduit(
+            board,
+            board.Players,
+            new Random(123),
+            new TestSimulationObserver());
+
+        Assert.NotNull(projection);
+        int expectedCornerTileId = board.GetCornerTileId(GameBoard.BoardCorner.TopLeft)!.Value;
+        Assert.Equal(expectedCornerTileId, projection!.FinalLandingTileId);
+        Assert.NotNull(board.GetCell(expectedCornerTileId));
+        Assert.Equal(owner.PlayerId, board.GetCell(expectedCornerTileId)!.OwnerPlayerId);
+        Assert.Null(board.GetCell(0));
+    }
 }
