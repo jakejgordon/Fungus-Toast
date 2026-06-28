@@ -148,6 +148,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                             direction,
                             JettingMyceliumHelper.GetToxinRowWidthsForMycovariant(picked.Id),
                             JettingMyceliumHelper.GetLivingLengthForMycovariant(picked.Id));
+                        foreach (int toxinTargetTileId in toxinCone.Distinct())
+                        {
+                            gridVisualizer.CaptureCurrentTileVisualSnapshot(toxinTargetTileId);
+                        }
                         var playerMyco = player.PlayerMycovariants
                             .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
 
@@ -179,7 +183,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.RenderBoard(board);
                         foreach (int toxinTileId in pendingJettingToxinImpactTileIds)
                         {
-                            gridVisualizer.RenderCapturedToxinImpactSnapshot(toxinTileId);
+                            gridVisualizer.RenderCapturedTileVisualSnapshot(toxinTileId);
                         }
                         gridVisualizer.ClearHighlights();
                         done = true;
@@ -226,7 +230,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
                             pendingJettingLaunchOriginTileId,
                             pendingJettingToxinImpactTileIds,
-                            toxinTileId => gridVisualizer.RenderTileFromBoard(toxinTileId));
+                            toxinTileId =>
+                            {
+                                gridVisualizer.ClearCapturedTileVisualSnapshot(toxinTileId);
+                                gridVisualizer.RenderTileFromBoard(toxinTileId);
+                            });
                         if (toxinVolley != null)
                         {
                             yield return toxinVolley;
