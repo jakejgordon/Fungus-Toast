@@ -1609,7 +1609,7 @@ namespace FungusToast.Unity
                 lastCompletedMycovariantDraftRound = Board?.CurrentRound ?? -1;
             }
             activeDraftCountsTowardRoundCompletion = false;
-            RefreshRightSidebarTopStats();
+            RefreshRightSidebarBoardState();
             TooltipManager.Instance?.CancelAll();
             gameUIManager.MutationUIManager.gameObject.SetActive(true);
             gameUIManager.RightSidebar?.gameObject.SetActive(true);
@@ -1743,6 +1743,19 @@ namespace FungusToast.Unity
             float occ = Board.GetOccupiedTileRatio() * 100f;
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
             gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
+        }
+
+        public void RefreshRightSidebarBoardState()
+        {
+            RefreshRightSidebarTopStats();
+
+            if (Board == null || gameUIManager?.RightSidebar == null)
+            {
+                return;
+            }
+
+            gameUIManager.RightSidebar.UpdatePlayerSummaries(Board.Players);
+            gameUIManager.RightSidebar.SortPlayerSummaryRows(Board.Players);
         }
 
         private void ConfigureDraftHistoryUi()

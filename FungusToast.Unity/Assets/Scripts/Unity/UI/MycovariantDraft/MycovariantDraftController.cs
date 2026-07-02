@@ -503,6 +503,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 playerMyco,
                 () => {
                     gridVisualizer.RenderBoard(GameManager.Instance.Board);
+                    GameManager.Instance?.RefreshRightSidebarBoardState();
                     string resolvedAnnouncement = BuildPickAnnouncement(currentPlayer, picked, playerMyco);
                     ReplaceCurrentPlayerEntry(resolvedAnnouncement);
                     string resultMessage = AddDraftResultMessage(currentPlayer, picked, playerMyco);
