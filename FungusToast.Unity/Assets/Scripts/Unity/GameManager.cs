@@ -295,7 +295,8 @@ namespace FungusToast.Unity
 
         [Header("Testing Mode")] 
         public bool testingModeEnabled = false; 
-        public int? testingMycovariantId = null; 
+        public bool testingHasMycovariantOverride = false;
+        public int testingMycovariantId = 0;
         public int testingCampaignLevelIndex = 0;
         public string testingForcedAdaptationId = string.Empty;
         public string testingForcedMoldinessRewardId = string.Empty;
@@ -417,7 +418,7 @@ namespace FungusToast.Unity
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
         public bool IsTestingModeEnabled => testingModeEnabled; 
-        public int? TestingMycovariantId => testingMycovariantId;
+        public int? TestingMycovariantId => TestingMycovariantIdOrNull;
         public int TestingCampaignLevelIndex => testingCampaignLevelIndex;
         public string TestingForcedAdaptationId => testingForcedAdaptationId;
         public string TestingForcedMoldinessRewardId => testingForcedMoldinessRewardId;
@@ -438,6 +439,8 @@ namespace FungusToast.Unity
         private float nextUiStuckCheckTime;
         private bool hasApplicationFocus = true;
         private int currentLevelGameplaySeed;
+
+        private int? TestingMycovariantIdOrNull => testingHasMycovariantOverride ? testingMycovariantId : (int?)null;
         private int? pendingGameplaySeed;
 
         // Services
@@ -1037,7 +1040,7 @@ namespace FungusToast.Unity
                 return allMycovariants;
             }
 
-            int? forcedMycovariantId = testingModeEnabled ? testingMycovariantId : null;
+            int? forcedMycovariantId = testingModeEnabled ? TestingMycovariantIdOrNull : null;
             return campaignController.GetEligibleMycovariantsForCampaignDraft(allMycovariants, forcedMycovariantId);
         }
 
@@ -1574,7 +1577,10 @@ namespace FungusToast.Unity
             bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
             if (!suppressIntroFeedback && countsTowardRoundCompletion && testingModeEnabled)
             {
-                var tMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantId);
+                int? testingMycovariantOverride = TestingMycovariantIdOrNull;
+                var tMyco = testingMycovariantOverride.HasValue
+                    ? MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycovariantOverride.Value)
+                    : null;
                 var name = tMyco?.Name ?? "Unknown";
                 soundEffectService?.PlayOneShot(draftPhaseStartClip, draftPhaseStartVolume);
                 gameUIManager.PhaseBanner.Show($"Testing: {name}",2f);
@@ -1825,7 +1831,8 @@ namespace FungusToast.Unity
             IReadOnlyList<string>? forcedStartingAdaptationIds = null)
         {
             testingModeEnabled = true;
-            testingMycovariantId = mycovariantId;
+            testingHasMycovariantOverride = mycovariantId.HasValue;
+            testingMycovariantId = mycovariantId ?? 0;
             testingCampaignLevelIndex = Math.Max(0, campaignLevelIndex);
             testingForcedAdaptationId = forcedAdaptationId ?? string.Empty;
             testingForcedMoldinessRewardId = forcedMoldinessRewardId ?? string.Empty;
@@ -1847,7 +1854,8 @@ namespace FungusToast.Unity
         public void DisableTestingMode()
         {
             testingModeEnabled = false;
-            testingMycovariantId = null;
+            testingHasMycovariantOverride = false;
+            testingMycovariantId = 0;
             testingCampaignLevelIndex = 0;
             testingForcedAdaptationId = string.Empty;
             testingForcedMoldinessRewardId = string.Empty;
@@ -1866,7 +1874,7 @@ namespace FungusToast.Unity
             if (testingModeEnabled && fastForwardRounds >0 && !_fastForwardStarted)
             {
                 _fastForwardStarted = true;
-                fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId);
+                fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, TestingMycovariantIdOrNull);
             }
         }
 
@@ -1925,7 +1933,7 @@ namespace FungusToast.Unity
             return fastForwardRounds > 0
                 || testingSkipToEndgameAfterFastForward
                 || testingForcedGameResult != ForcedGameResultMode.Natural
-                || testingMycovariantId.HasValue;
+                || testingHasMycovariantOverride;
         }
 
         private bool ShouldSkipTestingStartupEffects()
@@ -2082,14 +2090,14 @@ namespace FungusToast.Unity
                 if (fastForwardRounds > 0 && !_fastForwardStarted)
                 {
                     _fastForwardStarted = true;
-                    fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, testingMycovariantId);
+                    fastForwardService.StartFastForward(fastForwardRounds, testingSkipToEndgameAfterFastForward, TestingMycovariantIdOrNull);
                 }
                 else if (testingSkipToEndgameAfterFastForward)
                 {
                     TriggerEndGameInternal();
                     yield break;
                 }
-                else if (testingMycovariantId.HasValue)
+                else if (testingHasMycovariantOverride)
                 {
                     StartMycovariantDraftPhase();
                     yield break;
@@ -2112,7 +2120,7 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
-            if (!(testingModeEnabled && (fastForwardRounds > 0 || testingMycovariantId.HasValue)))
+            if (!(testingModeEnabled && (fastForwardRounds > 0 || testingHasMycovariantOverride)))
             {
                 StartNextRound();
             }
