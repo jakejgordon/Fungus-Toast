@@ -26,6 +26,7 @@ namespace FungusToast.Core.Config
         public const float NutrientPatchDensity = 0.005f;
         public const int NutrientPatchMinimumCount = 1;
         public const float NutrientPatchTotalTileMultiplier = 1.15f;
+        public const int MinimumStartingSporeDistanceFromPlayableEdge = 3;
         public const float NutrientPatchMinimumDistanceFromStartingSporeWidthFactor = 0.12f;
         public const int NutrientPatchMutationPointReward = 1;
         public const int NutrientPatchClusterMinimumSize = 4;

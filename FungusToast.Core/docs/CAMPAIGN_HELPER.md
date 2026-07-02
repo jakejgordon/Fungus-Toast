@@ -88,6 +88,7 @@ Configured in assets under:
 `BoardPreset` fields:
 - `presetId`
 - `boardWidth`, `boardHeight`
+- `humanStartingCoordinatePool`: optional authored human start coordinates that intentionally override generated campaign-slot metadata for that preset; use this when a level should keep bespoke positioning even if it is near the board edge
 - `aiPlayers`: ordered fixed lineup of AI specs; preserves current behavior and remains the preferred option when a level wants exact opponents
 - `pooledAiPlayerCount`: optional active AI count when using a strategy pool instead of a fixed lineup
 - `aiStrategyPool`: optional pool of eligible strategy IDs for the level

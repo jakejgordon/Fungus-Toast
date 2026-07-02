@@ -1058,12 +1058,15 @@ namespace FungusToast.Unity
             var edgeOffsets = players
                 .Select(player => player.MutationStrategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
                 .ToArray();
+            var (campaignPreferredPositions, ignoreMinimumPlayableEdgeDistancePlayerIds) = GetCampaignPreferredStartingPositions();
             StartingSporeUtility.PlaceStartingSpores(
                 Board,
                 players,
                 rng,
                 edgeOffsets: edgeOffsets,
-                preferredPositionsByPlayerId: GetCampaignPreferredStartingPositionsByPlayerId());
+                preferredPositionsByPlayerId: campaignPreferredPositions,
+                enforceMinimumPlayableEdgeDistanceForPreferredPositions: true,
+                ignoreMinimumPlayableEdgeDistancePlayerIds: ignoreMinimumPlayableEdgeDistancePlayerIds);
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
@@ -1079,14 +1082,27 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar.SetRoundAndOccupancy(round, occ);
         }
 
-        private IReadOnlyDictionary<int, (int x, int y)>? GetCampaignPreferredStartingPositionsByPlayerId()
+        private (IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId, ISet<int>? ignoreMinimumPlayableEdgeDistancePlayerIds) GetCampaignPreferredStartingPositions()
         {
             if (CurrentGameMode != GameMode.Campaign || humanPlayers.Count != 1)
             {
-                return null;
+                return (null, null);
             }
 
             var preset = campaignController?.CurrentBoardPreset;
+            if (preset?.humanStartingCoordinatePool != null && preset.humanStartingCoordinatePool.Count > 0)
+            {
+                int selectedIndex = rng.Next(preset.humanStartingCoordinatePool.Count);
+                var fallbackCoordinate = preset.humanStartingCoordinatePool[selectedIndex];
+                int humanPlayerId = humanPlayers[0].PlayerId;
+                return (
+                    new Dictionary<int, (int x, int y)>
+                    {
+                        [humanPlayerId] = (fallbackCoordinate.x, fallbackCoordinate.y)
+                    },
+                    new HashSet<int> { humanPlayerId });
+            }
+
             if (preset != null
                 && CampaignBoardStartingPositionCatalog.TryGetMetadata(preset.presetId, players.Count, out var metadata))
             {
@@ -1097,24 +1113,16 @@ namespace FungusToast.Unity
                 if (preferredCoordinates.Count > 0)
                 {
                     var selectedCoordinate = preferredCoordinates[rng.Next(preferredCoordinates.Count)];
-                    return new Dictionary<int, (int x, int y)>
-                    {
-                        [humanPlayers[0].PlayerId] = selectedCoordinate
-                    };
+                    return (
+                        new Dictionary<int, (int x, int y)>
+                        {
+                            [humanPlayers[0].PlayerId] = selectedCoordinate
+                        },
+                        null);
                 }
             }
 
-            if (preset?.humanStartingCoordinatePool == null || preset.humanStartingCoordinatePool.Count == 0)
-            {
-                return null;
-            }
-
-            int selectedIndex = rng.Next(preset.humanStartingCoordinatePool.Count);
-            var fallbackCoordinate = preset.humanStartingCoordinatePool[selectedIndex];
-            return new Dictionary<int, (int x, int y)>
-            {
-                [humanPlayers[0].PlayerId] = (fallbackCoordinate.x, fallbackCoordinate.y)
-            };
+            return (null, null);
         }
 
         private bool ShouldPlaceStartingNutrientPatches()

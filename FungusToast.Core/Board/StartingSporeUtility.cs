@@ -256,10 +256,14 @@ namespace FungusToast.Core.Board
             bool shufflePlayerOrder = true,
             IReadOnlyList<(int x, int y)>? overridePositions = null,
             IReadOnlyList<int>? edgeOffsets = null,
-            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null)
+            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
+            bool enforceMinimumPlayableEdgeDistanceForPreferredPositions = false,
+            ISet<int>? ignoreMinimumPlayableEdgeDistancePlayerIds = null)
         {
             var basePositions = GetStartingPositions(board.Width, board.Height, players.Count, overridePositions);
             var normalizedPreferredPositions = NormalizePreferredPositions(preferredPositionsByPlayerId, board.Width, board.Height);
+            bool ignoreMinimumPlayableEdgeDistanceForBasePositions = overridePositions is { Count: > 0 };
+            var playableEdgeDistances = BuildPlayableEdgeDistanceMap(board);
             var availablePositionIndices = Enumerable.Range(0, basePositions.Count).ToList();
 
             foreach (var preferredPosition in normalizedPreferredPositions.Values)
@@ -286,14 +290,17 @@ namespace FungusToast.Core.Board
 
             foreach (var kvp in normalizedPreferredPositions.OrderBy(entry => entry.Key))
             {
-                PlaceStartingSporeForPlayer(board, players, kvp.Key, kvp.Value, edgeOffsets);
+                bool ignoreMinimumPlayableEdgeDistance =
+                    !enforceMinimumPlayableEdgeDistanceForPreferredPositions
+                    || ignoreMinimumPlayableEdgeDistancePlayerIds?.Contains(kvp.Key) == true;
+                PlaceStartingSporeForPlayer(board, players, kvp.Key, kvp.Value, edgeOffsets, playableEdgeDistances, ignoreMinimumPlayableEdgeDistance);
             }
 
             int placements = Math.Min(playerIndices.Count, availablePositionIndices.Count);
             for (int i = 0; i < placements; i++)
             {
                 int pid = playerIndices[i];
-                PlaceStartingSporeForPlayer(board, players, pid, basePositions[availablePositionIndices[i]], edgeOffsets);
+                PlaceStartingSporeForPlayer(board, players, pid, basePositions[availablePositionIndices[i]], edgeOffsets, playableEdgeDistances, ignoreMinimumPlayableEdgeDistanceForBasePositions);
             }
         }
 
@@ -328,7 +335,9 @@ namespace FungusToast.Core.Board
             List<Player> players,
             int playerId,
             (int x, int y) preferredPosition,
-            IReadOnlyList<int>? edgeOffsets)
+            IReadOnlyList<int>? edgeOffsets,
+            IReadOnlyDictionary<int, int> playableEdgeDistances,
+            bool ignoreMinimumPlayableEdgeDistance)
         {
             var player = players.FirstOrDefault(p => p.PlayerId == playerId);
             var (x, y) = preferredPosition;
@@ -344,7 +353,11 @@ namespace FungusToast.Core.Board
                 (x, y) = ShiftTowardCenter(x, y, board.Width, board.Height);
             }
 
-            if (TryResolvePlayableStartingPosition(board, x, y, out var resolvedPosition))
+            int minimumPlayableEdgeDistance = ignoreMinimumPlayableEdgeDistance
+                ? 0
+                : GameBalance.MinimumStartingSporeDistanceFromPlayableEdge;
+
+            if (TryResolvePlayableStartingPosition(board, x, y, playableEdgeDistances, minimumPlayableEdgeDistance, out var resolvedPosition))
             {
                 board.PlaceInitialSpore(playerId, resolvedPosition.x, resolvedPosition.y);
             }
@@ -367,23 +380,37 @@ namespace FungusToast.Core.Board
             );
         }
 
-        private static bool TryResolvePlayableStartingPosition(GameBoard board, int preferredX, int preferredY, out (int x, int y) resolvedPosition)
+        private static bool TryResolvePlayableStartingPosition(
+            GameBoard board,
+            int preferredX,
+            int preferredY,
+            IReadOnlyDictionary<int, int> playableEdgeDistances,
+            int minimumPlayableEdgeDistance,
+            out (int x, int y) resolvedPosition)
         {
             resolvedPosition = (preferredX, preferredY);
 
             var preferredTile = board.GetTile(preferredX, preferredY);
             if (preferredTile != null
-                && !preferredTile.IsOccupiedForSporePlacement
-                && !board.IsTileBlockedForOccupation(preferredTile.TileId))
+                && IsTileEligibleForStartingSporePlacement(preferredTile, board, playableEdgeDistances, minimumPlayableEdgeDistance))
             {
                 return true;
             }
 
             var fallbackTile = board.AllTiles()
-                .Where(tile => !tile.IsOccupiedForSporePlacement && !board.IsTileBlockedForOccupation(tile.TileId))
+                .Where(tile => IsTileEligibleForStartingSporePlacement(tile, board, playableEdgeDistances, minimumPlayableEdgeDistance))
                 .OrderBy(tile => SquaredDistance(tile.X, tile.Y, preferredX, preferredY))
                 .ThenBy(tile => tile.TileId)
                 .FirstOrDefault();
+
+            if (fallbackTile == null && minimumPlayableEdgeDistance > 0)
+            {
+                fallbackTile = board.AllTiles()
+                    .Where(tile => IsTileEligibleForStartingSporePlacement(tile, board, playableEdgeDistances, minimumPlayableEdgeDistance: 0))
+                    .OrderBy(tile => SquaredDistance(tile.X, tile.Y, preferredX, preferredY))
+                    .ThenBy(tile => tile.TileId)
+                    .FirstOrDefault();
+            }
 
             if (fallbackTile == null)
             {
@@ -392,6 +419,91 @@ namespace FungusToast.Core.Board
 
             resolvedPosition = (fallbackTile.X, fallbackTile.Y);
             return true;
+        }
+
+        private static bool IsTileEligibleForStartingSporePlacement(
+            BoardTile tile,
+            GameBoard board,
+            IReadOnlyDictionary<int, int> playableEdgeDistances,
+            int minimumPlayableEdgeDistance)
+        {
+            if (tile.IsOccupiedForSporePlacement || board.IsTileBlockedForOccupation(tile.TileId))
+            {
+                return false;
+            }
+
+            return minimumPlayableEdgeDistance <= 0
+                || (playableEdgeDistances.TryGetValue(tile.TileId, out int edgeDistance) && edgeDistance >= minimumPlayableEdgeDistance);
+        }
+
+        private static IReadOnlyDictionary<int, int> BuildPlayableEdgeDistanceMap(GameBoard board)
+        {
+            var distances = new Dictionary<int, int>();
+            var frontier = new Queue<int>();
+
+            foreach (var tile in board.AllTiles())
+            {
+                if (board.IsTileBlockedForOccupation(tile.TileId))
+                {
+                    continue;
+                }
+
+                if (IsPlayableEdgeTile(board, tile.X, tile.Y))
+                {
+                    distances[tile.TileId] = 0;
+                    frontier.Enqueue(tile.TileId);
+                }
+            }
+
+            while (frontier.Count > 0)
+            {
+                int tileId = frontier.Dequeue();
+                var tile = board.GetTileById(tileId);
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                int nextDistance = distances[tileId] + 1;
+                foreach (var neighbor in GetOrthogonalNeighbors(board, tile.X, tile.Y))
+                {
+                    if (board.IsTileBlockedForOccupation(neighbor.TileId) || distances.ContainsKey(neighbor.TileId))
+                    {
+                        continue;
+                    }
+
+                    distances[neighbor.TileId] = nextDistance;
+                    frontier.Enqueue(neighbor.TileId);
+                }
+            }
+
+            return distances;
+        }
+
+        private static bool IsPlayableEdgeTile(GameBoard board, int x, int y)
+        {
+            foreach (var (neighborX, neighborY) in new[] { (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) })
+            {
+                var neighbor = board.GetTile(neighborX, neighborY);
+                if (neighbor == null || board.IsTileBlockedForOccupation(neighbor.TileId))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<BoardTile> GetOrthogonalNeighbors(GameBoard board, int x, int y)
+        {
+            foreach (var (neighborX, neighborY) in new[] { (x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1) })
+            {
+                var neighbor = board.GetTile(neighborX, neighborY);
+                if (neighbor != null)
+                {
+                    yield return neighbor;
+                }
+            }
         }
 
         private static IReadOnlyList<(int x, int y)> ApplyEdgeOffsets(IReadOnlyList<(int x, int y)> positions, int boardWidth, int boardHeight, IReadOnlyList<int> edgeOffsets)

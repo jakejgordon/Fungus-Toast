@@ -208,6 +208,72 @@ public class StartingSporePlacementTests
         }
     }
 
+    [Fact]
+    public void PlaceStartingSpores_relocates_edge_preferences_at_least_three_tiles_inward_when_possible()
+    {
+        var blockedTileIds = Enumerable.Range(0, 12 * 12)
+            .Where(tileId =>
+            {
+                int x = tileId % 12;
+                int y = tileId / 12;
+                return x < 2 || x > 9 || y < 2 || y > 9;
+            })
+            .ToArray();
+
+        var board = CreateBoard(width: 12, height: 12, playerCount: 4, blockedTileIds);
+        var players = board.Players;
+        StartingSporeUtility.PlaceStartingSpores(board, players, new Random(17), shufflePlayerOrder: false);
+
+        var finalPositions = players
+            .Select(player =>
+            {
+                int tileId = Assert.IsType<int>(player.StartingTileId);
+                return (x: tileId % board.Width, y: tileId / board.Width);
+            })
+            .ToArray();
+
+        Assert.Equal(4, finalPositions.Distinct().Count());
+        Assert.All(finalPositions, position =>
+        {
+            Assert.InRange(position.x, 5, 6);
+            Assert.InRange(position.y, 5, 6);
+        });
+    }
+
+    [Fact]
+    public void PlaceStartingSpores_allows_authored_exceptions_to_bypass_minimum_edge_distance()
+    {
+        var blockedTileIds = Enumerable.Range(0, 12 * 12)
+            .Where(tileId =>
+            {
+                int x = tileId % 12;
+                int y = tileId / 12;
+                return x < 2 || x > 9 || y < 2 || y > 9;
+            })
+            .ToArray();
+
+        var board = CreateBoard(width: 12, height: 12, playerCount: 2, blockedTileIds);
+        var players = board.Players;
+
+        StartingSporeUtility.PlaceStartingSpores(
+            board,
+            players,
+            new Random(17),
+            shufflePlayerOrder: false,
+            preferredPositionsByPlayerId: new Dictionary<int, (int x, int y)>
+            {
+                [0] = (2, 2)
+            },
+            enforceMinimumPlayableEdgeDistanceForPreferredPositions: true,
+            ignoreMinimumPlayableEdgeDistancePlayerIds: new HashSet<int> { 0 });
+
+        int playerZeroTileId = Assert.IsType<int>(players[0].StartingTileId);
+        int playerOneTileId = Assert.IsType<int>(players[1].StartingTileId);
+
+        Assert.Equal((2, 2), (playerZeroTileId % board.Width, playerZeroTileId / board.Width));
+        Assert.Equal((6, 6), (playerOneTileId % board.Width, playerOneTileId / board.Width));
+    }
+
     private static GameBoard CreateBoard(int width, int height, int playerCount, IEnumerable<int>? blockedTileIds = null)
     {
         var board = new GameBoard(width, height, playerCount, blockedTileIds);

@@ -267,7 +267,9 @@ namespace FungusToast.Simulation.GameSimulation
                 shuffleStartingSpores,
                 startingPositionOverride,
                 edgeOffsets,
-                preferredPositionsByPlayerId);
+                preferredPositionsByPlayerId,
+                enforceMinimumPlayableEdgeDistanceForPreferredPositions: false,
+                ignoreMinimumPlayableEdgeDistancePlayerIds: null);
             if (enableNutrientPatches)
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);

@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Iterable
 
 CAMPAIGN_PROXY_STRATEGY = "TST_CampaignPlayer_SafeBaseline"
+MINIMUM_STARTING_SPORE_DISTANCE_FROM_PLAYABLE_EDGE = 3
 CURATED_HOTDOG_VALIDATION_OPPONENTS = [
     "CMP_TierCap_GrowthResilience_Easy",
     "CMP_Reclaim_Scavenger_Easy",
@@ -356,9 +357,14 @@ def scale_coordinate(coordinate: int, reference_board_size: int, target_board_si
 def resolve_starting_positions(board_width: int, board_height: int, player_count: int, blocked_tile_ids: Iterable[int]) -> list[tuple[int, int]]:
     blocked = set(blocked_tile_ids)
     playable = [(x, y) for y in range(board_height) for x in range(board_width) if (y * board_width) + x not in blocked]
+    edge_distances = build_playable_edge_distance_map(playable)
     resolved: list[tuple[int, int]] = []
     for preferred_x, preferred_y in scale_reference_positions(board_width, board_height, player_count):
-        if ((preferred_y * board_width) + preferred_x) not in blocked and (preferred_x, preferred_y) not in resolved:
+        if (
+            ((preferred_y * board_width) + preferred_x) not in blocked
+            and (preferred_x, preferred_y) not in resolved
+            and edge_distances.get((preferred_x, preferred_y), 0) >= MINIMUM_STARTING_SPORE_DISTANCE_FROM_PLAYABLE_EDGE
+        ):
             resolved.append((preferred_x, preferred_y))
             continue
 
@@ -366,7 +372,10 @@ def resolve_starting_positions(board_width: int, board_height: int, player_count
         best_distance: int | None = None
         best_tile_id: int | None = None
         for candidate_x, candidate_y in playable:
-            if (candidate_x, candidate_y) in resolved:
+            if (
+                (candidate_x, candidate_y) in resolved
+                or edge_distances.get((candidate_x, candidate_y), 0) < MINIMUM_STARTING_SPORE_DISTANCE_FROM_PLAYABLE_EDGE
+            ):
                 continue
             distance = ((candidate_x - preferred_x) ** 2) + ((candidate_y - preferred_y) ** 2)
             tile_id = (candidate_y * board_width) + candidate_x
@@ -376,10 +385,48 @@ def resolve_starting_positions(board_width: int, board_height: int, player_count
                 best_tile_id = tile_id
 
         if best is None:
+            for candidate_x, candidate_y in playable:
+                if (candidate_x, candidate_y) in resolved:
+                    continue
+                distance = ((candidate_x - preferred_x) ** 2) + ((candidate_y - preferred_y) ** 2)
+                tile_id = (candidate_y * board_width) + candidate_x
+                if best is None or distance < best_distance or (distance == best_distance and tile_id < best_tile_id):
+                    best = (candidate_x, candidate_y)
+                    best_distance = distance
+                    best_tile_id = tile_id
+
+        if best is None:
             raise RuntimeError(f"No playable starting position found for {board_width}x{board_height}, players={player_count}")
         resolved.append(best)
 
     return resolved
+
+
+def build_playable_edge_distance_map(
+    playable: Iterable[tuple[int, int]],
+) -> dict[tuple[int, int], int]:
+    playable_set = set(playable)
+    edge_distances: dict[tuple[int, int], int] = {}
+    frontier: list[tuple[int, int]] = []
+
+    for x, y in playable_set:
+        if any((x + dx, y + dy) not in playable_set for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            edge_distances[(x, y)] = 0
+            frontier.append((x, y))
+
+    index = 0
+    while index < len(frontier):
+        x, y = frontier[index]
+        index += 1
+        next_distance = edge_distances[(x, y)] + 1
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            neighbor = (x + dx, y + dy)
+            if neighbor not in playable_set or neighbor in edge_distances:
+                continue
+            edge_distances[neighbor] = next_distance
+            frontier.append(neighbor)
+
+    return edge_distances
 
 
 def run_simulation(
