@@ -55,7 +55,7 @@ namespace FungusToast.Unity.Campaign
         public class AIPlayerSpec
         {
             public string strategyName; // must match AIRoster strategy name; resolved at runtime
-            public Vector2Int? startingCoordinate; // optional forced starting tile (null => auto placement)
+            public OptionalVector2Int startingCoordinate; // optional forced starting tile (unset => auto placement)
             public List<string> startingAdaptationIds = new();
         }
 
@@ -65,6 +65,37 @@ namespace FungusToast.Unity.Campaign
         {
             public string strategyName; // must match a name in aiStrategyPool
             public List<string> startingAdaptationIds = new();
+        }
+
+        /// <summary>Unity-serializable optional Vector2Int.</summary>
+        [Serializable]
+        public struct OptionalVector2Int
+        {
+            [SerializeField] private bool hasValue;
+            [SerializeField] private Vector2Int value;
+
+            public bool HasValue => hasValue;
+
+            public Vector2Int Value
+            {
+                get
+                {
+                    if (!hasValue)
+                    {
+                        throw new InvalidOperationException("OptionalVector2Int has no value.");
+                    }
+
+                    return value;
+                }
+            }
+
+            public OptionalVector2Int(Vector2Int value)
+            {
+                hasValue = true;
+                this.value = value;
+            }
+
+            public static implicit operator OptionalVector2Int(Vector2Int value) => new(value);
         }
     }
 }
