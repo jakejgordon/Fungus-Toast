@@ -351,6 +351,26 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                var preAnimationSnapshotTileIds = new List<int>();
+                var humanPlayer = board.Players.FirstOrDefault(candidate =>
+                    candidate.PlayerType == PlayerTypeEnum.Human
+                    && candidate.StartingTileId.HasValue);
+                if (humanPlayer?.StartingTileId.HasValue == true && player.StartingTileId.HasValue)
+                {
+                    var (sx, sy) = board.GetXYFromTileId(humanPlayer.StartingTileId.Value);
+                    var (tx, ty) = board.GetXYFromTileId(player.StartingTileId.Value);
+                    foreach (int tileId in MycovariantEffectProcessor
+                        .BuildSporalSnarePath(board, sx, sy, tx, ty, out _)
+                        .Where(tileId => tileId >= 0)
+                        .Distinct())
+                    {
+                        if (gridVisualizer.CaptureCurrentTileVisualSnapshot(tileId))
+                        {
+                            preAnimationSnapshotTileIds.Add(tileId);
+                        }
+                    }
+                }
+
                 var resolution = MycovariantEffectProcessor.ResolveSporalSnare(
                     playerMyco,
                     board,
@@ -376,6 +396,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                 if (animatedTileIds.Count > 0)
                 {
+                    foreach (int tileId in preAnimationSnapshotTileIds)
+                    {
+                        gridVisualizer.RenderCapturedTileVisualSnapshot(tileId);
+                    }
+
                     var availableBridgeSeconds = Mathf.Max(
                         0.25f,
                         UIEffectConstants.SporalSnareTotalAnimationSeconds
@@ -393,6 +418,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     if (breachAnimation != null)
                     {
                         yield return breachAnimation;
+                    }
+
+                    foreach (int tileId in preAnimationSnapshotTileIds)
+                    {
+                        gridVisualizer.ClearCapturedTileVisualSnapshot(tileId);
                     }
 
                     gameManager.StopJettingMyceliumVolleySound();
