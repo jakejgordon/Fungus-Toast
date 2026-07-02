@@ -1420,25 +1420,18 @@ namespace FungusToast.Core.Phases
                 return;
 
             var (px, py) = board.GetXYFromTileId(player.StartingTileId.Value);
-            int bw = board.Width;
-            int bh = board.Height;
             int patchSize = AdaptationGameBalance.LiminalSporemealPatchSize;
+            var anchorEdgeTile = board.GetPlayableEdgeTileIds()
+                .Select(board.GetTileById)
+                .Where(tile => tile != null)
+                .OrderBy(tile => Math.Abs(tile!.X - px) + Math.Abs(tile.Y - py))
+                .ThenBy(tile => tile!.TileId)
+                .FirstOrDefault();
 
-            int distTop    = py;
-            int distBottom = bh - 1 - py;
-            int distLeft   = px;
-            int distRight  = bw - 1 - px;
-            int minDist = Math.Min(Math.Min(distTop, distBottom), Math.Min(distLeft, distRight));
+            if (anchorEdgeTile == null)
+                return;
 
-            IEnumerable<int> candidateIds;
-            if (minDist == distTop)
-                candidateIds = GetEdgeTileIdsFromOrigin(row: 0, col: px, fixRow: true, bw: bw, bh: bh);
-            else if (minDist == distBottom)
-                candidateIds = GetEdgeTileIdsFromOrigin(row: bh - 1, col: px, fixRow: true, bw: bw, bh: bh);
-            else if (minDist == distLeft)
-                candidateIds = GetEdgeTileIdsFromOrigin(row: py, col: 0, fixRow: false, bw: bw, bh: bh);
-            else
-                candidateIds = GetEdgeTileIdsFromOrigin(row: py, col: bw - 1, fixRow: false, bw: bw, bh: bh);
+            IEnumerable<int> candidateIds = GetPlayableEdgeTileIdsFromAnchor(board, anchorEdgeTile.TileId);
 
             var patchTileIds = candidateIds
                 .Select(tid => board.GetTileById(tid))
@@ -1456,22 +1449,40 @@ namespace FungusToast.Core.Phases
                 board.PlaceNutrientPatch(tileId, patch);
         }
 
-        private static IEnumerable<int> GetEdgeTileIdsFromOrigin(
-            int row, int col, bool fixRow, int bw, int bh)
+        private static IEnumerable<int> GetPlayableEdgeTileIdsFromAnchor(GameBoard board, int anchorTileId)
         {
-            // Yields tile IDs along an edge row or column, walking outward from (row, col)
-            int limit = fixRow ? bw : bh;
-            int origin = fixRow ? col : row;
+            var visited = new HashSet<int>();
+            var queue = new Queue<int>();
+            queue.Enqueue(anchorTileId);
+            visited.Add(anchorTileId);
 
-            yield return fixRow ? row * bw + col : row * bw + col;
-            for (int offset = 1; offset < limit; offset++)
+            while (queue.Count > 0)
             {
-                int pos1 = origin + offset;
-                int pos2 = origin - offset;
-                if (pos1 < limit)
-                    yield return fixRow ? row * bw + pos1 : pos1 * bw + col;
-                if (pos2 >= 0)
-                    yield return fixRow ? row * bw + pos2 : pos2 * bw + col;
+                int tileId = queue.Dequeue();
+                yield return tileId;
+
+                foreach (var neighbor in board.GetOrthogonalNeighbors(tileId)
+                             .Where(tile => tile.IsEdgeOfBoard)
+                             .OrderBy(tile => tile.TileId))
+                {
+                    if (visited.Add(neighbor.TileId))
+                    {
+                        queue.Enqueue(neighbor.TileId);
+                    }
+                }
+            }
+
+            foreach (int tileId in board.GetPlayableEdgeTileIds()
+                         .Where(tileId => !visited.Contains(tileId))
+                         .OrderBy(tileId =>
+                         {
+                             var tile = board.GetTileById(tileId)!;
+                             var anchor = board.GetTileById(anchorTileId)!;
+                             return Math.Abs(tile.X - anchor.X) + Math.Abs(tile.Y - anchor.Y);
+                         })
+                         .ThenBy(tileId => tileId))
+            {
+                yield return tileId;
             }
         }
 

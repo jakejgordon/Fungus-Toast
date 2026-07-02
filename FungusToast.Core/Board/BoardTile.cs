@@ -12,6 +12,7 @@ namespace FungusToast.Core.Board
         public FungalCell? FungalCell { get; private set; }
         public NutrientPatch? NutrientPatch { get; private set; }
         public bool IsBlocked { get; private set; }
+        public bool IsEdgeOfBoard { get; private set; }
         public bool IsOccupied => FungalCell != null;
         public bool HasNutrientPatch => NutrientPatch != null;
         public bool IsOccupiedForSporePlacement => IsBlocked || FungalCell != null || NutrientPatch != null;
@@ -31,6 +32,11 @@ namespace FungusToast.Core.Board
         internal void SetBlocked(bool isBlocked)
         {
             IsBlocked = isBlocked;
+        }
+
+        internal void SetEdgeOfBoard(bool isEdgeOfBoard)
+        {
+            IsEdgeOfBoard = isEdgeOfBoard;
         }
 
         internal void ClearCell()

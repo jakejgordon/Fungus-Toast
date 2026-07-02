@@ -37,7 +37,9 @@ namespace FungusToast.Core.Board
 
         public static bool IsOnBorder(BoardTile tile, GameBoard board)
         {
-            return IsWithinEdgeDistance(tile, board, 1);
+            return tile != null
+                && board != null
+                && tile.IsEdgeOfBoard;
         }
 
         /// <summary>

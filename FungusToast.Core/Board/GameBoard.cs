@@ -968,6 +968,10 @@ namespace FungusToast.Core.Board
             playableEdgeTileIds.Clear();
             playableEdgeDistanceByTileId.Clear();
             cornerTileIdsByCorner.Clear();
+            foreach (var tile in AllTiles())
+            {
+                tile.SetEdgeOfBoard(false);
+            }
 
             var playableTileIds = AllTiles()
                 .Where(tile => !tile.IsBlocked)
@@ -981,6 +985,11 @@ namespace FungusToast.Core.Board
 
             bool[,] exteriorBlockedOrVoid = BuildExteriorBlockedOrVoidMap();
             BuildPlayableEdgeTileIds(exteriorBlockedOrVoid);
+            foreach (int tileId in playableEdgeTileIds)
+            {
+                GetTileById(tileId)?.SetEdgeOfBoard(true);
+            }
+
             BuildPlayableEdgeDistances();
             BuildCornerTileIds(playableTileIds);
         }

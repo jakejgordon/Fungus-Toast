@@ -14,7 +14,10 @@ public class GameBoardShapeMetadataTests
             permanentlyBlockedTileIds: new[] { 0, 1, 4, 20, 24 });
 
         Assert.True(board.IsPlayableEdgeTile(6));
+        Assert.True(board.GetTileById(6)!.IsEdgeOfBoard);
         Assert.False(board.IsPlayableEdgeTile(12));
+        Assert.False(board.GetTileById(12)!.IsEdgeOfBoard);
+        Assert.False(board.GetTileById(0)!.IsEdgeOfBoard);
 
         Assert.True(board.IsWithinPlayableEdgeDistance(11, 2));
         Assert.False(board.IsWithinPlayableEdgeDistance(11, 1));
