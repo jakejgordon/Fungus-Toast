@@ -108,9 +108,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private TooltipTrigger presentationSpeedTooltipTrigger = null!;
         private AudioSource soundEffectAudioSource = null!;
         private Button presentationSpeedButton = null!;
-        private TextMeshProUGUI presentationSpeedButtonText = null!;
-        private Image storePointsButtonIconImage = null!;
-        private Image presentationSpeedButtonIconImage = null!;
+        private TextMeshProUGUI? presentationSpeedButtonText;
+        private Image? storePointsButtonIconImage;
+        private Image? presentationSpeedButtonIconImage;
         private RectTransform timeLapseCoachmarkRoot = null!;
         private CanvasGroup timeLapseCoachmarkCanvasGroup = null!;
         private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel = null!;
@@ -2338,7 +2338,7 @@ namespace FungusToast.Unity.UI.MutationTree
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
             layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
 
-            storePointsButtonIconImage = ConfigureHeaderActionButtonContent(
+            _ = ConfigureHeaderActionButtonContent(
                 storePointsButton,
                 ref storePointsButtonIconImage,
                 "Store Mutation Points",
@@ -2346,7 +2346,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 "StoreMutationPointsButtonIcon",
                 storePointsButtonIcon,
                 UIStyleTokens.Text.Primary,
-                UIStyleTokens.Accent.Spore) ?? storePointsButtonIconImage;
+                UIStyleTokens.Accent.Spore);
             RefreshHeaderActionButtonWidths();
         }
 
