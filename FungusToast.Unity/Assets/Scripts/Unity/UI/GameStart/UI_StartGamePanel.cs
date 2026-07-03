@@ -9,6 +9,7 @@ using FungusToast.Core.Config;
 using FungusToast.Unity;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
+using FungusToast.Unity.UI.Campaign;
 using FungusToast.Unity.UI.Testing;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
@@ -2728,6 +2729,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             manager.StartHotseatGame(selectedPlayerCount.Value);
             manager.cameraCenterer.CenterCameraSmooth();
+            HideModeSelectBackground();
             gameObject.SetActive(false);
 
             if (magnifyingGlassUI != null)
@@ -2752,6 +2754,7 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             manager.StartHotseatResume();
+            HideModeSelectBackground();
             gameObject.SetActive(false);
 
             if (magnifyingGlassUI != null)
@@ -3140,8 +3143,28 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             gameObject.SetActive(false);
-            if (modeSelectPanel != null)
+            var modeSelectController = modeSelectPanel != null ? modeSelectPanel.GetComponent<UI_ModeSelectPanelController>() : null;
+            if (modeSelectController != null)
+            {
+                modeSelectController.ShowMainMenuAfterSubpanel();
+            }
+            else if (modeSelectPanel != null)
+            {
                 modeSelectPanel.SetActive(true);
+            }
+        }
+
+        private void HideModeSelectBackground()
+        {
+            var modeSelectController = modeSelectPanel != null ? modeSelectPanel.GetComponent<UI_ModeSelectPanelController>() : null;
+            if (modeSelectController != null)
+            {
+                modeSelectController.HideForGameplay();
+            }
+            else if (modeSelectPanel != null)
+            {
+                modeSelectPanel.SetActive(false);
+            }
         }
 
     }

@@ -2512,6 +2512,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (resumed)
             {
+                HideModeSelectBackground();
                 gameObject.SetActive(false);
             }
             else
@@ -2535,6 +2536,7 @@ namespace FungusToast.Unity.UI.Campaign
                     GameManager.Instance.StartCampaignResume();
                     if (DidCampaignNavigationActivate())
                     {
+                        HideModeSelectBackground();
                         gameObject.SetActive(false);
                     }
                     else
@@ -2562,6 +2564,7 @@ namespace FungusToast.Unity.UI.Campaign
                 GetSelectedCampaignStartLevelIndex());
             if (GameManager.Instance.Board != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign)
             {
+                HideModeSelectBackground();
                 gameObject.SetActive(false);
             }
             else
@@ -2610,7 +2613,33 @@ namespace FungusToast.Unity.UI.Campaign
             gameObject.SetActive(false);
             if (modeSelectPanel != null)
             {
-                modeSelectPanel.SetActive(true);
+                var modeSelectController = modeSelectPanel.GetComponent<UI_ModeSelectPanelController>();
+                if (modeSelectController != null)
+                {
+                    modeSelectController.ShowMainMenuAfterSubpanel();
+                }
+                else
+                {
+                    modeSelectPanel.SetActive(true);
+                }
+            }
+        }
+
+        private void HideModeSelectBackground()
+        {
+            if (modeSelectPanel == null)
+            {
+                return;
+            }
+
+            var modeSelectController = modeSelectPanel.GetComponent<UI_ModeSelectPanelController>();
+            if (modeSelectController != null)
+            {
+                modeSelectController.HideForGameplay();
+            }
+            else
+            {
+                modeSelectPanel.SetActive(false);
             }
         }
 

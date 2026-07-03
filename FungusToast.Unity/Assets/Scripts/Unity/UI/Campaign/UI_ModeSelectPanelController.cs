@@ -46,6 +46,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float AmbientEncroachmentDriftDistance = 6f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
         private const float AmbientEncroachmentRevealWindowSeconds = 10f;
+        private const float AmbientBackdropVignetteAlpha = 0.045f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -265,11 +266,11 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void OnHotseatClicked()
         {
-            // Show the existing start game panel (player count selection etc.)
+            ShowBackdropOnlyForSubpanel(startGamePanel != null ? startGamePanel.transform : null);
             if (startGamePanel != null)
+            {
                 startGamePanel.gameObject.SetActive(true);
-            // Hide self
-            gameObject.SetActive(false);
+            }
         }
 
         private void OnCampaignClicked()
@@ -282,9 +283,11 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
+            ShowBackdropOnlyForSubpanel(campaignPanel != null ? campaignPanel.transform : null);
             if (campaignPanel != null)
+            {
                 campaignPanel.SetActive(true);
-            gameObject.SetActive(false);
+            }
         }
 
         private void OnQuitClicked()
@@ -693,7 +696,7 @@ namespace FungusToast.Unity.UI.Campaign
                 UIStyleTokens.Surface.PanelPrimary.r,
                 UIStyleTokens.Surface.PanelPrimary.g,
                 UIStyleTokens.Surface.PanelPrimary.b,
-                0.075f);
+                AmbientBackdropVignetteAlpha);
             CreateBackdropBand("TopVignette", new Vector2(0.5f, 1f), new Vector2(0f, -78f), new Vector2(0f, 156f), vignetteColor, stretchHorizontally: true);
             CreateBackdropBand("BottomVignette", new Vector2(0.5f, 0f), new Vector2(0f, 84f), new Vector2(0f, 168f), vignetteColor, stretchHorizontally: true);
             CreateBackdropBand("LeftVignette", new Vector2(0f, 0.5f), new Vector2(92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
@@ -995,6 +998,46 @@ namespace FungusToast.Unity.UI.Campaign
             float progress = Mathf.Clamp01((elapsed - decoration.RevealDelay) / revealDuration);
             float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
             return Mathf.Lerp(0.04f, 1f, easedProgress);
+        }
+
+        public void ShowMainMenuAfterSubpanel()
+        {
+            transform.SetAsLastSibling();
+            ShowMainMenuContent();
+            RefreshCampaignButtonState();
+            RefreshSettingsState();
+            RefreshResponsiveLayout();
+        }
+
+        public void HideForGameplay()
+        {
+            gameObject.SetActive(false);
+        }
+
+        private void ShowBackdropOnlyForSubpanel(Transform activeSubpanel)
+        {
+            HideCompatibilityNotice();
+
+            if (contentRoot != null)
+            {
+                contentRoot.gameObject.SetActive(false);
+            }
+
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+
+            transform.SetAsFirstSibling();
+            if (activeSubpanel != null)
+            {
+                activeSubpanel.SetAsLastSibling();
+            }
         }
 
         private void RefreshCampaignButtonState()

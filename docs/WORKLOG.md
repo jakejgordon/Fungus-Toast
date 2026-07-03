@@ -41,16 +41,17 @@ Use the following minimal workflow to preserve working memory across sessions:
    - The backdrop pass has been softened back down to mostly faint edge shading after the larger glow plates read too boxy on-screen.
    - A second ultra-subtle encroachment ring now uses the same mold family art nearer the center margins with very low alpha, slight drift, and slow fade/scale breathing so the menu feels alive without putting mold over the main buttons.
    - Those inner colonies now stagger their fade-in over the opening several seconds so the empty middle margins gradually feel more claimed instead of fully static from frame one.
+   - The latest follow-up lightens the vignette slightly so the lower menu actions read more clearly, and keeps the ambient background alive behind the `Solo / Hotseat` and `Campaign` follow-on screens instead of dropping back to a flat canvas immediately.
    - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
 ## Pending Tasks
 
-- Verify the menu in Unity Editor for subtlety, readability, and whether the ambient layer should remain visible behind `Settings` and `Credits`.
-- If the center encroachment reads too noticeable, reduce its alpha/growth swing before adding any new effect type.
-- If the menu still feels dead after this pass, the next candidate is a very sparse spore drift layer rather than stronger central mold coverage.
+- Verify in Unity Editor that the brightened backdrop restores enough contrast for the lower action buttons without washing out the mold atmosphere.
+- Verify that entering `Solo / Hotseat` and `Campaign` preserves the animated mold background cleanly, and that backing out of those screens restores the normal main menu state.
+- If the center encroachment reads too noticeable after the submenu-background carryover, reduce its alpha/growth swing before adding any new effect type.
 
 ## Next Handoff
 
-- The implementation remains intentionally scoped to `UI_ModeSelectPanelController`, so more tuning can happen without scene or asset-pipeline churn.
-- In Unity, check the home screen at a few aspect ratios and confirm the restored perimeter motion plus staggered center-encroachment fade-ins feel alive while still staying out of the button lane.
-- Only consider spores or particles if the sprite-only pass still feels dead after the current variation work; they are not the default next step.
+- The implementation remains intentionally scoped to the menu controllers, so more tuning can happen without scene or asset-pipeline churn.
+- In Unity, check the main menu plus the `Solo / Hotseat` and `Campaign` submenu transitions at a few aspect ratios and confirm the shared animated backdrop sits behind those screens without leaking into actual gameplay.
+- Only consider spores or particles if the sprite-only pass still feels dead after this submenu-background pass; they are not the default next step.
