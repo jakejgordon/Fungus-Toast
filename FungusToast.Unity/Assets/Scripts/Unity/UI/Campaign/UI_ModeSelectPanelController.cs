@@ -49,6 +49,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float AmbientBackdropVignetteAlpha = 0.008f;
         private const float CompactMenuButtonHoverBlend = 0.18f;
         private const float CompactMenuButtonSelectedBlend = 0.24f;
+        private const float OverlayCardAlpha = 0.84f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -725,6 +726,18 @@ namespace FungusToast.Unity.UI.Campaign
             CreateAmbientEncroachmentDecoration("BottomApproachLeft", new Vector2(0.5f, 0.5f), new Vector2(-118f, -304f), new Vector2(130f, 130f), -6f, new Vector2(0.18f, 1f));
             CreateAmbientEncroachmentDecoration("BottomApproachCenter", new Vector2(0.5f, 0.5f), new Vector2(0f, -324f), new Vector2(138f, 138f), 4f, new Vector2(0f, 1f));
             CreateAmbientEncroachmentDecoration("BottomApproachRight", new Vector2(0.5f, 0.5f), new Vector2(122f, -296f), new Vector2(132f, 132f), 8f, new Vector2(-0.16f, 1f));
+            CreateAmbientEncroachmentDecoration("MidLeftUpperPocket", new Vector2(0.5f, 0.5f), new Vector2(-458f, 66f), new Vector2(122f, 122f), -10f, new Vector2(0.98f, -0.04f));
+            CreateAmbientEncroachmentDecoration("MidLeftLowerPocket", new Vector2(0.5f, 0.5f), new Vector2(-432f, -72f), new Vector2(126f, 126f), 12f, new Vector2(0.96f, 0.08f));
+            CreateAmbientEncroachmentDecoration("MidRightUpperPocket", new Vector2(0.5f, 0.5f), new Vector2(456f, 52f), new Vector2(124f, 124f), 8f, new Vector2(-0.98f, -0.04f));
+            CreateAmbientEncroachmentDecoration("MidRightLowerPocket", new Vector2(0.5f, 0.5f), new Vector2(438f, -86f), new Vector2(128f, 128f), -12f, new Vector2(-0.96f, 0.08f));
+            CreateAmbientEncroachmentDecoration("CenterLeftUpperGap", new Vector2(0.5f, 0.5f), new Vector2(-212f, 92f), new Vector2(112f, 112f), 10f, new Vector2(0.62f, -0.18f));
+            CreateAmbientEncroachmentDecoration("CenterLeftLowerGap", new Vector2(0.5f, 0.5f), new Vector2(-198f, -84f), new Vector2(118f, 118f), -8f, new Vector2(0.58f, 0.14f));
+            CreateAmbientEncroachmentDecoration("CenterRightUpperGap", new Vector2(0.5f, 0.5f), new Vector2(218f, 84f), new Vector2(114f, 114f), -10f, new Vector2(-0.62f, -0.16f));
+            CreateAmbientEncroachmentDecoration("CenterRightLowerGap", new Vector2(0.5f, 0.5f), new Vector2(202f, -92f), new Vector2(120f, 120f), 8f, new Vector2(-0.58f, 0.18f));
+            CreateAmbientEncroachmentDecoration("LowerCenterLeftGap", new Vector2(0.5f, 0.5f), new Vector2(-82f, -226f), new Vector2(116f, 116f), -6f, new Vector2(0.26f, 0.42f));
+            CreateAmbientEncroachmentDecoration("LowerCenterRightGap", new Vector2(0.5f, 0.5f), new Vector2(88f, -232f), new Vector2(118f, 118f), 6f, new Vector2(-0.24f, 0.4f));
+            CreateAmbientEncroachmentDecoration("UpperCenterLeftGap", new Vector2(0.5f, 0.5f), new Vector2(-94f, 204f), new Vector2(108f, 108f), 8f, new Vector2(0.22f, -0.48f));
+            CreateAmbientEncroachmentDecoration("UpperCenterRightGap", new Vector2(0.5f, 0.5f), new Vector2(96f, 198f), new Vector2(110f, 110f), -8f, new Vector2(-0.22f, -0.46f));
         }
 
         private void EnsureAmbientBackdropLayer()
@@ -1278,7 +1291,7 @@ namespace FungusToast.Unity.UI.Campaign
             cardLayoutElement.flexibleHeight = 0f;
 
             Image cardBackground = cardObject.GetComponent<Image>();
-            cardBackground.color = UIStyleTokens.Surface.PanelPrimary;
+            ApplyOverlayCardStyle(cardBackground);
 
             VerticalLayoutGroup cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(44, 44, 40, 40);
@@ -1398,7 +1411,7 @@ namespace FungusToast.Unity.UI.Campaign
             cardLayoutElement.flexibleHeight = 0f;
 
             Image cardBackground = cardObject.GetComponent<Image>();
-            cardBackground.color = UIStyleTokens.Surface.PanelPrimary;
+            ApplyOverlayCardStyle(cardBackground);
 
             VerticalLayoutGroup cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
             cardLayout.padding = new RectOffset(44, 44, 40, 40);
@@ -1602,6 +1615,7 @@ namespace FungusToast.Unity.UI.Campaign
             Button button = CreateButtonCore(parent, objectName, labelText, 22f, FontStyles.Normal, icon);
             button.onClick.AddListener(OnCreditsBackClicked);
             UIStyleTokens.Button.ApplySecondaryMenuAction(button, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            ApplyModeSelectCompactButtonStyle(button);
             return button;
         }
 
@@ -1643,6 +1657,17 @@ namespace FungusToast.Unity.UI.Campaign
         private Button CreateSettingsButton(Transform parent, string objectName, string labelText, Sprite icon = null)
         {
             return CreateButtonCore(parent, objectName, labelText, 24f, FontStyles.Bold, icon);
+        }
+
+        private static void ApplyOverlayCardStyle(Image cardBackground)
+        {
+            if (cardBackground == null)
+            {
+                return;
+            }
+
+            Color color = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Surface.PanelSecondary, 0.18f);
+            cardBackground.color = UIStyleTokens.WithAlpha(color, OverlayCardAlpha);
         }
 
         private Button CreateButtonCore(Transform parent, string objectName, string labelText, float fontSize, FontStyles fontStyle, Sprite icon = null)

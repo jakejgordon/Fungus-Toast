@@ -44,6 +44,8 @@ Use the following minimal workflow to preserve working memory across sessions:
    - The latest follow-up lightens the menu base further, softens the vignette again, and gives the compact lower action buttons a lighter menu-specific dark treatment so they stand apart from the background without the harsh hover contrast.
    - The ambient mold layer now stages a much larger growth wave over roughly the first 30 seconds, with additional top, bottom, and inner-approach colonies fading in so the screen fills in from all sides instead of staying sparse.
    - Ambient motion/pulsing has been strengthened again by increasing the drift, alpha swing, scale breathing, and animation speeds so the mold reads as gently alive instead of static.
+   - A follow-up tuning pass adds another set of center-side and upper/lower gap colonies so the remaining empty pockets fill in more naturally over time instead of leaving large dead zones.
+   - Credits and Settings now use translucent panel cards rather than opaque slabs, so the mold backdrop still reads behind them while the text stays comfortably legible.
    - The `Solo / Hotseat` and `Campaign` submenu roots now use transparent full-screen surfaces so the shared animated mold backdrop can remain visible behind those screens instead of repainting a flat canvas over it.
    - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
@@ -52,6 +54,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 - Verify in Unity Editor that the brightened backdrop restores enough contrast for the lower action buttons without washing out the mold atmosphere.
 - Verify that entering `Solo / Hotseat` and `Campaign` now visibly preserves the animated mold background, and that backing out of those screens restores the normal main menu state.
 - Verify that the first 20-30 seconds now show enough extra mold arrivals from the top/bottom and not just the left/right edges.
+- Verify that the translucent Credits/Settings cards feel intentional rather than washed out, and keep enough contrast for the copy on all tested monitors.
 - If the restored motion now reads too busy, reduce drift distance first before trimming the new colony count.
 
 ## Next Handoff
