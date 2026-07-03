@@ -1563,6 +1563,7 @@ namespace FungusToast.Unity
             {
                 testingModeForceHumanFirst = false;
             }
+
             // Activate the controller before draft setup so layout/calculation work and any
             // first-turn coroutines run against an active MonoBehaviour.
             mycovariantDraftController.gameObject.SetActive(true);
@@ -2064,6 +2065,10 @@ namespace FungusToast.Unity
             List<int> startingIds = ResolveStartingSporeIntroTileIds();
             bool skipStartingSporeIntro = allowSkippingIntroForTesting && ShouldSkipStartingSporeIntro();
             bool skipTestingStartupEffects = ShouldSkipTestingStartupEffects();
+            bool shouldStartImmediateTestingDraft = testingModeEnabled
+                && !testingSkipToEndgameAfterFastForward
+                && testingHasMycovariantOverride
+                && fastForwardRounds <= 0;
             if (startingIds.Count > 0 && !skipStartingSporeIntro)
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
@@ -2112,10 +2117,10 @@ namespace FungusToast.Unity
                     TriggerEndGameInternal();
                     yield break;
                 }
-                else if (testingHasMycovariantOverride)
+                else if (shouldStartImmediateTestingDraft)
                 {
-                    StartMycovariantDraftPhase();
-                    yield break;
+                    // Let the normal gameplay UI initialization finish first; starting the
+                    // draft earlier leaves the overlay in a half-initialized state.
                 }
                 else
                 {
@@ -2135,7 +2140,11 @@ namespace FungusToast.Unity
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
             gameUIManager.RightSidebar?.SetPerspectivePlayer(humanPlayer);
             gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
-            if (!(testingModeEnabled && (fastForwardRounds > 0 || testingHasMycovariantOverride)))
+            if (shouldStartImmediateTestingDraft)
+            {
+                StartMycovariantDraftPhase();
+            }
+            else if (!(testingModeEnabled && (fastForwardRounds > 0 || testingHasMycovariantOverride)))
             {
                 StartNextRound();
             }
