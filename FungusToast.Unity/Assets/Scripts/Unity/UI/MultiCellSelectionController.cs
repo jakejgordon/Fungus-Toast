@@ -24,6 +24,9 @@ namespace FungusToast.Unity.UI
         private int maxSelections = 5;
         private bool selectionActive = false;
         private int lastRemaining = -1;
+        private Func<IReadOnlyCollection<int>, int, IEnumerable<int>> autoSelectionResolver;
+        private string autoSelectionButtonLabel = "Auto Placement";
+        private string autoSelectionTooltipText = "Automatically select remaining tiles";
         private static readonly Color SelectableColorA = new(1f, 0.15f, 0.8f, 1f);
         private static readonly Color SelectableColorB = new(1f, 1f, 1f, 1f);
 
@@ -48,11 +51,17 @@ namespace FungusToast.Unity.UI
             int maxSelections,
             Action<List<FungalCell>> onSelected,
             Action onCancel = null,
-            string promptMessage = null)
+            string promptMessage = null,
+            Func<IReadOnlyCollection<int>, int, IEnumerable<int>> autoSelectTileIds = null,
+            string autoButtonLabel = "Auto Placement",
+            string autoTooltipText = "Automatically select remaining tiles")
         {
             this.selectingPlayerId = playerId;
             selectionActive = true;
             selectedTileIds.Clear();
+            autoSelectionResolver = autoSelectTileIds;
+            autoSelectionButtonLabel = string.IsNullOrWhiteSpace(autoButtonLabel) ? "Auto Placement" : autoButtonLabel;
+            autoSelectionTooltipText = string.IsNullOrWhiteSpace(autoTooltipText) ? "Automatically select remaining tiles" : autoTooltipText;
 
             // Find valid cells (living, owned by player, not already resistant)
             var validCells = GameManager.Instance.Board.GetAllCellsOwnedBy(playerId)
@@ -70,23 +79,21 @@ namespace FungusToast.Unity.UI
             UpdateSelectionPrompt();
 
             // Set up callbacks
-            onCellsSelected = (cells) =>
-            {
-                GameManager.Instance.HideSelectionPrompt();
-                onSelected?.Invoke(cells);
-            };
-            onCancelled = () =>
-            {
-                GameManager.Instance.HideSelectionPrompt();
-                onCancel?.Invoke();
-            };
+            onCellsSelected = onSelected;
+            onCancelled = onCancel;
         }
 
         private void UpdateSelectionPrompt()
         {
             int remaining = maxSelections - selectedTileIds.Count;
             string cellWord = remaining == 1 ? "cell" : "cells";
-            GameManager.Instance.ShowSelectionPrompt($"Select {remaining} {cellWord} to give Resistance.");
+            bool showAutoButton = autoSelectionResolver != null && remaining > 0;
+            GameManager.Instance.ShowSelectionPrompt(
+                $"Select {remaining} {cellWord} to give Resistance.",
+                showActionButton: showAutoButton,
+                actionButtonLabel: autoSelectionButtonLabel,
+                onAction: showAutoButton ? AutoCompleteSelection : null,
+                actionButtonTooltip: showAutoButton ? autoSelectionTooltipText : null);
 
             // Animate the prompt if the number changed
             if (remaining != lastRemaining)
@@ -167,17 +174,50 @@ namespace FungusToast.Unity.UI
                 // If we've selected the allowed number, finish immediately
                 if (selectedTileIds.Count == maxSelections)
                 {
-                    selectionActive = false;
-                    gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
-                    var selectedCells = selectedTileIds
-                        .Select(id => GameManager.Instance.Board.GetCell(id))
-                        .Where(c => c != null)
-                        .ToList();
-                    GameManager.Instance.HideSelectionPrompt();
-                    onCellsSelected?.Invoke(selectedCells);
-                    Reset();
+                    FinishSelection();
                 }
             }
+        }
+
+        private void AutoCompleteSelection()
+        {
+            if (!selectionActive || autoSelectionResolver == null)
+            {
+                return;
+            }
+
+            int remaining = Math.Max(0, maxSelections - selectedTileIds.Count);
+            var autoTileIds = autoSelectionResolver(selectedTileIds.ToList(), remaining) ?? Enumerable.Empty<int>();
+            foreach (int tileId in autoTileIds)
+            {
+                if (selectedTileIds.Count >= maxSelections)
+                {
+                    break;
+                }
+
+                if (!selectableTileIds.Contains(tileId) || selectedTileIds.Contains(tileId))
+                {
+                    continue;
+                }
+
+                selectedTileIds.Add(tileId);
+            }
+
+            gridVisualizer.ShowSelectedTiles(selectedTileIds, Color.black);
+            FinishSelection();
+        }
+
+        private void FinishSelection()
+        {
+            selectionActive = false;
+            gridVisualizer.ClearAllHighlights();
+            var selectedCells = selectedTileIds
+                .Select(id => GameManager.Instance.Board.GetCell(id))
+                .Where(c => c != null)
+                .ToList();
+            GameManager.Instance.HideSelectionPrompt();
+            onCellsSelected?.Invoke(selectedCells);
+            Reset();
         }
 
         public void CancelSelection()
@@ -197,6 +237,10 @@ namespace FungusToast.Unity.UI
             selectableTileIds.Clear();
             selectedTileIds.Clear();
             maxSelections = 5;
+            lastRemaining = -1;
+            autoSelectionResolver = null;
+            autoSelectionButtonLabel = "Auto Placement";
+            autoSelectionTooltipText = "Automatically select remaining tiles";
         }
 
         /// <summary>

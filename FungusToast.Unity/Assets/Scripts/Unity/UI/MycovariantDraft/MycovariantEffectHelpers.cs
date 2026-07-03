@@ -15,6 +15,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 {
     public static class MycovariantEffectHelpers
     {
+        private const string AutoPlacementButtonLabel = "Auto Placement";
+        private const string AutoPlacementTooltipText = "Automatically select remaining tiles";
+
         /// <summary>
         /// Handles UI/AI, input, and effect resolution for Jetting Mycelium.
         /// </summary>
@@ -649,7 +652,25 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         gridVisualizer.ClearHighlights();
                         selectionResolved = true;
                     },
-                    $"Select up to {maxCellsAllowed} of your living cells to make Resistant (invincible)."
+                    $"Select up to {maxCellsAllowed} of your living cells to make Resistant (invincible).",
+                    (alreadySelectedTileIds, remainingSelections) =>
+                    {
+                        var playerMyco = player.PlayerMycovariants
+                            .FirstOrDefault(pm => pm.MycovariantId == picked.Id);
+                        if (playerMyco == null || remainingSelections <= 0)
+                        {
+                            return Enumerable.Empty<int>();
+                        }
+
+                        return MycovariantEffectProcessor.SelectMycelialBastionTileIds(
+                            playerMyco,
+                            board,
+                            remainingSelections,
+                            new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                            alreadySelectedTileIds);
+                    },
+                    AutoPlacementButtonLabel,
+                    AutoPlacementTooltipText
                 );
 
                 while (!selectionResolved) yield return null;
@@ -904,7 +925,23 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                         done = true;
                         selectionResolved = true;
                     },
-                    $"Select up to {maxSpores} empty tiles to drop toxin spores."
+                    $"Select up to {maxSpores} empty tiles to drop toxin spores.",
+                    autoSelectTileIds: (alreadySelectedTileIds, remainingSelections) =>
+                    {
+                        if (playerMyco == null || remainingSelections <= 0)
+                        {
+                            return Enumerable.Empty<int>();
+                        }
+
+                        return BallistosporeDischargeHelper.SelectBallistosporeDischargeTargetTileIds(
+                            playerMyco,
+                            board,
+                            remainingSelections,
+                            new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
+                            alreadySelectedTileIds);
+                    },
+                    autoButtonLabel: AutoPlacementButtonLabel,
+                    autoTooltipText: AutoPlacementTooltipText
                 );
 
                 while (!done) yield return null;

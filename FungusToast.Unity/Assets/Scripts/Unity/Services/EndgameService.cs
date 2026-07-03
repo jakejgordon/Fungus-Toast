@@ -18,6 +18,7 @@ using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Tooltips;
+using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -452,11 +453,21 @@ namespace FungusToast.Unity
 
     public sealed class SelectionPromptService
     {
+        private const float PromptButtonHeight = 38f;
+        private const float PromptCancelButtonWidth = 170f;
+        private const float PromptActionButtonWidth = 190f;
+        private const float PromptButtonInset = 18f;
+        private const float PromptButtonGap = 12f;
+
         private readonly GameObject selectionPromptPanel;
         private readonly TextMeshProUGUI selectionPromptText;
 
         private Button selectionPromptCancelButton;
         private TextMeshProUGUI selectionPromptCancelButtonText;
+        private Button selectionPromptActionButton;
+        private TextMeshProUGUI selectionPromptActionButtonText;
+        private MoldButtonTooltipProvider selectionPromptActionTooltipProvider;
+        private TooltipTrigger selectionPromptActionTooltipTrigger;
 
         public SelectionPromptService(
             GameObject selectionPromptPanel,
@@ -470,9 +481,18 @@ namespace FungusToast.Unity
             this.selectionPromptCancelButtonText = selectionPromptCancelButtonText;
         }
 
-        public void Show(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action onCancel = null)
+        public void Show(
+            string message,
+            bool showCancelButton = false,
+            string cancelButtonLabel = "Cancel",
+            Action onCancel = null,
+            bool showActionButton = false,
+            string actionButtonLabel = "Action",
+            Action onAction = null,
+            string actionButtonTooltip = null)
         {
             EnsureSelectionPromptCancelButton();
+            EnsureSelectionPromptActionButton();
             if (selectionPromptPanel == null)
             {
                 return;
@@ -485,15 +505,19 @@ namespace FungusToast.Unity
             }
 
             ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
-            ConfigureSelectionPromptTextLayout(showCancelButton);
-            ConfigureSelectionPromptRaycasts(showCancelButton);
+            ConfigureSelectionPromptActionButton(showActionButton, actionButtonLabel, onAction, actionButtonTooltip);
+            ConfigureSelectionPromptButtonLayout(showCancelButton, showActionButton);
+            ConfigureSelectionPromptTextLayout(showCancelButton, showActionButton);
+            ConfigureSelectionPromptRaycasts(showCancelButton, showActionButton);
         }
 
         public void Hide()
         {
             ConfigureSelectionPromptCancelButton(false, "Cancel", null);
-            ConfigureSelectionPromptTextLayout(false);
-            ConfigureSelectionPromptRaycasts(false);
+            ConfigureSelectionPromptActionButton(false, "Action", null, null);
+            ConfigureSelectionPromptButtonLayout(false, false);
+            ConfigureSelectionPromptTextLayout(false, false);
+            ConfigureSelectionPromptRaycasts(false, false);
             selectionPromptPanel?.SetActive(false);
         }
 
@@ -521,20 +545,17 @@ namespace FungusToast.Unity
                 rectTransform.anchorMin = new Vector2(1f, 0.5f);
                 rectTransform.anchorMax = new Vector2(1f, 0.5f);
                 rectTransform.pivot = new Vector2(1f, 0.5f);
-                rectTransform.anchoredPosition = new Vector2(-18f, 0f);
-                rectTransform.sizeDelta = new Vector2(170f, 38f);
+                rectTransform.anchoredPosition = new Vector2(-PromptButtonInset, 0f);
+                rectTransform.sizeDelta = new Vector2(PromptCancelButtonWidth, PromptButtonHeight);
 
                 var image = buttonObject.GetComponent<Image>();
-                image.color = new Color(0.16f, 0.12f, 0.1f, 0.92f);
-
                 selectionPromptCancelButton = buttonObject.GetComponent<Button>();
-                var colors = selectionPromptCancelButton.colors;
-                colors.normalColor = image.color;
-                colors.highlightedColor = new Color(0.26f, 0.2f, 0.16f, 1f);
-                colors.pressedColor = new Color(0.12f, 0.09f, 0.07f, 1f);
-                colors.selectedColor = colors.highlightedColor;
-                colors.disabledColor = new Color(0.16f, 0.12f, 0.1f, 0.45f);
-                selectionPromptCancelButton.colors = colors;
+                UIStyleTokens.Button.ApplySecondaryMenuAction(
+                    selectionPromptCancelButton,
+                    width: PromptCancelButtonWidth,
+                    preferredHeight: PromptButtonHeight,
+                    minHeight: PromptButtonHeight);
+                image.color = selectionPromptCancelButton.colors.normalColor;
 
                 var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
                 labelObject.layer = selectionPromptPanel.layer;
@@ -565,7 +586,91 @@ namespace FungusToast.Unity
 
             ConfigureSelectionPromptRaycasts(selectionPromptCancelButton != null
                 && selectionPromptCancelButton.gameObject.activeSelf
-                && selectionPromptCancelButton.interactable);
+                && selectionPromptCancelButton.interactable,
+                selectionPromptActionButton != null
+                && selectionPromptActionButton.gameObject.activeSelf
+                && selectionPromptActionButton.interactable);
+        }
+
+        private void EnsureSelectionPromptActionButton()
+        {
+            if (selectionPromptPanel == null)
+            {
+                return;
+            }
+
+            EnsureSelectionPromptBackgroundGraphic();
+
+            if (selectionPromptActionButton == null)
+            {
+                var buttonObject = new GameObject(
+                    "UI_SelectionPromptActionButton",
+                    typeof(RectTransform),
+                    typeof(Image),
+                    typeof(Button),
+                    typeof(MoldButtonTooltipProvider),
+                    typeof(TooltipTrigger));
+                buttonObject.layer = selectionPromptPanel.layer;
+                buttonObject.transform.SetParent(selectionPromptPanel.transform, false);
+
+                var rectTransform = buttonObject.GetComponent<RectTransform>();
+                rectTransform.anchorMin = new Vector2(1f, 0.5f);
+                rectTransform.anchorMax = new Vector2(1f, 0.5f);
+                rectTransform.pivot = new Vector2(1f, 0.5f);
+                rectTransform.anchoredPosition = new Vector2(-PromptButtonInset, 0f);
+                rectTransform.sizeDelta = new Vector2(PromptActionButtonWidth, PromptButtonHeight);
+
+                selectionPromptActionButton = buttonObject.GetComponent<Button>();
+                UIStyleTokens.Button.ApplySecondaryMenuAction(
+                    selectionPromptActionButton,
+                    width: PromptActionButtonWidth,
+                    preferredHeight: PromptButtonHeight,
+                    minHeight: PromptButtonHeight);
+
+                var image = buttonObject.GetComponent<Image>();
+                image.color = selectionPromptActionButton.colors.normalColor;
+
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.layer = selectionPromptPanel.layer;
+                labelObject.transform.SetParent(buttonObject.transform, false);
+
+                var labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                selectionPromptActionButtonText = labelObject.GetComponent<TextMeshProUGUI>();
+                selectionPromptActionButtonText.fontSize = 22f;
+                selectionPromptActionButtonText.fontStyle = FontStyles.Bold;
+                selectionPromptActionButtonText.alignment = TextAlignmentOptions.Center;
+                selectionPromptActionButtonText.color = UIStyleTokens.Text.Primary;
+
+                selectionPromptActionTooltipProvider = buttonObject.GetComponent<MoldButtonTooltipProvider>();
+                selectionPromptActionTooltipTrigger = buttonObject.GetComponent<TooltipTrigger>();
+                selectionPromptActionTooltipTrigger.SetDynamicProvider(selectionPromptActionTooltipProvider);
+                selectionPromptActionTooltipTrigger.SetAutoPlacementOffsetX(18f);
+            }
+
+            if (selectionPromptActionButtonText == null && selectionPromptActionButton != null)
+            {
+                selectionPromptActionButtonText = selectionPromptActionButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+
+            if (selectionPromptActionTooltipProvider == null && selectionPromptActionButton != null)
+            {
+                selectionPromptActionTooltipProvider = selectionPromptActionButton.GetComponent<MoldButtonTooltipProvider>();
+            }
+
+            if (selectionPromptActionTooltipTrigger == null && selectionPromptActionButton != null)
+            {
+                selectionPromptActionTooltipTrigger = selectionPromptActionButton.GetComponent<TooltipTrigger>();
+                if (selectionPromptActionTooltipTrigger != null && selectionPromptActionTooltipProvider != null)
+                {
+                    selectionPromptActionTooltipTrigger.SetDynamicProvider(selectionPromptActionTooltipProvider);
+                    selectionPromptActionTooltipTrigger.SetAutoPlacementOffsetX(18f);
+                }
+            }
         }
 
         private void EnsureSelectionPromptBackgroundGraphic()
@@ -606,7 +711,63 @@ namespace FungusToast.Unity
             }
         }
 
-        private void ConfigureSelectionPromptTextLayout(bool cancelButtonVisible)
+        private void ConfigureSelectionPromptActionButton(bool visible, string actionButtonLabel, Action onAction, string actionButtonTooltip)
+        {
+            if (selectionPromptActionButton == null)
+            {
+                return;
+            }
+
+            selectionPromptActionButton.onClick.RemoveAllListeners();
+            selectionPromptActionButton.gameObject.SetActive(visible);
+            selectionPromptActionButton.interactable = visible;
+
+            if (selectionPromptActionButtonText != null)
+            {
+                selectionPromptActionButtonText.text = actionButtonLabel;
+            }
+
+            if (visible && onAction != null)
+            {
+                selectionPromptActionButton.onClick.AddListener(() => onAction());
+            }
+
+            if (selectionPromptActionTooltipProvider != null)
+            {
+                selectionPromptActionTooltipProvider.Initialize(actionButtonTooltip ?? string.Empty);
+            }
+
+            if (selectionPromptActionTooltipTrigger != null)
+            {
+                selectionPromptActionTooltipTrigger.enabled = visible && !string.IsNullOrWhiteSpace(actionButtonTooltip);
+            }
+        }
+
+        private void ConfigureSelectionPromptButtonLayout(bool cancelButtonVisible, bool actionButtonVisible)
+        {
+            if (selectionPromptCancelButton != null)
+            {
+                var cancelRect = selectionPromptCancelButton.GetComponent<RectTransform>();
+                if (cancelRect != null)
+                {
+                    cancelRect.anchoredPosition = new Vector2(-PromptButtonInset, 0f);
+                }
+            }
+
+            if (selectionPromptActionButton != null)
+            {
+                var actionRect = selectionPromptActionButton.GetComponent<RectTransform>();
+                if (actionRect != null)
+                {
+                    float x = cancelButtonVisible && actionButtonVisible
+                        ? -(PromptButtonInset + PromptCancelButtonWidth + PromptButtonGap)
+                        : -PromptButtonInset;
+                    actionRect.anchoredPosition = new Vector2(x, 0f);
+                }
+            }
+        }
+
+        private void ConfigureSelectionPromptTextLayout(bool cancelButtonVisible, bool actionButtonVisible)
         {
             if (selectionPromptText == null)
             {
@@ -614,12 +775,26 @@ namespace FungusToast.Unity
             }
 
             selectionPromptText.alignment = TextAlignmentOptions.Center;
-            selectionPromptText.margin = cancelButtonVisible
-                ? new Vector4(18f, 0f, 200f, 0f)
+            float rightMargin = 0f;
+            if (cancelButtonVisible && actionButtonVisible)
+            {
+                rightMargin = 420f;
+            }
+            else if (cancelButtonVisible)
+            {
+                rightMargin = 200f;
+            }
+            else if (actionButtonVisible)
+            {
+                rightMargin = 220f;
+            }
+
+            selectionPromptText.margin = rightMargin > 0f
+                ? new Vector4(18f, 0f, rightMargin, 0f)
                 : Vector4.zero;
         }
 
-        private void ConfigureSelectionPromptRaycasts(bool cancelButtonVisible)
+        private void ConfigureSelectionPromptRaycasts(bool cancelButtonVisible, bool actionButtonVisible)
         {
             if (selectionPromptPanel == null)
             {
@@ -643,20 +818,32 @@ namespace FungusToast.Unity
                 backgroundGraphic.raycastTarget = true;
             }
 
-            if (selectionPromptCancelButton == null)
+            if (selectionPromptCancelButton != null)
             {
-                return;
+                var cancelGraphics = selectionPromptCancelButton.GetComponentsInChildren<Graphic>(true);
+                foreach (var graphic in cancelGraphics)
+                {
+                    if (graphic == null)
+                    {
+                        continue;
+                    }
+
+                    graphic.raycastTarget = cancelButtonVisible;
+                }
             }
 
-            var cancelGraphics = selectionPromptCancelButton.GetComponentsInChildren<Graphic>(true);
-            foreach (var graphic in cancelGraphics)
+            if (selectionPromptActionButton != null)
             {
-                if (graphic == null)
+                var actionGraphics = selectionPromptActionButton.GetComponentsInChildren<Graphic>(true);
+                foreach (var graphic in actionGraphics)
                 {
-                    continue;
-                }
+                    if (graphic == null)
+                    {
+                        continue;
+                    }
 
-                graphic.raycastTarget = cancelButtonVisible;
+                    graphic.raycastTarget = actionButtonVisible;
+                }
             }
         }
     }

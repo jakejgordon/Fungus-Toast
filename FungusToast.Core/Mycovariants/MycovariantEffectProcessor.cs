@@ -774,26 +774,62 @@ public static class MycovariantEffectProcessor
         }
     }
 
+    public static IReadOnlyList<int> SelectMycelialBastionTileIds(
+        PlayerMycovariant playerMyco,
+        GameBoard board,
+        int maxCellsToSelect,
+        Random rng,
+        IReadOnlyCollection<int>? excludedTileIds = null)
+    {
+        var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+        if (player == null || maxCellsToSelect <= 0)
+        {
+            return Array.Empty<int>();
+        }
+
+        var excluded = excludedTileIds != null && excludedTileIds.Count > 0
+            ? new HashSet<int>(excludedTileIds)
+            : null;
+
+        var livingTileIds = new List<int>();
+        foreach (var tileId in player.ControlledTileIds)
+        {
+            if (excluded?.Contains(tileId) == true)
+            {
+                continue;
+            }
+
+            var tile = board.GetTileById(tileId);
+            var cell = tile?.FungalCell;
+            if (cell != null && cell.IsAlive && !cell.IsResistant && cell.OwnerPlayerId == player.PlayerId)
+            {
+                livingTileIds.Add(tileId);
+            }
+        }
+
+        int maxCells = Math.Min(maxCellsToSelect, livingTileIds.Count);
+        if (maxCells == 0)
+        {
+            return Array.Empty<int>();
+        }
+
+        for (int i = 0; i < maxCells; i++)
+        {
+            int j = rng.Next(i, livingTileIds.Count);
+            (livingTileIds[i], livingTileIds[j]) = (livingTileIds[j], livingTileIds[i]);
+        }
+
+        return livingTileIds.Take(maxCells).ToList();
+    }
+
     public static void ResolveMycelialBastion(
         PlayerMycovariant playerMyco,
         GameBoard board,
         Random rng,
         ISimulationObserver observer)
     {
-        // AI/simulation logic: auto-select up to the allowed number of living cells
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
         if (player == null) return;
-
-        var livingCells = new List<FungalCell>();
-        foreach (var tileId in player.ControlledTileIds)
-        {
-            var tile = board.GetTileById(tileId);
-            var cell = tile?.FungalCell;
-            if (cell != null && cell.IsAlive && !cell.IsResistant && cell.OwnerPlayerId == player.PlayerId)
-            {
-                livingCells.Add(cell);
-            }
-        }
 
         // Determine max cells based on which Mycelial Bastion tier this is
         int maxCellsAllowed = playerMyco.MycovariantId switch
@@ -804,17 +840,18 @@ public static class MycovariantEffectProcessor
             _ => MycovariantGameBalance.MycelialBastionIMaxResistantCells // fallback
         };
 
-        int maxCells = Math.Min(maxCellsAllowed, livingCells.Count);
-        if (maxCells == 0) return;
+        var selectedTileIds = SelectMycelialBastionTileIds(playerMyco, board, maxCellsAllowed, rng);
+        if (selectedTileIds.Count == 0) return;
 
-        // Randomly select up to maxCells via partial Fisher-Yates (avoids full sort allocation)
-        for (int i = 0; i < maxCells; i++)
+        foreach (int tileId in selectedTileIds)
         {
-            int j = rng.Next(i, livingCells.Count);
-            (livingCells[i], livingCells[j]) = (livingCells[j], livingCells[i]);
-            var cell = livingCells[i];
+            var cell = board.GetCell(tileId);
+            if (cell == null || !cell.IsAlive || cell.IsResistant || cell.OwnerPlayerId != player.PlayerId)
+            {
+                continue;
+            }
+
             cell.MakeResistant("Mycelial Bastion");
-            
             playerMyco.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);
             observer.RecordBastionedCells(player.PlayerId, 1);
         }

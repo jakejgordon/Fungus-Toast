@@ -13,6 +13,64 @@ namespace FungusToast.Core.Mycovariants
 {
     public static class BallistosporeDischargeHelper
     {
+        public static IReadOnlyList<int> SelectBallistosporeDischargeTargetTileIds(
+            PlayerMycovariant playerMyco,
+            GameBoard board,
+            int sporesToDrop,
+            Random rng,
+            IReadOnlyCollection<int>? excludedTileIds = null)
+        {
+            var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
+            if (player == null || sporesToDrop <= 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            var excluded = excludedTileIds != null && excludedTileIds.Count > 0
+                ? new HashSet<int>(excludedTileIds)
+                : null;
+
+            var emptyTiles = board.AllTiles()
+                .Where(t => !t.IsOccupiedForSporePlacement && (excluded == null || !excluded.Contains(t.TileId)))
+                .ToList();
+            int maxSpores = Math.Min(sporesToDrop, emptyTiles.Count);
+            if (maxSpores == 0)
+            {
+                return Array.Empty<int>();
+            }
+
+            var topPlayers = board.Players
+                .Where(p => p.PlayerId != player.PlayerId)
+                .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
+                .Take(3)
+                .Select(p => p.PlayerId)
+                .ToHashSet();
+
+            var targetTiles = emptyTiles
+                .Where(tile => board.GetOrthogonalNeighbors(tile.X, tile.Y)
+                    .Any(n => n.FungalCell != null
+                        && n.FungalCell.IsAlive
+                        && n.FungalCell.OwnerPlayerId != player.PlayerId
+                        && topPlayers.Contains(n.FungalCell.OwnerPlayerId ?? -1)))
+                .ToList();
+
+            if (targetTiles.Count < maxSpores)
+            {
+                var extra = emptyTiles
+                    .Except(targetTiles)
+                    .OrderBy(_ => rng.Next())
+                    .Take(maxSpores - targetTiles.Count)
+                    .Select(tile => tile.TileId);
+                return targetTiles.Select(tile => tile.TileId).Concat(extra).ToList();
+            }
+
+            return targetTiles
+                .OrderBy(_ => rng.Next())
+                .Take(maxSpores)
+                .Select(tile => tile.TileId)
+                .ToList();
+        }
+
         public static void ResolveBallistosporeDischarge(
             PlayerMycovariant playerMyco,
             GameBoard board,
@@ -23,47 +81,20 @@ namespace FungusToast.Core.Mycovariants
             var player = board.Players.FirstOrDefault(p => p.PlayerId == playerMyco.PlayerId);
             if (player == null) return;
 
-            // Get all empty tiles
-            var emptyTiles = board.AllTiles().Where(t => !t.IsOccupiedForSporePlacement).ToList();
-            int maxSpores = Math.Min(sporesToDrop, emptyTiles.Count);
-            if (maxSpores == 0) return;
-
-            // AI: target top 2 ENEMY players with most living cells
-            if (player.PlayerType != PlayerTypeEnum.Human)
+            var selectedTileIds = SelectBallistosporeDischargeTargetTileIds(playerMyco, board, sporesToDrop, rng);
+            if (selectedTileIds.Count == 0)
             {
-                var topPlayers = board.Players
-                    .Where(p => p.PlayerId != player.PlayerId)
-                    .OrderByDescending(p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive))
-                    .Take(3)
-                    .Select(p => p.PlayerId)
-                    .ToHashSet();
-
-                // Find empty tiles adjacent to top players' living cells (enemy only)
-                var targetTiles = emptyTiles
-                    .Where(tile => board.GetOrthogonalNeighbors(tile.X, tile.Y)
-                        .Any(n => n.FungalCell != null && n.FungalCell.IsAlive && n.FungalCell.OwnerPlayerId != player.PlayerId && topPlayers.Contains(n.FungalCell.OwnerPlayerId ?? -1)))
-                    .ToList();
-
-                // If not enough, fill with random empty tiles
-                if (targetTiles.Count < maxSpores)
-                {
-                    var extra = emptyTiles.Except(targetTiles).OrderBy(_ => rng.Next()).Take(maxSpores - targetTiles.Count).ToList();
-                    targetTiles.AddRange(extra);
-                }
-                else
-                {
-                    targetTiles = targetTiles.OrderBy(_ => rng.Next()).Take(maxSpores).ToList();
-                }
-
-                foreach (var tile in targetTiles)
-                {
-                    int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
-                    ToxinHelper.ConvertToToxin(board, tile.TileId, toxinLifespan, GrowthSource.Ballistospore, player);
-                }
-                playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, targetTiles.Count);
-                observer.RecordBallistosporeDischarge(player.PlayerId, targetTiles.Count);
+                return;
             }
-            // Human: UI will handle selection and call effect per tile
+
+            foreach (int tileId in selectedTileIds)
+            {
+                int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
+                ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.Ballistospore, player);
+            }
+
+            playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, selectedTileIds.Count);
+            observer.RecordBallistosporeDischarge(player.PlayerId, selectedTileIds.Count);
         }
 
         /// <summary>

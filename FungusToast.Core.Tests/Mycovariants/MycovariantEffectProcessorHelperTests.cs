@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
 
@@ -85,5 +86,89 @@ public class MycovariantEffectProcessorHelperTests
 
         Assert.InRange(score, 1f, 10f);
         Assert.True(score > 1f, "Expected a viable Hyphal Draw plan to score above the fallback value.");
+    }
+
+    [Fact]
+    public void SelectMycelialBastionTileIds_excludes_manual_picks_and_matches_partial_shuffle()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        owner.AddMycovariant(MycovariantRepository.GetById(MycovariantIds.MycelialBastionIIIId));
+        var playerMyco = owner.GetMycovariant(MycovariantIds.MycelialBastionIIIId)!;
+
+        PlaceOwnedLivingCell(board, owner, 1);
+        PlaceOwnedLivingCell(board, owner, 2);
+        PlaceOwnedLivingCell(board, owner, 3);
+        PlaceOwnedLivingCell(board, owner, 4);
+
+        var selectedTileIds = MycovariantEffectProcessor.SelectMycelialBastionTileIds(
+            playerMyco,
+            board,
+            maxCellsToSelect: 2,
+            rng: new Random(11),
+            excludedTileIds: new[] { 2 });
+
+        var expectedTileIds = SelectExpectedTileIds(new List<int> { 1, 3, 4 }, selectionCount: 2, seed: 11);
+        Assert.Equal(expectedTileIds, selectedTileIds);
+        Assert.DoesNotContain(2, selectedTileIds);
+    }
+
+    [Fact]
+    public void SelectBallistosporeDischargeTargetTileIds_prefers_enemy_adjacent_tiles_and_honors_exclusions()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 3);
+        var owner = new Player(0, "P0", PlayerTypeEnum.Human);
+        var enemyA = new Player(1, "P1", PlayerTypeEnum.AI);
+        var enemyB = new Player(2, "P2", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(enemyA);
+        board.Players.Add(enemyB);
+
+        owner.AddMycovariant(MycovariantRepository.GetById(MycovariantIds.BallistosporeDischargeIIIId));
+        var playerMyco = owner.GetMycovariant(MycovariantIds.BallistosporeDischargeIIIId)!;
+
+        PlaceOwnedLivingCell(board, enemyA, 6);
+        PlaceOwnedLivingCell(board, enemyA, 7);
+        PlaceOwnedLivingCell(board, enemyB, 18);
+
+        var selectedTileIds = BallistosporeDischargeHelper.SelectBallistosporeDischargeTargetTileIds(
+            playerMyco,
+            board,
+            sporesToDrop: 2,
+            rng: new Random(5),
+            excludedTileIds: new[] { 1 });
+
+        var targetableAdjacentTiles = board.AllTiles()
+            .Where(tile => !tile.IsOccupiedForSporePlacement && tile.TileId != 1)
+            .Where(tile => board.GetOrthogonalNeighbors(tile.X, tile.Y)
+                .Any(neighbor => neighbor.FungalCell?.IsAlive == true && neighbor.FungalCell.OwnerPlayerId is 1 or 2))
+            .Select(tile => tile.TileId)
+            .ToHashSet();
+
+        Assert.Equal(2, selectedTileIds.Count);
+        Assert.DoesNotContain(1, selectedTileIds);
+        Assert.All(selectedTileIds, tileId => Assert.Contains(tileId, targetableAdjacentTiles));
+    }
+
+    private static FungalCell PlaceOwnedLivingCell(GameBoard board, Player owner, int tileId)
+    {
+        var cell = new FungalCell(ownerPlayerId: owner.PlayerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);
+        board.PlaceFungalCell(cell);
+        owner.AddControlledTile(tileId);
+        return cell;
+    }
+
+    private static List<int> SelectExpectedTileIds(List<int> tileIds, int selectionCount, int seed)
+    {
+        var rng = new Random(seed);
+        var shuffled = tileIds.ToList();
+        for (int i = 0; i < selectionCount; i++)
+        {
+            int j = rng.Next(i, shuffled.Count);
+            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
+        }
+
+        return shuffled.Take(selectionCount).ToList();
     }
 }

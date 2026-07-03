@@ -1836,9 +1836,25 @@ namespace FungusToast.Unity
             backgroundMusicService?.StartTitleMusic();
         }
 
-        public void ShowSelectionPrompt(string message, bool showCancelButton = false, string cancelButtonLabel = "Cancel", Action? onCancel = null)
+        public void ShowSelectionPrompt(
+            string message,
+            bool showCancelButton = false,
+            string cancelButtonLabel = "Cancel",
+            Action? onCancel = null,
+            bool showActionButton = false,
+            string actionButtonLabel = "Action",
+            Action? onAction = null,
+            string? actionButtonTooltip = null)
         {
-            selectionPromptService?.Show(message, showCancelButton, cancelButtonLabel, onCancel);
+            selectionPromptService?.Show(
+                message,
+                showCancelButton,
+                cancelButtonLabel,
+                onCancel,
+                showActionButton,
+                actionButtonLabel,
+                onAction,
+                actionButtonTooltip);
         }
 
         public void HideSelectionPrompt()
