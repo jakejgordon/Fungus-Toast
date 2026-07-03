@@ -38,9 +38,12 @@ namespace FungusToast.Unity.UI.Campaign
         private const int AmbientMoldSpriteIndexScanLimit = 12;
         private const float AmbientMoldBaseAlpha = 0.115f;
         private const float AmbientMoldAlphaRange = 0.055f;
-        private const float AmbientMoldScalePulse = 0.055f;
-        private const float AmbientMoldDriftDistance = 8f;
-        private const float AmbientBackdropGlowScalePulse = 0.018f;
+        private const float AmbientMoldScalePulse = 0.072f;
+        private const float AmbientMoldDriftDistance = 12f;
+        private const float AmbientEncroachmentBaseAlpha = 0.01f;
+        private const float AmbientEncroachmentAlphaRange = 0.026f;
+        private const float AmbientEncroachmentScalePulse = 0.045f;
+        private const float AmbientEncroachmentDriftDistance = 6f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -130,6 +133,14 @@ namespace FungusToast.Unity.UI.Campaign
             public float Rotation;
             public bool FlipX;
             public bool FlipY;
+            public float BaseAlpha;
+            public float AlphaRange;
+            public float ScalePulse;
+            public float DriftDistance;
+            public float RotationAmplitude;
+            public bool IsEncroachment;
+            public float GrowthPhase;
+            public float GrowthSpeed;
         }
 
         private void Awake()
@@ -648,6 +659,10 @@ namespace FungusToast.Unity.UI.Campaign
             CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-94f, -230f), new Vector2(152f, 152f), 12f, new Vector2(-1f, -0.16f));
             CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-36f, -18f), new Vector2(184f, 184f), -8f, new Vector2(-1f, 0.06f));
             CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-56f, 54f), new Vector2(214f, 214f), 16f, new Vector2(-0.88f, 0.5f));
+            CreateAmbientEncroachmentDecoration("UpperInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-382f, 152f), new Vector2(144f, 144f), 10f, new Vector2(1f, -0.08f));
+            CreateAmbientEncroachmentDecoration("LowerInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-338f, -170f), new Vector2(156f, 156f), -6f, new Vector2(1f, 0.12f));
+            CreateAmbientEncroachmentDecoration("UpperInnerRight", new Vector2(0.5f, 0.5f), new Vector2(382f, 134f), new Vector2(148f, 148f), -12f, new Vector2(-1f, -0.06f));
+            CreateAmbientEncroachmentDecoration("LowerInnerRight", new Vector2(0.5f, 0.5f), new Vector2(344f, -196f), new Vector2(164f, 164f), 8f, new Vector2(-1f, 0.16f));
         }
 
         private void EnsureAmbientBackdropLayer()
@@ -672,23 +687,11 @@ namespace FungusToast.Unity.UI.Campaign
                 UIStyleTokens.Surface.PanelPrimary.r,
                 UIStyleTokens.Surface.PanelPrimary.g,
                 UIStyleTokens.Surface.PanelPrimary.b,
-                0.22f);
+                0.075f);
             CreateBackdropBand("TopVignette", new Vector2(0.5f, 1f), new Vector2(0f, -78f), new Vector2(0f, 156f), vignetteColor, stretchHorizontally: true);
             CreateBackdropBand("BottomVignette", new Vector2(0.5f, 0f), new Vector2(0f, 84f), new Vector2(0f, 168f), vignetteColor, stretchHorizontally: true);
             CreateBackdropBand("LeftVignette", new Vector2(0f, 0.5f), new Vector2(92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
             CreateBackdropBand("RightVignette", new Vector2(1f, 0.5f), new Vector2(-92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
-
-            Color primaryGlowColor = Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.Canvas, 0.18f);
-            primaryGlowColor.a = 0.19f;
-            CreateBackdropGlow("CenterGlow", Vector2.zero, new Vector2(1260f, 980f), primaryGlowColor, alphaRange: 0.028f, alphaSpeed: 0.11f, scaleSpeed: 0.09f);
-
-            Color logoGlowColor = Color.Lerp(UIStyleTokens.Accent.Hyphae, UIStyleTokens.Accent.Putrefaction, 0.55f);
-            logoGlowColor.a = 0.07f;
-            CreateBackdropGlow("LogoGlow", new Vector2(0f, 286f), new Vector2(760f, 250f), logoGlowColor, alphaRange: 0.018f, alphaSpeed: 0.14f, scaleSpeed: 0.11f);
-
-            Color menuGlowColor = Color.Lerp(UIStyleTokens.Accent.Spore, UIStyleTokens.Surface.Canvas, 0.6f);
-            menuGlowColor.a = 0.06f;
-            CreateBackdropGlow("MenuGlow", new Vector2(0f, -18f), new Vector2(860f, 620f), menuGlowColor, alphaRange: 0.014f, alphaSpeed: 0.1f, scaleSpeed: 0.08f);
         }
 
         private void CreateBackdropBand(
@@ -727,50 +730,6 @@ namespace FungusToast.Unity.UI.Campaign
             Image image = bandObject.GetComponent<Image>();
             image.color = color;
             image.raycastTarget = false;
-        }
-
-        private void CreateBackdropGlow(
-            string objectName,
-            Vector2 anchoredPosition,
-            Vector2 size,
-            Color color,
-            float alphaRange,
-            float alphaSpeed,
-            float scaleSpeed)
-        {
-            if (ambientBackdropLayerRoot == null)
-            {
-                return;
-            }
-
-            GameObject glowObject = new GameObject($"UI_ModeSelectAmbientBackdrop{objectName}", typeof(RectTransform), typeof(Image));
-            glowObject.transform.SetParent(ambientBackdropLayerRoot, false);
-            glowObject.layer = gameObject.layer;
-
-            RectTransform rectTransform = glowObject.GetComponent<RectTransform>();
-            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-            rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = anchoredPosition;
-            rectTransform.sizeDelta = size;
-
-            Image image = glowObject.GetComponent<Image>();
-            image.color = color;
-            image.raycastTarget = false;
-
-            ambientBackdropDecorations.Add(new AmbientBackdropDecoration
-            {
-                RectTransform = rectTransform,
-                Image = image,
-                BaseSize = size,
-                AnchoredPosition = anchoredPosition,
-                BaseAlpha = color.a,
-                AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
-                AlphaSpeed = alphaSpeed,
-                AlphaRange = alphaRange,
-                ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
-                ScaleSpeed = scaleSpeed
-            });
         }
 
         private void CreateAmbientMoldDecoration(
@@ -817,8 +776,43 @@ namespace FungusToast.Unity.UI.Campaign
                 PulseSpeed = UnityEngine.Random.Range(0.18f, 0.28f),
                 AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
                 AlphaSpeed = UnityEngine.Random.Range(0.12f, 0.2f),
-                Rotation = rotation
+                Rotation = rotation,
+                BaseAlpha = AmbientMoldBaseAlpha,
+                AlphaRange = AmbientMoldAlphaRange,
+                ScalePulse = AmbientMoldScalePulse,
+                DriftDistance = AmbientMoldDriftDistance,
+                RotationAmplitude = 3f,
+                GrowthPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                GrowthSpeed = 0f
             });
+        }
+
+        private void CreateAmbientEncroachmentDecoration(
+            string objectName,
+            Vector2 anchor,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            float rotation,
+            Vector2 driftDirection)
+        {
+            CreateAmbientMoldDecoration(objectName, anchor, anchoredPosition, size, rotation, driftDirection);
+            if (ambientMoldDecorations.Count == 0)
+            {
+                return;
+            }
+
+            AmbientMoldDecoration decoration = ambientMoldDecorations[ambientMoldDecorations.Count - 1];
+            decoration.BaseAlpha = AmbientEncroachmentBaseAlpha;
+            decoration.AlphaRange = AmbientEncroachmentAlphaRange;
+            decoration.ScalePulse = AmbientEncroachmentScalePulse;
+            decoration.DriftDistance = AmbientEncroachmentDriftDistance;
+            decoration.RotationAmplitude = 1.2f;
+            decoration.IsEncroachment = true;
+            decoration.GrowthPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+            decoration.GrowthSpeed = UnityEngine.Random.Range(0.03f, 0.05f);
+            decoration.PulseSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
+            decoration.AlphaSpeed = UnityEngine.Random.Range(0.07f, 0.11f);
+            decoration.BaseScale = UnityEngine.Random.Range(0.82f, 0.94f);
         }
 
         private void RefreshAmbientMoldDecorations()
@@ -846,11 +840,24 @@ namespace FungusToast.Unity.UI.Campaign
                 decoration.Image.enabled = true;
                 decoration.FlipX = UnityEngine.Random.value > 0.5f;
                 decoration.FlipY = UnityEngine.Random.value > 0.65f;
-                decoration.BaseScale = UnityEngine.Random.Range(0.88f, 1.05f);
+                if (decoration.IsEncroachment)
+                {
+                    decoration.BaseScale = UnityEngine.Random.Range(0.82f, 0.94f);
+                    decoration.PulseSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
+                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.07f, 0.11f);
+                    decoration.GrowthSpeed = UnityEngine.Random.Range(0.03f, 0.05f);
+                }
+                else
+                {
+                    decoration.BaseScale = UnityEngine.Random.Range(0.9f, 1.08f);
+                    decoration.PulseSpeed = UnityEngine.Random.Range(0.18f, 0.28f);
+                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
+                    decoration.GrowthSpeed = 0f;
+                }
+
                 decoration.ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
-                decoration.PulseSpeed = UnityEngine.Random.Range(0.16f, 0.24f);
                 decoration.AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
-                decoration.AlphaSpeed = UnityEngine.Random.Range(0.1f, 0.16f);
+                decoration.GrowthPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
             }
         }
 
@@ -921,7 +928,6 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             float time = Time.unscaledTime;
-            AnimateAmbientBackdropDecorations(time);
 
             if (ambientMoldDecorations.Count == 0)
             {
@@ -940,41 +946,21 @@ namespace FungusToast.Unity.UI.Campaign
                 float alphaWave = 0.5f + (0.5f * Mathf.Sin(decoration.AlphaPhase + (time * decoration.AlphaSpeed)));
                 float pulseWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.PulseSpeed));
                 float driftWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.PulseSpeed * 0.75f));
+                float growthWave = decoration.GrowthSpeed > 0f
+                    ? 0.5f + (0.5f * Mathf.Sin(decoration.GrowthPhase + (time * decoration.GrowthSpeed)))
+                    : 1f;
 
-                rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * AmbientMoldDriftDistance));
-                float scale = decoration.BaseScale + (pulseWave * AmbientMoldScalePulse);
+                rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * decoration.DriftDistance * growthWave));
+                float scale = decoration.BaseScale + (pulseWave * decoration.ScalePulse) + (decoration.IsEncroachment ? growthWave * 0.035f : 0f);
                 rectTransform.localScale = new Vector3(
                     decoration.FlipX ? -scale : scale,
                     decoration.FlipY ? -scale : scale,
                     1f);
-                rectTransform.localRotation = Quaternion.Euler(0f, 0f, decoration.Rotation + (pulseWave * 3f));
+                rectTransform.localRotation = Quaternion.Euler(0f, 0f, decoration.Rotation + (pulseWave * decoration.RotationAmplitude));
 
                 Color color = decoration.Image.color;
-                color.a = AmbientMoldBaseAlpha + (alphaWave * AmbientMoldAlphaRange);
+                color.a = decoration.BaseAlpha + (alphaWave * decoration.AlphaRange * growthWave);
                 decoration.Image.color = color;
-            }
-        }
-
-        private void AnimateAmbientBackdropDecorations(float time)
-        {
-            for (int i = 0; i < ambientBackdropDecorations.Count; i++)
-            {
-                AmbientBackdropDecoration decoration = ambientBackdropDecorations[i];
-                if (decoration.Image == null || decoration.RectTransform == null)
-                {
-                    continue;
-                }
-
-                float alphaWave = 0.5f + (0.5f * Mathf.Sin(decoration.AlphaPhase + (time * decoration.AlphaSpeed)));
-                float scaleWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.ScaleSpeed));
-
-                Color color = decoration.Image.color;
-                color.a = decoration.BaseAlpha + (alphaWave * decoration.AlphaRange);
-                decoration.Image.color = color;
-
-                float scaleMultiplier = 1f + (scaleWave * AmbientBackdropGlowScalePulse);
-                decoration.RectTransform.sizeDelta = decoration.BaseSize * scaleMultiplier;
-                decoration.RectTransform.anchoredPosition = decoration.AnchoredPosition;
             }
         }
 
