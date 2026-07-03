@@ -18,6 +18,8 @@ using FungusToast.Unity.UI.Onboarding;
 using System.Linq;
 using FungusToast.Core.Metrics;
 
+#nullable enable
+
 namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
