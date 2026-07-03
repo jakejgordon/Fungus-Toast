@@ -36,17 +36,19 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.13f;
-        private const float AmbientMoldAlphaRange = 0.055f;
-        private const float AmbientMoldScalePulse = 0.072f;
-        private const float AmbientMoldDriftDistance = 12f;
-        private const float AmbientEncroachmentBaseAlpha = 0.024f;
-        private const float AmbientEncroachmentAlphaRange = 0.038f;
-        private const float AmbientEncroachmentScalePulse = 0.045f;
-        private const float AmbientEncroachmentDriftDistance = 6f;
+        private const float AmbientMoldBaseAlpha = 0.145f;
+        private const float AmbientMoldAlphaRange = 0.085f;
+        private const float AmbientMoldScalePulse = 0.11f;
+        private const float AmbientMoldDriftDistance = 18f;
+        private const float AmbientEncroachmentBaseAlpha = 0.052f;
+        private const float AmbientEncroachmentAlphaRange = 0.06f;
+        private const float AmbientEncroachmentScalePulse = 0.075f;
+        private const float AmbientEncroachmentDriftDistance = 10f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
-        private const float AmbientEncroachmentRevealWindowSeconds = 10f;
-        private const float AmbientBackdropVignetteAlpha = 0.018f;
+        private const float AmbientEncroachmentRevealWindowSeconds = 30f;
+        private const float AmbientBackdropVignetteAlpha = 0.008f;
+        private const float CompactMenuButtonHoverBlend = 0.18f;
+        private const float CompactMenuButtonSelectedBlend = 0.24f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -205,7 +207,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Surface.PanelPrimary, 0.18f));
+            UIStyleTokens.ApplyPanelSurface(gameObject, Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Accent.Hyphae, 0.09f));
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             if (titleText != null)
@@ -235,6 +237,39 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(quitButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+
+            ApplyModeSelectCompactButtonStyle(creditsButton);
+            ApplyModeSelectCompactButtonStyle(settingsButton);
+            ApplyModeSelectCompactButtonStyle(creditsBackButton);
+            ApplyModeSelectCompactButtonStyle(settingsBackButton);
+            ApplyModeSelectCompactButtonStyle(quitButton);
+        }
+
+        private static void ApplyModeSelectCompactButtonStyle(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            Color normal = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Hyphae, 0.08f);
+            Color highlighted = Color.Lerp(normal, UIStyleTokens.Accent.Spore, CompactMenuButtonHoverBlend);
+            Color selected = Color.Lerp(normal, UIStyleTokens.Accent.Spore, CompactMenuButtonSelectedBlend);
+            Color pressed = Color.Lerp(normal, UIStyleTokens.Surface.PanelPrimary, 0.18f);
+            Color disabled = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.PanelPrimary, 0.5f), UIStyleTokens.Alpha.PanelDisabled);
+
+            button.colors = new ColorBlock
+            {
+                normalColor = normal,
+                highlightedColor = highlighted,
+                pressedColor = pressed,
+                selectedColor = selected,
+                disabledColor = disabled,
+                colorMultiplier = 1f,
+                fadeDuration = 0.1f
+            };
+
+            UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Text.Primary);
         }
 
         private void OnEnable()
@@ -668,10 +703,28 @@ namespace FungusToast.Unity.UI.Campaign
             CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-94f, -230f), new Vector2(152f, 152f), 12f, new Vector2(-1f, -0.16f));
             CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-36f, -18f), new Vector2(184f, 184f), -8f, new Vector2(-1f, 0.06f));
             CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-56f, 54f), new Vector2(214f, 214f), 16f, new Vector2(-0.88f, 0.5f));
+            CreateAmbientMoldDecoration("TopCenterLeft", new Vector2(0.5f, 1f), new Vector2(-356f, -54f), new Vector2(176f, 176f), 16f, new Vector2(0.54f, -0.84f));
+            CreateAmbientMoldDecoration("TopCenterMidLeft", new Vector2(0.5f, 1f), new Vector2(-174f, -36f), new Vector2(138f, 138f), -10f, new Vector2(0.28f, -0.96f));
+            CreateAmbientMoldDecoration("TopCenterMidRight", new Vector2(0.5f, 1f), new Vector2(172f, -40f), new Vector2(144f, 144f), 12f, new Vector2(-0.32f, -0.94f));
+            CreateAmbientMoldDecoration("TopCenterRight", new Vector2(0.5f, 1f), new Vector2(354f, -58f), new Vector2(184f, 184f), -14f, new Vector2(-0.56f, -0.82f));
+            CreateAmbientMoldDecoration("BottomCenterLeft", new Vector2(0.5f, 0f), new Vector2(-362f, 66f), new Vector2(182f, 182f), -18f, new Vector2(0.52f, 0.86f));
+            CreateAmbientMoldDecoration("BottomCenterMidLeft", new Vector2(0.5f, 0f), new Vector2(-186f, 52f), new Vector2(142f, 142f), 8f, new Vector2(0.26f, 0.96f));
+            CreateAmbientMoldDecoration("BottomCenterMidRight", new Vector2(0.5f, 0f), new Vector2(196f, 54f), new Vector2(148f, 148f), -12f, new Vector2(-0.24f, 0.96f));
+            CreateAmbientMoldDecoration("BottomCenterRight", new Vector2(0.5f, 0f), new Vector2(372f, 70f), new Vector2(188f, 188f), 14f, new Vector2(-0.48f, 0.88f));
             CreateAmbientEncroachmentDecoration("UpperInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-382f, 152f), new Vector2(144f, 144f), 10f, new Vector2(1f, -0.08f));
+            CreateAmbientEncroachmentDecoration("MidUpperInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-258f, 212f), new Vector2(128f, 128f), 14f, new Vector2(0.86f, -0.26f));
             CreateAmbientEncroachmentDecoration("LowerInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-338f, -170f), new Vector2(156f, 156f), -6f, new Vector2(1f, 0.12f));
+            CreateAmbientEncroachmentDecoration("MidLowerInnerLeft", new Vector2(0.5f, 0.5f), new Vector2(-248f, -246f), new Vector2(132f, 132f), -16f, new Vector2(0.92f, 0.18f));
             CreateAmbientEncroachmentDecoration("UpperInnerRight", new Vector2(0.5f, 0.5f), new Vector2(382f, 134f), new Vector2(148f, 148f), -12f, new Vector2(-1f, -0.06f));
+            CreateAmbientEncroachmentDecoration("MidUpperInnerRight", new Vector2(0.5f, 0.5f), new Vector2(262f, 206f), new Vector2(132f, 132f), -14f, new Vector2(-0.82f, -0.24f));
             CreateAmbientEncroachmentDecoration("LowerInnerRight", new Vector2(0.5f, 0.5f), new Vector2(344f, -196f), new Vector2(164f, 164f), 8f, new Vector2(-1f, 0.16f));
+            CreateAmbientEncroachmentDecoration("MidLowerInnerRight", new Vector2(0.5f, 0.5f), new Vector2(252f, -248f), new Vector2(138f, 138f), 18f, new Vector2(-0.88f, 0.22f));
+            CreateAmbientEncroachmentDecoration("TopApproachLeft", new Vector2(0.5f, 0.5f), new Vector2(-126f, 292f), new Vector2(126f, 126f), 6f, new Vector2(0.24f, -1f));
+            CreateAmbientEncroachmentDecoration("TopApproachCenter", new Vector2(0.5f, 0.5f), new Vector2(0f, 316f), new Vector2(134f, 134f), -4f, new Vector2(0f, -1f));
+            CreateAmbientEncroachmentDecoration("TopApproachRight", new Vector2(0.5f, 0.5f), new Vector2(132f, 286f), new Vector2(128f, 128f), -8f, new Vector2(-0.22f, -1f));
+            CreateAmbientEncroachmentDecoration("BottomApproachLeft", new Vector2(0.5f, 0.5f), new Vector2(-118f, -304f), new Vector2(130f, 130f), -6f, new Vector2(0.18f, 1f));
+            CreateAmbientEncroachmentDecoration("BottomApproachCenter", new Vector2(0.5f, 0.5f), new Vector2(0f, -324f), new Vector2(138f, 138f), 4f, new Vector2(0f, 1f));
+            CreateAmbientEncroachmentDecoration("BottomApproachRight", new Vector2(0.5f, 0.5f), new Vector2(122f, -296f), new Vector2(132f, 132f), 8f, new Vector2(-0.16f, 1f));
         }
 
         private void EnsureAmbientBackdropLayer()
@@ -792,7 +845,7 @@ namespace FungusToast.Unity.UI.Campaign
                 DriftDistance = AmbientMoldDriftDistance,
                 RotationAmplitude = 3f,
                 GrowthPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
-                GrowthSpeed = 0f,
+                GrowthSpeed = UnityEngine.Random.Range(0.06f, 0.11f),
                 RevealDelay = 0f,
                 RevealDuration = 0f
             });
@@ -858,22 +911,22 @@ namespace FungusToast.Unity.UI.Campaign
                 if (decoration.IsEncroachment)
                 {
                     decoration.BaseScale = UnityEngine.Random.Range(0.82f, 0.94f);
-                    decoration.PulseSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
-                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.07f, 0.11f);
-                    decoration.GrowthSpeed = UnityEngine.Random.Range(0.03f, 0.05f);
+                    decoration.PulseSpeed = UnityEngine.Random.Range(0.34f, 0.54f);
+                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.18f, 0.28f);
+                    decoration.GrowthSpeed = UnityEngine.Random.Range(0.08f, 0.13f);
                     decoration.RevealDelay = UnityEngine.Random.Range(
                         AmbientEncroachmentRevealLeadInSeconds,
-                        AmbientEncroachmentRevealLeadInSeconds + (AmbientEncroachmentRevealWindowSeconds * 0.55f));
-                    decoration.RevealDuration = UnityEngine.Random.Range(2.8f, 4.4f);
+                        AmbientEncroachmentRevealLeadInSeconds + (AmbientEncroachmentRevealWindowSeconds * 0.82f));
+                    decoration.RevealDuration = UnityEngine.Random.Range(4.6f, 7.5f);
                 }
                 else
                 {
                     decoration.BaseScale = UnityEngine.Random.Range(0.9f, 1.08f);
-                    decoration.PulseSpeed = UnityEngine.Random.Range(0.18f, 0.28f);
-                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
-                    decoration.GrowthSpeed = 0f;
-                    decoration.RevealDelay = 0f;
-                    decoration.RevealDuration = 0f;
+                    decoration.PulseSpeed = UnityEngine.Random.Range(0.28f, 0.46f);
+                    decoration.AlphaSpeed = UnityEngine.Random.Range(0.16f, 0.26f);
+                    decoration.GrowthSpeed = UnityEngine.Random.Range(0.06f, 0.11f);
+                    decoration.RevealDelay = UnityEngine.Random.Range(0f, AmbientEncroachmentRevealWindowSeconds * 0.6f);
+                    decoration.RevealDuration = UnityEngine.Random.Range(3.6f, 6.2f);
                 }
 
                 decoration.ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
@@ -989,7 +1042,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static float GetAmbientDecorationRevealMultiplier(AmbientMoldDecoration decoration, float elapsed)
         {
-            if (!decoration.IsEncroachment)
+            if (decoration.RevealDuration <= 0f)
             {
                 return 1f;
             }
@@ -997,7 +1050,8 @@ namespace FungusToast.Unity.UI.Campaign
             float revealDuration = Mathf.Max(0.01f, decoration.RevealDuration);
             float progress = Mathf.Clamp01((elapsed - decoration.RevealDelay) / revealDuration);
             float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
-            return Mathf.Lerp(0.04f, 1f, easedProgress);
+            float hiddenFloor = decoration.IsEncroachment ? 0.02f : 0f;
+            return Mathf.Lerp(hiddenFloor, 1f, easedProgress);
         }
 
         public void ShowMainMenuAfterSubpanel()
