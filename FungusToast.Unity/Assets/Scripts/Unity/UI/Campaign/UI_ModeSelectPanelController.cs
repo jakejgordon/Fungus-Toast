@@ -36,12 +36,12 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.145f;
-        private const float AmbientMoldAlphaRange = 0.085f;
+        private const float AmbientMoldBaseAlpha = 0.22f;
+        private const float AmbientMoldAlphaRange = 0.14f;
         private const float AmbientMoldScalePulse = 0.11f;
         private const float AmbientMoldDriftDistance = 18f;
-        private const float AmbientEncroachmentBaseAlpha = 0.052f;
-        private const float AmbientEncroachmentAlphaRange = 0.06f;
+        private const float AmbientEncroachmentBaseAlpha = 0.1f;
+        private const float AmbientEncroachmentAlphaRange = 0.095f;
         private const float AmbientEncroachmentScalePulse = 0.075f;
         private const float AmbientEncroachmentDriftDistance = 10f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
@@ -940,7 +940,7 @@ namespace FungusToast.Unity.UI.Campaign
                     decoration.RevealDelay = UnityEngine.Random.Range(
                         AmbientEncroachmentRevealLeadInSeconds,
                         AmbientEncroachmentRevealLeadInSeconds + (AmbientEncroachmentRevealWindowSeconds * 0.82f));
-                    decoration.RevealDuration = UnityEngine.Random.Range(4.6f, 7.5f);
+                    decoration.RevealDuration = UnityEngine.Random.Range(2.3f, 3.75f);
                 }
                 else
                 {
@@ -949,7 +949,7 @@ namespace FungusToast.Unity.UI.Campaign
                     decoration.AlphaSpeed = UnityEngine.Random.Range(0.16f, 0.26f);
                     decoration.GrowthSpeed = UnityEngine.Random.Range(0.06f, 0.11f);
                     decoration.RevealDelay = UnityEngine.Random.Range(0f, AmbientEncroachmentRevealWindowSeconds * 0.6f);
-                    decoration.RevealDuration = UnityEngine.Random.Range(3.6f, 6.2f);
+                    decoration.RevealDuration = UnityEngine.Random.Range(1.8f, 3.1f);
                 }
 
                 decoration.ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
