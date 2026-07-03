@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using FungusToast.Unity;
+using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI.GameStart; // for UI_StartGamePanel
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
