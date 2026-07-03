@@ -36,17 +36,17 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.115f;
+        private const float AmbientMoldBaseAlpha = 0.13f;
         private const float AmbientMoldAlphaRange = 0.055f;
         private const float AmbientMoldScalePulse = 0.072f;
         private const float AmbientMoldDriftDistance = 12f;
-        private const float AmbientEncroachmentBaseAlpha = 0.01f;
-        private const float AmbientEncroachmentAlphaRange = 0.026f;
+        private const float AmbientEncroachmentBaseAlpha = 0.024f;
+        private const float AmbientEncroachmentAlphaRange = 0.038f;
         private const float AmbientEncroachmentScalePulse = 0.045f;
         private const float AmbientEncroachmentDriftDistance = 6f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
         private const float AmbientEncroachmentRevealWindowSeconds = 10f;
-        private const float AmbientBackdropVignetteAlpha = 0.045f;
+        private const float AmbientBackdropVignetteAlpha = 0.018f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -205,7 +205,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+            UIStyleTokens.ApplyPanelSurface(gameObject, Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Surface.PanelPrimary, 0.18f));
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             if (titleText != null)

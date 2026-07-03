@@ -1710,7 +1710,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0f));
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
             ApplyActionButtonSemantics();
         }

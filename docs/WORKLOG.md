@@ -41,13 +41,14 @@ Use the following minimal workflow to preserve working memory across sessions:
    - The backdrop pass has been softened back down to mostly faint edge shading after the larger glow plates read too boxy on-screen.
    - A second ultra-subtle encroachment ring now uses the same mold family art nearer the center margins with very low alpha, slight drift, and slow fade/scale breathing so the menu feels alive without putting mold over the main buttons.
    - Those inner colonies now stagger their fade-in over the opening several seconds so the empty middle margins gradually feel more claimed instead of fully static from frame one.
-   - The latest follow-up lightens the vignette slightly so the lower menu actions read more clearly, and keeps the ambient background alive behind the `Solo / Hotseat` and `Campaign` follow-on screens instead of dropping back to a flat canvas immediately.
+   - The latest follow-up brightens the menu base and increases the alpha of the non-edge/encroachment mold sprites so the center-adjacent growth reads more clearly.
+   - The `Solo / Hotseat` and `Campaign` submenu roots now use transparent full-screen surfaces so the shared animated mold backdrop can remain visible behind those screens instead of repainting a flat canvas over it.
    - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
 ## Pending Tasks
 
 - Verify in Unity Editor that the brightened backdrop restores enough contrast for the lower action buttons without washing out the mold atmosphere.
-- Verify that entering `Solo / Hotseat` and `Campaign` preserves the animated mold background cleanly, and that backing out of those screens restores the normal main menu state.
+- Verify that entering `Solo / Hotseat` and `Campaign` now visibly preserves the animated mold background, and that backing out of those screens restores the normal main menu state.
 - If the center encroachment reads too noticeable after the submenu-background carryover, reduce its alpha/growth swing before adding any new effect type.
 
 ## Next Handoff
