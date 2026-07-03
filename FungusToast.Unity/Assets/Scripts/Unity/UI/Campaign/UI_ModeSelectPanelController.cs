@@ -730,6 +730,16 @@ namespace FungusToast.Unity.UI.Campaign
             CreateAmbientEncroachmentDecoration("MidLeftLowerPocket", new Vector2(0.5f, 0.5f), new Vector2(-432f, -72f), new Vector2(126f, 126f), 12f, new Vector2(0.96f, 0.08f));
             CreateAmbientEncroachmentDecoration("MidRightUpperPocket", new Vector2(0.5f, 0.5f), new Vector2(456f, 52f), new Vector2(124f, 124f), 8f, new Vector2(-0.98f, -0.04f));
             CreateAmbientEncroachmentDecoration("MidRightLowerPocket", new Vector2(0.5f, 0.5f), new Vector2(438f, -86f), new Vector2(128f, 128f), -12f, new Vector2(-0.96f, 0.08f));
+            CreateAmbientEncroachmentDecoration("FarLeftUpperLane", new Vector2(0.5f, 0.5f), new Vector2(-628f, 182f), new Vector2(128f, 128f), -14f, new Vector2(0.98f, -0.08f));
+            CreateAmbientEncroachmentDecoration("FarLeftCenterLane", new Vector2(0.5f, 0.5f), new Vector2(-602f, 8f), new Vector2(136f, 136f), 10f, new Vector2(1f, 0.02f));
+            CreateAmbientEncroachmentDecoration("FarLeftLowerLane", new Vector2(0.5f, 0.5f), new Vector2(-618f, -188f), new Vector2(132f, 132f), -8f, new Vector2(0.98f, 0.1f));
+            CreateAmbientEncroachmentDecoration("LeftInnerUpperLane", new Vector2(0.5f, 0.5f), new Vector2(-518f, 256f), new Vector2(118f, 118f), 12f, new Vector2(0.9f, -0.18f));
+            CreateAmbientEncroachmentDecoration("LeftInnerLowerLane", new Vector2(0.5f, 0.5f), new Vector2(-506f, -254f), new Vector2(122f, 122f), -10f, new Vector2(0.88f, 0.16f));
+            CreateAmbientEncroachmentDecoration("FarRightUpperLane", new Vector2(0.5f, 0.5f), new Vector2(626f, 176f), new Vector2(130f, 130f), 14f, new Vector2(-0.98f, -0.08f));
+            CreateAmbientEncroachmentDecoration("FarRightCenterLane", new Vector2(0.5f, 0.5f), new Vector2(606f, 4f), new Vector2(138f, 138f), -10f, new Vector2(-1f, 0.02f));
+            CreateAmbientEncroachmentDecoration("FarRightLowerLane", new Vector2(0.5f, 0.5f), new Vector2(620f, -194f), new Vector2(134f, 134f), 8f, new Vector2(-0.98f, 0.1f));
+            CreateAmbientEncroachmentDecoration("RightInnerUpperLane", new Vector2(0.5f, 0.5f), new Vector2(522f, 248f), new Vector2(120f, 120f), -12f, new Vector2(-0.9f, -0.18f));
+            CreateAmbientEncroachmentDecoration("RightInnerLowerLane", new Vector2(0.5f, 0.5f), new Vector2(512f, -262f), new Vector2(124f, 124f), 10f, new Vector2(-0.88f, 0.16f));
             CreateAmbientEncroachmentDecoration("CenterLeftUpperGap", new Vector2(0.5f, 0.5f), new Vector2(-212f, 92f), new Vector2(112f, 112f), 10f, new Vector2(0.62f, -0.18f));
             CreateAmbientEncroachmentDecoration("CenterLeftLowerGap", new Vector2(0.5f, 0.5f), new Vector2(-198f, -84f), new Vector2(118f, 118f), -8f, new Vector2(0.58f, 0.14f));
             CreateAmbientEncroachmentDecoration("CenterRightUpperGap", new Vector2(0.5f, 0.5f), new Vector2(218f, 84f), new Vector2(114f, 114f), -10f, new Vector2(-0.62f, -0.16f));
