@@ -574,7 +574,18 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (currentPlayer.PlayerType == PlayerTypeEnum.AI)
             {
                 SetDraftState(DraftUIState.AITurn);
-                StartCoroutine(AnimateAIPickRoutine());
+                if (gameObject.activeInHierarchy)
+                {
+                    StartCoroutine(AnimateAIPickRoutine());
+                }
+                else if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.StartCoroutine(AnimateAIPickRoutine());
+                }
+                else
+                {
+                    Debug.LogError("[MycovariantDraftController] No active runner available to start the AI draft turn.");
+                }
             }
             else
             {

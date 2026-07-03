@@ -1563,6 +1563,9 @@ namespace FungusToast.Unity
             {
                 testingModeForceHumanFirst = false;
             }
+            // Activate the controller before draft setup so layout/calculation work and any
+            // first-turn coroutines run against an active MonoBehaviour.
+            mycovariantDraftController.gameObject.SetActive(true);
             mycovariantDraftController.StartDraft(
                 Board.Players,
                 persistentPoolManager,
@@ -1598,7 +1601,6 @@ namespace FungusToast.Unity
             phaseProgressTracker?.HighlightDraftPhase();
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
-            mycovariantDraftController.gameObject.SetActive(true);
         }
 
         public void OnMycovariantDraftComplete()
