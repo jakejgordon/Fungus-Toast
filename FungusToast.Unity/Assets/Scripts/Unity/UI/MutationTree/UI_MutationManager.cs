@@ -433,6 +433,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void TryUpgradeMutation(Mutation mutation, Action<bool> onResolved)
         {
+            var player = humanPlayer;
+            if (player == null)
+            {
+                Debug.LogWarning("⚠️ Cannot upgrade mutation because no human player is initialized.");
+                onResolved?.Invoke(false);
+                return;
+            }
+
             if (mutation.Id == MutationIds.ChemotacticBeacon)
             {
                 StartCoroutine(ResolveChemotacticBeaconUpgrade(mutation, onResolved));
@@ -445,7 +453,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // Get the observer through GameManager's GameUI.GameLogRouter
             var observer = GameManager.Instance.GameUI.GameLogRouter;
 
-            if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound, board, mutationAvailabilityBoardSummaries))
+            if (player.TryUpgradeMutation(mutation, observer, currentRound, board, mutationAvailabilityBoardSummaries))
             {
                 RefreshSpendPointsButtonUI();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
@@ -455,7 +463,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            Debug.LogWarning($"⚠️ Player {humanPlayer.PlayerId} failed to upgrade {mutation.Name}");
+            Debug.LogWarning($"⚠️ Player {player.PlayerId} failed to upgrade {mutation.Name}");
             onResolved?.Invoke(false);
         }
 
@@ -850,12 +858,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private IEnumerator ClosePanelThenTriggerAI()
         {
+            var player = humanPlayer;
+
             if (isTreeOpen)
                 yield return StartCoroutine(SlideOutTree());
             // Multi-human: now signal GameManager to advance to next human
-            if (GameManager.Instance != null && GameManager.Instance.ConfiguredHumanPlayerCount > 1)
+            if (player != null && GameManager.Instance != null && GameManager.Instance.ConfiguredHumanPlayerCount > 1)
             {
-                GameManager.Instance.OnHumanMutationTurnFinished(humanPlayer);
+                GameManager.Instance.OnHumanMutationTurnFinished(player);
                 yield break;
             }
             // Single human: go straight to AI spending
@@ -2328,7 +2338,7 @@ namespace FungusToast.Unity.UI.MutationTree
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
             layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
 
-            ConfigureHeaderActionButtonContent(
+            storePointsButtonIconImage = ConfigureHeaderActionButtonContent(
                 storePointsButton,
                 ref storePointsButtonIconImage,
                 "Store Mutation Points",
@@ -2336,7 +2346,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 "StoreMutationPointsButtonIcon",
                 storePointsButtonIcon,
                 UIStyleTokens.Text.Primary,
-                UIStyleTokens.Accent.Spore);
+                UIStyleTokens.Accent.Spore) ?? storePointsButtonIconImage;
             RefreshHeaderActionButtonWidths();
         }
 
@@ -2397,7 +2407,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 "TimeLapseButtonIcon",
                 presentationSpeedButtonIcon,
                 UIStyleTokens.Text.Primary,
-                UIStyleTokens.Text.Primary);
+                UIStyleTokens.Text.Primary) ?? presentationSpeedButtonText;
+            presentationSpeedButtonIconImage ??= GetHeaderActionButtonContentRoot(presentationSpeedButton)?
+                .Find("TimeLapseButtonIcon")?
+                .GetComponent<Image>();
             RefreshHeaderActionButtonWidths();
         }
 
