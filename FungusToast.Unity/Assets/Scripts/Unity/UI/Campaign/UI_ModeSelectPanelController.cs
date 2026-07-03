@@ -40,6 +40,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float AmbientMoldAlphaRange = 0.055f;
         private const float AmbientMoldScalePulse = 0.055f;
         private const float AmbientMoldDriftDistance = 8f;
+        private const float AmbientBackdropGlowScalePulse = 0.018f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -97,8 +98,24 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI compatibilityNoticeBodyText;
         private Button compatibilityNoticeCloseButton;
         private bool isConfirmingCampaignReset;
+        private RectTransform ambientBackdropLayerRoot;
         private RectTransform ambientMoldLayerRoot;
+        private readonly List<AmbientBackdropDecoration> ambientBackdropDecorations = new();
         private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
+
+        private sealed class AmbientBackdropDecoration
+        {
+            public RectTransform RectTransform;
+            public Image Image;
+            public Vector2 BaseSize;
+            public Vector2 AnchoredPosition;
+            public float BaseAlpha;
+            public float AlphaPhase;
+            public float AlphaSpeed;
+            public float AlphaRange;
+            public float ScalePhase;
+            public float ScaleSpeed;
+        }
 
         private sealed class AmbientMoldDecoration
         {
@@ -120,6 +137,7 @@ namespace FungusToast.Unity.UI.Campaign
             ResolveSceneReferences();
             ConfigureLayout();
             EnsureReleaseUi();
+            EnsureAmbientBackdropLayer();
             EnsureAmbientMoldLayer();
             ApplyStyle();
 
@@ -620,7 +638,7 @@ namespace FungusToast.Unity.UI.Campaign
             ambientMoldLayerRoot.anchorMax = Vector2.one;
             ambientMoldLayerRoot.offsetMin = Vector2.zero;
             ambientMoldLayerRoot.offsetMax = Vector2.zero;
-            ambientMoldLayerRoot.SetSiblingIndex(0);
+            ambientMoldLayerRoot.SetSiblingIndex(Mathf.Min(1, transform.childCount - 1));
 
             CreateAmbientMoldDecoration("TopLeft", new Vector2(0f, 1f), new Vector2(42f, -46f), new Vector2(230f, 230f), 20f, new Vector2(0.9f, -0.5f));
             CreateAmbientMoldDecoration("UpperLeft", new Vector2(0f, 1f), new Vector2(86f, -222f), new Vector2(150f, 150f), -14f, new Vector2(1f, -0.2f));
@@ -630,6 +648,129 @@ namespace FungusToast.Unity.UI.Campaign
             CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-94f, -230f), new Vector2(152f, 152f), 12f, new Vector2(-1f, -0.16f));
             CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-36f, -18f), new Vector2(184f, 184f), -8f, new Vector2(-1f, 0.06f));
             CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-56f, 54f), new Vector2(214f, 214f), 16f, new Vector2(-0.88f, 0.5f));
+        }
+
+        private void EnsureAmbientBackdropLayer()
+        {
+            if (ambientBackdropLayerRoot != null)
+            {
+                return;
+            }
+
+            GameObject layerObject = new GameObject("UI_ModeSelectAmbientBackdropLayer", typeof(RectTransform));
+            layerObject.transform.SetParent(transform, false);
+            layerObject.layer = gameObject.layer;
+
+            ambientBackdropLayerRoot = layerObject.GetComponent<RectTransform>();
+            ambientBackdropLayerRoot.anchorMin = Vector2.zero;
+            ambientBackdropLayerRoot.anchorMax = Vector2.one;
+            ambientBackdropLayerRoot.offsetMin = Vector2.zero;
+            ambientBackdropLayerRoot.offsetMax = Vector2.zero;
+            ambientBackdropLayerRoot.SetSiblingIndex(0);
+
+            Color vignetteColor = new Color(
+                UIStyleTokens.Surface.PanelPrimary.r,
+                UIStyleTokens.Surface.PanelPrimary.g,
+                UIStyleTokens.Surface.PanelPrimary.b,
+                0.22f);
+            CreateBackdropBand("TopVignette", new Vector2(0.5f, 1f), new Vector2(0f, -78f), new Vector2(0f, 156f), vignetteColor, stretchHorizontally: true);
+            CreateBackdropBand("BottomVignette", new Vector2(0.5f, 0f), new Vector2(0f, 84f), new Vector2(0f, 168f), vignetteColor, stretchHorizontally: true);
+            CreateBackdropBand("LeftVignette", new Vector2(0f, 0.5f), new Vector2(92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
+            CreateBackdropBand("RightVignette", new Vector2(1f, 0.5f), new Vector2(-92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
+
+            Color primaryGlowColor = Color.Lerp(UIStyleTokens.Accent.Putrefaction, UIStyleTokens.Surface.Canvas, 0.18f);
+            primaryGlowColor.a = 0.19f;
+            CreateBackdropGlow("CenterGlow", Vector2.zero, new Vector2(1260f, 980f), primaryGlowColor, alphaRange: 0.028f, alphaSpeed: 0.11f, scaleSpeed: 0.09f);
+
+            Color logoGlowColor = Color.Lerp(UIStyleTokens.Accent.Hyphae, UIStyleTokens.Accent.Putrefaction, 0.55f);
+            logoGlowColor.a = 0.07f;
+            CreateBackdropGlow("LogoGlow", new Vector2(0f, 286f), new Vector2(760f, 250f), logoGlowColor, alphaRange: 0.018f, alphaSpeed: 0.14f, scaleSpeed: 0.11f);
+
+            Color menuGlowColor = Color.Lerp(UIStyleTokens.Accent.Spore, UIStyleTokens.Surface.Canvas, 0.6f);
+            menuGlowColor.a = 0.06f;
+            CreateBackdropGlow("MenuGlow", new Vector2(0f, -18f), new Vector2(860f, 620f), menuGlowColor, alphaRange: 0.014f, alphaSpeed: 0.1f, scaleSpeed: 0.08f);
+        }
+
+        private void CreateBackdropBand(
+            string objectName,
+            Vector2 anchor,
+            Vector2 anchoredPosition,
+            Vector2 sizeDelta,
+            Color color,
+            bool stretchHorizontally = false,
+            bool stretchVertically = false)
+        {
+            if (ambientBackdropLayerRoot == null)
+            {
+                return;
+            }
+
+            GameObject bandObject = new GameObject($"UI_ModeSelectAmbientBackdrop{objectName}", typeof(RectTransform), typeof(Image));
+            bandObject.transform.SetParent(ambientBackdropLayerRoot, false);
+            bandObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = bandObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = stretchHorizontally
+                ? new Vector2(0f, anchor.y)
+                : stretchVertically
+                    ? new Vector2(anchor.x, 0f)
+                    : anchor;
+            rectTransform.anchorMax = stretchHorizontally
+                ? new Vector2(1f, anchor.y)
+                : stretchVertically
+                    ? new Vector2(anchor.x, 1f)
+                    : anchor;
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = sizeDelta;
+
+            Image image = bandObject.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+        }
+
+        private void CreateBackdropGlow(
+            string objectName,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            Color color,
+            float alphaRange,
+            float alphaSpeed,
+            float scaleSpeed)
+        {
+            if (ambientBackdropLayerRoot == null)
+            {
+                return;
+            }
+
+            GameObject glowObject = new GameObject($"UI_ModeSelectAmbientBackdrop{objectName}", typeof(RectTransform), typeof(Image));
+            glowObject.transform.SetParent(ambientBackdropLayerRoot, false);
+            glowObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = glowObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+
+            Image image = glowObject.GetComponent<Image>();
+            image.color = color;
+            image.raycastTarget = false;
+
+            ambientBackdropDecorations.Add(new AmbientBackdropDecoration
+            {
+                RectTransform = rectTransform,
+                Image = image,
+                BaseSize = size,
+                AnchoredPosition = anchoredPosition,
+                BaseAlpha = color.a,
+                AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                AlphaSpeed = alphaSpeed,
+                AlphaRange = alphaRange,
+                ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                ScaleSpeed = scaleSpeed
+            });
         }
 
         private void CreateAmbientMoldDecoration(
@@ -774,12 +915,19 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void AnimateAmbientMoldDecorations()
         {
-            if (!isActiveAndEnabled || ambientMoldDecorations.Count == 0)
+            if (!isActiveAndEnabled)
             {
                 return;
             }
 
             float time = Time.unscaledTime;
+            AnimateAmbientBackdropDecorations(time);
+
+            if (ambientMoldDecorations.Count == 0)
+            {
+                return;
+            }
+
             for (int i = 0; i < ambientMoldDecorations.Count; i++)
             {
                 AmbientMoldDecoration decoration = ambientMoldDecorations[i];
@@ -804,6 +952,29 @@ namespace FungusToast.Unity.UI.Campaign
                 Color color = decoration.Image.color;
                 color.a = AmbientMoldBaseAlpha + (alphaWave * AmbientMoldAlphaRange);
                 decoration.Image.color = color;
+            }
+        }
+
+        private void AnimateAmbientBackdropDecorations(float time)
+        {
+            for (int i = 0; i < ambientBackdropDecorations.Count; i++)
+            {
+                AmbientBackdropDecoration decoration = ambientBackdropDecorations[i];
+                if (decoration.Image == null || decoration.RectTransform == null)
+                {
+                    continue;
+                }
+
+                float alphaWave = 0.5f + (0.5f * Mathf.Sin(decoration.AlphaPhase + (time * decoration.AlphaSpeed)));
+                float scaleWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.ScaleSpeed));
+
+                Color color = decoration.Image.color;
+                color.a = decoration.BaseAlpha + (alphaWave * decoration.AlphaRange);
+                decoration.Image.color = color;
+
+                float scaleMultiplier = 1f + (scaleWave * AmbientBackdropGlowScalePulse);
+                decoration.RectTransform.sizeDelta = decoration.BaseSize * scaleMultiplier;
+                decoration.RectTransform.anchoredPosition = decoration.AnchoredPosition;
             }
         }
 
