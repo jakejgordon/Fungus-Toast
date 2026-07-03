@@ -1658,6 +1658,27 @@ namespace FungusToast.Unity
             TryStartQueuedDraftPhaseForCurrentRound();
         }
 
+        private IEnumerator StartImmediateTestingDraftAfterUiSettles()
+        {
+            // Mirror the working fast-forward timing: let gameplay UI finish its
+            // first-frame layout/fade work before opening the modal draft overlay.
+            yield return null;
+            yield return new WaitForEndOfFrame();
+            yield return StartCoroutine(fastForwardService.WaitForFadeInAnimationsToComplete(gridVisualizer));
+
+            if (Board == null
+                || !testingModeEnabled
+                || !testingHasMycovariantOverride
+                || testingSkipToEndgameAfterFastForward
+                || fastForwardRounds > 0
+                || isInDraftPhase)
+            {
+                yield break;
+            }
+
+            StartMycovariantDraftPhase();
+        }
+
         public void ResolveMycovariantDraftPick(Player player, Mycovariant picked)
         {
             player.AddMycovariant(picked);
@@ -2142,7 +2163,7 @@ namespace FungusToast.Unity
             gameUIManager.MoldProfileRoot?.RefreshRandomDecayChance();
             if (shouldStartImmediateTestingDraft)
             {
-                StartMycovariantDraftPhase();
+                StartCoroutine(StartImmediateTestingDraftAfterUiSettles());
             }
             else if (!(testingModeEnabled && (fastForwardRounds > 0 || testingHasMycovariantOverride)))
             {
