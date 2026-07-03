@@ -1,18 +1,19 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
-using FungusToast.Core.Mycovariants;
-using FungusToast.Core.Players;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FungusToast.Core.Growth;
 
 namespace FungusToast.Core.Mycovariants
 {
     public static class BallistosporeDischargeHelper
     {
+        private const int UnreachableDistanceBand = int.MaxValue;
+
         public static IReadOnlyList<int> SelectBallistosporeDischargeTargetTileIds(
             PlayerMycovariant playerMyco,
             GameBoard board,
@@ -46,28 +47,24 @@ namespace FungusToast.Core.Mycovariants
                 .Select(p => p.PlayerId)
                 .ToHashSet();
 
-            var targetTiles = emptyTiles
-                .Where(tile => board.GetOrthogonalNeighbors(tile.X, tile.Y)
-                    .Any(n => n.FungalCell != null
-                        && n.FungalCell.IsAlive
-                        && n.FungalCell.OwnerPlayerId != player.PlayerId
-                        && topPlayers.Contains(n.FungalCell.OwnerPlayerId ?? -1)))
+            var livingEnemyTiles = board.AllTiles()
+                .Where(tile =>
+                    tile.FungalCell != null &&
+                    tile.FungalCell.IsAlive &&
+                    tile.FungalCell.OwnerPlayerId != player.PlayerId &&
+                    topPlayers.Contains(tile.FungalCell.OwnerPlayerId ?? -1))
                 .ToList();
 
-            if (targetTiles.Count < maxSpores)
-            {
-                var extra = emptyTiles
-                    .Except(targetTiles)
-                    .OrderBy(_ => rng.Next())
-                    .Take(maxSpores - targetTiles.Count)
-                    .Select(tile => tile.TileId);
-                return targetTiles.Select(tile => tile.TileId).Concat(extra).ToList();
-            }
-
-            return targetTiles
-                .OrderBy(_ => rng.Next())
+            return emptyTiles
+                .Select(tile => new
+                {
+                    TileId = tile.TileId,
+                    DistanceBand = GetEnemyProximityBand(tile, livingEnemyTiles)
+                })
+                .OrderBy(entry => entry.DistanceBand)
+                .ThenBy(_ => rng.Next())
                 .Take(maxSpores)
-                .Select(tile => tile.TileId)
+                .Select(entry => entry.TileId)
                 .ToList();
         }
 
@@ -113,11 +110,48 @@ namespace FungusToast.Core.Mycovariants
             {
                 return;
             }
-            // Use custom duration for Ballistospore Discharge, with all bonuses
+
             int toxinLifespan = ToxinHelper.GetToxinExpirationAge(player, MycovariantGameBalance.BallistosporeDischargeToxinDuration);
             ToxinHelper.ConvertToToxin(board, tileId, toxinLifespan, GrowthSource.Ballistospore, player);
             playerMyco.IncrementEffectCount(MycovariantEffectType.Drops, 1);
             observer.RecordBallistosporeDischarge(player.PlayerId, 1);
+        }
+
+        private static int GetEnemyProximityBand(BoardTile tile, IReadOnlyCollection<BoardTile> livingEnemyTiles)
+        {
+            if (livingEnemyTiles.Count == 0)
+            {
+                return UnreachableDistanceBand;
+            }
+
+            int closestBand = UnreachableDistanceBand;
+            foreach (var enemyTile in livingEnemyTiles)
+            {
+                int dx = Math.Abs(tile.X - enemyTile.X);
+                int dy = Math.Abs(tile.Y - enemyTile.Y);
+
+                if (dx == 0 && dy == 0)
+                {
+                    continue;
+                }
+
+                int band = dx + dy == 1
+                    ? 0
+                    : dx == 1 && dy == 1
+                        ? 1
+                        : Math.Max(dx, dy);
+
+                if (band < closestBand)
+                {
+                    closestBand = band;
+                    if (closestBand == 0)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return closestBand;
         }
     }
 }
