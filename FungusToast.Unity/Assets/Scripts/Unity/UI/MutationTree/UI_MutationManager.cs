@@ -52,31 +52,31 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float StorePointsCoachmarkVerticalOffset = -12f;
 
         [Header("General UI References")]
-        [SerializeField] private MutationManager mutationManager;
-        [SerializeField] private GameObject mutationTreePanel;
-        [SerializeField] private Button spendPointsButton;
-        [SerializeField] private TextMeshProUGUI spendPointsButtonText;
-        [SerializeField] private Outline buttonOutline;
+        [SerializeField] private MutationManager mutationManager = null!;
+        [SerializeField] private GameObject mutationTreePanel = null!;
+        [SerializeField] private Button spendPointsButton = null!;
+        [SerializeField] private TextMeshProUGUI spendPointsButtonText = null!;
+        [SerializeField] private Outline buttonOutline = null!;
 
         [Header("Mold Icon Display")]
-        [SerializeField] private Image playerMoldIcon;
-        [SerializeField] private GridVisualizer gridVisualizer;
+        [SerializeField] private Image playerMoldIcon = null!;
+        [SerializeField] private GridVisualizer gridVisualizer = null!;
 
         [Header("Mutation Tree Dynamic UI")]
-        [SerializeField] private MutationTreeBuilder mutationTreeBuilder;
+        [SerializeField] private MutationTreeBuilder mutationTreeBuilder = null!;
 
         [Header("Dock")]
-        [SerializeField] private Button dockButton;
-        [SerializeField] private TextMeshProUGUI dockButtonText;
+        [SerializeField] private Button dockButton = null!;
+        [SerializeField] private TextMeshProUGUI dockButtonText = null!;
 
         [Header("UI Wiring")]
-        [SerializeField] private TextMeshProUGUI mutationPointsCounterText;
-        [SerializeField] private Button storePointsButton;
-        [SerializeField] private Sprite storePointsButtonIcon;
-        [SerializeField] private Sprite presentationSpeedButtonIcon;
-        [SerializeField] private AudioClip mutationUpgradeSuccessClip = null;
+        [SerializeField] private TextMeshProUGUI mutationPointsCounterText = null!;
+        [SerializeField] private Button storePointsButton = null!;
+        [SerializeField] private Sprite? storePointsButtonIcon;
+        [SerializeField] private Sprite? presentationSpeedButtonIcon;
+        [SerializeField] private AudioClip? mutationUpgradeSuccessClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
-        [SerializeField] private AudioClip mutationStorePointsClip = null;
+        [SerializeField] private AudioClip? mutationStorePointsClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationStorePointsVolume = 1f;
 
         [Header("Tree Sliding Settings")]
@@ -92,47 +92,47 @@ namespace FungusToast.Unity.UI.MutationTree
         [Tooltip("Stagger delay between each node shimmer when panel opens")]
         public float shimmerStaggerDelay = 0.03f;
 
-        private RectTransform mutationTreeRect;
-        private RectTransform parentRectTransform;
-        private RectTransform mutationScrollViewRect;
-        private RectTransform mutationViewportRect;
-        private RectTransform mutationScrollViewContentRect;
-        private Canvas rootCanvas;
+        private RectTransform mutationTreeRect = null!;
+        private RectTransform parentRectTransform = null!;
+        private RectTransform mutationScrollViewRect = null!;
+        private RectTransform mutationViewportRect = null!;
+        private RectTransform mutationScrollViewContentRect = null!;
+        private Canvas rootCanvas = null!;
         private Vector3 originalButtonScale;
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
         private bool hasDismissedAlphaMutationIntroThisGame;
         private bool hasDismissedTreeGuidanceThisGame;
-        private TooltipTrigger spendPointsTooltipTrigger;
-        private TooltipTrigger presentationSpeedTooltipTrigger;
-        private AudioSource soundEffectAudioSource;
-        private Button presentationSpeedButton;
-        private TextMeshProUGUI presentationSpeedButtonText;
-        private Image storePointsButtonIconImage;
-        private Image presentationSpeedButtonIconImage;
-        private RectTransform timeLapseCoachmarkRoot;
-        private CanvasGroup timeLapseCoachmarkCanvasGroup;
-        private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel;
-        private TextMeshProUGUI timeLapseCoachmarkBodyTextLabel;
-        private Button timeLapseCoachmarkCloseButton;
-        private RectTransform storePointsCoachmarkRoot;
-        private CanvasGroup storePointsCoachmarkCanvasGroup;
-        private TextMeshProUGUI storePointsCoachmarkTitleTextLabel;
-        private TextMeshProUGUI storePointsCoachmarkBodyTextLabel;
-        private Button storePointsCoachmarkCloseButton;
-        private RectTransform headerControlsRowRect;
-        private RectTransform headerLeftSlotRect;
-        private RectTransform headerCenterSlotRect;
-        private RectTransform headerRightSlotRect;
+        private TooltipTrigger spendPointsTooltipTrigger = null!;
+        private TooltipTrigger presentationSpeedTooltipTrigger = null!;
+        private AudioSource soundEffectAudioSource = null!;
+        private Button presentationSpeedButton = null!;
+        private TextMeshProUGUI presentationSpeedButtonText = null!;
+        private Image storePointsButtonIconImage = null!;
+        private Image presentationSpeedButtonIconImage = null!;
+        private RectTransform timeLapseCoachmarkRoot = null!;
+        private CanvasGroup timeLapseCoachmarkCanvasGroup = null!;
+        private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel = null!;
+        private TextMeshProUGUI timeLapseCoachmarkBodyTextLabel = null!;
+        private Button timeLapseCoachmarkCloseButton = null!;
+        private RectTransform storePointsCoachmarkRoot = null!;
+        private CanvasGroup storePointsCoachmarkCanvasGroup = null!;
+        private TextMeshProUGUI storePointsCoachmarkTitleTextLabel = null!;
+        private TextMeshProUGUI storePointsCoachmarkBodyTextLabel = null!;
+        private Button storePointsCoachmarkCloseButton = null!;
+        private RectTransform headerControlsRowRect = null!;
+        private RectTransform headerLeftSlotRect = null!;
+        private RectTransform headerCenterSlotRect = null!;
+        private RectTransform headerRightSlotRect = null!;
 
-        private Player humanPlayer;
+        private Player? humanPlayer;
         private bool humanTurnEnded = false;
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
-        private Mutation hoveredMutation;
-        private Player hoveredMutationPlayer;
-        private PendingTargetedSurgeSelection pendingTargetedSurgeSelection;
+        private Mutation? hoveredMutation;
+        private Player? hoveredMutationPlayer;
+        private PendingTargetedSurgeSelection? pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
         private int lastKnownScreenHeight = -1;
@@ -859,7 +859,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 yield break;
             }
             // Single human: go straight to AI spending
-            GameManager.Instance.SpendAllMutationPointsForAIPlayers();
+            var gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.SpendAllMutationPointsForAIPlayers();
+            }
         }
 
         public void RefreshAllMutationButtons()
@@ -926,7 +930,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationAvailabilityBoardSummaries);
         }
 
-        public Mutation GetMutationById(int id)
+        public Mutation? GetMutationById(int id)
         {
             return mutationManager?.GetMutationById(id);
         }
@@ -1102,7 +1106,7 @@ namespace FungusToast.Unity.UI.MutationTree
             float topInset = 0f;
             for (int i = 0; i < mutationTreeRect.childCount; i++)
             {
-                RectTransform child = mutationTreeRect.GetChild(i) as RectTransform;
+                RectTransform? child = mutationTreeRect.GetChild(i) as RectTransform;
                 if (child == null || child == mutationScrollViewRect)
                 {
                     continue;
@@ -1154,7 +1158,7 @@ namespace FungusToast.Unity.UI.MutationTree
             return legacyInset;
         }
 
-        private static bool TryGetTopInsetForRect(RectTransform rectTransform, float fallbackHeight, out float topInset)
+        private static bool TryGetTopInsetForRect(RectTransform? rectTransform, float fallbackHeight, out float topInset)
         {
             topInset = 0f;
             if (rectTransform == null || !rectTransform.gameObject.activeInHierarchy)
@@ -1190,18 +1194,18 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            mutationTreeRect ??= mutationTreePanel.GetComponent<RectTransform>();
-            parentRectTransform ??= mutationTreeRect?.parent as RectTransform;
-            rootCanvas ??= mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas;
+            mutationTreeRect ??= mutationTreePanel.GetComponent<RectTransform>()!;
+            parentRectTransform ??= (mutationTreeRect.parent as RectTransform)!;
+            rootCanvas ??= mutationTreeRect.GetComponentInParent<Canvas>()?.rootCanvas!;
 
             if (mutationTreeRect == null)
             {
                 return;
             }
 
-            mutationScrollViewRect ??= mutationTreeRect.Find("UI_MutationScrollView") as RectTransform;
-            mutationViewportRect ??= mutationScrollViewRect?.Find("UI_MutationViewport") as RectTransform;
-            mutationScrollViewContentRect ??= mutationViewportRect?.Find("UI_MutationScrollViewContent") as RectTransform;
+            mutationScrollViewRect ??= (mutationTreeRect.Find("UI_MutationScrollView") as RectTransform)!;
+            mutationViewportRect ??= (mutationScrollViewRect?.Find("UI_MutationViewport") as RectTransform)!;
+            mutationScrollViewContentRect ??= (mutationViewportRect?.Find("UI_MutationScrollViewContent") as RectTransform)!;
         }
 
         private void ConfigureMutationPanelRect(float targetWidth)
@@ -1490,7 +1494,7 @@ namespace FungusToast.Unity.UI.MutationTree
         //  Projected cost display on hover
         // ═══════════════════════════════════════════════════════════════
 
-        private string basePointsText;
+        private string? basePointsText;
 
         /// <summary>
         /// Shows a projected "→ N" next to the mutation points counter when hovering a node.
@@ -1563,8 +1567,8 @@ namespace FungusToast.Unity.UI.MutationTree
             buttonObject.name = "PhaseSpeedButton";
             buttonObject.transform.SetSiblingIndex(templateButton.transform.GetSiblingIndex() + 1);
 
-            presentationSpeedButton = buttonObject.GetComponent<Button>();
-            presentationSpeedButtonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>(true);
+            presentationSpeedButton = buttonObject.GetComponent<Button>()!;
+            presentationSpeedButtonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>(true)!;
 
             presentationSpeedButton.onClick.RemoveAllListeners();
             presentationSpeedButton.onClick.AddListener(OnPresentationSpeedButtonClicked);
@@ -1687,8 +1691,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void MoveLabelToHeaderLeftSlot()
         {
-            var labelRect = mutationPointsCounterText != null ? mutationPointsCounterText.rectTransform : null;
-            if (labelRect == null || headerLeftSlotRect == null)
+            var label = mutationPointsCounterText;
+            var labelRect = label != null ? label.rectTransform : null;
+            if (labelRect == null || headerLeftSlotRect == null || label == null)
             {
                 return;
             }
@@ -1699,10 +1704,10 @@ namespace FungusToast.Unity.UI.MutationTree
             labelRect.pivot = new Vector2(0f, 0.5f);
             labelRect.anchoredPosition = Vector2.zero;
             labelRect.sizeDelta = Vector2.zero;
-            mutationPointsCounterText.alignment = TextAlignmentOptions.MidlineLeft;
-            mutationPointsCounterText.enableAutoSizing = false;
-            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(mutationPointsCounterText);
-            mutationPointsCounterText.raycastTarget = false;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.enableAutoSizing = false;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(label);
+            label.raycastTarget = false;
         }
 
         private void MoveButtonToHeaderCenterSlot(Button button)
@@ -1791,7 +1796,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            GameManager gameManager = GameManager.Instance;
+            var gameManager = GameManager.Instance;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
             int currentRound = gameManager?.Board?.CurrentRound ?? 0;
             bool shouldShowAlphaMutationIntro = NewPlayerTooltipRules.ShouldQueueAlphaMutationPhaseIntro(
@@ -1927,7 +1932,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            Transform parent = rootCanvas != null
+            Transform? parent = rootCanvas != null
                 ? rootCanvas.transform
                 : mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas?.transform;
             if (parent == null)
@@ -2044,7 +2049,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            Transform parent = rootCanvas != null
+            Transform? parent = rootCanvas != null
                 ? rootCanvas.transform
                 : mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas?.transform;
             if (parent == null)
@@ -2156,9 +2161,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void PositionTimeLapseCoachmark()
         {
-            RectTransform anchorRect = presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null;
-            RectTransform parentRect = timeLapseCoachmarkRoot != null ? timeLapseCoachmarkRoot.parent as RectTransform : null;
-            Canvas canvas = rootCanvas != null ? rootCanvas.rootCanvas : presentationSpeedButton?.GetComponentInParent<Canvas>()?.rootCanvas;
+            RectTransform? anchorRect = presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null;
+            RectTransform? parentRect = timeLapseCoachmarkRoot != null ? timeLapseCoachmarkRoot.parent as RectTransform : null;
+            Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : presentationSpeedButton?.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null || timeLapseCoachmarkRoot == null)
             {
                 return;
@@ -2181,9 +2186,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void PositionStorePointsCoachmark()
         {
-            RectTransform anchorRect = storePointsButton != null ? storePointsButton.transform as RectTransform : null;
-            RectTransform parentRect = storePointsCoachmarkRoot != null ? storePointsCoachmarkRoot.parent as RectTransform : null;
-            Canvas canvas = rootCanvas != null ? rootCanvas.rootCanvas : storePointsButton?.GetComponentInParent<Canvas>()?.rootCanvas;
+            RectTransform? anchorRect = storePointsButton != null ? storePointsButton.transform as RectTransform : null;
+            RectTransform? parentRect = storePointsCoachmarkRoot != null ? storePointsCoachmarkRoot.parent as RectTransform : null;
+            Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : storePointsButton?.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null || storePointsCoachmarkRoot == null)
             {
                 return;
@@ -2538,7 +2543,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private RectTransform GetHeaderActionButtonContentRoot(Button button)
+        private RectTransform? GetHeaderActionButtonContentRoot(Button button)
         {
             if (button == null)
             {
@@ -2560,13 +2565,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 ?.GetComponent<RectTransform>();
         }
 
-        private TextMeshProUGUI ConfigureHeaderActionButtonContent(
+        private TextMeshProUGUI? ConfigureHeaderActionButtonContent(
             Button button,
-            ref Image iconImage,
+            ref Image? iconImage,
             string labelText,
             string contentRootName,
             string iconObjectName,
-            Sprite iconSprite,
+            Sprite? iconSprite,
             Color labelColor,
             Color iconColor)
         {
@@ -2657,11 +2662,11 @@ namespace FungusToast.Unity.UI.MutationTree
             return label;
         }
 
-        private Image EnsureHeaderActionButtonIcon(
+        private Image? EnsureHeaderActionButtonIcon(
             RectTransform contentRoot,
             string iconObjectName,
-            Image existingIconImage,
-            Sprite iconSprite,
+            Image? existingIconImage,
+            Sprite? iconSprite,
             Color iconColor)
         {
             if (contentRoot == null)
@@ -2972,7 +2977,7 @@ namespace FungusToast.Unity.UI.MutationTree
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, PresentationSpeedButtonMinHeight);
         }
 
-        private static void ForceLayoutRebuild(RectTransform rowRect)
+        private static void ForceLayoutRebuild(RectTransform? rowRect)
         {
             if (rowRect == null)
             {
