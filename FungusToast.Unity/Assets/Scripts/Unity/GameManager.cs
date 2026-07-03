@@ -1578,7 +1578,7 @@ namespace FungusToast.Unity
                 humanTurnBannerText,
                 aiTurnBannerPrefix);
             bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
-            if (!suppressIntroFeedback && countsTowardRoundCompletion && testingModeEnabled)
+            if (!suppressIntroFeedback && countsTowardRoundCompletion && testingHasMycovariantOverride)
             {
                 int? testingMycovariantOverride = TestingMycovariantIdOrNull;
                 var tMyco = testingMycovariantOverride.HasValue

@@ -1326,8 +1326,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private void ShowDraftUI()
         {
             draftPanel.SetActive(true);
+            draftPanel.transform.SetAsLastSibling();
             if (draftMessagePanel != null)
+            {
                 draftMessagePanel.SetActive(true);
+                draftMessagePanel.transform.SetAsLastSibling();
+            }
             interactionBlocker.blocksRaycasts = true;
             interactionBlocker.alpha = 0.8f;
             uiState = DraftUIState.Idle;
