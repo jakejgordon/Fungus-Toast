@@ -1363,8 +1363,8 @@ namespace FungusToast.Unity.Grid
             RefreshMoldIdleCacheForTile(tileId);
         }
 
-        public void CaptureCurrentTileVisualSnapshot(int tileId)
-            => cellStateAnimationController?.CaptureCurrentTileVisualSnapshot(tileId);
+        public bool CaptureCurrentTileVisualSnapshot(int tileId)
+            => cellStateAnimationController?.CaptureCurrentTileVisualSnapshot(tileId) == true;
 
         public void RenderCapturedTileVisualSnapshot(int tileId)
         {
