@@ -44,6 +44,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const float AmbientEncroachmentAlphaRange = 0.026f;
         private const float AmbientEncroachmentScalePulse = 0.045f;
         private const float AmbientEncroachmentDriftDistance = 6f;
+        private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
+        private const float AmbientEncroachmentRevealWindowSeconds = 10f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -105,6 +107,7 @@ namespace FungusToast.Unity.UI.Campaign
         private RectTransform ambientMoldLayerRoot;
         private readonly List<AmbientBackdropDecoration> ambientBackdropDecorations = new();
         private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
+        private float ambientSequenceStartTime = -1f;
 
         private sealed class AmbientBackdropDecoration
         {
@@ -141,6 +144,8 @@ namespace FungusToast.Unity.UI.Campaign
             public bool IsEncroachment;
             public float GrowthPhase;
             public float GrowthSpeed;
+            public float RevealDelay;
+            public float RevealDuration;
         }
 
         private void Awake()
@@ -242,6 +247,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
             if (campaignPanel != null) campaignPanel.SetActive(false);
 
+            ambientSequenceStartTime = Time.unscaledTime;
             RefreshAmbientMoldDecorations();
             RefreshResponsiveLayout();
             TryShowPendingCompatibilityNotice();
@@ -783,7 +789,9 @@ namespace FungusToast.Unity.UI.Campaign
                 DriftDistance = AmbientMoldDriftDistance,
                 RotationAmplitude = 3f,
                 GrowthPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
-                GrowthSpeed = 0f
+                GrowthSpeed = 0f,
+                RevealDelay = 0f,
+                RevealDuration = 0f
             });
         }
 
@@ -813,6 +821,10 @@ namespace FungusToast.Unity.UI.Campaign
             decoration.PulseSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
             decoration.AlphaSpeed = UnityEngine.Random.Range(0.07f, 0.11f);
             decoration.BaseScale = UnityEngine.Random.Range(0.82f, 0.94f);
+            decoration.RevealDelay = UnityEngine.Random.Range(
+                AmbientEncroachmentRevealLeadInSeconds,
+                AmbientEncroachmentRevealLeadInSeconds + (AmbientEncroachmentRevealWindowSeconds * 0.55f));
+            decoration.RevealDuration = UnityEngine.Random.Range(2.8f, 4.4f);
         }
 
         private void RefreshAmbientMoldDecorations()
@@ -846,6 +858,10 @@ namespace FungusToast.Unity.UI.Campaign
                     decoration.PulseSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
                     decoration.AlphaSpeed = UnityEngine.Random.Range(0.07f, 0.11f);
                     decoration.GrowthSpeed = UnityEngine.Random.Range(0.03f, 0.05f);
+                    decoration.RevealDelay = UnityEngine.Random.Range(
+                        AmbientEncroachmentRevealLeadInSeconds,
+                        AmbientEncroachmentRevealLeadInSeconds + (AmbientEncroachmentRevealWindowSeconds * 0.55f));
+                    decoration.RevealDuration = UnityEngine.Random.Range(2.8f, 4.4f);
                 }
                 else
                 {
@@ -853,6 +869,8 @@ namespace FungusToast.Unity.UI.Campaign
                     decoration.PulseSpeed = UnityEngine.Random.Range(0.18f, 0.28f);
                     decoration.AlphaSpeed = UnityEngine.Random.Range(0.12f, 0.18f);
                     decoration.GrowthSpeed = 0f;
+                    decoration.RevealDelay = 0f;
+                    decoration.RevealDuration = 0f;
                 }
 
                 decoration.ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
@@ -928,6 +946,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             float time = Time.unscaledTime;
+            float elapsed = ambientSequenceStartTime < 0f ? 0f : Mathf.Max(0f, time - ambientSequenceStartTime);
 
             if (ambientMoldDecorations.Count == 0)
             {
@@ -949,8 +968,9 @@ namespace FungusToast.Unity.UI.Campaign
                 float growthWave = decoration.GrowthSpeed > 0f
                     ? 0.5f + (0.5f * Mathf.Sin(decoration.GrowthPhase + (time * decoration.GrowthSpeed)))
                     : 1f;
+                float revealMultiplier = GetAmbientDecorationRevealMultiplier(decoration, elapsed);
 
-                rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * decoration.DriftDistance * growthWave));
+                rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * decoration.DriftDistance * growthWave * Mathf.Lerp(0.7f, 1f, revealMultiplier)));
                 float scale = decoration.BaseScale + (pulseWave * decoration.ScalePulse) + (decoration.IsEncroachment ? growthWave * 0.035f : 0f);
                 rectTransform.localScale = new Vector3(
                     decoration.FlipX ? -scale : scale,
@@ -959,9 +979,22 @@ namespace FungusToast.Unity.UI.Campaign
                 rectTransform.localRotation = Quaternion.Euler(0f, 0f, decoration.Rotation + (pulseWave * decoration.RotationAmplitude));
 
                 Color color = decoration.Image.color;
-                color.a = decoration.BaseAlpha + (alphaWave * decoration.AlphaRange * growthWave);
+                color.a = (decoration.BaseAlpha + (alphaWave * decoration.AlphaRange * growthWave)) * revealMultiplier;
                 decoration.Image.color = color;
             }
+        }
+
+        private static float GetAmbientDecorationRevealMultiplier(AmbientMoldDecoration decoration, float elapsed)
+        {
+            if (!decoration.IsEncroachment)
+            {
+                return 1f;
+            }
+
+            float revealDuration = Mathf.Max(0.01f, decoration.RevealDuration);
+            float progress = Mathf.Clamp01((elapsed - decoration.RevealDelay) / revealDuration);
+            float easedProgress = Mathf.SmoothStep(0f, 1f, progress);
+            return Mathf.Lerp(0.04f, 1f, easedProgress);
         }
 
         private void RefreshCampaignButtonState()

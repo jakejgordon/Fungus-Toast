@@ -40,6 +40,7 @@ Use the following minimal workflow to preserve working memory across sessions:
    - The ambient mold layer is now in place inside `UI_ModeSelectPanelController` and has been tuned once to feel less like repeated stickers: colonies now sample multiple sprites from one random mold family, sit more offscreen at the edges, and animate with lighter motion/opacity.
    - The backdrop pass has been softened back down to mostly faint edge shading after the larger glow plates read too boxy on-screen.
    - A second ultra-subtle encroachment ring now uses the same mold family art nearer the center margins with very low alpha, slight drift, and slow fade/scale breathing so the menu feels alive without putting mold over the main buttons.
+   - Those inner colonies now stagger their fade-in over the opening several seconds so the empty middle margins gradually feel more claimed instead of fully static from frame one.
    - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
 ## Pending Tasks
@@ -51,5 +52,5 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Next Handoff
 
 - The implementation remains intentionally scoped to `UI_ModeSelectPanelController`, so more tuning can happen without scene or asset-pipeline churn.
-- In Unity, check the home screen at a few aspect ratios and confirm the restored perimeter motion plus faint center-encroachment layer feel alive while still staying out of the button lane.
+- In Unity, check the home screen at a few aspect ratios and confirm the restored perimeter motion plus staggered center-encroachment fade-ins feel alive while still staying out of the button lane.
 - Only consider spores or particles if the sprite-only pass still feels dead after the current variation work; they are not the default next step.
