@@ -346,7 +346,12 @@ namespace FungusToast.Core.Players
             return true;
         }
 
-        public bool TryUpgradeMutation(Mutation mutation, ISimulationObserver simulationObserver, int currentRound)
+        public bool TryUpgradeMutation(
+            Mutation mutation,
+            ISimulationObserver simulationObserver,
+            int currentRound,
+            GameBoard? board = null,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
         {
             if (mutation == null) return false;
 
@@ -367,57 +372,51 @@ namespace FungusToast.Core.Players
             if (mutation.Prerequisites.Count > 0 && !prereqsMet)
                 return false;
 
+            if (!CanUpgrade(mutation, currentRound, board, boardSummaries))
+                return false;
+
             if (mutation.IsSurge)
             {
                 return TryActivateSurgeInternal(mutation, simulationObserver, currentRound, reservedActivationCost: null);
             }
             else
             {
-                // Standard mutation upgrade
-                if (MutationPoints >= mutation.PointsPerUpgrade && pm.CurrentLevel < mutation.MaxLevel)
+                int oldLevel = pm.CurrentLevel;
+                int mutationPointsBefore = MutationPoints;
+                MutationPoints -= mutation.PointsPerUpgrade;
+                pm.Upgrade(currentRound);
+                int newLevel = pm.CurrentLevel;
+                TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
+
+                // --- Set PrereqMetRound on dependents ---
+                foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
                 {
-                    // Enforce one-round delay after prereqs met (only for non-root mutations)
-                    if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
-                        return false;
-
-                    int oldLevel = pm.CurrentLevel;
-                    int mutationPointsBefore = MutationPoints;
-                    MutationPoints -= mutation.PointsPerUpgrade;
-                    pm.Upgrade(currentRound);
-                    int newLevel = pm.CurrentLevel;
-                    TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
-
-                    // --- Set PrereqMetRound on dependents ---
-                    foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
+                    if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
                     {
-                        if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
-                        {
-                            if (!PlayerMutations.ContainsKey(dependent.Id))
-                                PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                            var depPlayerMutation = PlayerMutations[dependent.Id];
-                            bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                            if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                                depPlayerMutation.PrereqMetRound = currentRound;
-                        }
+                        if (!PlayerMutations.ContainsKey(dependent.Id))
+                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+                        var depPlayerMutation = PlayerMutations[dependent.Id];
+                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
+                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
+                            depPlayerMutation.PrereqMetRound = currentRound;
                     }
-
-                    simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
-                    simulationObserver.RecordMutationUpgradeEvent(
-                        playerId: PlayerId,
-                        mutationId: mutation.Id,
-                        mutationName: mutation.Name,
-                        mutationTier: mutation.Tier,
-                        oldLevel: oldLevel,
-                        newLevel: newLevel,
-                        round: currentRound,
-                        mutationPointsBefore: mutationPointsBefore,
-                        mutationPointsAfter: MutationPoints,
-                        pointsSpent: mutation.PointsPerUpgrade,
-                        upgradeSource: "manual");
-                    MutationsChanged?.Invoke(this);
-                    return true;
                 }
-                return false;
+
+                simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
+                simulationObserver.RecordMutationUpgradeEvent(
+                    playerId: PlayerId,
+                    mutationId: mutation.Id,
+                    mutationName: mutation.Name,
+                    mutationTier: mutation.Tier,
+                    oldLevel: oldLevel,
+                    newLevel: newLevel,
+                    round: currentRound,
+                    mutationPointsBefore: mutationPointsBefore,
+                    mutationPointsAfter: MutationPoints,
+                    pointsSpent: mutation.PointsPerUpgrade,
+                    upgradeSource: "manual");
+                MutationsChanged?.Invoke(this);
+                return true;
             }
         }
 
@@ -435,7 +434,7 @@ namespace FungusToast.Core.Players
 
             if (mutation.Id != MutationIds.ChemotacticBeacon)
             {
-                return TryUpgradeMutation(mutation, simulationObserver, currentRound);
+                return TryUpgradeMutation(mutation, simulationObserver, currentRound, board);
             }
 
             if (!board.IsTileOpenForChemobeacon(targetTileId))
@@ -443,7 +442,7 @@ namespace FungusToast.Core.Players
                 return false;
             }
 
-            if (!TryUpgradeMutation(mutation, simulationObserver, currentRound))
+            if (!TryUpgradeMutation(mutation, simulationObserver, currentRound, board))
             {
                 return false;
             }
@@ -477,7 +476,11 @@ namespace FungusToast.Core.Players
             return board.TryPlaceChemobeacon(PlayerId, targetTileId, mutation.Id, GetSurgeDuration(mutation));
         }
 
-        public bool CanUpgrade(Mutation mut, int currentRound)
+        public bool CanUpgrade(
+            Mutation mut,
+            int currentRound,
+            GameBoard? board = null,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
         {
             if (mut == null) return false;
 
@@ -496,9 +499,28 @@ namespace FungusToast.Core.Players
 
             // Enforce one-round delay after prereqs met (only for non-root mutations)
             if (mut.Prerequisites.Count > 0 && PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
-            return false;
+                return false;
 
-            return MutationPoints >= cost && currentLevel < mut.MaxLevel;
+            if (MutationPoints < cost || currentLevel >= mut.MaxLevel)
+                return false;
+
+            if (mut.Id == MutationIds.MimeticResilience)
+            {
+                if (board == null)
+                    return false;
+
+                return MycelialSurgeMutationProcessor.HasMimeticResilienceEligibleTargets(this, board.Players, board, boardSummaries);
+            }
+
+            if (mut.Id == MutationIds.CompetitiveAntagonism)
+            {
+                if (board == null)
+                    return false;
+
+                return MycelialSurgeMutationProcessor.HasCompetitiveAntagonismEligibleTargets(this, board.Players, board, boardSummaries);
+            }
+
+            return true;
         }
 
         /* ---------------- Bonus MP & auto-upgrade ------------- */

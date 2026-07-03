@@ -9,6 +9,30 @@ namespace FungusToast.Core.Tests.Mutations;
 public class MimeticResilienceTargetingTests
 {
     [Fact]
+    public void HasEligibleTargets_returns_false_when_no_rival_meets_thresholds()
+    {
+        var board = CreateBoardWithPlayers(out var actingPlayer, out var opponentA, out _);
+        SeedLivingCells(board, actingPlayer, new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        SeedLivingCells(board, opponentA, new[] { 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 });
+
+        bool hasEligibleTargets = MycelialSurgeMutationProcessor.HasMimeticResilienceEligibleTargets(actingPlayer, board.Players, board);
+
+        Assert.False(hasEligibleTargets);
+    }
+
+    [Fact]
+    public void HasEligibleTargets_returns_true_when_a_rival_meets_thresholds()
+    {
+        var board = CreateBoardWithPlayers(out var actingPlayer, out _, out var opponentB);
+        SeedLivingCells(board, actingPlayer, new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+        SeedLivingCells(board, opponentB, new[] { 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51 });
+
+        bool hasEligibleTargets = MycelialSurgeMutationProcessor.HasMimeticResilienceEligibleTargets(actingPlayer, board.Players, board);
+
+        Assert.True(hasEligibleTargets);
+    }
+
+    [Fact]
     public void FindTargets_excludes_players_with_less_than_twenty_percent_more_living_cells()
     {
         var board = CreateBoardWithPlayers(out var actingPlayer, out var opponentA, out var opponentB);
@@ -87,7 +111,7 @@ public class MimeticResilienceTargetingTests
     {
         var method = typeof(MycelialSurgeMutationProcessor).GetMethod("FindMimeticResilienceTargets_New", BindingFlags.Static | BindingFlags.NonPublic);
         Assert.NotNull(method);
-        var result = method!.Invoke(null, new object[] { actingPlayer, players, board });
+        var result = method!.Invoke(null, new object?[] { actingPlayer, players, board, null });
         return Assert.IsType<List<Player>>(result);
     }
 

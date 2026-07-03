@@ -149,11 +149,11 @@ namespace FungusToast.Core.AI
         }
 
         // ==== NEW: Get Economy Mutations for Early Game ====
-        private List<Mutation> GetEarlyGameEconomyMutations(List<Mutation> allMutations, Player player, int currentRound)
+        private List<Mutation> GetEarlyGameEconomyMutations(List<Mutation> allMutations, Player player, GameBoard board, int currentRound)
         {
             return allMutations
                 .Where(m => ShouldPrioritizeEconomyMutation(m, GetCurrentPhase(currentRound)) &&
-                           player.CanUpgrade(m, currentRound) &&
+                           player.CanUpgrade(m, currentRound, board) &&
                            (int)m.Tier <= (int)maxTier)
                 .ToList();
         }
@@ -284,13 +284,13 @@ namespace FungusToast.Core.AI
             // ==== NEW: Early Game Economy Priority ====
             if (currentPhase == GamePhase.EarlyGame)
             {
-                var economyMutations = GetEarlyGameEconomyMutations(allMutations, player, board.CurrentRound);
+                var economyMutations = GetEarlyGameEconomyMutations(allMutations, player, board, board.CurrentRound);
                 if (economyMutations.Count > 0)
                 {
                     // Prioritize economy mutations in early game
                     foreach (var economyMutation in economyMutations)
                     {
-                        if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation, board.CurrentRound))
+                        if (player.MutationPoints > 0 && player.CanUpgrade(economyMutation, board.CurrentRound, board))
                         {
                             if (MutationSpendingHelper.TryUpgradeWithTargeting(player, economyMutation, board, simulationObserver, board.CurrentRound))
                             {
@@ -354,7 +354,7 @@ namespace FungusToast.Core.AI
                         // If there's no next mutation, this is the final target, so don't bank
                     }
 
-                    while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation, board.CurrentRound))
+                    while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation, board.CurrentRound, board))
                     {
                         if (MutationSpendingHelper.TryUpgradeWithTargeting(player, mutation, board, simulationObserver, board.CurrentRound))
                         {
@@ -378,11 +378,11 @@ namespace FungusToast.Core.AI
                 }
 
                 // Now try to upgrade the actual target mutation
-                if (player.CanUpgrade(targetMutation, board.CurrentRound))
+                if (player.CanUpgrade(targetMutation, board.CurrentRound, board))
                 {
                     while (player.GetMutationLevel(targetMutation.Id) < goalTargetLevel && 
                            player.MutationPoints > 0 && 
-                           player.CanUpgrade(targetMutation, board.CurrentRound))
+                           player.CanUpgrade(targetMutation, board.CurrentRound, board))
                     {
                         if (MutationSpendingHelper.TryUpgradeWithTargeting(player, targetMutation, board, simulationObserver, board.CurrentRound))
                         {
@@ -499,7 +499,7 @@ namespace FungusToast.Core.AI
                     continue;
                 }
 
-                if (!player.CanUpgrade(surge, board.CurrentRound))
+                if (!player.CanUpgrade(surge, board.CurrentRound, board))
                 {
                     continue;
                 }
@@ -643,7 +643,7 @@ namespace FungusToast.Core.AI
             // Burn off leftovers if any upgradable mutations remain (should almost never be necessary)
             while (player.MutationPoints > 0)
             {
-                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound)).ToList();
+                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound, board)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
                 MutationSpendingHelper.TryUpgradeWithTargeting(player, anyUpgradable[0], board, simulationObserver, board.CurrentRound);
@@ -662,7 +662,7 @@ namespace FungusToast.Core.AI
                 var candidates = allMutations
                     .Where(m => m.Category == category
                                 && (int)m.Tier <= (int)maxTier
-                                && player.CanUpgrade(m, board.CurrentRound))
+                                && player.CanUpgrade(m, board.CurrentRound, board))
                     .ToList();
 
                 if (TrySpendWithinCategory(player, board, candidates, simulationObserver))
@@ -679,7 +679,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver simulationObserver)
         {
             var fallbackCandidates = allMutations
-                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound))
+                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound, board))
                 .ToList();
 
             return TrySpendWithinCategory(player, board, fallbackCandidates, simulationObserver);
@@ -697,7 +697,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver simulationObserver)
         {
             var upgradable = allMutations
-                .Where(m => player.CanUpgrade(m, board.CurrentRound) && (int)m.Tier <= (int)maxTier)
+                .Where(m => player.CanUpgrade(m, board.CurrentRound, board) && (int)m.Tier <= (int)maxTier)
                 .ToList();
 
             if (upgradable.Count == 0)

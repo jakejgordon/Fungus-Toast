@@ -289,20 +289,40 @@ namespace FungusToast.Core.Phases
         /// <summary>
         /// New target selection helper for updated Mimetic Resilience logic.
         /// </summary>
-        private static List<Player> FindMimeticResilienceTargets_New(Player actingPlayer, List<Player> players, GameBoard board)
+        public static bool HasMimeticResilienceEligibleTargets(
+            Player actingPlayer,
+            List<Player> players,
+            GameBoard board,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
         {
+            return FindMimeticResilienceTargets_New(actingPlayer, players, board, boardSummaries).Count > 0;
+        }
+
+        private static List<Player> FindMimeticResilienceTargets_New(
+            Player actingPlayer,
+            List<Player> players,
+            GameBoard board,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
+        {
+            boardSummaries ??= BoardUtilities.GetPlayerBoardSummaries(players, board);
             float advantageThreshold = 1f + GameBalance.MimeticResilienceMinimumCellAdvantageThreshold;
             float controlThreshold = GameBalance.MimeticResilienceMinimumBoardControlThreshold;
-            int actingLiving = board.GetAllCellsOwnedBy(actingPlayer.PlayerId).Count(c => c.IsAlive);
+            if (!boardSummaries.TryGetValue(actingPlayer.PlayerId, out var actingSummary))
+                return new List<Player>();
+
+            int actingLiving = actingSummary.LivingCells;
             int totalTiles = board.Width * board.Height;
             var result = new List<Player>();
             foreach (var p in players)
             {
                 if (p.PlayerId == actingPlayer.PlayerId) continue;
-                int oppLiving = board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive);
+                if (!boardSummaries.TryGetValue(p.PlayerId, out var opponentSummary))
+                    continue;
+
+                int oppLiving = opponentSummary.LivingCells;
                 if (oppLiving <= 0) continue;
                 if (actingLiving > 0 && oppLiving < actingLiving * advantageThreshold) continue;
-                int oppControlled = board.GetAllCellsOwnedBy(p.PlayerId).Count;
+                int oppControlled = opponentSummary.OwnedCells;
                 float controlFrac = (float)oppControlled / totalTiles;
                 if (controlFrac < controlThreshold) continue;
                 result.Add(p);
@@ -314,11 +334,25 @@ namespace FungusToast.Core.Phases
         /// Gets the list of players that should be prioritized for targeting based on colony size.
         /// Returns players ordered by living cell count (descending), excluding the requesting player.
         /// </summary>
-        public static List<Player> GetCompetitiveAntagonismTargets(Player requestingPlayer, List<Player> allPlayers, GameBoard board)
+        public static bool HasCompetitiveAntagonismEligibleTargets(
+            Player requestingPlayer,
+            List<Player> allPlayers,
+            GameBoard board,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
         {
+            return GetCompetitiveAntagonismTargets(requestingPlayer, allPlayers, board, boardSummaries).Count > 0;
+        }
+
+        public static List<Player> GetCompetitiveAntagonismTargets(
+            Player requestingPlayer,
+            List<Player> allPlayers,
+            GameBoard board,
+            IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
+        {
+            boardSummaries ??= BoardUtilities.GetPlayerBoardSummaries(allPlayers, board);
             var playerCellCounts = allPlayers.ToDictionary(
                 p => p.PlayerId,
-                p => board.GetAllCellsOwnedBy(p.PlayerId).Count(c => c.IsAlive)
+                p => boardSummaries.TryGetValue(p.PlayerId, out var summary) ? summary.LivingCells : 0
             );
 
             int requestingPlayerCells = playerCellCounts[requestingPlayer.PlayerId];

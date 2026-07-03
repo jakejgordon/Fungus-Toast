@@ -11,6 +11,7 @@ namespace FungusToast.Core.Board
         public int ResistantCells { get; }
         public int DeadCells { get; }
         public int ToxinCells { get; }
+        public int OwnedCells => LivingCells + DeadCells + ToxinCells;
 
         public PlayerBoardSummary(int playerId, int livingCells, int resistantCells, int deadCells, int toxinCells)
         {

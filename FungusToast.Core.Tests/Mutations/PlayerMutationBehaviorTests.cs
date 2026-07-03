@@ -1,4 +1,5 @@
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -125,6 +126,86 @@ public class PlayerMutationBehaviorTests
     }
 
     [Fact]
+    public void CanUpgrade_returns_false_for_mimetic_resilience_when_no_rival_meets_thresholds()
+    {
+        var board = CreateMimeticResilienceBoard(out var player, out _);
+        var mutation = RequireMutation(MutationIds.MimeticResilience);
+        SatisfyPrerequisites(player, mutation);
+
+        var canUpgrade = player.CanUpgrade(mutation, currentRound: 5, board);
+
+        Assert.False(canUpgrade, $"Expected {mutation.Name} to stay disabled when no rival currently meets its threshold check.");
+    }
+
+    [Fact]
+    public void TryUpgradeMutation_returns_false_for_mimetic_resilience_when_no_rival_meets_thresholds()
+    {
+        var board = CreateMimeticResilienceBoard(out var player, out _);
+        var observer = new TestSimulationObserver();
+        var mutation = RequireMutation(MutationIds.MimeticResilience);
+        SatisfyPrerequisites(player, mutation);
+        int startingPoints = player.MutationPoints;
+
+        var upgraded = player.TryUpgradeMutation(mutation, observer, currentRound: 5, board);
+
+        Assert.False(upgraded, $"Expected {mutation.Name} activation to be blocked when no rival currently meets its threshold check.");
+        Assert.Equal(0, player.GetMutationLevel(mutation.Id));
+        Assert.Equal(startingPoints, player.MutationPoints);
+    }
+
+    [Fact]
+    public void CanUpgrade_returns_true_for_mimetic_resilience_when_a_rival_meets_thresholds()
+    {
+        var board = CreateMimeticResilienceBoard(out var player, out _, rivalLivingCells: 12);
+        var mutation = RequireMutation(MutationIds.MimeticResilience);
+        SatisfyPrerequisites(player, mutation);
+
+        var canUpgrade = player.CanUpgrade(mutation, currentRound: 5, board);
+
+        Assert.True(canUpgrade, $"Expected {mutation.Name} to become available once a rival meets its threshold check.");
+    }
+
+    [Fact]
+    public void CanUpgrade_returns_false_for_competitive_antagonism_when_no_rival_has_more_living_cells()
+    {
+        var board = CreateCompetitiveAntagonismBoard(out var player, out _);
+        var mutation = RequireMutation(MutationIds.CompetitiveAntagonism);
+        SatisfyPrerequisites(player, mutation);
+
+        var canUpgrade = player.CanUpgrade(mutation, currentRound: 5, board);
+
+        Assert.False(canUpgrade, $"Expected {mutation.Name} to stay disabled when no rival currently has more living cells.");
+    }
+
+    [Fact]
+    public void TryUpgradeMutation_returns_false_for_competitive_antagonism_when_no_rival_has_more_living_cells()
+    {
+        var board = CreateCompetitiveAntagonismBoard(out var player, out _);
+        var observer = new TestSimulationObserver();
+        var mutation = RequireMutation(MutationIds.CompetitiveAntagonism);
+        SatisfyPrerequisites(player, mutation);
+        int startingPoints = player.MutationPoints;
+
+        var upgraded = player.TryUpgradeMutation(mutation, observer, currentRound: 5, board);
+
+        Assert.False(upgraded, $"Expected {mutation.Name} activation to be blocked when no rival currently has more living cells.");
+        Assert.Equal(0, player.GetMutationLevel(mutation.Id));
+        Assert.Equal(startingPoints, player.MutationPoints);
+    }
+
+    [Fact]
+    public void CanUpgrade_returns_true_for_competitive_antagonism_when_a_rival_has_more_living_cells()
+    {
+        var board = CreateCompetitiveAntagonismBoard(out var player, out _, rivalLivingCells: 2);
+        var mutation = RequireMutation(MutationIds.CompetitiveAntagonism);
+        SatisfyPrerequisites(player, mutation);
+
+        var canUpgrade = player.CanUpgrade(mutation, currentRound: 5, board);
+
+        Assert.True(canUpgrade, $"Expected {mutation.Name} to become available once a rival has more living cells.");
+    }
+
+    [Fact]
     public void TryUpgradeMutation_for_standard_mutation_spends_points_increases_level_and_records_manual_upgrade()
     {
         var player = CreatePlayer(mutationPoints: 10);
@@ -239,6 +320,30 @@ public class PlayerMutationBehaviorTests
         return Assert.IsType<Mutation>(mutation);
     }
 
+    private static GameBoard CreateMimeticResilienceBoard(out Player player, out Player rival, int rivalLivingCells = 11)
+    {
+        var board = new GameBoard(width: 8, height: 8, playerCount: 2);
+        player = CreatePlayer(mutationPoints: 99);
+        rival = new Player(playerId: 1, playerName: "Rival", playerType: PlayerTypeEnum.AI);
+        board.Players.AddRange(new[] { player, rival });
+
+        SeedLivingCells(board, player, Enumerable.Range(0, 10));
+        SeedLivingCells(board, rival, Enumerable.Range(16, rivalLivingCells));
+        return board;
+    }
+
+    private static GameBoard CreateCompetitiveAntagonismBoard(out Player player, out Player rival, int rivalLivingCells = 1)
+    {
+        var board = new GameBoard(width: 8, height: 8, playerCount: 2);
+        player = CreatePlayer(mutationPoints: 99);
+        rival = new Player(playerId: 1, playerName: "Rival", playerType: PlayerTypeEnum.AI);
+        board.Players.AddRange(new[] { player, rival });
+
+        SeedLivingCells(board, player, new[] { 0 });
+        SeedLivingCells(board, rival, Enumerable.Range(16, rivalLivingCells));
+        return board;
+    }
+
     private static AdaptationDefinition RequireAdaptation(string adaptationId)
     {
         var found = AdaptationRepository.TryGetById(adaptationId, out var adaptation);
@@ -251,6 +356,16 @@ public class PlayerMutationBehaviorTests
         foreach (var prerequisite in mutation.Prerequisites)
         {
             player.SetMutationLevel(prerequisite.MutationId, prerequisite.RequiredLevel, currentRound: 1);
+        }
+    }
+
+    private static void SeedLivingCells(GameBoard board, Player player, IEnumerable<int> tileIds)
+    {
+        foreach (var tileId in tileIds)
+        {
+            var cell = new FungalCell(ownerPlayerId: player.PlayerId, tileId: tileId, source: FungusToast.Core.Growth.GrowthSource.InitialSpore, lastOwnerPlayerId: null);
+            board.PlaceFungalCell(cell);
+            player.AddControlledTile(tileId);
         }
     }
 }

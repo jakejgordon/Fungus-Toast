@@ -145,8 +145,9 @@ namespace FungusToast.Unity.UI.MutationTree
   
         private void OnUpgradeClicked()
         {
-            int currentRound = GameManager.Instance.Board.CurrentRound;
-            if (!player.CanUpgrade(mutation, currentRound))
+            var board = GameManager.Instance.Board;
+            int currentRound = board.CurrentRound;
+            if (!player.CanUpgrade(mutation, currentRound, board, uiManager.GetMutationAvailabilityBoardSummaries()))
                 return;
 
             upgradeButton.interactable = false;
@@ -199,14 +200,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
-            lockOverlay.SetActive(isLocked && !isSurgeActive && !showPendingUnlock);
+            bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, isMaxed);
+            lockOverlay.SetActive(isLocked && !isSurgeActive && !showPendingUnlock && !isDisabledBecauseNoEffect);
             if (pendingUnlockOverlay != null)
                 pendingUnlockOverlay.SetActive(showPendingUnlock);
             if (pendingUnlockText != null)
                 pendingUnlockText.text = "1";
 
             if (canvasGroup != null)
-                canvasGroup.alpha = (isLocked || isSurgeActive || showPendingUnlock) ? 0.5f : 1f;
+                canvasGroup.alpha = (isLocked || isSurgeActive || showPendingUnlock) ? 0.5f : isDisabledBecauseNoEffect ? 0.8f : 1f;
 
             // Surge overlay (shows when surge is active)
             if (surgeActiveOverlay != null)
@@ -260,8 +262,9 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             // ── Affordability background tinting ──
-            ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock);
+            ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
             ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
+            ApplyDisabledNoEffectOutline(isDisabledBecauseNoEffect);
 
             UpdateInteractable();
 
@@ -284,7 +287,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         // ── Affordability / state background tinting ──────────────────────
 
-        private void ApplyNodeBackgroundTint(bool isLocked, bool isMaxed, bool canAfford, bool isSurgeActive, bool showPendingUnlock)
+        private void ApplyNodeBackgroundTint(bool isLocked, bool isMaxed, bool canAfford, bool isSurgeActive, bool showPendingUnlock, bool isDisabledBecauseNoEffect)
         {
             if (nodeBackground == null) return;
 
@@ -293,6 +296,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 // Gold-tinted background for maxed nodes
                 Color gold = MutationTreeColors.MaxedGold;
                 nodeBackground.color = new Color(gold.r * 0.3f, gold.g * 0.3f, gold.b * 0.15f, 1f);
+            }
+            else if (isDisabledBecauseNoEffect)
+            {
+                nodeBackground.color = MutationTreeColors.WarningNodeBG;
             }
             else if (isLocked || isSurgeActive || showPendingUnlock)
             {
@@ -487,6 +494,20 @@ namespace FungusToast.Unity.UI.MutationTree
                 int cost = player.GetMutationPointCost(mutation);
 
                 sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
+                sb.AppendLine();
+            }
+
+            bool isLocked = mutation.Prerequisites.Any(prereq => player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
+            bool isSurgeActive = mutation.IsSurge && player.IsSurgeActive(mutation.Id);
+            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+                && player.PlayerMutations.TryGetValue(mutation.Id, out var pendingMutation)
+                && pendingMutation.PrereqMetRound.HasValue
+                && pendingMutation.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
+            bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, currentLevel >= mutation.MaxLevel);
+            if (isDisabledBecauseNoEffect)
+            {
+                sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Disabled right now</b></color>");
+                sb.AppendLine(GetNoEffectDisabledReasonText());
                 sb.AppendLine();
             }
 
@@ -1132,10 +1153,55 @@ namespace FungusToast.Unity.UI.MutationTree
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             bool isMaxed = currentLevel >= mutation.MaxLevel;
+            bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, isMaxed);
             bool interactable = !isLocked && canAfford && !isMaxed && !showPendingUnlock;
             if (isSurge && isSurgeActive)
                 interactable = false;
+            if (isDisabledBecauseNoEffect)
+                interactable = false;
             upgradeButton.interactable = interactable;
+        }
+
+        private bool ShouldShowNoEffectDisabledState(bool isLocked, bool isSurgeActive, bool showPendingUnlock, bool isMaxed)
+        {
+            if (mutation == null || uiManager == null || player == null)
+                return false;
+
+            if (mutation.Id != MutationIds.MimeticResilience && mutation.Id != MutationIds.CompetitiveAntagonism)
+                return false;
+
+            return !isLocked
+                && !isSurgeActive
+                && !showPendingUnlock
+                && !isMaxed
+                && uiManager.IsMutationDisabledBecauseNoEffect(mutation, player);
+        }
+
+        private string GetNoEffectDisabledReasonText()
+        {
+            return mutation.Id switch
+            {
+                MutationIds.MimeticResilience => "No rival currently meets Mimetic Resilience's living-cell and board-control thresholds.",
+                MutationIds.CompetitiveAntagonism => "No rival currently has more living cells than you, so Competitive Antagonism would have no effect.",
+                _ => "This mutation is disabled right now because it would have no effect."
+            };
+        }
+
+        private void ApplyDisabledNoEffectOutline(bool isDisabledBecauseNoEffect)
+        {
+            if (highlightOutline == null)
+                return;
+
+            if (isDisabledBecauseNoEffect)
+            {
+                highlightOutline.enabled = true;
+                highlightOutline.effectColor = MutationTreeColors.WarningOutline;
+                highlightOutline.effectDistance = new Vector2(2.4f, -2.4f);
+                return;
+            }
+
+            highlightOutline.effectDistance = DefaultHighlightEffectDistance;
+            highlightOutline.enabled = false;
         }
 
         // ── Runtime prefab augmentation ──────────────────────────────────

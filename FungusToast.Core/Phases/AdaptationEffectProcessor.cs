@@ -797,7 +797,7 @@ namespace FungusToast.Core.Phases
             int cost = player.GetMutationPointCost(chosenSurge);
             player.MutationPoints += cost;
 
-            if (!player.TryUpgradeMutation(chosenSurge, observer, board.CurrentRound))
+            if (!player.TryUpgradeMutation(chosenSurge, observer, board.CurrentRound, board))
             {
                 player.MutationPoints -= cost;
                 return;

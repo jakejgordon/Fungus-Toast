@@ -4,6 +4,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using FungusToast.Core.Board;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Phases;
@@ -135,6 +136,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private int lastKnownScreenHeight = -1;
         private bool hasDismissedTimeLapseCoachmarkThisGame;
         private bool hasDismissedStorePointsCoachmarkThisGame;
+        private Dictionary<int, PlayerBoardSummary>? mutationAvailabilityBoardSummaries;
+        private bool humanMimeticResilienceHasEligibleTargets = true;
+        private bool humanCompetitiveAntagonismHasEligibleTargets = true;
 
         private sealed class PendingTargetedSurgeSelection
         {
@@ -421,6 +425,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            RefreshAllMutationButtons();
             RefreshResponsiveMutationPanelLayout();
         }
 
@@ -433,11 +438,12 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             int currentRound = GameManager.Instance.Board.CurrentRound;
+            var board = GameManager.Instance.Board;
 
             // Get the observer through GameManager's GameUI.GameLogRouter
             var observer = GameManager.Instance.GameUI.GameLogRouter;
 
-            if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound))
+            if (humanPlayer.TryUpgradeMutation(mutation, observer, currentRound, board, mutationAvailabilityBoardSummaries))
             {
                 RefreshSpendPointsButtonUI();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
@@ -468,7 +474,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             int currentRound = board.CurrentRound;
-            if (!humanPlayer.CanUpgrade(mutation, currentRound))
+            if (!humanPlayer.CanUpgrade(mutation, currentRound, board, mutationAvailabilityBoardSummaries))
             {
                 onResolved?.Invoke(false);
                 yield break;
@@ -856,6 +862,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void RefreshAllMutationButtons()
         {
+            RefreshMutationAvailabilityCache();
+
             foreach (var button in mutationButtons)
             {
                 button.UpdateDisplay();
@@ -866,6 +874,54 @@ namespace FungusToast.Unity.UI.MutationTree
             // Also refresh category investment summaries
             if (mutationTreeBuilder != null && humanPlayer != null)
                 mutationTreeBuilder.UpdateCategoryInvestmentSummaries(mutationButtons, humanPlayer);
+        }
+
+        public bool IsMutationDisabledBecauseNoEffect(Mutation mutation, Player player)
+        {
+            if (mutation == null || player == null)
+                return false;
+
+            if (humanPlayer == null || player.PlayerId != humanPlayer.PlayerId)
+                return false;
+
+            if (mutationAvailabilityBoardSummaries == null)
+                RefreshMutationAvailabilityCache();
+
+            return mutation.Id switch
+            {
+                MutationIds.MimeticResilience => !humanMimeticResilienceHasEligibleTargets,
+                MutationIds.CompetitiveAntagonism => !humanCompetitiveAntagonismHasEligibleTargets,
+                _ => false
+            };
+        }
+
+        public IReadOnlyDictionary<int, PlayerBoardSummary>? GetMutationAvailabilityBoardSummaries()
+        {
+            return mutationAvailabilityBoardSummaries;
+        }
+
+        private void RefreshMutationAvailabilityCache()
+        {
+            var board = GameManager.Instance?.Board;
+            if (board == null || humanPlayer == null)
+            {
+                mutationAvailabilityBoardSummaries = null;
+                humanMimeticResilienceHasEligibleTargets = true;
+                humanCompetitiveAntagonismHasEligibleTargets = true;
+                return;
+            }
+
+            mutationAvailabilityBoardSummaries = BoardUtilities.GetPlayerBoardSummaries(board.Players, board);
+            humanMimeticResilienceHasEligibleTargets = MycelialSurgeMutationProcessor.HasMimeticResilienceEligibleTargets(
+                humanPlayer,
+                board.Players,
+                board,
+                mutationAvailabilityBoardSummaries);
+            humanCompetitiveAntagonismHasEligibleTargets = MycelialSurgeMutationProcessor.HasCompetitiveAntagonismEligibleTargets(
+                humanPlayer,
+                board.Players,
+                board,
+                mutationAvailabilityBoardSummaries);
         }
 
         public Mutation GetMutationById(int id)

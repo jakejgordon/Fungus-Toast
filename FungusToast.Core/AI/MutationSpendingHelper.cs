@@ -16,7 +16,7 @@ namespace FungusToast.Core.AI
         public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
         {
             var eligible = allMutations
-                .Where(m => player.CanUpgrade(m, currentRound))
+                .Where(m => player.CanUpgrade(m, currentRound, board))
                 .OrderBy(_ => rng.NextDouble())
                 .ToList();
 
@@ -41,7 +41,7 @@ namespace FungusToast.Core.AI
                     && player.TryActivateTargetedSurge(mutation, board, targetTileId.Value, simulationObserver, currentRound);
             }
 
-            return player.TryUpgradeMutation(mutation, simulationObserver, currentRound);
+            return player.TryUpgradeMutation(mutation, simulationObserver, currentRound, board);
         }
     }
 }
