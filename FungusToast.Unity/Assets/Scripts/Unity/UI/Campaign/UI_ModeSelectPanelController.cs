@@ -1,7 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Tilemaps;
 using TMPro;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using FungusToast.Unity;
 using FungusToast.Unity.UI.GameStart; // for UI_StartGamePanel
@@ -32,6 +34,11 @@ namespace FungusToast.Unity.UI.Campaign
         private const float ResponsiveScaleSafetyFactor = 0.97f;
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
+        private const int AmbientMoldSpriteIndexScanLimit = 12;
+        private const float AmbientMoldBaseAlpha = 0.16f;
+        private const float AmbientMoldAlphaRange = 0.08f;
+        private const float AmbientMoldScalePulse = 0.07f;
+        private const float AmbientMoldDriftDistance = 10f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -89,12 +96,28 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI compatibilityNoticeBodyText;
         private Button compatibilityNoticeCloseButton;
         private bool isConfirmingCampaignReset;
+        private RectTransform ambientMoldLayerRoot;
+        private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
+
+        private sealed class AmbientMoldDecoration
+        {
+            public Image Image;
+            public Vector2 AnchoredPosition;
+            public Vector2 DriftDirection;
+            public float BaseScale;
+            public float ScalePhase;
+            public float PulseSpeed;
+            public float AlphaPhase;
+            public float AlphaSpeed;
+            public float Rotation;
+        }
 
         private void Awake()
         {
             ResolveSceneReferences();
             ConfigureLayout();
             EnsureReleaseUi();
+            EnsureAmbientMoldLayer();
             ApplyStyle();
 
             if (hotseatButton != null) hotseatButton.onClick.AddListener(OnHotseatClicked);
@@ -162,8 +185,8 @@ namespace FungusToast.Unity.UI.Campaign
                 versionText.color = UIStyleTokens.Text.Muted;
             }
 
-            UIStyleTokens.Button.ApplyPrimaryMenuAction(hotseatButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
-            UIStyleTokens.Button.ApplyPrimaryMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
+            UIStyleTokens.Button.ApplyNeutralMenuAction(hotseatButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
+            UIStyleTokens.Button.ApplyNeutralMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
@@ -187,6 +210,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
             if (campaignPanel != null) campaignPanel.SetActive(false);
 
+            RefreshAmbientMoldDecorations();
             RefreshResponsiveLayout();
             TryShowPendingCompatibilityNotice();
         }
@@ -194,6 +218,11 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnRectTransformDimensionsChange()
         {
             RefreshResponsiveLayout();
+        }
+
+        private void Update()
+        {
+            AnimateAmbientMoldDecorations();
         }
 
         private void OnHotseatClicked()
@@ -570,6 +599,166 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplySecondaryMenuAction(compatibilityNoticeCloseButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
 
             compatibilityNoticeModalRoot.SetActive(false);
+        }
+
+        private void EnsureAmbientMoldLayer()
+        {
+            if (ambientMoldLayerRoot != null)
+            {
+                return;
+            }
+
+            GameObject layerObject = new GameObject("UI_ModeSelectAmbientMoldLayer", typeof(RectTransform));
+            layerObject.transform.SetParent(transform, false);
+            layerObject.layer = gameObject.layer;
+
+            ambientMoldLayerRoot = layerObject.GetComponent<RectTransform>();
+            ambientMoldLayerRoot.anchorMin = Vector2.zero;
+            ambientMoldLayerRoot.anchorMax = Vector2.one;
+            ambientMoldLayerRoot.offsetMin = Vector2.zero;
+            ambientMoldLayerRoot.offsetMax = Vector2.zero;
+            ambientMoldLayerRoot.SetSiblingIndex(0);
+
+            CreateAmbientMoldDecoration("TopLeft", new Vector2(0f, 1f), new Vector2(110f, -90f), new Vector2(200f, 200f), 18f, new Vector2(0.85f, -0.45f));
+            CreateAmbientMoldDecoration("UpperLeft", new Vector2(0f, 1f), new Vector2(140f, -260f), new Vector2(156f, 156f), -12f, new Vector2(1f, -0.25f));
+            CreateAmbientMoldDecoration("MidLeft", new Vector2(0f, 0.5f), new Vector2(92f, 54f), new Vector2(188f, 188f), 8f, new Vector2(1f, 0.12f));
+            CreateAmbientMoldDecoration("BottomLeft", new Vector2(0f, 0f), new Vector2(132f, 102f), new Vector2(174f, 174f), -20f, new Vector2(0.8f, 0.5f));
+            CreateAmbientMoldDecoration("TopRight", new Vector2(1f, 1f), new Vector2(-118f, -102f), new Vector2(192f, 192f), -16f, new Vector2(-0.9f, -0.4f));
+            CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-154f, -282f), new Vector2(164f, 164f), 10f, new Vector2(-1f, -0.18f));
+            CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-98f, -34f), new Vector2(182f, 182f), -6f, new Vector2(-1f, 0.08f));
+            CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-126f, 114f), new Vector2(204f, 204f), 14f, new Vector2(-0.86f, 0.52f));
+        }
+
+        private void CreateAmbientMoldDecoration(
+            string objectName,
+            Vector2 anchor,
+            Vector2 anchoredPosition,
+            Vector2 size,
+            float rotation,
+            Vector2 driftDirection)
+        {
+            if (ambientMoldLayerRoot == null)
+            {
+                return;
+            }
+
+            GameObject imageObject = new GameObject($"UI_ModeSelectAmbientMold{objectName}", typeof(RectTransform), typeof(Image));
+            imageObject.transform.SetParent(ambientMoldLayerRoot, false);
+            imageObject.layer = gameObject.layer;
+
+            RectTransform rectTransform = imageObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = anchor;
+            rectTransform.anchorMax = anchor;
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.anchoredPosition = anchoredPosition;
+            rectTransform.sizeDelta = size;
+            rectTransform.localRotation = Quaternion.Euler(0f, 0f, rotation);
+
+            Image image = imageObject.GetComponent<Image>();
+            image.preserveAspect = true;
+            image.raycastTarget = false;
+            image.color = new Color(1f, 1f, 1f, AmbientMoldBaseAlpha);
+
+            Vector2 normalizedDrift = driftDirection.sqrMagnitude > 0.001f
+                ? driftDirection.normalized
+                : Vector2.right;
+
+            ambientMoldDecorations.Add(new AmbientMoldDecoration
+            {
+                Image = image,
+                AnchoredPosition = anchoredPosition,
+                DriftDirection = normalizedDrift,
+                BaseScale = UnityEngine.Random.Range(0.92f, 1.08f),
+                ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                PulseSpeed = UnityEngine.Random.Range(0.18f, 0.28f),
+                AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f),
+                AlphaSpeed = UnityEngine.Random.Range(0.12f, 0.2f),
+                Rotation = rotation
+            });
+        }
+
+        private void RefreshAmbientMoldDecorations()
+        {
+            if (ambientMoldDecorations.Count == 0)
+            {
+                return;
+            }
+
+            List<Sprite> candidateSprites = CollectAmbientMoldSprites();
+            if (candidateSprites.Count == 0)
+            {
+                return;
+            }
+
+            Sprite selectedSprite = candidateSprites[UnityEngine.Random.Range(0, candidateSprites.Count)];
+            if (selectedSprite == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < ambientMoldDecorations.Count; i++)
+            {
+                AmbientMoldDecoration decoration = ambientMoldDecorations[i];
+                if (decoration.Image == null)
+                {
+                    continue;
+                }
+
+                decoration.Image.sprite = selectedSprite;
+                decoration.Image.enabled = true;
+            }
+        }
+
+        private List<Sprite> CollectAmbientMoldSprites()
+        {
+            var sprites = new List<Sprite>();
+            GridVisualizer gridVisualizer = FindAnyObjectByType<GridVisualizer>();
+            if (gridVisualizer == null)
+            {
+                return sprites;
+            }
+
+            for (int moldIndex = 0; moldIndex < AmbientMoldSpriteIndexScanLimit; moldIndex++)
+            {
+                Tile moldTile = gridVisualizer.GetMoldIconTileForMoldIndex(moldIndex);
+                if (moldTile?.sprite != null)
+                {
+                    sprites.Add(moldTile.sprite);
+                }
+            }
+
+            return sprites;
+        }
+
+        private void AnimateAmbientMoldDecorations()
+        {
+            if (!isActiveAndEnabled || ambientMoldDecorations.Count == 0)
+            {
+                return;
+            }
+
+            float time = Time.unscaledTime;
+            for (int i = 0; i < ambientMoldDecorations.Count; i++)
+            {
+                AmbientMoldDecoration decoration = ambientMoldDecorations[i];
+                if (decoration.Image == null)
+                {
+                    continue;
+                }
+
+                RectTransform rectTransform = decoration.Image.rectTransform;
+                float alphaWave = 0.5f + (0.5f * Mathf.Sin(decoration.AlphaPhase + (time * decoration.AlphaSpeed)));
+                float pulseWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.PulseSpeed));
+                float driftWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.PulseSpeed * 0.75f));
+
+                rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * AmbientMoldDriftDistance));
+                rectTransform.localScale = Vector3.one * (decoration.BaseScale + (pulseWave * AmbientMoldScalePulse));
+                rectTransform.localRotation = Quaternion.Euler(0f, 0f, decoration.Rotation + (pulseWave * 3f));
+
+                Color color = decoration.Image.color;
+                color.a = AmbientMoldBaseAlpha + (alphaWave * AmbientMoldAlphaRange);
+                decoration.Image.color = color;
+            }
         }
 
         private void RefreshCampaignButtonState()

@@ -33,23 +33,21 @@ Use the following minimal workflow to preserve working memory across sessions:
 ## Active Thread
 
 - **Repo:** `c:/Users/jakej/FungusToast`
-- **Current focus:** campaign start difficulty now biases the human starting slot by authored board-position strength
+- **Current focus:** main-menu polish pass with subtle ambient mold growth around the mode-select screen
 - **Current state:**
-   - `CampaignBoardStartingPositionCatalog.g.cs` and `FungusToast.Core/Board/Generated/campaign_board_starting_positions.json` now carry generated per-preset slot metadata keyed by preset and player count.
-   - `CampaignStartingPositionDifficultyResolver` maps `CampaignDifficulty` to a sliding half-window of allowed human spawn coordinates, from strongest slots at `Training` toward weakest slots at `Boss`.
-   - New campaign runs now persist the selected `startDifficulty`, and the Unity campaign start flow forwards that selection into gameplay setup.
-   - `GameManager` now prefers metadata-driven spawn coordinates for campaign humans before falling back to the preset pool.
-   - Targeted resolver tests pass, and Core/Simulation builds are clean in the current checkout.
+   - `Solo / Hotseat` and `Campaign` should remain equal-weight entry paths, so the menu treatment should emphasize atmosphere and readability rather than a single recommended CTA.
+   - Existing player mold icon art under `FungusToast.Unity/Assets/Sprites/Tiles/Mold/` is the preferred source material for this pass; avoid turning the task into a new art pipeline.
+   - The current target is a lightweight first pass inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
 ## Pending Tasks
 
-- Verify the new spawn-bias flow in Unity Editor because this checkout does not currently include the generated Unity `.csproj` compile proxy.
-- Decide whether `docs/generated/hotdog_115_slot_validation.csv` should be kept as a committed validation artifact for this feature.
-- If campaign-start difficulty behavior feels too subtle in playtests, tune the resolver windowing strategy rather than adding flat stat modifiers first.
-- The mold icon overhaul thread is still parked after the yellow slot baseline; resume from cyan when this campaign work is out of the way.
+- Implement a runtime ambient mold layer for the main menu using reused player mold icon sprites, with colonies staged around the screen perimeter and kept off the button labels.
+- Make the mold presentation fully ambient from frame one: slow breathing, slight drift, and staggered timings instead of explicit center-racing growth.
+- Update the mode-select button semantics so `Solo / Hotseat` and `Campaign` read as equal peer choices instead of dual primary CTAs.
+- Verify the menu in Unity Editor for subtlety, readability, and whether the ambient layer should remain visible behind `Settings` and `Credits`.
 
 ## Next Handoff
 
-- In Unity, start new campaign runs at `Training` and `Boss` on the same preset and confirm the human spawn shifts from the strongest half of slots toward the weakest half.
-- If the in-editor behavior matches expectations, keep the feature slice scoped to the current metadata/resolver/start-flow files and exclude local temp outputs such as `tmp/campaign_starting_position_metadata` and the touched `.pyc`.
-- After Unity verification, the next dormant project thread is still the cyan mold rollout from the earlier art pass.
+- First implementation slice: keep the change scoped to `UI_ModeSelectPanelController` plus this worklog update so the menu ambience can be tuned without broad scene refactors.
+- In Unity, check the home screen at a few aspect ratios and confirm the perimeter mold feels alive but does not compete with the central menu stack.
+- If the first pass reads too static, consider a tiny spore layer only after testing the sprite-only ambience; do not add particles by default.
