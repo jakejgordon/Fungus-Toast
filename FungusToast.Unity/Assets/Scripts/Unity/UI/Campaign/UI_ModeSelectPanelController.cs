@@ -36,10 +36,10 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.16f;
-        private const float AmbientMoldAlphaRange = 0.08f;
-        private const float AmbientMoldScalePulse = 0.07f;
-        private const float AmbientMoldDriftDistance = 10f;
+        private const float AmbientMoldBaseAlpha = 0.115f;
+        private const float AmbientMoldAlphaRange = 0.055f;
+        private const float AmbientMoldScalePulse = 0.055f;
+        private const float AmbientMoldDriftDistance = 8f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
@@ -111,6 +111,8 @@ namespace FungusToast.Unity.UI.Campaign
             public float AlphaPhase;
             public float AlphaSpeed;
             public float Rotation;
+            public bool FlipX;
+            public bool FlipY;
         }
 
         private void Awake()
@@ -620,14 +622,14 @@ namespace FungusToast.Unity.UI.Campaign
             ambientMoldLayerRoot.offsetMax = Vector2.zero;
             ambientMoldLayerRoot.SetSiblingIndex(0);
 
-            CreateAmbientMoldDecoration("TopLeft", new Vector2(0f, 1f), new Vector2(110f, -90f), new Vector2(200f, 200f), 18f, new Vector2(0.85f, -0.45f));
-            CreateAmbientMoldDecoration("UpperLeft", new Vector2(0f, 1f), new Vector2(140f, -260f), new Vector2(156f, 156f), -12f, new Vector2(1f, -0.25f));
-            CreateAmbientMoldDecoration("MidLeft", new Vector2(0f, 0.5f), new Vector2(92f, 54f), new Vector2(188f, 188f), 8f, new Vector2(1f, 0.12f));
-            CreateAmbientMoldDecoration("BottomLeft", new Vector2(0f, 0f), new Vector2(132f, 102f), new Vector2(174f, 174f), -20f, new Vector2(0.8f, 0.5f));
-            CreateAmbientMoldDecoration("TopRight", new Vector2(1f, 1f), new Vector2(-118f, -102f), new Vector2(192f, 192f), -16f, new Vector2(-0.9f, -0.4f));
-            CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-154f, -282f), new Vector2(164f, 164f), 10f, new Vector2(-1f, -0.18f));
-            CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-98f, -34f), new Vector2(182f, 182f), -6f, new Vector2(-1f, 0.08f));
-            CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-126f, 114f), new Vector2(204f, 204f), 14f, new Vector2(-0.86f, 0.52f));
+            CreateAmbientMoldDecoration("TopLeft", new Vector2(0f, 1f), new Vector2(42f, -46f), new Vector2(230f, 230f), 20f, new Vector2(0.9f, -0.5f));
+            CreateAmbientMoldDecoration("UpperLeft", new Vector2(0f, 1f), new Vector2(86f, -222f), new Vector2(150f, 150f), -14f, new Vector2(1f, -0.2f));
+            CreateAmbientMoldDecoration("MidLeft", new Vector2(0f, 0.5f), new Vector2(38f, 58f), new Vector2(186f, 186f), 6f, new Vector2(1f, 0.08f));
+            CreateAmbientMoldDecoration("BottomLeft", new Vector2(0f, 0f), new Vector2(54f, 48f), new Vector2(196f, 196f), -18f, new Vector2(0.84f, 0.48f));
+            CreateAmbientMoldDecoration("TopRight", new Vector2(1f, 1f), new Vector2(-44f, -44f), new Vector2(224f, 224f), -18f, new Vector2(-0.92f, -0.46f));
+            CreateAmbientMoldDecoration("UpperRight", new Vector2(1f, 1f), new Vector2(-94f, -230f), new Vector2(152f, 152f), 12f, new Vector2(-1f, -0.16f));
+            CreateAmbientMoldDecoration("MidRight", new Vector2(1f, 0.5f), new Vector2(-36f, -18f), new Vector2(184f, 184f), -8f, new Vector2(-1f, 0.06f));
+            CreateAmbientMoldDecoration("BottomRight", new Vector2(1f, 0f), new Vector2(-56f, 54f), new Vector2(214f, 214f), 16f, new Vector2(-0.88f, 0.5f));
         }
 
         private void CreateAmbientMoldDecoration(
@@ -691,12 +693,6 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            Sprite selectedSprite = candidateSprites[UnityEngine.Random.Range(0, candidateSprites.Count)];
-            if (selectedSprite == null)
-            {
-                return;
-            }
-
             for (int i = 0; i < ambientMoldDecorations.Count; i++)
             {
                 AmbientMoldDecoration decoration = ambientMoldDecorations[i];
@@ -705,8 +701,15 @@ namespace FungusToast.Unity.UI.Campaign
                     continue;
                 }
 
-                decoration.Image.sprite = selectedSprite;
+                decoration.Image.sprite = candidateSprites[UnityEngine.Random.Range(0, candidateSprites.Count)];
                 decoration.Image.enabled = true;
+                decoration.FlipX = UnityEngine.Random.value > 0.5f;
+                decoration.FlipY = UnityEngine.Random.value > 0.65f;
+                decoration.BaseScale = UnityEngine.Random.Range(0.88f, 1.05f);
+                decoration.ScalePhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                decoration.PulseSpeed = UnityEngine.Random.Range(0.16f, 0.24f);
+                decoration.AlphaPhase = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                decoration.AlphaSpeed = UnityEngine.Random.Range(0.1f, 0.16f);
             }
         }
 
@@ -719,16 +722,54 @@ namespace FungusToast.Unity.UI.Campaign
                 return sprites;
             }
 
+            var eligibleMoldIndices = new List<int>();
             for (int moldIndex = 0; moldIndex < AmbientMoldSpriteIndexScanLimit; moldIndex++)
             {
                 Tile moldTile = gridVisualizer.GetMoldIconTileForMoldIndex(moldIndex);
                 if (moldTile?.sprite != null)
                 {
-                    sprites.Add(moldTile.sprite);
+                    eligibleMoldIndices.Add(moldIndex);
+                }
+            }
+
+            if (eligibleMoldIndices.Count == 0)
+            {
+                return sprites;
+            }
+
+            int selectedMoldIndex = eligibleMoldIndices[UnityEngine.Random.Range(0, eligibleMoldIndices.Count)];
+            AddAmbientMoldSprite(sprites, gridVisualizer.GetMoldIconTileForMoldIndex(selectedMoldIndex)?.sprite);
+            if (gridVisualizer.playerMoldTiles != null
+                && selectedMoldIndex >= 0
+                && selectedMoldIndex < gridVisualizer.playerMoldTiles.Length)
+            {
+                AddAmbientMoldSprite(sprites, gridVisualizer.playerMoldTiles[selectedMoldIndex]?.sprite);
+            }
+
+            if (gridVisualizer.playerMoldAliveVariantTiles != null
+                && selectedMoldIndex >= 0
+                && selectedMoldIndex < gridVisualizer.playerMoldAliveVariantTiles.Length)
+            {
+                GridVisualizer.MoldAliveVisualTiles variantTiles = gridVisualizer.playerMoldAliveVariantTiles[selectedMoldIndex];
+                if (variantTiles != null)
+                {
+                    AddAmbientMoldSprite(sprites, variantTiles.isolatedTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.clusteredTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.clusteredAlternateTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.denseTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.denseAlternateTile?.sprite);
                 }
             }
 
             return sprites;
+        }
+
+        private static void AddAmbientMoldSprite(List<Sprite> sprites, Sprite sprite)
+        {
+            if (sprite != null && !sprites.Contains(sprite))
+            {
+                sprites.Add(sprite);
+            }
         }
 
         private void AnimateAmbientMoldDecorations()
@@ -753,7 +794,11 @@ namespace FungusToast.Unity.UI.Campaign
                 float driftWave = Mathf.Sin(decoration.ScalePhase + (time * decoration.PulseSpeed * 0.75f));
 
                 rectTransform.anchoredPosition = decoration.AnchoredPosition + (decoration.DriftDirection * (driftWave * AmbientMoldDriftDistance));
-                rectTransform.localScale = Vector3.one * (decoration.BaseScale + (pulseWave * AmbientMoldScalePulse));
+                float scale = decoration.BaseScale + (pulseWave * AmbientMoldScalePulse);
+                rectTransform.localScale = new Vector3(
+                    decoration.FlipX ? -scale : scale,
+                    decoration.FlipY ? -scale : scale,
+                    1f);
                 rectTransform.localRotation = Quaternion.Euler(0f, 0f, decoration.Rotation + (pulseWave * 3f));
 
                 Color color = decoration.Image.color;

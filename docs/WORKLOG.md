@@ -37,17 +37,17 @@ Use the following minimal workflow to preserve working memory across sessions:
 - **Current state:**
    - `Solo / Hotseat` and `Campaign` should remain equal-weight entry paths, so the menu treatment should emphasize atmosphere and readability rather than a single recommended CTA.
    - Existing player mold icon art under `FungusToast.Unity/Assets/Sprites/Tiles/Mold/` is the preferred source material for this pass; avoid turning the task into a new art pipeline.
-   - The current target is a lightweight first pass inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
+   - The ambient mold layer is now in place inside `UI_ModeSelectPanelController` and has been tuned once to feel less like repeated stickers: colonies now sample multiple sprites from one random mold family, sit more offscreen at the edges, and animate with lighter motion/opacity.
+   - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.
 
 ## Pending Tasks
 
-- Implement a runtime ambient mold layer for the main menu using reused player mold icon sprites, with colonies staged around the screen perimeter and kept off the button labels.
-- Make the mold presentation fully ambient from frame one: slow breathing, slight drift, and staggered timings instead of explicit center-racing growth.
-- Update the mode-select button semantics so `Solo / Hotseat` and `Campaign` read as equal peer choices instead of dual primary CTAs.
 - Verify the menu in Unity Editor for subtlety, readability, and whether the ambient layer should remain visible behind `Settings` and `Credits`.
+- If the perimeter still reads too “placed,” try a second tuning pass with either 1-2 smaller secondary colonies or per-colony tint/blur softening before considering any particle/spore work.
+- Decide whether the home screen background should stay mold-only or gain a very subtle bread-surface/vignette treatment behind the existing logo and buttons.
 
 ## Next Handoff
 
-- First implementation slice: keep the change scoped to `UI_ModeSelectPanelController` plus this worklog update so the menu ambience can be tuned without broad scene refactors.
-- In Unity, check the home screen at a few aspect ratios and confirm the perimeter mold feels alive but does not compete with the central menu stack.
-- If the first pass reads too static, consider a tiny spore layer only after testing the sprite-only ambience; do not add particles by default.
+- The implementation remains intentionally scoped to `UI_ModeSelectPanelController`, so more tuning can happen without scene or asset-pipeline churn.
+- In Unity, check the home screen at a few aspect ratios and confirm the new offscreen-biased placement and mixed mold-family sprites feel organic but still stay out of the button lane.
+- Only consider spores or particles if the sprite-only pass still feels dead after the current variation work; they are not the default next step.
