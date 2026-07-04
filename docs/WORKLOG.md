@@ -47,6 +47,7 @@ Use the following minimal workflow to preserve working memory across sessions:
    - A follow-up tuning pass adds another set of center-side and upper/lower gap colonies so the remaining empty pockets fill in more naturally over time instead of leaving large dead zones.
 - The latest pass specifically targets the left/right side lanes with another set of staged colonies so the wide side gutters fill in more evenly instead of leaving obvious vertical empty bands.
 - The latest opacity tuning makes the ambient mold fade in faster and hold at a noticeably higher alpha so the early colonies no longer disappear into the background after the first 10-15 seconds.
+- A small follow-up fix now clears any leftover world-space board visuals when entering the mode-select menu and disables gameplay camera panning while no board is active, which should remove the stray draggable toast-colored line at the top of the home screen.
    - Credits and Settings now use translucent panel cards rather than opaque slabs, so the mold backdrop still reads behind them while the text stays comfortably legible.
    - The `Solo / Hotseat` and `Campaign` submenu roots now use transparent full-screen surfaces so the shared animated mold backdrop can remain visible behind those screens instead of repainting a flat canvas over it.
    - The current target remains a lightweight polish path inside the existing mode-select flow, aiming for "better" rather than a bespoke background-animation system.

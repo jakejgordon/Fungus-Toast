@@ -75,6 +75,12 @@ namespace FungusToast.Unity.Cameras
             GameManager gameManager = GameManager.Instance;
             RefreshCameraPanOnboardingState(gameManager);
 
+            if (gameManager == null || gameManager.Board == null)
+            {
+                HideCameraPanCoachmarkImmediate();
+                return;
+            }
+
             if (gameManager != null && gameManager.IsPauseMenuOpen)
             {
                 return;

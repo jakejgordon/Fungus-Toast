@@ -937,6 +937,7 @@ namespace FungusToast.Unity
         public void ShowStartGamePanel()
         {
             pauseMenuService?.ForceClose();
+            gridVisualizer?.ResetForGameTransition();
 
             if (gameUIManager != null)
             {
@@ -958,6 +959,8 @@ namespace FungusToast.Unity
                 {
                     gameUIManager.GameLogPanel.Initialize(gameUIManager.GameLogManager);
                 }
+
+                gameUIManager.ClearBoard();
             }
 
             if (modeSelectPanel != null)
