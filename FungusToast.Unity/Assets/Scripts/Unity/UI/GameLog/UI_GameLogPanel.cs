@@ -13,6 +13,8 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionRowHeight = 40f;
         private const float TopActionRowVerticalOffset = 8f;
         private const float TopActionReservedHeight = 45f;
+        private const float TopActionRowBackgroundBlend = 0.42f;
+        private const float TopActionButtonAccentBlend = 0.22f;
 
         [Header("UI References")]
         [SerializeField] private ScrollRect scrollRect;
@@ -116,13 +118,12 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (topActionButton != null)
             {
-                UIStyleTokens.Button.ApplyPanelSecondaryStyle(topActionButton);
-                UIStyleTokens.Button.SetButtonLabelColor(topActionButton, UIStyleTokens.Text.Primary);
+                ApplyTopActionButtonStyle();
             }
 
             if (topActionButtonLabel != null)
             {
-                topActionButtonLabel.color = UIStyleTokens.Text.Primary;
+                topActionButtonLabel.color = UIStyleTokens.Text.OnAccent;
             }
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
@@ -408,7 +409,7 @@ namespace FungusToast.Unity.UI.GameLog
             headerOriginalAnchoredPosition = headerRoot.anchoredPosition;
             scrollViewOriginalOffsetMax = scrollViewRoot.offsetMax;
 
-            var rowObject = new GameObject("UI_GameLogPanelTopActionRow", typeof(RectTransform));
+            var rowObject = new GameObject("UI_GameLogPanelTopActionRow", typeof(RectTransform), typeof(Image), typeof(Outline));
             rowObject.transform.SetParent(transform, false);
             rowObject.transform.SetSiblingIndex(0);
 
@@ -419,7 +420,15 @@ namespace FungusToast.Unity.UI.GameLog
             topActionRowRoot.offsetMin = new Vector2(0f, -(TopActionRowHeight - TopActionRowVerticalOffset));
             topActionRowRoot.offsetMax = new Vector2(0f, TopActionRowVerticalOffset);
 
-            var buttonObject = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button));
+            var rowBackground = rowObject.GetComponent<Image>();
+            rowBackground.color = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Accent.Moss, TopActionRowBackgroundBlend);
+            rowBackground.raycastTarget = false;
+
+            var rowOutline = rowObject.GetComponent<Outline>();
+            rowOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.32f);
+            rowOutline.effectDistance = new Vector2(1f, -1f);
+
+            var buttonObject = new GameObject("Button", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
             buttonObject.transform.SetParent(topActionRowRoot, false);
 
             var buttonRect = buttonObject.GetComponent<RectTransform>();
@@ -429,6 +438,7 @@ namespace FungusToast.Unity.UI.GameLog
             buttonRect.offsetMax = new Vector2(-4f, -2f);
 
             topActionButton = buttonObject.GetComponent<Button>();
+            ApplyTopActionButtonStyle();
 
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             labelObject.transform.SetParent(buttonObject.transform, false);
@@ -442,6 +452,7 @@ namespace FungusToast.Unity.UI.GameLog
             topActionButtonLabel = labelObject.GetComponent<TextMeshProUGUI>();
             topActionButtonLabel.fontStyle = FontStyles.Bold;
             topActionButtonLabel.fontSize = 18f;
+            topActionButtonLabel.color = UIStyleTokens.Text.OnAccent;
             topActionButtonLabel.alignment = TextAlignmentOptions.Center;
             topActionButtonLabel.raycastTarget = false;
 
@@ -452,6 +463,30 @@ namespace FungusToast.Unity.UI.GameLog
 
             topActionRowRoot.gameObject.SetActive(false);
             ApplyTopActionLayout(false);
+        }
+
+        private void ApplyTopActionButtonStyle()
+        {
+            if (topActionButton == null)
+            {
+                return;
+            }
+
+            var colors = UIStyleTokens.Button.BuildColorBlock();
+            colors.normalColor = Color.Lerp(UIStyleTokens.Button.BackgroundSelected, UIStyleTokens.Accent.Spore, TopActionButtonAccentBlend);
+            colors.highlightedColor = Color.Lerp(UIStyleTokens.Button.BackgroundHover, UIStyleTokens.Accent.Spore, 0.28f);
+            colors.pressedColor = Color.Lerp(UIStyleTokens.Button.BackgroundPressed, UIStyleTokens.Accent.Moss, 0.24f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.disabledColor = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Alpha.PanelDisabled);
+            topActionButton.colors = colors;
+            UIStyleTokens.Button.SetButtonLabelColor(topActionButton, UIStyleTokens.Text.OnAccent);
+
+            var outline = topActionButton.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Hyphae, 0.65f);
+                outline.effectDistance = new Vector2(1f, -1f);
+            }
         }
 
         private void ApplyTopActionLayout(bool showTopAction)
