@@ -73,6 +73,8 @@ namespace FungusToast.Unity.Grid
         [Header("Mold Visual Rotation")]
         [Tooltip("Applies a stable 0/90/180/270 degree rotation per alive tile to reduce repetition in repeated mold sprites.")]
         public bool enableAliveMoldQuarterTurnVariation = true;
+        [Tooltip("Applies a stable horizontal mirror per alive tile to further break up repeated mold sprite silhouettes.")]
+        public bool enableAliveMoldMirrorVariation = true;
         public Tile toxinOverlayTile;
         [SerializeField] private Tile solidHighlightTile;
         public Tile goldShieldOverlayTile;
@@ -1303,8 +1305,13 @@ namespace FungusToast.Unity.Grid
         private Matrix4x4 BuildAliveMoldVisualMatrix(BoardTile tile, Vector3 localOffset, float extraScaleMultiplier = 1f)
         {
             float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile)) * extraScaleMultiplier;
+            if (ShouldMirrorAliveVisual(tile))
+            {
+                scale *= -1f;
+            }
+
             Quaternion rotation = GetAliveVisualRotation(tile);
-            return Matrix4x4.TRS(localOffset, rotation, new Vector3(scale, scale, 1f));
+            return Matrix4x4.TRS(localOffset, rotation, new Vector3(scale, Mathf.Abs(scale), 1f));
         }
 
         private Quaternion GetAliveVisualRotation(BoardTile tile)
@@ -1316,12 +1323,30 @@ namespace FungusToast.Unity.Grid
 
             unchecked
             {
+                int quarterTurns = (int)(GetAliveVisualTransformHash(tile) & 3u);
+                return Quaternion.Euler(0f, 0f, quarterTurns * 90f);
+            }
+        }
+
+        private bool ShouldMirrorAliveVisual(BoardTile tile)
+        {
+            return enableAliveMoldMirrorVariation
+                && tile != null
+                && ((GetAliveVisualTransformHash(tile) >> 2) & 1u) == 0u;
+        }
+
+        private static uint GetAliveVisualTransformHash(BoardTile tile)
+        {
+            unchecked
+            {
                 uint hash = 0x811C9DC5u;
                 hash = (hash ^ (uint)tile.X) * 0x01000193u;
                 hash = (hash ^ (uint)tile.Y) * 0x01000193u;
                 hash = (hash ^ (uint)tile.TileId) * 0x01000193u;
-                int quarterTurns = (int)(hash & 3u);
-                return Quaternion.Euler(0f, 0f, quarterTurns * 90f);
+                hash ^= hash >> 13;
+                hash *= 0x85EBCA6Bu;
+                hash ^= hash >> 16;
+                return hash;
             }
         }
 
