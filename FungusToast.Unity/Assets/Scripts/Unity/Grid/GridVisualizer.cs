@@ -70,6 +70,9 @@ namespace FungusToast.Unity.Grid
         [Range(1f, 1.25f)] public float clusteredMoldVisualScale = 1.1f;
         [Tooltip("Baseline scale for dense alive cells to reduce visible gaps between mature neighboring colonies.")]
         [Range(1f, 1.25f)] public float denseMoldVisualScale = 1.2f;
+        [Header("Mold Visual Rotation")]
+        [Tooltip("Applies a stable 0/90/180/270 degree rotation per alive tile to reduce repetition in repeated mold sprites.")]
+        public bool enableAliveMoldQuarterTurnVariation = true;
         public Tile toxinOverlayTile;
         [SerializeField] private Tile solidHighlightTile;
         public Tile goldShieldOverlayTile;
@@ -695,8 +698,8 @@ namespace FungusToast.Unity.Grid
             float offsetY = cellSize.y * UIEffectConstants.MoldIdleDriftAmplitudeYCellFraction
                 * (Mathf.Cos(secondaryPhase) + (Mathf.Sin(primaryPhase) * UIEffectConstants.MoldIdleDriftSecondaryWaveContribution));
 
-            float scale = GetAliveVisualScaleForTile(tileId);
-            return Matrix4x4.TRS(new Vector3(offsetX, offsetY, 0f), Quaternion.identity, new Vector3(scale, scale, 1f));
+            BoardTile tile = ActiveBoard?.GetTileById(tileId);
+            return BuildAliveMoldVisualMatrix(tile, new Vector3(offsetX, offsetY, 0f));
         }
 
         private static float GetMoldIdleNoise01(int tileId, int updateStep, uint salt)
@@ -1297,15 +1300,42 @@ namespace FungusToast.Unity.Grid
             }
         }
 
+        private Matrix4x4 BuildAliveMoldVisualMatrix(BoardTile tile, Vector3 localOffset, float extraScaleMultiplier = 1f)
+        {
+            float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile)) * extraScaleMultiplier;
+            Quaternion rotation = GetAliveVisualRotation(tile);
+            return Matrix4x4.TRS(localOffset, rotation, new Vector3(scale, scale, 1f));
+        }
+
+        private Quaternion GetAliveVisualRotation(BoardTile tile)
+        {
+            if (!enableAliveMoldQuarterTurnVariation || tile == null)
+            {
+                return Quaternion.identity;
+            }
+
+            unchecked
+            {
+                uint hash = 0x811C9DC5u;
+                hash = (hash ^ (uint)tile.X) * 0x01000193u;
+                hash = (hash ^ (uint)tile.Y) * 0x01000193u;
+                hash = (hash ^ (uint)tile.TileId) * 0x01000193u;
+                int quarterTurns = (int)(hash & 3u);
+                return Quaternion.Euler(0f, 0f, quarterTurns * 90f);
+            }
+        }
+
         private Matrix4x4 GetBaseMoldVisualMatrix(int tileId)
             => GetBaseMoldVisualMatrix(ActiveBoard?.GetTileById(tileId));
 
         private Matrix4x4 GetBaseMoldVisualMatrix(BoardTile tile)
         {
-            float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile));
-            return Mathf.Approximately(scale, 1f)
-                ? IdentityMatrix
-                : Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            return BuildAliveMoldVisualMatrix(tile, Vector3.zero);
+        }
+
+        private static Matrix4x4 ApplyAdditionalUniformScale(Matrix4x4 matrix, float scaleMultiplier)
+        {
+            return matrix * Matrix4x4.Scale(new Vector3(scaleMultiplier, scaleMultiplier, 1f));
         }
 
         private float GetAliveVisualScaleForTile(int tileId)
@@ -2205,7 +2235,7 @@ namespace FungusToast.Unity.Grid
                         Color liftedColor = Color.Lerp(snapshot.MoldColor, Color.white, 0.22f * eased);
                         liftedColor.a = Mathf.Max(snapshot.MoldColor.a, Mathf.Lerp(snapshot.MoldColor.a, 1f, 0.28f * eased));
                         moldTilemap.SetColor(snapshot.Position, liftedColor);
-                        moldTilemap.SetTransformMatrix(snapshot.Position, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(currentMoldScale, currentMoldScale, 1f)));
+                        moldTilemap.SetTransformMatrix(snapshot.Position, ApplyAdditionalUniformScale(snapshot.MoldTransform, currentMoldScale));
                     }
 
                     if (hoverTilemap != null)
@@ -2213,7 +2243,7 @@ namespace FungusToast.Unity.Grid
                         Color haloColor = UIEffectConstants.PlayerHoverColonyHaloColor;
                         haloColor.a = currentHaloAlpha;
                         hoverTilemap.SetColor(snapshot.Position, haloColor);
-                        hoverTilemap.SetTransformMatrix(snapshot.Position, Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(currentHaloScale, currentHaloScale, 1f)));
+                        hoverTilemap.SetTransformMatrix(snapshot.Position, ApplyAdditionalUniformScale(snapshot.HoverTransform, currentHaloScale));
                     }
                 }
 
