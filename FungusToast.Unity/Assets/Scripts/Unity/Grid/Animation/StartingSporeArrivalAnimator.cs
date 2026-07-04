@@ -67,7 +67,7 @@ namespace FungusToast.Unity.Grid.Animation
             int playerId = tile?.FungalCell?.OwnerPlayerId ?? -1;
             if (playerId >= 0)
             {
-                var playerTile = _viz.GetTileForPlayer(playerId);
+                var playerTile = _viz.GetMoldIconTileForPlayer(playerId);
                 if (playerTile != null) moldSprite = playerTile.sprite;
             }
 
