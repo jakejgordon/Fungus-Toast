@@ -41,6 +41,11 @@ namespace FungusToast.Unity.UI
             ApplyStyle();
         }
 
+        private void Start()
+        {
+            HideImmediate();
+        }
+
         private void CacheTransformDefaults()
         {
             if (bannerRectTransform != null)
