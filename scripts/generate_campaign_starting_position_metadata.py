@@ -369,31 +369,34 @@ def resolve_starting_positions(board_width: int, board_height: int, player_count
             continue
 
         best: tuple[int, int] | None = None
-        best_distance: int | None = None
-        best_tile_id: int | None = None
+        best_key: tuple[float, int, int, int, int] | None = None
         for candidate_x, candidate_y in playable:
-            if (
-                (candidate_x, candidate_y) in resolved
-                or edge_distances.get((candidate_x, candidate_y), 0) < MINIMUM_STARTING_SPORE_DISTANCE_FROM_PLAYABLE_EDGE
-            ):
+            if (candidate_x, candidate_y) in resolved:
                 continue
-            distance = ((candidate_x - preferred_x) ** 2) + ((candidate_y - preferred_y) ** 2)
-            tile_id = (candidate_y * board_width) + candidate_x
-            if best is None or distance < best_distance or (distance == best_distance and tile_id < best_tile_id):
-                best = (candidate_x, candidate_y)
-                best_distance = distance
-                best_tile_id = tile_id
 
-        if best is None:
-            for candidate_x, candidate_y in playable:
-                if (candidate_x, candidate_y) in resolved:
-                    continue
-                distance = ((candidate_x - preferred_x) ** 2) + ((candidate_y - preferred_y) ** 2)
-                tile_id = (candidate_y * board_width) + candidate_x
-                if best is None or distance < best_distance or (distance == best_distance and tile_id < best_tile_id):
-                    best = (candidate_x, candidate_y)
-                    best_distance = distance
-                    best_tile_id = tile_id
+            distance_to_preferred = ((candidate_x - preferred_x) ** 2) + ((candidate_y - preferred_y) ** 2)
+            tile_id = (candidate_y * board_width) + candidate_x
+            playable_edge_distance = edge_distances.get((candidate_x, candidate_y), 0)
+            meets_minimum_edge_distance = int(
+                playable_edge_distance >= MINIMUM_STARTING_SPORE_DISTANCE_FROM_PLAYABLE_EDGE
+            )
+            minimum_distance_to_existing_starts = min(
+                (
+                    ((candidate_x - existing_x) ** 2) + ((candidate_y - existing_y) ** 2)
+                    for existing_x, existing_y in resolved
+                ),
+                default=float("inf"),
+            )
+            candidate_key = (
+                minimum_distance_to_existing_starts,
+                meets_minimum_edge_distance,
+                playable_edge_distance,
+                -distance_to_preferred,
+                -tile_id,
+            )
+            if best is None or candidate_key > best_key:
+                best = (candidate_x, candidate_y)
+                best_key = candidate_key
 
         if best is None:
             raise RuntimeError(f"No playable starting position found for {board_width}x{board_height}, players={player_count}")

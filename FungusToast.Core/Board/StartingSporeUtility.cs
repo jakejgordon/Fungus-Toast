@@ -137,6 +137,29 @@ namespace FungusToast.Core.Board
             }
         }
 
+        private sealed class StartingPositionCandidate
+        {
+            public BoardTile Tile { get; }
+            public bool MeetsMinimumPlayableEdgeDistance { get; }
+            public int PlayableEdgeDistance { get; }
+            public double MinimumDistanceToExistingStartingSporesSquared { get; }
+            public double DistanceToPreferredSquared { get; }
+
+            public StartingPositionCandidate(
+                BoardTile tile,
+                bool meetsMinimumPlayableEdgeDistance,
+                int playableEdgeDistance,
+                double minimumDistanceToExistingStartingSporesSquared,
+                double distanceToPreferredSquared)
+            {
+                Tile = tile;
+                MeetsMinimumPlayableEdgeDistance = meetsMinimumPlayableEdgeDistance;
+                PlayableEdgeDistance = playableEdgeDistance;
+                MinimumDistanceToExistingStartingSporesSquared = minimumDistanceToExistingStartingSporesSquared;
+                DistanceToPreferredSquared = distanceToPreferredSquared;
+            }
+        }
+
         /// <summary>
         /// Returns the chosen starting positions for a board size and player count.
         /// Positions are ordered by player slot.
@@ -398,19 +421,15 @@ namespace FungusToast.Core.Board
             }
 
             var fallbackTile = board.AllTiles()
-                .Where(tile => IsTileEligibleForStartingSporePlacement(tile, board, playableEdgeDistances, minimumPlayableEdgeDistance))
-                .OrderBy(tile => SquaredDistance(tile.X, tile.Y, preferredX, preferredY))
-                .ThenBy(tile => tile.TileId)
+                .Where(tile => IsTileEligibleForStartingSporePlacement(tile, board, playableEdgeDistances, minimumPlayableEdgeDistance: 0))
+                .Select(tile => BuildStartingPositionCandidate(tile, board, preferredX, preferredY, playableEdgeDistances, minimumPlayableEdgeDistance))
+                .OrderByDescending(candidate => candidate.MinimumDistanceToExistingStartingSporesSquared)
+                .ThenByDescending(candidate => candidate.MeetsMinimumPlayableEdgeDistance)
+                .ThenByDescending(candidate => candidate.PlayableEdgeDistance)
+                .ThenBy(candidate => candidate.DistanceToPreferredSquared)
+                .ThenBy(candidate => candidate.Tile.TileId)
+                .Select(candidate => candidate.Tile)
                 .FirstOrDefault();
-
-            if (fallbackTile == null && minimumPlayableEdgeDistance > 0)
-            {
-                fallbackTile = board.AllTiles()
-                    .Where(tile => IsTileEligibleForStartingSporePlacement(tile, board, playableEdgeDistances, minimumPlayableEdgeDistance: 0))
-                    .OrderBy(tile => SquaredDistance(tile.X, tile.Y, preferredX, preferredY))
-                    .ThenBy(tile => tile.TileId)
-                    .FirstOrDefault();
-            }
 
             if (fallbackTile == null)
             {
@@ -434,6 +453,41 @@ namespace FungusToast.Core.Board
 
             return minimumPlayableEdgeDistance <= 0
                 || (playableEdgeDistances.TryGetValue(tile.TileId, out int edgeDistance) && edgeDistance >= minimumPlayableEdgeDistance);
+        }
+
+        private static StartingPositionCandidate BuildStartingPositionCandidate(
+            BoardTile tile,
+            GameBoard board,
+            int preferredX,
+            int preferredY,
+            IReadOnlyDictionary<int, int> playableEdgeDistances,
+            int minimumPlayableEdgeDistance)
+        {
+            playableEdgeDistances.TryGetValue(tile.TileId, out int playableEdgeDistance);
+            return new StartingPositionCandidate(
+                tile,
+                meetsMinimumPlayableEdgeDistance: minimumPlayableEdgeDistance <= 0 || playableEdgeDistance >= minimumPlayableEdgeDistance,
+                playableEdgeDistance,
+                minimumDistanceToExistingStartingSporesSquared: ComputeMinimumDistanceToExistingStartingSporesSquared(board, tile),
+                distanceToPreferredSquared: SquaredDistance(tile.X, tile.Y, preferredX, preferredY));
+        }
+
+        private static double ComputeMinimumDistanceToExistingStartingSporesSquared(GameBoard board, BoardTile tile)
+        {
+            var existingStartingTiles = board.Players
+                .Select(player => player.StartingTileId)
+                .Where(tileId => tileId.HasValue)
+                .Select(tileId => board.GetTileById(tileId!.Value))
+                .Where(existingTile => existingTile != null)
+                .Cast<BoardTile>()
+                .ToArray();
+
+            if (existingStartingTiles.Length == 0)
+            {
+                return double.PositiveInfinity;
+            }
+
+            return existingStartingTiles.Min(existingTile => SquaredDistance(tile.X, tile.Y, existingTile.X, existingTile.Y));
         }
 
         private static IReadOnlyDictionary<int, int> BuildPlayableEdgeDistanceMap(GameBoard board)

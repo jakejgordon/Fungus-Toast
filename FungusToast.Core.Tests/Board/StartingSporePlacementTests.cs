@@ -209,7 +209,7 @@ public class StartingSporePlacementTests
     }
 
     [Fact]
-    public void PlaceStartingSpores_relocates_edge_preferences_at_least_three_tiles_inward_when_possible()
+    public void PlaceStartingSpores_prefers_player_spacing_over_minimum_edge_distance_when_interior_tiles_would_cluster_players()
     {
         var blockedTileIds = Enumerable.Range(0, 12 * 12)
             .Where(tileId =>
@@ -233,11 +233,16 @@ public class StartingSporePlacementTests
             .ToArray();
 
         Assert.Equal(4, finalPositions.Distinct().Count());
-        Assert.All(finalPositions, position =>
-        {
-            Assert.InRange(position.x, 5, 6);
-            Assert.InRange(position.y, 5, 6);
-        });
+        Assert.Contains(finalPositions, position => position.x < 5 || position.x > 6 || position.y < 5 || position.y > 6);
+
+        var minimumPairwiseDistanceSquared = finalPositions
+            .SelectMany((position, index) => finalPositions.Skip(index + 1)
+                .Select(other => ((position.x - other.x) * (position.x - other.x)) + ((position.y - other.y) * (position.y - other.y))))
+            .Min();
+
+        Assert.True(
+            minimumPairwiseDistanceSquared >= 8,
+            $"Expected softened edge fallback to spread players out; minimum squared distance was {minimumPairwiseDistanceSquared}.");
     }
 
     [Fact]
@@ -269,9 +274,15 @@ public class StartingSporePlacementTests
 
         int playerZeroTileId = Assert.IsType<int>(players[0].StartingTileId);
         int playerOneTileId = Assert.IsType<int>(players[1].StartingTileId);
+        var playerZeroPosition = (x: playerZeroTileId % board.Width, y: playerZeroTileId / board.Width);
+        var playerOnePosition = (x: playerOneTileId % board.Width, y: playerOneTileId / board.Width);
 
-        Assert.Equal((2, 2), (playerZeroTileId % board.Width, playerZeroTileId / board.Width));
-        Assert.Equal((6, 6), (playerOneTileId % board.Width, playerOneTileId / board.Width));
+        Assert.Equal((2, 2), playerZeroPosition);
+        Assert.NotEqual(playerZeroPosition, playerOnePosition);
+        Assert.True(
+            ((playerZeroPosition.x - playerOnePosition.x) * (playerZeroPosition.x - playerOnePosition.x))
+            + ((playerZeroPosition.y - playerOnePosition.y) * (playerZeroPosition.y - playerOnePosition.y)) >= 18,
+            $"Expected the non-authored start to stay well separated from the authored exception, but got {playerOnePosition}.");
     }
 
     private static GameBoard CreateBoard(int width, int height, int playerCount, IEnumerable<int>? blockedTileIds = null)
