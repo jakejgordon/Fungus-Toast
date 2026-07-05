@@ -183,12 +183,15 @@ namespace FungusToast.Unity.UI
                     return;
                 }
 
+                Color hoverColor = Color.Lerp(Surface.PanelElevated, Accent.Moss, 0.34f);
+                Color pressedColor = Color.Lerp(Surface.PanelPrimary, Accent.Moss, 0.18f);
+
                 button.colors = new ColorBlock
                 {
                     normalColor = Surface.PanelElevated,
-                    highlightedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
-                    pressedColor = Surface.PanelPrimary,
-                    selectedColor = Color.Lerp(Surface.PanelElevated, Accent.Spore, 0.38f),
+                    highlightedColor = hoverColor,
+                    pressedColor = pressedColor,
+                    selectedColor = hoverColor,
                     disabledColor = WithAlpha(Surface.PanelPrimary, Alpha.PanelDisabled),
                     colorMultiplier = 1f,
                     fadeDuration = 0.1f

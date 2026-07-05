@@ -232,6 +232,7 @@ Notes:
 - Runtime-built buttons must receive an explicit active label color after styling passes. Do not assume inherited TMP defaults will remain contrast-safe.
 - Interactive card-style controls on dark panels should expose a gentle hover highlight so mouse users can immediately tell they are actionable. Keep the hover state subtle and clearly weaker than the selected state.
 - Compact dark utility buttons should still use a clearly visible hover state. If the control is small or sits in a dense header, increase the hover contrast enough that the button reads as clickable at a glance rather than relying on a barely perceptible surface shift.
+- For dark utility buttons that keep light labels, do not brighten the hover fill so far toward pale `Accent.Spore` or light neutral button fills that the label loses contrast. Prefer a darker moss-tinted hover that preserves `Text.Primary` readability.
 
 ### 5.3 Dropdown/Input Readability
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
