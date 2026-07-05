@@ -26,6 +26,7 @@ namespace FungusToast.Unity.UI
         private const float SummaryIconColumnWidth = 50f;
         private const float SummaryStatColumnWidth = 90f;
         private const int SummaryHorizontalInset = 15;
+        private const float DraftHistoryAttentionDurationSeconds = 4f;
 
         [Header("Player Summary Panel")]
         [SerializeField] private Transform playerSummaryContainer;
@@ -52,6 +53,7 @@ namespace FungusToast.Unity.UI
         private Func<bool> canOpenDraftHistory;
         private bool hasDismissedScoreboardCoachmarkThisGame;
         private bool hasDismissedEndgameCountdownCoachmarkThisGame;
+        private int lastDraftHistoryAttentionRound = -1;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
 
@@ -263,6 +265,7 @@ namespace FungusToast.Unity.UI
         public void SetBoard(GameBoard gameBoard)
         {
             board = gameBoard;
+            lastDraftHistoryAttentionRound = -1;
             hasDismissedScoreboardCoachmarkThisGame = false;
             hasDismissedEndgameCountdownCoachmarkThisGame = false;
             HideScoreboardCoachmarkImmediate(false);
@@ -292,6 +295,16 @@ namespace FungusToast.Unity.UI
                 DraftHistoryButtonLabel,
                 isAvailable ? onDraftHistoryRequested : null,
                 isAvailable);
+
+            var gameManager = GameManager.Instance;
+            int completedDraftRound = gameManager != null ? gameManager.LastCompletedMycovariantDraftRound : -1;
+            int currentRound = board?.CurrentRound ?? -1;
+            bool justCompletedThisRound = isAvailable && completedDraftRound >= 0 && completedDraftRound == currentRound;
+            if (justCompletedThisRound && lastDraftHistoryAttentionRound != completedDraftRound)
+            {
+                draftHistoryLogPanel.TriggerTopActionAttention(DraftHistoryAttentionDurationSeconds);
+                lastDraftHistoryAttentionRound = completedDraftRound;
+            }
         }
 
         public void InitializePlayerSummaries(List<Player> players)
