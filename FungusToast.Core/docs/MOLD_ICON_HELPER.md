@@ -287,6 +287,18 @@ Add exactly 24 new source PNGs: one isolated, one clustered (medium-density), an
 
 This task includes art generation, deterministic runtime selection, Unity Tile assets, scene wiring, automated asset validation, and gameplay-scale visual review. It does not replace or repaint any of the existing 40 PNGs unless a separate cleanup is approved.
 
+### Confirmed Execution Decisions
+
+Jake has confirmed the following for this expansion:
+
+- use the red mold as the pilot family
+- apply the consistent footprint and margin rules in this helper to all new art; do not reproduce existing outliers
+- review and approve the red pilot family before generating the other seven molds
+- after the red family succeeds, generate the remaining seven families as one batch, while still validating every individual file
+- use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` as prompt-provenance input, then retire that temporary file after its durable information has been migrated and verified
+
+The transparency workflow, candidate count, and exact red-pilot review granularity remain unresolved. Do not begin image generation until those choices are recorded below.
+
 ### Verified Current Implementation
 
 The current implementation is concentrated in:
@@ -342,6 +354,31 @@ Preserve these visible identities from the current assets:
 | 7 | `orange_red` | shaggy woolly rusty orange/apricot masses, pale fringe, and ember/cinnamon core pockets |
 
 The reference PNGs, not the flat UI token palette, are canonical for art color. The UI palette remains useful for player distinction checks, but must not be used to recolor the biological texture into a flat token color.
+
+### Prompt Provenance and Durable Rule Migration
+
+`docs/TEMP_MOLD_SPRITE_PROMPTS.md` contains most, but not all, of the prompts used to create the existing sprites. It is useful evidence of intended species identity, palette boundaries, density progression, and negative constraints, but it is not authoritative by itself because:
+
+- some final sprites were manually adjusted after generation
+- some prompts produced false checkerboard backgrounds instead of alpha transparency
+- several families are missing one or more alternate-state prompts
+- some historical footprint ranges differ slightly from the consistent acceptance bands adopted for this expansion
+
+Use this authority order when creating the new variants:
+
+1. the five final same-mold PNGs establish the canonical visual species and palette
+2. this helper establishes current cross-family rules, footprint bands, transparency checks, naming, and runtime behavior
+3. the temporary prompt archive supplies species intent and useful negative constraints that remain consistent with the first two sources
+
+Before deleting the temporary archive at the end of the task:
+
+1. distill its durable per-mold species, palette, structural-anchor, and anti-drift rules into this helper's reference matrix or a clearly labeled section in this helper
+2. preserve the final approved prompts for all 24 new sprites in this helper or another indexed project document
+3. verify that no unique useful rule remains only in the temporary file
+4. delete `docs/TEMP_MOLD_SPRITE_PROMPTS.md` in the final approved cleanup slice
+5. update any links or handoff notes that mention the temporary file
+
+Do not copy the historical prompts wholesale into permanent documentation. Preserve reusable rules and approved final prompts; discard duplicates, failed transparency wording, and superseded footprint values.
 
 ### Footprint Definitions and Acceptance Bands
 
@@ -412,10 +449,10 @@ Work one mold at a time so species drift is caught early:
 
 1. Resolve the execution decisions listed in Inputs Required From Jake.
 2. Implement the runtime fields and three-choice resolver with null-safe fallbacks before bulk art wiring.
-3. Select one pilot mold. Orange-red is efficient if Jake provides its original prompts; red is the cleanest established baseline. Do not choose between them without Jake's direction.
-4. Generate multiple candidates for that mold's isolated variant only, validate them, and present the best `64x64` candidates for approval.
-5. Repeat for clustered, then dense. Review the full eight-image family and a repeated-tile board patch before accepting the pilot mold.
-6. Repeat the approved workflow for the other seven molds, with an approval checkpoint after each mold rather than generating all remaining assets blindly.
+3. Use red as the pilot mold.
+4. Generate and validate the approved number of candidates for red isolated, clustered, and dense. Present them at the review cadence Jake selects; do not assume whether approval happens state-by-state or once for the complete family.
+5. Review the full eight-image red family and a repeated-tile board patch before accepting the pilot mold.
+6. Present the complete red family at gameplay scale for Jake's approval. After approval, use the same validated workflow to generate the other seven mold families as one batch.
 7. Preserve final prompts beside the handoff record in this document or another indexed project document so future variants can be reproduced. Do not store secrets, API keys, or generated scratch files in the repo.
 
 ### Runtime Selection Plan
@@ -472,10 +509,15 @@ The slice is complete only when all 24 final PNGs and Tile assets are present, a
 
 ### Inputs Required From Jake Before Execution
 
-Do not begin image generation until these are resolved:
+Resolved:
 
-1. **Pilot mold**: choose orange-red (best prompt provenance if the remaining prompts exist) or red (cleanest original baseline).
-2. **Transparency path**: approve either the default chroma-key/removal path or the true-native-alpha CLI path. The latter requires explicit approval and an available `OPENAI_API_KEY`.
-3. **Footprint policy**: confirm the documented consistent bands are authoritative for new art, even where an existing sprite is an outlier, or request per-player matching to those outliers.
-4. **Review cadence**: confirm approval after each completed mold family, or explicitly authorize a larger batch.
-5. **Original prompts**: provide any available prompts. They are helpful and should reduce species/color drift, but they are not essential because the five existing same-mold PNGs can serve as canonical visual references. The prompts become important if they contain intentional species or palette rules that are not reliably visible in the final `64x64` files.
+1. **Pilot mold**: red.
+2. **Footprint policy**: use the documented consistent bands; do not match existing outliers.
+3. **Review cadence**: approve the complete red pilot family first, then generate the remaining seven families as one batch.
+4. **Original prompts**: use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` together with the five final same-mold PNGs, then migrate its durable rules and remove the temporary file at the end of the task.
+
+Still required before image generation:
+
+1. **Transparency path**: approve either chroma-key generation plus local background removal, or true native-alpha PNG generation. Native alpha is preferred for these sprites because it preserves fuzzy and hairlike edges more reliably; it requires a supported image-generation path and any credentials that path needs.
+2. **Candidate count**: decide how many candidates to generate for each new red state before selecting the best one. More candidates improve variation and selection quality but increase generation time and cost.
+3. **Pilot review granularity**: decide whether to approve red isolated, clustered, and dense one at a time, or review all three together as one family checkpoint.
