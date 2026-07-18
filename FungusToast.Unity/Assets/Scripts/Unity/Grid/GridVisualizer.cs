@@ -20,10 +20,13 @@ namespace FungusToast.Unity.Grid
         public sealed class MoldAliveVisualTiles
         {
             public Tile isolatedTile;
+            public Tile isolatedAlternateTile;
             public Tile clusteredTile;
             public Tile clusteredAlternateTile;
+            public Tile clusteredSecondAlternateTile;
             public Tile denseTile;
             public Tile denseAlternateTile;
+            public Tile denseSecondAlternateTile;
         }
 
         private enum MoldAliveVisualState
@@ -1101,6 +1104,11 @@ namespace FungusToast.Unity.Grid
                 {
                     return variantTiles.denseAlternateTile;
                 }
+
+                if (variantTiles.denseSecondAlternateTile != null)
+                {
+                    return variantTiles.denseSecondAlternateTile;
+                }
             }
 
             if (playerMoldTiles != null && moldIndex < playerMoldTiles.Length)
@@ -1133,9 +1141,19 @@ namespace FungusToast.Unity.Grid
                     return variantTiles.clusteredAlternateTile;
                 }
 
+                if (variantTiles.clusteredSecondAlternateTile != null)
+                {
+                    return variantTiles.clusteredSecondAlternateTile;
+                }
+
                 if (variantTiles.isolatedTile != null)
                 {
                     return variantTiles.isolatedTile;
+                }
+
+                if (variantTiles.isolatedAlternateTile != null)
+                {
+                    return variantTiles.isolatedAlternateTile;
                 }
 
                 if (variantTiles.denseTile != null)
@@ -1220,11 +1238,16 @@ namespace FungusToast.Unity.Grid
         {
             return ClassifyAliveVisualState(tile) switch
             {
-                MoldAliveVisualState.Isolated => variantTiles.isolatedTile,
+                MoldAliveVisualState.Isolated => ResolveIsolatedVariantTile(tile, variantTiles),
                 MoldAliveVisualState.Clustered => ResolveClusteredVariantTile(tile, variantTiles),
                 MoldAliveVisualState.Dense => ResolveDenseVariantTile(tile, variantTiles),
                 _ => null,
             };
+        }
+
+        private static Tile ResolveIsolatedVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
+        {
+            return ResolveVariantTile(tile, 53u, variantTiles?.isolatedTile, variantTiles?.isolatedAlternateTile);
         }
 
         private static Tile ResolveClusteredVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
@@ -1236,17 +1259,36 @@ namespace FungusToast.Unity.Grid
 
             if (variantTiles.clusteredTile == null)
             {
-                return variantTiles.clusteredAlternateTile;
+                return ResolveVariantTile(
+                    tile,
+                    73u,
+                    variantTiles.clusteredAlternateTile,
+                    variantTiles.clusteredSecondAlternateTile);
             }
 
             if (variantTiles.clusteredAlternateTile == null)
             {
-                return variantTiles.clusteredTile;
+                return ResolveVariantTile(
+                    tile,
+                    73u,
+                    variantTiles.clusteredTile,
+                    variantTiles.clusteredSecondAlternateTile);
             }
 
-            return ShouldUseAlternateVariantTile(tile, 73u)
-                ? variantTiles.clusteredAlternateTile
-                : variantTiles.clusteredTile;
+            // Preserve the established two-variant selection exactly until the new third tile is assigned.
+            if (variantTiles.clusteredSecondAlternateTile == null)
+            {
+                return ShouldUseAlternateVariantTile(tile, 73u)
+                    ? variantTiles.clusteredAlternateTile
+                    : variantTiles.clusteredTile;
+            }
+
+            return ResolveVariantTile(
+                tile,
+                73u,
+                variantTiles.clusteredTile,
+                variantTiles.clusteredAlternateTile,
+                variantTiles.clusteredSecondAlternateTile);
         }
 
         private static Tile ResolveDenseVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
@@ -1258,17 +1300,58 @@ namespace FungusToast.Unity.Grid
 
             if (variantTiles.denseTile == null)
             {
-                return variantTiles.denseAlternateTile;
+                return ResolveVariantTile(
+                    tile,
+                    97u,
+                    variantTiles.denseAlternateTile,
+                    variantTiles.denseSecondAlternateTile);
             }
 
             if (variantTiles.denseAlternateTile == null)
             {
-                return variantTiles.denseTile;
+                return ResolveVariantTile(
+                    tile,
+                    97u,
+                    variantTiles.denseTile,
+                    variantTiles.denseSecondAlternateTile);
             }
 
-            return ShouldUseAlternateVariantTile(tile, 97u)
-                ? variantTiles.denseAlternateTile
-                : variantTiles.denseTile;
+            // Preserve the established two-variant selection exactly until the new third tile is assigned.
+            if (variantTiles.denseSecondAlternateTile == null)
+            {
+                return ShouldUseAlternateVariantTile(tile, 97u)
+                    ? variantTiles.denseAlternateTile
+                    : variantTiles.denseTile;
+            }
+
+            return ResolveVariantTile(
+                tile,
+                97u,
+                variantTiles.denseTile,
+                variantTiles.denseAlternateTile,
+                variantTiles.denseSecondAlternateTile);
+        }
+
+        private static Tile ResolveVariantTile(BoardTile tile, uint salt, params Tile[] variants)
+        {
+            if (variants == null)
+            {
+                return null;
+            }
+
+            Tile[] availableVariants = variants.Where(variant => variant != null).ToArray();
+            if (availableVariants.Length == 0)
+            {
+                return null;
+            }
+
+            if (availableVariants.Length == 1 || tile == null)
+            {
+                return availableVariants[0];
+            }
+
+            int variantIndex = (int)(GetVariantTileHash(tile, salt) % (uint)availableVariants.Length);
+            return availableVariants[variantIndex];
         }
 
         private static bool ShouldUseAlternateVariantTile(BoardTile tile, uint salt)
@@ -1278,6 +1361,11 @@ namespace FungusToast.Unity.Grid
                 return false;
             }
 
+            return (GetVariantTileHash(tile, salt) & 1u) == 0u;
+        }
+
+        private static uint GetVariantTileHash(BoardTile tile, uint salt)
+        {
             unchecked
             {
                 // Use a stronger deterministic coordinate hash so variant selection stays stable
@@ -1298,7 +1386,7 @@ namespace FungusToast.Unity.Grid
                 hash *= 0xC2B2AE35u;
                 hash ^= hash >> 16;
 
-                return (hash & 1u) == 0u;
+                return hash;
             }
         }
 

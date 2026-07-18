@@ -999,10 +999,13 @@ namespace FungusToast.Unity.UI.Campaign
                 if (variantTiles != null)
                 {
                     AddAmbientMoldSprite(sprites, variantTiles.isolatedTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.isolatedAlternateTile?.sprite);
                     AddAmbientMoldSprite(sprites, variantTiles.clusteredTile?.sprite);
                     AddAmbientMoldSprite(sprites, variantTiles.clusteredAlternateTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.clusteredSecondAlternateTile?.sprite);
                     AddAmbientMoldSprite(sprites, variantTiles.denseTile?.sprite);
                     AddAmbientMoldSprite(sprites, variantTiles.denseAlternateTile?.sprite);
+                    AddAmbientMoldSprite(sprites, variantTiles.denseSecondAlternateTile?.sprite);
                 }
             }
 
