@@ -296,8 +296,12 @@ Jake has confirmed the following for this expansion:
 - review and approve the red pilot family before generating the other seven molds
 - after the red family succeeds, generate the remaining seven families as one batch, while still validating every individual file
 - use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` as prompt-provenance input, then retire that temporary file after its durable information has been migrated and verified
+- use built-in image generation on a flat per-mold chroma-key background, remove that background locally, and require all alpha/composite validation checks to pass
+- generate three candidates for each new red state
+- review red state-by-state in this order: isolated, clustered, dense; then review the complete red family and repeated-tile board patch
+- retain each selected full-resolution master under `art-source/mold-sprites/{mold}/` outside Unity's `Assets` tree, together with the final `64x64` project asset and approved prompt; do not retain rejected candidates in the repository
 
-The transparency workflow, candidate count, and exact red-pilot review granularity remain unresolved. Do not begin image generation until those choices are recorded below.
+All planning inputs are resolved. Image generation may begin as a separate execution slice using the sequence and stop conditions below.
 
 ### Verified Current Implementation
 
@@ -428,6 +432,8 @@ At execution time, choose one of these paths before the first generation call:
 1. **Built-in image generation plus chroma-key removal**: generate on a single flat key color that does not occur in that mold, remove it locally with the installed image-generation helper, use soft matte/despill, then validate the result. This is the default tool path, but fuzzy hyphae can retain color spill or lose fine fringe.
 2. **True native alpha via the CLI `gpt-image-1.5` path**: use `--background transparent --output-format png`. This is safer for fuzzy/hairlike mold edges, but requires Jake's explicit approval for the model/path change and requires `OPENAI_API_KEY`. Never switch to it silently.
 
+Approved path for this expansion: start with built-in chroma-key generation and local removal. If a selected candidate cannot pass edge-fringe and composite validation after the normal removal pass and one targeted cleanup retry, stop that state and ask Jake before switching to the native-alpha CLI fallback. Approval of chroma-key generation does not authorize an automatic model/path switch.
+
 For chroma keying, select the key per mold rather than assuming green is always safe. Never choose a key near the subject palette. Keep the key perfectly flat with no shadows, gradient, floor plane, texture, or lighting variation. Retain the unprocessed generated source outside `Assets/`; only validated `64x64` alpha PNGs enter the Unity sprite folder.
 
 Reject a candidate automatically if any of these are true:
@@ -450,7 +456,7 @@ Work one mold at a time so species drift is caught early:
 1. Resolve the execution decisions listed in Inputs Required From Jake.
 2. Implement the runtime fields and three-choice resolver with null-safe fallbacks before bulk art wiring.
 3. Use red as the pilot mold.
-4. Generate and validate the approved number of candidates for red isolated, clustered, and dense. Present them at the review cadence Jake selects; do not assume whether approval happens state-by-state or once for the complete family.
+4. Generate three candidates for the new red isolated state, validate them, and present the passing candidates at final `64x64` size for approval. Repeat for clustered only after isolated is approved, then repeat for dense only after clustered is approved.
 5. Review the full eight-image red family and a repeated-tile board patch before accepting the pilot mold.
 6. Present the complete red family at gameplay scale for Jake's approval. After approval, use the same validated workflow to generate the other seven mold families as one batch.
 7. Preserve final prompts beside the handoff record in this document or another indexed project document so future variants can be reproduced. Do not store secrets, API keys, or generated scratch files in the repo.
@@ -507,7 +513,7 @@ Unity visual validation at actual gameplay scale:
 
 The slice is complete only when all 24 final PNGs and Tile assets are present, all 24 scene fields are wired, automated validation passes, Unity compilation succeeds, and Jake approves gameplay-scale screenshots of every mold in isolated/clustered/dense board situations.
 
-### Inputs Required From Jake Before Execution
+### Execution Readiness
 
 Resolved:
 
@@ -515,9 +521,9 @@ Resolved:
 2. **Footprint policy**: use the documented consistent bands; do not match existing outliers.
 3. **Review cadence**: approve the complete red pilot family first, then generate the remaining seven families as one batch.
 4. **Original prompts**: use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` together with the five final same-mold PNGs, then migrate its durable rules and remove the temporary file at the end of the task.
+5. **Transparency path**: use built-in chroma-key generation plus local removal and validation. If normal removal plus one targeted cleanup retry fails, pause for approval before considering native-alpha CLI generation.
+6. **Candidate count**: generate three candidates per new red state.
+7. **Pilot review granularity**: approve red isolated, clustered, and dense state-by-state, followed by a complete-family and repeated-board-patch review.
+8. **Source masters**: commit selected full-resolution masters under `art-source/mold-sprites/{mold}/`, outside Unity's `Assets` tree; commit neither rejected candidates nor transient chroma-key processing files.
 
-Still required before image generation:
-
-1. **Transparency path**: approve either chroma-key generation plus local background removal, or true native-alpha PNG generation. Native alpha is preferred for these sprites because it preserves fuzzy and hairlike edges more reliably; it requires a supported image-generation path and any credentials that path needs.
-2. **Candidate count**: decide how many candidates to generate for each new red state before selecting the best one. More candidates improve variation and selection quality but increase generation time and cost.
-3. **Pilot review granularity**: decide whether to approve red isolated, clustered, and dense one at a time, or review all three together as one family checkpoint.
+No further user input is required to begin the red isolated generation slice.
