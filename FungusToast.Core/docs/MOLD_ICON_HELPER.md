@@ -272,18 +272,18 @@ Useful examples:
 
 ## Future Expansion Notes
 
-The runtime and art now cover all eight molds with five images per mold. The next planned expansion is one new isolated, clustered, and dense image per mold, as specified below.
+The runtime and art now cover all eight molds with five images per mold. The next planned expansion is two new isolated, clustered, and dense images per mold, as specified below.
 
-## Eight Images Per Mold Expansion Plan
+## Eleven Images Per Mold Expansion Plan
 
 ### Objective and Scope
 
-Add exactly 24 new source PNGs: one isolated, one clustered (medium-density), and one dense variant for each of the eight molds. After the expansion, every mold has:
+Add exactly 48 new source PNGs: two isolated, two clustered (medium-density), and two dense variants for each of the eight molds. After the expansion, every mold has:
 
-- 2 isolated images
-- 3 clustered images
-- 3 dense images
-- 8 alive-state images total
+- 3 isolated images
+- 4 clustered images
+- 4 dense images
+- 11 alive-state images total
 
 This task includes art generation, deterministic runtime selection, Unity Tile assets, scene wiring, automated asset validation, and gameplay-scale visual review. It does not replace or repaint any of the existing 40 PNGs unless a separate cleanup is approved.
 
@@ -297,7 +297,7 @@ Jake has confirmed the following for this expansion:
 - after the red family succeeds, generate the remaining seven families as one batch, while still validating every individual file
 - use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` as prompt-provenance input, then retire that temporary file after its durable information has been migrated and verified
 - use built-in image generation on a flat per-mold chroma-key background, remove that background locally, and require all alpha/composite validation checks to pass
-- generate three candidates for each new red state
+- generate three candidates for each red state type, retaining the best two and discarding the third
 - review red state-by-state in this order: isolated, clustered, dense; then review the complete red family and repeated-tile board patch
 - retain each selected full-resolution master under `art-source/mold-sprites/{mold}/` outside Unity's `Assets` tree, together with the final `64x64` project asset and approved prompt; do not retain rejected candidates in the repository
 
@@ -323,22 +323,40 @@ The runtime change is therefore additive. Do not change the three neighbor-count
 Use these new state suffixes consistently for PNGs and matching Tile assets:
 
 - `isolated_alt`
+- `isolated_alt_2`
 - `clustered_alt_2`
+- `clustered_alt_3`
 - `dense_alt_2`
+- `dense_alt_3`
 
 Examples:
 
 - `red_mold_pilot_isolated_alt_64x64.png`
+- `red_mold_pilot_isolated_alt_2_64x64.png`
 - `red_mold_pilot_clustered_alt_2_64x64.png`
+- `red_mold_pilot_clustered_alt_3_64x64.png`
 - `red_mold_pilot_dense_alt_2_64x64.png`
+- `red_mold_pilot_dense_alt_3_64x64.png`
 
 Add these serialized fields without renaming the five existing fields, so Unity preserves existing scene references:
 
 - `isolatedAlternateTile`
+- `isolatedSecondAlternateTile`
 - `clusteredSecondAlternateTile`
+- `clusteredThirdAlternateTile`
 - `denseSecondAlternateTile`
+- `denseThirdAlternateTile`
 
-Do not convert the existing explicit fields to arrays in this slice. That would create avoidable Unity serialization/migration risk for a fixed three-variant requirement.
+Do not convert the existing explicit fields to arrays in this slice. That would create avoidable Unity serialization/migration risk for a fixed per-state variant count.
+
+### Red Isolated Review Decision
+
+Jake selected both current red isolated review assets:
+
+- review A will become `red_mold_pilot_isolated_alt_64x64.png`
+- review B will become `red_mold_pilot_isolated_alt_2_64x64.png`
+
+Candidate C is unselected and will be removed during the approved-asset cleanup slice. Keep the `_review_` filenames only until the final red assets are wired.
 
 ### Canonical Reference Matrix
 
@@ -454,10 +472,10 @@ Also inspect each candidate composited over at least three backgrounds: light ne
 Work one mold at a time so species drift is caught early:
 
 1. Resolve the execution decisions listed in Inputs Required From Jake.
-2. Implement the runtime fields and three-choice resolver with null-safe fallbacks before bulk art wiring.
+2. Implement the runtime fields and multi-choice resolver with null-safe fallbacks before bulk art wiring.
 3. Use red as the pilot mold.
-4. Generate three candidates for the new red isolated state, validate them, and present the passing candidates at final `64x64` size for approval. Repeat for clustered only after isolated is approved, then repeat for dense only after clustered is approved.
-5. Review the full eight-image red family and a repeated-tile board patch before accepting the pilot mold.
+4. Generate three candidates for each red state type, validate them, and present the passing candidates at final `64x64` size for approval. Retain the best two as that state's two new variants and discard the third. Complete isolated before clustered, then dense.
+5. Review the full eleven-image red family and a repeated-tile board patch before accepting the pilot mold.
 6. Present the complete red family at gameplay scale for Jake's approval. After approval, use the same validated workflow to generate the other seven mold families as one batch.
 7. Preserve final prompts beside the handoff record in this document or another indexed project document so future variants can be reproduced. Do not store secrets, API keys, or generated scratch files in the repo.
 
@@ -465,14 +483,14 @@ Work one mold at a time so species drift is caught early:
 
 In `GridVisualizer.cs`:
 
-1. Add the three serialized fields listed above.
+1. Add the six serialized fields listed above.
 2. Add `ResolveIsolatedVariantTile` and route isolated state through it.
-3. Extend clustered and dense resolution to three non-null choices.
+3. Extend isolated resolution to three non-null choices, and clustered and dense resolution to four non-null choices.
 4. Use a stable full-width hash and state-specific salts, then choose `hash % availableVariantCount` so each configured image receives approximately equal representation.
-5. Preserve the exact current two-image selection path whenever the third clustered/dense field is null. Existing scenes or partial configurations must retain their old behavior.
-6. For isolated, return the original tile when the alternate is null; when both exist, use a separate salt and a stable 50/50 selection.
+5. Preserve the exact current two-image clustered/dense selection path whenever the added fields are null. Existing scenes or partial configurations must retain their old behavior.
+6. For isolated, return the original tile when both alternates are null; select from the original and first alternate when the second alternate is null; otherwise select among all three with a separate state salt.
 7. Keep selection dependent only on stable board data (`X`, `Y`, and `TileId`), never Unity random state, animation frame, render order, or player turn.
-8. Keep representative UI icons pinned to the primary clustered tile. Add the three new sprites to ambient menu collection, but do not randomize profile/start/campaign icons.
+8. Keep representative UI icons pinned to the primary clustered tile. Add all six new sprites to ambient menu collection, but do not randomize profile/start/campaign icons.
 
 This behavior must remain deterministic across rerenders, save/resume, reclaim animations, and different machines.
 
@@ -485,7 +503,7 @@ For each accepted final PNG:
 3. Let `MoldSpriteImporter` apply the established import settings.
 4. Create a matching Tile asset under `FungusToast.Unity/Assets/Tiles/Mold/`; do not assume the importer creates it.
 5. Reimport the PNG after the Tile asset exists if necessary so the importer assigns the Sprite.
-6. Wire all three new Tile fields for all eight entries in `SampleScene.unity` through Unity serialization, preserving `.meta` GUIDs.
+6. Wire all six new Tile fields for all eight entries in `SampleScene.unity` through Unity serialization, preserving `.meta` GUIDs.
 7. Confirm no prefab or alternate scene owns another `GridVisualizer` configuration that needs the same wiring.
 
 ### Validation and Definition of Done
@@ -497,21 +515,21 @@ Runtime validation:
 - verify the same board state always resolves to the same image
 - verify null fields fall back without exceptions
 - verify 2-choice configurations preserve existing selection behavior
-- verify all three configured choices appear across a representative coordinate sample without row, column, or checkerboard banding
+- verify every configured choice appears across a representative coordinate sample without row, column, or checkerboard banding
 - verify the neighbor thresholds remain `0`, `1-2`, and `3+`
-- verify ambient menu sprite collection includes all eight images per selected mold without duplicates
+- verify ambient menu sprite collection includes all eleven images per selected mold without duplicates
 - verify stable representative UI icons are unchanged
 
 Unity visual validation at actual gameplay scale:
 
 - isolated cells read as sparse and do not look like miniature dense stamps
-- clustered bands show three distinct silhouettes and remain visually between isolated and dense
+- clustered bands show four distinct silhouettes and remain visually between isolated and dense
 - dense repeated patches feel fused, do not expose a strong icon grid, and do not become flat squares
 - rotations and mirrors do not reveal lighting or perspective inconsistencies
 - each mold remains recognizable against toast and distinguishable from the other seven molds
 - light/dark/toast composites show no checkerboard, chroma fringe, halo, or accidental opaque background
 
-The slice is complete only when all 24 final PNGs and Tile assets are present, all 24 scene fields are wired, automated validation passes, Unity compilation succeeds, and Jake approves gameplay-scale screenshots of every mold in isolated/clustered/dense board situations.
+The slice is complete only when all 48 final PNGs and Tile assets are present, all 48 scene fields are wired, automated validation passes, Unity compilation succeeds, and Jake approves gameplay-scale screenshots of every mold in isolated/clustered/dense board situations.
 
 ### Execution Readiness
 
@@ -522,8 +540,9 @@ Resolved:
 3. **Review cadence**: approve the complete red pilot family first, then generate the remaining seven families as one batch.
 4. **Original prompts**: use `docs/TEMP_MOLD_SPRITE_PROMPTS.md` together with the five final same-mold PNGs, then migrate its durable rules and remove the temporary file at the end of the task.
 5. **Transparency path**: use built-in chroma-key generation plus local removal and validation. If normal removal plus one targeted cleanup retry fails, pause for approval before considering native-alpha CLI generation.
-6. **Candidate count**: generate three candidates per new red state.
+6. **Candidate count**: generate three candidates per red state type; retain the best two as that state's two new variants and discard the third.
 7. **Pilot review granularity**: approve red isolated, clustered, and dense state-by-state, followed by a complete-family and repeated-board-patch review.
 8. **Source masters**: commit selected full-resolution masters under `art-source/mold-sprites/{mold}/`, outside Unity's `Assets` tree; commit neither rejected candidates nor transient chroma-key processing files.
+9. **Variant count**: create two new isolated, two new clustered, and two new dense variants per mold. Red isolated candidates A and B occupy the two new isolated slots; C is discarded.
 
-No further user input is required to begin the red isolated generation slice.
+No further user input is required to begin the red clustered generation slice.

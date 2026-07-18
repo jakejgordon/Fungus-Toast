@@ -41,8 +41,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Pending Tasks
 
-- Expand each of the eight player molds from five to eight alive-state sprites: add one isolated, one clustered, and one dense variant per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eight Images Per Mold Expansion Plan**. All planning inputs are resolved; the next execution slice is three red isolated candidates using the approved chroma-key and validation workflow.
+- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. Red isolated review candidates A and B are selected; C is to be discarded during approved-asset cleanup. The next execution slice is three red clustered candidates using the approved chroma-key and validation workflow.
 
 ## Next Handoff
 
-- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eight Images Per Mold Expansion Plan**. Generate and validate three red isolated candidates, then pause for Jake's state-level approval before creating the red clustered candidates. Do not switch to the native-alpha CLI fallback without explicit approval.
+- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Generate and validate three red clustered candidates, then pause for Jake's state-level approval before creating the next red clustered candidate set. Do not switch to the native-alpha CLI fallback without explicit approval.
