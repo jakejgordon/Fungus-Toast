@@ -41,8 +41,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Pending Tasks
 
-- None.
+- Expand each of the eight player molds from five to eight alive-state sprites: add one isolated, one clustered, and one dense variant per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eight Images Per Mold Expansion Plan**. Image generation is waiting on the explicit decisions listed in that plan.
 
 ## Next Handoff
 
-- No active handoff. Start the next task fresh and update this file only when there is a real in-progress thread or pending follow-up.
+- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eight Images Per Mold Expansion Plan**. Resolve the five inputs from Jake before generating assets; do not silently choose the alpha workflow or normalize existing outlier sprites.

@@ -41,13 +41,11 @@ Current lesson from rollout:
 - yellow passed gameplay readability, but it stayed somewhat close to the red mold in silhouette language
 - future prompts should push harder on species-specific structure so each mold reads as its own organism family at a glance
 
-## Current Pilot Status
+## Current Eight-Mold Status
 
-The current pilot is the red mold in mold slot 0.
+The red mold in mold slot 0 was the original pilot. All eight mold slots now have the same five-image alive-state set, and the red set remains the baseline quality reference.
 
-This pilot is now the baseline template for the remaining rollout molds, with yellow slot 1 already completed.
-
-The runtime currently supports these alive-state variants for the pilot mold:
+The runtime currently supports these alive-state variants for every mold:
 - `isolatedTile`
 - `clusteredTile`
 - `clusteredAlternateTile`
@@ -67,6 +65,8 @@ Current state classification:
 Current variation behavior:
 - clustered cells can alternate stably between `clusteredTile` and `clusteredAlternateTile` using a deterministic tile-id hash
 - dense cells can alternate stably between `denseTile` and `denseAlternateTile` using a deterministic tile-id hash
+- isolated cells currently have only one image
+- stable quarter-turn and horizontal-mirror transforms add more variation after the sprite is selected
 
 Current non-board UI icon behavior:
 - representative player mold icons are sourced from `GridVisualizer.GetMoldIconTileForPlayer` and `GridVisualizer.GetMoldIconTileForMoldIndex`
@@ -86,7 +86,7 @@ Representative UI icon consumers:
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/GameStart/UI_StartGamePanel.cs`
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/Campaign/UI_CampaignPanelController.cs`
 
-Current pilot tile assets:
+Representative current tile assets:
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_isolated_64x64.asset`
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_64x64.asset`
 - `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_alt_64x64.asset`
@@ -272,9 +272,210 @@ Useful examples:
 
 ## Future Expansion Notes
 
-The runtime is now ready for a full 8-mold rollout.
+The runtime and art now cover all eight molds with five images per mold. The next planned expansion is one new isolated, clustered, and dense image per mold, as specified below.
 
-Recommended next expansions, in order:
-1. roll out the remaining 7 molds using the red baseline as the quality bar
-2. add more visually distinct dense alternates only for molds that still read repetitively in screenshots
-3. consider an enemy-contested border state only if playtests show that adjacency readability still needs more help
+## Eight Images Per Mold Expansion Plan
+
+### Objective and Scope
+
+Add exactly 24 new source PNGs: one isolated, one clustered (medium-density), and one dense variant for each of the eight molds. After the expansion, every mold has:
+
+- 2 isolated images
+- 3 clustered images
+- 3 dense images
+- 8 alive-state images total
+
+This task includes art generation, deterministic runtime selection, Unity Tile assets, scene wiring, automated asset validation, and gameplay-scale visual review. It does not replace or repaint any of the existing 40 PNGs unless a separate cleanup is approved.
+
+### Verified Current Implementation
+
+The current implementation is concentrated in:
+
+- `GridVisualizer.MoldAliveVisualTiles`, which serializes five explicit Tile fields per mold
+- `GridVisualizer.ClassifyAliveVisualState`, which maps `0` friendly orthogonal neighbors to isolated, `1-2` to clustered, and `3+` to dense
+- `ResolveClusteredVariantTile` and `ResolveDenseVariantTile`, which choose between two images with a stable coordinate/tile-id hash
+- `BuildAliveMoldVisualMatrix`, which independently adds stable quarter-turn and mirror variation
+- `SampleScene.unity`, which wires eight `playerMoldAliveVariantTiles` entries in this order: red, yellow, cyan, aqua, green, dark blue, purple, orange-red
+- `MoldSpriteImporter`, which applies Sprite/64 PPU/Point/Clamp/uncompressed/full-rect import settings and updates a matching Tile asset if that Tile asset already exists; it does not create a missing Tile asset
+- `UI_ModeSelectPanelController`, which collects all five current images for ambient menu decoration
+- `GetMoldIconTileForMoldIndex`, which deliberately uses the primary clustered image as the stable representative UI icon
+
+The runtime change is therefore additive. Do not change the three neighbor-count bands or the existing visual scale values as part of this work.
+
+### Asset Names and Runtime Fields
+
+Use these new state suffixes consistently for PNGs and matching Tile assets:
+
+- `isolated_alt`
+- `clustered_alt_2`
+- `dense_alt_2`
+
+Examples:
+
+- `red_mold_pilot_isolated_alt_64x64.png`
+- `red_mold_pilot_clustered_alt_2_64x64.png`
+- `red_mold_pilot_dense_alt_2_64x64.png`
+
+Add these serialized fields without renaming the five existing fields, so Unity preserves existing scene references:
+
+- `isolatedAlternateTile`
+- `clusteredSecondAlternateTile`
+- `denseSecondAlternateTile`
+
+Do not convert the existing explicit fields to arrays in this slice. That would create avoidable Unity serialization/migration risk for a fixed three-variant requirement.
+
+### Canonical Reference Matrix
+
+For each generation call, use all five existing PNGs for that same mold as reference images. Label their roles explicitly: isolated anchor, primary clustered anchor, alternate clustered anchor, primary dense anchor, and alternate dense anchor. Do not use another player's mold as the species reference.
+
+Preserve these visible identities from the current assets:
+
+| Scene slot | File prefix | Species identity to preserve |
+|---|---|---|
+| 0 | `red` | vermilion-red velvety lobes/rosettes, darker maroon folds and cores |
+| 1 | `yellow` | mustard-yellow/olive fuzzy clustered nodules with darker granular centers |
+| 2 | `cyan` | bright cyan-blue branching coral/frond growth with deep-blue structure |
+| 3 | `aqua` | pale aqua/mint porous blister-pad colonies with darker turquoise pits |
+| 4 | `green` | olive-green mossy, chunky lobes with deep green-brown recesses |
+| 5 | `dark_blue` | very dark navy/indigo folded velvety biomass with blue highlights |
+| 6 | `purple` | lavender-purple soft radial filaments and fuzzy cloudlike lobes with darker violet cores |
+| 7 | `orange_red` | shaggy woolly rusty orange/apricot masses, pale fringe, and ember/cinnamon core pockets |
+
+The reference PNGs, not the flat UI token palette, are canonical for art color. The UI palette remains useful for player distinction checks, but must not be used to recolor the biological texture into a flat token color.
+
+### Footprint Definitions and Acceptance Bands
+
+Use two separate measurements; do not use the ambiguous word "occupancy" by itself:
+
+1. **Alpha footprint**: area of the smallest bounding rectangle containing every pixel whose alpha is greater than zero, divided by total canvas area.
+2. **Visible-pixel coverage**: percentage of all canvas pixels whose alpha is greater than zero. Record alpha-at-least-128 coverage as a secondary edge-softness check.
+
+Target alpha-footprint bands at the final `64x64` size:
+
+| State | Target alpha footprint | Preferred transparent margin | Visual intent |
+|---|---:|---:|---|
+| Isolated | 45%-65% | 5-8 px on most sides | one small colony or a few connected masses, clearly surrounded by toast |
+| Clustered | 65%-78% | 4-6 px on most sides | medium growth, broader than isolated but not fused to neighboring tiles |
+| Dense | 78%-88% | 2-4 px on most sides | mature fused patch pressing outward asymmetrically |
+
+These footprint bands are prompt and review targets, not permission to fill the bounding box with a solid shape. The visible-pixel coverage must remain appropriate to the species: an airy cyan frond and a porous aqua pad should not be forced to match the solid-pixel count of a velvety red lobe.
+
+Before generation, run the validator against the current five images for the selected mold and record their alpha footprint and visible-pixel coverage. Use the appropriate existing state images as the local comparison. Several current assets reach or cross the border and one source named `aqua_mold_pilot_clustered_64x64.png` is actually `85x85`; treat those as known baseline defects, not standards to reproduce. Do not alter them without separate approval.
+
+### Prompt Construction
+
+Create three separate prompts per mold rather than requesting a sheet or three subjects in one image. Each prompt must contain:
+
+1. the target state and the fact that this is a new silhouette, not a copy or simple rotation of an existing image
+2. the five same-mold references and their labeled roles
+3. the species identity and color/material language from the reference matrix, refined by any original prompt Jake supplies
+4. the target alpha-footprint band, final margin, and `64x64` readability requirement
+5. top-down, semi-realistic, asymmetrical, fully contained composition
+6. the common negative constraints from Core Art Direction Rules
+7. explicit instructions to avoid a rendered checkerboard, cast shadow, glow, background, border contact, and cross-player palette drift
+
+State-specific shape direction:
+
+- **New isolated**: change mass count, lobe orientation, and center placement while staying sparse; it must not be the existing isolated sprite rotated, mirrored, or scaled.
+- **New clustered**: use a third perimeter rhythm and distribution of weight; it must sit between isolated and dense and differ materially from both existing clustered silhouettes.
+- **New dense**: use off-center core pockets, asymmetric near-contact spacing, bays/notches, and fused masses; it must blend into a patch without becoming a square pancake or centered medallion.
+
+The orange dense prompt supplied by Jake is a strong dense template. Reuse its structure and transparency warnings, but substitute each mold's own references, material language, colors, and silhouette rules. Do not reuse its orange-specific biological description for other players.
+
+### Transparency Workflow and Checkerboard Prevention
+
+An instruction in the prompt is not sufficient proof of transparency. Every candidate must pass file-level alpha validation.
+
+At execution time, choose one of these paths before the first generation call:
+
+1. **Built-in image generation plus chroma-key removal**: generate on a single flat key color that does not occur in that mold, remove it locally with the installed image-generation helper, use soft matte/despill, then validate the result. This is the default tool path, but fuzzy hyphae can retain color spill or lose fine fringe.
+2. **True native alpha via the CLI `gpt-image-1.5` path**: use `--background transparent --output-format png`. This is safer for fuzzy/hairlike mold edges, but requires Jake's explicit approval for the model/path change and requires `OPENAI_API_KEY`. Never switch to it silently.
+
+For chroma keying, select the key per mold rather than assuming green is always safe. Never choose a key near the subject palette. Keep the key perfectly flat with no shadows, gradient, floor plane, texture, or lighting variation. Retain the unprocessed generated source outside `Assets/`; only validated `64x64` alpha PNGs enter the Unity sprite folder.
+
+Reject a candidate automatically if any of these are true:
+
+- it is not exactly `64x64` after final downsample
+- it lacks an alpha channel
+- all pixels are opaque
+- any of the four corners is opaque
+- any nontransparent pixel occurs in the outermost 2 px border
+- the alpha footprint is outside the approved state band
+- a gray/white checker pattern is baked into opaque pixels
+- chroma-key colored fringe remains on the mold edge
+
+Also inspect each candidate composited over at least three backgrounds: light neutral, dark neutral, and representative toast brown. File-level tests catch opaque checkerboards; compositing catches halos, missing fringe, and bad despill.
+
+### Generation and Approval Sequence
+
+Work one mold at a time so species drift is caught early:
+
+1. Resolve the execution decisions listed in Inputs Required From Jake.
+2. Implement the runtime fields and three-choice resolver with null-safe fallbacks before bulk art wiring.
+3. Select one pilot mold. Orange-red is efficient if Jake provides its original prompts; red is the cleanest established baseline. Do not choose between them without Jake's direction.
+4. Generate multiple candidates for that mold's isolated variant only, validate them, and present the best `64x64` candidates for approval.
+5. Repeat for clustered, then dense. Review the full eight-image family and a repeated-tile board patch before accepting the pilot mold.
+6. Repeat the approved workflow for the other seven molds, with an approval checkpoint after each mold rather than generating all remaining assets blindly.
+7. Preserve final prompts beside the handoff record in this document or another indexed project document so future variants can be reproduced. Do not store secrets, API keys, or generated scratch files in the repo.
+
+### Runtime Selection Plan
+
+In `GridVisualizer.cs`:
+
+1. Add the three serialized fields listed above.
+2. Add `ResolveIsolatedVariantTile` and route isolated state through it.
+3. Extend clustered and dense resolution to three non-null choices.
+4. Use a stable full-width hash and state-specific salts, then choose `hash % availableVariantCount` so each configured image receives approximately equal representation.
+5. Preserve the exact current two-image selection path whenever the third clustered/dense field is null. Existing scenes or partial configurations must retain their old behavior.
+6. For isolated, return the original tile when the alternate is null; when both exist, use a separate salt and a stable 50/50 selection.
+7. Keep selection dependent only on stable board data (`X`, `Y`, and `TileId`), never Unity random state, animation frame, render order, or player turn.
+8. Keep representative UI icons pinned to the primary clustered tile. Add the three new sprites to ambient menu collection, but do not randomize profile/start/campaign icons.
+
+This behavior must remain deterministic across rerenders, save/resume, reclaim animations, and different machines.
+
+### Unity Asset and Scene Wiring
+
+For each accepted final PNG:
+
+1. Downsample once to final `64x64` with a high-quality alpha-aware filter; judge this file, not the large source.
+2. Save it under `FungusToast.Unity/Assets/Sprites/Tiles/Mold/` with the approved suffix.
+3. Let `MoldSpriteImporter` apply the established import settings.
+4. Create a matching Tile asset under `FungusToast.Unity/Assets/Tiles/Mold/`; do not assume the importer creates it.
+5. Reimport the PNG after the Tile asset exists if necessary so the importer assigns the Sprite.
+6. Wire all three new Tile fields for all eight entries in `SampleScene.unity` through Unity serialization, preserving `.meta` GUIDs.
+7. Confirm no prefab or alternate scene owns another `GridVisualizer` configuration that needs the same wiring.
+
+### Validation and Definition of Done
+
+Add a repeatable Unity Editor validation command for the mold sprite folder. It should report, per PNG: dimensions, alpha-channel presence, corner alpha, outer-2-px violations, alpha footprint, visible-pixel coverage, and matching Tile asset existence. It should fail clearly on an opaque checkerboard-like background rather than trusting the filename or prompt.
+
+Runtime validation:
+
+- verify the same board state always resolves to the same image
+- verify null fields fall back without exceptions
+- verify 2-choice configurations preserve existing selection behavior
+- verify all three configured choices appear across a representative coordinate sample without row, column, or checkerboard banding
+- verify the neighbor thresholds remain `0`, `1-2`, and `3+`
+- verify ambient menu sprite collection includes all eight images per selected mold without duplicates
+- verify stable representative UI icons are unchanged
+
+Unity visual validation at actual gameplay scale:
+
+- isolated cells read as sparse and do not look like miniature dense stamps
+- clustered bands show three distinct silhouettes and remain visually between isolated and dense
+- dense repeated patches feel fused, do not expose a strong icon grid, and do not become flat squares
+- rotations and mirrors do not reveal lighting or perspective inconsistencies
+- each mold remains recognizable against toast and distinguishable from the other seven molds
+- light/dark/toast composites show no checkerboard, chroma fringe, halo, or accidental opaque background
+
+The slice is complete only when all 24 final PNGs and Tile assets are present, all 24 scene fields are wired, automated validation passes, Unity compilation succeeds, and Jake approves gameplay-scale screenshots of every mold in isolated/clustered/dense board situations.
+
+### Inputs Required From Jake Before Execution
+
+Do not begin image generation until these are resolved:
+
+1. **Pilot mold**: choose orange-red (best prompt provenance if the remaining prompts exist) or red (cleanest original baseline).
+2. **Transparency path**: approve either the default chroma-key/removal path or the true-native-alpha CLI path. The latter requires explicit approval and an available `OPENAI_API_KEY`.
+3. **Footprint policy**: confirm the documented consistent bands are authoritative for new art, even where an existing sprite is an outlier, or request per-player matching to those outliers.
+4. **Review cadence**: confirm approval after each completed mold family, or explicitly authorize a larger batch.
+5. **Original prompts**: provide any available prompts. They are helpful and should reduce species/color drift, but they are not essential because the five existing same-mold PNGs can serve as canonical visual references. The prompts become important if they contain intentional species or palette rules that are not reliably visible in the final `64x64` files.
