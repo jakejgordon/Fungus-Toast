@@ -349,14 +349,16 @@ Add these serialized fields without renaming the five existing fields, so Unity 
 
 Do not convert the existing explicit fields to arrays in this slice. That would create avoidable Unity serialization/migration risk for a fixed per-state variant count.
 
-### Red Isolated Review Decision
+### Red Pilot Review Decisions
 
-Jake selected both current red isolated review assets:
+Jake accepted the refined red clustered and dense review assets A and B. They have been promoted to final sprite names; C was discarded for both states:
 
-- review A will become `red_mold_pilot_isolated_alt_64x64.png`
-- review B will become `red_mold_pilot_isolated_alt_2_64x64.png`
+- clustered A → `red_mold_pilot_clustered_alt_2_64x64.png`
+- clustered B → `red_mold_pilot_clustered_alt_3_64x64.png`
+- dense A → `red_mold_pilot_dense_alt_2_64x64.png`
+- dense B → `red_mold_pilot_dense_alt_3_64x64.png`
 
-Candidate C is unselected and will be removed during the approved-asset cleanup slice. Keep the `_review_` filenames only until the final red assets are wired.
+The original three red isolated review candidates, including the previously selected A/B pair, were rejected because their broad lobe treatment read as floral. They have been replaced in place with a new fine-granular, non-radial A/B/C review set. Do not promote any isolated review asset until Jake selects two from this replacement set.
 
 ### Canonical Reference Matrix
 

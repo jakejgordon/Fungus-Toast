@@ -41,8 +41,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Pending Tasks
 
-- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. Red isolated review candidates A and B are selected; C is to be discarded during approved-asset cleanup. Review-only A/B/C candidates for both red clustered and red dense are now in Unity's `Assets/Sprites/Tiles/Mold` folder; all six passed chroma-key/alpha/border/footprint validation.
+- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. Red clustered and dense candidates A/B are accepted and promoted; C was discarded. A replacement fine-granular, non-floral A/B/C set for red isolated is in Unity's `Assets/Sprites/Tiles/Mold` folder for review.
 
 ## Next Handoff
 
-- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Jake should select the best two review candidates from each of the clustered and dense red sets. Then rename/promote the four selected assets, create Tile assets, wire the red mold fields, and review the complete family before batch-generating the remaining seven molds. Do not switch to the native-alpha CLI fallback without explicit approval.
+- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Jake should select two of the replacement red isolated review candidates. Then promote them, create Tile assets, wire all six new red fields, and review the complete family before batch-generating the remaining seven molds. Do not switch to the native-alpha CLI fallback without explicit approval.
