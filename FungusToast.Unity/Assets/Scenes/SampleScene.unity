@@ -111990,10 +111990,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 79dc2f3c008fbc6499c900917e11cb93, type: 2}
   playerMoldAliveVariantTiles:
   - isolatedTile: {fileID: 11400000, guid: 9f4d3d8b6ea44c1cb9cbe5c6f2fb7a11, type: 2}
+    isolatedAlternateTile: {fileID: 11400000, guid: 584c2903be0f437eac950658f57df62d, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: 35deb18664e64564bdb6ebbf4a5a6d8e, type: 2}
     clusteredTile: {fileID: 11400000, guid: 5aa7d3441d244c37b7314a183b9d1464, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 0c4787dbb7b6480da4c650c0d2ae4be4, type: 2}
+    clusteredSecondAlternateTile: {fileID: 11400000, guid: 7f0bf4f1eb8e4a069870da55579aed62, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 4f9fd2755c6b41e19cac6d4278727a4f, type: 2}
     denseTile: {fileID: 11400000, guid: e2e9aef17f0d4434b0cf8a52e85b2d7c, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: c742f38a8a6e42f9b0b031be1e8823e6, type: 2}
+    denseSecondAlternateTile: {fileID: 11400000, guid: a0071bcfe5524500b3d88d60d509bd0e, type: 2}
+    denseThirdAlternateTile: {fileID: 11400000, guid: f8ac535338d94192950c7ed710380385, type: 2}
   - isolatedTile: {fileID: 11400000, guid: cfa506b260464509ae238968b14b4d49, type: 2}
     clusteredTile: {fileID: 11400000, guid: adca0c3d13e543ae9379da0238d9fb0a, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 1267aa475eab48c4840463306200772e, type: 2}

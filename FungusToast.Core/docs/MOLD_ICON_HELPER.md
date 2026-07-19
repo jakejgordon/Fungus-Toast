@@ -358,7 +358,12 @@ Jake accepted the refined red clustered and dense review assets A and B. They ha
 - dense A → `red_mold_pilot_dense_alt_2_64x64.png`
 - dense B → `red_mold_pilot_dense_alt_3_64x64.png`
 
-The original three red isolated review candidates, including the previously selected A/B pair, were rejected because their broad lobe treatment read as floral. They have been replaced in place with a new fine-granular, non-radial A/B/C review set. Do not promote any isolated review asset until Jake selects two from this replacement set.
+The original three red isolated review candidates, including the previously selected A/B pair, were rejected because their broad lobe treatment read as floral. Their replacement fine-granular, non-radial review set was approved as B and C, then promoted:
+
+- isolated B → `red_mold_pilot_isolated_alt_64x64.png`
+- isolated C → `red_mold_pilot_isolated_alt_2_64x64.png`
+
+All six promoted red Tile assets are wired to the first `SampleScene.unity` mold entry. The runtime now serializes and selects all eleven alive-state choices (3 isolated, 4 clustered, 4 dense), including all six new red sprites.
 
 ### Canonical Reference Matrix
 
@@ -547,6 +552,6 @@ Resolved:
 6. **Candidate count**: generate three candidates per red state type; retain the best two as that state's two new variants and discard the third.
 7. **Pilot review granularity**: approve red isolated, clustered, and dense state-by-state, followed by a complete-family and repeated-board-patch review.
 8. **Source masters**: commit selected full-resolution masters under `art-source/mold-sprites/{mold}/`, outside Unity's `Assets` tree; commit neither rejected candidates nor transient chroma-key processing files.
-9. **Variant count**: create two new isolated, two new clustered, and two new dense variants per mold. Red isolated candidates A and B occupy the two new isolated slots; C is discarded.
+9. **Variant count**: create two new isolated, two new clustered, and two new dense variants per mold. Red isolated candidates B and C occupy the two new isolated slots; A is discarded.
 
 No further user input is required to begin the red clustered generation slice.

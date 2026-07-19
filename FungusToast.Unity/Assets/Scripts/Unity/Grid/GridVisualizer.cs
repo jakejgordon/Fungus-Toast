@@ -27,6 +27,9 @@ namespace FungusToast.Unity.Grid
             public Tile denseTile;
             public Tile denseAlternateTile;
             public Tile denseSecondAlternateTile;
+            public Tile isolatedSecondAlternateTile;
+            public Tile clusteredThirdAlternateTile;
+            public Tile denseThirdAlternateTile;
         }
 
         private enum MoldAliveVisualState
@@ -1247,7 +1250,12 @@ namespace FungusToast.Unity.Grid
 
         private static Tile ResolveIsolatedVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
         {
-            return ResolveVariantTile(tile, 53u, variantTiles?.isolatedTile, variantTiles?.isolatedAlternateTile);
+            return ResolveVariantTile(
+                tile,
+                53u,
+                variantTiles?.isolatedTile,
+                variantTiles?.isolatedAlternateTile,
+                variantTiles?.isolatedSecondAlternateTile);
         }
 
         private static Tile ResolveClusteredVariantTile(BoardTile tile, MoldAliveVisualTiles variantTiles)
@@ -1255,6 +1263,17 @@ namespace FungusToast.Unity.Grid
             if (variantTiles == null)
             {
                 return null;
+            }
+
+            if (variantTiles.clusteredThirdAlternateTile != null)
+            {
+                return ResolveVariantTile(
+                    tile,
+                    73u,
+                    variantTiles.clusteredTile,
+                    variantTiles.clusteredAlternateTile,
+                    variantTiles.clusteredSecondAlternateTile,
+                    variantTiles.clusteredThirdAlternateTile);
             }
 
             if (variantTiles.clusteredTile == null)
@@ -1296,6 +1315,17 @@ namespace FungusToast.Unity.Grid
             if (variantTiles == null)
             {
                 return null;
+            }
+
+            if (variantTiles.denseThirdAlternateTile != null)
+            {
+                return ResolveVariantTile(
+                    tile,
+                    97u,
+                    variantTiles.denseTile,
+                    variantTiles.denseAlternateTile,
+                    variantTiles.denseSecondAlternateTile,
+                    variantTiles.denseThirdAlternateTile);
             }
 
             if (variantTiles.denseTile == null)
