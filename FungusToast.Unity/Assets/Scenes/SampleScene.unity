@@ -112029,6 +112029,8 @@ MonoBehaviour:
     clusteredThirdAlternateTile: {fileID: 11400000, guid: 0a3f29ade32a43b3a406eb9326542976, type: 2}
     denseTile: {fileID: 11400000, guid: 4f4bff99cfa049b7be5c3e96c27a82be, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 84e5364e6e584697a59eb8614709d6a8, type: 2}
+    denseSecondAlternateTile: {fileID: 11400000, guid: bef1b675e12d4bf997315702a5b0285c, type: 2}
+    denseThirdAlternateTile: {fileID: 11400000, guid: e34c396114ed4353855ed6aa95bdaaf2, type: 2}
   - isolatedTile: {fileID: 11400000, guid: a1d642e9cf4e4ed9a6b77925f0f6e721, type: 2}
     clusteredTile: {fileID: 11400000, guid: 5d8b28c0a4c24d14b63f1a8f16245ec3, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 8e985f7c7dd5447bb4c9d8dbe7f9a641, type: 2}

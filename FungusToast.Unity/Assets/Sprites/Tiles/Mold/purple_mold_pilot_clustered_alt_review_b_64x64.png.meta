@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 6ad49abadedc422abfd3a047906e5424
+guid: 1acd7c33b0d14aecbd1162c34be4e3cc
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 8217578308074558656
-    second: aqua_mold_pilot_dense_alt_review_c_64x64_0
+      213: -5513575821807123923
+    second: purple_mold_pilot_clustered_alt_review_b_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: aqua_mold_pilot_dense_alt_review_c_64x64_0
+      name: purple_mold_pilot_clustered_alt_review_b_64x64_0
       rect:
         serializedVersion: 2
-        x: 1
+        x: 0
         y: 3
-        width: 62
-        height: 58
+        width: 64
+        height: 60
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 0c45dbebee3ba0270800000000000000
-      internalID: 8217578308074558656
+      spriteID: d2201039008db73b0800000000000000
+      internalID: -5513575821807123923
       vertices: []
       indices: 
       edges: []
