@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: e9b288b28f444f16886d75fd26fc9f77
+guid: 662ed86d057f4eea88c5946bce4f3757
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3248510837283782433
-    second: yellow_mold_pilot_clustered_alt_review_b_64x64_0
+      213: -9034257801017030944
+    second: cyan_mold_pilot_isolated_alt_review_a_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: yellow_mold_pilot_clustered_alt_review_b_64x64_0
+      name: cyan_mold_pilot_isolated_alt_review_a_64x64_0
       rect:
         serializedVersion: 2
-        x: 0
-        y: 0
-        width: 64
-        height: 64
+        x: 1
+        y: 6
+        width: 63
+        height: 53
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 12f7e492567051d20800000000000000
-      internalID: 3248510837283782433
+      spriteID: 0e60411456edf9280800000000000000
+      internalID: -9034257801017030944
       vertices: []
       indices: 
       edges: []
