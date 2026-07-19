@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 74ce0dbd813e4c27ad7de8930e260159
+guid: e58fb3497a5f49eaab748efa77fbeb03
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -3727159688729979133
-    second: aqua_mold_pilot_isolated_alt_review_a_64x64_0
+      213: 5028738989716264457
+    second: aqua_mold_pilot_clustered_alt_review_c_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: aqua_mold_pilot_isolated_alt_review_a_64x64_0
+      name: aqua_mold_pilot_clustered_alt_review_c_64x64_0
       rect:
         serializedVersion: 2
-        x: 5
-        y: 12
-        width: 54
-        height: 40
+        x: 0
+        y: 5
+        width: 85
+        height: 75
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 307181ca208764cc0800000000000000
-      internalID: -3727159688729979133
+      spriteID: 906d13eb77ba9c540800000000000000
+      internalID: 5028738989716264457
       vertices: []
       indices: 
       edges: []
