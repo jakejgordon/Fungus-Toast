@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: cb8016ba00fd432db3215f73e01f1930
+guid: 881b348344544e2eb24223dd99ee4eb0
 TextureImporter:
   internalIDToNameTable:
   - first:
       213: 975218605380194048
-    second: cyan_mold_pilot_dense_alt_review_c_64x64_0
+    second: cyan_mold_pilot_dense_alt_2_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: cyan_mold_pilot_dense_alt_review_c_64x64_0
+      name: cyan_mold_pilot_dense_alt_2_64x64_0
       rect:
         serializedVersion: 2
         x: 0
