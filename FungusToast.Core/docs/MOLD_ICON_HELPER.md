@@ -439,6 +439,8 @@ State-specific shape direction:
 - **New clustered**: use a third perimeter rhythm and distribution of weight; it must sit between isolated and dense and differ materially from both existing clustered silhouettes.
 - **New dense**: use off-center core pockets, asymmetric near-contact spacing, bays/notches, and fused masses; it must blend into a patch without becoming a square pancake or centered medallion.
 
+Fine-detail rule learned during the red pilot review: when the reference mold uses a compact granular or velvety surface, new variants must preserve that small-scale texture and avoid broad discrete round lobes. Explicitly reject floral, lily-pad, petal, rosette, coral, and radial-medallion reads at the final `64x64` size; density variants should be a finer fused mold mat, not simply a collection of larger lobes.
+
 The orange dense prompt supplied by Jake is a strong dense template. Reuse its structure and transparency warnings, but substitute each mold's own references, material language, colors, and silhouette rules. Do not reuse its orange-specific biological description for other players.
 
 ### Transparency Workflow and Checkerboard Prevention
