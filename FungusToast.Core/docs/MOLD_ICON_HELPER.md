@@ -388,13 +388,22 @@ Jake accepted cyan isolated review candidates A and C. They have been promoted, 
 
 Unselected candidate B remains as an unpromoted review asset because Jake has not requested its deletion.
 
-### Cyan Clustered Review Candidates
+### Cyan Clustered Review Decision
 
-Three validated cyan clustered review assets are present in the Unity sprite folder:
+Jake accepted cyan clustered review candidates B and C. They have been promoted, supplied with matching Tile assets, and wired to the cyan entry in `SampleScene.unity`:
 
-- `cyan_mold_pilot_clustered_alt_review_a_64x64.png`
-- `cyan_mold_pilot_clustered_alt_review_b_64x64.png`
-- `cyan_mold_pilot_clustered_alt_review_c_64x64.png`
+- clustered B → `cyan_mold_pilot_clustered_alt_2_64x64.png`
+- clustered C → `cyan_mold_pilot_clustered_alt_3_64x64.png`
+
+Unselected candidate A remains as an unpromoted review asset because Jake has not requested its deletion.
+
+### Cyan Dense Review Candidates
+
+Three validated cyan dense review assets are present in the Unity sprite folder:
+
+- `cyan_mold_pilot_dense_alt_review_a_64x64.png`
+- `cyan_mold_pilot_dense_alt_review_b_64x64.png`
+- `cyan_mold_pilot_dense_alt_review_c_64x64.png`
 
 They are review-only and must not be wired until Jake selects two.
 

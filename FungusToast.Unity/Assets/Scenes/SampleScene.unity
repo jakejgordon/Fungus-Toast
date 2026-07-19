@@ -112014,6 +112014,8 @@ MonoBehaviour:
     isolatedSecondAlternateTile: {fileID: 11400000, guid: c4d0b1323f3c4ca99d64283a0672182f, type: 2}
     clusteredTile: {fileID: 11400000, guid: 55b481b3b0d14e8c9d57c2c9fcefa20e, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 75ee7525aaa341b3a45cd30901adbe75, type: 2}
+    clusteredSecondAlternateTile: {fileID: 11400000, guid: 22c7424614b24544bec60b306e03a756, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 78a55494d1e04962bb8cd0e82ad74c85, type: 2}
     denseTile: {fileID: 11400000, guid: 7e9870226c3c4ff0ba74a4d1dff08810, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 09f9acc35dc54d44b086f14e3848341d, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 41cebc3f0f114c1681e1f31593dd8c3c, type: 2}
