@@ -41,8 +41,8 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 ## Pending Tasks
 
-- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. The full red family is promoted and wired: isolated B/C, clustered A/B, and dense A/B are accepted; all C review assets for clustered/dense and A for isolated were discarded. Next: yellow concept candidates.
+- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. The full red family is promoted and wired: isolated B/C, clustered A/B, and dense A/B are accepted; all C review assets for clustered/dense and A for isolated were discarded. Yellow isolated review candidates A/B/C are now in Unity's `Assets/Sprites/Tiles/Mold` folder and await selection.
 
 ## Next Handoff
 
-- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Generate yellow isolated concept candidates using the same validated non-floral workflow. Do not switch to the native-alpha CLI fallback without explicit approval.
+- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Jake should select two yellow isolated review candidates; then promote them and generate the yellow clustered candidate set. Do not switch to the native-alpha CLI fallback without explicit approval.
