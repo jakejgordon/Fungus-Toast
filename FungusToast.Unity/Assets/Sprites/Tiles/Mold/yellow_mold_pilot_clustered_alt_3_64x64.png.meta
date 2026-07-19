@@ -4,7 +4,7 @@ TextureImporter:
   internalIDToNameTable:
   - first:
       213: 3248510837283782433
-    second: yellow_mold_pilot_clustered_alt_review_c_64x64_0
+    second: yellow_mold_pilot_clustered_alt_3_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: yellow_mold_pilot_clustered_alt_review_c_64x64_0
+      name: yellow_mold_pilot_clustered_alt_3_64x64_0
       rect:
         serializedVersion: 2
         x: 0

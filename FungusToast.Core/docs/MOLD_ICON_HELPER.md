@@ -365,6 +365,15 @@ The original three red isolated review candidates, including the previously sele
 
 All six promoted red Tile assets are wired to the first `SampleScene.unity` mold entry. The runtime now serializes and selects all eleven alive-state choices (3 isolated, 4 clustered, 4 dense), including all six new red sprites.
 
+### Yellow Clustered Review Decision
+
+Jake accepted yellow clustered review candidates A and C. They have been promoted, supplied with matching Tile assets, and wired to the yellow entry in `SampleScene.unity`:
+
+- clustered A → `yellow_mold_pilot_clustered_alt_2_64x64.png`
+- clustered C → `yellow_mold_pilot_clustered_alt_3_64x64.png`
+
+Yellow dense review candidates A, B, and C are present in the Unity sprite folder as `yellow_mold_pilot_dense_alt_review_{a,b,c}_64x64.png`. They are validated review assets only and must not be wired until Jake selects two.
+
 ### Canonical Reference Matrix
 
 For each generation call, use all five existing PNGs for that same mold as reference images. Label their roles explicitly: isolated anchor, primary clustered anchor, alternate clustered anchor, primary dense anchor, and alternate dense anchor. Do not use another player's mold as the species reference.

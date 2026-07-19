@@ -112003,6 +112003,8 @@ MonoBehaviour:
   - isolatedTile: {fileID: 11400000, guid: cfa506b260464509ae238968b14b4d49, type: 2}
     clusteredTile: {fileID: 11400000, guid: adca0c3d13e543ae9379da0238d9fb0a, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 1267aa475eab48c4840463306200772e, type: 2}
+    clusteredSecondAlternateTile: {fileID: 11400000, guid: 8a43941022f448e88df3c43209d76d5a, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: c93dec043680479798387584d5483a07, type: 2}
     denseTile: {fileID: 11400000, guid: 7ef0e5f0ffd44b05b6491c26455d06e3, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 054ab5a50c924c7da3cd3295be02d782, type: 2}
   - isolatedTile: {fileID: 11400000, guid: df8421cfb46c44cf93ca26306c8e4611, type: 2}
