@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: purple_mold_isolated_2_64x64
+  m_Name: orange_red_mold_clustered_3_64x64
   m_EditorClassIdentifier:
-  m_Sprite: {fileID: 21300000, guid: 6fbdaeae4a8d4981bb3cd6b67c287a37, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 0f5c5bb799fb49a2a04dd10c71685189, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
