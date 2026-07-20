@@ -112032,15 +112032,27 @@ MonoBehaviour:
     denseSecondAlternateTile: {fileID: 11400000, guid: bef1b675e12d4bf997315702a5b0285c, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: e34c396114ed4353855ed6aa95bdaaf2, type: 2}
   - isolatedTile: {fileID: 11400000, guid: a1d642e9cf4e4ed9a6b77925f0f6e721, type: 2}
+    isolatedAlternateTile: {fileID: 11400000, guid: 211e75b143a0459b9f623733c0b1f9de, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: e471192da3fc48aaac1794b3f5262135, type: 2}
     clusteredTile: {fileID: 11400000, guid: 5d8b28c0a4c24d14b63f1a8f16245ec3, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 8e985f7c7dd5447bb4c9d8dbe7f9a641, type: 2}
+    clusteredSecondAlternateTile: {fileID: 11400000, guid: 781d273beafe41e89732eaf84cbfc7e4, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 2f46f9c9474347808a401c0f50348abd, type: 2}
     denseTile: {fileID: 11400000, guid: 84ed4ef52d3745c88c3d6145b5bf4d3e, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 2af2e0f65017434ea8d2b460d29a0d88, type: 2}
+    denseSecondAlternateTile: {fileID: 11400000, guid: 3f4dfd48b6ad4fd486a91a1f3b0cb0cd, type: 2}
+    denseThirdAlternateTile: {fileID: 11400000, guid: 361a94c3a34946f3b7f6c2eb69411664, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 06e3782b85a5404e8f50a46da5a14022, type: 2}
+    isolatedAlternateTile: {fileID: 11400000, guid: b3909203a69d4887840f2a8404f36147, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: b34cb5410ee144f8bad389de5c086d2a, type: 2}
     clusteredTile: {fileID: 11400000, guid: 49a36337ee19444e8a65520400810f81, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 2113917257034645b0f1235140a31f1b, type: 2}
+    clusteredSecondAlternateTile: {fileID: 11400000, guid: 464dac7bd1d14bceb39620ae86d82ec4, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: ce3e5b98b80a400eb85fa780cf244533, type: 2}
     denseTile: {fileID: 11400000, guid: 665db9ec49fe4514a1dcbb2fc5289778, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: f895289ff4734ecf9075f678052a2a0c, type: 2}
+    denseSecondAlternateTile: {fileID: 11400000, guid: 9a0db754eb6b4816b69f87c62209136a, type: 2}
+    denseThirdAlternateTile: {fileID: 11400000, guid: 9a4d097a9fe740adaa685aec981fae38, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 96d282d2aa1b474a8c02dc7ae854be38, type: 2}
     clusteredTile: {fileID: 11400000, guid: e8724477a5d24bd4b35eb1f37448cb91, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 3d684de19d5042ceb9af0c998cc730ef, type: 2}

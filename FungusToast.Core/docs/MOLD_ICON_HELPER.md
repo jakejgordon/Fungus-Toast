@@ -87,11 +87,11 @@ Representative UI icon consumers:
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/Campaign/UI_CampaignPanelController.cs`
 
 Representative current tile assets:
-- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_isolated_64x64.asset`
-- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_64x64.asset`
-- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_clustered_alt_64x64.asset`
-- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_dense_64x64.asset`
-- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_pilot_dense_alt_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_isolated_1_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_clustered_1_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_clustered_2_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_dense_1_64x64.asset`
+- `FungusToast.Unity/Assets/Tiles/Mold/red_mold_dense_2_64x64.asset`
 
 Sprite source folder:
 - `FungusToast.Unity/Assets/Sprites/Tiles/Mold/`
@@ -109,17 +109,21 @@ Palette baseline:
 Place gameplay PNGs under:
 - `FungusToast.Unity/Assets/Sprites/Tiles/Mold/`
 
-Preferred runtime naming pattern:
-- `{mold_name}_pilot_{state}_64x64.png`
+Canonical runtime naming pattern:
+- `{mold_name}_mold_{state}_{number}_64x64.png`
 
-For the remaining rollout, keep the `_pilot_` infix for consistency with the red baseline unless the whole set is renamed in one deliberate cleanup.
+Number each state family from one in deterministic runtime order. This deliberately replaces the former `_pilot_` and mixed `_alt_` suffixes.
 
 Examples:
-- `red_mold_pilot_isolated_64x64.png`
-- `red_mold_pilot_clustered_64x64.png`
-- `red_mold_pilot_clustered_alt_64x64.png`
-- `red_mold_pilot_dense_64x64.png`
-- `red_mold_pilot_dense_alt_64x64.png`
+- `cyan_mold_isolated_1_64x64.png`
+- `cyan_mold_isolated_2_64x64.png`
+- `cyan_mold_clustered_1_64x64.png`
+- `cyan_mold_clustered_4_64x64.png`
+- `cyan_mold_dense_1_64x64.png`
+- `cyan_mold_dense_4_64x64.png`
+
+Unpromoted review assets use the same state vocabulary but add an explicit candidate marker:
+- `{mold_name}_mold_{state}_candidate_{number}_64x64.png`
 
 ### Tile assets
 
@@ -127,11 +131,11 @@ Keep matching Tile assets under:
 - `FungusToast.Unity/Assets/Tiles/Mold/`
 
 Examples:
-- `red_mold_pilot_isolated_64x64.asset`
-- `red_mold_pilot_clustered_64x64.asset`
-- `red_mold_pilot_clustered_alt_64x64.asset`
-- `red_mold_pilot_dense_64x64.asset`
-- `red_mold_pilot_dense_alt_64x64.asset`
+- `red_mold_isolated_1_64x64.asset`
+- `red_mold_clustered_1_64x64.asset`
+- `red_mold_clustered_2_64x64.asset`
+- `red_mold_dense_1_64x64.asset`
+- `red_mold_dense_2_64x64.asset`
 
 ## AI Generation Workflow
 
@@ -234,7 +238,7 @@ Keep a candidate if:
 Use this when generating a clustered alternate for any mold after the main clustered tile is working.
 
 Recommended filename:
-- `red_mold_pilot_clustered_alt_64x64.png`
+- `red_mold_clustered_2_64x64.png`
 
 Prompt:
 
@@ -320,23 +324,16 @@ The runtime change is therefore additive. Do not change the three neighbor-count
 
 ### Asset Names and Runtime Fields
 
-Use these new state suffixes consistently for PNGs and matching Tile assets:
-
-- `isolated_alt`
-- `isolated_alt_2`
-- `clustered_alt_2`
-- `clustered_alt_3`
-- `dense_alt_2`
-- `dense_alt_3`
+Use numbered state variants consistently for PNGs and matching Tile assets. The new runtime variants map to `isolated_2`, `isolated_3`, `clustered_3`, `clustered_4`, `dense_3`, and `dense_4` respectively.
 
 Examples:
 
-- `red_mold_pilot_isolated_alt_64x64.png`
-- `red_mold_pilot_isolated_alt_2_64x64.png`
-- `red_mold_pilot_clustered_alt_2_64x64.png`
-- `red_mold_pilot_clustered_alt_3_64x64.png`
-- `red_mold_pilot_dense_alt_2_64x64.png`
-- `red_mold_pilot_dense_alt_3_64x64.png`
+- `red_mold_isolated_2_64x64.png`
+- `red_mold_isolated_3_64x64.png`
+- `red_mold_clustered_3_64x64.png`
+- `red_mold_clustered_4_64x64.png`
+- `red_mold_dense_3_64x64.png`
+- `red_mold_dense_4_64x64.png`
 
 Add these serialized fields without renaming the five existing fields, so Unity preserves existing scene references:
 
