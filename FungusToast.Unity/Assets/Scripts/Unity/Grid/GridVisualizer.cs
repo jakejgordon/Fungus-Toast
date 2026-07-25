@@ -79,7 +79,7 @@ namespace FungusToast.Unity.Grid
         [Header("Mold Visual Rotation")]
         [Tooltip("Applies a stable 0/90/180/270 degree rotation per alive tile to reduce repetition in repeated mold sprites.")]
         public bool enableAliveMoldQuarterTurnVariation = true;
-        [Tooltip("Applies a stable horizontal mirror per alive tile to further break up repeated mold sprite silhouettes.")]
+        [Tooltip("Applies stable, independent horizontal and vertical mirrors per alive tile to further break up repeated mold sprite silhouettes.")]
         public bool enableAliveMoldMirrorVariation = true;
         public Tile toxinOverlayTile;
         [SerializeField] private Tile solidHighlightTile;
@@ -1423,13 +1423,11 @@ namespace FungusToast.Unity.Grid
         private Matrix4x4 BuildAliveMoldVisualMatrix(BoardTile tile, Vector3 localOffset, float extraScaleMultiplier = 1f)
         {
             float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile)) * extraScaleMultiplier;
-            if (ShouldMirrorAliveVisual(tile))
-            {
-                scale *= -1f;
-            }
+            float horizontalScale = ShouldFlipAliveVisualHorizontally(tile) ? -scale : scale;
+            float verticalScale = ShouldFlipAliveVisualVertically(tile) ? -scale : scale;
 
             Quaternion rotation = GetAliveVisualRotation(tile);
-            return Matrix4x4.TRS(localOffset, rotation, new Vector3(scale, Mathf.Abs(scale), 1f));
+            return Matrix4x4.TRS(localOffset, rotation, new Vector3(horizontalScale, verticalScale, 1f));
         }
 
         private Quaternion GetAliveVisualRotation(BoardTile tile)
@@ -1446,11 +1444,18 @@ namespace FungusToast.Unity.Grid
             }
         }
 
-        private bool ShouldMirrorAliveVisual(BoardTile tile)
+        private bool ShouldFlipAliveVisualHorizontally(BoardTile tile)
         {
             return enableAliveMoldMirrorVariation
                 && tile != null
                 && ((GetAliveVisualTransformHash(tile) >> 2) & 1u) == 0u;
+        }
+
+        private bool ShouldFlipAliveVisualVertically(BoardTile tile)
+        {
+            return enableAliveMoldMirrorVariation
+                && tile != null
+                && ((GetAliveVisualTransformHash(tile) >> 3) & 1u) == 0u;
         }
 
         private static uint GetAliveVisualTransformHash(BoardTile tile)

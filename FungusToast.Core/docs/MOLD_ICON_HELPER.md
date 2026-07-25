@@ -66,7 +66,7 @@ Current variation behavior:
 - clustered cells can alternate stably between `clusteredTile` and `clusteredAlternateTile` using a deterministic tile-id hash
 - dense cells can alternate stably between `denseTile` and `denseAlternateTile` using a deterministic tile-id hash
 - isolated cells currently have only one image
-- stable quarter-turn and horizontal-mirror transforms add more variation after the sprite is selected
+- stable quarter-turn plus independent horizontal and vertical mirror transforms add more variation after the sprite is selected
 
 Current non-board UI icon behavior:
 - representative player mold icons are sourced from `GridVisualizer.GetMoldIconTileForPlayer` and `GridVisualizer.GetMoldIconTileForMoldIndex`
