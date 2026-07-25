@@ -34,15 +34,12 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** none
-- **Current state:**
-   - No active Fungus-Toast task is currently in progress.
-   - The recent main-menu polish pass is complete, including ambient mold growth, brighter button contrast, translucent overlay cards, submenu background continuity, and cleanup of the stray draggable toast-colored line at the top of the screen.
-   - Use daily memory notes for the detailed change history; keep this file focused on genuinely active work.
+- **Current state:** no active Fungus-Toast task is in progress.
 
 ## Pending Tasks
 
-- Expand each of the eight player molds from five to eleven alive-state sprites: add two isolated, two clustered, and two dense variants per mold. The durable implementation and generation handoff is in `FungusToast.Core/docs/MOLD_ICON_HELPER.md` under **Eleven Images Per Mold Expansion Plan**. The full red family is promoted and wired: isolated B/C, clustered A/B, and dense A/B are accepted; all C review assets for clustered/dense and A for isolated were discarded. The full yellow family is promoted and wired: isolated B/C, clustered A/C, and dense A/C; rejected clustered B was moved to Trash. Cyan isolated A/C and clustered B/C are accepted and promoted; dense review candidates A/B/C are now in Unity's `Assets/Sprites/Tiles/Mold` folder.
+- None.
 
 ## Next Handoff
 
-- Resume from `FungusToast.Core/docs/MOLD_ICON_HELPER.md` → **Eleven Images Per Mold Expansion Plan**. Jake should select two cyan dense review candidates; then promote and wire them before beginning the aqua family. Do not switch to the native-alpha CLI fallback without explicit approval.
+- None.
