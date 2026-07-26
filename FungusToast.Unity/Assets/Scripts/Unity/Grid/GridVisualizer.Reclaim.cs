@@ -2600,7 +2600,30 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private void StopAndClearToxinDropAnimations()
 		{
+			// Toxin drops render their falling icon on the transient (ping) tilemap.
+			// Stopping a Unity coroutine does not run its cleanup block, so explicitly
+			// remove those icons before a suppressed board render (such as fast-forward)
+			// can leave one frozen over an unrelated final board tile.
+			foreach (int tileId in _toxinDropCoroutines.Keys.ToList())
+			{
+				ClearToxinDropTransientVisual(tileId);
+			}
+
 			StopTrackedAnimations(_toxinDropCoroutines);
+		}
+
+		private void ClearToxinDropTransientVisual(int tileId)
+		{
+			var transientTilemap = _getTransientTilemap();
+			if (transientTilemap == null)
+			{
+				return;
+			}
+
+			Vector3Int pos = _getPositionForTileId(tileId);
+			transientTilemap.SetTile(pos, null);
+			transientTilemap.SetColor(pos, Color.white);
+			transientTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
 		}
 
 		private void StopTrackedAnimations(Dictionary<int, Coroutine> coroutines)
