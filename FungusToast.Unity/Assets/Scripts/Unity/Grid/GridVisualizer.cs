@@ -535,7 +535,7 @@ namespace FungusToast.Unity.Grid
             BoardTile tile = ActiveBoard?.GetTileById(tileId);
             if (ShouldAnimateMoldIdleResistanceOverlay(tile, activeOverlayTilemap, pos))
             {
-                activeOverlayTilemap.SetTransformMatrix(pos, matrix);
+                activeOverlayTilemap.SetTransformMatrix(pos, GetMoldOverlayIdleTransform(matrix));
             }
         }
 
@@ -550,10 +550,7 @@ namespace FungusToast.Unity.Grid
             var activeOverlayTilemap = overlayTilemap;
             if (activeOverlayTilemap != null && activeOverlayTilemap.HasTile(pos))
             {
-                BoardTile tile = ActiveBoard?.GetTileById(tileId);
-                activeOverlayTilemap.SetTransformMatrix(
-                    pos,
-                    ShouldAnimateMoldIdleResistanceOverlay(tile, activeOverlayTilemap, pos) ? baseMatrix : IdentityMatrix);
+                activeOverlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
             }
         }
 
@@ -1027,8 +1024,17 @@ namespace FungusToast.Unity.Grid
                 && activeOverlayTilemap.HasTile(pos)
                 && ShouldRenderResistanceOverlay(tile.TileId, cell))
             {
-                activeOverlayTilemap.SetTransformMatrix(pos, baseMatrix);
+                activeOverlayTilemap.SetTransformMatrix(pos, IdentityMatrix);
             }
+        }
+
+        private static Matrix4x4 GetMoldOverlayIdleTransform(Matrix4x4 moldTransform)
+        {
+            // Overlays follow the mold's idle positional drift, but remain upright and
+            // unscaled so the mold tile's visual-variation rotation and mirroring do
+            // not affect shield or toxin iconography.
+            Vector4 translation = moldTransform.GetColumn(3);
+            return Matrix4x4.TRS(new Vector3(translation.x, translation.y, translation.z), Quaternion.identity, Vector3.one);
         }
 
         private Vector3Int GetPositionForTileId(int tileId)

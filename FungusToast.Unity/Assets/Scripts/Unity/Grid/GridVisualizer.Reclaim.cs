@@ -3523,6 +3523,7 @@ namespace FungusToast.Unity.Grid.Helpers
 				overlayTilemap.SetTile(pos, overlayTile);
 				overlayTilemap.SetTileFlags(pos, TileFlags.None);
 				overlayTilemap.SetColor(pos, overlayColor);
+				overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
 				overlayTilemap.RefreshTile(pos);
 			}
 		}
