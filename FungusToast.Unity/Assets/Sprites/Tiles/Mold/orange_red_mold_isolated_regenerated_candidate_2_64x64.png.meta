@@ -1,7 +1,10 @@
 fileFormatVersion: 2
-guid: 01eddc3216f946b58db555ec0d6b1ae2
+guid: 61274f4bf3021094ea35e879e2fa0f0c
 TextureImporter:
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      213: -4302800298723646170
+    second: orange_red_mold_isolated_regenerated_candidate_2_64x64_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -95,7 +98,29 @@ TextureImporter:
     forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
-    sprites: []
+    sprites:
+    - serializedVersion: 2
+      name: orange_red_mold_isolated_regenerated_candidate_2_64x64_0
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 9
+        width: 47
+        height: 45
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 625e12fece16944c0800000000000000
+      internalID: -4302800298723646170
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
     outline: []
     customData: 
     physicsShape: []
