@@ -193,6 +193,10 @@ Preferred margin targets:
 - clustered: about `4-6 px`
 - dense: about `2-4 px`
 
+Dense coverage target:
+- target roughly `75-88%` of the usable interior (the area inside the mandatory 2 px transparent border), or about `66-77%` of the full 64x64 tile as visible mold pixels; the perimeter silhouette should span roughly `88-94%` of the usable width and height
+- use large fused peripheral pads and short connecting hyphae to consume most remaining interior space; the perimeter growth should be visually several times more substantial than isolated stray specks
+
 Important nuance:
 - dense should not have even centered padding on all sides
 - dense should press outward asymmetrically toward the border
@@ -207,6 +211,7 @@ Dense should:
 - read as part of a contiguous patch when repeated
 - have an irregular perimeter with bays / notches / uneven outward pressure
 - have a darker, heavier center than isolated or clustered
+- fill most of the available interior with uneven fused growth while retaining a few readable inlets and species-specific voids
 
 Dense should not:
 - look like a centered flower medallion
