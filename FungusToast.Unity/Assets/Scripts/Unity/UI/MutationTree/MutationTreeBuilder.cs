@@ -11,9 +11,11 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class MutationTreeBuilder : MonoBehaviour
     {
+        private const float HeaderTitleHeight = 40f;
         private const float HeaderInvestmentSummaryFontSize = 14f;
         private const float HeaderInvestmentSummaryMinFontSize = 11f;
         private const float HeaderInvestmentSummaryHeight = 20f;
+        private const float HeaderTotalHeight = HeaderTitleHeight + HeaderInvestmentSummaryHeight;
         private const float DefaultColumnWidth = 200f;
         private const float GrowthColumnWidth = 220f;
         private static readonly IReadOnlyDictionary<MutationCategory, string> CategoryHeaderTooltipText = new Dictionary<MutationCategory, string>
@@ -133,10 +135,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
 
                 headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
+                ConfigureHeaderTitleRect(headerBG.rectTransform);
 
                 if (headerText != null)
                 {
                     headerText.text = SplitCamelCase(category.ToString());
+                    if (headerText.gameObject != headerGO)
+                    {
+                        ConfigureHeaderTitleRect(headerText.rectTransform);
+                    }
                     headerText.color = Color.white;
                 }
 
@@ -149,11 +156,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 headerLayout.preferredWidth = columnWidth;
                 headerLayout.minWidth = columnWidth;
                 headerLayout.flexibleWidth = 0f;
+                headerLayout.minHeight = HeaderTotalHeight;
+                headerLayout.preferredHeight = HeaderTotalHeight;
+                headerLayout.flexibleHeight = 0f;
 
                 var headerRect = headerGO.GetComponent<RectTransform>();
                 if (headerRect != null)
                 {
                     headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, columnWidth);
+                    headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderTotalHeight);
                 }
 
                 AttachHeaderTooltip(headerGO, category);
@@ -171,10 +182,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 summaryText.textWrappingMode = TextWrappingModes.NoWrap;
                 summaryText.overflowMode = TextOverflowModes.Truncate;
                 var summaryRect = summaryGO.GetComponent<RectTransform>();
-                summaryRect.anchorMin = new Vector2(0, 0);
-                summaryRect.anchorMax = new Vector2(1, 0);
+                summaryRect.anchorMin = new Vector2(0, 1);
+                summaryRect.anchorMax = new Vector2(1, 1);
                 summaryRect.pivot = new Vector2(0.5f, 1f);
-                summaryRect.anchoredPosition = new Vector2(0, 0);
+                summaryRect.anchoredPosition = new Vector2(0, -HeaderTitleHeight);
                 summaryRect.sizeDelta = new Vector2(0, HeaderInvestmentSummaryHeight);
                 headerSummaryTexts[category] = summaryText;
 
@@ -234,6 +245,15 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateCategoryInvestmentSummaries(createdNodes, player);
 
             return createdNodes;
+        }
+
+        private static void ConfigureHeaderTitleRect(RectTransform rectTransform)
+        {
+            rectTransform.anchorMin = new Vector2(0f, 1f);
+            rectTransform.anchorMax = new Vector2(1f, 1f);
+            rectTransform.pivot = new Vector2(0.5f, 1f);
+            rectTransform.anchoredPosition = Vector2.zero;
+            rectTransform.sizeDelta = new Vector2(0f, HeaderTitleHeight);
         }
 
         /// <summary>
