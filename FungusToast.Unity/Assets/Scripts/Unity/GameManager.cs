@@ -2025,8 +2025,10 @@ namespace FungusToast.Unity
                 return;
             }
 
-            (string overline, string title) = BuildNonCampaignStartBanner();
-            gameUIManager.PhaseBanner.ShowStyledIntro(overline, title);
+            int width = Board?.Width ?? boardWidth;
+            int height = Board?.Height ?? boardHeight;
+            string surfaceName = BoardThemeFlavorResolver.ResolveGameStartTitle(gridVisualizer?.ActiveBoardMedium, width, height);
+            gameUIManager.PhaseBanner.ShowGameStartSurfaceIntro(surfaceName);
         }
 
         private (string overline, string title) BuildNonCampaignStartBanner()

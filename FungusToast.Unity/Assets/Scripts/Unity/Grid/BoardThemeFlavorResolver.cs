@@ -74,5 +74,25 @@ namespace FungusToast.Unity.Grid
 
             return ("Board", "Spore");
         }
+
+        /// <summary>
+        /// Returns the compact, player-facing surface name used by the game-start title card.
+        /// This deliberately stays separate from <see cref="Resolve"/>, whose longer labels are
+        /// useful in setup controls and non-campaign flavor copy.
+        /// </summary>
+        public static string ResolveGameStartTitle(BoardMediumConfig medium, int width, int height)
+        {
+            string themeLabel = Resolve(medium, width, height).themeLabel;
+            return themeLabel switch
+            {
+                "White Bread" => "Bread",
+                "White Cracker" => "Cracker",
+                "White Cheddar" => "Cheddar",
+                "Pita Bread" => "Pita",
+                "Kaiser Bun" => "Kaiser",
+                "Hot Dog Bun" => "Hot Dog",
+                _ => themeLabel,
+            };
+        }
     }
 }

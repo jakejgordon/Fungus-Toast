@@ -18,6 +18,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 | Post‑Growth: Directed vector surge presentation | `GameBoard.DirectedVectorSurge` → `PostGrowthVisualSequence` → `PlayDirectedVectorSurgePresentation(playerId, originTileId, tileIds)` | `RunDirectedVectorSurgePresentation` with chunk pulses + floating toast | `HyphalVectoringOriginPulseDurationSeconds` + chunk cadence (`HyphalVectoringChunkPulseDurationSeconds`, `HyphalVectoringChunkStaggerSeconds`) + `HyphalVectoringToastDurationSeconds` |
 | Post‑Growth: Resistance pulses (Bastion / HRT spread) | `PlayResistancePulseBatchScaled(tileIds, scaleMultiplier)` | `BastionResistantPulseAnimation` | `MycelialBastionPulseDurationSeconds` (or `_timingContext.ResistancePulseTotal` if set) |
 | Starting tile ping highlight (occasionally shown) | `TriggerStartingTilePing(playerId)` / hover path `StartStartingTileHoverPing(playerId)` → `RunStartingTilePing()` / `RunLoopingStartingTilePing()` | (helper in `RingHighlightHelper`) | `StartingTilePingDurationSeconds` with `StartingTilePing*` radius, fade, and band-color constants |
+| Starting spores establish at game entry | `GameManager.PlayGameplayEntryFlow()` → `GridVisualizer.PlayStartingSporeArrivalAnimation()` | `StartingSporeArrivalAnimator.AnimateSingleArrival()` | Surgical Inoculation arc constants; each mold sprite takes a non-spinning parabolic path from the closest board edge |
 
 ## Notes
 - Phase timing diagnostics are compiled out by default; define `FT_PHASE_TIMING` in Core and Unity to re-enable them.
