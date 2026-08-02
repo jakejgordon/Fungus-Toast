@@ -111991,91 +111991,97 @@ MonoBehaviour:
   playerMoldAliveVariantTiles:
   - isolatedTile: {fileID: 11400000, guid: 9f4d3d8b6ea44c1cb9cbe5c6f2fb7a11, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: 584c2903be0f437eac950658f57df62d, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: 35deb18664e64564bdb6ebbf4a5a6d8e, type: 2}
     clusteredTile: {fileID: 11400000, guid: 5aa7d3441d244c37b7314a183b9d1464, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 0c4787dbb7b6480da4c650c0d2ae4be4, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 7f0bf4f1eb8e4a069870da55579aed62, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: 4f9fd2755c6b41e19cac6d4278727a4f, type: 2}
     denseTile: {fileID: 11400000, guid: e2e9aef17f0d4434b0cf8a52e85b2d7c, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: c742f38a8a6e42f9b0b031be1e8823e6, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: a0071bcfe5524500b3d88d60d509bd0e, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: 35deb18664e64564bdb6ebbf4a5a6d8e, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 4f9fd2755c6b41e19cac6d4278727a4f, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: f8ac535338d94192950c7ed710380385, type: 2}
   - isolatedTile: {fileID: 11400000, guid: cfa506b260464509ae238968b14b4d49, type: 2}
+    isolatedAlternateTile: {fileID: 0}
     clusteredTile: {fileID: 11400000, guid: adca0c3d13e543ae9379da0238d9fb0a, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 1267aa475eab48c4840463306200772e, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 8a43941022f448e88df3c43209d76d5a, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: c93dec043680479798387584d5483a07, type: 2}
     denseTile: {fileID: 11400000, guid: 7ef0e5f0ffd44b05b6491c26455d06e3, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 054ab5a50c924c7da3cd3295be02d782, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: 01c173e29d744394853e5e7751bea813, type: 2}
+    isolatedSecondAlternateTile: {fileID: 0}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: c93dec043680479798387584d5483a07, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: 64fb00f3451c45de88026cdeeec87fff, type: 2}
   - isolatedTile: {fileID: 11400000, guid: df8421cfb46c44cf93ca26306c8e4611, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: 536d64f4666d45488cfb3665c7096039, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: c4d0b1323f3c4ca99d64283a0672182f, type: 2}
     clusteredTile: {fileID: 11400000, guid: 55b481b3b0d14e8c9d57c2c9fcefa20e, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 75ee7525aaa341b3a45cd30901adbe75, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 22c7424614b24544bec60b306e03a756, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: 78a55494d1e04962bb8cd0e82ad74c85, type: 2}
     denseTile: {fileID: 11400000, guid: 7e9870226c3c4ff0ba74a4d1dff08810, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 09f9acc35dc54d44b086f14e3848341d, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: e130c5036c52407d91017d6814377b84, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: c4d0b1323f3c4ca99d64283a0672182f, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 78a55494d1e04962bb8cd0e82ad74c85, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: f0b7d16412314cb9927586da9882ee7f, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 41cebc3f0f114c1681e1f31593dd8c3c, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: 0477d60078f541da8f65bd2c98dece91, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: 30542dd88aea4470a3a0c30e1b409978, type: 2}
     clusteredTile: {fileID: 11400000, guid: 1f6bd19ff3654d439f51c6eb3a81d6d1, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: ffad133f15e94b12bb87d3c616e6b01f, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: a91438a243024bc7a7d5e3a75dee2ab6, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: 0a3f29ade32a43b3a406eb9326542976, type: 2}
     denseTile: {fileID: 11400000, guid: 4f4bff99cfa049b7be5c3e96c27a82be, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 84e5364e6e584697a59eb8614709d6a8, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: bef1b675e12d4bf997315702a5b0285c, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: 30542dd88aea4470a3a0c30e1b409978, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 0a3f29ade32a43b3a406eb9326542976, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: e34c396114ed4353855ed6aa95bdaaf2, type: 2}
   - isolatedTile: {fileID: 11400000, guid: a1d642e9cf4e4ed9a6b77925f0f6e721, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: 211e75b143a0459b9f623733c0b1f9de, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: e471192da3fc48aaac1794b3f5262135, type: 2}
     clusteredTile: {fileID: 11400000, guid: 5d8b28c0a4c24d14b63f1a8f16245ec3, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 8e985f7c7dd5447bb4c9d8dbe7f9a641, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 781d273beafe41e89732eaf84cbfc7e4, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: 2f46f9c9474347808a401c0f50348abd, type: 2}
     denseTile: {fileID: 11400000, guid: 84ed4ef52d3745c88c3d6145b5bf4d3e, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 2af2e0f65017434ea8d2b460d29a0d88, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: 3f4dfd48b6ad4fd486a91a1f3b0cb0cd, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: e471192da3fc48aaac1794b3f5262135, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: 2f46f9c9474347808a401c0f50348abd, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: 361a94c3a34946f3b7f6c2eb69411664, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 06e3782b85a5404e8f50a46da5a14022, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: b3909203a69d4887840f2a8404f36147, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: b34cb5410ee144f8bad389de5c086d2a, type: 2}
     clusteredTile: {fileID: 11400000, guid: 49a36337ee19444e8a65520400810f81, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 2113917257034645b0f1235140a31f1b, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 464dac7bd1d14bceb39620ae86d82ec4, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: ce3e5b98b80a400eb85fa780cf244533, type: 2}
     denseTile: {fileID: 11400000, guid: 665db9ec49fe4514a1dcbb2fc5289778, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: f895289ff4734ecf9075f678052a2a0c, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: 9a0db754eb6b4816b69f87c62209136a, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: b34cb5410ee144f8bad389de5c086d2a, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: ce3e5b98b80a400eb85fa780cf244533, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: 9a4d097a9fe740adaa685aec981fae38, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 96d282d2aa1b474a8c02dc7ae854be38, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: d4f20e3f0da24c8d9b4f84bd6265b47b, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: 107ea20a0ac34b6caf853e68765a61d7, type: 2}
     clusteredTile: {fileID: 11400000, guid: e8724477a5d24bd4b35eb1f37448cb91, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 3d684de19d5042ceb9af0c998cc730ef, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 020f3b7093fd470dae153678d2274d80, type: 2}
-    clusteredThirdAlternateTile: {fileID: 11400000, guid: f62601d002d24021b30337e282e174a1, type: 2}
     denseTile: {fileID: 11400000, guid: 860f33d8a2c945d9b0d26c3576fb2dbb, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 23276842635842298b7587ccf5ebf10d, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: 3793ba6bfdde498e803f552b8355ca13, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: 107ea20a0ac34b6caf853e68765a61d7, type: 2}
+    clusteredThirdAlternateTile: {fileID: 11400000, guid: f62601d002d24021b30337e282e174a1, type: 2}
     denseThirdAlternateTile: {fileID: 11400000, guid: cab1e33a44eb4596a61a72878a1796ed, type: 2}
   - isolatedTile: {fileID: 11400000, guid: 547e14cf429b4f42a6fcd0f6f4a6de5a, type: 2}
     isolatedAlternateTile: {fileID: 11400000, guid: d85ab6b80f5c46058d086e02cb5777a8, type: 2}
-    isolatedSecondAlternateTile: {fileID: 11400000, guid: 924178c94d654360a2e3bb24aa741262, type: 2}
     clusteredTile: {fileID: 11400000, guid: c5682b28214a4db8a233f0523051a158, type: 2}
     clusteredAlternateTile: {fileID: 11400000, guid: 1ff0cc8041bf4a5aaee6d5fb0fc7f7db, type: 2}
     clusteredSecondAlternateTile: {fileID: 11400000, guid: 1025a03dbc49472a9b2f885a5fc864e4, type: 2}
     denseTile: {fileID: 11400000, guid: 6d7f67c34af74ef8bb97f1b60b298f30, type: 2}
     denseAlternateTile: {fileID: 11400000, guid: 5374f6fe22d34507a69bf84fb2d62ee3, type: 2}
     denseSecondAlternateTile: {fileID: 11400000, guid: 5698a54c5d274a71941ecf1b56f7d831, type: 2}
+    isolatedSecondAlternateTile: {fileID: 11400000, guid: 924178c94d654360a2e3bb24aa741262, type: 2}
+    clusteredThirdAlternateTile: {fileID: 0}
+    denseThirdAlternateTile: {fileID: 0}
   isolatedMoldVisualScale: 1
   clusteredMoldVisualScale: 1.1
   denseMoldVisualScale: 1.2
+  enableAliveMoldQuarterTurnVariation: 1
+  enableAliveMoldMirrorVariation: 1
   toxinOverlayTile: {fileID: 11400000, guid: b03fa0ef3f880e944836bca2e3270b89, type: 2}
   solidHighlightTile: {fileID: 11400000, guid: 2948f1915b2f9f94faed40359df6b9d4, type: 2}
   goldShieldOverlayTile: {fileID: 11400000, guid: c263d2624d4a84043852764dbdb51385, type: 2}
@@ -118074,7 +118080,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2143743642}
   m_HandleRect: {fileID: 2143743641}
   m_Direction: 0
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -125345,7 +125351,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 853.66907
+      value: 854.4065
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -125353,7 +125359,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 474.83453
+      value: 475.20325
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.y

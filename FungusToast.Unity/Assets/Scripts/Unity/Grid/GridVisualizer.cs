@@ -272,7 +272,7 @@ namespace FungusToast.Unity.Grid
                 GetAliveTileForBoardTile,
                 (tileId, cell) => ShouldRenderResistanceOverlay(tileId, cell),
                 (tileId, cell) => cellStateAnimationController != null ? cellStateAnimationController.GetAliveCellAlpha(tileId, cell) : 1f,
-                tileId => preAnimationHiddenPreviewTileIds.Contains(tileId),
+                IsPreAnimationPreviewTile,
                 tileId => overlayRenderer?.RemoveTrackedNutrientTile(tileId),
                 (tile, pos) => RenderNutrientPatchOverlay(tile, pos));
             presentationEffects = new GridSpecialPresentationEffects(
@@ -1227,6 +1227,25 @@ namespace FungusToast.Unity.Grid
         public void ClearPreAnimationPreviewTiles()
         {
             preAnimationHiddenPreviewTileIds.Clear();
+        }
+
+        private bool IsPreAnimationPreviewTile(int tileId)
+        {
+            if (!preAnimationHiddenPreviewTileIds.Contains(tileId))
+            {
+                return false;
+            }
+
+            var cell = ActiveBoard?.GetTileById(tileId)?.FungalCell;
+            if (cell?.IsNewlyGrown == true || cell?.IsDying == true || cell?.IsReceivingToxinDrop == true)
+            {
+                return true;
+            }
+
+            // A preview may be interrupted by an endgame, phase transition, or a
+            // replacement render. It must not leave a mature cell transparent.
+            preAnimationHiddenPreviewTileIds.Remove(tileId);
+            return false;
         }
 
         private int ResolvePlayerMoldIndex(int playerId)
