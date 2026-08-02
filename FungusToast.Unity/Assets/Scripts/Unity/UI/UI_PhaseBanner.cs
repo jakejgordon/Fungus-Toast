@@ -16,7 +16,6 @@ namespace FungusToast.Unity.UI
         private const float CampaignIntroEndYOffset = 14f;
         private const float CampaignIntroStartScale = 0.94f;
         private const float CampaignIntroOvershootScale = 1.04f;
-        private const float GameStartFirstWordDelaySeconds = 0.5f;
         private const float GameStartSlamDurationSeconds = 0.12f;
         private const float GameStartHoldDurationSeconds = 2.65f;
         private const float GameStartExitDurationSeconds = 0.18f;
@@ -265,21 +264,7 @@ namespace FungusToast.Unity.UI
         private IEnumerator PlayGameStartSurfaceIntro(string surfaceName)
         {
             CacheTransformDefaults();
-            bannerText.text = "FUNGUS";
-            SetBannerVisualState(1f, 0f, GameStartSlamOvershootScale);
-
-            for (float elapsed = 0f; elapsed < GameStartSlamDurationSeconds; elapsed += Time.unscaledDeltaTime)
-            {
-                float progress = Mathf.Clamp01(elapsed / GameStartSlamDurationSeconds);
-                float eased = 1f - Mathf.Pow(1f - progress, 3f);
-                SetBannerVisualState(1f, 0f, Mathf.Lerp(GameStartSlamOvershootScale, 1f, eased));
-                yield return null;
-            }
-
-            SetBannerVisualState(1f, 0f, 1f);
-            yield return new WaitForSecondsRealtime(GameStartFirstWordDelaySeconds);
-
-            bannerText.text = $"FUNGUS <b><i><size=82%>{surfaceName.ToUpperInvariant()}</size></i></b>";
+            bannerText.text = $"<b>Fungus</b> • {surfaceName}";
             SetBannerVisualState(1f, GameStartSlamStartYOffset, GameStartSlamOvershootScale);
             for (float elapsed = 0f; elapsed < GameStartSlamDurationSeconds; elapsed += Time.unscaledDeltaTime)
             {
