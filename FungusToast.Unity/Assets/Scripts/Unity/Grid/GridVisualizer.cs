@@ -1187,7 +1187,7 @@ namespace FungusToast.Unity.Grid
             }
 
             Tile baseTileForPlayer = GetTileForPlayer(ownerPlayerId);
-            if (baseTileForPlayer == null || playerMoldAliveVariantTiles == null || playerMoldAliveVariantTiles.Length == 0)
+            if (playerMoldAliveVariantTiles == null || playerMoldAliveVariantTiles.Length == 0)
             {
                 return baseTileForPlayer;
             }
@@ -1204,6 +1204,8 @@ namespace FungusToast.Unity.Grid
                 return baseTileForPlayer;
             }
 
+            // The configured alive variants are the board presentation source of
+            // truth. A stale or missing legacy fallback must not suppress them.
             return ResolveAliveVariantTile(tile, variantTiles) ?? baseTileForPlayer;
         }
         public void RegisterPreAnimationHiddenPreviewTiles(IEnumerable<int> tileIds)
