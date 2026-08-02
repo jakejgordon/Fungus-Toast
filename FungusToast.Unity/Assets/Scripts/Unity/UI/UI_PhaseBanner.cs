@@ -18,7 +18,7 @@ namespace FungusToast.Unity.UI
         private const float CampaignIntroOvershootScale = 1.04f;
         private const float GameStartFirstWordDelaySeconds = 0.5f;
         private const float GameStartSlamDurationSeconds = 0.12f;
-        private const float GameStartHoldDurationSeconds = 1.15f;
+        private const float GameStartHoldDurationSeconds = 2.65f;
         private const float GameStartExitDurationSeconds = 0.18f;
         private const float GameStartSlamStartYOffset = 140f;
         private const float GameStartSlamOvershootScale = 1.16f;
@@ -279,7 +279,7 @@ namespace FungusToast.Unity.UI
             SetBannerVisualState(1f, 0f, 1f);
             yield return new WaitForSecondsRealtime(GameStartFirstWordDelaySeconds);
 
-            bannerText.text = $"FUNGUS\n<size=82%>{surfaceName.ToUpperInvariant()}</size>";
+            bannerText.text = $"FUNGUS <b><i><size=82%>{surfaceName.ToUpperInvariant()}</size></i></b>";
             SetBannerVisualState(1f, GameStartSlamStartYOffset, GameStartSlamOvershootScale);
             for (float elapsed = 0f; elapsed < GameStartSlamDurationSeconds; elapsed += Time.unscaledDeltaTime)
             {
