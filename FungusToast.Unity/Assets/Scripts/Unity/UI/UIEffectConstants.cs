@@ -207,7 +207,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration of the shared, non-blocking source-to-target toxin volley.
         /// </summary>
-        public const float ToxinLaunchVolleyDurationSeconds = 0.38f;
+        public const float ToxinLaunchVolleyDurationSeconds = 0.76f;
 
         /// <summary>
         /// Brief ownership cue shown at each attacking colony's starting cell.
