@@ -1286,6 +1286,9 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Action<IEnumerable<int>> _registerPreAnimationHiddenPreviewTiles;
 		private readonly Action<int> _revealPreAnimationPreviewTile;
 		private readonly Action<int> _renderTileFromBoard;
+		private readonly Func<int, IReadOnlyList<int>, IEnumerator> _playToxinLaunchBatch;
+		private readonly Action<IEnumerable<int>> _triggerToxinSourcePings;
+		private readonly Action _clearToxinLaunchProjectiles;
 
 		private readonly HashSet<int> _newlyGrownTileIds = new();
 		private readonly HashSet<int> _newlyGrownAnimationPlayedTileIds = new();
@@ -1301,6 +1304,8 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly HashSet<int> _toxinDropTileIds = new();
 		private readonly HashSet<int> _suppressedToxinDropTileIdsForNextRender = new();
 		private readonly Dictionary<int, Coroutine> _toxinDropCoroutines = new();
+		private readonly Dictionary<int, Coroutine> _toxinLaunchCoroutines = new();
+		private readonly Dictionary<int, int> _toxinDropPlayerIds = new();
 		private readonly Dictionary<int, ToxinImpactVisualSnapshot> _pendingToxinImpactSnapshots = new();
 		private readonly Dictionary<int, ToxinImpactVisualSnapshot> _capturedTileVisualSnapshots = new();
 		private readonly Dictionary<int, ExpiringToxinVisualSnapshot> _pendingToxinExpirySnapshots = new();
@@ -1320,7 +1325,10 @@ namespace FungusToast.Unity.Grid.Helpers
 			Action endAnimation,
 			Action<IEnumerable<int>> registerPreAnimationHiddenPreviewTiles,
 			Action<int> revealPreAnimationPreviewTile,
-			Action<int> renderTileFromBoard)
+			Action<int> renderTileFromBoard,
+			Func<int, IReadOnlyList<int>, IEnumerator> playToxinLaunchBatch,
+			Action<IEnumerable<int>> triggerToxinSourcePings,
+			Action clearToxinLaunchProjectiles)
 		{
 			_getBoard = getBoard;
 			_getMoldTilemap = getMoldTilemap;
@@ -1336,6 +1344,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			_registerPreAnimationHiddenPreviewTiles = registerPreAnimationHiddenPreviewTiles;
 			_revealPreAnimationPreviewTile = revealPreAnimationPreviewTile;
 			_renderTileFromBoard = renderTileFromBoard;
+			_playToxinLaunchBatch = playToxinLaunchBatch;
+			_triggerToxinSourcePings = triggerToxinSourcePings;
+			_clearToxinLaunchProjectiles = clearToxinLaunchProjectiles;
 		}
 
 		public void SuppressNextToxinDropAnimations(IEnumerable<int> tileIds)
@@ -1407,6 +1418,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 			if (suppressAnimations)
 			{
+				_toxinDropPlayerIds.Clear();
 				foreach (var tile in board.AllTiles())
 				{
 					var cell = tile.FungalCell;
@@ -1691,8 +1703,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			tilemap.SetColor(pos, color);
 		}
 
-		public bool CaptureToxinImpactSnapshot(int tileId)
+		public bool CaptureToxinImpactSnapshot(int tileId, int placingPlayerId = -1)
 		{
+			_toxinDropPlayerIds[tileId] = placingPlayerId;
 			if (_pendingToxinImpactSnapshots.ContainsKey(tileId))
 			{
 				return true;
@@ -2378,11 +2391,126 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private void StartToxinDropAnimations()
 		{
-			foreach (int tileId in _toxinDropTileIds)
+			var board = _getBoard();
+			if (board == null || _toxinDropTileIds.Count == 0)
 			{
-				StopTrackedAnimation(_toxinDropCoroutines, tileId);
-				_toxinDropCoroutines[tileId] = _startCoroutine(ToxinDropAnimation(tileId));
+				return;
 			}
+
+			var targetTileIdsByPlayer = new Dictionary<int, List<int>>();
+			foreach (int tileId in _toxinDropTileIds.ToList())
+			{
+				int playerId = _toxinDropPlayerIds.TryGetValue(tileId, out int capturedPlayerId)
+					? capturedPlayerId
+					: board.GetTileById(tileId)?.FungalCell?.OwnerPlayerId ?? -1;
+				if (playerId < 0 || playerId >= board.Players.Count || !board.Players[playerId].StartingTileId.HasValue)
+				{
+					CompleteToxinDropImmediately(tileId);
+					continue;
+				}
+
+				if (!targetTileIdsByPlayer.TryGetValue(playerId, out var targetTileIds))
+				{
+					targetTileIds = new List<int>();
+					targetTileIdsByPlayer.Add(playerId, targetTileIds);
+				}
+				targetTileIds.Add(tileId);
+			}
+
+			if (targetTileIdsByPlayer.Count == 0)
+			{
+				return;
+			}
+
+			_triggerToxinSourcePings?.Invoke(targetTileIdsByPlayer.Keys);
+			foreach (var pair in targetTileIdsByPlayer)
+			{
+				int playerId = pair.Key;
+				List<int> visibleTargetTileIds = SelectRepresentativeToxinTargets(pair.Value, UIEffectConstants.ToxinLaunchVisibleProjectileCapPerPlayer);
+				var visibleTargets = new HashSet<int>(visibleTargetTileIds);
+				foreach (int tileId in pair.Value)
+				{
+					if (visibleTargets.Contains(tileId))
+					{
+						RenderCapturedToxinImpactSnapshot(tileId);
+					}
+					else
+					{
+						CompleteToxinDropImmediately(tileId);
+					}
+				}
+
+				if (visibleTargetTileIds.Count == 0)
+				{
+					continue;
+				}
+
+				StopTrackedAnimation(_toxinLaunchCoroutines, playerId);
+				_toxinLaunchCoroutines[playerId] = _startCoroutine(ToxinLaunchBatch(
+					playerId,
+					board.Players[playerId].StartingTileId!.Value,
+					visibleTargetTileIds));
+			}
+		}
+
+		private IEnumerator ToxinLaunchBatch(int playerId, int sourceTileId, IReadOnlyList<int> targetTileIds)
+		{
+			_beginAnimation();
+			try
+			{
+				if (_playToxinLaunchBatch != null)
+				{
+					yield return _playToxinLaunchBatch(sourceTileId, targetTileIds);
+				}
+			}
+			finally
+			{
+				foreach (int tileId in targetTileIds)
+				{
+					CompleteToxinDropImmediately(tileId);
+				}
+				_toxinLaunchCoroutines.Remove(playerId);
+				_endAnimation();
+			}
+		}
+
+		private static List<int> SelectRepresentativeToxinTargets(IReadOnlyList<int> targetTileIds, int cap)
+		{
+			if (targetTileIds == null || targetTileIds.Count == 0 || cap <= 0)
+			{
+				return new List<int>();
+			}
+
+			var ordered = targetTileIds.OrderBy(tileId => tileId).ToList();
+			if (ordered.Count <= cap)
+			{
+				return ordered;
+			}
+
+			if (cap == 1)
+			{
+				return new List<int> { ordered[ordered.Count / 2] };
+			}
+
+			var selected = new List<int>(cap);
+			for (int i = 0; i < cap; i++)
+			{
+				int index = (int)Math.Round(i * (ordered.Count - 1d) / (cap - 1d));
+				selected.Add(ordered[index]);
+			}
+			return selected;
+		}
+
+		private void CompleteToxinDropImmediately(int tileId)
+		{
+			var board = _getBoard();
+			var cell = board?.GetTileById(tileId)?.FungalCell;
+			cell?.ClearToxinDropFlag();
+			_toxinDropTileIds.Remove(tileId);
+			_toxinDropPlayerIds.Remove(tileId);
+			_pendingToxinImpactSnapshots.Remove(tileId);
+			ClearToxinDropTransientVisual(tileId);
+			_renderTileFromBoard?.Invoke(tileId);
 		}
 
 		private IEnumerator ToxinDropAnimation(int tileId)
@@ -2614,7 +2742,13 @@ namespace FungusToast.Unity.Grid.Helpers
 				ClearToxinDropTransientVisual(tileId);
 			}
 
+			_clearToxinLaunchProjectiles?.Invoke();
 			StopTrackedAnimations(_toxinDropCoroutines);
+			StopTrackedAnimations(_toxinLaunchCoroutines);
+			foreach (int tileId in _toxinDropTileIds.ToList())
+			{
+				CompleteToxinDropImmediately(tileId);
+			}
 		}
 
 		private void ClearToxinDropTransientVisual(int tileId)

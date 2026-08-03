@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -12,6 +13,7 @@ namespace FungusToast.Unity.Grid.Helpers
     {
         private readonly MonoBehaviour _runner;
         private readonly Tilemap _referenceTilemap; // used to convert cells to world and to align sorting
+        private readonly List<GameObject> _activeBatchProjectiles = new();
 
         public ArcProjectileHelper(MonoBehaviour runner, Tilemap referenceTilemap)
         {
@@ -76,6 +78,96 @@ namespace FungusToast.Unity.Grid.Helpers
             }
 
             Object.Destroy(go);
+        }
+
+        /// <summary>
+        /// Renders a bounded volley in one coroutine. This deliberately avoids one
+        /// coroutine per projectile, which is important for late-game toxin batches.
+        /// </summary>
+        public IEnumerator AnimateArcBatch(
+            Vector3Int startCell,
+            IReadOnlyList<Vector3Int> endCells,
+            Sprite sprite,
+            float duration,
+            float baseArcHeightWorld,
+            float arcHeightPerTile,
+            float peakScale)
+        {
+            if (_referenceTilemap == null || sprite == null || endCells == null || endCells.Count == 0)
+            {
+                yield break;
+            }
+
+            var projectiles = new List<(GameObject gameObject, Vector3 startWorld, Vector3 endWorld, float arcHeightWorld)>(endCells.Count);
+            var tilemapRenderer = _referenceTilemap.GetComponent<TilemapRenderer>();
+            Vector3 startWorld = CellCenterWorld(startCell);
+            try
+            {
+                foreach (Vector3Int endCell in endCells)
+                {
+                    var projectile = new GameObject("ToxinLaunchProjectile");
+                    _activeBatchProjectiles.Add(projectile);
+                    projectile.transform.SetParent(_referenceTilemap.transform, false);
+                    var renderer = projectile.AddComponent<SpriteRenderer>();
+                    renderer.sprite = sprite;
+                    if (tilemapRenderer != null)
+                    {
+                        renderer.sortingLayerID = tilemapRenderer.sortingLayerID;
+                        renderer.sortingOrder = tilemapRenderer.sortingOrder + 10;
+                    }
+
+                    Vector3 endWorld = CellCenterWorld(endCell);
+                    float distanceTiles = Vector2.Distance(new Vector2(startCell.x, startCell.y), new Vector2(endCell.x, endCell.y));
+                    float arcHeightWorld = baseArcHeightWorld + distanceTiles * arcHeightPerTile * _referenceTilemap.cellSize.y;
+                    projectiles.Add((projectile, startWorld, endWorld, arcHeightWorld));
+                }
+
+                float elapsed = 0f;
+                while (elapsed < duration)
+                {
+                    elapsed += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsed / duration);
+                    float heightNormal = 4f * t * (1f - t);
+                    float scaleEase = 1f - Mathf.Pow(1f - heightNormal, 2f);
+                    float scale = Mathf.Lerp(1f, Mathf.Max(1f, peakScale), scaleEase);
+                    foreach (var projectile in projectiles)
+                    {
+                        if (projectile.gameObject == null)
+                        {
+                            continue;
+                        }
+
+                        projectile.gameObject.transform.position = Vector3.Lerp(projectile.startWorld, projectile.endWorld, t)
+                            + Vector3.up * (heightNormal * projectile.arcHeightWorld);
+                        projectile.gameObject.transform.localScale = new Vector3(scale, scale, 1f);
+                    }
+
+                    yield return null;
+                }
+            }
+            finally
+            {
+                foreach (var projectile in projectiles)
+                {
+                    if (projectile.gameObject != null)
+                    {
+						_activeBatchProjectiles.Remove(projectile.gameObject);
+                        Object.Destroy(projectile.gameObject);
+                    }
+                }
+            }
+        }
+
+        public void ClearBatchProjectiles()
+        {
+            foreach (GameObject projectile in _activeBatchProjectiles)
+            {
+                if (projectile != null)
+                {
+                    Object.Destroy(projectile);
+                }
+            }
+            _activeBatchProjectiles.Clear();
         }
 
         private Vector3 CellCenterWorld(Vector3Int cell)
