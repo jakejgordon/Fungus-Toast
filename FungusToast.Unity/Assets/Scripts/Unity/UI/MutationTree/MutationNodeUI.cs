@@ -473,6 +473,16 @@ namespace FungusToast.Unity.UI.MutationTree
             sb.AppendLine();
 
             int currentLevel = player.GetMutationLevel(mutation.Id);
+            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+                && player.PlayerMutations.TryGetValue(mutation.Id, out var pendingMutation)
+                && pendingMutation.PrereqMetRound.HasValue
+                && pendingMutation.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
+
+            if (showPendingUnlock)
+            {
+                sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Unlocks next turn</b></color>");
+                sb.AppendLine();
+            }
 
             // Show maxed state prominently
             if (currentLevel >= mutation.MaxLevel)
@@ -499,10 +509,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
             bool isLocked = mutation.Prerequisites.Any(prereq => player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
             bool isSurgeActive = mutation.IsSurge && player.IsSurgeActive(mutation.Id);
-            bool showPendingUnlock = mutation.Prerequisites.Count > 0
-                && player.PlayerMutations.TryGetValue(mutation.Id, out var pendingMutation)
-                && pendingMutation.PrereqMetRound.HasValue
-                && pendingMutation.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, currentLevel >= mutation.MaxLevel);
             if (isDisabledBecauseNoEffect)
             {
