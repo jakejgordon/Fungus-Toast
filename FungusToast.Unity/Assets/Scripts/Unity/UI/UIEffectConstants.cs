@@ -39,11 +39,6 @@ namespace FungusToast.Unity.UI
         public const float CellGrowthFadeInStartAlpha = 0f;
 
         /// <summary>
-        /// Duration (in seconds) for a newly grown cell to settle back to its highlighted transparency after reaching full opacity.
-        /// </summary>
-        public const float CellGrowthSettleDurationSeconds = 0.3f;
-
-        /// <summary>
         /// Duration of the source-cell anticipation stretch for source-aware normal hyphal growth.
         /// </summary>
         public const float HyphalGrowthSourceStretchDurationSeconds = 0.08f;
@@ -628,19 +623,34 @@ namespace FungusToast.Unity.UI
         // ==================== NEW GROWTH VISUAL TWEAKS ====================
 
         /// <summary>
-        /// Duration (in seconds) of the bright green flash when a newly-grown cell reaches full opacity.
+        /// Duration (in seconds) of the bright flash when a newly-grown cell reaches full opacity.
         /// </summary>
         public const float NewGrowthFlashDurationSeconds = 0.1f;
 
         /// <summary>
-        /// The color of the flash shown when a newly-grown cell reaches full opacity.
+        /// The ownership-neutral color of the flash shown when a newly-grown cell reaches full opacity.
         /// </summary>
         public static readonly Color NewGrowthFlashColor = new Color(0.2f, 1f, 0.2f, 1f);
 
         /// <summary>
-        /// The persistent alpha for cells that grew this round (until the next round begins).
+        /// Base visual scale for cells during the growth cycle in which they are spawned.
         /// </summary>
-        public const float NewGrowthFinalAlpha = 0.78f;
+        public const float NewGrowthInitialScale = 0.5f;
+
+        /// <summary>
+        /// Visual size gained by a newly grown cell for each subsequent completed growth cycle.
+        /// </summary>
+        public const float NewGrowthScaleIncreasePerCycle = 0.1f;
+
+        /// <summary>
+        /// Largest visual scale used for newly grown cells before they mature into normal full-size cells.
+        /// </summary>
+        public const float NewGrowthMaximumScale = 1f;
+
+        /// <summary>
+        /// The persistent alpha for newly grown and young cells. New growth stays fully opaque so it reads as a gain, not a weaker state.
+        /// </summary>
+        public const float NewGrowthFinalAlpha = 1f;
 
         // ==================== TOOLTIP HIGHLIGHTING ====================
         /// <summary>

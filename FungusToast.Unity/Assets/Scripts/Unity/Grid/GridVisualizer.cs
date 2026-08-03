@@ -1451,12 +1451,34 @@ namespace FungusToast.Unity.Grid
 
         private Matrix4x4 BuildAliveMoldVisualMatrix(BoardTile tile, Vector3 localOffset, float extraScaleMultiplier = 1f)
         {
-            float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile)) * extraScaleMultiplier;
+            float scale = GetAliveVisualScale(ClassifyAliveVisualState(tile))
+                * GetNewGrowthVisualScale(tile?.FungalCell)
+                * extraScaleMultiplier;
             float horizontalScale = ShouldFlipAliveVisualHorizontally(tile) ? -scale : scale;
             float verticalScale = ShouldFlipAliveVisualVertically(tile) ? -scale : scale;
 
             Quaternion rotation = GetAliveVisualRotation(tile);
             return Matrix4x4.TRS(localOffset, rotation, new Vector3(horizontalScale, verticalScale, 1f));
+        }
+
+        private static float GetNewGrowthVisualScale(FungalCell cell)
+        {
+            if (cell?.IsAlive != true
+                || (cell.SourceOfGrowth ?? GrowthSource.Unknown) == GrowthSource.InitialSpore)
+            {
+                return 1f;
+            }
+
+            // Cells are aged at the end of the cycle that creates them, so age one
+            // still represents the initial half-size visual state. IsNewlyGrown is
+            // only an animation marker and clears when the next growth phase starts;
+            // the visual maturity must instead persist from GrowthCycleAge until the
+            // cell reaches its normal scale.
+            int completedCyclesSinceSpawn = Mathf.Max(0, cell.GrowthCycleAge - 1);
+            return Mathf.Min(
+                UIEffectConstants.NewGrowthMaximumScale,
+                UIEffectConstants.NewGrowthInitialScale
+                    + completedCyclesSinceSpawn * UIEffectConstants.NewGrowthScaleIncreasePerCycle);
         }
 
         private Quaternion GetAliveVisualRotation(BoardTile tile)
@@ -1719,6 +1741,7 @@ namespace FungusToast.Unity.Grid
                     cellStateAnimationController?.StartDirectionalGrowthAnimations(directionalMoves);
                 }
             }
+
         }
 
         // Backwards-compatible single-parameter call (default animations enabled)

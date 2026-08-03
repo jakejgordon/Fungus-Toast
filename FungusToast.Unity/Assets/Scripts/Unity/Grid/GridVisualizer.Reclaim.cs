@@ -1306,7 +1306,6 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Dictionary<int, ExpiringToxinVisualSnapshot> _pendingToxinExpirySnapshots = new();
 		private readonly Dictionary<int, Coroutine> _toxinExpiryCoroutines = new();
 		private readonly Dictionary<int, Coroutine> _chemobeaconExpiryCoroutines = new();
-
 		public GridCellStateAnimationController(
 			Func<GameBoard> getBoard,
 			Func<Tilemap> getMoldTilemap,
@@ -1418,7 +1417,8 @@ namespace FungusToast.Unity.Grid.Helpers
 
 					if (cell.IsNewlyGrown)
 					{
-						cell.ClearNewlyGrownFlag();
+						_newlyGrownTileIds.Add(tile.TileId);
+						_newlyGrownAnimationPlayedTileIds.Add(tile.TileId);
 					}
 
 					if (cell.IsDying)
@@ -1432,7 +1432,6 @@ namespace FungusToast.Unity.Grid.Helpers
 					}
 				}
 
-				_newlyGrownAnimationPlayedTileIds.Clear();
 				return;
 			}
 
@@ -1543,9 +1542,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					: UIEffectConstants.CellGrowthFadeInStartAlpha;
 			}
 
-			return cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold
-				? UIEffectConstants.NewGrowthFinalAlpha
-				: 1f;
+			return 1f;
 		}
 
 		public void ClearPendingToxinExpirySnapshots()
@@ -1678,6 +1675,19 @@ namespace FungusToast.Unity.Grid.Helpers
 			tilemap.SetTileFlags(pos, TileFlags.None);
 			Color color = tilemap.GetColor(pos);
 			color.a = alpha;
+			tilemap.SetColor(pos, color);
+		}
+
+		private static void SetNewGrowthFlashColor(Tilemap tilemap, Vector3Int pos, float progress)
+		{
+			if (tilemap == null || !tilemap.HasTile(pos))
+			{
+				return;
+			}
+
+			tilemap.SetTileFlags(pos, TileFlags.None);
+			Color color = Color.Lerp(UIEffectConstants.NewGrowthFlashColor, Color.white, Mathf.Clamp01(progress));
+			color.a = 1f;
 			tilemap.SetColor(pos, color);
 		}
 
@@ -2054,7 +2064,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			var xy = board.GetXYFromTileId(tileId);
 			var pos = new Vector3Int(xy.Item1, xy.Item2, 0);
 			float duration = UIEffectConstants.CellGrowthFadeInDurationSeconds;
-			float settleDuration = UIEffectConstants.CellGrowthSettleDurationSeconds;
+			float flashDuration = UIEffectConstants.NewGrowthFlashDurationSeconds;
 			float startAlpha = UIEffectConstants.CellGrowthFadeInStartAlpha;
 			float targetAlpha = 1f;
 			float elapsed = 0f;
@@ -2085,25 +2095,18 @@ namespace FungusToast.Unity.Grid.Helpers
 					moldTilemap.SetColor(pos, finalColor);
 				}
 
-				float settleElapsed = 0f;
-				while (settleElapsed < settleDuration)
+				float flashElapsed = 0f;
+				while (flashElapsed < flashDuration)
 				{
-					settleElapsed += Time.deltaTime;
-					if (moldTilemap.HasTile(pos))
-					{
-						Color settleColor = moldTilemap.GetColor(pos);
-						float t = settleDuration <= 0f ? 1f : Mathf.Clamp01(settleElapsed / settleDuration);
-						settleColor.a = Mathf.Lerp(1f, UIEffectConstants.NewGrowthFinalAlpha, t);
-						moldTilemap.SetColor(pos, settleColor);
-					}
+					flashElapsed += Time.deltaTime;
+					float t = flashDuration <= 0f ? 1f : flashElapsed / flashDuration;
+					SetNewGrowthFlashColor(moldTilemap, pos, t);
 					yield return null;
 				}
 
 				if (moldTilemap.HasTile(pos))
 				{
-					Color settleColor = Color.white;
-					settleColor.a = UIEffectConstants.NewGrowthFinalAlpha;
-					moldTilemap.SetColor(pos, settleColor);
+					SetNewGrowthFlashColor(moldTilemap, pos, 1f);
 				}
 			}
 			finally
@@ -2230,9 +2233,11 @@ namespace FungusToast.Unity.Grid.Helpers
 					float ease = 1f - Mathf.Pow(1f - t, 2f);
 					float settledScale = Mathf.Lerp(overshootScale, 1f, ease);
 					ApplyDirectionalTransform(moldTilemap, overlayTilemap, destinationPos, Vector3.zero, settledScale, settledScale, normalizedDirection);
-					float alpha = Mathf.Lerp(1f, UIEffectConstants.NewGrowthFinalAlpha, ease);
-					SetTileAlpha(moldTilemap, destinationPos, alpha);
-					SetTileAlpha(overlayTilemap, destinationPos, alpha);
+					float flashProgress = UIEffectConstants.NewGrowthFlashDurationSeconds <= 0f
+						? 1f
+						: elapsed / UIEffectConstants.NewGrowthFlashDurationSeconds;
+					SetNewGrowthFlashColor(moldTilemap, destinationPos, flashProgress);
+					SetTileAlpha(overlayTilemap, destinationPos, 1f);
 					yield return null;
 				}
 			}
