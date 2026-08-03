@@ -27,6 +27,8 @@ namespace FungusToast.Unity.UI
         private Color normalColor;
         private readonly Dictionary<TextMeshProUGUI, Vector3> baseScales = new();
         private TextMeshProUGUI activePulseLabel;
+        private TextMeshProUGUI growthCycleAdvancePulseLabel;
+        private float growthCycleAdvancePulseStartTime;
 
         private void Awake()
         {
@@ -130,7 +132,9 @@ namespace FungusToast.Unity.UI
                     SetCompleted(growthCycleLabels[i], UIStyleTokens.State.Success);
                 }
 
-                HighlightPrimary(growthCycleLabels[cycle - 1], UIStyleTokens.State.Success);
+                TextMeshProUGUI activeCycleLabel = growthCycleLabels[cycle - 1];
+                HighlightPrimary(activeCycleLabel, UIStyleTokens.State.Success);
+                StartGrowthCycleAdvancePulse(activeCycleLabel);
             }
         }
 
@@ -151,6 +155,7 @@ namespace FungusToast.Unity.UI
         private void ResetAllStyles()
         {
             activePulseLabel = null;
+            growthCycleAdvancePulseLabel = null;
             SetDim(mutationPhaseLabel);
             SetDim(growthPhaseLabel);
             SetDim(decayPhaseLabel);
@@ -254,7 +259,38 @@ namespace FungusToast.Unity.UI
 
             Vector3 baseScale = GetBaseScale(activePulseLabel);
             float pulse = 1f + PrimaryPulseAmplitude * Mathf.Sin(Time.unscaledTime * PrimaryPulseSpeed);
-            activePulseLabel.rectTransform.localScale = baseScale * (PrimaryScaleMultiplier * pulse);
+            float scaleMultiplier = PrimaryScaleMultiplier * pulse;
+
+            if (activePulseLabel == growthCycleAdvancePulseLabel)
+            {
+                float elapsed = Time.unscaledTime - growthCycleAdvancePulseStartTime;
+                if (elapsed < UIEffectConstants.GrowthCycleProgressPulseDurationSeconds)
+                {
+                    float progress = elapsed / UIEffectConstants.GrowthCycleProgressPulseDurationSeconds;
+                    float pulseStrength = Mathf.Sin(progress * Mathf.PI);
+                    scaleMultiplier *= Mathf.Lerp(
+                        1f,
+                        UIEffectConstants.GrowthCycleProgressPulsePeakScaleMultiplier,
+                        pulseStrength);
+                }
+                else
+                {
+                    growthCycleAdvancePulseLabel = null;
+                }
+            }
+
+            activePulseLabel.rectTransform.localScale = baseScale * scaleMultiplier;
+        }
+
+        private void StartGrowthCycleAdvancePulse(TextMeshProUGUI cycleLabel)
+        {
+            if (cycleLabel == null)
+            {
+                return;
+            }
+
+            growthCycleAdvancePulseLabel = cycleLabel;
+            growthCycleAdvancePulseStartTime = Time.unscaledTime;
         }
 
         private Vector3 GetBaseScale(TextMeshProUGUI label)

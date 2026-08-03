@@ -19,6 +19,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 | Post‑Growth: Resistance pulses (Bastion / HRT spread) | `PlayResistancePulseBatchScaled(tileIds, scaleMultiplier)` | `BastionResistantPulseAnimation` | `MycelialBastionPulseDurationSeconds` (or `_timingContext.ResistancePulseTotal` if set) |
 | Starting tile ping highlight (occasionally shown) | `TriggerStartingTilePing(playerId)` / hover path `StartStartingTileHoverPing(playerId)` → `RunStartingTilePing()` / `RunLoopingStartingTilePing()` | (helper in `RingHighlightHelper`) | `StartingTilePingDurationSeconds` with `StartingTilePing*` radius, fade, and band-color constants |
 | Starting spores establish at game entry | `GameManager.PlayGameplayEntryFlow()` → `GridVisualizer.PlayStartingSporeArrivalAnimation()` | `StartingSporeArrivalAnimator.AnimateSingleArrival()` | Surgical Inoculation arc constants; each mold sprite takes a non-spinning parabolic path from the closest board edge |
+| Growth-cycle progress number advances | `GrowthPhaseRunner.RunNextCycle()` → `UI_PhaseProgressTracker.AdvanceToNextGrowthCycle()` | `UI_PhaseProgressTracker.UpdatePulse()` (unscaled, non-blocking) | `GrowthCycleProgressPulseDurationSeconds` + `GrowthCycleProgressPulsePeakScaleMultiplier` |
 
 ## Notes
 - Phase timing diagnostics are compiled out by default; define `FT_PHASE_TIMING` in Core and Unity to re-enable them.

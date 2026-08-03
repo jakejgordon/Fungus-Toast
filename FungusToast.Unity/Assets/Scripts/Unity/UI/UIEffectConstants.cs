@@ -613,6 +613,18 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float TimeBetweenGrowthCycles = 1f;
 
+        /// <summary>
+        /// Duration (in seconds) of the attention pulse when a growth-cycle progress number advances.
+        /// This presentation runs independently of growth-phase sequencing.
+        /// </summary>
+        public const float GrowthCycleProgressPulseDurationSeconds = 0.22f;
+
+        /// <summary>
+        /// Peak scale multiplier for the newly active growth-cycle progress number.
+        /// Applied on top of its normal highlighted scale before it settles.
+        /// </summary>
+        public const float GrowthCycleProgressPulsePeakScaleMultiplier = 1.85f;
+
         // ==================== NEW GROWTH VISUAL TWEAKS ====================
 
         /// <summary>
