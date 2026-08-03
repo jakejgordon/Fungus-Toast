@@ -1250,6 +1250,8 @@ namespace FungusToast.Unity.Grid
             return false;
         }
 
+        public int GetMoldIndexForPlayer(int playerId) => ResolvePlayerMoldIndex(playerId);
+
         private int ResolvePlayerMoldIndex(int playerId)
         {
             if (playerId >= 0 && playerId < playerMoldAssignments.Count)

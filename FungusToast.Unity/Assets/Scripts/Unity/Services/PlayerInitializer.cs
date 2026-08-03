@@ -115,6 +115,12 @@ namespace FungusToast.Unity
 
         private void ApplyStartingAdaptations(Player ai, int aiIndex, BoardPreset preset, IReadOnlyList<string> resolvedStrategyNames)
         {
+            if (getGameMode() != GameMode.Campaign)
+            {
+                ApplyMoldStartingAdaptationToAi(ai);
+                return;
+            }
+
             if (preset == null) return;
 
             List<string> adaptationIds = null;
@@ -143,6 +149,30 @@ namespace FungusToast.Unity
                 {
                     Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.PlayerName}. Skipping.");
                 }
+            }
+        }
+
+        private void ApplyMoldStartingAdaptationToAi(Player ai)
+        {
+            if (ai == null || gridVisualizer == null)
+            {
+                return;
+            }
+
+            int moldIndex = gridVisualizer.GetMoldIndexForPlayer(ai.PlayerId);
+            string adaptationId = MoldCatalog.GetStartingAdaptationId(moldIndex);
+            if (string.IsNullOrWhiteSpace(adaptationId))
+            {
+                return;
+            }
+
+            if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+            {
+                ai.TryAddAdaptation(adaptation);
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerInitializer] Unknown starting adaptation '{adaptationId}' for AI mold index {moldIndex}.");
             }
         }
 
