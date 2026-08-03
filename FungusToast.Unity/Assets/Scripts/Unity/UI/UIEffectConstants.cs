@@ -204,6 +204,37 @@ namespace FungusToast.Unity.UI
         public const float ToxinDropAnimationDurationSeconds = 1.3f;
 
         /// <summary>
+        /// Maximum representative toxin projectiles shown per attacking colony in a single render.
+        /// Remaining toxin placements resolve immediately so late-game decay remains bounded.
+        /// </summary>
+        public const int ToxinLaunchVisibleProjectileCapPerPlayer = 8;
+
+        /// <summary>
+        /// Duration of the shared, non-blocking source-to-target toxin volley.
+        /// </summary>
+        public const float ToxinLaunchVolleyDurationSeconds = 0.38f;
+
+        /// <summary>
+        /// Brief ownership cue shown at each attacking colony's starting cell.
+        /// </summary>
+        public const float ToxinLaunchSourcePingDurationSeconds = 0.2f;
+
+        /// <summary>
+        /// Base parabolic lift for generic colony toxin launches.
+        /// </summary>
+        public const float ToxinLaunchArcBaseHeightWorld = 0.18f;
+
+        /// <summary>
+        /// Additional parabolic lift per board tile travelled by a toxin launch.
+        /// </summary>
+        public const float ToxinLaunchArcHeightPerTile = 0.03f;
+
+        /// <summary>
+        /// Largest scale reached by a generic toxin projectile at the top of its arc.
+        /// </summary>
+        public const float ToxinLaunchArcPeakScale = 1.35f;
+
+        /// <summary>
         /// Duration (in seconds) for the expired-toxin dissolve animation.
         /// </summary>
         public const float ToxinExpiryDissolveDurationSeconds = 0.5f;

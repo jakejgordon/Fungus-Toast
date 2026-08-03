@@ -243,7 +243,10 @@ namespace FungusToast.Unity.Grid
                 EndAnimation,
                 RegisterPreAnimationHiddenPreviewTiles,
                 RevealPreAnimationPreviewTile,
-                RenderTileFromBoard);
+                RenderTileFromBoard,
+                PlayToxinLaunchBatch,
+                TriggerToxinSourcePings,
+                () => arcHelper?.ClearBatchProjectiles());
             resistanceOverlayController = new GridResistanceOverlayController(
                 () => ActiveBoard,
                 () => overlayTilemap,
@@ -804,6 +807,89 @@ namespace FungusToast.Unity.Grid
             => _surgicalAnimator != null && toxinOverlayTile != null
             ? _surgicalAnimator.RunArcVolley(sourceTileId, destinationTileIds, toxinOverlayTile.sprite, onImpact)
                 : null;
+
+        private IEnumerator PlayToxinLaunchBatch(int sourceTileId, IReadOnlyList<int> destinationTileIds)
+        {
+            if (arcHelper == null || toxinOverlayTile == null || toxinOverlayTile.sprite == null || ActiveBoard == null || destinationTileIds == null || destinationTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            var targetCells = new List<Vector3Int>(destinationTileIds.Count);
+            foreach (int tileId in destinationTileIds)
+            {
+                if (tileId == sourceTileId)
+                {
+                    continue;
+                }
+
+                var (x, y) = ActiveBoard.GetXYFromTileId(tileId);
+                targetCells.Add(new Vector3Int(x, y, 0));
+            }
+
+            if (targetCells.Count == 0)
+            {
+                yield break;
+            }
+
+            var (sourceX, sourceY) = ActiveBoard.GetXYFromTileId(sourceTileId);
+            yield return arcHelper.AnimateArcBatch(
+                new Vector3Int(sourceX, sourceY, 0),
+                targetCells,
+                toxinOverlayTile.sprite,
+                UIEffectConstants.ToxinLaunchVolleyDurationSeconds,
+                UIEffectConstants.ToxinLaunchArcBaseHeightWorld,
+                UIEffectConstants.ToxinLaunchArcHeightPerTile,
+                UIEffectConstants.ToxinLaunchArcPeakScale);
+        }
+
+        private void TriggerToxinSourcePings(IEnumerable<int> playerIds)
+        {
+            var active = ActiveBoard;
+            var targetTilemap = ringHelper.ChoosePingTarget();
+            if (active == null || targetTilemap == null || solidHighlightTile == null || playerIds == null)
+            {
+                return;
+            }
+
+            var centers = playerIds
+                .Distinct()
+                .Where(playerId => playerId >= 0 && playerId < active.Players.Count)
+                .Select(playerId => active.Players[playerId].StartingTileId)
+                .Where(tileId => tileId.HasValue)
+                .Select(tileId =>
+                {
+                    var (x, y) = active.GetXYFromTileId(tileId!.Value);
+                    return new Vector3Int(x, y, 0);
+                })
+                .ToList();
+            if (centers.Count == 0)
+            {
+                return;
+            }
+
+            CancelActivePing(targetTilemap);
+            lastPingTilemap = targetTilemap;
+            loopingStartingTilePingPlayerId = -1;
+            BeginAnimation();
+            startingTilePingCoroutine = StartCoroutine(RunToxinSourcePings(centers, targetTilemap));
+        }
+
+        private IEnumerator RunToxinSourcePings(IReadOnlyList<Vector3Int> centers, Tilemap targetTilemap)
+        {
+            GetStartingTilePingParameters(out _, out float expandPortion, out float maxRadius, out float ringThickness);
+            yield return ringHelper.StartingTilePingAnimation(
+                centers,
+                targetTilemap,
+                UIEffectConstants.ToxinLaunchSourcePingDurationSeconds,
+                expandPortion,
+                maxRadius,
+                ringThickness);
+            startingTilePingCoroutine = null;
+            lastPingTilemap = null;
+            loopingStartingTilePingPlayerId = -1;
+            EndAnimation();
+        }
         public IEnumerator PlayHyphalBridgeAnimation(int playerId, int sourceTileId, IReadOnlyList<int> destinationTileIds, float durationScale = UIEffectConstants.HyphalBridgeSegmentDurationScale)
             => _launchArcAnimator != null
                 ? _launchArcAnimator.PlaySequence(
@@ -874,7 +960,7 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            cellStateAnimationController?.CaptureToxinImpactSnapshot(e.TileId);
+            cellStateAnimationController?.CaptureToxinImpactSnapshot(e.TileId, e.PlacingPlayerId);
         }
 
         private void HandleCellReclaimed(int playerId, int tileId, GrowthSource source)
