@@ -17,10 +17,15 @@ namespace FungusToast.Unity.UI
         private const float CampaignIntroStartScale = 0.94f;
         private const float CampaignIntroOvershootScale = 1.04f;
         private const float GameStartSlamDurationSeconds = 0.12f;
+        private const float GameStartSurfaceNameDelaySeconds = 0.32f;
+        private const float GameStartSurfaceNameStampDurationSeconds = 0.16f;
         private const float GameStartHoldDurationSeconds = 2.65f;
         private const float GameStartExitDurationSeconds = 0.18f;
         private const float GameStartSlamStartYOffset = 140f;
         private const float GameStartSlamOvershootScale = 1.16f;
+        private const float GameStartSurfaceNameStartXOffset = 20f;
+        private const float GameStartSurfaceNameStartScale = 0.85f;
+        private const float GameStartSurfaceNameOvershootScale = 1.08f;
 
         public TextMeshProUGUI bannerText;
         public CanvasGroup canvasGroup;
@@ -265,6 +270,8 @@ namespace FungusToast.Unity.UI
         {
             CacheTransformDefaults();
             bannerText.text = $"<b>Fungus</b> • {surfaceName}";
+            int surfaceNameStartCharacterIndex = "Fungus • ".Length;
+            SetSurfaceNameStampVisuals(surfaceNameStartCharacterIndex, 0f, GameStartSurfaceNameStartXOffset, GameStartSurfaceNameStartScale, 0f);
             SetBannerVisualState(1f, GameStartSlamStartYOffset, GameStartSlamOvershootScale);
             for (float elapsed = 0f; elapsed < GameStartSlamDurationSeconds; elapsed += Time.unscaledDeltaTime)
             {
@@ -278,6 +285,27 @@ namespace FungusToast.Unity.UI
             }
 
             SetBannerVisualState(1f, 0f, 1f);
+            yield return new WaitForSecondsRealtime(GameStartSurfaceNameDelaySeconds);
+
+            for (float elapsed = 0f; elapsed < GameStartSurfaceNameStampDurationSeconds; elapsed += Time.unscaledDeltaTime)
+            {
+                float progress = Mathf.Clamp01(elapsed / GameStartSurfaceNameStampDurationSeconds);
+                float eased = 1f - Mathf.Pow(1f - progress, 3f);
+                float scaleProgress = progress / 0.65f;
+                float scale = progress < 0.65f
+                    ? Mathf.Lerp(GameStartSurfaceNameStartScale, GameStartSurfaceNameOvershootScale, 1f - Mathf.Pow(1f - scaleProgress, 3f))
+                    : Mathf.Lerp(GameStartSurfaceNameOvershootScale, 1f, Mathf.SmoothStep(0f, 1f, (progress - 0.65f) / 0.35f));
+
+                SetSurfaceNameStampVisuals(
+                    surfaceNameStartCharacterIndex,
+                    eased,
+                    Mathf.Lerp(GameStartSurfaceNameStartXOffset, 0f, eased),
+                    scale,
+                    eased);
+                yield return null;
+            }
+
+            SetSurfaceNameStampVisuals(surfaceNameStartCharacterIndex, 1f, 0f, 1f, 1f);
             yield return new WaitForSecondsRealtime(GameStartHoldDurationSeconds);
 
             for (float elapsed = 0f; elapsed < GameStartExitDurationSeconds; elapsed += Time.unscaledDeltaTime)
@@ -288,6 +316,37 @@ namespace FungusToast.Unity.UI
             }
 
             HideImmediate();
+        }
+
+        private void SetSurfaceNameStampVisuals(int firstSurfaceNameCharacterIndex, float alpha, float xOffset, float scale, float colorProgress)
+        {
+            bannerText.ForceMeshUpdate();
+            TMP_TextInfo textInfo = bannerText.textInfo;
+            Color stampColor = Color.Lerp(UIStyleTokens.Accent.Spore, UIStyleTokens.Text.Primary, colorProgress);
+            Color32 stampColor32 = stampColor;
+            byte stampAlpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(alpha) * byte.MaxValue);
+
+            for (int characterIndex = firstSurfaceNameCharacterIndex; characterIndex < textInfo.characterCount; characterIndex++)
+            {
+                TMP_CharacterInfo characterInfo = textInfo.characterInfo[characterIndex];
+                if (!characterInfo.isVisible)
+                {
+                    continue;
+                }
+
+                TMP_MeshInfo meshInfo = textInfo.meshInfo[characterInfo.materialReferenceIndex];
+                int vertexIndex = characterInfo.vertexIndex;
+                Vector3 characterCenter = (meshInfo.vertices[vertexIndex] + meshInfo.vertices[vertexIndex + 2]) * 0.5f;
+
+                for (int vertexOffset = 0; vertexOffset < 4; vertexOffset++)
+                {
+                    int currentVertexIndex = vertexIndex + vertexOffset;
+                    meshInfo.vertices[currentVertexIndex] = characterCenter + ((meshInfo.vertices[currentVertexIndex] - characterCenter) * scale) + Vector3.right * xOffset;
+                    meshInfo.colors32[currentVertexIndex] = new Color32(stampColor32.r, stampColor32.g, stampColor32.b, stampAlpha);
+                }
+            }
+
+            bannerText.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices | TMP_VertexDataUpdateFlags.Colors32);
         }
 
         private void SetBannerVisualState(float alpha, float yOffset, float scale)
