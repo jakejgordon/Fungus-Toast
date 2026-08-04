@@ -23,7 +23,7 @@ public class Tier6MutationTests
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.NecrohyphalInfiltration && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.AnabolicInversion && p.RequiredLevel == 1);
-        Assert.Contains("Expired toxins can revive your dead cells", mutation.Description);
+        Assert.Contains("Expired toxins can reclaim your dead cells", mutation.Description);
         Assert.Contains("Enemy toxins next to your dead cells age twice as fast", mutation.Description);
     }
 
@@ -38,7 +38,7 @@ public class Tier6MutationTests
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveRejuvenation && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChemotacticBeacon && p.RequiredLevel == 1);
-        Assert.Contains("Cascaded kills leave toxin tiles instead of dead cells", mutation.Description);
+        Assert.Contains("Cascaded kills poison their targets instead of leaving dead cells", mutation.Description);
     }
 
     [Fact]

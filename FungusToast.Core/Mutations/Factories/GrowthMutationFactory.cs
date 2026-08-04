@@ -57,7 +57,7 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
-                description: $"Brings your own dead cells back near your living colony.\n\n" +
+                description: $"Reclaims your own dead cells near your living colony.\n\n" +
                              $"<b>Technical:</b> After the Growth Phase and before the Decay Phase, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned adjacent in a cardinal direction (up / down / left / right). Each dead cell is checked at most once per round.",
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,

@@ -39,7 +39,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Chemotactic Beacon",
                 description:
                     $"Lets you place a target marker and grow a straight line toward it.\n\n" +
-                    $"<b>Technical:</b> On activation, mark one empty non-nutrient tile. At Growth Phase end while the surge is active, grow a line of {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells from your starting spore toward that marker. This line can replace toxins, dead cells, enemy cells, and empty tiles in its path, but skips friendly living cells.\n" +
+                    $"<b>Technical:</b> On activation, mark one empty non-nutrient tile. At Growth Phase end while the surge is active, grow a line of {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells from your starting spore toward that marker. This line overgrows toxins, reclaims dead cells, infests enemy living cells, and colonizes empty tiles in its path, but skips friendly living cells.\n" +
                     $"Buffed by: Putrefactive Mycotoxin.",
                 flavorText: "A volatile lure condenses over bare toast, exhaling a phantom food trail that bends the colony's advance while the beacon itself slowly evaporates.",
                 type: MutationType.ChemotacticBeacon,
@@ -62,7 +62,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Mimetic Resilience",
                 description:
                     $"Lets you try to copy resistant footholds from stronger rivals.\n\n" +
-                    $"<b>Technical:</b> While active, target rival players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their resistant living cells, attempt to place one of your own resistant cells within level + 1 tiles, preferring enemy living cells, then enemy toxins, then empty tiles, then dead cells. Each success makes later attempts against that same rival 5% less likely, and the effect stops after 20 successes against one rival in the same Growth Phase. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
+                    $"<b>Technical:</b> While active, target rival players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their resistant living cells, attempt to place one of your own resistant cells within level + 1 tiles, preferring to infest enemy living cells, then overgrow enemy toxins, colonize empty tiles, or reclaim dead cells. Each success makes later attempts against that same rival 5% less likely, and the effect stops after 20 successes against one rival in the same Growth Phase. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
                 flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
                 type: MutationType.MimeticResilience,
                 effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
@@ -107,7 +107,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Chitin Fortification",
                 description:
                     $"While the surge is active, it permanently gives resistance to part of your colony each Growth Phase.\n\n" +
-                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-resistant living cells per level permanently gain Resistant. Resistant living cells cannot be killed or replaced, and they stay resistant after the surge ends. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
+                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-resistant living cells per level permanently gain Resistant. Resistant living cells cannot be killed or infested, and they stay resistant after the surge ends. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
                 flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
                 type: MutationType.ChitinFortification,
                 effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,

@@ -319,7 +319,7 @@ public class Tier3MutationTests
         Assert.Contains("20.0%+ more living cells", mutation.Description);
         Assert.Contains("1.0%+ board control", mutation.Description);
         Assert.DoesNotContain(" %", mutation.Description);
-        Assert.Contains("preferring enemy living cells, then enemy toxins, then empty tiles, then dead cells", mutation.Description);
+        Assert.Contains("preferring to infest enemy living cells, then overgrow enemy toxins, colonize empty tiles, or reclaim dead cells", mutation.Description);
     }
 
     [Fact]
