@@ -45,6 +45,11 @@ Description should include, in compact form:
 - Two short clauses are acceptable if needed for accuracy.
 - Avoid implementation jargon and long lore prose.
 
+### 6) Use canonical board-action terms
+- For an exact board-state change, use the canonical verb in [GAMEPLAY_TERMINOLOGY.md](../GAMEPLAY_TERMINOLOGY.md): `Colonize`, `Reclaim`, `Infest`, `Overgrow`, `Toxify`, or `Poison`.
+- Pair a term with a short plain-language outcome on its first meaningful use when needed for comprehension; do not replace it with *invade*, *occupy*, *convert*, or *take over*, and do not re-define it every time.
+- Names and flavor text may use evocative synonyms, but Description text must remain mechanically precise.
+
 ---
 
 ## FlavorText Rules
@@ -66,7 +71,7 @@ Description should include, in compact form:
 
 ### Good
 - `For the rest of the game, before each growth phase, trace a path to the nearest corner and resolve up to N actionable tiles.`
-- `One-time on draft: launch up to N toxin spores onto empty tiles.`
+- `One-time on draft: launch toxin spores to toxify up to N empty tiles.`
 
 ### Bad
 - `Works like Corner Conduit I, but better.`

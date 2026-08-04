@@ -26,7 +26,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIId,
             Name = "Mycelial Bastion I",
-            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, infested, or poisoned for the rest of the game.",
             FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -45,7 +45,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIIId,
             Name = "Mycelial Bastion II",
-            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, infested, or poisoned for the rest of the game.",
             FlavorText = "Advanced fortification techniques create an impenetrable mycelial bulwark.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
@@ -64,7 +64,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.MycelialBastionIIIId,
             Name = "Mycelial Bastion III",
-            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, replaced, or converted for the rest of the game.",
+            Description = $"One-time on draft: select up to {MycovariantGameBalance.MycelialBastionIIIMaxResistantCells} living cells to become Resistant. Resistant cells cannot be killed, infested, or poisoned for the rest of the game.",
             FlavorText = "Master-level mycelial engineering creates an unassailable fortress of living tissue.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,

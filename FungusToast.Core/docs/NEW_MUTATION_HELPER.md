@@ -56,7 +56,7 @@ Before finalizing a new Mutation name, first propose **5 candidate names** that 
 | **Technical block** | After `\n\n`, explain the real trigger/timing, target restrictions, scaling, and important limits using implementation-accurate terms |
 | **Max-level clause** | Use `<b>Max Level Bonus:</b>` on its own new line only when the max-level effect is mechanically distinct |
 | **Synergy clause** | Use `Buffed by: Mutation Name.` only for important implemented cross-mutation synergies that materially change the effect |
-| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Summary sentence |
+| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Summary sentence. Use the canonical state-transition verbs from `GAMEPLAY_TERMINOLOGY.md`; explain a term briefly on its first meaningful use, rather than replacing it with a near-synonym or defining it repeatedly. |
 | **Formatting** | Use ASCII punctuation, `\n\n` before `Technical`, and `\n` before optional follow-up lines. Avoid bullet lists inside descriptions |
 | **Encoding** | No special Unicode bullets or en-dashes that can corrupt — use plain hyphens and standard ASCII punctuation |
 

@@ -703,12 +703,12 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (level <= 0)
             {
-                return "No infiltration or cascade chance yet.";
+                return "No reclaim or cascade chance yet.";
             }
 
-            float invadeChancePercent = level * GameBalance.NecrohyphalInfiltrationChancePerLevel * 100f;
+            float reclaimChancePercent = level * GameBalance.NecrohyphalInfiltrationChancePerLevel * 100f;
             float cascadeChancePercent = level * GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel * 100f;
-            return $"Invade adjacent dead enemy cell {invadeChancePercent:0.00}%, cascade from each successful reclaim {cascadeChancePercent:0.00}%";
+            return $"Reclaim adjacent dead enemy cell {reclaimChancePercent:0.00}%, cascade from each successful reclaim {cascadeChancePercent:0.00}%";
         }
 
         private string BuildCatabolicRebirthSummary(int level)

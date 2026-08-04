@@ -204,8 +204,7 @@ public class AggressotropicConduitMycovariantTests
 
         string description = MycovariantDescriptionFormatter.GetDraftPreviewDescription(myco, currentRound: 25);
 
-        Assert.Contains("grow up to 3 tiles", description);
-        Assert.Contains("reclaiming dead cells along the path", description);
+        Assert.Contains("colonize, reclaim, infest, or overgrow up to 3 tiles", description);
         Assert.DoesNotContain("Current draft bonus", description);
         Assert.DoesNotContain("round 25", description);
     }
@@ -223,8 +222,7 @@ public class AggressotropicConduitMycovariantTests
 
         string description = MycovariantDescriptionFormatter.GetOwnedTooltipDescription(myco);
 
-        Assert.Contains("grow up to 4 tiles", description);
-        Assert.Contains("reclaiming dead cells along the path", description);
+        Assert.Contains("colonize, reclaim, infest, or overgrow up to 4 tiles", description);
         Assert.DoesNotContain("Locked-in bonus", description);
         Assert.DoesNotContain("round 25", description);
     }

@@ -64,6 +64,9 @@ Fungus Toast uses precise verbs for board-state changes so gameplay logic, analy
 ### UI copy and tooltips
 
 - Tooltips and log text may use more readable sentence forms, but the underlying mechanic name should still map to the canonical verb.
+- In player-facing descriptions, use the canonical verb whenever describing one of these exact state changes. Do not substitute near-synonyms such as *invade*, *occupy*, *convert*, or *take over*; those words make players wonder whether a different rule applies.
+- Lead with a plain-language benefit, then name the mechanic precisely in the details. On a term's first use in a description, add a short natural-language outcome when it helps comprehension (for example, "reclaim a dead cell, restoring it as your living cell"). Do not re-define the term on every use.
+- Flavor text and names may use evocative language such as *infiltration* or *invasion*, provided they are not explaining rules.
 
 ## Related Domain Terms
 

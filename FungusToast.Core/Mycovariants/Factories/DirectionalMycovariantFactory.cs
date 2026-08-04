@@ -23,7 +23,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = mycovariantId,
                 Name = name,
-                Description = $"One-time on draft: choose a living source cell, then aim a spore-jet in a cardinal direction: grow {livingLength} living tiles, then place a widening toxin fan up to {maxToxinWidth} tiles wide.",
+                Description = $"One-time on draft: choose a living source cell, then aim a spore-jet in a cardinal direction. It colonizes, reclaims, infests, or overgrows up to {livingLength} tiles in a line, then launches a widening toxin fan up to {maxToxinWidth} tiles wide that poisons non-Resistant enemy living cells and toxifies empty or dead tiles.",
                 FlavorText = "The cap ruptures violently. The colony blasts outward in a widening cloud of toxic spores wherever the pilot aims.",
                 Type = MycovariantType.Directional,
                 Category = MycovariantCategory.Fungicide,

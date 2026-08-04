@@ -105,7 +105,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.SporeSalvo,
                         "Spore Salvo",
-                        "At the start of the game, your starting spore launches one toxin into the nearest open tile beside each enemy starting spore.",
+                        "At the start of the game, your starting spore launches one toxin to toxify the nearest open tile beside each enemy starting spore.",
                         "spore_salvo",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
@@ -119,7 +119,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.VesicleBurst,
                         "Vesicle Burst",
-                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop and drop friendly toxins into every orthogonally adjacent tile that is empty or occupied by a non-resistant enemy cell, dead cell, or toxin.",
+                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop, poisoning adjacent non-Resistant enemy living cells and spreading toxin to adjacent empty, dead, or enemy toxin tiles.",
                         "vesicle_burst",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),

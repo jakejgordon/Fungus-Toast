@@ -80,7 +80,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIId,
             Name = "Ballistospore Discharge I",
-            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeISpores} empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -102,7 +102,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIId,
             Name = "Ballistospore Discharge II",
-            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeIISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIISpores} empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "A thunderous burst of spores erupts, blanketing the battlefield in a toxic haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -124,7 +124,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIIId,
             Name = "Ballistospore Discharge III",
-            Description = $"One-time on draft: launch up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} toxin spores onto empty tiles (fewer if not enough valid tiles exist).",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} empty tiles (fewer if not enough valid tiles exist).",
             FlavorText = "The ultimate actinic volley: a storm of spores rains down, saturating the terrain with lethal intent.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -146,7 +146,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CytolyticBurstId,
             Name = "Cytolytic Burst",
-            Description = $"One-time on draft: choose one of your toxins to burst in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in range has {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to gain toxin, killing any cell there.",
+            Description = $"One-time on draft: choose one of your toxins to burst in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in range has {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to poison a non-Resistant living cell or toxify an empty or dead tile.",
             FlavorText = "The toxin's cellular membrane ruptures catastrophically, releasing cytolytic enzymes in a violent cascade that spreads destruction through the surrounding substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,

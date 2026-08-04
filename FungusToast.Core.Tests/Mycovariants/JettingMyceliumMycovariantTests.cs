@@ -26,7 +26,7 @@ public class JettingMyceliumMycovariantTests
                 Assert.Equal(MycovariantIds.JettingMyceliumIId, tierI.Id);
                 Assert.Equal("Jetting Mycelium I", tierI.Name);
                 Assert.True(tierI.IsUniversal);
-                Assert.Contains("grow 3 living tiles", tierI.Description);
+                Assert.Contains("up to 3 tiles in a line", tierI.Description);
                 Assert.Contains("up to 7 tiles wide", tierI.Description);
             },
             tierII =>
@@ -34,7 +34,7 @@ public class JettingMyceliumMycovariantTests
                 Assert.Equal(MycovariantIds.JettingMyceliumIIId, tierII.Id);
                 Assert.Equal("Jetting Mycelium II", tierII.Name);
                 Assert.False(tierII.IsUniversal);
-                Assert.Contains("grow 3 living tiles", tierII.Description);
+                Assert.Contains("up to 3 tiles in a line", tierII.Description);
                 Assert.Contains("up to 9 tiles wide", tierII.Description);
             },
             tierIII =>
@@ -42,7 +42,7 @@ public class JettingMyceliumMycovariantTests
                 Assert.Equal(MycovariantIds.JettingMyceliumIIIId, tierIII.Id);
                 Assert.Equal("Jetting Mycelium III", tierIII.Name);
                 Assert.False(tierIII.IsUniversal);
-                Assert.Contains("grow 4 living tiles", tierIII.Description);
+                Assert.Contains("up to 4 tiles in a line", tierIII.Description);
                 Assert.Contains("up to 11 tiles wide", tierIII.Description);
             });
     }
