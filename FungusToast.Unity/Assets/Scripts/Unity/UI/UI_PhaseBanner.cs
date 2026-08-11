@@ -21,19 +21,27 @@ namespace FungusToast.Unity.UI
         private const float GameStartSurfaceNameStampDurationSeconds = 0.16f;
         private const float GameStartHoldDurationSeconds = 2.65f;
         private const float GameStartExitDurationSeconds = 0.18f;
-        private const float GameStartSlamStartYOffset = 140f;
-        private const float GameStartSlamOvershootScale = 1.16f;
-        private const float GameStartSurfaceNameStartXOffset = 20f;
-        private const float GameStartSurfaceNameStartScale = 0.85f;
-        private const float GameStartSurfaceNameOvershootScale = 1.08f;
+        private const float GameStartTitleFontSize = 72f;
+        private const float GameStartTitleCardWidth = 1400f;
+        private const float GameStartTitleCardHeight = 240f;
+        private const float GameStartSlamStartYOffset = 480f;
+        private const float GameStartSlamOvershootScale = 2.6f;
+        private const float GameStartSurfaceNameStartXOffset = 200f;
+        private const float GameStartSurfaceNameStartScale = 0.1f;
+        private const float GameStartSurfaceNameOvershootScale = 1.8f;
 
         public TextMeshProUGUI bannerText;
         public CanvasGroup canvasGroup;
         [SerializeField] private Image bannerBackground;
 
         private RectTransform bannerRectTransform;
+        private RectTransform bannerPanelRectTransform;
         private Vector2 baseAnchoredPosition;
         private Vector3 baseScale = Vector3.one;
+        private Vector2 baseBannerSize;
+        private Vector2 baseBannerTextSize;
+        private Vector2 baseBannerPanelSize;
+        private float baseBannerTextFontSize;
         private bool isCampaignIntroPlaying;
         private string pendingBannerText;
         private float pendingBannerDuration;
@@ -68,6 +76,18 @@ namespace FungusToast.Unity.UI
             {
                 baseAnchoredPosition = bannerRectTransform.anchoredPosition;
                 baseScale = bannerRectTransform.localScale;
+                baseBannerSize = bannerRectTransform.sizeDelta;
+            }
+
+            if (bannerText != null)
+            {
+                baseBannerTextSize = bannerText.rectTransform.sizeDelta;
+                baseBannerTextFontSize = bannerText.fontSize;
+                bannerPanelRectTransform = bannerText.rectTransform.parent as RectTransform;
+                if (bannerPanelRectTransform != null)
+                {
+                    baseBannerPanelSize = bannerPanelRectTransform.sizeDelta;
+                }
             }
         }
 
@@ -269,6 +289,7 @@ namespace FungusToast.Unity.UI
         private IEnumerator PlayGameStartSurfaceIntro(string surfaceName)
         {
             CacheTransformDefaults();
+            PrepareGameStartTitleCard();
             bannerText.text = $"<b>Fungus</b> • {surfaceName}";
             int surfaceNameStartCharacterIndex = "Fungus • ".Length;
             SetSurfaceNameStampVisuals(surfaceNameStartCharacterIndex, 0f, GameStartSurfaceNameStartXOffset, GameStartSurfaceNameStartScale, 0f);
@@ -349,6 +370,27 @@ namespace FungusToast.Unity.UI
             bannerText.UpdateVertexData(TMP_VertexDataUpdateFlags.Vertices | TMP_VertexDataUpdateFlags.Colors32);
         }
 
+        private void PrepareGameStartTitleCard()
+        {
+            if (bannerText == null)
+            {
+                return;
+            }
+
+            bannerText.fontSize = GameStartTitleFontSize;
+            bannerText.rectTransform.sizeDelta = new Vector2(GameStartTitleCardWidth, GameStartTitleCardHeight);
+
+            if (bannerRectTransform != null)
+            {
+                bannerRectTransform.sizeDelta = new Vector2(GameStartTitleCardWidth, GameStartTitleCardHeight);
+            }
+
+            if (bannerPanelRectTransform != null)
+            {
+                bannerPanelRectTransform.sizeDelta = new Vector2(GameStartTitleCardWidth, GameStartTitleCardHeight);
+            }
+        }
+
         private void SetBannerVisualState(float alpha, float yOffset, float scale)
         {
             if (canvasGroup != null)
@@ -370,6 +412,18 @@ namespace FungusToast.Unity.UI
             {
                 bannerRectTransform.anchoredPosition = baseAnchoredPosition;
                 bannerRectTransform.localScale = baseScale;
+                bannerRectTransform.sizeDelta = baseBannerSize;
+            }
+
+            if (bannerText != null)
+            {
+                bannerText.fontSize = baseBannerTextFontSize;
+                bannerText.rectTransform.sizeDelta = baseBannerTextSize;
+            }
+
+            if (bannerPanelRectTransform != null)
+            {
+                bannerPanelRectTransform.sizeDelta = baseBannerPanelSize;
             }
         }
 
