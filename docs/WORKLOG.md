@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-3 are complete; Task 4 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-4 are complete; Task 5 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -149,7 +149,9 @@ Every implementation agent must:
 
 **Special verification:** Exercise 1-7 total players, all permitted human counts, each board size, fresh start, saved-game resume, Back, and a return to the screen after leaving it.
 
-### 4. [ ] Polish custom-game mold selection
+### 4. [x] Polish custom-game mold selection
+
+**Completed:** Simplified the step to `Choose a Mold`, added `SETUP 2 OF 2`, separated player context from helper copy, added numbered/color-coded player identity, enlarged mold cards/icons, and made selected/taken states explicit with a lichen outline, checkmark, and owning-player label. Sequential assignment, defaults, uniqueness enforcement, Back, and idle motion were preserved. Core build passed; Editor checks are deferred to Task 11.
 
 **Depends on:** Task 3.
 
@@ -347,4 +349,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 4: Polish custom-game mold selection**. The first custom-game setup step now establishes the containing card and segmented-control layout.
+- Assign **Task 5: Clarify the campaign overview and progression summary**. Custom-game setup and mold assignment are now code-complete.

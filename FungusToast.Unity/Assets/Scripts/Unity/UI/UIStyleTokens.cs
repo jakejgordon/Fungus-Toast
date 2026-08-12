@@ -48,6 +48,31 @@ namespace FungusToast.Unity.UI
             public static readonly Color Focus = Hex("#B3C77A");
         }
 
+        public static class Player
+        {
+            public static readonly Color Blue = Hex("#0072D1");
+            public static readonly Color Orange = Hex("#FF8A00");
+            public static readonly Color Sky = Hex("#00AEEF");
+            public static readonly Color Purple = Hex("#8E5DFF");
+            public static readonly Color Yellow = Hex("#7EA000");
+            public static readonly Color Teal = Hex("#008F7A");
+            public static readonly Color Vermillion = Hex("#C73E1D");
+
+            public static Color GetByIndex(int index)
+            {
+                switch (Mathf.Abs(index) % 7)
+                {
+                    case 0: return Blue;
+                    case 1: return Orange;
+                    case 2: return Sky;
+                    case 3: return Purple;
+                    case 4: return Yellow;
+                    case 5: return Teal;
+                    default: return Vermillion;
+                }
+            }
+        }
+
         public static class Category
         {
             public static readonly Color Growth = Hex("#5F8F61");

@@ -84,9 +84,12 @@ namespace FungusToast.Unity.UI.GameStart
         private string defaultTitleText;
         private TextMeshProUGUI moldSelectionTitleLabel;
         private TextMeshProUGUI moldSelectionStatusLabel;
+        private TextMeshProUGUI moldSelectionStepLabel;
+        private TextMeshProUGUI moldSelectionHelperLabel;
         private GridLayoutGroup moldSelectionGrid;
         private readonly List<Button> moldSelectionButtons = new();
         private readonly List<Image> moldSelectionHighlights = new();
+        private readonly List<Outline> moldSelectionOutlines = new();
         private readonly List<Image> moldSelectionIcons = new();
         private readonly List<RectTransform> moldSelectionIconRects = new();
         private readonly List<Vector2> moldSelectionIconBasePositions = new();
@@ -938,6 +941,13 @@ namespace FungusToast.Unity.UI.GameStart
                 return;
             }
 
+            moldSelectionStepLabel ??= CreateMoldSelectionText(
+                "UI_MoldSelectionStep",
+                15f,
+                FontStyles.Bold,
+                UIStyleTokens.Text.Muted,
+                TextAlignmentOptions.Center,
+                22f);
             moldSelectionTitleLabel ??= CreateMoldSelectionText(
                 "UI_MoldSelectionTitle",
                 28f,
@@ -951,7 +961,14 @@ namespace FungusToast.Unity.UI.GameStart
                 FontStyles.Normal,
                 UIStyleTokens.Text.Secondary,
                 TextAlignmentOptions.Center,
-                56f);
+                30f);
+            moldSelectionHelperLabel ??= CreateMoldSelectionText(
+                "UI_MoldSelectionHelper",
+                18f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                TextAlignmentOptions.Center,
+                42f);
         }
 
         private TextMeshProUGUI CreateMoldSelectionText(
@@ -1022,8 +1039,8 @@ namespace FungusToast.Unity.UI.GameStart
 
             moldSelectionGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             moldSelectionGrid.constraintCount = 4;
-            moldSelectionGrid.cellSize = new Vector2(116f, 116f);
-            moldSelectionGrid.spacing = new Vector2(10f, 10f);
+            moldSelectionGrid.cellSize = new Vector2(120f, 120f);
+            moldSelectionGrid.spacing = new Vector2(8f, 10f);
             moldSelectionGrid.childAlignment = TextAnchor.UpperCenter;
             moldSelectionGrid.startAxis = GridLayoutGroup.Axis.Horizontal;
             moldSelectionGrid.startCorner = GridLayoutGroup.Corner.UpperLeft;
@@ -1035,7 +1052,7 @@ namespace FungusToast.Unity.UI.GameStart
             var layoutElement = moldSelectionGrid.GetComponent<LayoutElement>();
             layoutElement.minWidth = 504f;
             layoutElement.preferredWidth = 504f;
-            layoutElement.minHeight = 240f;
+            layoutElement.minHeight = 250f;
             layoutElement.preferredHeight = -1f;
         }
 
@@ -1902,7 +1919,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             if (setupTitleLabel != null)
             {
-                setupTitleLabel.text = isMoldSelectionStep ? "Pick Your Mold" : defaultTitleText;
+                setupTitleLabel.text = isMoldSelectionStep ? "Choose a Mold" : defaultTitleText;
             }
 
             if (isMoldSelectionStep)
@@ -2096,12 +2113,25 @@ namespace FungusToast.Unity.UI.GameStart
         {
             if (moldSelectionTitleLabel != null)
             {
-                moldSelectionTitleLabel.text = "Choose a Unique Mold Icon for Each Human Player";
+                moldSelectionTitleLabel.text = "Choose a Mold";
             }
 
             if (moldSelectionStatusLabel != null)
             {
                 moldSelectionStatusLabel.text = BuildMoldSelectionStatusText();
+                moldSelectionStatusLabel.color = UIStyleTokens.Player.GetByIndex(currentHumanMoldSelectionIndex);
+                moldSelectionStatusLabel.fontStyle = FontStyles.Bold;
+            }
+
+            if (moldSelectionStepLabel != null)
+            {
+                moldSelectionStepLabel.text = "SETUP 2 OF 2";
+                moldSelectionStepLabel.characterSpacing = 1.5f;
+            }
+
+            if (moldSelectionHelperLabel != null)
+            {
+                moldSelectionHelperLabel.text = "Each human player must choose a unique mold.";
             }
 
             RebuildMoldSelectionButtons();
@@ -2110,15 +2140,7 @@ namespace FungusToast.Unity.UI.GameStart
         private string BuildMoldSelectionStatusText()
         {
             int humanNumber = currentHumanMoldSelectionIndex + 1;
-            string currentChoice = "None selected yet";
-            if (currentHumanMoldSelectionIndex >= 0
-                && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
-                && selectedHumanMoldIndices[currentHumanMoldSelectionIndex].HasValue)
-            {
-                currentChoice = GetMoldDisplayName(selectedHumanMoldIndices[currentHumanMoldSelectionIndex].Value);
-            }
-
-            return $"Human {humanNumber} of {selectedHumanPlayerCount} is choosing. Current selection: {currentChoice}.";
+            return $"Player {humanNumber} of {selectedHumanPlayerCount}";
         }
 
         private void RebuildMoldSelectionButtons()
@@ -2160,20 +2182,31 @@ namespace FungusToast.Unity.UI.GameStart
                 bool isSelected = currentHumanMoldSelectionIndex >= 0
                     && currentHumanMoldSelectionIndex < selectedHumanMoldIndices.Count
                     && selectedHumanMoldIndices[currentHumanMoldSelectionIndex] == moldIndex;
-                bool isTakenByOtherHuman = IsMoldTakenByOtherHuman(moldIndex);
+                int owningHumanIndex = FindOtherHumanUsingMold(moldIndex);
+                bool isTakenByOtherHuman = owningHumanIndex >= 0;
+                bool isAvailable = !isTakenByOtherHuman || isSelected;
 
-                button.interactable = !isTakenByOtherHuman || isSelected;
+                UIStyleTokens.Startup.ApplyChoice(
+                    button,
+                    isSelected,
+                    isAvailable,
+                    moldIndex < moldSelectionHighlights.Count ? moldSelectionHighlights[moldIndex] : null);
 
-                if (moldIndex < moldSelectionHighlights.Count)
+                if (moldIndex < moldSelectionOutlines.Count)
                 {
-                    moldSelectionHighlights[moldIndex].enabled = isSelected;
-                    moldSelectionHighlights[moldIndex].gameObject.SetActive(isSelected);
+                    moldSelectionOutlines[moldIndex].enabled = isSelected;
                 }
 
                 if (moldIndex < moldSelectionLabels.Count)
                 {
-                    moldSelectionLabels[moldIndex].text = isTakenByOtherHuman && !isSelected ? "Taken" : GetMoldDisplayName(moldIndex);
-                    moldSelectionLabels[moldIndex].color = button.interactable ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled;
+                    moldSelectionLabels[moldIndex].text = isSelected
+                        ? $"✓ {GetMoldDisplayName(moldIndex)}"
+                        : isTakenByOtherHuman
+                            ? $"Player {owningHumanIndex + 1}"
+                            : GetMoldDisplayName(moldIndex);
+                    moldSelectionLabels[moldIndex].color = isAvailable
+                        ? UIStyleTokens.Button.TextDefault
+                        : UIStyleTokens.Button.TextDisabled;
                 }
             }
         }
@@ -2211,7 +2244,8 @@ namespace FungusToast.Unity.UI.GameStart
                 typeof(RectTransform),
                 typeof(Image),
                 typeof(Button),
-                typeof(LayoutElement));
+                typeof(LayoutElement),
+                typeof(Outline));
             var buttonRect = buttonObject.GetComponent<RectTransform>();
             buttonRect.SetParent(moldSelectionGrid.transform, false);
 
@@ -2225,10 +2259,16 @@ namespace FungusToast.Unity.UI.GameStart
             button.onClick.AddListener(() => OnMoldOptionSelected(capturedIndex));
 
             var layoutElement = buttonObject.GetComponent<LayoutElement>();
-            layoutElement.minWidth = 116f;
-            layoutElement.preferredWidth = 116f;
-            layoutElement.minHeight = 116f;
-            layoutElement.preferredHeight = 116f;
+            layoutElement.minWidth = 120f;
+            layoutElement.preferredWidth = 120f;
+            layoutElement.minHeight = 120f;
+            layoutElement.preferredHeight = 120f;
+
+            var selectionOutline = buttonObject.GetComponent<Outline>();
+            selectionOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Lichen, UIStyleTokens.Alpha.FocusOutline);
+            selectionOutline.effectDistance = new Vector2(2f, -2f);
+            selectionOutline.useGraphicAlpha = false;
+            selectionOutline.enabled = false;
 
             var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
             var highlightRect = highlightObject.GetComponent<RectTransform>();
@@ -2251,7 +2291,7 @@ namespace FungusToast.Unity.UI.GameStart
             iconRect.anchorMin = new Vector2(0.5f, 0.5f);
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.sizeDelta = new Vector2(58f, 58f);
+            iconRect.sizeDelta = new Vector2(68f, 68f);
             iconRect.anchoredPosition = new Vector2(0f, 14f);
             var iconImage = iconObject.GetComponent<Image>();
             iconImage.preserveAspect = true;
@@ -2263,7 +2303,7 @@ namespace FungusToast.Unity.UI.GameStart
             labelRect.anchorMin = new Vector2(0.5f, 0f);
             labelRect.anchorMax = new Vector2(0.5f, 0f);
             labelRect.pivot = new Vector2(0.5f, 0f);
-            labelRect.sizeDelta = new Vector2(102f, 34f);
+            labelRect.sizeDelta = new Vector2(108f, 38f);
             labelRect.anchoredPosition = new Vector2(0f, 6f);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
             label.fontSize = 14f;
@@ -2278,6 +2318,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             moldSelectionButtons.Add(button);
             moldSelectionHighlights.Add(highlightImage);
+            moldSelectionOutlines.Add(selectionOutline);
             moldSelectionIcons.Add(iconImage);
             moldSelectionIconRects.Add(iconRect);
             moldSelectionIconBasePositions.Add(iconRect.anchoredPosition);
@@ -2397,6 +2438,11 @@ namespace FungusToast.Unity.UI.GameStart
 
         private bool IsMoldTakenByOtherHuman(int moldIndex)
         {
+            return FindOtherHumanUsingMold(moldIndex) >= 0;
+        }
+
+        private int FindOtherHumanUsingMold(int moldIndex)
+        {
             for (int i = 0; i < selectedHumanMoldIndices.Count; i++)
             {
                 if (i == currentHumanMoldSelectionIndex)
@@ -2406,11 +2452,11 @@ namespace FungusToast.Unity.UI.GameStart
 
                 if (selectedHumanMoldIndices[i] == moldIndex)
                 {
-                    return true;
+                    return i;
                 }
             }
 
-            return false;
+            return -1;
         }
 
         private Tile GetMoldTileAtIndex(int moldIndex)
