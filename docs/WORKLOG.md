@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-4 are complete; Task 5 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-5 are complete; Task 6 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -175,7 +175,9 @@ Every implementation agent must:
 
 **Special verification:** Complete setup with one human, then with at least three humans; test attempted duplicate choices, Back from player 2+, and all viewport sizes.
 
-### 5. [ ] Clarify the campaign overview and progression summary
+### 5. [x] Clarify the campaign overview and progression summary
+
+**Completed:** Replaced the toast-block progress visualization with a non-interactive labeled progress bar, made current Moldiness Level primary, muted lifetime totals, previewed the next reward tier directly from `MoldinessUnlockCatalog`, retained the labeled unlocked-reward strip/tooltips, and standardized `Start New Campaign`. Resume/start CTA priority remains driven by existing save state. Core build passed; Editor/state-boundary checks are deferred to Task 11.
 
 **Depends on:** Tasks 1-2.
 
@@ -349,4 +351,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 5: Clarify the campaign overview and progression summary**. Custom-game setup and mold assignment are now code-complete.
+- Assign **Task 6: Polish new-campaign difficulty and mold setup**. Campaign overview hierarchy and progression presentation are code-complete.

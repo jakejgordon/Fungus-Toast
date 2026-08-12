@@ -32,7 +32,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float MoldinessSummaryPanelMinWidth = 440f;
         private const float MoldinessSummaryPanelPreferredWidth = 460f;
         private const float MoldinessSummaryTextWidth = 400f;
-        private const float MoldinessSummaryToastGridWidth = 200f;
+        private const float MoldinessProgressBarWidth = 400f;
         private const float MoldinessUnlockedRewardsGridWidth = 400f;
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
@@ -82,7 +82,10 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI moldinessSummaryTitleLabel;
         private TextMeshProUGUI moldinessSummaryStatusLabel;
         private TextMeshProUGUI moldinessSummaryLifetimeLabel;
+        private TextMeshProUGUI moldinessSummaryNextRewardLabel;
         private TextMeshProUGUI moldinessSummaryPendingLabel;
+        private Slider moldinessSummaryProgressBar;
+        private Image moldinessSummaryProgressFill;
         private MoldinessUnlockedRewardsStripController moldinessUnlockedRewardsStrip;
         private TextMeshProUGUI moldinessUnlockedRewardsLabel;
         private RectTransform moldinessUnlockedRewardsGridRoot;
@@ -464,7 +467,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             ConfigureMoldinessSummarySection();
             EnsureMoldinessSummaryHeader();
-            EnsureMoldinessSummaryToastGrid();
+            EnsureMoldinessSummaryProgressBar();
             EnsureMoldinessUnlockedRewardsStrip();
             ReorderMoldinessSummaryContent();
         }
@@ -533,6 +536,12 @@ namespace FungusToast.Unity.UI.Campaign
                 FontStyles.Normal,
                 UIStyleTokens.Text.Secondary,
                 26f);
+            moldinessSummaryNextRewardLabel ??= CreateMoldinessSummaryText(
+                "UI_CampaignMoldinessSummaryNextReward",
+                17f,
+                FontStyles.Normal,
+                UIStyleTokens.Text.Secondary,
+                42f);
             moldinessSummaryPendingLabel ??= CreateMoldinessSummaryText(
                 "UI_CampaignMoldinessSummaryPending",
                 18f,
@@ -626,6 +635,75 @@ namespace FungusToast.Unity.UI.Campaign
             element.preferredHeight = -1f;
         }
 
+        private void EnsureMoldinessSummaryProgressBar()
+        {
+            if (moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            RectTransform progressRoot = moldinessSummarySectionRoot.Find("UI_CampaignMoldinessProgressBar") as RectTransform;
+            if (progressRoot == null)
+            {
+                GameObject progressObject = new GameObject(
+                    "UI_CampaignMoldinessProgressBar",
+                    typeof(RectTransform),
+                    typeof(Slider),
+                    typeof(LayoutElement));
+                progressObject.transform.SetParent(moldinessSummarySectionRoot, false);
+                progressRoot = progressObject.GetComponent<RectTransform>();
+
+                GameObject backgroundObject = new GameObject("Background", typeof(RectTransform), typeof(Image));
+                RectTransform backgroundRect = backgroundObject.GetComponent<RectTransform>();
+                backgroundRect.SetParent(progressRoot, false);
+                backgroundRect.anchorMin = Vector2.zero;
+                backgroundRect.anchorMax = Vector2.one;
+                backgroundRect.offsetMin = Vector2.zero;
+                backgroundRect.offsetMax = Vector2.zero;
+                Image background = backgroundObject.GetComponent<Image>();
+                background.color = UIStyleTokens.Surface.PanelSecondary;
+                background.raycastTarget = false;
+
+                GameObject fillObject = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+                RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+                fillRect.SetParent(progressRoot, false);
+                fillRect.anchorMin = Vector2.zero;
+                fillRect.anchorMax = Vector2.one;
+                fillRect.offsetMin = new Vector2(3f, 3f);
+                fillRect.offsetMax = new Vector2(-3f, -3f);
+                moldinessSummaryProgressFill = fillObject.GetComponent<Image>();
+                moldinessSummaryProgressFill.color = UIStyleTokens.Accent.Lichen;
+                moldinessSummaryProgressFill.raycastTarget = false;
+
+                moldinessSummaryProgressBar = progressObject.GetComponent<Slider>();
+                moldinessSummaryProgressBar.fillRect = fillRect;
+                moldinessSummaryProgressBar.direction = Slider.Direction.LeftToRight;
+                moldinessSummaryProgressBar.minValue = 0f;
+                moldinessSummaryProgressBar.maxValue = 1f;
+                moldinessSummaryProgressBar.wholeNumbers = false;
+                moldinessSummaryProgressBar.interactable = false;
+                moldinessSummaryProgressBar.transition = Selectable.Transition.None;
+            }
+            else
+            {
+                moldinessSummaryProgressBar = progressRoot.GetComponent<Slider>();
+                moldinessSummaryProgressFill = progressRoot.Find("Fill")?.GetComponent<Image>();
+            }
+
+            LayoutElement progressLayout = progressRoot.GetComponent<LayoutElement>();
+            progressLayout.minWidth = MoldinessProgressBarWidth;
+            progressLayout.preferredWidth = MoldinessProgressBarWidth;
+            progressLayout.minHeight = 22f;
+            progressLayout.preferredHeight = 22f;
+            progressLayout.flexibleWidth = 0f;
+            progressLayout.flexibleHeight = 0f;
+
+            if (moldinessSummaryToastGrid != null)
+            {
+                moldinessSummaryToastGrid.gameObject.SetActive(false);
+            }
+        }
+
         private void EnsureMoldinessSummaryToastTileCount(int requiredCount)
         {
             while (moldinessSummaryToastTiles.Count < requiredCount)
@@ -703,9 +781,10 @@ namespace FungusToast.Unity.UI.Campaign
             int siblingIndex = 0;
             moldinessSummaryTitleLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryStatusLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryProgressBar?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryLifetimeLabel?.transform.SetSiblingIndex(siblingIndex++);
+            moldinessSummaryNextRewardLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryPendingLabel?.transform.SetSiblingIndex(siblingIndex++);
-            moldinessSummaryToastGrid?.transform.SetSiblingIndex(siblingIndex++);
             moldinessUnlockedRewardsStrip?.RootTransform?.SetSiblingIndex(siblingIndex);
         }
 
@@ -1099,10 +1178,6 @@ namespace FungusToast.Unity.UI.Campaign
             int level = snapshot.CurrentTierIndex + 1;
             int threshold = Math.Max(1, snapshot.CurrentThreshold);
             int progress = Mathf.Clamp(snapshot.CurrentProgress, 0, threshold);
-            ConfigureMoldinessSummaryToastGrid(threshold);
-            EnsureMoldinessSummaryToastTileCount(threshold);
-            int filledTileCount = Mathf.Clamp(progress, 0, moldinessSummaryToastTiles.Count);
-
             if (moldinessSummaryTitleLabel != null)
             {
                 moldinessSummaryTitleLabel.text = $"Moldiness Level {level}";
@@ -1110,12 +1185,24 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (moldinessSummaryStatusLabel != null)
             {
-                moldinessSummaryStatusLabel.text = $"{progress} / {threshold} to next threshold";
+                moldinessSummaryStatusLabel.text = $"{progress} / {threshold} to Level {level + 1}";
+            }
+
+            if (moldinessSummaryProgressBar != null)
+            {
+                moldinessSummaryProgressBar.value = threshold > 0 ? progress / (float)threshold : 0f;
             }
 
             if (moldinessSummaryLifetimeLabel != null)
             {
                 moldinessSummaryLifetimeLabel.text = $"Lifetime earned: {snapshot.LifetimeEarned}";
+                moldinessSummaryLifetimeLabel.fontSize = 16f;
+                moldinessSummaryLifetimeLabel.color = UIStyleTokens.Text.Muted;
+            }
+
+            if (moldinessSummaryNextRewardLabel != null)
+            {
+                moldinessSummaryNextRewardLabel.text = BuildNextMoldinessRewardPreview(campaignController.State?.moldiness);
             }
 
             if (moldinessSummaryPendingLabel != null)
@@ -1139,8 +1226,6 @@ namespace FungusToast.Unity.UI.Campaign
 
             moldinessUnlockedRewardsStrip?.Refresh(campaignController.State?.moldiness);
 
-            ApplyMoldinessSummaryToastPattern(progress, threshold, filledTileCount);
-
             bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
             bool pendingMoldinessReward = campaignController.HasPendingMoldinessUnlockChoice;
             int nextLevelDisplay = GetNextCampaignLevelDisplay(campaignController);
@@ -1155,6 +1240,30 @@ namespace FungusToast.Unity.UI.Campaign
                             ? $"Resume Campaign (Pending Reward, Level {nextLevelDisplay})"
                             : $"Resume Campaign ({resumableLevelLabel})");
             }
+        }
+
+        private static string BuildNextMoldinessRewardPreview(MoldinessProgressionState progressionState)
+        {
+            int currentUnlockLevel = Mathf.Max(0, progressionState?.unlockLevel ?? 0);
+            var nextRewards = MoldinessUnlockCatalog.All
+                .Where(definition => definition.RequiredUnlockLevel > currentUnlockLevel)
+                .OrderBy(definition => definition.RequiredUnlockLevel)
+                .ThenBy(definition => MoldinessUnlockCatalog.GetSortIndex(definition.Id))
+                .ToList();
+
+            if (nextRewards.Count == 0)
+            {
+                return "All catalog reward tiers unlocked.";
+            }
+
+            int nextLevel = nextRewards[0].RequiredUnlockLevel;
+            var rewardsAtLevel = nextRewards
+                .Where(definition => definition.RequiredUnlockLevel == nextLevel)
+                .ToList();
+            string additionalRewards = rewardsAtLevel.Count > 1
+                ? $" + {rewardsAtLevel.Count - 1} more"
+                : string.Empty;
+            return $"Next reward tier: Level {nextLevel} adds {rewardsAtLevel[0].DisplayName}{additionalRewards}.";
         }
 
         private static string BuildResumableLevelLabel(CampaignController campaignController, int nextLevelDisplay)
@@ -1777,7 +1886,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (newButton != null)
             {
-                SetButtonText(newButton, selectingMold ? "Start Campaign" : hasCampaignSave ? "New Campaign" : "Start Campaign");
+                SetButtonText(newButton, selectingMold ? "Start Campaign" : "Start New Campaign");
                 newButton.interactable = !selectingMold || selectedCampaignMoldIndex.HasValue;
             }
 
