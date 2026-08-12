@@ -186,16 +186,20 @@ namespace FungusToast.Unity.UI.Campaign
             ConfigureMainStackRoot(mainStackRoot);
 
             developmentTestingRailRoot = FindNamedRectTransform("UI_CampaignDevelopmentTestingRail");
-            if (developmentTestingRailRoot == null)
+            if (DevelopmentTestingAccess.IsAvailable && developmentTestingRailRoot == null)
             {
                 var rail = new GameObject("UI_CampaignDevelopmentTestingRail", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
                 rail.transform.SetParent(layoutShellRoot, false);
                 developmentTestingRailRoot = rail.GetComponent<RectTransform>();
             }
 
-            developmentTestingRailRoot.SetParent(layoutShellRoot, false);
-            developmentTestingRailRoot.SetSiblingIndex(1);
-            ConfigureDevelopmentTestingRailRoot(developmentTestingRailRoot);
+            if (developmentTestingRailRoot != null)
+            {
+                developmentTestingRailRoot.SetParent(layoutShellRoot, false);
+                developmentTestingRailRoot.SetSiblingIndex(1);
+                ConfigureDevelopmentTestingRailRoot(developmentTestingRailRoot);
+                developmentTestingRailRoot.gameObject.SetActive(DevelopmentTestingAccess.IsAvailable);
+            }
 
             if (testingOptionsSectionRoot != null)
             {
@@ -303,6 +307,16 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void BuildTestingCard()
         {
+            if (!DevelopmentTestingAccess.IsAvailable || developmentTestingRailRoot == null)
+            {
+                if (developmentTestingRailRoot != null)
+                {
+                    developmentTestingRailRoot.gameObject.SetActive(false);
+                }
+
+                return;
+            }
+
             testingCardController = new DevelopmentTestingCardController(new DevelopmentTestingCardOptions
             {
                 Parent = developmentTestingRailRoot,
@@ -441,7 +455,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static bool ShouldShowDevelopmentTestingUi()
         {
-            return true;
+            return DevelopmentTestingAccess.IsAvailable;
         }
 
         private void BuildMoldinessSummarySection()

@@ -11,6 +11,11 @@ using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.Testing
 {
+    public static class DevelopmentTestingAccess
+    {
+        public static bool IsAvailable => Application.isEditor || Debug.isDebugBuild;
+    }
+
     public static class DevelopmentTestingBoardSizePresets
     {
         public const int DefaultSize = 160;

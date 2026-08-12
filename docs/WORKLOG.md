@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-8 are complete; Task 9 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-9 are complete; Task 10 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -283,7 +283,9 @@ Every implementation agent must:
 
 **Special verification:** Reopen Credits several times in one session and check object hierarchy for duplicated labels/buttons.
 
-### 9. [ ] Enforce release UI hygiene for development controls
+### 9. [x] Enforce release UI hygiene for development controls
+
+**Completed:** Added one shared Editor/development-build availability gate, removed the unconditional `true` gates, skipped construction of startup testing cards/rails in production scope, and explicitly deactivated legacy serialized testing roots. Editor/development builds retain the existing controls. Inactive production roots do not participate in layout or input. Core build passed; dual-build hierarchy/screenshots are deferred to Task 11.
 
 **Depends on:** Tasks 3 and 5-6.
 
@@ -357,4 +359,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 9: Enforce release UI hygiene for development controls**. All player-facing startup screens are now individually polished at code level.
+- Assign **Task 10: Add restrained interaction and transition polish**. Release/development startup UI now shares one authoritative gate.

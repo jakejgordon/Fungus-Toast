@@ -270,6 +270,13 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void InitializeTestingCard()
         {
+            if (!DevelopmentTestingAccess.IsAvailable)
+            {
+                HideLegacyTestingControls();
+                SetDevelopmentTestingUiActive(false);
+                return;
+            }
+
             if (testingOptionsSectionRoot == null)
             {
                 return;
@@ -337,7 +344,15 @@ namespace FungusToast.Unity.UI.GameStart
 
             ConfigureSetupContentRoot(setupContentRoot);
             ResolveSetupSectionReferences();
-            EnsureAdvancedSettingsSection();
+            if (DevelopmentTestingAccess.IsAvailable)
+            {
+                EnsureAdvancedSettingsSection();
+            }
+            else
+            {
+                HideLegacyTestingControls();
+                SetDevelopmentTestingUiActive(false);
+            }
             EnsureBoardSizeSection();
             HideAudioSettingsSection();
             EnsureMoldSelectionSection();
@@ -1814,6 +1829,15 @@ namespace FungusToast.Unity.UI.GameStart
             testingOptionsSectionRoot.SetActive(false);
         }
 
+        private void SetDevelopmentTestingUiActive(bool isActive)
+        {
+            developmentTestingAnchorRoot?.gameObject.SetActive(isActive);
+            developmentTestingRailRoot?.gameObject.SetActive(isActive);
+            advancedSettingsSectionRoot?.gameObject.SetActive(isActive);
+            advancedSettingsContentRoot?.gameObject.SetActive(isActive);
+            testingCardSectionRoot?.gameObject.SetActive(isActive);
+        }
+
         private void InitializeHumanPlayerUI()
         {
             if (humanPlayerSectionRoot != null)
@@ -2020,7 +2044,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private static bool ShouldShowDevelopmentTestingUi()
         {
-            return true;
+            return DevelopmentTestingAccess.IsAvailable;
         }
 
         private void ResetMoldSelectionState()
