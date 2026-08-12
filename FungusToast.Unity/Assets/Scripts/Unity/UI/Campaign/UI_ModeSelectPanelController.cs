@@ -61,9 +61,10 @@ namespace FungusToast.Unity.UI.Campaign
         private const string SettingsHeadingText = "Settings";
         private const string SettingsAudioHeadingText = "Audio";
         private const string SettingsHelpHeadingText = "Help & Tutorials";
-        private const string SettingsAdvancedHeadingText = "Advanced Campaign";
+        private const string SettingsAdvancedHeadingText = "Campaign Data";
         private const string SettingsTutorialSummaryText = "Re-enable tutorial popups and guidance hints you previously dismissed. This does not reset campaign progress.";
-        private const string SettingsResetPromptText = "Are you sure you want to reset all of your campaign rewards?";
+        private const string SettingsResetPromptText = "Confirm reset? This cannot be undone.";
+        private const string SettingsResetSummaryText = "Erases Moldiness level and progress, permanent Moldiness rewards, pending reward choices, and preserved Adaptation carryover. It does not delete the campaign save. If defeat carryover is pending, that run resets.";
 
         [Header("Panels")] 
         [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel
@@ -92,8 +93,10 @@ namespace FungusToast.Unity.UI.Campaign
         private Button settingsButton;
         private Button creditsBackButton;
         private Button settingsBackButton;
-        private Button settingsSoundEffectsButton;
-        private Button settingsMusicButton;
+        private Slider settingsSoundEffectsSlider;
+        private Slider settingsMusicSlider;
+        private TextMeshProUGUI settingsSoundEffectsValueLabel;
+        private TextMeshProUGUI settingsMusicValueLabel;
         private Button settingsTutorialReplayButton;
         private Button settingsResetButton;
         private Button settingsResetCancelButton;
@@ -243,10 +246,8 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsSoundEffectsButton);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsTutorialReplayButton);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
+            UIStyleTokens.Button.ApplyDangerMenuAction(settingsResetButton);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(quitButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
 
@@ -351,15 +352,15 @@ namespace FungusToast.Unity.UI.Campaign
             ShowMainMenuContent();
         }
 
-        private void OnSettingsSoundEffectsClicked()
+        private void OnSettingsSoundEffectsChanged(float value)
         {
-            SoundEffectsSettings.CycleVolumeForward();
+            SoundEffectsSettings.SetVolume(value);
             RefreshSettingsAudioLabels();
         }
 
-        private void OnSettingsMusicClicked()
+        private void OnSettingsMusicChanged(float value)
         {
-            MusicSettings.CycleVolumeForward();
+            MusicSettings.SetVolume(value);
             GameManager.Instance?.RefreshMusicVolume();
             RefreshSettingsAudioLabels();
         }
@@ -1194,8 +1195,6 @@ namespace FungusToast.Unity.UI.Campaign
             EnsureTooltip(quitButton, "Close Fungus Toast and return to desktop.");
             EnsureTooltip(creditsBackButton, "Return to the main menu.");
             EnsureTooltip(settingsBackButton, "Return to the main menu.");
-            EnsureTooltip(settingsSoundEffectsButton, "Cycle the sound effects volume to the next preset.");
-            EnsureTooltip(settingsMusicButton, "Cycle the music volume to the next preset.");
             EnsureTooltip(settingsTutorialReplayButton, "Re-enable tutorial popups and onboarding hints you dismissed earlier.");
             EnsureTooltip(settingsResetButton, GetSettingsResetTooltipText);
             EnsureTooltip(settingsResetCancelButton, "Cancel the campaign reset prompt.");
@@ -1204,6 +1203,21 @@ namespace FungusToast.Unity.UI.Campaign
         private static void EnsureTooltip(Button button, string text)
         {
             EnsureTooltip(button, () => text);
+        }
+
+        private static void EnsureTooltip(Slider slider, string text)
+        {
+            if (slider == null || string.IsNullOrWhiteSpace(text))
+            {
+                return;
+            }
+
+            var provider = slider.GetComponent<MoldButtonTooltipProvider>()
+                ?? slider.gameObject.AddComponent<MoldButtonTooltipProvider>();
+            provider.Initialize(() => text);
+            var trigger = slider.GetComponent<TooltipTrigger>()
+                ?? slider.gameObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
         }
 
         private static void EnsureTooltip(Button button, Func<string> resolver)
@@ -1450,7 +1464,7 @@ namespace FungusToast.Unity.UI.Campaign
             panelRect.offsetMax = Vector2.zero;
 
             VerticalLayoutGroup panelLayout = settingsPanel.GetComponent<VerticalLayoutGroup>();
-            panelLayout.padding = new RectOffset(72, 72, 72, 72);
+            panelLayout.padding = new RectOffset(48, 48, 48, 48);
             panelLayout.spacing = 24f;
             panelLayout.childAlignment = TextAnchor.MiddleCenter;
             panelLayout.childControlWidth = false;
@@ -1480,8 +1494,8 @@ namespace FungusToast.Unity.UI.Campaign
             ApplyOverlayCardStyle(cardBackground);
 
             VerticalLayoutGroup cardLayout = cardObject.GetComponent<VerticalLayoutGroup>();
-            cardLayout.padding = new RectOffset(44, 44, 40, 40);
-            cardLayout.spacing = 14f;
+            cardLayout.padding = new RectOffset(44, 44, 28, 28);
+            cardLayout.spacing = 10f;
             cardLayout.childAlignment = TextAnchor.UpperCenter;
             cardLayout.childControlWidth = true;
             cardLayout.childControlHeight = false;
@@ -1497,7 +1511,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "UI_ModeSelectSettingsTitle",
                 SettingsHeadingText,
                 34f,
-                56f,
+                44f,
                 UIStyleTokens.Text.Primary,
                 FontStyles.Bold);
             titleLabel.enableAutoSizing = true;
@@ -1509,24 +1523,31 @@ namespace FungusToast.Unity.UI.Campaign
                 "UI_ModeSelectSettingsAudioHeading",
                 SettingsAudioHeadingText,
                 24f,
-                34f,
+                28f,
                 UIStyleTokens.Accent.Spore,
                 FontStyles.Bold);
 
-            settingsSoundEffectsButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsSfxButton", string.Empty);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsSoundEffectsButton);
-            settingsSoundEffectsButton.onClick.AddListener(OnSettingsSoundEffectsClicked);
-
-            settingsMusicButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsMusicButton", string.Empty);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsMusicButton);
-            settingsMusicButton.onClick.AddListener(OnSettingsMusicClicked);
+            settingsSoundEffectsSlider = CreateSettingsSliderRow(
+                cardObject.transform,
+                "UI_ModeSelectSettingsSfx",
+                "Sound Effects",
+                SoundEffectsSettings.Volume,
+                OnSettingsSoundEffectsChanged,
+                out settingsSoundEffectsValueLabel);
+            settingsMusicSlider = CreateSettingsSliderRow(
+                cardObject.transform,
+                "UI_ModeSelectSettingsMusic",
+                "Music",
+                MusicSettings.Volume,
+                OnSettingsMusicChanged,
+                out settingsMusicValueLabel);
 
             TextMeshProUGUI helpHeading = CreateSettingsLabel(
                 cardObject.transform,
                 "UI_ModeSelectSettingsHelpHeading",
                 SettingsHelpHeadingText,
                 24f,
-                34f,
+                28f,
                 UIStyleTokens.Accent.Spore,
                 FontStyles.Bold);
 
@@ -1534,8 +1555,8 @@ namespace FungusToast.Unity.UI.Campaign
                 cardObject.transform,
                 "UI_ModeSelectSettingsHelpSummary",
                 SettingsTutorialSummaryText,
-                20f,
-                78f,
+                18f,
+                50f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
 
@@ -1548,7 +1569,7 @@ namespace FungusToast.Unity.UI.Campaign
                 "UI_ModeSelectSettingsTutorialStatus",
                 string.Empty,
                 18f,
-                36f,
+                28f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
 
@@ -1557,42 +1578,52 @@ namespace FungusToast.Unity.UI.Campaign
                 "UI_ModeSelectSettingsAdvancedHeading",
                 SettingsAdvancedHeadingText,
                 24f,
-                34f,
+                28f,
                 UIStyleTokens.Accent.Moss,
                 FontStyles.Bold);
 
+            Transform dangerZone = CreateSettingsDangerZone(cardObject.transform);
             CreateSettingsLabel(
-                cardObject.transform,
+                dangerZone,
+                "UI_ModeSelectSettingsDangerHeading",
+                "Danger Zone",
+                22f,
+                28f,
+                UIStyleTokens.State.Danger,
+                FontStyles.Bold);
+
+            CreateSettingsLabel(
+                dangerZone,
                 "UI_ModeSelectSettingsAdvancedSummary",
-                "Resetting campaign rewards clears your persistent moldiness progress, unlocked moldiness rewards, and pending moldiness reward choices.",
-                20f,
-                78f,
+                SettingsResetSummaryText,
+                17f,
+                62f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
 
             settingsResetPromptLabel = CreateSettingsLabel(
-                cardObject.transform,
+                dangerZone,
                 "UI_ModeSelectSettingsResetPrompt",
                 SettingsResetPromptText,
-                20f,
-                64f,
+                18f,
+                44f,
                 UIStyleTokens.State.Warning,
                 FontStyles.Bold);
 
-            settingsResetButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsResetButton", string.Empty);
-            UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetButton);
+            settingsResetButton = CreateSettingsButton(dangerZone, "UI_ModeSelectSettingsResetButton", string.Empty);
+            UIStyleTokens.Button.ApplyDangerMenuAction(settingsResetButton);
             settingsResetButton.onClick.AddListener(OnSettingsResetClicked);
 
-            settingsResetCancelButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsResetCancelButton", "Cancel");
+            settingsResetCancelButton = CreateSettingsButton(dangerZone, "UI_ModeSelectSettingsResetCancelButton", "Cancel");
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsResetCancelButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             settingsResetCancelButton.onClick.AddListener(OnSettingsResetCancelClicked);
 
             settingsResetStatusText = CreateSettingsLabel(
-                cardObject.transform,
+                dangerZone,
                 "UI_ModeSelectSettingsResetStatus",
                 string.Empty,
-                18f,
-                52f,
+                17f,
+                42f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
 
@@ -1674,6 +1705,175 @@ namespace FungusToast.Unity.UI.Campaign
             label.color = color;
 
             return label;
+        }
+
+        private Slider CreateSettingsSliderRow(
+            Transform parent,
+            string objectName,
+            string labelText,
+            float initialValue,
+            UnityEngine.Events.UnityAction<float> onValueChanged,
+            out TextMeshProUGUI valueLabel)
+        {
+            GameObject rowObject = new GameObject(
+                $"{objectName}Row",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image),
+                typeof(HorizontalLayoutGroup));
+            rowObject.transform.SetParent(parent, false);
+            rowObject.layer = gameObject.layer;
+
+            Image rowBackground = rowObject.GetComponent<Image>();
+            rowBackground.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.82f);
+            rowBackground.raycastTarget = false;
+
+            LayoutElement rowElement = rowObject.GetComponent<LayoutElement>();
+            rowElement.minWidth = SettingsTextWidth;
+            rowElement.preferredWidth = SettingsTextWidth;
+            rowElement.minHeight = 52f;
+            rowElement.preferredHeight = 52f;
+
+            HorizontalLayoutGroup rowLayout = rowObject.GetComponent<HorizontalLayoutGroup>();
+            rowLayout.padding = new RectOffset(16, 16, 8, 8);
+            rowLayout.spacing = 14f;
+            rowLayout.childAlignment = TextAnchor.MiddleCenter;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+
+            TextMeshProUGUI nameLabel = CreateInlineSettingsLabel(rowObject.transform, $"{objectName}Label", labelText, 170f, TextAlignmentOptions.Left);
+            UIStyleTokens.Startup.ApplySupportingCopy(nameLabel);
+            nameLabel.fontStyle = FontStyles.Bold;
+
+            GameObject sliderObject = new GameObject(
+                $"{objectName}Slider",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Slider));
+            sliderObject.transform.SetParent(rowObject.transform, false);
+            sliderObject.layer = gameObject.layer;
+            LayoutElement sliderElement = sliderObject.GetComponent<LayoutElement>();
+            sliderElement.minWidth = 380f;
+            sliderElement.preferredWidth = 380f;
+            sliderElement.minHeight = 28f;
+            sliderElement.preferredHeight = 28f;
+
+            GameObject trackObject = new GameObject("Track", typeof(RectTransform), typeof(Image));
+            RectTransform trackRect = trackObject.GetComponent<RectTransform>();
+            trackRect.SetParent(sliderObject.transform, false);
+            trackRect.anchorMin = new Vector2(0f, 0.5f);
+            trackRect.anchorMax = new Vector2(1f, 0.5f);
+            trackRect.pivot = new Vector2(0.5f, 0.5f);
+            trackRect.sizeDelta = new Vector2(0f, 10f);
+            Image trackImage = trackObject.GetComponent<Image>();
+            trackImage.color = UIStyleTokens.Surface.PanelPrimary;
+            trackImage.raycastTarget = false;
+
+            GameObject fillObject = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            RectTransform fillRect = fillObject.GetComponent<RectTransform>();
+            fillRect.SetParent(sliderObject.transform, false);
+            fillRect.anchorMin = new Vector2(0f, 0.5f);
+            fillRect.anchorMax = new Vector2(1f, 0.5f);
+            fillRect.pivot = new Vector2(0.5f, 0.5f);
+            fillRect.sizeDelta = new Vector2(-4f, 6f);
+            Image fillImage = fillObject.GetComponent<Image>();
+            fillImage.color = UIStyleTokens.Accent.Lichen;
+            fillImage.raycastTarget = false;
+
+            GameObject handleObject = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            RectTransform handleRect = handleObject.GetComponent<RectTransform>();
+            handleRect.SetParent(sliderObject.transform, false);
+            handleRect.anchorMin = new Vector2(0f, 0.5f);
+            handleRect.anchorMax = new Vector2(0f, 0.5f);
+            handleRect.pivot = new Vector2(0.5f, 0.5f);
+            handleRect.sizeDelta = new Vector2(18f, 26f);
+            Image handleImage = handleObject.GetComponent<Image>();
+            handleImage.color = UIStyleTokens.Accent.Spore;
+
+            Slider slider = sliderObject.GetComponent<Slider>();
+            slider.minValue = 0f;
+            slider.maxValue = 1f;
+            slider.wholeNumbers = false;
+            slider.fillRect = fillRect;
+            slider.handleRect = handleRect;
+            slider.targetGraphic = handleImage;
+            slider.direction = Slider.Direction.LeftToRight;
+            slider.SetValueWithoutNotify(Mathf.Clamp01(initialValue));
+            slider.onValueChanged.AddListener(onValueChanged);
+
+            valueLabel = CreateInlineSettingsLabel(rowObject.transform, $"{objectName}Value", string.Empty, 92f, TextAlignmentOptions.Right);
+            valueLabel.fontStyle = FontStyles.Bold;
+            EnsureTooltip(slider, $"Adjust {labelText.ToLowerInvariant()} volume.");
+            return slider;
+        }
+
+        private TextMeshProUGUI CreateInlineSettingsLabel(
+            Transform parent,
+            string objectName,
+            string textValue,
+            float width,
+            TextAlignmentOptions alignment)
+        {
+            GameObject labelObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(parent, false);
+            labelObject.layer = gameObject.layer;
+            LayoutElement layout = labelObject.GetComponent<LayoutElement>();
+            layout.minWidth = width;
+            layout.preferredWidth = width;
+            layout.minHeight = 32f;
+            layout.preferredHeight = 32f;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.font = ResolveSharedFont();
+            label.fontSize = 18f;
+            label.text = textValue;
+            label.alignment = alignment;
+            label.color = UIStyleTokens.Text.Primary;
+            label.raycastTarget = false;
+            return label;
+        }
+
+        private Transform CreateSettingsDangerZone(Transform parent)
+        {
+            GameObject dangerObject = new GameObject(
+                "UI_ModeSelectSettingsDangerZone",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image),
+                typeof(Outline),
+                typeof(VerticalLayoutGroup),
+                typeof(ContentSizeFitter));
+            dangerObject.transform.SetParent(parent, false);
+            dangerObject.layer = gameObject.layer;
+
+            LayoutElement element = dangerObject.GetComponent<LayoutElement>();
+            element.minWidth = SettingsTextWidth + 36f;
+            element.preferredWidth = SettingsTextWidth + 36f;
+            element.preferredHeight = -1f;
+
+            Image background = dangerObject.GetComponent<Image>();
+            background.color = UIStyleTokens.WithAlpha(UIStyleTokens.State.Danger, 0.1f);
+            background.raycastTarget = false;
+
+            Outline outline = dangerObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Danger, 0.58f);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            VerticalLayoutGroup layout = dangerObject.GetComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(18, 18, 14, 14);
+            layout.spacing = 8f;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            layout.childControlWidth = true;
+            layout.childControlHeight = false;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = dangerObject.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return dangerObject.transform;
         }
 
         private Button CreateCreditsButton(Transform parent, string objectName, string labelText, Sprite icon = null)
@@ -1917,8 +2117,22 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void RefreshSettingsAudioLabels()
         {
-            SetButtonLabel(settingsSoundEffectsButton, $"SFX Volume: {Mathf.RoundToInt(SoundEffectsSettings.Volume * 100f)}%");
-            SetButtonLabel(settingsMusicButton, $"Music Volume: {Mathf.RoundToInt(MusicSettings.Volume * 100f)}%");
+            float sfxVolume = SoundEffectsSettings.Volume;
+            float musicVolume = MusicSettings.Volume;
+            settingsSoundEffectsSlider?.SetValueWithoutNotify(sfxVolume);
+            settingsMusicSlider?.SetValueWithoutNotify(musicVolume);
+
+            if (settingsSoundEffectsValueLabel != null)
+            {
+                bool muted = !SoundEffectsSettings.Enabled || sfxVolume <= 0.001f;
+                settingsSoundEffectsValueLabel.text = $"{Mathf.RoundToInt(sfxVolume * 100f)}% {(muted ? "🔇" : "🔊")}";
+            }
+
+            if (settingsMusicValueLabel != null)
+            {
+                bool muted = musicVolume <= 0.001f;
+                settingsMusicValueLabel.text = $"{Mathf.RoundToInt(musicVolume * 100f)}% {(muted ? "🔇" : "🔊")}";
+            }
         }
 
         private void RefreshSettingsTutorialControls()
@@ -2000,6 +2214,33 @@ namespace FungusToast.Unity.UI.Campaign
             scale *= ResponsiveScaleSafetyFactor;
 
             contentRoot.localScale = new Vector3(scale, scale, 1f);
+            RefreshOverlayPanelScale(settingsPanel);
+            RefreshOverlayPanelScale(creditsPanel);
+        }
+
+        private static void RefreshOverlayPanelScale(GameObject panel)
+        {
+            if (panel == null || !panel.activeInHierarchy || panel.transform.childCount == 0)
+            {
+                return;
+            }
+
+            RectTransform panelRect = panel.GetComponent<RectTransform>();
+            RectTransform cardRect = panel.transform.GetChild(0) as RectTransform;
+            if (panelRect == null || cardRect == null)
+            {
+                return;
+            }
+
+            cardRect.localScale = Vector3.one;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(cardRect);
+            float preferredHeight = LayoutUtility.GetPreferredHeight(cardRect);
+            float availableHeight = Mathf.Max(0f, panelRect.rect.height - (MinimumVerticalMargin * 2f));
+            float scale = preferredHeight > 0f && availableHeight > 0f
+                ? Mathf.Min(1f, availableHeight / preferredHeight)
+                : 1f;
+            scale *= ResponsiveScaleSafetyFactor;
+            cardRect.localScale = new Vector3(scale, scale, 1f);
         }
 
         private Button CreateButton(string objectName, string labelText, Sprite icon = null)

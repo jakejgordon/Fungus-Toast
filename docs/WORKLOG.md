@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-6 are complete; Task 7 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-7 are complete; Task 8 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -230,7 +230,9 @@ Every implementation agent must:
 
 **Special verification:** Test each unlocked difficulty, at least one locked-difficulty state, every available mold, Back/return, and campaign launch.
 
-### 7. [ ] Rebuild settings as a compact preferences panel
+### 7. [x] Rebuild settings as a compact preferences panel
+
+**Completed:** Replaced audio cycle buttons with live sliders backed by the existing persisted setters, added percentage and speaker/mute feedback, compacted Help/Tutorial controls, renamed the data section to `Campaign Data`, and isolated reset inside a danger-accented `Danger Zone` with fact-checked erase/retain copy and the existing two-step confirmation. Added responsive scaling for startup overlay cards. Core build passed; persistence, keyboard focus, and reset-state Editor checks are deferred to Task 11.
 
 **Depends on:** Tasks 1-2.
 
@@ -353,4 +355,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 7: Rebuild settings as a compact preferences panel**. Campaign overview and campaign creation are now code-complete.
+- Assign **Task 8: Restructure credits content**. Settings presentation and persistence wiring are code-complete.
