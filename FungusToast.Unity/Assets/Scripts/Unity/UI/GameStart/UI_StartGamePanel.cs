@@ -32,7 +32,6 @@ namespace FungusToast.Unity.UI.GameStart
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
         private const float ActionButtonHorizontalPadding = 12f;
-        private const string HumanSelectionPrefix = "Select number of Human Players";
 
         private enum SetupStep
         {
@@ -337,7 +336,7 @@ namespace FungusToast.Unity.UI.GameStart
             ResolveSetupSectionReferences();
             EnsureAdvancedSettingsSection();
             EnsureBoardSizeSection();
-            EnsureAudioSettingsSection();
+            HideAudioSettingsSection();
             EnsureMoldSelectionSection();
 
             var orderedSections = new List<RectTransform>();
@@ -345,7 +344,6 @@ namespace FungusToast.Unity.UI.GameStart
             TryAddSetupSection(orderedSections, playerCountSectionRoot);
             TryAddSetupSection(orderedSections, humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null);
             TryAddSetupSection(orderedSections, boardSizeSectionRoot);
-            TryAddSetupSection(orderedSections, audioSettingsSectionRoot);
             TryAddSetupSection(orderedSections, moldSelectionSectionRoot);
 
             for (int index = 0; index < orderedSections.Count; index++)
@@ -380,7 +378,9 @@ namespace FungusToast.Unity.UI.GameStart
                 setupTitleLabel = titleSectionRoot.GetComponentInChildren<TextMeshProUGUI>(true);
                 if (setupTitleLabel != null && string.IsNullOrWhiteSpace(defaultTitleText))
                 {
-                    defaultTitleText = setupTitleLabel.text;
+                    defaultTitleText = "Game Setup";
+                    setupTitleLabel.text = defaultTitleText;
+                    UIStyleTokens.Startup.ApplyScreenHeading(setupTitleLabel);
                 }
             }
 
@@ -389,8 +389,20 @@ namespace FungusToast.Unity.UI.GameStart
                 playerCountSectionRoot = GetTopLevelSection(playerButtons != null && playerButtons.Count > 0 ? playerButtons[0]?.transform : null) as RectTransform;
             }
 
-            ConfigureCenteredButtonRow(playerCountSectionRoot, "UI_PlayerCountButtonGroup");
-            ConfigureCenteredButtonRow(humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null, "UI_HumanPlayerCountButtonGroup");
+            ConfigureCountSelectionSection(playerCountSectionRoot, "Total players", "UI_PlayerCountButtonGroup");
+            ConfigureCountSelectionSection(
+                humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null,
+                "Human players",
+                "UI_HumanPlayerCountButtonGroup");
+        }
+
+        private void HideAudioSettingsSection()
+        {
+            audioSettingsSectionRoot ??= FindNamedRectTransform("UI_StartGameAudioSettingsSection");
+            if (audioSettingsSectionRoot != null)
+            {
+                audioSettingsSectionRoot.gameObject.SetActive(false);
+            }
         }
 
         private void EnsureAdvancedSettingsSection()
@@ -518,11 +530,80 @@ namespace FungusToast.Unity.UI.GameStart
             }
         }
 
-        private void ConfigureCenteredButtonRow(RectTransform sectionRoot, string rowName)
+        private void ConfigureCountSelectionSection(RectTransform sectionRoot, string labelText, string rowName)
         {
             if (sectionRoot == null || string.IsNullOrWhiteSpace(rowName))
             {
                 return;
+            }
+
+            var sectionLayout = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            if (sectionLayout == null)
+            {
+                sectionLayout = sectionRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
+
+            sectionLayout.padding = new RectOffset(12, 12, 8, 8);
+            sectionLayout.spacing = 6f;
+            sectionLayout.childAlignment = TextAnchor.UpperCenter;
+            sectionLayout.childControlWidth = true;
+            sectionLayout.childControlHeight = true;
+            sectionLayout.childForceExpandWidth = false;
+            sectionLayout.childForceExpandHeight = false;
+
+            var sectionFitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            if (sectionFitter == null)
+            {
+                sectionFitter = sectionRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
+
+            sectionFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            sectionFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var sectionElement = sectionRoot.GetComponent<LayoutElement>();
+            if (sectionElement == null)
+            {
+                sectionElement = sectionRoot.gameObject.AddComponent<LayoutElement>();
+            }
+
+            sectionElement.minWidth = StartMenuPrimaryColumnWidth;
+            sectionElement.preferredWidth = StartMenuPrimaryColumnWidth;
+            sectionElement.minHeight = 74f;
+            sectionElement.preferredHeight = -1f;
+
+            string labelObjectName = $"{rowName}Label";
+            Transform existingLabel = sectionRoot.Find(labelObjectName);
+            TextMeshProUGUI label;
+            if (existingLabel != null)
+            {
+                label = existingLabel.GetComponent<TextMeshProUGUI>();
+            }
+            else
+            {
+                GameObject labelObject = new GameObject(
+                    labelObjectName,
+                    typeof(RectTransform),
+                    typeof(TextMeshProUGUI),
+                    typeof(LayoutElement));
+                labelObject.transform.SetParent(sectionRoot, false);
+                labelObject.transform.SetSiblingIndex(0);
+                labelObject.layer = gameObject.layer;
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+            }
+
+            if (label != null)
+            {
+                label.text = labelText;
+                label.fontSize = 20f;
+                label.alignment = TextAlignmentOptions.Center;
+                label.raycastTarget = false;
+                UIStyleTokens.Startup.ApplySectionHeading(label);
+
+                LayoutElement labelElement = label.GetComponent<LayoutElement>();
+                labelElement.minWidth = StartMenuPrimaryColumnWidth - 24f;
+                labelElement.preferredWidth = StartMenuPrimaryColumnWidth - 24f;
+                labelElement.minHeight = 24f;
+                labelElement.preferredHeight = 26f;
             }
 
             var row = FindNamedRectTransform(rowName);
@@ -536,6 +617,39 @@ namespace FungusToast.Unity.UI.GameStart
             row.pivot = new Vector2(0.5f, 0.5f);
             row.anchoredPosition = new Vector2(0f, row.anchoredPosition.y);
             row.localScale = Vector3.one;
+
+            var rowLayout = row.GetComponent<HorizontalLayoutGroup>();
+            if (rowLayout != null)
+            {
+                rowLayout.spacing = 4f;
+                rowLayout.childAlignment = TextAnchor.MiddleCenter;
+                rowLayout.childControlWidth = true;
+                rowLayout.childControlHeight = true;
+                rowLayout.childForceExpandWidth = false;
+                rowLayout.childForceExpandHeight = false;
+            }
+
+            for (int childIndex = 0; childIndex < row.childCount; childIndex++)
+            {
+                Transform child = row.GetChild(childIndex);
+                if (child == null || child.GetComponent<Button>() == null)
+                {
+                    continue;
+                }
+
+                LayoutElement buttonLayout = child.GetComponent<LayoutElement>();
+                if (buttonLayout == null)
+                {
+                    buttonLayout = child.gameObject.AddComponent<LayoutElement>();
+                }
+
+                buttonLayout.minWidth = 52f;
+                buttonLayout.preferredWidth = 52f;
+                buttonLayout.minHeight = 44f;
+                buttonLayout.preferredHeight = 44f;
+                buttonLayout.flexibleWidth = 0f;
+                buttonLayout.flexibleHeight = 0f;
+            }
         }
 
         private void EnsureTestingCardSection()
@@ -974,14 +1088,14 @@ namespace FungusToast.Unity.UI.GameStart
             var surface = sectionRoot.GetComponent<Image>();
             if (surface != null)
             {
-                surface.color = Color.clear;
+                UIStyleTokens.Startup.ApplyCard(surface, elevated: true, alpha: 0.76f);
                 surface.raycastTarget = false;
             }
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
-            layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+            layoutGroup.padding = new RectOffset(12, 12, 10, 12);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
-            layoutGroup.spacing = 4f;
+            layoutGroup.spacing = 8f;
             layoutGroup.childForceExpandWidth = false;
             layoutGroup.childForceExpandHeight = false;
             layoutGroup.childControlWidth = true;
@@ -994,7 +1108,7 @@ namespace FungusToast.Unity.UI.GameStart
             var element = sectionRoot.GetComponent<LayoutElement>();
             element.minWidth = StartMenuPrimaryColumnWidth;
             element.preferredWidth = StartMenuPrimaryColumnWidth;
-            element.minHeight = 62f;
+            element.minHeight = 86f;
             element.preferredHeight = -1f;
         }
 
@@ -1579,11 +1693,20 @@ namespace FungusToast.Unity.UI.GameStart
             contentRoot.anchorMax = new Vector2(0.5f, 1f);
             contentRoot.pivot = new Vector2(0.5f, 1f);
             contentRoot.anchoredPosition = new Vector2(0f, -36f);
-            contentRoot.sizeDelta = new Vector2(760f, 0f);
+            contentRoot.sizeDelta = new Vector2(UIStyleTokens.Startup.CardWidth, 0f);
             contentRoot.localScale = Vector3.one;
 
+            var surface = contentRoot.GetComponent<Image>();
+            if (surface == null)
+            {
+                surface = contentRoot.gameObject.AddComponent<Image>();
+            }
+
+            UIStyleTokens.Startup.ApplyCard(surface, alpha: 0.9f);
+            surface.raycastTarget = false;
+
             var layoutGroup = contentRoot.GetComponent<VerticalLayoutGroup>();
-            layoutGroup.padding = new RectOffset(24, 24, 0, 24);
+            layoutGroup.padding = new RectOffset(36, 36, 24, 30);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 14f;
             layoutGroup.childForceExpandWidth = true;
@@ -1596,8 +1719,8 @@ namespace FungusToast.Unity.UI.GameStart
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = contentRoot.GetComponent<LayoutElement>();
-            element.minWidth = 760f;
-            element.preferredWidth = 760f;
+            element.minWidth = UIStyleTokens.Startup.CardWidth;
+            element.preferredWidth = UIStyleTokens.Startup.CardWidth;
             element.minHeight = 200f;
         }
 
@@ -1764,7 +1887,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             if (audioSettingsSectionRoot != null)
             {
-                audioSettingsSectionRoot.gameObject.SetActive(!isMoldSelectionStep);
+                audioSettingsSectionRoot.gameObject.SetActive(false);
             }
 
             if (testingCardSectionRoot != null)
@@ -1795,7 +1918,6 @@ namespace FungusToast.Unity.UI.GameStart
                 bool showResumeButton = !isMoldSelectionStep && manager != null && manager.HasSoloSave();
                 resumeSavedGameButton.gameObject.SetActive(showResumeButton);
             }
-            RefreshAudioSettingsControls();
             RefreshTestingSectionLayout();
             RefreshStartMenuLayout();
         }
@@ -3086,7 +3208,7 @@ namespace FungusToast.Unity.UI.GameStart
             int ai = Mathf.Max(0, total - humans);
             string humanLabel = humans == 1 ? "1 Human" : $"{humans} Humans";
             string aiLabel = ai == 1 ? "1 AI" : $"{ai} AI";
-            playerSummaryLabel.text = $"{HumanSelectionPrefix} ({humanLabel} / {aiLabel})";
+            playerSummaryLabel.text = $"{humanLabel}  •  {aiLabel}";
         }
 
         private void UpdateButtonVisuals()

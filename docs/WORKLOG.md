@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-2 are complete; Task 3 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-3 are complete; Task 4 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -117,7 +117,9 @@ Every implementation agent must:
 
 **Special verification:** Check main menu with and without a resumable campaign and in both development/release-style build conditions available locally.
 
-### 3. [ ] Restructure the custom-game setup step
+### 3. [x] Restructure the custom-game setup step
+
+**Completed:** Reframed count selection as a `Game Setup` card, added explicit `Total players` and `Human players` labels, normalized the serialized number buttons into compact segmented rows, made board size a nested selection card, removed audio from the flow, retained save-aware Resume visibility, and simplified the human/AI summary. Count validation, persistence, board mapping, callbacks, and save semantics were not changed. Core build passed; Editor checks are deferred to Task 11.
 
 **Depends on:** Tasks 1-2.
 
@@ -345,4 +347,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 3: Restructure the custom-game setup step**. The shared startup shell and presentation APIs are ready for setup-screen adoption.
+- Assign **Task 4: Polish custom-game mold selection**. The first custom-game setup step now establishes the containing card and segmented-control layout.
