@@ -18,15 +18,14 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_ModeSelectPanelController : MonoBehaviour
     {
-        private const float ExpandedContentWidth = 760f;
-        private const float ExpandedButtonWidth = 620f;
-        private const float ExpandedDescriptionWidth = 620f;
+        private const float ExpandedContentWidth = UIStyleTokens.Startup.ContentWidth;
+        private const float ExpandedButtonWidth = UIStyleTokens.Startup.CardWidth;
+        private const float ExpandedDescriptionWidth = UIStyleTokens.Startup.CardWidth;
         private const float CreditsCardWidth = 860f;
         private const float CreditsTextWidth = 700f;
         private const float WideLogoWidth = 520f;
         private const float WideLogoHeight = 223f;
         private const float TitleHeight = 34f;
-        private const float SummaryHeight = 68f;
         private const float FooterHeight = 24f;
         private const float CompactMenuButtonIconSize = 22f;
         private const float CompactMenuButtonContentSpacing = 10f;
@@ -36,23 +35,24 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.22f;
-        private const float AmbientMoldAlphaRange = 0.14f;
-        private const float AmbientMoldScalePulse = 0.11f;
-        private const float AmbientMoldDriftDistance = 18f;
-        private const float AmbientEncroachmentBaseAlpha = 0.1f;
-        private const float AmbientEncroachmentAlphaRange = 0.095f;
-        private const float AmbientEncroachmentScalePulse = 0.075f;
-        private const float AmbientEncroachmentDriftDistance = 10f;
+        private const float AmbientMoldBaseAlpha = 0.12f;
+        private const float AmbientMoldAlphaRange = 0.06f;
+        private const float AmbientMoldScalePulse = 0.06f;
+        private const float AmbientMoldDriftDistance = 10f;
+        private const float AmbientEncroachmentBaseAlpha = 0.025f;
+        private const float AmbientEncroachmentAlphaRange = 0.025f;
+        private const float AmbientEncroachmentScalePulse = 0.035f;
+        private const float AmbientEncroachmentDriftDistance = 5f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
         private const float AmbientEncroachmentRevealWindowSeconds = 30f;
-        private const float AmbientBackdropVignetteAlpha = 0.008f;
+        private const float AmbientBackdropVignetteAlpha = 0.2f;
         private const float OverlayCardAlpha = 0.84f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
-        private const string AlphaHeadingText = "Alpha Test Build";
-        private const string AlphaSummaryCopy = "Alpha build for testing. Hotseat and campaign are both available; progression and balance are still in flux.";
+        private const string AlphaHeadingText = "ALPHA BUILD";
+        private const string CustomGameDescription = "Play solo against AI or share this device.";
+        private const string CampaignDescription = "Play a persistent run with unlocks and escalating challenges.";
         private const string CreditsHeadingText = "Special Credits";
         private const string ArtworkHeadingText = "Artwork";
         private const string ArtworkCreditCopy = "Special thanks to my teenage son Matthew for doing many of the graphics.";
@@ -85,6 +85,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
+        private RectTransform buildStatusBadgeRoot;
         private GameObject creditsPanel;
         private GameObject settingsPanel;
         private Button creditsButton;
@@ -209,14 +210,26 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.ApplyPanelSurface(gameObject, Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Accent.Hyphae, 0.09f));
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
+            if (contentRoot != null)
+            {
+                Image contentCard = contentRoot.GetComponent<Image>();
+                if (contentCard == null)
+                {
+                    contentCard = contentRoot.gameObject.AddComponent<Image>();
+                }
+
+                UIStyleTokens.Startup.ApplyCard(contentCard, alpha: OverlayCardAlpha);
+                contentCard.raycastTarget = false;
+            }
+
             if (titleText != null)
             {
-                titleText.color = UIStyleTokens.Text.Primary;
+                titleText.color = UIStyleTokens.Accent.Spore;
             }
 
             if (alphaSummaryText != null)
             {
-                alphaSummaryText.color = UIStyleTokens.Text.Secondary;
+                alphaSummaryText.gameObject.SetActive(false);
             }
 
             if (versionText != null)
@@ -440,11 +453,28 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 titleText.text = AlphaHeadingText;
                 titleText.enableAutoSizing = true;
-                titleText.fontSizeMin = 22f;
-                titleText.fontSizeMax = 32f;
-                titleText.fontSize = 28f;
+                titleText.fontSizeMin = 14f;
+                titleText.fontSizeMax = 16f;
+                titleText.fontSize = 16f;
+                titleText.fontStyle = FontStyles.Bold;
+                titleText.color = UIStyleTokens.Accent.Spore;
+                titleText.characterSpacing = 2f;
                 titleText.alignment = TextAlignmentOptions.Center;
-                ResizeRectTransform(titleText.rectTransform, ExpandedDescriptionWidth, TitleHeight);
+                ResizeRectTransform(titleText.rectTransform, 180f, TitleHeight);
+                EnsureBuildStatusBadge();
+            }
+
+            SetButtonLabel(hotseatButton, "Custom Game");
+            if (hotseatDescriptionText != null)
+            {
+                hotseatDescriptionText.text = CustomGameDescription;
+                UIStyleTokens.Startup.ApplySupportingCopy(hotseatDescriptionText);
+            }
+
+            if (campaignDescriptionText != null)
+            {
+                campaignDescriptionText.text = CampaignDescription;
+                UIStyleTokens.Startup.ApplySupportingCopy(campaignDescriptionText);
             }
         }
 
@@ -455,22 +485,9 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            if (alphaSummaryText == null)
+            if (alphaSummaryText != null)
             {
-                alphaSummaryText = CreateLabel(
-                    "UI_ModeSelectAlphaSummary",
-                    AlphaSummaryCopy,
-                    22f,
-                    SummaryHeight,
-                    UIStyleTokens.Text.Secondary);
-                alphaSummaryText.enableAutoSizing = true;
-                alphaSummaryText.fontSizeMin = 18f;
-                alphaSummaryText.fontSizeMax = 22f;
-                alphaSummaryText.transform.SetSiblingIndex(Mathf.Min(2, contentRoot.childCount - 1));
-            }
-            else
-            {
-                alphaSummaryText.text = AlphaSummaryCopy;
+                alphaSummaryText.gameObject.SetActive(false);
             }
 
             if (creditsButton == null)
@@ -481,7 +498,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (settingsButton == null)
             {
-                settingsButton = CreateButton("UI_ModeSelectSettingsButton", "Settings", settingsButtonIcon);
+                settingsButton = CreateButton("UI_ModeSelectSettingsButton", "Settings");
                 settingsButton.onClick.AddListener(OnSettingsClicked);
             }
 
@@ -525,6 +542,15 @@ namespace FungusToast.Unity.UI.Campaign
                 quitButton.transform.SetAsLastSibling();
             }
 
+            if (buildStatusBadgeRoot != null)
+            {
+                buildStatusBadgeRoot.SetAsLastSibling();
+            }
+            else if (titleText != null)
+            {
+                titleText.transform.SetAsLastSibling();
+            }
+
             if (versionText != null)
             {
                 versionText.transform.SetAsLastSibling();
@@ -532,6 +558,54 @@ namespace FungusToast.Unity.UI.Campaign
 
             EnsureCreditsPanel();
             EnsureSettingsPanel();
+        }
+
+        private void EnsureBuildStatusBadge()
+        {
+            if (contentRoot == null || titleText == null)
+            {
+                return;
+            }
+
+            if (buildStatusBadgeRoot == null)
+            {
+                GameObject badgeObject = new GameObject(
+                    "UI_ModeSelectBuildStatusBadge",
+                    typeof(RectTransform),
+                    typeof(LayoutElement),
+                    typeof(Image),
+                    typeof(Outline));
+                int titleSiblingIndex = titleText.transform.GetSiblingIndex();
+                badgeObject.transform.SetParent(contentRoot, false);
+                badgeObject.transform.SetSiblingIndex(titleSiblingIndex);
+                badgeObject.layer = gameObject.layer;
+                buildStatusBadgeRoot = badgeObject.GetComponent<RectTransform>();
+
+                LayoutElement layout = badgeObject.GetComponent<LayoutElement>();
+                layout.minWidth = 180f;
+                layout.preferredWidth = 180f;
+                layout.minHeight = TitleHeight;
+                layout.preferredHeight = TitleHeight;
+                layout.flexibleWidth = 0f;
+                layout.flexibleHeight = 0f;
+
+                Image background = badgeObject.GetComponent<Image>();
+                background.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.94f);
+                background.raycastTarget = false;
+
+                Outline outline = badgeObject.GetComponent<Outline>();
+                outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Lichen, UIStyleTokens.Alpha.AccentOutline);
+                outline.effectDistance = new Vector2(1f, -1f);
+
+                titleText.transform.SetParent(buildStatusBadgeRoot, false);
+            }
+
+            buildStatusBadgeRoot.sizeDelta = new Vector2(180f, TitleHeight);
+            RectTransform titleRect = titleText.rectTransform;
+            titleRect.anchorMin = Vector2.zero;
+            titleRect.anchorMax = Vector2.one;
+            titleRect.offsetMin = new Vector2(10f, 0f);
+            titleRect.offsetMax = new Vector2(-10f, 0f);
         }
 
         private void UpdateVersionLabel()
@@ -1158,7 +1232,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static string GetHotseatTooltipText()
         {
-            return "Start a local hotseat game on this machine. You will choose player count, human seats, and setup options next.";
+            return "Start a custom game against AI players or share this device with other human players.";
         }
 
         private string GetCampaignTooltipText()

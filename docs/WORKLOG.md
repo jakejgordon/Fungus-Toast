@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Task 1 is complete; Task 2 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-2 are complete; Task 3 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -90,7 +90,9 @@ Every implementation agent must:
 
 **Special verification:** Open the main menu, custom setup, and campaign overview; exercise hover, click, disabled, and back navigation states. Confirm no serialized references were lost.
 
-### 2. [ ] Unify the startup backdrop and main-menu composition
+### 2. [x] Unify the startup backdrop and main-menu composition
+
+**Completed:** Reframed the logo as the hero, moved alpha status into a compact footer badge beside version metadata, renamed the custom mode and tightened both mode descriptions, unified utility-button treatment, added a calm central card, and substantially reduced ambient mold contrast/motion while strengthening the edge vignette. Core build passed; affected screen states remain queued for Task 11 Editor validation.
 
 **Depends on:** Task 1.
 
@@ -343,4 +345,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 2: Unify the startup backdrop and main-menu composition**. Shared presentation APIs are now available in `UIStyleTokens`.
+- Assign **Task 3: Restructure the custom-game setup step**. The shared startup shell and presentation APIs are ready for setup-screen adoption.
