@@ -21,7 +21,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const float ExpandedContentWidth = UIStyleTokens.Startup.ContentWidth;
         private const float ExpandedButtonWidth = UIStyleTokens.Startup.CardWidth;
         private const float ExpandedDescriptionWidth = UIStyleTokens.Startup.CardWidth;
-        private const float CreditsCardWidth = 860f;
+        private const float CreditsCardWidth = 800f;
         private const float CreditsTextWidth = 700f;
         private const float WideLogoWidth = 520f;
         private const float WideLogoHeight = 223f;
@@ -53,11 +53,13 @@ namespace FungusToast.Unity.UI.Campaign
         private const string AlphaHeadingText = "ALPHA BUILD";
         private const string CustomGameDescription = "Play solo against AI or share this device.";
         private const string CampaignDescription = "Play a persistent run with unlocks and escalating challenges.";
-        private const string CreditsHeadingText = "Special Credits";
+        private const string CreditsHeadingText = "Credits";
         private const string ArtworkHeadingText = "Artwork";
-        private const string ArtworkCreditCopy = "Special thanks to my teenage son Matthew for doing many of the graphics.";
+        private const string ArtworkCreditName = "Matthew";
+        private const string ArtworkCreditCopy = "Original artwork and game graphics";
         private const string MusicHeadingText = "Music";
-        private const string MusicCreditCopy = "Thanks to Chris Howard for the music track of Fungus Toast. It sounds great!";
+        private const string MusicCreditName = "Chris Howard";
+        private const string MusicCreditCopy = "“Fungus Toast” — original music";
         private const string SettingsHeadingText = "Settings";
         private const string SettingsAudioHeadingText = "Audio";
         private const string SettingsHelpHeadingText = "Help & Tutorials";
@@ -493,7 +495,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (creditsButton == null)
             {
-                creditsButton = CreateButton("UI_ModeSelectCreditsButton", "Special Credits");
+                creditsButton = CreateButton("UI_ModeSelectCreditsButton", "Credits");
                 creditsButton.onClick.AddListener(OnCreditsClicked);
             }
 
@@ -1386,6 +1388,8 @@ namespace FungusToast.Unity.UI.Campaign
             cardFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             cardFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
+            CreateCreditsLogo(cardObject.transform);
+
             TextMeshProUGUI titleLabel = CreateCreditsLabel(
                 cardObject.transform,
                 "UI_ModeSelectCreditsTitle",
@@ -1407,18 +1411,30 @@ namespace FungusToast.Unity.UI.Campaign
                 UIStyleTokens.Accent.Spore,
                 FontStyles.Bold);
             artworkHeading.fontStyle = FontStyles.Bold;
+            artworkHeading.alignment = TextAlignmentOptions.Left;
+
+            TextMeshProUGUI artworkName = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectArtworkName",
+                ArtworkCreditName,
+                22f,
+                30f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            artworkName.alignment = TextAlignmentOptions.Left;
 
             TextMeshProUGUI artworkCopy = CreateCreditsLabel(
                 cardObject.transform,
                 "UI_ModeSelectArtworkCopy",
                 ArtworkCreditCopy,
                 22f,
-                72f,
+                34f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             artworkCopy.enableAutoSizing = true;
             artworkCopy.fontSizeMin = 18f;
             artworkCopy.fontSizeMax = 22f;
+            artworkCopy.alignment = TextAlignmentOptions.Left;
 
             TextMeshProUGUI musicHeading = CreateCreditsLabel(
                 cardObject.transform,
@@ -1429,20 +1445,59 @@ namespace FungusToast.Unity.UI.Campaign
                 UIStyleTokens.Accent.Spore,
                 FontStyles.Bold);
             musicHeading.fontStyle = FontStyles.Bold;
+            musicHeading.alignment = TextAlignmentOptions.Left;
+
+            TextMeshProUGUI musicName = CreateCreditsLabel(
+                cardObject.transform,
+                "UI_ModeSelectMusicName",
+                MusicCreditName,
+                22f,
+                30f,
+                UIStyleTokens.Text.Primary,
+                FontStyles.Bold);
+            musicName.alignment = TextAlignmentOptions.Left;
 
             TextMeshProUGUI musicCopy = CreateCreditsLabel(
                 cardObject.transform,
                 "UI_ModeSelectMusicCopy",
                 MusicCreditCopy,
                 22f,
-                72f,
+                34f,
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
             musicCopy.enableAutoSizing = true;
             musicCopy.fontSizeMin = 18f;
             musicCopy.fontSizeMax = 22f;
+            musicCopy.alignment = TextAlignmentOptions.Left;
 
             creditsBackButton = CreateCreditsButton(cardObject.transform, "UI_ModeSelectCreditsBackButton", "Back to Menu", backButtonIcon);
+        }
+
+        private void CreateCreditsLogo(Transform parent)
+        {
+            if (parent == null || wideTitleLogoSprite == null)
+            {
+                return;
+            }
+
+            GameObject logoObject = new GameObject(
+                "UI_ModeSelectCreditsLogo",
+                typeof(RectTransform),
+                typeof(LayoutElement),
+                typeof(Image));
+            logoObject.transform.SetParent(parent, false);
+            logoObject.layer = gameObject.layer;
+
+            Image logo = logoObject.GetComponent<Image>();
+            logo.sprite = wideTitleLogoSprite;
+            logo.preserveAspect = true;
+            logo.raycastTarget = false;
+
+            LayoutElement layout = logoObject.GetComponent<LayoutElement>();
+            layout.minWidth = 220f;
+            layout.preferredWidth = 220f;
+            layout.minHeight = 94f;
+            layout.preferredHeight = 94f;
         }
 
         private void EnsureSettingsPanel()

@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-7 are complete; Task 8 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-8 are complete; Task 9 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -259,7 +259,9 @@ Every implementation agent must:
 
 **Special verification:** Test minimum, intermediate, and maximum audio values; reopen settings; cancel and confirm campaign reset using disposable development data; verify Back in both normal and confirmation states.
 
-### 8. [ ] Restructure credits content
+### 8. [x] Restructure credits content
+
+**Completed:** Renamed the entry and screen to `Credits`, replaced conversational centered paragraphs with left-aligned role/name/contribution rows, retained Matthew's artwork/game-graphics and Chris Howard's original-music attribution, and reused the existing logo as restrained decoration. Core build passed; repeated-open hierarchy checks are deferred to Task 11.
 
 **Depends on:** Task 2.
 
@@ -355,4 +357,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 8: Restructure credits content**. Settings presentation and persistence wiring are code-complete.
+- Assign **Task 9: Enforce release UI hygiene for development controls**. All player-facing startup screens are now individually polished at code level.
