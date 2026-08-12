@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-9 are complete; Task 10 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-10 are complete; Task 11 final regression is next. Jake authorized consolidated Unity validation after Task 11.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -311,7 +311,9 @@ Every implementation agent must:
 
 **Special verification:** Compare screenshots and hierarchy state under both build conditions for custom setup, campaign overview, and new-campaign setup.
 
-### 10. [ ] Add restrained interaction and transition polish
+### 10. [x] Add restrained interaction and transition polish
+
+**Completed:** Routed main-menu/custom/campaign/settings/credits navigation through one guarded 120 ms unscaled CanvasGroup fade path, disabled interaction/raycasts during transitions, ignored duplicate transition requests, and restored CanvasGroup state when startup UI is cancelled for gameplay. Reused existing button transitions and ambient motion; no sound or animation framework was added. Core build passed; rapid-navigation stress testing is deferred to Task 11.
 
 **Depends on:** Tasks 2-9.
 
@@ -359,4 +361,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 10: Add restrained interaction and transition polish**. Release/development startup UI now shares one authoritative gate.
+- Assign **Task 11: Perform the final startup-flow UX and regression pass**. Tasks 1-10 are committed independently and synchronized.

@@ -3,6 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.Tilemaps;
 using TMPro;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using FungusToast.Unity;
@@ -111,6 +112,9 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI compatibilityNoticeBodyText;
         private Button compatibilityNoticeCloseButton;
         private bool isConfirmingCampaignReset;
+        private const float StartupTransitionDuration = 0.12f;
+        private Coroutine startupTransitionCoroutine;
+        private bool isStartupTransitioning;
         private RectTransform ambientBackdropLayerRoot;
         private RectTransform ambientMoldLayerRoot;
         private readonly List<AmbientBackdropDecoration> ambientBackdropDecorations = new();
@@ -294,11 +298,11 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void OnHotseatClicked()
         {
-            ShowBackdropOnlyForSubpanel(startGamePanel != null ? startGamePanel.transform : null);
-            if (startGamePanel != null)
-            {
-                startGamePanel.gameObject.SetActive(true);
-            }
+            GameObject target = startGamePanel != null ? startGamePanel.gameObject : null;
+            BeginStartupTransition(
+                contentRoot != null ? contentRoot.gameObject : null,
+                target,
+                () => PrepareExternalSubpanel(startGamePanel != null ? startGamePanel.transform : null));
         }
 
         private void OnCampaignClicked()
@@ -311,11 +315,10 @@ namespace FungusToast.Unity.UI.Campaign
                 return;
             }
 
-            ShowBackdropOnlyForSubpanel(campaignPanel != null ? campaignPanel.transform : null);
-            if (campaignPanel != null)
-            {
-                campaignPanel.SetActive(true);
-            }
+            BeginStartupTransition(
+                contentRoot != null ? contentRoot.gameObject : null,
+                campaignPanel,
+                () => PrepareExternalSubpanel(campaignPanel != null ? campaignPanel.transform : null));
         }
 
         private void OnQuitClicked()
@@ -336,22 +339,29 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void OnCreditsClicked()
         {
-            ShowCreditsContent();
+            BeginStartupTransition(
+                contentRoot != null ? contentRoot.gameObject : null,
+                creditsPanel,
+                () => settingsPanel?.SetActive(false));
         }
 
         private void OnSettingsClicked()
         {
-            ShowSettingsContent();
+            RefreshSettingsState();
+            BeginStartupTransition(
+                contentRoot != null ? contentRoot.gameObject : null,
+                settingsPanel,
+                () => creditsPanel?.SetActive(false));
         }
 
         private void OnCreditsBackClicked()
         {
-            ShowMainMenuContent();
+            BeginStartupTransition(creditsPanel, contentRoot != null ? contentRoot.gameObject : null, PrepareMainMenuForTransition);
         }
 
         private void OnSettingsBackClicked()
         {
-            ShowMainMenuContent();
+            BeginStartupTransition(settingsPanel, contentRoot != null ? contentRoot.gameObject : null, PrepareMainMenuForTransition);
         }
 
         private void OnSettingsSoundEffectsChanged(float value)
@@ -1139,25 +1149,20 @@ namespace FungusToast.Unity.UI.Campaign
         public void ShowMainMenuAfterSubpanel()
         {
             transform.SetAsLastSibling();
-            ShowMainMenuContent();
             RefreshCampaignButtonState();
             RefreshSettingsState();
-            RefreshResponsiveLayout();
+            BeginStartupTransition(null, contentRoot != null ? contentRoot.gameObject : null, PrepareMainMenuForTransition);
         }
 
         public void HideForGameplay()
         {
+            CancelStartupTransition();
             gameObject.SetActive(false);
         }
 
-        private void ShowBackdropOnlyForSubpanel(Transform activeSubpanel)
+        private void PrepareExternalSubpanel(Transform activeSubpanel)
         {
             HideCompatibilityNotice();
-
-            if (contentRoot != null)
-            {
-                contentRoot.gameObject.SetActive(false);
-            }
 
             if (creditsPanel != null)
             {
@@ -1174,6 +1179,110 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 activeSubpanel.SetAsLastSibling();
             }
+        }
+
+        private void PrepareMainMenuForTransition()
+        {
+            if (creditsPanel != null)
+            {
+                creditsPanel.SetActive(false);
+            }
+
+            if (settingsPanel != null)
+            {
+                settingsPanel.SetActive(false);
+            }
+
+            RefreshResponsiveLayout();
+        }
+
+        private void BeginStartupTransition(GameObject from, GameObject to, Action prepareTarget)
+        {
+            if (isStartupTransitioning || to == null || from == to)
+            {
+                return;
+            }
+
+            startupTransitionCoroutine = StartCoroutine(RunStartupTransition(from, to, prepareTarget));
+        }
+
+        private IEnumerator RunStartupTransition(GameObject from, GameObject to, Action prepareTarget)
+        {
+            isStartupTransitioning = true;
+            CanvasGroup fromGroup = from != null ? EnsureCanvasGroup(from) : null;
+            if (fromGroup != null && from.activeSelf)
+            {
+                fromGroup.interactable = false;
+                fromGroup.blocksRaycasts = false;
+                yield return FadeCanvasGroup(fromGroup, fromGroup.alpha, 0f);
+                from.SetActive(false);
+            }
+
+            prepareTarget?.Invoke();
+            CanvasGroup toGroup = EnsureCanvasGroup(to);
+            toGroup.alpha = 0f;
+            toGroup.interactable = false;
+            toGroup.blocksRaycasts = false;
+            to.SetActive(true);
+            RefreshResponsiveLayout();
+            yield return FadeCanvasGroup(toGroup, 0f, 1f);
+            toGroup.alpha = 1f;
+            toGroup.interactable = true;
+            toGroup.blocksRaycasts = true;
+
+            isStartupTransitioning = false;
+            startupTransitionCoroutine = null;
+        }
+
+        private static CanvasGroup EnsureCanvasGroup(GameObject target)
+        {
+            return target.GetComponent<CanvasGroup>() ?? target.AddComponent<CanvasGroup>();
+        }
+
+        private static IEnumerator FadeCanvasGroup(CanvasGroup group, float from, float to)
+        {
+            float elapsed = 0f;
+            while (group != null && elapsed < StartupTransitionDuration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float progress = Mathf.Clamp01(elapsed / StartupTransitionDuration);
+                group.alpha = Mathf.Lerp(from, to, Mathf.SmoothStep(0f, 1f, progress));
+                yield return null;
+            }
+
+            if (group != null)
+            {
+                group.alpha = to;
+            }
+        }
+
+        private void CancelStartupTransition()
+        {
+            if (startupTransitionCoroutine != null)
+            {
+                StopCoroutine(startupTransitionCoroutine);
+                startupTransitionCoroutine = null;
+            }
+
+            isStartupTransitioning = false;
+            RestoreCanvasGroup(contentRoot != null ? contentRoot.gameObject : null);
+            RestoreCanvasGroup(creditsPanel);
+            RestoreCanvasGroup(settingsPanel);
+            RestoreCanvasGroup(startGamePanel != null ? startGamePanel.gameObject : null);
+            RestoreCanvasGroup(campaignPanel);
+        }
+
+        private static void RestoreCanvasGroup(GameObject target)
+        {
+            CanvasGroup group = target != null ? target.GetComponent<CanvasGroup>() : null;
+            if (group == null)
+            {
+                return;
+            }
+
+            group.alpha = 1f;
+            group.interactable = true;
+            group.blocksRaycasts = true;
         }
 
         private void RefreshCampaignButtonState()
@@ -2117,48 +2226,6 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 settingsPanel.SetActive(false);
             }
-
-            RefreshResponsiveLayout();
-        }
-
-        private void ShowCreditsContent()
-        {
-            if (contentRoot != null)
-            {
-                contentRoot.gameObject.SetActive(false);
-            }
-
-            if (creditsPanel != null)
-            {
-                creditsPanel.SetActive(true);
-            }
-
-            if (settingsPanel != null)
-            {
-                settingsPanel.SetActive(false);
-            }
-
-            RefreshResponsiveLayout();
-        }
-
-        private void ShowSettingsContent()
-        {
-            if (contentRoot != null)
-            {
-                contentRoot.gameObject.SetActive(false);
-            }
-
-            if (creditsPanel != null)
-            {
-                creditsPanel.SetActive(false);
-            }
-
-            if (settingsPanel != null)
-            {
-                settingsPanel.SetActive(true);
-            }
-
-            RefreshSettingsState();
 
             RefreshResponsiveLayout();
         }
