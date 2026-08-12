@@ -34,7 +34,7 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Tasks 1-5 are complete; Task 6 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
+- **Current state:** Tasks 1-6 are complete; Task 7 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
@@ -204,7 +204,9 @@ Every implementation agent must:
 
 **Special verification:** Inspect zero progress, partial progress, threshold reached, active campaign, and no-save states using existing development data controls only in a development build.
 
-### 6. [ ] Polish new-campaign difficulty and mold setup
+### 6. [x] Polish new-campaign difficulty and mold setup
+
+**Completed:** Widened only the campaign-creation step, structured it as numbered difficulty/mold sections, surfaced start depth and AI drafting behavior on each difficulty card, added visible lock prerequisites, and aligned selected difficulty/mold cards with the shared checkmark/outline language. Existing option metadata, unlock calculations, selected indices, and campaign start parameters were preserved. Core build passed; Editor checks are deferred to Task 11.
 
 **Depends on:** Task 5.
 
@@ -351,4 +353,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 6: Polish new-campaign difficulty and mold setup**. Campaign overview hierarchy and progression presentation are code-complete.
+- Assign **Task 7: Rebuild settings as a compact preferences panel**. Campaign overview and campaign creation are now code-complete.

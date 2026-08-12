@@ -37,8 +37,10 @@ namespace FungusToast.Unity.UI.Campaign
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
         private const float ActionButtonHorizontalPadding = 12f;
-        private const string CampaignStartDifficultyTitleText = "Choose Your Starting Difficulty";
-        private const string MoldSelectionTitleText = "Choose Your Mold Icon for This Campaign Run";
+        private const float CampaignSetupWidth = 620f;
+        private const float CampaignSetupInnerWidth = 584f;
+        private const string CampaignStartDifficultyTitleText = "1. Choose Starting Difficulty";
+        private const string MoldSelectionTitleText = "2. Choose Your Mold";
 
         private static readonly string[] MoldDisplayNames =
         {
@@ -103,10 +105,12 @@ namespace FungusToast.Unity.UI.Campaign
         private GridLayoutGroup campaignStartDifficultyGrid;
         private readonly List<Button> campaignStartDifficultyButtons = new();
         private readonly List<Image> campaignStartDifficultyHighlights = new();
+        private readonly List<Outline> campaignStartDifficultyOutlines = new();
         private readonly List<TextMeshProUGUI> campaignStartDifficultyLabels = new();
         private GridLayoutGroup moldSelectionGrid;
         private readonly List<Button> moldSelectionButtons = new();
         private readonly List<Image> moldSelectionHighlights = new();
+        private readonly List<Outline> moldSelectionOutlines = new();
         private readonly List<Image> moldSelectionIcons = new();
         private readonly List<TextMeshProUGUI> moldSelectionLabels = new();
         private CampaignPanelStep currentStep = CampaignPanelStep.MainActions;
@@ -1484,8 +1488,8 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldSelectionSectionRoot.GetComponent<LayoutElement>();
-            element.minWidth = 460f;
-            element.preferredWidth = 500f;
+            element.minWidth = CampaignSetupWidth;
+            element.preferredWidth = CampaignSetupWidth;
             element.minHeight = 220f;
             element.preferredHeight = -1f;
         }
@@ -1578,8 +1582,8 @@ namespace FungusToast.Unity.UI.Campaign
             label.text = string.Empty;
 
             var element = label.GetComponent<LayoutElement>();
-            element.minWidth = 460f;
-            element.preferredWidth = 460f;
+            element.minWidth = CampaignSetupInnerWidth;
+            element.preferredWidth = CampaignSetupInnerWidth;
             element.minHeight = minHeight;
             element.preferredHeight = -1f;
 
@@ -1615,7 +1619,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             moldSelectionGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             moldSelectionGrid.constraintCount = 4;
-            moldSelectionGrid.cellSize = new Vector2(110f, 110f);
+            moldSelectionGrid.cellSize = new Vector2(132f, 122f);
             moldSelectionGrid.spacing = new Vector2(10f, 10f);
             moldSelectionGrid.childAlignment = TextAnchor.UpperCenter;
 
@@ -1624,9 +1628,9 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = moldSelectionGrid.GetComponent<LayoutElement>();
-            element.minWidth = 470f;
-            element.preferredWidth = 470f;
-            element.minHeight = 180f;
+            element.minWidth = 558f;
+            element.preferredWidth = 558f;
+            element.minHeight = 254f;
             element.preferredHeight = -1f;
         }
 
@@ -1659,8 +1663,8 @@ namespace FungusToast.Unity.UI.Campaign
 
             campaignStartDifficultyGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             campaignStartDifficultyGrid.constraintCount = 3;
-            campaignStartDifficultyGrid.cellSize = new Vector2(140f, 62f);
-            campaignStartDifficultyGrid.spacing = new Vector2(10f, 10f);
+            campaignStartDifficultyGrid.cellSize = new Vector2(188f, 96f);
+            campaignStartDifficultyGrid.spacing = new Vector2(8f, 10f);
             campaignStartDifficultyGrid.childAlignment = TextAnchor.UpperCenter;
 
             var fitter = campaignStartDifficultyGrid.GetComponent<ContentSizeFitter>();
@@ -1668,9 +1672,9 @@ namespace FungusToast.Unity.UI.Campaign
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = campaignStartDifficultyGrid.GetComponent<LayoutElement>();
-            element.minWidth = 460f;
-            element.preferredWidth = 460f;
-            element.minHeight = 72f;
+            element.minWidth = CampaignSetupInnerWidth;
+            element.preferredWidth = CampaignSetupInnerWidth;
+            element.minHeight = 202f;
             element.preferredHeight = -1f;
         }
 
@@ -1689,7 +1693,8 @@ namespace FungusToast.Unity.UI.Campaign
                 typeof(RectTransform),
                 typeof(Image),
                 typeof(Button),
-                typeof(LayoutElement));
+                typeof(LayoutElement),
+                typeof(Outline));
             buttonObject.transform.SetParent(campaignStartDifficultyGrid.transform, false);
 
             var background = buttonObject.GetComponent<Image>();
@@ -1706,10 +1711,16 @@ namespace FungusToast.Unity.UI.Campaign
             tooltipTrigger.SetAutoPlacementOffsetX(18f);
 
             var element = buttonObject.GetComponent<LayoutElement>();
-            element.minWidth = 140f;
-            element.preferredWidth = 140f;
-            element.minHeight = 62f;
-            element.preferredHeight = 62f;
+            element.minWidth = 188f;
+            element.preferredWidth = 188f;
+            element.minHeight = 96f;
+            element.preferredHeight = 96f;
+
+            var selectionOutline = buttonObject.GetComponent<Outline>();
+            selectionOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Lichen, UIStyleTokens.Alpha.FocusOutline);
+            selectionOutline.effectDistance = new Vector2(2f, -2f);
+            selectionOutline.useGraphicAlpha = false;
+            selectionOutline.enabled = false;
 
             var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
             highlightObject.transform.SetParent(buttonObject.transform, false);
@@ -1732,10 +1743,10 @@ namespace FungusToast.Unity.UI.Campaign
             labelRect.anchorMin = new Vector2(0.5f, 0.5f);
             labelRect.anchorMax = new Vector2(0.5f, 0.5f);
             labelRect.pivot = new Vector2(0.5f, 0.5f);
-            labelRect.sizeDelta = new Vector2(122f, 50f);
+            labelRect.sizeDelta = new Vector2(170f, 82f);
             labelRect.anchoredPosition = Vector2.zero;
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.fontSize = 17f;
+            label.fontSize = 16f;
             label.enableAutoSizing = true;
             label.fontSizeMin = 11f;
             label.fontSizeMax = 17f;
@@ -1746,6 +1757,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             campaignStartDifficultyButtons.Add(button);
             campaignStartDifficultyHighlights.Add(highlightImage);
+            campaignStartDifficultyOutlines.Add(selectionOutline);
             campaignStartDifficultyLabels.Add(label);
         }
 
@@ -1863,6 +1875,7 @@ namespace FungusToast.Unity.UI.Campaign
             bool selectingMold = currentStep == CampaignPanelStep.MoldSelection;
             bool hasCampaignSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
             bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
+            ConfigureCampaignContentWidth(selectingMold);
             ApplyActionButtonSemantics();
             if (moldSelectionSectionRoot != null)
             {
@@ -1911,6 +1924,23 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
+        private void ConfigureCampaignContentWidth(bool useSetupWidth)
+        {
+            if (mainStackRoot == null)
+            {
+                return;
+            }
+
+            float width = useSetupWidth ? CampaignSetupWidth : PrimaryColumnWidth;
+            mainStackRoot.sizeDelta = new Vector2(width, mainStackRoot.sizeDelta.y);
+            LayoutElement element = mainStackRoot.GetComponent<LayoutElement>();
+            if (element != null)
+            {
+                element.minWidth = useSetupWidth ? CampaignSetupWidth : PrimaryColumnWidth - 40f;
+                element.preferredWidth = width;
+            }
+        }
+
         private void EnterMoldSelectionStep()
         {
             currentStep = CampaignPanelStep.MoldSelection;
@@ -1940,8 +1970,8 @@ namespace FungusToast.Unity.UI.Campaign
             if (moldSelectionStatusLabel != null)
             {
                 moldSelectionStatusLabel.text = selectedCampaignMoldIndex.HasValue
-                    ? $"Selected mold: {GetMoldDisplayName(selectedCampaignMoldIndex.Value)}. This icon will persist for the whole run."
-                    : "Select a mold icon before starting the campaign.";
+                    ? $"Selected: {GetMoldDisplayName(selectedCampaignMoldIndex.Value)} • Used for this entire run"
+                    : "Select one mold for this campaign run.";
             }
 
             RefreshCampaignStartDifficultyUi();
@@ -2008,9 +2038,16 @@ namespace FungusToast.Unity.UI.Campaign
                     isSelected,
                     isUnlocked,
                     campaignStartDifficultyHighlights[optionIndex]);
-                campaignStartDifficultyLabels[optionIndex].text = isUnlocked
-                    ? $"{option.Label}\n<size=70%>Level {option.StartLevelDisplay}</size>"
-                    : $"{option.Label}\n<size=70%>Locked</size>";
+                if (optionIndex < campaignStartDifficultyOutlines.Count)
+                {
+                    campaignStartDifficultyOutlines[optionIndex].enabled = isSelected;
+                }
+
+                campaignStartDifficultyLabels[optionIndex].text = BuildCampaignStartDifficultyCardText(
+                    options,
+                    optionIndex,
+                    isUnlocked,
+                    isSelected);
 
                 var tooltipTrigger = button.GetComponent<TooltipTrigger>();
                 if (tooltipTrigger != null)
@@ -2019,6 +2056,29 @@ namespace FungusToast.Unity.UI.Campaign
                 }
 
             }
+        }
+
+        private static string BuildCampaignStartDifficultyCardText(
+            IReadOnlyList<CampaignController.CampaignStartDifficultyOption> options,
+            int optionIndex,
+            bool isUnlocked,
+            bool isSelected)
+        {
+            var option = options[optionIndex];
+            if (!isUnlocked)
+            {
+                string prerequisite = optionIndex > 0 ? options[optionIndex - 1].Label : "the prior difficulty";
+                return $"🔒 {option.Label}\n<size=68%>Clear {prerequisite} to unlock</size>";
+            }
+
+            bool usesRandomDrafting = option.Difficulty == CampaignDifficulty.Training
+                || option.Difficulty == CampaignDifficulty.Easy;
+            string drafting = usesRandomDrafting ? "Random AI drafts" : "Smarter AI drafts";
+            string start = option.Difficulty == CampaignDifficulty.Training
+                ? "Full campaign"
+                : $"Starts at Level {option.StartLevelDisplay}";
+            string selectedMarker = isSelected ? "✓ " : string.Empty;
+            return $"{selectedMarker}{option.Label}\n<size=68%>{start}\n{drafting}</size>";
         }
 
         private static string BuildCampaignStartDifficultyTooltipText(
@@ -2137,9 +2197,19 @@ namespace FungusToast.Unity.UI.Campaign
                 moldSelectionIcons[moldIndex].enabled = tile != null && tile.sprite != null;
 
                 bool isSelected = selectedCampaignMoldIndex == moldIndex;
-                moldSelectionHighlights[moldIndex].enabled = isSelected;
-                moldSelectionHighlights[moldIndex].gameObject.SetActive(isSelected);
-                moldSelectionLabels[moldIndex].text = GetMoldDisplayName(moldIndex);
+                UIStyleTokens.Startup.ApplyChoice(
+                    button,
+                    isSelected,
+                    true,
+                    moldSelectionHighlights[moldIndex]);
+                if (moldIndex < moldSelectionOutlines.Count)
+                {
+                    moldSelectionOutlines[moldIndex].enabled = isSelected;
+                }
+
+                moldSelectionLabels[moldIndex].text = isSelected
+                    ? $"✓ {GetMoldDisplayName(moldIndex)}"
+                    : GetMoldDisplayName(moldIndex);
             }
         }
 
@@ -2163,7 +2233,8 @@ namespace FungusToast.Unity.UI.Campaign
                 typeof(RectTransform),
                 typeof(Image),
                 typeof(Button),
-                typeof(LayoutElement));
+                typeof(LayoutElement),
+                typeof(Outline));
             buttonObject.transform.SetParent(moldSelectionGrid.transform, false);
 
             var background = buttonObject.GetComponent<Image>();
@@ -2176,10 +2247,16 @@ namespace FungusToast.Unity.UI.Campaign
             button.onClick.AddListener(() => OnCampaignMoldSelected(capturedIndex));
 
             var element = buttonObject.GetComponent<LayoutElement>();
-            element.minWidth = 110f;
-            element.preferredWidth = 110f;
-            element.minHeight = 110f;
-            element.preferredHeight = 110f;
+            element.minWidth = 132f;
+            element.preferredWidth = 132f;
+            element.minHeight = 122f;
+            element.preferredHeight = 122f;
+
+            var selectionOutline = buttonObject.GetComponent<Outline>();
+            selectionOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Lichen, UIStyleTokens.Alpha.FocusOutline);
+            selectionOutline.effectDistance = new Vector2(2f, -2f);
+            selectionOutline.useGraphicAlpha = false;
+            selectionOutline.enabled = false;
 
             var highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
             highlightObject.transform.SetParent(buttonObject.transform, false);
@@ -2202,7 +2279,7 @@ namespace FungusToast.Unity.UI.Campaign
             iconRect.anchorMin = new Vector2(0.5f, 0.5f);
             iconRect.anchorMax = new Vector2(0.5f, 0.5f);
             iconRect.pivot = new Vector2(0.5f, 0.5f);
-            iconRect.sizeDelta = new Vector2(56f, 56f);
+            iconRect.sizeDelta = new Vector2(68f, 68f);
             iconRect.anchoredPosition = new Vector2(0f, 14f);
             var iconImage = iconObject.GetComponent<Image>();
             iconImage.preserveAspect = true;
@@ -2214,7 +2291,7 @@ namespace FungusToast.Unity.UI.Campaign
             labelRect.anchorMin = new Vector2(0.5f, 0f);
             labelRect.anchorMax = new Vector2(0.5f, 0f);
             labelRect.pivot = new Vector2(0.5f, 0f);
-            labelRect.sizeDelta = new Vector2(98f, 34f);
+            labelRect.sizeDelta = new Vector2(118f, 38f);
             labelRect.anchoredPosition = new Vector2(0f, 6f);
             var label = labelObject.GetComponent<TextMeshProUGUI>();
             label.fontSize = 14f;
@@ -2228,6 +2305,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             moldSelectionButtons.Add(button);
             moldSelectionHighlights.Add(highlightImage);
+            moldSelectionOutlines.Add(selectionOutline);
             moldSelectionIcons.Add(iconImage);
             moldSelectionLabels.Add(label);
 
