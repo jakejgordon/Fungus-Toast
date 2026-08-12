@@ -94,9 +94,6 @@ namespace FungusToast.Unity.UI.Campaign
         private GridLayoutGroup moldinessUnlockedRewardsGrid;
         private readonly List<GameObject> moldinessUnlockedRewardIcons = new();
         private readonly List<TextMeshProUGUI> moldinessUnlockedRewardCountBadges = new();
-        private GridLayoutGroup moldinessSummaryToastGrid;
-        private readonly List<Image> moldinessSummaryToastTiles = new();
-        private System.Random moldinessSummaryToastRandom;
         private RectTransform moldSelectionSectionRoot;
         private TextMeshProUGUI moldSelectionTitleLabel;
         private TextMeshProUGUI moldSelectionStatusLabel;
@@ -615,44 +612,6 @@ namespace FungusToast.Unity.UI.Campaign
             return label;
         }
 
-        private void EnsureMoldinessSummaryToastGrid()
-        {
-            if (moldinessSummarySectionRoot == null)
-            {
-                return;
-            }
-
-            if (moldinessSummaryToastGrid == null)
-            {
-                var existing = moldinessSummarySectionRoot.Find("UI_CampaignMoldinessSummaryToastGrid") as RectTransform;
-                if (existing != null)
-                {
-                    moldinessSummaryToastGrid = existing.GetComponent<GridLayoutGroup>();
-                }
-                else
-                {
-                    var gridObject = new GameObject(
-                        "UI_CampaignMoldinessSummaryToastGrid",
-                        typeof(RectTransform),
-                        typeof(GridLayoutGroup),
-                        typeof(ContentSizeFitter),
-                        typeof(LayoutElement));
-                    gridObject.transform.SetParent(moldinessSummarySectionRoot, false);
-                    moldinessSummaryToastGrid = gridObject.GetComponent<GridLayoutGroup>();
-                }
-            }
-
-            var fitter = moldinessSummaryToastGrid.GetComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
-            element.minWidth = MoldinessSummaryToastGridWidth;
-            element.preferredWidth = MoldinessSummaryToastGridWidth;
-            element.minHeight = 92f;
-            element.preferredHeight = -1f;
-        }
-
         private void EnsureMoldinessSummaryProgressBar()
         {
             if (moldinessSummarySectionRoot == null)
@@ -716,35 +675,6 @@ namespace FungusToast.Unity.UI.Campaign
             progressLayout.flexibleWidth = 0f;
             progressLayout.flexibleHeight = 0f;
 
-            if (moldinessSummaryToastGrid != null)
-            {
-                moldinessSummaryToastGrid.gameObject.SetActive(false);
-            }
-        }
-
-        private void EnsureMoldinessSummaryToastTileCount(int requiredCount)
-        {
-            while (moldinessSummaryToastTiles.Count < requiredCount)
-            {
-                var tileObject = new GameObject(
-                    $"UI_CampaignMoldinessToastTile_{moldinessSummaryToastTiles.Count + 1}",
-                    typeof(RectTransform),
-                    typeof(Image),
-                    typeof(LayoutElement));
-                tileObject.transform.SetParent(moldinessSummaryToastGrid.transform, false);
-
-                var tileImage = tileObject.GetComponent<Image>();
-                tileImage.raycastTarget = false;
-                tileImage.color = UIStyleTokens.Surface.PanelSecondary;
-
-                var tileElement = tileObject.GetComponent<LayoutElement>();
-                tileElement.minWidth = 42f;
-                tileElement.preferredWidth = 42f;
-                tileElement.minHeight = 42f;
-                tileElement.preferredHeight = 42f;
-
-                moldinessSummaryToastTiles.Add(tileImage);
-            }
         }
 
         private void EnsureMoldinessUnlockedRewardsGrid()
@@ -1314,108 +1244,6 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             return Mathf.Max(1, nextLevelDisplay);
-        }
-
-        private void ConfigureMoldinessSummaryToastGrid(int threshold)
-        {
-            if (moldinessSummaryToastGrid == null)
-            {
-                return;
-            }
-
-            var dimensions = GetMoldinessToastGridDimensions(threshold);
-            int columns = dimensions.x;
-            int rows = dimensions.y;
-            float maxGridWidth = MoldinessSummaryToastGridWidth;
-            float maxGridHeight = 112f;
-            float spacing = threshold <= 12 ? 6f : 4f;
-            float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);
-            float cellHeight = Mathf.Clamp((maxGridHeight - ((rows - 1) * spacing)) / rows, 14f, 34f);
-
-            moldinessSummaryToastGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            moldinessSummaryToastGrid.constraintCount = columns;
-            moldinessSummaryToastGrid.cellSize = new Vector2(cellWidth, cellHeight);
-            moldinessSummaryToastGrid.spacing = new Vector2(spacing, spacing);
-            moldinessSummaryToastGrid.childAlignment = TextAnchor.UpperCenter;
-
-            var element = moldinessSummaryToastGrid.GetComponent<LayoutElement>();
-            element.minWidth = maxGridWidth;
-            element.preferredWidth = maxGridWidth;
-            element.minHeight = Mathf.Max(56f, (rows * cellHeight) + ((rows - 1) * spacing));
-            element.preferredHeight = -1f;
-        }
-
-        private static Vector2Int GetMoldinessToastGridDimensions(int threshold)
-        {
-            int safeThreshold = Mathf.Max(1, threshold);
-            int bestColumns = safeThreshold;
-            int bestRows = 1;
-            int bestAspectPenalty = int.MaxValue;
-
-            for (int columns = 1; columns <= safeThreshold; columns++)
-            {
-                if (safeThreshold % columns != 0)
-                {
-                    continue;
-                }
-
-                int rows = safeThreshold / columns;
-                int maxDimension = Mathf.Max(columns, rows);
-                int minDimension = Mathf.Min(columns, rows);
-                int aspectPenalty = maxDimension - minDimension;
-
-                if (aspectPenalty < bestAspectPenalty)
-                {
-                    bestAspectPenalty = aspectPenalty;
-                    bestColumns = maxDimension;
-                    bestRows = minDimension;
-                }
-            }
-
-            return new Vector2Int(bestColumns, bestRows);
-        }
-
-        private void ApplyMoldinessSummaryToastPattern(int progress, int threshold, int filledTileCount)
-        {
-            if (moldinessSummaryToastTiles.Count == 0)
-            {
-                return;
-            }
-
-            moldinessSummaryToastRandom ??= new System.Random(1337);
-            var orderedIndices = Enumerable.Range(0, threshold)
-                .OrderBy(index => GetToastTileSortKey(index, threshold))
-                .ThenBy(index => index)
-                .ToList();
-            var filledIndices = new HashSet<int>(orderedIndices.Take(filledTileCount));
-
-            for (int i = 0; i < moldinessSummaryToastTiles.Count; i++)
-            {
-                var tile = moldinessSummaryToastTiles[i];
-                if (tile == null)
-                {
-                    continue;
-                }
-
-                bool shouldShow = i < threshold;
-                tile.gameObject.SetActive(shouldShow);
-                if (!shouldShow)
-                {
-                    continue;
-                }
-
-                tile.color = filledIndices.Contains(i) ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelSecondary;
-            }
-        }
-
-        private static float GetToastTileSortKey(int index, int threshold)
-        {
-            int columns = GetMoldinessToastGridDimensions(threshold).x;
-            int row = index / columns;
-            int column = index % columns;
-            float centerColumn = (columns - 1) * 0.5f;
-            float columnDistance = Mathf.Abs(column - centerColumn);
-            return (row * 10f) + columnDistance + ((index * 37) % 11) * 0.01f;
         }
 
         private static int GetMoldinessRewardCategorySortOrder(MoldinessUnlockDefinition definition)
@@ -2082,7 +1910,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (!isUnlocked)
             {
                 string prerequisite = optionIndex > 0 ? options[optionIndex - 1].Label : "the prior difficulty";
-                return $"🔒 {option.Label}\n<size=68%>Clear {prerequisite} to unlock</size>";
+                return $"LOCKED • {option.Label}\n<size=68%>Clear {prerequisite} to unlock</size>";
             }
 
             bool usesRandomDrafting = option.Difficulty == CampaignDifficulty.Training
@@ -2091,7 +1919,7 @@ namespace FungusToast.Unity.UI.Campaign
             string start = option.Difficulty == CampaignDifficulty.Training
                 ? "Full campaign"
                 : $"Starts at Level {option.StartLevelDisplay}";
-            string selectedMarker = isSelected ? "✓ " : string.Empty;
+            string selectedMarker = isSelected ? "SELECTED • " : string.Empty;
             return $"{selectedMarker}{option.Label}\n<size=68%>{start}\n{drafting}</size>";
         }
 
@@ -2222,7 +2050,7 @@ namespace FungusToast.Unity.UI.Campaign
                 }
 
                 moldSelectionLabels[moldIndex].text = isSelected
-                    ? $"✓ {GetMoldDisplayName(moldIndex)}"
+                    ? $"Selected • {GetMoldDisplayName(moldIndex)}"
                     : GetMoldDisplayName(moldIndex);
             }
         }

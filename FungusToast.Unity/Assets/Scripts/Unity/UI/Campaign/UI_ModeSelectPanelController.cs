@@ -367,6 +367,7 @@ namespace FungusToast.Unity.UI.Campaign
         private void OnSettingsSoundEffectsChanged(float value)
         {
             SoundEffectsSettings.SetVolume(value);
+            SoundEffectsSettings.SetEnabled(value > 0.001f);
             RefreshSettingsAudioLabels();
         }
 
@@ -2247,13 +2248,13 @@ namespace FungusToast.Unity.UI.Campaign
             if (settingsSoundEffectsValueLabel != null)
             {
                 bool muted = !SoundEffectsSettings.Enabled || sfxVolume <= 0.001f;
-                settingsSoundEffectsValueLabel.text = $"{Mathf.RoundToInt(sfxVolume * 100f)}% {(muted ? "🔇" : "🔊")}";
+                settingsSoundEffectsValueLabel.text = muted ? "Muted" : $"{Mathf.RoundToInt(sfxVolume * 100f)}%";
             }
 
             if (settingsMusicValueLabel != null)
             {
                 bool muted = musicVolume <= 0.001f;
-                settingsMusicValueLabel.text = $"{Mathf.RoundToInt(musicVolume * 100f)}% {(muted ? "🔇" : "🔊")}";
+                settingsMusicValueLabel.text = muted ? "Muted" : $"{Mathf.RoundToInt(musicVolume * 100f)}%";
             }
         }
 

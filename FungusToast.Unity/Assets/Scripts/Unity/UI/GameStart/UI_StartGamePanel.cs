@@ -2142,8 +2142,9 @@ namespace FungusToast.Unity.UI.GameStart
 
             if (moldSelectionStatusLabel != null)
             {
-                moldSelectionStatusLabel.text = BuildMoldSelectionStatusText();
-                moldSelectionStatusLabel.color = UIStyleTokens.Player.GetByIndex(currentHumanMoldSelectionIndex);
+                string playerColor = UIStyleTokens.ToHtmlRgb(UIStyleTokens.Player.GetByIndex(currentHumanMoldSelectionIndex));
+                moldSelectionStatusLabel.text = $"<color=#{playerColor}>●</color> {BuildMoldSelectionStatusText()}";
+                moldSelectionStatusLabel.color = UIStyleTokens.Text.Primary;
                 moldSelectionStatusLabel.fontStyle = FontStyles.Bold;
             }
 
@@ -2224,7 +2225,7 @@ namespace FungusToast.Unity.UI.GameStart
                 if (moldIndex < moldSelectionLabels.Count)
                 {
                     moldSelectionLabels[moldIndex].text = isSelected
-                        ? $"✓ {GetMoldDisplayName(moldIndex)}"
+                        ? $"Selected • {GetMoldDisplayName(moldIndex)}"
                         : isTakenByOtherHuman
                             ? $"Player {owningHumanIndex + 1}"
                             : GetMoldDisplayName(moldIndex);
