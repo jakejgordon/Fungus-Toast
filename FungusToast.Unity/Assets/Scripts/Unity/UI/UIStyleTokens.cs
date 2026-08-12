@@ -57,6 +57,85 @@ namespace FungusToast.Unity.UI
             public static readonly Color MycelialSurges = Hex("#80607A");
         }
 
+        /// <summary>
+        /// Shared presentation primitives for the launch-to-game setup flow.
+        /// Screen controllers remain responsible for composition and content.
+        /// </summary>
+        public static class Startup
+        {
+            public const float ContentWidth = 760f;
+            public const float CardWidth = 620f;
+            public const float SectionSpacing = 16f;
+            public const float ControlSpacing = 12f;
+
+            public static void ApplyCard(Image card, bool elevated = false, float alpha = 0.9f)
+            {
+                if (card == null)
+                {
+                    return;
+                }
+
+                card.color = WithAlpha(elevated ? Surface.PanelSecondary : Surface.PanelPrimary, alpha);
+            }
+
+            public static void ApplyScreenHeading(TextMeshProUGUI label)
+            {
+                ApplyText(label, Text.Primary, FontStyles.Bold);
+            }
+
+            public static void ApplySectionHeading(TextMeshProUGUI label)
+            {
+                ApplyText(label, Accent.Hyphae, FontStyles.Bold);
+            }
+
+            public static void ApplySupportingCopy(TextMeshProUGUI label)
+            {
+                ApplyText(label, Text.Secondary, FontStyles.Normal);
+            }
+
+            public static void ApplyMutedCopy(TextMeshProUGUI label)
+            {
+                ApplyText(label, Text.Muted, FontStyles.Normal);
+            }
+
+            public static void ApplyChoice(
+                UnityEngine.UI.Button button,
+                bool isSelected,
+                bool isAvailable = true,
+                Image selectionOverlay = null)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                button.interactable = isAvailable;
+                var colors = Button.BuildChoiceColorBlock(isSelected);
+                button.colors = colors;
+                Button.SetButtonLabelColor(
+                    button,
+                    isAvailable ? Button.TextDefault : Button.TextDisabled);
+
+                if (selectionOverlay != null)
+                {
+                    selectionOverlay.color = WithAlpha(Accent.Lichen, Alpha.SelectionFill);
+                    selectionOverlay.enabled = isSelected;
+                    selectionOverlay.gameObject.SetActive(isSelected);
+                }
+            }
+
+            private static void ApplyText(TextMeshProUGUI label, Color color, FontStyles style)
+            {
+                if (label == null)
+                {
+                    return;
+                }
+
+                label.color = color;
+                label.fontStyle = style;
+            }
+        }
+
         public static class Button
         {
             public const float DesktopPrimaryMenuActionWidth = 500f;
@@ -85,6 +164,25 @@ namespace FungusToast.Unity.UI
                     selectedColor = BackgroundSelected,
                     disabledColor = BackgroundDisabled,
                     colorMultiplier = colorMultiplier,
+                    fadeDuration = fadeDuration
+                };
+            }
+
+            public static ColorBlock BuildChoiceColorBlock(bool useSelectedAsNormal, float fadeDuration = 0.1f)
+            {
+                Color normal = useSelectedAsNormal ? BackgroundSelected : BackgroundDefault;
+                Color hover = useSelectedAsNormal
+                    ? Color.Lerp(BackgroundSelected, Accent.Lichen, 0.32f)
+                    : BackgroundHover;
+
+                return new ColorBlock
+                {
+                    normalColor = normal,
+                    highlightedColor = hover,
+                    pressedColor = BackgroundPressed,
+                    selectedColor = BackgroundSelected,
+                    disabledColor = BackgroundDisabled,
+                    colorMultiplier = 1f,
                     fadeDuration = fadeDuration
                 };
             }
@@ -197,6 +295,60 @@ namespace FungusToast.Unity.UI
                     fadeDuration = 0.1f
                 };
 
+                SetButtonLabelColor(button, Text.Primary);
+            }
+
+            public static void ApplyStartupUtilityAction(UnityEngine.UI.Button button)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                Color normal = Color.Lerp(Surface.PanelSecondary, Accent.Hyphae, 0.08f);
+                Color hover = Color.Lerp(normal, Accent.Spore, 0.18f);
+                Color pressed = Color.Lerp(normal, Surface.PanelPrimary, 0.18f);
+
+                button.colors = new ColorBlock
+                {
+                    normalColor = normal,
+                    highlightedColor = hover,
+                    pressedColor = pressed,
+                    selectedColor = Color.Lerp(normal, Accent.Spore, 0.24f),
+                    disabledColor = WithAlpha(
+                        Color.Lerp(Surface.PanelSecondary, Surface.PanelPrimary, 0.5f),
+                        Alpha.PanelDisabled),
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
+
+                SetButtonLabelColor(button, Text.Primary);
+            }
+
+            public static void ApplyDangerMenuAction(
+                UnityEngine.UI.Button button,
+                float width = DesktopPrimaryMenuActionWidth,
+                float preferredHeight = DesktopMenuActionHeight,
+                float minHeight = MinimumMenuActionHeight)
+            {
+                if (button == null)
+                {
+                    return;
+                }
+
+                ConfigureMenuActionLayout(button, width, preferredHeight, minHeight);
+                Color normal = Color.Lerp(Surface.PanelElevated, State.Danger, 0.2f);
+                Color hover = Color.Lerp(normal, State.Danger, 0.28f);
+                button.colors = new ColorBlock
+                {
+                    normalColor = normal,
+                    highlightedColor = hover,
+                    pressedColor = Color.Lerp(Surface.PanelPrimary, State.Danger, 0.3f),
+                    selectedColor = hover,
+                    disabledColor = WithAlpha(Surface.PanelPrimary, Alpha.PanelDisabled),
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
                 SetButtonLabelColor(button, Text.Primary);
             }
 

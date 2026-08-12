@@ -1894,9 +1894,11 @@ namespace FungusToast.Unity.UI.Campaign
                 bool isSelected = isUnlocked && optionIndex == selectedCampaignStartDifficultyIndex;
                 var option = options[optionIndex];
 
-                button.interactable = isUnlocked;
-                campaignStartDifficultyHighlights[optionIndex].enabled = isSelected;
-                campaignStartDifficultyHighlights[optionIndex].gameObject.SetActive(isSelected);
+                UIStyleTokens.Startup.ApplyChoice(
+                    button,
+                    isSelected,
+                    isUnlocked,
+                    campaignStartDifficultyHighlights[optionIndex]);
                 campaignStartDifficultyLabels[optionIndex].text = isUnlocked
                     ? $"{option.Label}\n<size=70%>Level {option.StartLevelDisplay}</size>"
                     : $"{option.Label}\n<size=70%>Locked</size>";
@@ -1907,9 +1909,6 @@ namespace FungusToast.Unity.UI.Campaign
                     tooltipTrigger.SetStaticText(BuildCampaignStartDifficultyTooltipText(option, isUnlocked, isSelected));
                 }
 
-                UIStyleTokens.Button.SetButtonLabelColor(
-                    button,
-                    isUnlocked ? UIStyleTokens.Button.TextDefault : UIStyleTokens.Button.TextDisabled);
             }
         }
 

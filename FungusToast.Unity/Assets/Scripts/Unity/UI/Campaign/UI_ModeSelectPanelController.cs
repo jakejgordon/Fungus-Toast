@@ -47,8 +47,6 @@ namespace FungusToast.Unity.UI.Campaign
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
         private const float AmbientEncroachmentRevealWindowSeconds = 30f;
         private const float AmbientBackdropVignetteAlpha = 0.008f;
-        private const float CompactMenuButtonHoverBlend = 0.18f;
-        private const float CompactMenuButtonSelectedBlend = 0.24f;
         private const float OverlayCardAlpha = 0.84f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
@@ -248,29 +246,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static void ApplyModeSelectCompactButtonStyle(Button button)
         {
-            if (button == null)
-            {
-                return;
-            }
-
-            Color normal = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Hyphae, 0.08f);
-            Color highlighted = Color.Lerp(normal, UIStyleTokens.Accent.Spore, CompactMenuButtonHoverBlend);
-            Color selected = Color.Lerp(normal, UIStyleTokens.Accent.Spore, CompactMenuButtonSelectedBlend);
-            Color pressed = Color.Lerp(normal, UIStyleTokens.Surface.PanelPrimary, 0.18f);
-            Color disabled = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Surface.PanelPrimary, 0.5f), UIStyleTokens.Alpha.PanelDisabled);
-
-            button.colors = new ColorBlock
-            {
-                normalColor = normal,
-                highlightedColor = highlighted,
-                pressedColor = pressed,
-                selectedColor = selected,
-                disabledColor = disabled,
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f
-            };
-
-            UIStyleTokens.Button.SetButtonLabelColor(button, UIStyleTokens.Text.Primary);
+            UIStyleTokens.Button.ApplyStartupUtilityAction(button);
         }
 
         private void OnEnable()

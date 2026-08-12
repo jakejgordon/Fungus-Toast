@@ -23,14 +23,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         public void SetSelected(bool isSelected)
         {
-            if (highlightImage != null)
-            {
-                var selectedTint = UIStyleTokens.Button.BackgroundSelected;
-                selectedTint.a = 0.55f;
-                highlightImage.color = selectedTint;
-                highlightImage.enabled = isSelected;
-                highlightImage.gameObject.SetActive(isSelected); 
-            }
+            UIStyleTokens.Startup.ApplyChoice(button, isSelected, button == null || button.interactable, highlightImage);
         }
 
     }

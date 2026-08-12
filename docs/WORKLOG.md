@@ -34,14 +34,14 @@ Use the following minimal workflow to preserve working memory across sessions:
 
 - **Repo:** `c:/Users/jakej/FungusToast`
 - **Current focus:** Startup menu design and UX polish.
-- **Current state:** Ordered implementation plan is ready. No implementation task has started.
+- **Current state:** Task 1 is complete; Task 2 is next. Jake authorized implementation through Task 11 before consolidated Unity validation.
 - **Primary surfaces:** Main menu, custom-game setup, custom mold selection, campaign overview, new-campaign setup, settings, and credits.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 
 ### Execution Contract
 
-Give exactly one numbered task below to one agent at a time. Do not start a later task until the previous task is merged, pulled locally, and visually accepted in Unity.
+Complete exactly one numbered task at a time. Do not start a later task until the previous task is committed and synchronized. Jake authorized deferring the consolidated Unity visual walkthrough to Task 11; keep recording affected-flow checks as each slice lands.
 
 Every implementation agent must:
 
@@ -65,7 +65,9 @@ Every implementation agent must:
 
 ## Pending Tasks
 
-### 1. [ ] Establish shared startup presentation primitives
+### 1. [x] Establish shared startup presentation primitives
+
+**Completed:** Added shared startup card/text, universal choice-state, utility-action, and danger-action primitives to `UIStyleTokens`. Adopted them in main-menu utility actions, custom player-count choices, and campaign difficulty choices. Core build passed; Unity Editor validation is deferred to Task 11 because no Unity executable is available in this environment.
 
 **Goal:** Make later screen work use one visual language without prematurely redesigning an individual screen.
 
@@ -341,4 +343,4 @@ Every implementation agent must:
 
 ## Next Handoff
 
-- Assign **Task 1: Establish shared startup presentation primitives**. Later tasks should not begin until its shared API and representative adoption have been accepted in Unity.
+- Assign **Task 2: Unify the startup backdrop and main-menu composition**. Shared presentation APIs are now available in `UIStyleTokens`.
