@@ -14,6 +14,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
+using UnityMoldinessProgressionState = FungusToast.Unity.Campaign.MoldinessProgressionState;
 
 namespace FungusToast.Unity.UI.Campaign
 {
@@ -1190,7 +1191,7 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
-        private static string BuildNextMoldinessRewardPreview(MoldinessProgressionState progressionState)
+        private static string BuildNextMoldinessRewardPreview(UnityMoldinessProgressionState progressionState)
         {
             int currentUnlockLevel = Mathf.Max(0, progressionState?.unlockLevel ?? 0);
             var nextRewards = MoldinessUnlockCatalog.All
