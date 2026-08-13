@@ -1857,7 +1857,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0f));
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
 
             if (humanPlayerSectionRoot != null)
             {
