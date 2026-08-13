@@ -1237,7 +1237,8 @@ namespace FungusToast.Unity.UI.Campaign
 
         private static CanvasGroup EnsureCanvasGroup(GameObject target)
         {
-            return target.GetComponent<CanvasGroup>() ?? target.AddComponent<CanvasGroup>();
+            CanvasGroup group = target.GetComponent<CanvasGroup>();
+            return group != null ? group : target.AddComponent<CanvasGroup>();
         }
 
         private static IEnumerator FadeCanvasGroup(CanvasGroup group, float from, float to)
