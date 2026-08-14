@@ -120,6 +120,7 @@ namespace FungusToast.Unity.Phases
             }
 
             phaseCycle++;
+            GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             PlayGrowthCycleStartSound();
             bool fastPresentationMode = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
 
@@ -142,7 +143,6 @@ namespace FungusToast.Unity.Phases
             float occupancy = GameManager.Instance.Board.GetOccupiedTileRatio() * 100f;
             GameManager.Instance.GameUI.RightSidebar.SetRoundAndOccupancy(round, occupancy);
 
-            GameManager.Instance.GameUI.PhaseProgressTracker?.AdvanceToNextGrowthCycle(phaseCycle);
             GameManager.Instance.GameUI.RightSidebar?.UpdatePlayerSummaries(board.Players);
 
             yield return new WaitForSeconds(cycleDelaySeconds);

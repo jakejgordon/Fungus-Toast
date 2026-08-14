@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priority 1 is implemented and awaiting Jake's Unity visual/interaction validation. Priority 2 has not started.
+- **State:** Priority 1 is completed and visually accepted by Jake. Priority 2 is implemented in code and awaits focused Unity visual/interaction validation. Priority 3 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -38,7 +38,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 1. P1 — Mutation workspace decision flow and node clarity
 
-**Implementation status (2026-08-13):** Completed in code; Unity Editor validation remains manual.
+**Implementation status (2026-08-13):** Completed and visually accepted by Jake after the floating HUD controls were removed from the open mutation workspace.
 
 **Problem:** The tree is strategically important but reads like a partial drawer over the board. Exit behavior is represented by an ambiguous arrow, remaining-point projection uses an unexplained `current → projected` display, prerequisite relationships are difficult to scan, and large tooltips cover the nodes they explain.
 
@@ -82,6 +82,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 2. P1 — Explicit phase and growth-cycle tracker
 
+**Implementation status (2026-08-13):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** The compact `MUTATION → GROWTH [1][2][3][4][5] → DECAY` tracker makes the active growth cycle too easy to misread and does not clearly separate completed, current, and upcoming states.
 
 **Implementation intent:**
@@ -104,6 +106,16 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Static screenshots alone make Mutation, each of the five Growth cycles, Decay, and Draft unmistakable.
 - Completed cycles cannot be confused with the active cycle.
 - Tracker state remains correct during normal speed, Time-Lapse, fast-forward/testing flows, hotseat turns, and game transitions.
+
+**Implemented checkpoint:**
+
+- Growth now reports `CYCLE N OF 5` directly beneath the `GROWTH` phase label, while Mutation, Draft, and Decay retain their explicit named phase labels.
+- The five cycle segments use different text treatments as well as semantic styling: completed numbers are struck through, the current number is bracketed/emphasized, and upcoming numbers remain plain/dim.
+- Growth-cycle progress advances immediately when each cycle starts instead of after its execution and presentation delays, eliminating the observed one-cycle visual lag.
+- Existing pulse animation remains supplemental feedback rather than the only current-cycle indicator.
+- No scene or serialized-reference changes were required.
+- Core and Simulation builds passed; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: Mutation, Draft, Decay, `GROWTH / STARTING`, and cycles 1–5 at 1920x1080; sidebar fit at 1600x900 and 1280x720; normal speed, Time-Lapse, fast-forward/testing, hotseat, restart/transition paths, and Console cleanliness.
 
 ### 3. P1 — Desktop readability and interaction-target pass
 

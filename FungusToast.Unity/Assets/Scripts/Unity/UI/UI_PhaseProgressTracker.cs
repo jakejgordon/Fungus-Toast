@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FungusToast.Core.Config;
 using TMPro;
 using UnityEngine;
 
@@ -18,6 +19,7 @@ namespace FungusToast.Unity.UI
         private const float SecondaryOutlineWidth = 0.12f;
         private const float PrimaryCharacterSpacing = 2.5f;
         private const float SecondaryCharacterSpacing = 0.8f;
+        private const string GrowthPhaseText = "GROWTH";
 
         [SerializeField] private TextMeshProUGUI mutationPhaseLabel;
         [SerializeField] private TextMeshProUGUI growthPhaseLabel;
@@ -50,7 +52,7 @@ namespace FungusToast.Unity.UI
             ApplyTextScale(decayPhaseLabel, PhaseLabelScale);
 
             ConfigureSingleLineFit(mutationPhaseLabel);
-            ConfigureSingleLineFit(growthPhaseLabel);
+            ConfigureGrowthPhaseLabel();
             ConfigureSingleLineFit(decayPhaseLabel);
 
             foreach (var cycleLabel in growthCycleLabels)
@@ -108,6 +110,24 @@ namespace FungusToast.Unity.UI
             label.fontSizeMin = Mathf.Max(10f, targetSize * 0.70f);
         }
 
+        private void ConfigureGrowthPhaseLabel()
+        {
+            if (growthPhaseLabel == null)
+            {
+                return;
+            }
+
+            float targetSize = growthPhaseLabel.enableAutoSizing
+                ? growthPhaseLabel.fontSizeMax
+                : growthPhaseLabel.fontSize;
+            growthPhaseLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            growthPhaseLabel.overflowMode = TextOverflowModes.Overflow;
+            growthPhaseLabel.enableAutoSizing = true;
+            growthPhaseLabel.fontSizeMax = targetSize;
+            growthPhaseLabel.fontSizeMin = Mathf.Max(12f, targetSize * 0.70f);
+            growthPhaseLabel.alignment = TextAlignmentOptions.Center;
+        }
+
         public void ResetTracker()
         {
             ResetAllStyles();
@@ -127,14 +147,21 @@ namespace FungusToast.Unity.UI
 
             if (cycle >= 1 && cycle <= growthCycleLabels.Count)
             {
+                SetGrowthPhaseText($"{GrowthPhaseText}\nCYCLE {cycle} OF {GameBalance.TotalGrowthCycles}");
+
                 for (int i = 0; i < cycle - 1; i++)
                 {
-                    SetCompleted(growthCycleLabels[i], UIStyleTokens.State.Success);
+                    SetCompletedGrowthCycle(growthCycleLabels[i], i + 1, UIStyleTokens.State.Success);
                 }
 
                 TextMeshProUGUI activeCycleLabel = growthCycleLabels[cycle - 1];
+                activeCycleLabel.text = $"[{cycle}]";
                 HighlightPrimary(activeCycleLabel, UIStyleTokens.State.Success);
                 StartGrowthCycleAdvancePulse(activeCycleLabel);
+            }
+            else
+            {
+                SetGrowthPhaseText($"{GrowthPhaseText}\nSTARTING");
             }
         }
 
@@ -156,12 +183,17 @@ namespace FungusToast.Unity.UI
         {
             activePulseLabel = null;
             growthCycleAdvancePulseLabel = null;
+            SetGrowthPhaseText(GrowthPhaseText);
             SetDim(mutationPhaseLabel);
             SetDim(growthPhaseLabel);
             SetDim(decayPhaseLabel);
 
-            foreach (var cycleLabel in growthCycleLabels)
+            for (int i = 0; i < growthCycleLabels.Count; i++)
+            {
+                TextMeshProUGUI cycleLabel = growthCycleLabels[i];
+                cycleLabel.text = (i + 1).ToString();
                 SetDim(cycleLabel);
+            }
         }
 
 
@@ -195,16 +227,17 @@ namespace FungusToast.Unity.UI
                 enablePulse: false);
         }
 
-        private void SetCompleted(TextMeshProUGUI label, Color accentColor)
+        private void SetCompletedGrowthCycle(TextMeshProUGUI label, int cycle, Color accentColor)
         {
             if (label == null) return;
 
+            label.text = cycle.ToString();
             ApplyStyledState(
                 label,
                 WithAlpha(Blend(accentColor, UIStyleTokens.Text.Primary, 0.45f), CompletedAlpha),
                 Color.clear,
                 0f,
-                FontStyles.Bold,
+                FontStyles.Bold | FontStyles.Strikethrough,
                 1f,
                 0f,
                 enablePulse: false);
@@ -222,6 +255,17 @@ namespace FungusToast.Unity.UI
             label.extraPadding = false;
             label.rectTransform.localScale = GetBaseScale(label);
             label.ForceMeshUpdate();
+        }
+
+        private void SetGrowthPhaseText(string text)
+        {
+            if (growthPhaseLabel == null)
+            {
+                return;
+            }
+
+            growthPhaseLabel.text = text;
+            growthPhaseLabel.ForceMeshUpdate();
         }
 
         private void ApplyStyledState(
