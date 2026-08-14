@@ -17,9 +17,11 @@ namespace FungusToast.Unity.UI
             ExitGame
         }
 
-        private const float HudButtonWidth = 28f;
-        private const float HudButtonHeight = 28f;
+        private const float HudButtonWidth = UIStyleTokens.Interaction.MinimumTargetSize;
+        private const float HudButtonHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float HudButtonIconSize = 20f;
+        private const float HudButtonGap = 8f;
+        private const float HudButtonRightInset = 8f;
         private const float ActionButtonIconSize = 28f;
         private const float ActionButtonContentSpacing = 12f;
         private const float CardWidth = 420f;
@@ -269,7 +271,7 @@ namespace FungusToast.Unity.UI
             rootRect.anchorMax = new Vector2(1f, 1f);
             rootRect.pivot = new Vector2(1f, 1f);
             rootRect.sizeDelta = new Vector2(HudButtonWidth, HudButtonHeight);
-            rootRect.anchoredPosition = new Vector2(-8f, -6f);
+            rootRect.anchoredPosition = new Vector2(-HudButtonRightInset, -6f);
 
             Image background = hudButtonRoot.AddComponent<Image>();
             background.color = UIStyleTokens.Button.BackgroundDefault;
@@ -305,7 +307,9 @@ namespace FungusToast.Unity.UI
             rootRect.anchorMax = new Vector2(1f, 1f);
             rootRect.pivot = new Vector2(1f, 1f);
             rootRect.sizeDelta = new Vector2(HudButtonWidth, HudButtonHeight);
-            rootRect.anchoredPosition = new Vector2(-40f, -6f);
+            rootRect.anchoredPosition = new Vector2(
+                -(HudButtonRightInset + HudButtonWidth + HudButtonGap),
+                -6f);
 
             Image background = nextTrackHudButtonRoot.AddComponent<Image>();
             background.color = UIStyleTokens.Button.BackgroundDefault;

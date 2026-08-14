@@ -31,9 +31,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float StoreButtonMinWidth = 220f;
-        private const float StoreButtonMinHeight = 36f;
+        private const float StoreButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float PresentationSpeedButtonMinWidth = 220f;
-        private const float PresentationSpeedButtonMinHeight = 36f;
+        private const float PresentationSpeedButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float HeaderControlsHeight = 40f;
         private const float HeaderControlsHorizontalInset = 16f;
         private const float HeaderControlsSpacing = 12f;

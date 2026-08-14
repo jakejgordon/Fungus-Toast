@@ -120,6 +120,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 3. P1 — Desktop readability and interaction-target pass
 
+**Implementation status (2026-08-14):** In progress. Slice 1 (shared readability/interaction tokens and compact HUD utilities) is complete in code; Unity Editor validation remains manual.
+
 **Problem:** Several HUD labels, log controls, badges, mutation indicators, legend icons, adaptation icons, and compact utilities are difficult to read or target at 1920x1080.
 
 **Implementation intent:**
@@ -144,6 +146,15 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Targeted controls and essential labels are comfortably readable/clickable at 1920x1080 without clipping or overlap.
 - Shared layout remains usable at 1600x900 and 1280x720.
 - No active control visually resembles a disabled control.
+
+**Implemented checkpoint:**
+
+- Added shared `UIStyleTokens` primitives for the 14px micro-text floor and 36x36 minimum / 40x40 preferred desktop interaction targets.
+- Increased the floating pause-menu and next-track HUD controls from 28x28 to 36x36, preserving their 20px visible icons and standard hover/pressed styling.
+- Repositioned the adjacent HUD controls to retain an 8px gap at the larger target size.
+- Routed Store Mutation Points and Time-Lapse minimum heights through the shared 36px interaction token without changing their current labels, state behavior, or header composition.
+- `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: pause and next-track target placement/hover/click behavior at 1920x1080, 1600x900, and 1280x720; mutation workspace header fit and Store/Time-Lapse hover/pressed states at the same resolutions; repeated mutation-workspace open/close; Console cleanliness.
 
 ### 4. P1 — Progressive board-inspection tooltip
 

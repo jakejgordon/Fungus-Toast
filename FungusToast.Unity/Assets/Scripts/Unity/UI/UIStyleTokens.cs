@@ -39,6 +39,17 @@ namespace FungusToast.Unity.UI
             public static readonly Color OnAccent = Hex("#1B2117");
         }
 
+        public static class Typography
+        {
+            public const float MicroMinimum = 14f;
+        }
+
+        public static class Interaction
+        {
+            public const float MinimumTargetSize = 36f;
+            public const float PreferredTargetSize = 40f;
+        }
+
         public static class State
         {
             public static readonly Color Success = Hex("#A9CC63");
