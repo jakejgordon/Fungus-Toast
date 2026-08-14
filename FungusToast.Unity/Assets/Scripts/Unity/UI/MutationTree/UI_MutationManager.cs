@@ -168,6 +168,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (mutationTreePanel != null)
             {
                 CacheMutationPanelLayoutReferences();
+                ApplyPanelTheme();
             }
             else
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
