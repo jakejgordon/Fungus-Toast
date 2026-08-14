@@ -1159,7 +1159,7 @@ namespace FungusToast.Unity
             if (!suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(growthPhaseStartClip, growthPhaseStartVolume);
-                gameUIManager.PhaseBanner.Show("Growth Phase Begins!",2f);
+                gameUIManager.PhaseBanner.ShowRoutinePhase("Growth");
             }
             phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
@@ -1263,7 +1263,7 @@ namespace FungusToast.Unity
             if (!suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(decayPhaseStartClip, decayPhaseStartVolume);
-                gameUIManager.PhaseBanner.Show("Decay Phase Begins!",2f);
+                gameUIManager.PhaseBanner.ShowRoutinePhase("Decay");
             }
             phaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(
@@ -1403,7 +1403,7 @@ namespace FungusToast.Unity
             if (!suppressIntroFeedback)
             {
                 soundEffectService?.PlayOneShot(mutationPhaseStartClip, mutationPhaseStartVolume);
-                gameUIManager.PhaseBanner.Show("Mutation Phase Begins!", 2f);
+                gameUIManager.PhaseBanner.ShowRoutinePhase("Mutation");
             }
             if (specialEventPresentationService != null && specialEventPresentationService.HasPendingImmediateEvents)
             {

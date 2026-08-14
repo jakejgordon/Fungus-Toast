@@ -8,6 +8,9 @@ namespace FungusToast.Unity.UI
     public class UI_PhaseBanner : MonoBehaviour
     {
         private const float StandardFadeDuration = 0.5f;
+        private const float RoutinePhaseHoldDuration = 0.45f;
+        private const float RoutinePhaseFadeInDuration = 0.14f;
+        private const float RoutinePhaseFadeOutDuration = 0.18f;
         private const float CampaignIntroFadeInDuration = 0.16f;
         private const float CampaignIntroSettleDuration = 0.08f;
         private const float CampaignIntroFadeOutDuration = 0.2f;
@@ -113,6 +116,36 @@ namespace FungusToast.Unity.UI
 
         public void Show(string text, float duration = 2f)
         {
+            ShowTransient(text, duration, StandardFadeDuration, StandardFadeDuration);
+        }
+
+        /// <summary>
+        /// Brief acknowledgement for normal phase transitions. The persistent phase tracker
+        /// remains the source of detailed phase and cycle information.
+        /// </summary>
+        public void ShowRoutinePhase(string phaseName)
+        {
+            string label = phaseName?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(label))
+            {
+                return;
+            }
+
+            if (isCampaignIntroPlaying)
+            {
+                Show(label, RoutinePhaseHoldDuration);
+                return;
+            }
+
+            ShowTransient(
+                label.ToUpperInvariant(),
+                RoutinePhaseHoldDuration,
+                RoutinePhaseFadeInDuration,
+                RoutinePhaseFadeOutDuration);
+        }
+
+        private void ShowTransient(string text, float duration, float fadeInDuration, float fadeOutDuration)
+        {
             if (isCampaignIntroPlaying)
             {
                 pendingBannerText = text ?? string.Empty;
@@ -121,10 +154,10 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            bannerText.text = text;
+            bannerText.text = text ?? string.Empty;
             StopAllCoroutines();
             ResetBannerTransform();
-            StartCoroutine(FadeInOut(duration));
+            StartCoroutine(FadeInOut(duration, fadeInDuration, fadeOutDuration));
         }
 
         public void ShowStyledIntro(string overline, string title, float holdDuration = CampaignIntroHoldDuration)
@@ -214,14 +247,14 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private IEnumerator FadeInOut(float duration)
+        private IEnumerator FadeInOut(float duration, float fadeInDuration, float fadeOutDuration)
         {
             canvasGroup.alpha = 0f;
 
             // Fade in
-            for (float t = 0; t < StandardFadeDuration; t += Time.deltaTime)
+            for (float t = 0; t < fadeInDuration; t += Time.deltaTime)
             {
-                canvasGroup.alpha = t / StandardFadeDuration;
+                canvasGroup.alpha = t / fadeInDuration;
                 yield return null;
             }
             canvasGroup.alpha = 1f;
@@ -229,9 +262,9 @@ namespace FungusToast.Unity.UI
             yield return new WaitForSeconds(duration);
 
             // Fade out
-            for (float t = 0; t < StandardFadeDuration; t += Time.deltaTime)
+            for (float t = 0; t < fadeOutDuration; t += Time.deltaTime)
             {
-                canvasGroup.alpha = 1f - (t / StandardFadeDuration);
+                canvasGroup.alpha = 1f - (t / fadeOutDuration);
                 yield return null;
             }
             canvasGroup.alpha = 0f;

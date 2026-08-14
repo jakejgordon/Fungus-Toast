@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priorities 1–8 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–8 await focused Unity visual/interaction validation. Priority 9 has not started.
+- **State:** Priorities 1–9 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–9 await focused Unity visual/interaction validation. The gameplay UX audit implementation queue is complete.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -365,6 +365,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 9. P3 — Phase-banner restraint and sidebar surface cohesion
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** Routine phase banners can obscure the board and duplicate the tracker, while the two sidebars still contain inconsistent surface treatments.
 
 **Implementation intent:**
@@ -385,6 +387,15 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Routine phase changes are noticeable but do not repeatedly cover important play information.
 - Major-event banners retain appropriate emphasis.
 - Both sidebars read as one visual system without losing semantic player/event accents.
+
+**Implemented checkpoint:**
+
+- Added a dedicated routine-phase banner path: Mutation, Growth, and Decay now show concise uppercase phase labels for roughly 0.77 seconds total (0.14s in, 0.45s hold, 0.18s out) rather than the previous `Phase Begins!` copy held for roughly three seconds with standard fades.
+- Kept the persistent phase tracker as the detailed source for current phase and growth-cycle progress; routine banners remain acknowledgement only.
+- Preserved the standard longer banner treatment for game start, campaign introductions, Mycovariant Draft, testing, endgame, special interruptions, and consequential event/ability presentation.
+- Aligned the right sidebar to the shared surface hierarchy used by the left sidebar: `PanelPrimary` root with the player-summary section on `PanelSecondary`; existing log and semantic player/event accents remain unchanged.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: normal Mutation/Growth/Decay transitions at 1920x1080 and 1600x900/1280x720; all five growth cycles/tracker states; Time-Lapse and fast-forward suppression; hotseat handoff; draft/game-start/endgame/special-event banner emphasis; banner overlap with active cells, tooltips, mutation workspace, and pause menu; both sidebar/log surface hierarchy; restart/transition paths; and Console cleanliness.
 
 ## Cross-Slice Validation Matrix
 

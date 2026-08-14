@@ -296,6 +296,8 @@ Notes:
 - Left and right sidebars should share the same surface hierarchy.
 - Round/phase/occupancy text should use consistent emphasis weights.
 - Avoid introducing unique per-widget colors unless semantic.
+- The persistent phase tracker is the source of detail for normal Mutation, Growth, and Decay transitions. Routine phase banners should use concise phase-only copy and brief acknowledgement timing; do not repeat instructions the tracker already communicates.
+- Keep the standard banner treatment for game start, drafts, endgame, special interruptions, and consequential ability/event presentation. These are exceptions because they introduce a decision, a distinct event outcome, or a major context switch.
 
 ### 6.2.1 Board Visual Priority
 
