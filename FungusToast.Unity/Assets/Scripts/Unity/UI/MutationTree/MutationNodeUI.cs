@@ -18,6 +18,10 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
+        private const int NodeTextTopPadding = 42;
+        private const int NodeTextBottomPadding = 4;
+        private const float NodeTextSpacing = 2f;
+        private const float NodeStateTextHeight = 32f;
         private const float MaxBadgeWidth = 44f;
         private const float MaxBadgeHeight = 20f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
@@ -343,13 +347,16 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             string level = $"L{currentLevel}/{mutation.MaxLevel}";
 
-            if (isMaxed) return $"MAX · {level}";
-            if (isSurgeActive) return $"ACTIVE {surgeTurns}R · {level}";
-            if (showPendingUnlock) return $"NEXT ROUND · {level}";
-            if (isLocked) return $"LOCKED · {level}";
-            if (isDisabledBecauseNoEffect) return $"NO TARGET · {level}";
-            if (canAfford) return currentLevel > 0 ? $"READY · {level}" : $"AVAILABLE · {level}";
-            return currentLevel > 0 ? $"OWNED · {level}" : $"NEED POINTS · {level}";
+            // The node's top lane is reserved for the lock/status and DNA-cost
+            // indicators. Keep the compact state and the level on separate lines
+            // so a max level is never clipped on narrow cards.
+            if (isMaxed) return $"MAX\n{level}";
+            if (isSurgeActive) return $"ACTIVE {surgeTurns}R\n{level}";
+            if (showPendingUnlock) return $"NEXT ROUND\n{level}";
+            if (isLocked) return $"LOCKED\n{level}";
+            if (isDisabledBecauseNoEffect) return $"NO TARGET\n{level}";
+            if (canAfford) return currentLevel > 0 ? $"READY\n{level}" : $"AVAILABLE\n{level}";
+            return currentLevel > 0 ? $"OWNED\n{level}" : $"NEED POINTS\n{level}";
         }
 
         private void ApplyNodeStateBorder(
@@ -1562,20 +1569,25 @@ namespace FungusToast.Unity.UI.MutationTree
             var textContainer = mutationNameText.transform.parent as RectTransform;
             if (textContainer != null)
             {
-                var anchorMin = textContainer.anchorMin;
-                var anchorMax = textContainer.anchorMax;
-                anchorMin.x = 0f;
-                anchorMax.x = 1f;
-                textContainer.anchorMin = anchorMin;
-                textContainer.anchorMax = anchorMax;
-                textContainer.offsetMin = new Vector2(MutationNameHorizontalPadding, textContainer.offsetMin.y);
-                textContainer.offsetMax = new Vector2(-MutationNameHorizontalPadding, textContainer.offsetMax.y);
+                textContainer.anchorMin = Vector2.zero;
+                textContainer.anchorMax = Vector2.one;
+                textContainer.offsetMin = new Vector2(MutationNameHorizontalPadding, NodeTextBottomPadding);
+                textContainer.offsetMax = new Vector2(-MutationNameHorizontalPadding, -NodeTextTopPadding);
+
+                var layoutGroup = textContainer.GetComponent<VerticalLayoutGroup>();
+                if (layoutGroup != null)
+                {
+                    layoutGroup.padding.top = 0;
+                    layoutGroup.padding.bottom = 0;
+                    layoutGroup.spacing = NodeTextSpacing;
+                    layoutGroup.childForceExpandHeight = false;
+                }
 
                 var fitter = textContainer.GetComponent<ContentSizeFitter>();
                 if (fitter != null)
                 {
                     fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-                    fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+                    fitter.verticalFit = ContentSizeFitter.FitMode.Unconstrained;
                 }
             }
 
@@ -1594,11 +1606,18 @@ namespace FungusToast.Unity.UI.MutationTree
 
             float targetSize = Mathf.Max(levelText.fontSize, UIStyleTokens.Typography.CaptionMinimum);
             levelText.enableAutoSizing = true;
-            levelText.textWrappingMode = TextWrappingModes.NoWrap;
-            levelText.overflowMode = TextOverflowModes.Truncate;
+            levelText.textWrappingMode = TextWrappingModes.Normal;
+            levelText.overflowMode = TextOverflowModes.Overflow;
             levelText.fontSizeMax = targetSize;
             levelText.fontSizeMin = Mathf.Min(targetSize, UIStyleTokens.Typography.MicroMinimum);
             levelText.fontStyle = FontStyles.Bold;
+
+            var stateLayout = levelText.GetComponent<LayoutElement>();
+            if (stateLayout == null)
+                stateLayout = levelText.gameObject.AddComponent<LayoutElement>();
+            stateLayout.minHeight = NodeStateTextHeight;
+            stateLayout.preferredHeight = NodeStateTextHeight;
+            stateLayout.flexibleHeight = 0f;
         }
 
         private static void ConfigureStatusIndicator(GameObject indicator)
