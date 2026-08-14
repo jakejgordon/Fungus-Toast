@@ -74,7 +74,7 @@ namespace FungusToast.Unity.UI
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const float StatsRootHeight = 44f;
-        private const float GrowthPreviewPreferredHeight = 500f;
+        private const float GrowthPreviewPreferredHeight = 364f;
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float RandomDecayChanceIconSize = 24f;
@@ -538,6 +538,7 @@ namespace FungusToast.Unity.UI
             {
                 randomDecayChanceText = CreateRandomDecayChanceText(randomDecayChanceRoot);
             }
+            EnsureRandomDecayChanceTextFont();
 
             randomDecayChanceIcon = randomDecayChanceRoot.Find("DeathIcon")?.GetComponent<Image>();
             if (randomDecayChanceIcon == null)
@@ -851,6 +852,9 @@ namespace FungusToast.Unity.UI
             background.raycastTarget = false;
 
             randomDecayChanceText.color = UIStyleTokens.Text.Primary;
+            randomDecayChanceText.enabled = true;
+            randomDecayChanceText.gameObject.SetActive(true);
+            EnsureRandomDecayChanceTextFont();
             randomDecayChanceText.fontStyle = FontStyles.Normal;
             randomDecayChanceText.enableAutoSizing = false;
             randomDecayChanceText.fontSizeMin = RandomDecayChanceFontSize;
@@ -1229,7 +1233,7 @@ namespace FungusToast.Unity.UI
 
         private static TextMeshProUGUI CreateRandomDecayChanceText(RectTransform parent)
         {
-            var textObject = new GameObject(RandomDecayChanceTextName, typeof(RectTransform), typeof(TextMeshProUGUI));
+            var textObject = new GameObject(RandomDecayChanceTextName, typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             textObject.transform.SetParent(parent, false);
 
             var rect = textObject.GetComponent<RectTransform>();
@@ -1245,6 +1249,26 @@ namespace FungusToast.Unity.UI
             text.text = string.Empty;
 
             return text;
+        }
+
+        private void EnsureRandomDecayChanceTextFont()
+        {
+            if (randomDecayChanceText == null || randomDecayChanceText.font != null)
+            {
+                return;
+            }
+
+            var labels = GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                if (labels[i] != randomDecayChanceText && labels[i].font != null)
+                {
+                    randomDecayChanceText.font = labels[i].font;
+                    return;
+                }
+            }
+
+            randomDecayChanceText.font = TMP_Settings.defaultFontAsset;
         }
 
         private static Image CreateRandomDecayChanceIcon(RectTransform parent)
