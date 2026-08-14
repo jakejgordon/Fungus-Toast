@@ -15,6 +15,9 @@ namespace FungusToast.Unity.UI
     {
         private const float StatTextScale = 1.05f;
         private const float StatColumnWidth = 90f;
+        private const float YouBadgeWidth = 44f;
+        private const float YouBadgeHeight = 20f;
+        private static readonly Vector2 YouBadgeOffset = new Vector2(4f, -2f);
         private static readonly Color InactiveRowBackground = UIStyleTokens.WithAlpha(
             UIStyleTokens.Surface.PanelPrimary,
             UIStyleTokens.Alpha.InactivePanel);
@@ -151,15 +154,21 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            var badgeObject = new GameObject("UI_YouBadge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            var badgeObject = new GameObject(
+                "UI_YouBadge",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Outline),
+                typeof(LayoutElement));
             badgeObject.transform.SetParent(moldIconImage.transform, false);
 
             var badgeRect = badgeObject.GetComponent<RectTransform>();
             badgeRect.anchorMin = new Vector2(1f, 1f);
             badgeRect.anchorMax = new Vector2(1f, 1f);
             badgeRect.pivot = new Vector2(1f, 1f);
-            badgeRect.anchoredPosition = new Vector2(2f, -2f);
-            badgeRect.sizeDelta = new Vector2(30f, 14f);
+            badgeRect.anchoredPosition = YouBadgeOffset;
+            badgeRect.sizeDelta = new Vector2(YouBadgeWidth, YouBadgeHeight);
 
             var badgeLayout = badgeObject.GetComponent<LayoutElement>();
             badgeLayout.ignoreLayout = true;
@@ -167,6 +176,11 @@ namespace FungusToast.Unity.UI
             var badgeBackground = badgeObject.GetComponent<Image>();
             badgeBackground.raycastTarget = false;
             badgeBackground.color = UIStyleTokens.Accent.Lichen;
+
+            var badgeOutline = badgeObject.GetComponent<Outline>();
+            badgeOutline.effectColor = UIStyleTokens.Surface.PanelPrimary;
+            badgeOutline.effectDistance = new Vector2(1f, -1f);
+            badgeOutline.useGraphicAlpha = true;
 
             var badgeTextObject = new GameObject("UI_YouBadgeText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             badgeTextObject.transform.SetParent(badgeObject.transform, false);
@@ -182,11 +196,12 @@ namespace FungusToast.Unity.UI
             badgeText.color = UIStyleTokens.Text.OnAccent;
             badgeText.alignment = TextAlignmentOptions.Center;
             badgeText.fontStyle = FontStyles.Bold;
-            badgeText.enableAutoSizing = true;
-            badgeText.fontSizeMin = 7f;
-            badgeText.fontSizeMax = 11f;
+            badgeText.enableAutoSizing = false;
+            badgeText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            badgeText.margin = new Vector4(4f, 0f, 4f, 0f);
             badgeText.textWrappingMode = TextWrappingModes.NoWrap;
-            badgeText.overflowMode = TextOverflowModes.Truncate;
+            badgeText.overflowMode = TextOverflowModes.Ellipsis;
+            badgeText.raycastTarget = false;
 
             if (livingCellsText != null)
             {

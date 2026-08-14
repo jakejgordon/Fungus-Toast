@@ -120,7 +120,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 3. P1 — Desktop readability and interaction-target pass
 
-**Implementation status (2026-08-14):** In progress. Slices 1–2 (shared tokens/compact HUD utilities and activity-log readability) are complete in code; Unity Editor validation remains manual.
+**Implementation status (2026-08-14):** In progress. Slices 1–3 (shared tokens/compact HUD utilities, activity-log readability, and the human-player marker) are complete in code; Unity Editor validation remains manual.
 
 **Problem:** Several HUD labels, log controls, badges, mutation indicators, legend icons, adaptation icons, and compact utilities are difficult to read or target at 1920x1080.
 
@@ -157,8 +157,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Increased pooled log messages from 14px to 16px and round tags from 10px to the shared 14px micro-text floor.
 - Increased the pooled entry baseline from 24px to 32px and expanded the round-tag rect/reserved space so larger tags do not collide with wrapped messages.
 - Kept entry height calculation, category colors, pooling, filtering, caps, fade-in, and automatic scrolling behavior unchanged.
+- Increased the runtime `YOU` marker from a 30x14 chip with 7–11px autosizing to a 44x20 chip with fixed 14px bold text.
+- Added a dark token-based outline so the `YOU` chip stays distinct over varied mold sprites, while retaining the existing text label and left accent strip so identity does not rely on color alone.
+- Disabled raycasts on the chip visuals so the underlying mold-icon hover highlight and pinned player tooltip remain accessible.
+- Preserved score-based row ordering, stat columns, row sizing, perspective switching, and scoreboard data flow; rank and broader identity work remain scoped to item 7.
 - `git diff --check` passed. Unity Editor was unavailable in this environment.
-- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
+- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; the `YOU` chip with 1–8 players, score reordering, hotseat perspective changes, high stat counts, mold-icon hover/pinning, and restart; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
 
 ### 4. P1 — Progressive board-inspection tooltip
 
