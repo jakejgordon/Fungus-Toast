@@ -120,7 +120,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 3. P1 — Desktop readability and interaction-target pass
 
-**Implementation status (2026-08-14):** In progress. Slices 1–3 (shared tokens/compact HUD utilities, activity-log readability, and the human-player marker) are complete in code; Unity Editor validation remains manual.
+**Implementation status (2026-08-14):** In progress. Slices 1–4 (shared tokens/compact HUD utilities, activity-log readability, the human-player marker, and mutation-node compact indicators) are complete in code; Unity Editor validation remains manual.
 
 **Problem:** Several HUD labels, log controls, badges, mutation indicators, legend icons, adaptation icons, and compact utilities are difficult to read or target at 1920x1080.
 
@@ -161,8 +161,14 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Added a dark token-based outline so the `YOU` chip stays distinct over varied mold sprites, while retaining the existing text label and left accent strip so identity does not rely on color alone.
 - Disabled raycasts on the chip visuals so the underlying mold-icon hover highlight and pinned player tooltip remain accessible.
 - Preserved score-based row ordering, stat columns, row sizing, perspective switching, and scoreboard data flow; rank and broader identity work remain scoped to item 7.
+- Raised mutation-name and node-state autosizing floors to the shared 14px micro-text minimum and capped mutation names at their authored 18px size instead of the legacy 72px TMP maximum.
+- Increased the DNA-cost treatment to a 36px-high group with a 28px icon and fixed 16px bold cost text; retained content-driven width for multi-digit costs.
+- Increased lock, pending-unlock, and active-surge indicators from 32x32 to 36x36 and moved them to a shared upper-left lane so they remain separate from the upper-right DNA cost.
+- Increased the runtime `MAX` badge from 36x16 with 10px text to 44x20 with fixed 14px text and the node's existing font.
+- Disabled raycasts on status and `MAX` graphics so mutation-node hover, tooltip, relationship highlighting, and button ownership remain intact.
+- Preserved mutation costs, availability, prerequisite timing, purchase behavior, state text, and category/state colors.
 - `git diff --check` passed. Unity Editor was unavailable in this environment.
-- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; the `YOU` chip with 1–8 players, score reordering, hotseat perspective changes, high stat counts, mold-icon hover/pinning, and restart; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
+- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; the `YOU` chip with 1–8 players, score reordering, hotseat perspective changes, high stat counts, mold-icon hover/pinning, and restart; every mutation-node state and long/multi-line name; one- and multi-digit DNA costs; node hover/path highlighting and purchases; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
 
 ### 4. P1 — Progressive board-inspection tooltip
 

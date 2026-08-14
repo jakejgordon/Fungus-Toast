@@ -16,8 +16,11 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ITooltipContentProvider
     {
-        private const float MutationNameMinimumFontSize = 10f;
+        private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
+        private const float MaxBadgeWidth = 44f;
+        private const float MaxBadgeHeight = 20f;
+        private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
         private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
@@ -26,10 +29,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
-        private const float UpgradeCostIconWidth = 24f;
+        private const float UpgradeCostIconWidth = 28f;
         private const float UpgradeCostPaddingH = 4f;   // 2 left + 2 right in HorizontalLayoutGroup
         private const float UpgradeCostSpacing = 2f;
-        private const float UpgradeCostMinTextWidth = 15f;
+        private const float UpgradeCostMinTextWidth = 20f;
 
         [Header("UI References")]
         [SerializeField] private Button upgradeButton;
@@ -94,6 +97,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
             ConfigureMutationNameFit();
             ConfigureStateTextFit();
+            ConfigureStatusIndicator(lockOverlay);
+            ConfigureStatusIndicator(pendingUnlockOverlay);
+            ConfigureStatusIndicator(surgeActiveOverlay);
             mutationNameText.text = mutation.Name;
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
@@ -1450,6 +1456,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var badgeBG = badgeGO.AddComponent<Image>();
             badgeBG.color = new Color(MutationTreeColors.MaxedGold.r, MutationTreeColors.MaxedGold.g, MutationTreeColors.MaxedGold.b, 0.9f);
+            badgeBG.raycastTarget = false;
 
             var badgeRect = badgeGO.GetComponent<RectTransform>();
             // Bottom-center of the card, just above the progress bar
@@ -1457,16 +1464,19 @@ namespace FungusToast.Unity.UI.MutationTree
             badgeRect.anchorMax = new Vector2(0.5f, 0);
             badgeRect.pivot = new Vector2(0.5f, 0);
             badgeRect.anchoredPosition = new Vector2(0, 8);
-            badgeRect.sizeDelta = new Vector2(36, 16);
+            badgeRect.sizeDelta = new Vector2(MaxBadgeWidth, MaxBadgeHeight);
 
             var textGO = new GameObject("MaxText");
             textGO.transform.SetParent(badgeGO.transform, false);
             var maxText = textGO.AddComponent<TextMeshProUGUI>();
             maxText.text = "MAX";
-            maxText.fontSize = 10;
+            maxText.fontSize = UIStyleTokens.Typography.MicroMinimum;
             maxText.fontStyle = FontStyles.Bold;
             maxText.color = UIStyleTokens.Text.OnAccent;
             maxText.alignment = TextAlignmentOptions.Center;
+            maxText.raycastTarget = false;
+            if (levelText != null)
+                maxText.font = levelText.font;
             var textRect = textGO.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -1487,6 +1497,9 @@ namespace FungusToast.Unity.UI.MutationTree
             if (upgradeCostText == null || upgradeCostGroup == null) return;
 
             var groupRect = (RectTransform)upgradeCostGroup.transform;
+            groupRect.sizeDelta = new Vector2(
+                groupRect.sizeDelta.x,
+                Mathf.Max(groupRect.sizeDelta.y, UIStyleTokens.Interaction.MinimumTargetSize));
 
             // Turn on childControlWidth so the layout group sizes each child
             // to its preferred width (TMP text reports actual text width,
@@ -1494,8 +1507,14 @@ namespace FungusToast.Unity.UI.MutationTree
             var layoutGroup = upgradeCostGroup.GetComponent<HorizontalLayoutGroup>();
             if (layoutGroup != null)
             {
+                int horizontalPadding = Mathf.RoundToInt(UpgradeCostPaddingH * 0.5f);
+                layoutGroup.padding.left = horizontalPadding;
+                layoutGroup.padding.right = horizontalPadding;
+                layoutGroup.spacing = UpgradeCostSpacing;
                 layoutGroup.childControlWidth = true;
+                layoutGroup.childControlHeight = true;
                 layoutGroup.childForceExpandWidth = false;
+                layoutGroup.childForceExpandHeight = false;
             }
 
             // Pin the icon to a fixed width via LayoutElement so the layout
@@ -1508,7 +1527,23 @@ namespace FungusToast.Unity.UI.MutationTree
                     iconLayout = iconTransform.gameObject.AddComponent<LayoutElement>();
                 iconLayout.preferredWidth = UpgradeCostIconWidth;
                 iconLayout.minWidth = UpgradeCostIconWidth;
+                iconLayout.preferredHeight = UpgradeCostIconWidth;
+                iconLayout.minHeight = UpgradeCostIconWidth;
             }
+
+            upgradeCostText.fontSize = UIStyleTokens.Typography.CaptionMinimum;
+            upgradeCostText.fontStyle = FontStyles.Bold;
+            upgradeCostText.enableAutoSizing = false;
+            upgradeCostText.textWrappingMode = TextWrappingModes.NoWrap;
+            upgradeCostText.raycastTarget = false;
+
+            var textLayout = upgradeCostText.GetComponent<LayoutElement>();
+            if (textLayout == null)
+                textLayout = upgradeCostText.gameObject.AddComponent<LayoutElement>();
+            textLayout.minWidth = UpgradeCostMinTextWidth;
+            textLayout.preferredWidth = Mathf.Max(UpgradeCostMinTextWidth, upgradeCostText.preferredWidth);
+            textLayout.minHeight = UpgradeCostIconWidth;
+            textLayout.preferredHeight = UpgradeCostIconWidth;
 
             // Auto-size the group container to fit icon + spacing + text + padding.
             var fitter = upgradeCostGroup.GetComponent<ContentSizeFitter>();
@@ -1544,7 +1579,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
-            float targetSize = mutationNameText.enableAutoSizing ? mutationNameText.fontSizeMax : mutationNameText.fontSize;
+            float targetSize = Mathf.Max(mutationNameText.fontSize, UIStyleTokens.Typography.CaptionMinimum);
             mutationNameText.enableAutoSizing = true;
             mutationNameText.textWrappingMode = TextWrappingModes.Normal;
             mutationNameText.overflowMode = TextOverflowModes.Truncate;
@@ -1557,13 +1592,31 @@ namespace FungusToast.Unity.UI.MutationTree
             if (levelText == null)
                 return;
 
-            float targetSize = levelText.enableAutoSizing ? levelText.fontSizeMax : levelText.fontSize;
+            float targetSize = Mathf.Max(levelText.fontSize, UIStyleTokens.Typography.CaptionMinimum);
             levelText.enableAutoSizing = true;
             levelText.textWrappingMode = TextWrappingModes.NoWrap;
             levelText.overflowMode = TextOverflowModes.Truncate;
             levelText.fontSizeMax = targetSize;
-            levelText.fontSizeMin = Mathf.Min(targetSize, 11f);
+            levelText.fontSizeMin = Mathf.Min(targetSize, UIStyleTokens.Typography.MicroMinimum);
             levelText.fontStyle = FontStyles.Bold;
+        }
+
+        private static void ConfigureStatusIndicator(GameObject indicator)
+        {
+            if (indicator == null)
+                return;
+
+            if (indicator.transform is RectTransform indicatorRect)
+            {
+                indicatorRect.anchoredPosition = StatusIndicatorOffset;
+                indicatorRect.sizeDelta = Vector2.one * UIStyleTokens.Interaction.MinimumTargetSize;
+            }
+
+            var graphics = indicator.GetComponentsInChildren<Graphic>(true);
+            for (int i = 0; i < graphics.Length; i++)
+            {
+                graphics[i].raycastTarget = false;
+            }
         }
 
         private static string ToHex(Color color)
