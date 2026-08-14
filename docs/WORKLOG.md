@@ -77,6 +77,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Hover now distinguishes the inspected node, all of its prerequisites, and its direct dependents at the same time.
 - Increased mutation-tooltip width to reduce excessive height while retaining automatic on-screen placement.
 - Hide the floating next-track and pause-menu HUD controls while the full-screen mutation workspace is open, then restore them when it closes, so they cannot overlap `Return to Board`.
+- Follow-up fix (2026-08-14): apply the mutation panel's dark theme during `Awake`, before its first responsive layout pass, so the default white scroll-surface styling cannot flash or leave a visible seam above the category columns.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed.
 - Manual Unity checks still required: full-canvas composition at 1920x1080/1600x900/1280x720; every node state; tooltip/path visibility at all columns and screen edges; repeated open/close; purchases to zero; banking; targeted selection; Time-Lapse; hotseat handoff; game restart; Console cleanliness.
 
