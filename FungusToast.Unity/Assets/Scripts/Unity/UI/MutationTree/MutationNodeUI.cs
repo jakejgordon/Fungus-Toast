@@ -67,6 +67,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         [Header("Enhanced UX — MAX Badge")]
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
+        private Outline nodeStateBorder;
 
         private Mutation mutation;
         private UI_MutationManager uiManager;
@@ -92,6 +93,7 @@ namespace FungusToast.Unity.UI.MutationTree
             this.uiManager = uiManager;
 
             ConfigureMutationNameFit();
+            ConfigureStateTextFit();
             mutationNameText.text = mutation.Name;
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
@@ -135,6 +137,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 trigger = gameObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(this);
             trigger.SetAutoPlacementOffsetX(60f);
+            trigger.SetMaxWidth(520);
         }
 
         /// <summary>
@@ -171,9 +174,6 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             bool isMaxed = currentLevel >= mutation.MaxLevel;
 
-            // Level text — clean display (MAX badge handles maxed state separately)
-            levelText.text = $"Level {currentLevel}/{mutation.MaxLevel}";
-
             // SURGE LOGIC
             bool isSurge = mutation.IsSurge;
             bool isSurgeActive = isSurge && player.IsSurgeActive(mutation.Id);
@@ -201,6 +201,15 @@ namespace FungusToast.Unity.UI.MutationTree
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, isMaxed);
+            levelText.text = BuildNodeStateText(
+                currentLevel,
+                isLocked,
+                isMaxed,
+                canAfford,
+                isSurgeActive,
+                surgeTurns,
+                showPendingUnlock,
+                isDisabledBecauseNoEffect);
             lockOverlay.SetActive(isLocked && !isSurgeActive && !showPendingUnlock && !isDisabledBecauseNoEffect);
             if (pendingUnlockOverlay != null)
                 pendingUnlockOverlay.SetActive(showPendingUnlock);
@@ -208,7 +217,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 pendingUnlockText.text = "1";
 
             if (canvasGroup != null)
-                canvasGroup.alpha = (isLocked || isSurgeActive || showPendingUnlock) ? 0.5f : isDisabledBecauseNoEffect ? 0.8f : 1f;
+                canvasGroup.alpha = isLocked ? 0.72f : (isSurgeActive || showPendingUnlock) ? 0.82f : isDisabledBecauseNoEffect ? 0.88f : 1f;
 
             // Surge overlay (shows when surge is active)
             if (surgeActiveOverlay != null)
@@ -230,15 +239,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     upgradeCostGroup.SetActive(false);
                 }
-                else if (upgradeCost > 1)
-                {
-                    upgradeCostGroup.SetActive(true);
-                    upgradeCostText.text = $"x{upgradeCost}";
-                    ConfigureUpgradeCostBadge();
-                }
                 else
                 {
-                    upgradeCostGroup.SetActive(false);
+                    upgradeCostGroup.SetActive(true);
+                    upgradeCostText.text = upgradeCost.ToString();
+                    ConfigureUpgradeCostBadge();
                 }
             }
 
@@ -262,8 +267,9 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             // ── Affordability background tinting ──
-            ApplyNodeBackgroundTint(isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
+            ApplyNodeBackgroundTint(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
             ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
+            ApplyNodeStateBorder(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
             ApplyDisabledNoEffectOutline(isDisabledBecauseNoEffect);
 
             UpdateInteractable();
@@ -287,7 +293,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         // ── Affordability / state background tinting ──────────────────────
 
-        private void ApplyNodeBackgroundTint(bool isLocked, bool isMaxed, bool canAfford, bool isSurgeActive, bool showPendingUnlock, bool isDisabledBecauseNoEffect)
+        private void ApplyNodeBackgroundTint(int currentLevel, bool isLocked, bool isMaxed, bool canAfford, bool isSurgeActive, bool showPendingUnlock, bool isDisabledBecauseNoEffect)
         {
             if (nodeBackground == null) return;
 
@@ -303,17 +309,88 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             else if (isLocked || isSurgeActive || showPendingUnlock)
             {
-                nodeBackground.color = MutationTreeColors.DefaultNodeBG;
+                nodeBackground.color = MutationTreeColors.LockedNodeBG;
             }
             else if (canAfford)
             {
-                // Subtle category-tinted glow when affordable (proper lerp, not additive)
-                nodeBackground.color = MutationTreeColors.GetAffordableNodeBG(mutation.Category, 0.15f);
+                nodeBackground.color = MutationTreeColors.GetAffordableNodeBG(mutation.Category, currentLevel > 0 ? 0.25f : 0.20f);
+            }
+            else if (currentLevel > 0)
+            {
+                nodeBackground.color = MutationTreeColors.GetOwnedNodeBG(mutation.Category);
             }
             else
             {
                 nodeBackground.color = MutationTreeColors.DefaultNodeBG;
             }
+        }
+
+        private string BuildNodeStateText(
+            int currentLevel,
+            bool isLocked,
+            bool isMaxed,
+            bool canAfford,
+            bool isSurgeActive,
+            int surgeTurns,
+            bool showPendingUnlock,
+            bool isDisabledBecauseNoEffect)
+        {
+            string level = $"L{currentLevel}/{mutation.MaxLevel}";
+
+            if (isMaxed) return $"MAX · {level}";
+            if (isSurgeActive) return $"ACTIVE {surgeTurns}R · {level}";
+            if (showPendingUnlock) return $"NEXT ROUND · {level}";
+            if (isLocked) return $"LOCKED · {level}";
+            if (isDisabledBecauseNoEffect) return $"NO TARGET · {level}";
+            if (canAfford) return currentLevel > 0 ? $"READY · {level}" : $"AVAILABLE · {level}";
+            return currentLevel > 0 ? $"OWNED · {level}" : $"NEED POINTS · {level}";
+        }
+
+        private void ApplyNodeStateBorder(
+            int currentLevel,
+            bool isLocked,
+            bool isMaxed,
+            bool canAfford,
+            bool isSurgeActive,
+            bool showPendingUnlock,
+            bool isDisabledBecauseNoEffect)
+        {
+            if (nodeStateBorder == null)
+            {
+                return;
+            }
+
+            Color borderColor;
+            Vector2 borderDistance = DefaultHighlightEffectDistance;
+
+            if (isMaxed)
+            {
+                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.MaxedGold, 0.85f);
+            }
+            else if (showPendingUnlock || isDisabledBecauseNoEffect)
+            {
+                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.78f);
+            }
+            else if (isLocked || isSurgeActive)
+            {
+                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Disabled, 0.55f);
+            }
+            else if (canAfford)
+            {
+                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.GetCategoryAccent(mutation.Category), 0.88f);
+                borderDistance = new Vector2(2f, -2f);
+            }
+            else if (currentLevel > 0)
+            {
+                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.GetCategoryAccent(mutation.Category), 0.52f);
+            }
+            else
+            {
+                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.SecondaryText, 0.38f);
+            }
+
+            nodeStateBorder.effectColor = borderColor;
+            nodeStateBorder.effectDistance = borderDistance;
         }
 
         // ── Hover: prerequisite highlighting + projected cost ────────────
@@ -1090,12 +1167,31 @@ namespace FungusToast.Unity.UI.MutationTree
                 prerequisiteHighlightOverlay.SetActive(false);
 
             if (highlightOutline != null)
+            {
                 highlightOutline.enabled = on;
+                if (on)
+                {
+                    highlightOutline.effectColor = MutationTreeColors.PrerequisiteBorder;
+                    highlightOutline.effectDistance = new Vector2(3f, -3f);
+                }
+            }
 
             if (!on)
                 return;
 
             ApplyHighlightCardVisual();
+        }
+
+        public void SetInspectedHighlight(bool on)
+        {
+            if (highlightOutline == null)
+            {
+                return;
+            }
+
+            highlightOutline.enabled = on;
+            highlightOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.98f);
+            highlightOutline.effectDistance = on ? new Vector2(3f, -3f) : DefaultHighlightEffectDistance;
         }
 
         public void SetDependentHighlight(bool on)
@@ -1259,12 +1355,14 @@ namespace FungusToast.Unity.UI.MutationTree
             // Don't duplicate if one already exists (beyond the highlight outline)
             foreach (var existing in target.GetComponents<Outline>())
             {
-                if (existing != highlightOutline) return; // border already present
+                if (existing == highlightOutline) continue;
+                nodeStateBorder = existing;
+                return;
             }
 
-            var border = target.AddComponent<Outline>();
-            border.effectColor = new Color(MutationTreeColors.SecondaryText.r, MutationTreeColors.SecondaryText.g, MutationTreeColors.SecondaryText.b, 0.45f);
-            border.effectDistance = DefaultHighlightEffectDistance;
+            nodeStateBorder = target.AddComponent<Outline>();
+            nodeStateBorder.effectColor = UIStyleTokens.WithAlpha(MutationTreeColors.SecondaryText, 0.45f);
+            nodeStateBorder.effectDistance = DefaultHighlightEffectDistance;
         }
 
         private void EnsureDependentHighlightOverlay()
@@ -1452,6 +1550,20 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationNameText.overflowMode = TextOverflowModes.Truncate;
             mutationNameText.fontSizeMax = targetSize;
             mutationNameText.fontSizeMin = Mathf.Min(targetSize, MutationNameMinimumFontSize);
+        }
+
+        private void ConfigureStateTextFit()
+        {
+            if (levelText == null)
+                return;
+
+            float targetSize = levelText.enableAutoSizing ? levelText.fontSizeMax : levelText.fontSize;
+            levelText.enableAutoSizing = true;
+            levelText.textWrappingMode = TextWrappingModes.NoWrap;
+            levelText.overflowMode = TextOverflowModes.Truncate;
+            levelText.fontSizeMax = targetSize;
+            levelText.fontSizeMin = Mathf.Min(targetSize, 11f);
+            levelText.fontStyle = FontStyles.Bold;
         }
 
         private static string ToHex(Color color)

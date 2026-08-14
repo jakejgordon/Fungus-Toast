@@ -23,9 +23,11 @@ namespace FungusToast.Unity.UI.MutationTree
         public static readonly Color LockedTint      = UIStyleTokens.Text.Disabled;
         public static readonly Color WarningOutline  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.95f);
         public static readonly Color DefaultNodeBG   = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, FungicideAccent, 0.18f);
+        public static readonly Color LockedNodeBG    = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Surface.Canvas, 0.42f);
         public static readonly Color WarningNodeBG   = Color.Lerp(DefaultNodeBG, UIStyleTokens.State.Warning, 0.18f);
         public static readonly Color DependentHover  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.6f);
         public static readonly Color DependentBorder = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.State.Focus, UIStyleTokens.Text.Primary, 0.35f), 0.95f);
+        public static readonly Color PrerequisiteBorder = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.95f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
         public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;
@@ -102,6 +104,11 @@ namespace FungusToast.Unity.UI.MutationTree
             Color accent = GetCategoryAccent(category);
             Color bg = DefaultNodeBG;
             return Color.Lerp(bg, accent, blendAmount);
+        }
+
+        public static Color GetOwnedNodeBG(MutationCategory category)
+        {
+            return Color.Lerp(DefaultNodeBG, GetCategoryAccent(category), 0.10f);
         }
 
         /// <summary>

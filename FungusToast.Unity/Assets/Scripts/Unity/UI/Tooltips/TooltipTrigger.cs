@@ -88,6 +88,11 @@ namespace FungusToast.Unity.UI.Tooltips
             autoPlacementOffsetX = value;
         }
 
+        public void SetMaxWidth(int value)
+        {
+            maxWidth = Mathf.Max(0, value);
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (touchMode && !isHelpIcon)

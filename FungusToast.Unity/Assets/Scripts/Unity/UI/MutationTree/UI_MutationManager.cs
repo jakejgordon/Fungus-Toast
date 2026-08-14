@@ -40,7 +40,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HeaderButtonIconSize = 18f;
         private const float HeaderButtonContentSpacing = 8f;
         private const float HeaderButtonHorizontalPadding = 18f;
-        private const float MutationPanelMaxWidth = 1125f;
+        private const float ReturnButtonMinWidth = 176f;
+        private const string ReturnButtonLabel = "Return to Board";
+        private const string ReturnButtonTooltipText = "Close the mutation workspace and return to the toast. Your unspent points remain available this turn.";
         private const float MutationPanelTopInsetPadding = 6f;
         private const float TimeLapseCoachmarkWidth = 340f;
         private const float TimeLapseCoachmarkHeight = 168f;
@@ -125,6 +127,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerLeftSlotRect = null!;
         private RectTransform headerCenterSlotRect = null!;
         private RectTransform headerRightSlotRect = null!;
+        private RectTransform headerReturnSlotRect = null!;
 
         private Player? humanPlayer;
         private bool humanTurnEnded = false;
@@ -288,7 +291,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (dockButtonText != null)
             {
-                dockButtonText.text = ">";
+                dockButtonText.text = ReturnButtonLabel;
             }
 
             SetDockButtonVisible(false);
@@ -764,7 +767,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (dockButtonText != null)
             {
-                dockButtonText.text = ">";
+                dockButtonText.text = ReturnButtonLabel;
             }
 
             SetDockButtonVisible(false);
@@ -796,8 +799,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationTreeRect.anchoredPosition = targetVisiblePosition;
 
-            if (dockButtonText != null)
-                dockButtonText.text = "<";
+            ConfigureReturnToBoardButton();
 
             isSliding = false;
 
@@ -834,7 +836,7 @@ namespace FungusToast.Unity.UI.MutationTree
             HideStorePointsCoachmarkImmediate(false);
 
             if (dockButtonText != null)
-                dockButtonText.text = ">";
+                dockButtonText.text = ReturnButtonLabel;
 
             SetDockButtonVisible(false);
             isSliding = false;
@@ -972,15 +974,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            bool isLocked = hoveredMutation.Prerequisites.Any(prereq => hoveredMutationPlayer.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
-            if (isLocked)
-            {
-                HighlightUnmetPrerequisites(hoveredMutation, hoveredMutationPlayer);
-            }
-            else
-            {
-                HighlightDirectDependents(hoveredMutation);
-            }
+            ClearAllHighlights();
+            mutationButtons.FirstOrDefault(node => node.MutationId == hoveredMutation.Id)?.SetInspectedHighlight(true);
+            HighlightPrerequisites(hoveredMutation, hoveredMutationPlayer);
+            HighlightDirectDependents(hoveredMutation);
 
             int currentLevel = hoveredMutationPlayer.GetMutationLevel(hoveredMutation.Id);
             bool isMaxed = currentLevel >= hoveredMutation.MaxLevel;
@@ -1077,9 +1074,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (mutationScrollViewContentRect != null)
             {
-                mutationScrollViewContentRect.anchorMin = new Vector2(0f, 1f);
-                mutationScrollViewContentRect.anchorMax = new Vector2(0f, 1f);
-                mutationScrollViewContentRect.pivot = new Vector2(0f, 1f);
+                mutationScrollViewContentRect.anchorMin = new Vector2(0.5f, 1f);
+                mutationScrollViewContentRect.anchorMax = new Vector2(0.5f, 1f);
+                mutationScrollViewContentRect.pivot = new Vector2(0.5f, 1f);
                 mutationScrollViewContentRect.anchoredPosition = Vector2.zero;
             }
 
@@ -1094,10 +1091,10 @@ namespace FungusToast.Unity.UI.MutationTree
             Vector2 canvasSize = GetEffectiveCanvasSize();
             if (canvasSize.x <= 0f)
             {
-                return MutationPanelMaxWidth;
+                return 1920f;
             }
 
-            return Mathf.Min(MutationPanelMaxWidth, canvasSize.x);
+            return canvasSize.x;
         }
 
         private float GetMutationPanelTopInset()
@@ -1372,27 +1369,23 @@ namespace FungusToast.Unity.UI.MutationTree
             return endgameVisible || manager.IsDraftOverlayVisible;
         }
 
-        // Highlights unmet prerequisite nodes for a hovered mutation
-        public void HighlightUnmetPrerequisites(Mutation mutation, Player player)
+        // Highlights the prerequisite path for a hovered mutation. Unmet requirements
+        // remain distinguishable through their normal locked state and tooltip copy.
+        public void HighlightPrerequisites(Mutation mutation, Player player)
         {
-            // First, clear any previous highlights
-            ClearAllHighlights();
+            if (mutation == null || player == null) return;
+
             foreach (var prereq in mutation.Prerequisites)
             {
-                int ownedLevel = player.GetMutationLevel(prereq.MutationId);
-                if (ownedLevel < prereq.RequiredLevel)
-                {
-                    var node = mutationButtons.FirstOrDefault(n => n.MutationId == prereq.MutationId);
-                    if (node != null)
-                        node.SetPrerequisiteHighlight(true);
-                }
+                var node = mutationButtons.FirstOrDefault(n => n.MutationId == prereq.MutationId);
+                if (node != null)
+                    node.SetPrerequisiteHighlight(true);
             }
         }
 
         // Highlights direct dependent nodes for a hovered, currently unlocked mutation.
         public void HighlightDirectDependents(Mutation mutation)
         {
-            ClearAllHighlights();
             if (mutation == null) return;
 
             if (!directDependentsByMutationId.TryGetValue(mutation.Id, out var dependentIds))
@@ -1515,7 +1508,7 @@ namespace FungusToast.Unity.UI.MutationTree
             int current = humanPlayer.MutationPoints;
             int projected = Mathf.Max(0, current - cost);
             basePointsText ??= mutationPointsCounterText.text;
-            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.Text.Muted)}>→ {projected}</color>";
+            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.Text.Secondary)}>Cost: {cost} · After purchase: {projected}</color>";
         }
 
         /// <summary>Restores normal points counter text.</summary>
@@ -1613,14 +1606,18 @@ namespace FungusToast.Unity.UI.MutationTree
             headerLeftSlotRect ??= CreateHeaderSlot("UI_MutationHeaderLeftSlot", flexibleWidth: 1f, preferredWidth: 0f);
             headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
             headerRightSlotRect ??= CreateHeaderSlot("UI_MutationHeaderRightSlot", flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
+            headerReturnSlotRect ??= CreateHeaderSlot("UI_MutationHeaderReturnSlot", flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             ConfigureHeaderSlotLayout(headerLeftSlotRect, flexibleWidth: 1f, preferredWidth: 0f);
             ConfigureHeaderSlotLayout(headerCenterSlotRect, flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
             ConfigureHeaderSlotLayout(headerRightSlotRect, flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
+            ConfigureHeaderSlotLayout(headerReturnSlotRect, flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             MoveLabelToHeaderLeftSlot();
             MoveButtonToHeaderCenterSlot(storePointsButton);
             MoveButtonToHeaderRightSlot(presentationSpeedButton);
+            MoveButtonToHeaderSlot(dockButton, headerReturnSlotRect);
+            ConfigureReturnToBoardButton();
             RefreshHeaderActionButtonWidths();
         }
 
@@ -1748,6 +1745,68 @@ namespace FungusToast.Unity.UI.MutationTree
             rect.anchorMax = new Vector2(1f, 0.5f);
             rect.pivot = new Vector2(1f, 0.5f);
             rect.anchoredPosition = Vector2.zero;
+        }
+
+        private static void MoveButtonToHeaderSlot(Button button, RectTransform slotRect)
+        {
+            if (button == null || slotRect == null)
+            {
+                return;
+            }
+
+            var rect = button.GetComponent<RectTransform>();
+            rect.SetParent(slotRect, false);
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+        }
+
+        private void ConfigureReturnToBoardButton()
+        {
+            if (dockButton == null)
+            {
+                return;
+            }
+
+            if (dockButtonText != null)
+            {
+                dockButtonText.text = ReturnButtonLabel;
+                dockButtonText.color = UIStyleTokens.Text.Primary;
+                dockButtonText.fontStyle = FontStyles.Bold;
+                dockButtonText.enableAutoSizing = true;
+                dockButtonText.fontSizeMin = 14f;
+                dockButtonText.fontSizeMax = 18f;
+                dockButtonText.textWrappingMode = TextWrappingModes.NoWrap;
+                dockButtonText.raycastTarget = false;
+            }
+
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(dockButton);
+            UIStyleTokens.Button.SetButtonLabelColor(dockButton, UIStyleTokens.Text.Primary);
+
+            var layout = dockButton.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = dockButton.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = ReturnButtonMinWidth;
+            layout.preferredWidth = ReturnButtonMinWidth;
+            layout.minHeight = HeaderControlsHeight;
+            layout.preferredHeight = HeaderControlsHeight;
+
+            if (dockButton.TryGetComponent<RectTransform>(out var rect))
+            {
+                rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, ReturnButtonMinWidth);
+                rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderControlsHeight);
+            }
+
+            var trigger = dockButton.GetComponent<TooltipTrigger>();
+            if (trigger == null)
+            {
+                trigger = dockButton.gameObject.AddComponent<TooltipTrigger>();
+            }
+            trigger.SetStaticText(ReturnButtonTooltipText);
         }
 
         private void WireSpendPointsTooltip()
@@ -2442,6 +2501,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             UpdateHeaderActionButtonWidth(storePointsButton, headerCenterSlotRect, StoreButtonMinWidth);
             UpdateHeaderActionButtonWidth(presentationSpeedButton, headerRightSlotRect, PresentationSpeedButtonMinWidth);
+            UpdateHeaderActionButtonWidth(dockButton, headerReturnSlotRect, ReturnButtonMinWidth);
         }
 
         private void SetSpendPointsButtonText(string text)

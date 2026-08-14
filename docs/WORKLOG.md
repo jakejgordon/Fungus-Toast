@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Audit accepted in principle. No gameplay UX implementation from this queue has started.
+- **State:** Priority 1 is implemented and awaiting Jake's Unity visual/interaction validation. Priority 2 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -37,6 +37,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 ## Priority Queue
 
 ### 1. P1 — Mutation workspace decision flow and node clarity
+
+**Implementation status (2026-08-13):** Completed in code; Unity Editor validation remains manual.
 
 **Problem:** The tree is strategically important but reads like a partial drawer over the board. Exit behavior is represented by an ambiguous arrow, remaining-point projection uses an unexplained `current → projected` display, prerequisite relationships are difficult to scan, and large tooltips cover the nodes they explain.
 
@@ -65,6 +67,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Hovering every node state communicates availability and cost without obscuring the node or its relevant prerequisite/dependent path.
 - Point totals are never visually mistaken for a pending or already-committed transaction.
 - Repeated open/close, buying to zero, banking, targeted mutation selection, Time-Lapse, and hotseat handoff still work without duplicate listeners, stuck panels, or Console errors.
+
+**Implemented checkpoint:**
+
+- Expanded the mutation panel from the previous 1125px drawer to a full-canvas workspace and centered the five-column tree within it.
+- Replaced the unlabeled dock arrow with a styled `Return to Board` header action and explanatory tooltip.
+- Replaced the ambiguous points arrow with explicit `Cost` and `After purchase` copy while preserving immediate purchases.
+- Added concise text states and semantic borders/backgrounds for available, ready-to-upgrade, owned, unaffordable, locked, next-round, active-surge, no-target, and maxed nodes; cost badges now also show one-point costs.
+- Hover now distinguishes the inspected node, all of its prerequisites, and its direct dependents at the same time.
+- Increased mutation-tooltip width to reduce excessive height while retaining automatic on-screen placement.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed.
+- Manual Unity checks still required: full-canvas composition at 1920x1080/1600x900/1280x720; every node state; tooltip/path visibility at all columns and screen edges; repeated open/close; purchases to zero; banking; targeted selection; Time-Lapse; hotseat handoff; game restart; Console cleanliness.
 
 ### 2. P1 — Explicit phase and growth-cycle tracker
 
