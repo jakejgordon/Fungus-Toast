@@ -120,7 +120,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 3. P1 — Desktop readability and interaction-target pass
 
-**Implementation status (2026-08-14):** In progress. Slice 1 (shared readability/interaction tokens and compact HUD utilities) is complete in code; Unity Editor validation remains manual.
+**Implementation status (2026-08-14):** In progress. Slices 1–2 (shared tokens/compact HUD utilities and activity-log readability) are complete in code; Unity Editor validation remains manual.
 
 **Problem:** Several HUD labels, log controls, badges, mutation indicators, legend icons, adaptation icons, and compact utilities are difficult to read or target at 1920x1080.
 
@@ -153,8 +153,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Increased the floating pause-menu and next-track HUD controls from 28x28 to 36x36, preserving their 20px visible icons and standard hover/pressed styling.
 - Repositioned the adjacent HUD controls to retain an 8px gap at the larger target size.
 - Routed Store Mutation Points and Time-Lapse minimum heights through the shared 36px interaction token without changing their current labels, state behavior, or header composition.
+- Increased the shared Activity Log `Clear` control from 40x20 with 12px text to 64x36 with 16px text while preserving its existing tooltip and button-state styling.
+- Increased pooled log messages from 14px to 16px and round tags from 10px to the shared 14px micro-text floor.
+- Increased the pooled entry baseline from 24px to 32px and expanded the round-tag rect/reserved space so larger tags do not collide with wrapped messages.
+- Kept entry height calculation, category colors, pooling, filtering, caps, fade-in, and automatic scrolling behavior unchanged.
 - `git diff --check` passed. Unity Editor was unavailable in this environment.
-- Manual Unity checks still required: pause and next-track target placement/hover/click behavior at 1920x1080, 1600x900, and 1280x720; mutation workspace header fit and Store/Time-Lapse hover/pressed states at the same resolutions; repeated mutation-workspace open/close; Console cleanliness.
+- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
 
 ### 4. P1 — Progressive board-inspection tooltip
 

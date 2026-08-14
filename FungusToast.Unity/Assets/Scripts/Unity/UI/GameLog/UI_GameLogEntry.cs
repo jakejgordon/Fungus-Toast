@@ -7,19 +7,51 @@ namespace FungusToast.Unity.UI.GameLog
 {
     public class UI_GameLogEntry : MonoBehaviour
     {
+        private const float TimestampMinimumWidth = 34f;
+        private const float TimestampMinimumHeight = 20f;
+        private const float TimestampTopInset = 2f;
+
         [SerializeField] private TextMeshProUGUI messageText;
         [SerializeField] private TextMeshProUGUI timestampText;
         [SerializeField] private Image backgroundImage;
         [Header("Auto Height Settings")] 
         [SerializeField] private LayoutElement layoutElement; // optional, assign on prefab root
         [SerializeField] private float verticalPadding = 4f; // extra padding added to calculated height
-        [SerializeField] private float minHeight = 24f; // baseline single-line height
-        [SerializeField] private float extraSafetyPadding = 2f; // prevents last line clipping
+        [SerializeField] private float minHeight = 32f; // baseline single-line height
+        [SerializeField] private float extraSafetyPadding = 4f; // prevents last line clipping
         [SerializeField] private float timestampSpacing = 14f;
-        [SerializeField] private float minimumReservedTimestampWidth = 34f;
+        [SerializeField] private float minimumReservedTimestampWidth = TimestampMinimumWidth;
         private bool deferredScheduled = false;
 
         public int DisplayedRound { get; private set; }
+
+        private void Awake()
+        {
+            ApplyReadabilityStyle();
+        }
+
+        private void ApplyReadabilityStyle()
+        {
+            if (messageText != null)
+            {
+                messageText.fontSize = UIStyleTokens.Typography.CaptionMinimum;
+                messageText.enableAutoSizing = false;
+            }
+
+            if (timestampText != null)
+            {
+                timestampText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+                timestampText.enableAutoSizing = false;
+
+                RectTransform timestampRect = timestampText.rectTransform;
+                float width = Mathf.Max(timestampRect.sizeDelta.x, TimestampMinimumWidth);
+                float height = Mathf.Max(timestampRect.sizeDelta.y, TimestampMinimumHeight);
+                timestampRect.sizeDelta = new Vector2(width, height);
+                timestampRect.anchoredPosition = new Vector2(
+                    timestampRect.anchoredPosition.x,
+                    -(TimestampTopInset + (height * 0.5f)));
+            }
+        }
 
         public void SetEntry(GameLogEntry entry)
         {
@@ -78,7 +110,7 @@ namespace FungusToast.Unity.UI.GameLog
             float preferredHeight = preferredValues.y;
 
             float target = Mathf.Max(
-                Mathf.Max(minHeight, 30f),
+                minHeight,
                 Mathf.Ceil(preferredHeight) + Mathf.Max(verticalPadding, 8f) + Mathf.Max(extraSafetyPadding, 4f));
 
             if (Mathf.Abs(layoutElement.preferredHeight - target) > 0.5f)

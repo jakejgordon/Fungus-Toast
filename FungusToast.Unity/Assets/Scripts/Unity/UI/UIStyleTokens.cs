@@ -42,6 +42,7 @@ namespace FungusToast.Unity.UI
         public static class Typography
         {
             public const float MicroMinimum = 14f;
+            public const float CaptionMinimum = 16f;
         }
 
         public static class Interaction

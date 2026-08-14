@@ -15,6 +15,7 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionReservedHeight = 45f;
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
+        private const float ClearButtonMinimumWidth = 64f;
 
         [Header("UI References")]
         [SerializeField] private ScrollRect scrollRect;
@@ -116,6 +117,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (clearButton != null)
             {
                 UIStyleTokens.Button.ApplyStyle(clearButton);
+                ConfigureClearButtonReadability();
             }
 
             if (topActionButton != null)
@@ -129,6 +131,28 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
+        }
+
+        private void ConfigureClearButtonReadability()
+        {
+            if (clearButton == null)
+            {
+                return;
+            }
+
+            if (clearButton.transform is RectTransform buttonRect)
+            {
+                buttonRect.sizeDelta = new Vector2(
+                    Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
+                    Mathf.Max(buttonRect.sizeDelta.y, UIStyleTokens.Interaction.MinimumTargetSize));
+            }
+
+            var labels = clearButton.GetComponentsInChildren<TextMeshProUGUI>(true);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                labels[i].fontSize = UIStyleTokens.Typography.CaptionMinimum;
+                labels[i].enableAutoSizing = false;
+            }
         }
 
         public void ConfigureTopActionButton(string label, Action onClick, bool isVisible)
