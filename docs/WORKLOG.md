@@ -111,6 +111,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 - Growth now reports `CYCLE N OF 5` directly beneath the `GROWTH` phase label, while Mutation, Draft, and Decay retain their explicit named phase labels.
 - The five cycle segments use different text treatments as well as semantic styling: completed numbers are struck through, the current number is bracketed/emphasized, and upcoming numbers remain plain/dim.
+- Completed-cycle strikes use a tracker-local centered rule rather than the active TMP font asset's low strikethrough metric, preventing them from reading as underlines.
 - Growth-cycle progress advances immediately when each cycle starts instead of after its execution and presentation delays, eliminating the observed one-cycle visual lag.
 - Existing pulse animation remains supplemental feedback rather than the only current-cycle indicator.
 - No scene or serialized-reference changes were required.

@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
 {
@@ -19,6 +20,8 @@ namespace FungusToast.Unity.UI
         private const float SecondaryOutlineWidth = 0.12f;
         private const float PrimaryCharacterSpacing = 2.5f;
         private const float SecondaryCharacterSpacing = 0.8f;
+        private const float CompletionStrikeThickness = 2f;
+        private const float CompletionStrikeWidthMultiplier = 0.85f;
         private const string GrowthPhaseText = "GROWTH";
 
         [SerializeField] private TextMeshProUGUI mutationPhaseLabel;
@@ -28,6 +31,7 @@ namespace FungusToast.Unity.UI
 
         private Color normalColor;
         private readonly Dictionary<TextMeshProUGUI, Vector3> baseScales = new();
+        private readonly Dictionary<TextMeshProUGUI, Image> completionStrikes = new();
         private TextMeshProUGUI activePulseLabel;
         private TextMeshProUGUI growthCycleAdvancePulseLabel;
         private float growthCycleAdvancePulseStartTime;
@@ -232,15 +236,19 @@ namespace FungusToast.Unity.UI
             if (label == null) return;
 
             label.text = cycle.ToString();
+            Color completedColor = WithAlpha(
+                Blend(accentColor, UIStyleTokens.Text.Primary, 0.45f),
+                CompletedAlpha);
             ApplyStyledState(
                 label,
-                WithAlpha(Blend(accentColor, UIStyleTokens.Text.Primary, 0.45f), CompletedAlpha),
+                completedColor,
                 Color.clear,
                 0f,
-                FontStyles.Bold | FontStyles.Strikethrough,
+                FontStyles.Bold,
                 1f,
                 0f,
                 enablePulse: false);
+            SetCompletionStrike(label, true, completedColor);
         }
 
         private void SetDim(TextMeshProUGUI label)
@@ -254,7 +262,47 @@ namespace FungusToast.Unity.UI
             label.outlineColor = Color.clear;
             label.extraPadding = false;
             label.rectTransform.localScale = GetBaseScale(label);
+            SetCompletionStrike(label, false, Color.clear);
             label.ForceMeshUpdate();
+        }
+
+        private void SetCompletionStrike(TextMeshProUGUI label, bool visible, Color color)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            if (!completionStrikes.TryGetValue(label, out Image strike))
+            {
+                if (!visible)
+                {
+                    return;
+                }
+
+                var strikeObject = new GameObject("Completion Strike", typeof(RectTransform), typeof(Image));
+                strikeObject.transform.SetParent(label.rectTransform, false);
+                strike = strikeObject.GetComponent<Image>();
+                strike.raycastTarget = false;
+                completionStrikes[label] = strike;
+            }
+
+            strike.gameObject.SetActive(visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            strike.color = color;
+            RectTransform strikeTransform = strike.rectTransform;
+            strikeTransform.anchorMin = new Vector2(0.5f, 0.5f);
+            strikeTransform.anchorMax = new Vector2(0.5f, 0.5f);
+            strikeTransform.pivot = new Vector2(0.5f, 0.5f);
+            strikeTransform.anchoredPosition = Vector2.zero;
+            strikeTransform.sizeDelta = new Vector2(
+                Mathf.Max(label.preferredWidth * CompletionStrikeWidthMultiplier, label.fontSize * 0.5f),
+                CompletionStrikeThickness);
+            strikeTransform.SetAsLastSibling();
         }
 
         private void SetGrowthPhaseText(string text)
