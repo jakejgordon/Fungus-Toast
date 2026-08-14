@@ -72,9 +72,11 @@ namespace FungusToast.Unity.UI
         private const int AdaptationIconMaxColumns = 12;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
-        private const float StatsRootHeight = 35f;
-        private const float RandomDecayChanceRowHeight = 24f;
-        private const float RandomDecayChanceFontSize = 18f;
+        private const float StatsRootHeight = 44f;
+        private const float RandomDecayChanceRowHeight = 40f;
+        private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
+        private const float BoardOverlayLegendRowHeight = UIStyleTokens.Interaction.MinimumTargetSize;
+        private const float BoardOverlayLegendLabelFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float AdaptationCoachmarkWidth = 340f;
         private const float AdaptationCoachmarkHeight = 170f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
@@ -365,7 +367,7 @@ namespace FungusToast.Unity.UI
 
             Player perspectivePlayer = ResolveTrackedPlayer(board);
             RandomDecayChanceTooltipProvider.RandomDecayChanceBreakdown breakdown = RandomDecayChanceTooltipProvider.BuildBreakdown(board, perspectivePlayer);
-            randomDecayChanceText.text = $"<b>Random Decay Chance:</b> {(breakdown.EffectiveChance * 100f):0.0}% effective";
+            randomDecayChanceText.text = $"<b>Random Decay</b>  {(breakdown.EffectiveChance * 100f):0.0}% per living cell";
             InitializeRandomDecayChanceTooltip(board, perspectivePlayer);
         }
 
@@ -468,31 +470,22 @@ namespace FungusToast.Unity.UI
         {
             EnsureAdaptationSectionExists();
 
-            RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, trackedPlayer?.PlayerAdaptations, CreateAdaptationIcon);
+            RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, adaptationHeaderText, adaptationHeaderLabel, trackedPlayer?.PlayerAdaptations, CreateAdaptationIcon);
         }
 
         private void RefreshBoardOverlayLegend()
         {
             EnsureBoardOverlayLegendSectionExists();
 
-            var overlayTypes = new[]
-            {
-                BoardOverlayLegendType.ResistanceShield,
-                BoardOverlayLegendType.Toxin,
-                BoardOverlayLegendType.DeadCell,
-                BoardOverlayLegendType.Chemobeacon,
-                BoardOverlayLegendType.AdaptogenPatch,
-                BoardOverlayLegendType.SporemealPatch,
-                BoardOverlayLegendType.HypervariationPatch
-            };
+            var overlayTypes = GetRelevantBoardOverlayTypes(GameManager.Instance?.Board);
 
-            RefreshIconSection(boardOverlayLegendSectionRoot, boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, overlayTypes, CreateBoardOverlayLegendIcon);
+            RefreshIconSection(boardOverlayLegendSectionRoot, boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, boardOverlayLegendHeaderText, boardOverlayLegendHeaderLabel, overlayTypes, CreateBoardOverlayLegendIcon);
         }
 
         private void RefreshMycovariants()
         {
             EnsureMycovariantSectionExists();
-            RefreshIconSection(mycovariantSectionRoot, mycovariantIconGridRoot, mycovariantIconObjects, trackedPlayer?.PlayerMycovariants, CreateMycovariantIcon);
+            RefreshIconSection(mycovariantSectionRoot, mycovariantIconGridRoot, mycovariantIconObjects, mycovariantHeaderText, mycovariantHeaderLabel, trackedPlayer?.PlayerMycovariants, CreateMycovariantIcon);
         }
 
         private void EnsureRandomDecayChanceSectionExists()
@@ -521,7 +514,7 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private void RefreshIconSection<T>(RectTransform sectionRoot, RectTransform iconGridRoot, List<GameObject> iconObjects, IList<T> entries, Action<T> createIcon)
+        private void RefreshIconSection<T>(RectTransform sectionRoot, RectTransform iconGridRoot, List<GameObject> iconObjects, TextMeshProUGUI headerText, string headerLabel, IList<T> entries, Action<T> createIcon)
         {
             if (sectionRoot == null || iconGridRoot == null)
             {
@@ -532,6 +525,7 @@ namespace FungusToast.Unity.UI
 
             bool hasEntries = entries != null && entries.Count > 0;
             sectionRoot.gameObject.SetActive(hasEntries);
+            UpdateSectionHeaderCount(headerText, headerLabel, entries?.Count ?? 0);
             if (!hasEntries)
             {
                 return;
@@ -549,6 +543,63 @@ namespace FungusToast.Unity.UI
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
             }
+        }
+
+        private static void UpdateSectionHeaderCount(TextMeshProUGUI headerText, string headerLabel, int entryCount)
+        {
+            if (headerText == null)
+            {
+                return;
+            }
+
+            headerText.text = entryCount > 0 ? $"{headerLabel} ({entryCount})" : headerLabel;
+        }
+
+        private static List<BoardOverlayLegendType> GetRelevantBoardOverlayTypes(GameBoard board)
+        {
+            var relevantTypes = new List<BoardOverlayLegendType>();
+            if (board == null)
+            {
+                return relevantTypes;
+            }
+
+            bool hasResistance = false;
+            bool hasToxin = false;
+            bool hasDeadCell = false;
+            bool hasAdaptogenPatch = false;
+            bool hasSporemealPatch = false;
+            bool hasHypervariationPatch = false;
+
+            foreach (var tile in board.AllTiles())
+            {
+                var cell = tile.FungalCell;
+                hasResistance |= cell != null && cell.IsResistant;
+                hasToxin |= cell != null && cell.IsToxin;
+                hasDeadCell |= cell != null && cell.IsDead;
+
+                switch (tile.NutrientPatch?.PatchType)
+                {
+                    case NutrientPatchType.Adaptogen:
+                        hasAdaptogenPatch = true;
+                        break;
+                    case NutrientPatchType.Sporemeal:
+                        hasSporemealPatch = true;
+                        break;
+                    case NutrientPatchType.Hypervariation:
+                        hasHypervariationPatch = true;
+                        break;
+                }
+            }
+
+            if (hasResistance) relevantTypes.Add(BoardOverlayLegendType.ResistanceShield);
+            if (hasToxin) relevantTypes.Add(BoardOverlayLegendType.Toxin);
+            if (hasDeadCell) relevantTypes.Add(BoardOverlayLegendType.DeadCell);
+            if (board.GetActiveChemobeacons().Count > 0) relevantTypes.Add(BoardOverlayLegendType.Chemobeacon);
+            if (hasAdaptogenPatch) relevantTypes.Add(BoardOverlayLegendType.AdaptogenPatch);
+            if (hasSporemealPatch) relevantTypes.Add(BoardOverlayLegendType.SporemealPatch);
+            if (hasHypervariationPatch) relevantTypes.Add(BoardOverlayLegendType.HypervariationPatch);
+
+            return relevantTypes;
         }
 
         private static void ClearIconObjects(List<GameObject> iconObjects)
@@ -759,14 +810,26 @@ namespace FungusToast.Unity.UI
                 layout.flexibleHeight = 0f;
             }
 
-            randomDecayChanceText.color = UIStyleTokens.Text.Secondary;
+            var background = randomDecayChanceRoot.GetComponent<Image>();
+            if (background == null)
+            {
+                background = randomDecayChanceRoot.gameObject.AddComponent<Image>();
+            }
+            background.color = UIStyleTokens.Surface.PanelSecondary;
+            background.raycastTarget = false;
+
+            randomDecayChanceText.color = UIStyleTokens.Text.Primary;
             randomDecayChanceText.fontStyle = FontStyles.Normal;
-            randomDecayChanceText.enableAutoSizing = true;
-            randomDecayChanceText.fontSizeMin = 13f;
+            randomDecayChanceText.enableAutoSizing = false;
+            randomDecayChanceText.fontSizeMin = RandomDecayChanceFontSize;
             randomDecayChanceText.fontSizeMax = RandomDecayChanceFontSize;
             randomDecayChanceText.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(randomDecayChanceText);
             randomDecayChanceText.alignment = TextAlignmentOptions.Left;
+
+            var textRect = randomDecayChanceText.rectTransform;
+            textRect.offsetMin = new Vector2(8f, 0f);
+            textRect.offsetMax = new Vector2(-8f, 0f);
         }
 
         private void ApplyAdaptationSectionStyle()
@@ -824,6 +887,13 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            if (iconGridRoot == boardOverlayLegendIconGridRoot)
+            {
+                grid.cellSize = new Vector2(GetSectionGridWidth(sectionRoot, iconGridRoot), BoardOverlayLegendRowHeight);
+                grid.constraintCount = 1;
+                return;
+            }
+
             grid.cellSize = new Vector2(AdaptationIconTargetSize, AdaptationIconTargetSize);
             grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
             grid.constraintCount = GetSectionColumnCount(sectionRoot, iconGridRoot);
@@ -849,6 +919,17 @@ namespace FungusToast.Unity.UI
 
             int columns = Mathf.FloorToInt((availableWidth + AdaptationIconSpacing) / (AdaptationIconTargetSize + AdaptationIconSpacing));
             return Mathf.Clamp(columns, 1, AdaptationIconMaxColumns);
+        }
+
+        private static float GetSectionGridWidth(RectTransform sectionRoot, RectTransform iconGridRoot)
+        {
+            float availableWidth = iconGridRoot != null ? iconGridRoot.rect.width : 0f;
+            if (availableWidth <= 0f && sectionRoot != null)
+            {
+                availableWidth = sectionRoot.rect.width - 20f;
+            }
+
+            return Mathf.Max(AdaptationIconTargetSize, availableWidth);
         }
 
         private void CreateAdaptationIcon(PlayerAdaptation playerAdaptation)
@@ -878,7 +959,7 @@ namespace FungusToast.Unity.UI
             }
 
             var grid = GameManager.Instance?.gridVisualizer;
-            var iconObject = CreateIconObject($"UI_BoardOverlayLegend_{overlayType}", boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, GetBoardOverlayLegendSprite(overlayType, grid));
+            var iconObject = CreateBoardOverlayLegendRow(overlayType, boardOverlayLegendIconGridRoot, boardOverlayLegendObjects, GetBoardOverlayLegendSprite(overlayType, grid));
 
             var provider = iconObject.AddComponent<BoardOverlayLegendTooltipProvider>();
             provider.Initialize(overlayType);
@@ -955,6 +1036,84 @@ namespace FungusToast.Unity.UI
             hoverFeedback.Initialize(background, outline);
 
             return iconObject;
+        }
+
+        private static GameObject CreateBoardOverlayLegendRow(BoardOverlayLegendType overlayType, RectTransform gridRoot, List<GameObject> iconObjects, Sprite sprite)
+        {
+            var rowObject = new GameObject($"UI_BoardOverlayLegend_{overlayType}", typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Outline), typeof(HorizontalLayoutGroup));
+            rowObject.transform.SetParent(gridRoot, false);
+            iconObjects.Add(rowObject);
+
+            var rowLayout = rowObject.GetComponent<LayoutElement>();
+            rowLayout.preferredHeight = BoardOverlayLegendRowHeight;
+            rowLayout.minHeight = BoardOverlayLegendRowHeight;
+
+            var background = rowObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+            background.raycastTarget = true;
+
+            var outline = rowObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.enabled = false;
+
+            var rowGroup = rowObject.GetComponent<HorizontalLayoutGroup>();
+            rowGroup.padding = new RectOffset(4, 8, 4, 4);
+            rowGroup.spacing = 8f;
+            rowGroup.childAlignment = TextAnchor.MiddleLeft;
+            rowGroup.childControlWidth = true;
+            rowGroup.childControlHeight = true;
+            rowGroup.childForceExpandWidth = true;
+            rowGroup.childForceExpandHeight = false;
+
+            var renderedIconObject = new GameObject("RenderedIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(LayoutElement), typeof(Image));
+            renderedIconObject.transform.SetParent(rowObject.transform, false);
+            var renderedIconLayout = renderedIconObject.GetComponent<LayoutElement>();
+            renderedIconLayout.preferredWidth = AdaptationIconVisualSize;
+            renderedIconLayout.preferredHeight = AdaptationIconVisualSize;
+            renderedIconLayout.minWidth = AdaptationIconVisualSize;
+            renderedIconLayout.minHeight = AdaptationIconVisualSize;
+            var renderedIcon = renderedIconObject.GetComponent<Image>();
+            renderedIcon.sprite = sprite;
+            renderedIcon.type = Image.Type.Simple;
+            renderedIcon.preserveAspect = true;
+            renderedIcon.color = Color.white;
+            renderedIcon.raycastTarget = false;
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(rowObject.transform, false);
+            var labelLayout = labelObject.GetComponent<LayoutElement>();
+            labelLayout.flexibleWidth = 1f;
+            labelLayout.preferredHeight = BoardOverlayLegendRowHeight;
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = GetBoardOverlayLegendLabel(overlayType);
+            label.fontSize = BoardOverlayLegendLabelFontSize;
+            label.fontStyle = FontStyles.Bold;
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableAutoSizing = false;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(label);
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.raycastTarget = false;
+
+            var hoverFeedback = rowObject.AddComponent<CompactIconHoverFeedback>();
+            hoverFeedback.Initialize(background, outline);
+            return rowObject;
+        }
+
+        private static string GetBoardOverlayLegendLabel(BoardOverlayLegendType overlayType)
+        {
+            return overlayType switch
+            {
+                BoardOverlayLegendType.ResistanceShield => "Resistance shield",
+                BoardOverlayLegendType.Toxin => "Toxin",
+                BoardOverlayLegendType.DeadCell => "Dead cell",
+                BoardOverlayLegendType.Chemobeacon => "Chemobeacon",
+                BoardOverlayLegendType.AdaptogenPatch => "Adaptogen patch",
+                BoardOverlayLegendType.SporemealPatch => "Sporemeal patch",
+                BoardOverlayLegendType.HypervariationPatch => "Hypervariation patch",
+                _ => "Board symbol"
+            };
         }
 
         private static Sprite GetBoardOverlayLegendSprite(BoardOverlayLegendType overlayType, FungusToast.Unity.Grid.GridVisualizer grid)
@@ -1151,9 +1310,16 @@ namespace FungusToast.Unity.UI
 
             UpdateSectionGridConstraint(sectionRoot, iconGridRoot);
 
+            var grid = iconGridRoot.GetComponent<GridLayoutGroup>();
             int columns = GetSectionColumnCount(sectionRoot, iconGridRoot);
+            if (iconGridRoot == boardOverlayLegendIconGridRoot)
+            {
+                columns = 1;
+            }
             int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)columns));
-            float gridHeight = (rows * AdaptationIconTargetSize) + ((rows - 1) * AdaptationIconSpacing);
+            float cellHeight = grid != null ? grid.cellSize.y : AdaptationIconTargetSize;
+            float verticalSpacing = grid != null ? grid.spacing.y : AdaptationIconSpacing;
+            float gridHeight = (rows * cellHeight) + ((rows - 1) * verticalSpacing);
 
             var gridLayout = iconGridRoot.GetComponent<LayoutElement>();
             if (gridLayout != null)

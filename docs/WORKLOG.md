@@ -217,6 +217,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 5. P2 — Left-sidebar strategic labels and symbol legend
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** Growth probabilities and Random Decay lack enough hierarchy, while `Common Symbols` and adaptation/mycovariant icons are too cryptic and small.
 
 **Implementation intent:**
@@ -238,6 +240,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 - A player can name what the percentage grid, Random Decay value, and every visible legend symbol represent without guessing from art alone.
 - Hover highlights and tooltips remain accurate after mutations, adaptations, mycovariants, and board-state changes.
+
+**Implemented checkpoint:**
+
+- Kept the existing `Growth Chance Per Living Cell` heading and directional center relationship intact.
+- Reworked Random Decay into a distinct 40px panel-surface row with a readable `Random Decay — N% per living cell` label and its existing detailed hover explanation.
+- Converted Common Symbols from unlabeled compact icons into 36px labeled rows with the existing tooltips and board-highlight handlers preserved.
+- Common Symbols now only displays overlays currently present on the board (resistance, toxin, dead cell, chemobeacon, and nutrient-patch types), keeping the sidebar compact while ensuring every visible symbol is explicitly named.
+- Adaptations and Mycovariants now show their current item counts in their section headers, while their existing detailed per-icon hover inspection remains unchanged.
+- The shared refresh path rebuilds labels/counts from live board and player state, so mutation, adaptation, mycovariant, and board changes remain represented without new event plumbing.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: 1920x1080/1600x900/1280x720 sidebar fit; zero, one, and multiple Common Symbols; all seven overlay types; each board-highlight/tooltip path; Random Decay hover and mutation refresh; zero/multiple adaptation and mycovariant counts/icons; hotseat perspective switching; restart; and Console cleanliness.
 
 ### 6. P2 — Activity-log information architecture
 
