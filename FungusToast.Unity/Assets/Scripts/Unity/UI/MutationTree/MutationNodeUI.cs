@@ -614,7 +614,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     int ownedLevel = player.GetMutationLevel(prereq.MutationId);
                     var prereqMutation = uiManager.GetMutationById(prereq.MutationId);
-                    string prereqText = $"- {prereqMutation?.Name ?? "Unknown"} (Level {ownedLevel}/{prereq.RequiredLevel})";
+                    string prereqText = $"- {prereqMutation?.Name ?? "Unknown"} — Level {ownedLevel} (requires {prereq.RequiredLevel})";
                     if (ownedLevel < prereq.RequiredLevel)
                     {
                         sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{prereqText}</color>");

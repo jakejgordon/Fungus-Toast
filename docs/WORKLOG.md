@@ -165,6 +165,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Raised mutation-name and node-state autosizing floors to the shared 14px micro-text minimum and capped mutation names at their authored 18px size instead of the legacy 72px TMP maximum.
 - Reserved each mutation node's top indicator lane for the lock/status and DNA-cost badges, so neither icon can overlap the mutation name.
 - Put the node state and complete `Lcurrent/max` progress on separate lines, preventing locked and unpurchased nodes from truncating their max level (for example, `LOCKED` / `L0/5`).
+- Widened mutation cards from 120px to 132px so long single-word names such as `Necrosporulation` fit without an orphaned final character; prerequisite tooltip copy now separates owned and required levels (for example, `Mutator Phenotype — Level 10 (requires 2)`).
 - Increased the DNA-cost treatment to a 36px-high group with a 28px icon and fixed 16px bold cost text; retained content-driven width for multi-digit costs.
 - Increased lock, pending-unlock, and active-surge indicators from 32x32 to 36x36 and moved them to a shared upper-left lane so they remain separate from the upper-right DNA cost.
 - Increased the runtime `MAX` badge from 36x16 with 10px text to 44x20 with fixed 14px text and the node's existing font.

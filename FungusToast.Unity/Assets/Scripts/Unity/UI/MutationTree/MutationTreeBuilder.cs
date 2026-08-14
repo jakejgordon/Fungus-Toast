@@ -16,6 +16,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HeaderInvestmentSummaryMinFontSize = 11f;
         private const float HeaderInvestmentSummaryHeight = 20f;
         private const float HeaderTotalHeight = HeaderTitleHeight + HeaderInvestmentSummaryHeight;
+        private const float MutationNodeWidth = 132f;
+        private const float MutationNodeHeight = 120f;
         private const float DefaultColumnWidth = 200f;
         private const float GrowthColumnWidth = 220f;
         private static readonly IReadOnlyDictionary<MutationCategory, string> CategoryHeaderTooltipText = new Dictionary<MutationCategory, string>
@@ -218,8 +220,8 @@ namespace FungusToast.Unity.UI.MutationTree
                     var mutationNodeLayout = nodeGO.GetComponent<LayoutElement>();
                     if (mutationNodeLayout != null)
                     {
-                        mutationNodeLayout.preferredWidth = 120;
-                        mutationNodeLayout.preferredHeight = 120;
+                        mutationNodeLayout.preferredWidth = MutationNodeWidth;
+                        mutationNodeLayout.preferredHeight = MutationNodeHeight;
                     }
 
                     MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
