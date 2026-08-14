@@ -129,6 +129,12 @@ namespace FungusToast.Unity.UI.GameLog
             if (headerText != null)
             {
                 headerText.color = UIStyleTokens.Text.Primary;
+                headerText.text = isPlayerSpecificPanel ? "Human Log" : "Global Log";
+                headerText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+                headerText.enableAutoSizing = false;
+                headerText.textWrappingMode = TextWrappingModes.NoWrap;
+                TMPOverflowUtility.SetSafeEllipsis(headerText);
+                headerText.alignment = TextAlignmentOptions.MidlineLeft;
             }
 
             if (clearButton != null)

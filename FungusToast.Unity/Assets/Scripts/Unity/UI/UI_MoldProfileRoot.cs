@@ -74,7 +74,7 @@ namespace FungusToast.Unity.UI
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const float StatsRootHeight = 44f;
-        private const float ProfileRootPreferredHeight = 450f;
+        private const float GrowthPreviewPreferredHeight = 500f;
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float RandomDecayChanceIconSize = 24f;
@@ -163,9 +163,7 @@ namespace FungusToast.Unity.UI
         {
             if (TryGetComponent<LayoutElement>(out var rootLayout))
             {
-                // Preserve this sidebar lane instead of allowing its dynamic
-                // sections to displace the mutation action above it.
-                rootLayout.preferredHeight = ProfileRootPreferredHeight;
+                rootLayout.preferredHeight = -1f;
                 rootLayout.flexibleHeight = 0f;
             }
 
@@ -176,6 +174,7 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyChildLayoutBehavior(GrowthPreviewRootName, ignoreIfEmpty: false);
+            ApplyGrowthPreviewLayoutMetrics();
             ApplyChildLayoutBehavior(StatsRootName, ignoreIfEmpty: true);
             ApplyStatsRootStyle();
 
@@ -214,6 +213,19 @@ namespace FungusToast.Unity.UI
             if (child.TryGetComponent<HorizontalLayoutGroup>(out var horizontalLayout))
             {
                 horizontalLayout.childForceExpandHeight = false;
+            }
+        }
+
+        private void ApplyGrowthPreviewLayoutMetrics()
+        {
+            var growthPreviewRoot = FindDirectChildRect(GrowthPreviewRootName);
+            if (growthPreviewRoot != null && growthPreviewRoot.TryGetComponent<LayoutElement>(out var layout))
+            {
+                // The preview is a 3x3 board. Its original 375-unit allocation
+                // clips the bottom row once the sidebar is Canvas-scaled.
+                layout.preferredHeight = GrowthPreviewPreferredHeight;
+                layout.minHeight = GrowthPreviewPreferredHeight;
+                layout.flexibleHeight = 0f;
             }
         }
 
@@ -1227,6 +1239,7 @@ namespace FungusToast.Unity.UI
             rect.offsetMax = Vector2.zero;
 
             var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.font = TMP_Settings.defaultFontAsset;
             text.textWrappingMode = TextWrappingModes.NoWrap;
             text.alignment = TextAlignmentOptions.Left;
             text.text = string.Empty;
