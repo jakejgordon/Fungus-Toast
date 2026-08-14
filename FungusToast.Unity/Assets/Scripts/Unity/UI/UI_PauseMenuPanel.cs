@@ -69,6 +69,7 @@ namespace FungusToast.Unity.UI
 
         private PendingAction pendingAction;
         private bool gameplayVisible;
+        private bool hudControlsSuppressed;
 
         public bool IsOpen { get; private set; }
         public bool IsConfirming => pendingAction != PendingAction.None;
@@ -103,21 +104,19 @@ namespace FungusToast.Unity.UI
         {
             gameplayVisible = isVisible;
             EnsureBuilt();
-
-            if (hudButtonRoot != null)
-            {
-                hudButtonRoot.SetActive(isVisible);
-            }
-
-            if (nextTrackHudButtonRoot != null)
-            {
-                nextTrackHudButtonRoot.SetActive(isVisible);
-            }
+            RefreshHudControlsVisibility();
 
             if (!isVisible)
             {
                 Hide();
             }
+        }
+
+        public void SetHudControlsSuppressed(bool suppressed)
+        {
+            hudControlsSuppressed = suppressed;
+            EnsureBuilt();
+            RefreshHudControlsVisibility();
         }
 
         public void Show()
@@ -212,18 +211,25 @@ namespace FungusToast.Unity.UI
                 BuildOverlay(rootCanvas.transform);
             }
 
+            RefreshHudControlsVisibility();
+
+            ApplyPanelState();
+            Hide();
+        }
+
+        private void RefreshHudControlsVisibility()
+        {
+            bool shouldShow = gameplayVisible && !hudControlsSuppressed;
+
             if (hudButtonRoot != null)
             {
-                hudButtonRoot.SetActive(gameplayVisible);
+                hudButtonRoot.SetActive(shouldShow);
             }
 
             if (nextTrackHudButtonRoot != null)
             {
-                nextTrackHudButtonRoot.SetActive(gameplayVisible);
+                nextTrackHudButtonRoot.SetActive(shouldShow);
             }
-
-            ApplyPanelState();
-            Hide();
         }
 
         private Canvas ResolveRootCanvas()

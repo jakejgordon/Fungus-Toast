@@ -190,6 +190,7 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutationPlayer = null;
             HideTimeLapseCoachmarkImmediate(false);
             HideStorePointsCoachmarkImmediate(false);
+            SetGlobalHudControlsSuppressed(false);
             SetDockButtonVisible(false);
         }
 
@@ -283,6 +284,8 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 mutationTreePanel.SetActive(false);
             }
+
+            SetGlobalHudControlsSuppressed(false);
 
             if (mutationTreeRect != null)
             {
@@ -764,6 +767,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             mutationTreePanel.SetActive(false);
+            SetGlobalHudControlsSuppressed(false);
 
             if (dockButtonText != null)
             {
@@ -780,6 +784,7 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = true;
 
             mutationTreePanel.SetActive(true);
+            SetGlobalHudControlsSuppressed(true);
             SetDockButtonVisible(true);
             isTreeOpen = true;
             RefreshResponsiveMutationPanelLayout();
@@ -832,6 +837,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationTreeRect.anchoredPosition = targetHiddenPosition;
             mutationTreePanel.SetActive(false);
+            SetGlobalHudControlsSuppressed(false);
             HideTimeLapseCoachmarkImmediate(false);
             HideStorePointsCoachmarkImmediate(false);
 
@@ -848,6 +854,11 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 dockButton.gameObject.SetActive(visible);
             }
+        }
+
+        private static void SetGlobalHudControlsSuppressed(bool suppressed)
+        {
+            GameManager.Instance?.GameUI?.PauseMenuPanel?.SetHudControlsSuppressed(suppressed);
         }
 
         private void TryEndHumanTurn()

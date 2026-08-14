@@ -76,6 +76,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Added concise text states and semantic borders/backgrounds for available, ready-to-upgrade, owned, unaffordable, locked, next-round, active-surge, no-target, and maxed nodes; cost badges now also show one-point costs.
 - Hover now distinguishes the inspected node, all of its prerequisites, and its direct dependents at the same time.
 - Increased mutation-tooltip width to reduce excessive height while retaining automatic on-screen placement.
+- Hide the floating next-track and pause-menu HUD controls while the full-screen mutation workspace is open, then restore them when it closes, so they cannot overlap `Return to Board`.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed.
 - Manual Unity checks still required: full-canvas composition at 1920x1080/1600x900/1280x720; every node state; tooltip/path visibility at all columns and screen edges; repeated open/close; purchases to zero; banking; targeted selection; Time-Lapse; hotseat handoff; game restart; Console cleanliness.
 
