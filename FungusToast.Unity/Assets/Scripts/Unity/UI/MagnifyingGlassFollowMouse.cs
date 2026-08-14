@@ -13,6 +13,8 @@ using TMPro;
 public class MagnifyingGlassFollowMouse : MonoBehaviour
 {
     private const float UnitsPerPixelComparisonEpsilon = 0.0001f;
+    private const float TooltipScreenPadding = 12f;
+    private const float TooltipNeighborhoodClearance = 72f;
 
     [Header("Grid Reference")]
     // Assign this in the Inspector to your GridVisualizer instance
@@ -156,6 +158,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         bool overBread = gameStarted && IsMouseOverBread();
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
+        bool pointerOverTooltip = IsPointerOverTooltip(pointerScreen);
 
         // Decide if we show magnifier visuals (independent from tooltip logic)
         bool showVisuals = visualsAllowed && !selectionModeVisualsSuppressed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
@@ -172,15 +175,20 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         }
 
         // Tooltip logic: show when hovering valid cell regardless of visualsAllowed (still suppress if over UI to avoid conflicts)
-        bool processTooltip = overBread && !pointerOverUI;
+        bool processTooltip = (overBread && !pointerOverUI) || pointerOverTooltip;
 
         if (processTooltip)
         {
-            Vector3Int currentCellPos = GetCurrentCellPosition();
-            if (currentCellPos != lastHoveredCellPos)
+            // Keep the inspected cell stable while the pointer moves onto the tooltip's
+            // explicit details control. Screen coordinates over UI are not board cells.
+            if (!pointerOverTooltip)
             {
-                OnCellHoverChanged(currentCellPos);
-                lastHoveredCellPos = currentCellPos;
+                Vector3Int currentCellPos = GetCurrentCellPosition();
+                if (currentCellPos != lastHoveredCellPos)
+                {
+                    OnCellHoverChanged(currentCellPos);
+                    lastHoveredCellPos = currentCellPos;
+                }
             }
         }
         else
@@ -444,6 +452,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         tooltipRectTransform = tooltipInstance.GetComponent<RectTransform>();
         tooltipCanvasGroup = tooltipInstance.GetComponent<CanvasGroup>();
         tooltipUI = tooltipInstance.GetComponent<CellTooltipUI>();
+        if (tooltipUI != null)
+        {
+            tooltipUI.LayoutChanged += PositionTooltip;
+        }
 
         // Inject PlayerBinder dependency into the tooltip
         if (tooltipUI != null && FungusToast.Unity.GameManager.Instance?.GameUI?.PlayerUIBinder != null)
@@ -506,8 +518,9 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         // Configure CanvasGroup
         tooltipCanvasGroup.alpha = 0f;
-        tooltipCanvasGroup.interactable = false;
-        tooltipCanvasGroup.blocksRaycasts = false;
+        tooltipCanvasGroup.interactable = true;
+        // The background is non-raycastable, but the explicit details button needs input.
+        tooltipCanvasGroup.blocksRaycasts = true;
 
         // Start hidden
         tooltipInstance.SetActive(false);
@@ -729,29 +742,61 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         Vector2 tooltipSize = tooltipPixelRect.size;
         Vector2 screenSize = new Vector2(Screen.width, Screen.height);
 
-        // Calculate position to the right of the mouse with offset
-        Vector3 tooltipPos = mousePos + new Vector3(tooltipOffset.x, tooltipOffset.y, 0);
-        
-        // Center the tooltip vertically with the mouse cursor (magnifying glass circle)
-        // Subtract half the tooltip height to center it
-        tooltipPos.y -= tooltipSize.y * 0.5f;
-        
-        // If tooltip would go off right edge of screen, position it to the left instead
-        if (tooltipPos.x + tooltipSize.x > screenSize.x)
-        {
-            tooltipPos = mousePos + new Vector3(-tooltipOffset.x - tooltipSize.x, tooltipOffset.y, 0);
-            // Center vertically for left-side positioning too
-            tooltipPos.y -= tooltipSize.y * 0.5f;
-        }
-        
-        // Ensure tooltip stays within screen bounds
-        tooltipPos.x = Mathf.Clamp(tooltipPos.x, 0, screenSize.x - tooltipSize.x);
-        tooltipPos.y = Mathf.Clamp(tooltipPos.y, 0, screenSize.y - tooltipSize.y);
+        float horizontalClearance = Mathf.Max(TooltipNeighborhoodClearance, tooltipOffset.x);
+        float verticalClearance = Mathf.Max(TooltipNeighborhoodClearance, Mathf.Abs(tooltipOffset.y));
+        float neighborhoodRadius = Mathf.Max(TooltipNeighborhoodClearance, GetMagnifyingGlassRadius());
+        var inspectedNeighborhood = new Rect(
+            mousePos.x - neighborhoodRadius,
+            mousePos.y - neighborhoodRadius,
+            neighborhoodRadius * 2f,
+            neighborhoodRadius * 2f);
 
-        PositionRectTransformAtScreen(tooltipRectTransform, new Vector2(tooltipPos.x, tooltipPos.y));
+        Vector2[] candidates =
+        {
+            new(mousePos.x + horizontalClearance, mousePos.y - tooltipSize.y * 0.5f),
+            new(mousePos.x - horizontalClearance - tooltipSize.x, mousePos.y - tooltipSize.y * 0.5f),
+            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y + verticalClearance),
+            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y - verticalClearance - tooltipSize.y)
+        };
+
+        Vector2 tooltipPos = ClampTooltipPosition(candidates[0], tooltipSize, screenSize);
+        foreach (Vector2 candidate in candidates)
+        {
+            Vector2 clamped = ClampTooltipPosition(candidate, tooltipSize, screenSize);
+            Rect candidateRect = new(clamped, tooltipSize);
+            if (!candidateRect.Overlaps(inspectedNeighborhood))
+            {
+                tooltipPos = clamped;
+                break;
+            }
+        }
+
+        PositionRectTransformAtScreen(tooltipRectTransform, tooltipPos);
 
         if (enableDebugLogs)
             Debug.Log($"[Tooltip Debug] Positioned tooltip at: {tooltipPos} (mouse: {mousePos}, offset: {tooltipOffset})");
+    }
+
+    private static Vector2 ClampTooltipPosition(Vector2 position, Vector2 tooltipSize, Vector2 screenSize)
+    {
+        float maxX = Mathf.Max(TooltipScreenPadding, screenSize.x - tooltipSize.x - TooltipScreenPadding);
+        float maxY = Mathf.Max(TooltipScreenPadding, screenSize.y - tooltipSize.y - TooltipScreenPadding);
+        return new Vector2(
+            Mathf.Clamp(position.x, TooltipScreenPadding, maxX),
+            Mathf.Clamp(position.y, TooltipScreenPadding, maxY));
+    }
+
+    private bool IsPointerOverTooltip(Vector2 pointerScreen)
+    {
+        if (!isTooltipVisible || tooltipRectTransform == null || tooltipInstance == null || !tooltipInstance.activeInHierarchy)
+        {
+            return false;
+        }
+
+        Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? rootCanvas.worldCamera
+            : null;
+        return RectTransformUtility.RectangleContainsScreenPoint(tooltipRectTransform, pointerScreen, uiCamera);
     }
 
     void CacheRootCanvas()
@@ -852,6 +897,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         // Clean up tooltip instance when this object is destroyed
         if (tooltipInstance != null)
         {
+            if (tooltipUI != null)
+            {
+                tooltipUI.LayoutChanged -= PositionTooltip;
+            }
             Destroy(tooltipInstance);
         }
     }

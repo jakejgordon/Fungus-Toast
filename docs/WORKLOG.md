@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priority 1 is completed and visually accepted by Jake. Priority 2 is implemented in code and awaits focused Unity visual/interaction validation. Priority 3 has not started.
+- **State:** Priorities 1–3 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–3 await focused Unity visual/interaction validation. Priority 4 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -181,6 +181,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 4. P1 — Progressive board-inspection tooltip
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** The default cell tooltip exposes diagnostic-level detail, is visually noisy over the board, and can conceal the inspected neighborhood.
 
 **Implementation intent:**
@@ -202,6 +204,16 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Alive, dead, toxic, resistant, initial-spore, and notable special-effect cells have concise and accurate default summaries.
 - Advanced details remain available without crowding normal hover inspection.
 - Tooltips stay on-screen and do not cover the inspected cell/neighborhood at board edges or corners.
+
+**Implemented checkpoint:**
+
+- Reworked the existing cell/board inspection tooltip in place; it now presents a decision-focused summary by default and keeps coordinates, positional classification, adjacency counts, local contest state, reclaim count, resistance source, and nutrient/chemobeacon tile diagnostics behind an explicit `Show details` control.
+- Added the discoverable control as a token-styled 36px secondary button inside the existing runtime tooltip, with a matching `Hide details` state; no generic hover-tooltip or alternate board-inspection path was introduced.
+- Retained live owner, state, growth source, age, toxin expiration, resistance, death reason, nutrient reward/trigger, chemobeacon effect, and unusual animation-state information in the default summary.
+- Raised tooltip detail copy to the shared 16px caption floor and retained the opaque token-based `PanelSecondary` surface.
+- Reworked screen placement to choose right, left, above, or below based on a clear inspected-neighborhood area, then clamp with a 12px viewport margin. The tooltip remains open while the pointer moves onto its own details button and does not reinterpret that UI position as a different board cell.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: alive, dead, toxin, resistant, initial-spore, newly-grown/dying/receiving-toxin, nutrient, and chemobeacon cells; `Show details`/`Hide details` interaction; edge and corner placement; 1920x1080, 1600x900, and 1280x720; magnifier enabled/disabled board sizes; rapid cross-cell hover; selection modes; restart; and Console cleanliness.
 
 ### 5. P2 — Left-sidebar strategic labels and symbol legend
 

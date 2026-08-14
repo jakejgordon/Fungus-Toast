@@ -60,10 +60,14 @@ namespace FungusToast.Unity.UI
         private const float LeftPadding = 28f;
         private const float RightPadding = 16f;
         private const float VerticalPadding = 16f;
+        private const float DetailsButtonHeight = UIStyleTokens.Interaction.MinimumTargetSize;
+        private const float DetailsButtonBottomMargin = 8f;
+        private const float DetailsButtonGap = 8f;
+        private const float ContentBottomPadding = VerticalPadding + DetailsButtonHeight + DetailsButtonBottomMargin + DetailsButtonGap;
         private const float ContentWidth = TooltipWidth - LeftPadding - RightPadding;
-        private const float DefaultSectionFontSize = 15.5f;
+        private const float DefaultSectionFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float EmphasizedSectionFontSize = 18f;
-        private const float DetailSectionFontSize = 14f;
+        private const float DetailSectionFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float OwnerBadgeSize = 18f;
         private const float OwnerBadgeHorizontalOffset = 12f;
 
@@ -73,8 +77,17 @@ namespace FungusToast.Unity.UI
         private Image ownerBadgeImage;
         private Image lastOwnerBadgeImage;
         private RectTransform rootRect;
+        private Button detailsButton;
+        private TextMeshProUGUI detailsButtonText;
+        private FungalCell inspectedCell;
+        private BoardTile inspectedTile;
+        private GameBoard inspectedBoard;
+        private bool showAdvancedDetails;
         private bool initialized;
         private readonly StringBuilder sb = new();
+
+        /// <summary>Raised after the tooltip's height changes, so its owner can re-clamp it.</summary>
+        public event Action LayoutChanged;
 
         // ═══════════════════════════════════════════════════════════════════
         //  Public API
@@ -91,7 +104,24 @@ namespace FungusToast.Unity.UI
 
             if (bodyText == null) return;
 
-            // ── Build every line into one rich-text string ──
+            inspectedCell = cell;
+            inspectedTile = null;
+            inspectedBoard = board;
+            showAdvancedDetails = false;
+            RenderCellTooltip();
+        }
+
+        private void RenderCellTooltip()
+        {
+            if (bodyText == null || inspectedCell == null)
+            {
+                return;
+            }
+
+            FungalCell cell = inspectedCell;
+            GameBoard board = inspectedBoard;
+
+            // ── Build the decision summary, then opt-in diagnostics ──
             sb.Clear();
             AppendStatus(cell);
             AppendGrowthSource(cell);
@@ -100,16 +130,14 @@ namespace FungusToast.Unity.UI
             AppendAge(cell);
             AppendExpiration(cell);
             AppendResistance(cell);
-            AppendTacticalInfo(cell, board);
+            if (showAdvancedDetails)
+            {
+                AppendAdvancedHeading();
+                AppendTacticalInfo(cell, board);
+            }
             AppendAnimationFlags(cell);
 
-            bodyText.text = sb.ToString().TrimEnd('\n', '\r');
-            bodyText.ForceMeshUpdate();
-
-            // ── Size root to fit ──
-            SizeToContent();
-            bodyText.ForceMeshUpdate();
-            UpdateOwnershipIcons(cell);
+            CommitRenderedContent(cell);
         }
 
         public void UpdateTooltip(
@@ -130,6 +158,24 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            inspectedCell = null;
+            inspectedTile = tile;
+            inspectedBoard = board;
+            showAdvancedDetails = false;
+            RenderTileTooltip();
+        }
+
+        private void RenderTileTooltip()
+        {
+            if (bodyText == null || inspectedTile == null)
+            {
+                return;
+            }
+
+            BoardTile tile = inspectedTile;
+            GameBoard board = inspectedBoard;
+            var chemobeacon = board?.GetChemobeaconAtTile(tile.TileId);
+
             sb.Clear();
             if (chemobeacon != null)
             {
@@ -138,14 +184,42 @@ namespace FungusToast.Unity.UI
             else if (tile.NutrientPatch != null)
             {
                 AppendNutrientPatch(tile.NutrientPatch);
-                AppendNutrientTileInfo(tile, board);
             }
 
+            if (showAdvancedDetails)
+            {
+                AppendAdvancedHeading();
+                if (chemobeacon != null)
+                {
+                    AppendChemobeaconTileInfo(tile);
+                }
+                else
+                {
+                    AppendNutrientTileInfo(tile, board);
+                }
+            }
+
+            CommitRenderedContent(null);
+        }
+
+        private void CommitRenderedContent(FungalCell cell)
+        {
             bodyText.text = sb.ToString().TrimEnd('\n', '\r');
             bodyText.ForceMeshUpdate();
+            UpdateDetailsButtonLabel();
             SizeToContent();
             bodyText.ForceMeshUpdate();
-            HideOwnershipIcons();
+
+            if (cell != null)
+            {
+                UpdateOwnershipIcons(cell);
+            }
+            else
+            {
+                HideOwnershipIcons();
+            }
+
+            LayoutChanged?.Invoke();
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -210,6 +284,7 @@ namespace FungusToast.Unity.UI
             bodyText.gameObject.SetActive(true);
             bodyText.transform.SetAsLastSibling();
             ConfigureBodyText(bodyText);
+            CreateDetailsButton();
             ownerBadgeImage = PrepareOwnershipBadge(ownerIcon, "OwnerBadgeIcon");
             lastOwnerBadgeImage = PrepareOwnershipBadge(lastOwnerIcon, "LastOwnerBadgeIcon");
 
@@ -293,7 +368,7 @@ namespace FungusToast.Unity.UI
             var rt = tmp.rectTransform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
-            rt.offsetMin = new Vector2(LeftPadding, VerticalPadding);
+            rt.offsetMin = new Vector2(LeftPadding, ContentBottomPadding);
             rt.offsetMax = new Vector2(-RightPadding, -VerticalPadding);
 
             // Remove components that might interfere
@@ -302,6 +377,59 @@ namespace FungusToast.Unity.UI
 
             var fit = tmp.GetComponent<ContentSizeFitter>();
             if (fit != null) Destroy(fit);
+        }
+
+        private void CreateDetailsButton()
+        {
+            var buttonObject = new GameObject("AdvancedDetailsButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(transform, false);
+
+            detailsButton = buttonObject.GetComponent<Button>();
+            var buttonRect = detailsButton.GetComponent<RectTransform>();
+            buttonRect.anchorMin = new Vector2(0f, 0f);
+            buttonRect.anchorMax = new Vector2(1f, 0f);
+            buttonRect.pivot = new Vector2(0.5f, 0f);
+            buttonRect.offsetMin = new Vector2(LeftPadding, DetailsButtonBottomMargin);
+            buttonRect.offsetMax = new Vector2(-RightPadding, DetailsButtonBottomMargin + DetailsButtonHeight);
+
+            UIStyleTokens.Button.ApplySecondaryMenuAction(detailsButton);
+            detailsButton.onClick.AddListener(ToggleAdvancedDetails);
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            detailsButtonText = labelObject.GetComponent<TextMeshProUGUI>();
+            detailsButtonText.raycastTarget = false;
+            detailsButtonText.font = bodyText.font;
+            detailsButtonText.fontSize = UIStyleTokens.Typography.CaptionMinimum;
+            detailsButtonText.fontStyle = FontStyles.Bold;
+            detailsButtonText.alignment = TextAlignmentOptions.Center;
+            detailsButtonText.color = UIStyleTokens.Text.Primary;
+            var labelRect = detailsButtonText.rectTransform;
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+        }
+
+        private void ToggleAdvancedDetails()
+        {
+            showAdvancedDetails = !showAdvancedDetails;
+            if (inspectedCell != null)
+            {
+                RenderCellTooltip();
+            }
+            else if (inspectedTile != null)
+            {
+                RenderTileTooltip();
+            }
+        }
+
+        private void UpdateDetailsButtonLabel()
+        {
+            if (detailsButtonText != null)
+            {
+                detailsButtonText.text = showAdvancedDetails ? "Hide details" : "Show details";
+            }
         }
 
         private Image PrepareOwnershipBadge(Image configuredImage, string objectName)
@@ -338,7 +466,7 @@ namespace FungusToast.Unity.UI
 
             // TMP can report preferred height for a given width
             float textHeight = bodyText.GetPreferredValues(bodyText.text, ContentWidth, 0f).y;
-            float totalHeight = textHeight + VerticalPadding * 2f;
+            float totalHeight = textHeight + VerticalPadding + ContentBottomPadding;
 
             rootRect.sizeDelta = new Vector2(TooltipWidth, totalHeight);
         }
@@ -404,7 +532,7 @@ namespace FungusToast.Unity.UI
             bool young = cell.IsAlive
                          && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
             Color ageColor = young ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary;
-            sb.AppendLine(EmphasizedLine("Growth Cycle Age",
+            sb.AppendLine(EmphasizedLine("Age",
                 cell.GrowthCycleAge.ToString(),
                 ageColor));
         }
@@ -433,17 +561,23 @@ namespace FungusToast.Unity.UI
 
                 if (!string.IsNullOrWhiteSpace(cell.ResistanceSource))
                 {
-                    sb.AppendLine(DetailLine("Resistance Source", cell.ResistanceSource,
-                        UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
+                    if (showAdvancedDetails)
+                    {
+                        sb.AppendLine(DetailLine("Resistance Source", cell.ResistanceSource,
+                            UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
+                    }
                 }
             }
         }
 
+        private void AppendAdvancedHeading()
+        {
+            sb.AppendLine();
+            sb.AppendLine(DetailBullet("Advanced inspection", UIStyleTokens.Accent.Hyphae));
+        }
+
         private void AppendTacticalInfo(FungalCell cell, GameBoard board)
         {
-            // Blank line separator between core info and tactical section
-            sb.AppendLine();
-
             var (x, y) = board.GetXYFromTileId(cell.TileId);
             sb.AppendLine(DetailLine("Tile", $"({x}, {y})",
                 UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
@@ -504,7 +638,6 @@ namespace FungusToast.Unity.UI
         private void AppendNutrientPatch(NutrientPatch nutrientPatch)
         {
             sb.AppendLine(EmphasizedLine("Status", nutrientPatch.DisplayName, UIStyleTokens.State.Warning));
-            sb.AppendLine(DetailLine("Cluster Size", nutrientPatch.ClusterTileCount.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Source", GetNutrientPatchSourceLabel(nutrientPatch.Source), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
 
             string rewardText = nutrientPatch.RewardType switch
@@ -517,8 +650,6 @@ namespace FungusToast.Unity.UI
 
             sb.AppendLine(DetailLine("Reward", rewardText, UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
             sb.AppendLine(DetailLine("Trigger", "First living growth onto this cluster claims it", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine();
-            sb.AppendLine(DetailLine("Notes", nutrientPatch.Description, UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
         }
 
         private static string GetNutrientPatchSourceLabel(NutrientPatchSource source)
@@ -580,6 +711,10 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(DetailLine("Effect", $"Projects {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
             sb.AppendLine(DetailLine("Effect", "Replaces toxins, dead cells, enemy cells, and empty tiles in its path", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Effect", "Skips over friendly living cells", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+        }
+
+        private void AppendChemobeaconTileInfo(BoardTile tile)
+        {
             sb.AppendLine();
             sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Occupancy", "Blocked while active", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
