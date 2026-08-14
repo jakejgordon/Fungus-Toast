@@ -350,7 +350,8 @@ namespace FungusToast.Unity.UI.MutationTree
             // The node's top lane is reserved for the lock/status and DNA-cost
             // indicators. Keep the compact state and the level on separate lines
             // so a max level is never clipped on narrow cards.
-            if (isMaxed) return $"MAX\n{level}";
+            // The dedicated MAX badge is the sole terminal-state indicator.
+            if (isMaxed) return level;
             if (isSurgeActive) return $"ACTIVE {surgeTurns}R\n{level}";
             if (showPendingUnlock) return $"NEXT ROUND\n{level}";
             if (isLocked) return $"LOCKED\n{level}";

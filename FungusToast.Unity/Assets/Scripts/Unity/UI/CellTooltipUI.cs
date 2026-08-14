@@ -60,10 +60,7 @@ namespace FungusToast.Unity.UI
         private const float LeftPadding = 28f;
         private const float RightPadding = 16f;
         private const float VerticalPadding = 16f;
-        private const float DetailsButtonHeight = UIStyleTokens.Interaction.MinimumTargetSize;
-        private const float DetailsButtonBottomMargin = 8f;
-        private const float DetailsButtonGap = 8f;
-        private const float ContentBottomPadding = VerticalPadding + DetailsButtonHeight + DetailsButtonBottomMargin + DetailsButtonGap;
+        private const float ContentBottomPadding = VerticalPadding;
         private const float ContentWidth = TooltipWidth - LeftPadding - RightPadding;
         private const float DefaultSectionFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float EmphasizedSectionFontSize = 18f;
@@ -77,12 +74,9 @@ namespace FungusToast.Unity.UI
         private Image ownerBadgeImage;
         private Image lastOwnerBadgeImage;
         private RectTransform rootRect;
-        private Button detailsButton;
-        private TextMeshProUGUI detailsButtonText;
         private FungalCell inspectedCell;
         private BoardTile inspectedTile;
         private GameBoard inspectedBoard;
-        private bool showAdvancedDetails;
         private bool initialized;
         private readonly StringBuilder sb = new();
 
@@ -107,7 +101,6 @@ namespace FungusToast.Unity.UI
             inspectedCell = cell;
             inspectedTile = null;
             inspectedBoard = board;
-            showAdvancedDetails = false;
             RenderCellTooltip();
         }
 
@@ -121,7 +114,7 @@ namespace FungusToast.Unity.UI
             FungalCell cell = inspectedCell;
             GameBoard board = inspectedBoard;
 
-            // ── Build the decision summary, then opt-in diagnostics ──
+            // ── Build only the immediate, actionable inspection summary. ──
             sb.Clear();
             AppendStatus(cell);
             AppendGrowthSource(cell);
@@ -130,11 +123,6 @@ namespace FungusToast.Unity.UI
             AppendAge(cell);
             AppendExpiration(cell);
             AppendResistance(cell);
-            if (showAdvancedDetails)
-            {
-                AppendAdvancedHeading();
-                AppendTacticalInfo(cell, board);
-            }
             AppendAnimationFlags(cell);
 
             CommitRenderedContent(cell);
@@ -161,7 +149,6 @@ namespace FungusToast.Unity.UI
             inspectedCell = null;
             inspectedTile = tile;
             inspectedBoard = board;
-            showAdvancedDetails = false;
             RenderTileTooltip();
         }
 
@@ -186,19 +173,6 @@ namespace FungusToast.Unity.UI
                 AppendNutrientPatch(tile.NutrientPatch);
             }
 
-            if (showAdvancedDetails)
-            {
-                AppendAdvancedHeading();
-                if (chemobeacon != null)
-                {
-                    AppendChemobeaconTileInfo(tile);
-                }
-                else
-                {
-                    AppendNutrientTileInfo(tile, board);
-                }
-            }
-
             CommitRenderedContent(null);
         }
 
@@ -206,7 +180,6 @@ namespace FungusToast.Unity.UI
         {
             bodyText.text = sb.ToString().TrimEnd('\n', '\r');
             bodyText.ForceMeshUpdate();
-            UpdateDetailsButtonLabel();
             SizeToContent();
             bodyText.ForceMeshUpdate();
 
@@ -284,7 +257,6 @@ namespace FungusToast.Unity.UI
             bodyText.gameObject.SetActive(true);
             bodyText.transform.SetAsLastSibling();
             ConfigureBodyText(bodyText);
-            CreateDetailsButton();
             ownerBadgeImage = PrepareOwnershipBadge(ownerIcon, "OwnerBadgeIcon");
             lastOwnerBadgeImage = PrepareOwnershipBadge(lastOwnerIcon, "LastOwnerBadgeIcon");
 
@@ -377,59 +349,6 @@ namespace FungusToast.Unity.UI
 
             var fit = tmp.GetComponent<ContentSizeFitter>();
             if (fit != null) Destroy(fit);
-        }
-
-        private void CreateDetailsButton()
-        {
-            var buttonObject = new GameObject("AdvancedDetailsButton", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
-            buttonObject.transform.SetParent(transform, false);
-
-            detailsButton = buttonObject.GetComponent<Button>();
-            var buttonRect = detailsButton.GetComponent<RectTransform>();
-            buttonRect.anchorMin = new Vector2(0f, 0f);
-            buttonRect.anchorMax = new Vector2(1f, 0f);
-            buttonRect.pivot = new Vector2(0.5f, 0f);
-            buttonRect.offsetMin = new Vector2(LeftPadding, DetailsButtonBottomMargin);
-            buttonRect.offsetMax = new Vector2(-RightPadding, DetailsButtonBottomMargin + DetailsButtonHeight);
-
-            UIStyleTokens.Button.ApplySecondaryMenuAction(detailsButton);
-            detailsButton.onClick.AddListener(ToggleAdvancedDetails);
-
-            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(buttonObject.transform, false);
-            detailsButtonText = labelObject.GetComponent<TextMeshProUGUI>();
-            detailsButtonText.raycastTarget = false;
-            detailsButtonText.font = bodyText.font;
-            detailsButtonText.fontSize = UIStyleTokens.Typography.CaptionMinimum;
-            detailsButtonText.fontStyle = FontStyles.Bold;
-            detailsButtonText.alignment = TextAlignmentOptions.Center;
-            detailsButtonText.color = UIStyleTokens.Text.Primary;
-            var labelRect = detailsButtonText.rectTransform;
-            labelRect.anchorMin = Vector2.zero;
-            labelRect.anchorMax = Vector2.one;
-            labelRect.offsetMin = Vector2.zero;
-            labelRect.offsetMax = Vector2.zero;
-        }
-
-        private void ToggleAdvancedDetails()
-        {
-            showAdvancedDetails = !showAdvancedDetails;
-            if (inspectedCell != null)
-            {
-                RenderCellTooltip();
-            }
-            else if (inspectedTile != null)
-            {
-                RenderTileTooltip();
-            }
-        }
-
-        private void UpdateDetailsButtonLabel()
-        {
-            if (detailsButtonText != null)
-            {
-                detailsButtonText.text = showAdvancedDetails ? "Hide details" : "Show details";
-            }
         }
 
         private Image PrepareOwnershipBadge(Image configuredImage, string objectName)
@@ -559,70 +478,7 @@ namespace FungusToast.Unity.UI
                 sb.AppendLine(DetailLine("Resistance", "Active",
                     UIStyleTokens.Text.Secondary, UIStyleTokens.Accent.Spore));
 
-                if (!string.IsNullOrWhiteSpace(cell.ResistanceSource))
-                {
-                    if (showAdvancedDetails)
-                    {
-                        sb.AppendLine(DetailLine("Resistance Source", cell.ResistanceSource,
-                            UIStyleTokens.Text.Secondary, UIStyleTokens.State.Info));
-                    }
-                }
             }
-        }
-
-        private void AppendAdvancedHeading()
-        {
-            sb.AppendLine();
-            sb.AppendLine(DetailBullet("Advanced inspection", UIStyleTokens.Accent.Hyphae));
-        }
-
-        private void AppendTacticalInfo(FungalCell cell, GameBoard board)
-        {
-            var (x, y) = board.GetXYFromTileId(cell.TileId);
-            sb.AppendLine(DetailLine("Tile", $"({x}, {y})",
-                UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-
-            bool isBorder = x == 0 || y == 0 || x == board.Width - 1 || y == board.Height - 1;
-            bool nearEdge = !isBorder && (x <= 1 || y <= 1 || x >= board.Width - 2 || y >= board.Height - 2);
-            string posLabel = isBorder ? "Border" : nearEdge ? "Near Edge" : "Interior";
-            Color posColor = isBorder ? UIStyleTokens.State.Warning : UIStyleTokens.Text.Primary;
-            sb.AppendLine(DetailLine("Position", posLabel,
-                UIStyleTokens.Text.Secondary, posColor));
-
-            int allies = 0, enemies = 0, toxins = 0, empty = 0;
-            foreach (var adj in board.GetAdjacentTiles(cell.TileId))
-            {
-                var ac = adj.FungalCell;
-                if (ac == null) { empty++; continue; }
-                if (ac.IsToxin) toxins++;
-                if (cell.OwnerPlayerId.HasValue && ac.OwnerPlayerId == cell.OwnerPlayerId)
-                    allies++;
-                else if (ac.OwnerPlayerId.HasValue)
-                    enemies++;
-            }
-
-            sb.AppendLine(DetailLine("Adjacent Allies", allies.ToString(),
-                UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
-            sb.AppendLine(DetailLine("Adjacent Enemies", enemies.ToString(),
-                UIStyleTokens.Text.Secondary,
-                enemies > 0 ? UIStyleTokens.State.Danger : UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Adjacent Toxins", toxins.ToString(),
-                UIStyleTokens.Text.Secondary,
-                toxins > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Adjacent Empty", empty.ToString(),
-                UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-
-            bool contested = enemies > 0 && cell.IsAlive;
-            if (contested)
-                sb.AppendLine(DetailLine("Local State", "Contested",
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
-            else if (cell.IsAlive)
-                sb.AppendLine(DetailLine("Local State", "Stable",
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
-
-            if (cell.ReclaimCount > 0)
-                sb.AppendLine(DetailLine("Reclaimed", $"{cell.ReclaimCount}x",
-                    UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
         }
 
         private void AppendAnimationFlags(FungalCell cell)
@@ -661,48 +517,6 @@ namespace FungusToast.Unity.UI
             };
         }
 
-        private void AppendNutrientTileInfo(BoardTile tile, GameBoard board)
-        {
-            sb.AppendLine();
-
-            sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Cluster Tiles", board.GetNutrientClusterTileCount(tile.TileId).ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-
-            int alliedNeighbors = 0;
-            int enemyNeighbors = 0;
-            int toxinNeighbors = 0;
-            foreach (var adjacentTile in board.GetOrthogonalNeighbors(tile.TileId))
-            {
-                var adjacentCell = adjacentTile.FungalCell;
-                if (adjacentCell == null)
-                {
-                    continue;
-                }
-
-                if (adjacentCell.IsToxin)
-                {
-                    toxinNeighbors++;
-                    continue;
-                }
-
-                if (adjacentCell.OwnerPlayerId.HasValue)
-                {
-                    if (adjacentCell.IsAlive)
-                    {
-                        alliedNeighbors++;
-                    }
-                    else
-                    {
-                        enemyNeighbors++;
-                    }
-                }
-            }
-
-            sb.AppendLine(DetailLine("Orthogonal Living Cells", alliedNeighbors.ToString(), UIStyleTokens.Text.Secondary, alliedNeighbors > 0 ? UIStyleTokens.State.Success : UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Orthogonal Dead Cells", enemyNeighbors.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Orthogonal Toxins", toxinNeighbors.ToString(), UIStyleTokens.Text.Secondary, toxinNeighbors > 0 ? UIStyleTokens.Category.Fungicide : UIStyleTokens.Text.Primary));
-        }
-
         private void AppendChemobeaconInfo(BoardTile tile, GameBoard board, GameBoard.ChemobeaconMarker chemobeacon)
         {
             sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
@@ -711,13 +525,6 @@ namespace FungusToast.Unity.UI
             sb.AppendLine(DetailLine("Effect", $"Projects {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
             sb.AppendLine(DetailLine("Effect", "Replaces toxins, dead cells, enemy cells, and empty tiles in its path", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Effect", "Skips over friendly living cells", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-        }
-
-        private void AppendChemobeaconTileInfo(BoardTile tile)
-        {
-            sb.AppendLine();
-            sb.AppendLine(DetailLine("Tile", $"({tile.X}, {tile.Y})", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
-            sb.AppendLine(DetailLine("Occupancy", "Blocked while active", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Danger));
         }
 
         // ═══════════════════════════════════════════════════════════════════

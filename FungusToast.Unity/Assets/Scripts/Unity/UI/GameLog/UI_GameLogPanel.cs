@@ -15,7 +15,10 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionReservedHeight = 45f;
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
-        private const float ClearButtonMinimumWidth = 64f;
+        private const float ClearButtonMinimumWidth = 72f;
+        private const float HeaderActionInset = 10f;
+        private const float CollapseButtonWidth = 76f;
+        private const float LatestButtonWidth = 112f;
         private const float CollapsedHeight = 48f;
         private const float ExpandedMinimumHeight = 180f;
         private const float BottomFollowThreshold = 0.025f;
@@ -159,6 +162,16 @@ namespace FungusToast.Unity.UI.GameLog
                 buttonRect.sizeDelta = new Vector2(
                     Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
                     Mathf.Max(buttonRect.sizeDelta.y, UIStyleTokens.Interaction.MinimumTargetSize));
+                buttonRect.anchorMin = new Vector2(1f, 1f);
+                buttonRect.anchorMax = new Vector2(1f, 1f);
+                buttonRect.pivot = new Vector2(1f, 0.5f);
+                buttonRect.anchoredPosition = new Vector2(-HeaderActionInset, -20f);
+            }
+
+            if (headerText != null)
+            {
+                var headerTextRect = headerText.rectTransform;
+                headerTextRect.offsetMax = new Vector2(-(ClearButtonMinimumWidth + CollapseButtonWidth + (HeaderActionInset * 3f)), headerTextRect.offsetMax.y);
             }
 
             var labels = clearButton.GetComponentsInChildren<TextMeshProUGUI>(true);
@@ -551,13 +564,13 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (collapseButton == null)
             {
-                collapseButton = CreateButton(headerRoot, "ActivityVisibilityButton", new Vector2(1f, 1f), new Vector2(-112f, -20f), new Vector2(72f, 36f), out collapseButtonLabel);
+                collapseButton = CreateButton(headerRoot, "ActivityVisibilityButton", new Vector2(1f, 1f), new Vector2(-(HeaderActionInset + ClearButtonMinimumWidth + HeaderActionInset + (CollapseButtonWidth * 0.5f)), -20f), new Vector2(CollapseButtonWidth, UIStyleTokens.Interaction.MinimumTargetSize), out collapseButtonLabel);
                 collapseButton.onClick.AddListener(ToggleCollapsed);
             }
 
             if (latestButton == null)
             {
-                latestButton = CreateButton(scrollViewRoot, "ReturnToLatestButton", new Vector2(1f, 0f), new Vector2(-56f, 22f), new Vector2(96f, 36f), out latestButtonLabel);
+                latestButton = CreateButton(scrollViewRoot, "ReturnToLatestButton", new Vector2(1f, 0f), new Vector2(-(HeaderActionInset + (LatestButtonWidth * 0.5f)), 28f), new Vector2(LatestButtonWidth, UIStyleTokens.Interaction.MinimumTargetSize), out latestButtonLabel);
                 latestButton.onClick.AddListener(ScrollToBottom);
             }
 

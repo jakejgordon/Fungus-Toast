@@ -31,6 +31,7 @@ namespace FungusToast.Unity.UI
         [Header("Random Decay Chance")]
         [SerializeField] private RectTransform randomDecayChanceRoot;
         [SerializeField] private TextMeshProUGUI randomDecayChanceText;
+        [SerializeField] private Image randomDecayChanceIcon;
 
         [Header("Adaptations")]
         [SerializeField] private RectTransform adaptationSectionRoot;
@@ -73,10 +74,15 @@ namespace FungusToast.Unity.UI
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const float StatsRootHeight = 44f;
+        private const float ProfileRootPreferredHeight = 450f;
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
+        private const float RandomDecayChanceIconSize = 24f;
         private const float BoardOverlayLegendRowHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float BoardOverlayLegendLabelFontSize = UIStyleTokens.Typography.CaptionMinimum;
+        private const float BoardOverlayLegendHorizontalPadding = 12f;
+        private const float BoardOverlayLegendIconLaneWidth = 32f;
+        private const float BoardOverlayLegendIconVisualSize = 26f;
         private const float AdaptationCoachmarkWidth = 340f;
         private const float AdaptationCoachmarkHeight = 170f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
@@ -157,7 +163,9 @@ namespace FungusToast.Unity.UI
         {
             if (TryGetComponent<LayoutElement>(out var rootLayout))
             {
-                rootLayout.preferredHeight = -1f;
+                // Preserve this sidebar lane instead of allowing its dynamic
+                // sections to displace the mutation action above it.
+                rootLayout.preferredHeight = ProfileRootPreferredHeight;
                 rootLayout.flexibleHeight = 0f;
             }
 
@@ -368,6 +376,12 @@ namespace FungusToast.Unity.UI
             Player perspectivePlayer = ResolveTrackedPlayer(board);
             RandomDecayChanceTooltipProvider.RandomDecayChanceBreakdown breakdown = RandomDecayChanceTooltipProvider.BuildBreakdown(board, perspectivePlayer);
             randomDecayChanceText.text = $"<b>Random Decay</b>  {(breakdown.EffectiveChance * 100f):0.0}% per living cell";
+            if (randomDecayChanceIcon != null)
+            {
+                randomDecayChanceIcon.sprite = GameManager.Instance?.gridVisualizer?.deadTile?.sprite;
+                randomDecayChanceIcon.enabled = randomDecayChanceIcon.sprite != null;
+            }
+            ApplyChildLayoutBehavior(StatsRootName, ignoreIfEmpty: true);
             InitializeRandomDecayChanceTooltip(board, perspectivePlayer);
         }
 
@@ -490,7 +504,7 @@ namespace FungusToast.Unity.UI
 
         private void EnsureRandomDecayChanceSectionExists()
         {
-            if (randomDecayChanceRoot != null && randomDecayChanceText != null)
+            if (randomDecayChanceRoot != null && randomDecayChanceText != null && randomDecayChanceIcon != null)
             {
                 return;
             }
@@ -511,6 +525,12 @@ namespace FungusToast.Unity.UI
             if (randomDecayChanceText == null)
             {
                 randomDecayChanceText = CreateRandomDecayChanceText(randomDecayChanceRoot);
+            }
+
+            randomDecayChanceIcon = randomDecayChanceRoot.Find("DeathIcon")?.GetComponent<Image>();
+            if (randomDecayChanceIcon == null)
+            {
+                randomDecayChanceIcon = CreateRandomDecayChanceIcon(randomDecayChanceRoot);
             }
         }
 
@@ -828,8 +848,18 @@ namespace FungusToast.Unity.UI
             randomDecayChanceText.alignment = TextAlignmentOptions.Left;
 
             var textRect = randomDecayChanceText.rectTransform;
-            textRect.offsetMin = new Vector2(8f, 0f);
+            textRect.offsetMin = new Vector2(8f + RandomDecayChanceIconSize + 8f, 0f);
             textRect.offsetMax = new Vector2(-8f, 0f);
+
+            var iconRect = randomDecayChanceIcon.rectTransform;
+            iconRect.anchorMin = new Vector2(0f, 0.5f);
+            iconRect.anchorMax = new Vector2(0f, 0.5f);
+            iconRect.pivot = new Vector2(0f, 0.5f);
+            iconRect.anchoredPosition = new Vector2(8f, 0f);
+            iconRect.sizeDelta = new Vector2(RandomDecayChanceIconSize, RandomDecayChanceIconSize);
+            randomDecayChanceIcon.preserveAspect = true;
+            randomDecayChanceIcon.color = UIStyleTokens.Text.Muted;
+            randomDecayChanceIcon.raycastTarget = false;
         }
 
         private void ApplyAdaptationSectionStyle()
@@ -890,6 +920,7 @@ namespace FungusToast.Unity.UI
             if (iconGridRoot == boardOverlayLegendIconGridRoot)
             {
                 grid.cellSize = new Vector2(GetSectionGridWidth(sectionRoot, iconGridRoot), BoardOverlayLegendRowHeight);
+                grid.spacing = Vector2.zero;
                 grid.constraintCount = 1;
                 return;
             }
@@ -1058,21 +1089,25 @@ namespace FungusToast.Unity.UI
             outline.enabled = false;
 
             var rowGroup = rowObject.GetComponent<HorizontalLayoutGroup>();
-            rowGroup.padding = new RectOffset(4, 8, 4, 4);
+            rowGroup.padding = new RectOffset(
+                Mathf.RoundToInt(BoardOverlayLegendHorizontalPadding),
+                Mathf.RoundToInt(BoardOverlayLegendHorizontalPadding),
+                4,
+                4);
             rowGroup.spacing = 8f;
             rowGroup.childAlignment = TextAnchor.MiddleLeft;
             rowGroup.childControlWidth = true;
             rowGroup.childControlHeight = true;
-            rowGroup.childForceExpandWidth = true;
+            rowGroup.childForceExpandWidth = false;
             rowGroup.childForceExpandHeight = false;
 
             var renderedIconObject = new GameObject("RenderedIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(LayoutElement), typeof(Image));
             renderedIconObject.transform.SetParent(rowObject.transform, false);
             var renderedIconLayout = renderedIconObject.GetComponent<LayoutElement>();
-            renderedIconLayout.preferredWidth = AdaptationIconVisualSize;
-            renderedIconLayout.preferredHeight = AdaptationIconVisualSize;
-            renderedIconLayout.minWidth = AdaptationIconVisualSize;
-            renderedIconLayout.minHeight = AdaptationIconVisualSize;
+            renderedIconLayout.preferredWidth = BoardOverlayLegendIconLaneWidth;
+            renderedIconLayout.preferredHeight = BoardOverlayLegendIconVisualSize;
+            renderedIconLayout.minWidth = BoardOverlayLegendIconLaneWidth;
+            renderedIconLayout.minHeight = BoardOverlayLegendIconVisualSize;
             var renderedIcon = renderedIconObject.GetComponent<Image>();
             renderedIcon.sprite = sprite;
             renderedIcon.type = Image.Type.Simple;
@@ -1197,6 +1232,13 @@ namespace FungusToast.Unity.UI
             text.text = string.Empty;
 
             return text;
+        }
+
+        private static Image CreateRandomDecayChanceIcon(RectTransform parent)
+        {
+            var iconObject = new GameObject("DeathIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            iconObject.transform.SetParent(parent, false);
+            return iconObject.GetComponent<Image>();
         }
 
         private void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)
