@@ -857,11 +857,19 @@ namespace FungusToast.Unity.UI
             EnsureRandomDecayChanceTextFont();
             randomDecayChanceText.fontStyle = FontStyles.Normal;
             randomDecayChanceText.enableAutoSizing = false;
+            // fontSizeMin/fontSizeMax are ignored unless auto-sizing is enabled.  A
+            // runtime-created TMP label can otherwise retain a zero-sized current
+            // font value, leaving its tooltip hit area present but its glyphs absent.
+            randomDecayChanceText.fontSize = RandomDecayChanceFontSize;
             randomDecayChanceText.fontSizeMin = RandomDecayChanceFontSize;
             randomDecayChanceText.fontSizeMax = RandomDecayChanceFontSize;
             randomDecayChanceText.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(randomDecayChanceText);
             randomDecayChanceText.alignment = TextAlignmentOptions.Left;
+            randomDecayChanceText.margin = Vector4.zero;
+            randomDecayChanceText.maxVisibleCharacters = int.MaxValue;
+            randomDecayChanceText.maxVisibleWords = int.MaxValue;
+            randomDecayChanceText.maxVisibleLines = 1;
 
             var textRect = randomDecayChanceText.rectTransform;
             textRect.offsetMin = new Vector2(8f + RandomDecayChanceIconSize + 8f, 0f);
