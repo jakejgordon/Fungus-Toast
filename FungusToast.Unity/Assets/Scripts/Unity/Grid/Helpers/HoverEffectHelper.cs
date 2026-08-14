@@ -20,6 +20,10 @@ namespace FungusToast.Unity.Grid.Helpers
         private readonly List<Vector3Int> _livingPreviewPositions = new();
         private readonly List<Vector3Int> _toxinPreviewPositions = new();
         private Coroutine _previewPulseCoroutine;
+        private static readonly Matrix4x4 InspectionHoverMatrix = Matrix4x4.TRS(
+            Vector3.zero,
+            Quaternion.identity,
+            new Vector3(1.08f, 1.08f, 1f));
 
         public HoverEffectHelper(MonoBehaviour runner, Tilemap hoverOverlayTileMap, Tile solidHighlightTile)
         {
@@ -36,6 +40,7 @@ namespace FungusToast.Unity.Grid.Helpers
             {
                 _hoverOverlayTileMap.SetTile(cellPos, _solidHighlightTile);
                 _hoverOverlayTileMap.SetTileFlags(cellPos, TileFlags.None);
+                _hoverOverlayTileMap.SetTransformMatrix(cellPos, InspectionHoverMatrix);
                 if (_hoverGlowCoroutine != null)
                     _runner.StopCoroutine(_hoverGlowCoroutine);
                 _hoverGlowCoroutine = _runner.StartCoroutine(HoverOutlineGlowAnimation(cellPos));
@@ -47,6 +52,8 @@ namespace FungusToast.Unity.Grid.Helpers
             if (_currentHoveredPosition.HasValue && _hoverOverlayTileMap != null)
             {
                 _hoverOverlayTileMap.SetTile(_currentHoveredPosition.Value, null);
+                _hoverOverlayTileMap.SetColor(_currentHoveredPosition.Value, Color.white);
+                _hoverOverlayTileMap.SetTransformMatrix(_currentHoveredPosition.Value, Matrix4x4.identity);
                 _currentHoveredPosition = null;
 
                 if (_hoverGlowCoroutine != null)
@@ -59,9 +66,9 @@ namespace FungusToast.Unity.Grid.Helpers
 
         private IEnumerator HoverOutlineGlowAnimation(Vector3Int cellPos)
         {
-            float pulseDuration = 1.5f;
-            Color dimColor = new Color(0.2f, 0.6f, 1f, 0.2f);
-            Color brightColor = new Color(0.4f, 0.8f, 1f, 0.6f);
+            const float pulseDuration = 1.5f;
+            Color dimColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.38f);
+            Color brightColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.82f);
 
             while (_currentHoveredPosition == cellPos && _hoverOverlayTileMap != null && _hoverOverlayTileMap.HasTile(cellPos))
             {

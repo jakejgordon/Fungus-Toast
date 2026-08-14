@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priorities 1–7 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–7 await focused Unity visual/interaction validation. Priority 8 has not started.
+- **State:** Priorities 1–8 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–8 await focused Unity visual/interaction validation. Priority 9 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -330,6 +330,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 8. P2 — Late-game board legibility
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** At high occupancy, mold art, dead cells, toxins, resistance/status overlays, selection, highlights, and substrate detail compete for attention.
 
 **Implementation intent:**
@@ -350,6 +352,16 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Ownership, living/dead/toxic state, resistance, hover, and selection remain distinguishable on a nearly full Seed Cracker 10x10 board.
 - Improvements hold on at least one medium and one large board/background.
 - No clipping, sorting-order, hover-hit-testing, or obvious frame-time regression is introduced.
+
+**Implemented checkpoint:**
+
+- Established and documented the board visual-priority contract: substrate/decorative detail, ownership art, exceptional state overlays, hover inspection, then confirmed/target selection.
+- Confirmed the existing board composition already suppresses nutrient/substrate overlays beneath occupied cells and keeps toxin, resistance, death, nutrient, and chemobeacon information in the exceptional-state layer instead of making ownership color carry every meaning.
+- Chose the existing non-interactive hover tilemap as the minimal inspection overlay after reviewing its scene sorting position between cell-state overlays and selected/target layers; no new persistent overlay, collider, raycast target, input route, or board-wide per-frame update was added.
+- Strengthened cell hover with shared semantic focus/primary colors and a small centered 1.08x inspection lift, then explicitly resets its color/transform when cleared so dense-board inspection remains distinct without leaving stale visual state.
+- Preserved hover/selection controller ownership, active target-selection precedence, existing cell tooltip inspection, mold art, resistance/toxin/death rendering, and all board state/rule behavior.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: nearly full Seed Cracker 10x10; one medium and one large board/background; living/dead/toxin/resistant/chemobeacon/nutrient states; normal hover and rapid cross-cell hover; selection, multi-selection, targeted-mutation, and preview layers; board edges; 1920x1080/1600x900/1280x720; hotseat, restart, Time-Lapse/fast-forward; render-order/hover-hit-testing; and Console/frame-time cleanliness.
 
 ### 9. P3 — Phase-banner restraint and sidebar surface cohesion
 

@@ -297,6 +297,22 @@ Notes:
 - Round/phase/occupancy text should use consistent emphasis weights.
 - Avoid introducing unique per-widget colors unless semantic.
 
+### 6.2.1 Board Visual Priority
+
+Board layers must communicate state in this order, from lowest to highest priority:
+
+1. Substrate and other non-interactive board decoration.
+2. Mold ownership art, including the alive/dead base silhouette.
+3. Exceptional cell state overlays: toxin, resistance, death, nutrient, and chemobeacon information.
+4. Hover inspection emphasis.
+5. Confirmed selection and active target-selection feedback.
+
+- Do not add decorative or substrate overlays above occupied cells. Dense living colonies should keep ownership art legible; lower-value substrate detail remains beneath the mold layer.
+- Toxin, resistance, and death must retain a distinct icon/state treatment in addition to ownership color. Do not communicate any of these states through hue alone.
+- Reuse the existing non-interactive hover tilemap for board inspection. Hover emphasis must be visibly stronger than surrounding dense cell art but remain below selected/targeted feedback, and it must not add a collider, raycast target, or new input route.
+- Confirmed selection and active target-selection layers always take precedence over hover. Use the established `SelectedTileMap` and `SelectionHighlightTileMap`; do not replace their input/controller ownership with a board-visual feature.
+- Before adding a persistent ownership/state inspection mode, first verify that this hierarchy fails in a dense-board playtest. A new overlay is justified only when it improves recognition without hiding selection feedback or increasing per-frame tile churn.
+
 ### 6.3 Mutation Tree
 - Keep category accents and dark tree baseline; align text/button states with global tokens.
 - Store/bank actions use primary action style; less critical actions use secondary.
