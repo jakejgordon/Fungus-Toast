@@ -184,4 +184,88 @@ namespace FungusToast.Unity.UI
             };
         }
     }
+
+    public sealed class CompactIconHoverFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    {
+        private Image background;
+        private Outline focusOutline;
+        private Color normalColor;
+        private Color hoverColor;
+        private Color pressedColor;
+        private bool isPointerInside;
+
+        public void Initialize(Image targetBackground, Outline targetOutline)
+        {
+            background = targetBackground;
+            focusOutline = targetOutline;
+            normalColor = UIStyleTokens.Surface.PanelElevated;
+            hoverColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Moss, 0.34f);
+            pressedColor = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Accent.Moss, 0.18f);
+            ApplyNormalState();
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            isPointerInside = true;
+            ApplyHoverState();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            isPointerInside = false;
+            ApplyNormalState();
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            if (background != null)
+            {
+                background.color = pressedColor;
+            }
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            if (isPointerInside)
+            {
+                ApplyHoverState();
+            }
+            else
+            {
+                ApplyNormalState();
+            }
+        }
+
+        private void OnDisable()
+        {
+            isPointerInside = false;
+            ApplyNormalState();
+        }
+
+        private void ApplyNormalState()
+        {
+            if (background != null)
+            {
+                background.color = normalColor;
+            }
+
+            if (focusOutline != null)
+            {
+                focusOutline.enabled = false;
+            }
+        }
+
+        private void ApplyHoverState()
+        {
+            if (background != null)
+            {
+                background.color = hoverColor;
+            }
+
+            if (focusOutline != null)
+            {
+                focusOutline.enabled = true;
+            }
+        }
+    }
 }

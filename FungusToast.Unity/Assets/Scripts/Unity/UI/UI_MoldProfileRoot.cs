@@ -67,7 +67,8 @@ namespace FungusToast.Unity.UI
         private const string SurgeName = "UI_GrowthPreviewCellSurgeText";
         private const float AdaptationHeaderFontSize = 18f;
         private const float AdaptationHeaderHeight = 24f;
-        private const int AdaptationIconSize = 24;
+        private const float AdaptationIconTargetSize = UIStyleTokens.Interaction.MinimumTargetSize;
+        private const float AdaptationIconVisualSize = 28f;
         private const int AdaptationIconMaxColumns = 12;
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
@@ -823,7 +824,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
+            grid.cellSize = new Vector2(AdaptationIconTargetSize, AdaptationIconTargetSize);
             grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
             grid.constraintCount = GetSectionColumnCount(sectionRoot, iconGridRoot);
         }
@@ -846,7 +847,7 @@ namespace FungusToast.Unity.UI
                 return AdaptationIconMaxColumns;
             }
 
-            int columns = Mathf.FloorToInt((availableWidth + AdaptationIconSpacing) / (AdaptationIconSize + AdaptationIconSpacing));
+            int columns = Mathf.FloorToInt((availableWidth + AdaptationIconSpacing) / (AdaptationIconTargetSize + AdaptationIconSpacing));
             return Mathf.Clamp(columns, 1, AdaptationIconMaxColumns);
         }
 
@@ -911,24 +912,47 @@ namespace FungusToast.Unity.UI
 
         private static GameObject CreateIconObject(string objectName, RectTransform gridRoot, List<GameObject> iconObjects, Sprite sprite)
         {
-            var iconObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image));
+            var iconObject = new GameObject(objectName, typeof(RectTransform), typeof(LayoutElement), typeof(Image), typeof(Outline));
             iconObject.transform.SetParent(gridRoot, false);
             iconObjects.Add(iconObject);
 
             var rect = iconObject.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(AdaptationIconSize, AdaptationIconSize);
+            rect.sizeDelta = new Vector2(AdaptationIconTargetSize, AdaptationIconTargetSize);
 
             var layout = iconObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = AdaptationIconSize;
-            layout.preferredHeight = AdaptationIconSize;
-            layout.minWidth = AdaptationIconSize;
-            layout.minHeight = AdaptationIconSize;
+            layout.preferredWidth = AdaptationIconTargetSize;
+            layout.preferredHeight = AdaptationIconTargetSize;
+            layout.minWidth = AdaptationIconTargetSize;
+            layout.minHeight = AdaptationIconTargetSize;
 
-            var image = iconObject.GetComponent<Image>();
-            image.sprite = sprite;
-            image.type = Image.Type.Simple;
-            image.preserveAspect = true;
-            image.color = Color.white;
+            var background = iconObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+            background.raycastTarget = true;
+
+            var outline = iconObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+            outline.enabled = false;
+
+            var renderedIconObject = new GameObject("RenderedIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            renderedIconObject.transform.SetParent(iconObject.transform, false);
+
+            var renderedIconRect = renderedIconObject.GetComponent<RectTransform>();
+            renderedIconRect.anchorMin = new Vector2(0.5f, 0.5f);
+            renderedIconRect.anchorMax = new Vector2(0.5f, 0.5f);
+            renderedIconRect.pivot = new Vector2(0.5f, 0.5f);
+            renderedIconRect.anchoredPosition = Vector2.zero;
+            renderedIconRect.sizeDelta = new Vector2(AdaptationIconVisualSize, AdaptationIconVisualSize);
+
+            var renderedIcon = renderedIconObject.GetComponent<Image>();
+            renderedIcon.sprite = sprite;
+            renderedIcon.type = Image.Type.Simple;
+            renderedIcon.preserveAspect = true;
+            renderedIcon.color = Color.white;
+            renderedIcon.raycastTarget = false;
+
+            var hoverFeedback = iconObject.AddComponent<CompactIconHoverFeedback>();
+            hoverFeedback.Initialize(background, outline);
 
             return iconObject;
         }
@@ -1104,7 +1128,7 @@ namespace FungusToast.Unity.UI
             rect.pivot = new Vector2(0.5f, 1f);
 
             var grid = gridObject.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(AdaptationIconSize, AdaptationIconSize);
+            grid.cellSize = new Vector2(AdaptationIconTargetSize, AdaptationIconTargetSize);
             grid.spacing = new Vector2(AdaptationIconSpacing, AdaptationIconSpacing);
             grid.childAlignment = TextAnchor.UpperLeft;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
@@ -1112,7 +1136,7 @@ namespace FungusToast.Unity.UI
             grid.startAxis = GridLayoutGroup.Axis.Horizontal;
 
             var layout = gridObject.GetComponent<LayoutElement>();
-            layout.preferredHeight = AdaptationIconSize;
+            layout.preferredHeight = AdaptationIconTargetSize;
             layout.flexibleHeight = 0f;
 
             return rect;
@@ -1129,7 +1153,7 @@ namespace FungusToast.Unity.UI
 
             int columns = GetSectionColumnCount(sectionRoot, iconGridRoot);
             int rows = Mathf.Max(1, Mathf.CeilToInt(iconCount / (float)columns));
-            float gridHeight = (rows * AdaptationIconSize) + ((rows - 1) * AdaptationIconSpacing);
+            float gridHeight = (rows * AdaptationIconTargetSize) + ((rows - 1) * AdaptationIconSpacing);
 
             var gridLayout = iconGridRoot.GetComponent<LayoutElement>();
             if (gridLayout != null)

@@ -120,7 +120,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 3. P1 — Desktop readability and interaction-target pass
 
-**Implementation status (2026-08-14):** In progress. Slices 1–4 (shared tokens/compact HUD utilities, activity-log readability, the human-player marker, and mutation-node compact indicators) are complete in code; Unity Editor validation remains manual.
+**Implementation status (2026-08-14):** Complete in code across slices 1–5 (shared tokens/compact HUD utilities, activity-log readability, the human-player marker, mutation-node compact indicators, and left-sidebar icon targets); Unity Editor validation remains manual.
 
 **Problem:** Several HUD labels, log controls, badges, mutation indicators, legend icons, adaptation icons, and compact utilities are difficult to read or target at 1920x1080.
 
@@ -167,8 +167,13 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Increased the runtime `MAX` badge from 36x16 with 10px text to 44x20 with fixed 14px text and the node's existing font.
 - Disabled raycasts on status and `MAX` graphics so mutation-node hover, tooltip, relationship highlighting, and button ownership remain intact.
 - Preserved mutation costs, availability, prerequisite timing, purchase behavior, state text, and category/state colors.
+- Increased Common Symbols, adaptation, and mycovariant icon targets from 24x24 to the shared 36x36 minimum while keeping their rendered artwork centered at 28x28.
+- Added shared token-based hover, pressed, and focus-outline feedback to those runtime icon targets; child artwork does not intercept raycasts.
+- Updated responsive grid column and section-height calculations to use the larger target size so variable icon counts wrap without overlap.
+- Preserved all existing tooltip providers, tooltip placement, and Common Symbols board-highlight behavior; icon-plus-label information architecture remains scoped to item 5.
+- No scene or prefab changes were required because all three icon grids and their entries are created at runtime.
 - `git diff --check` passed. Unity Editor was unavailable in this environment.
-- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; the `YOU` chip with 1–8 players, score reordering, hotseat perspective changes, high stat counts, mold-icon hover/pinning, and restart; every mutation-node state and long/multi-line name; one- and multi-digit DNA costs; node hover/path highlighting and purchases; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
+- Manual Unity checks still required: pause and next-track target placement/hover/click behavior; mutation workspace header fit and Store/Time-Lapse states; both Activity Logs with empty, single-line, wrapped, 30-entry, and multi-digit-round content; both `Clear` actions; player-specific filtering; special top actions; pooled reuse/reinitialization; the `YOU` chip with 1–8 players, score reordering, hotseat perspective changes, high stat counts, mold-icon hover/pinning, and restart; every mutation-node state and long/multi-line name; one- and multi-digit DNA costs; node hover/path highlighting and purchases; Common Symbols tooltips and matching-board highlights; adaptation/mycovariant tooltips with empty, single-row, and wrapped icon counts; runtime refresh/restart paths; and Console cleanliness at 1920x1080, 1600x900, and 1280x720.
 
 ### 4. P1 — Progressive board-inspection tooltip
 
