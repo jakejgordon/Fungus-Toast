@@ -22,12 +22,16 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private float timestampSpacing = 14f;
         [SerializeField] private float minimumReservedTimestampWidth = TimestampMinimumWidth;
         private bool deferredScheduled = false;
+        private bool startsRoundGroup;
+        private Image categoryAccent;
+        private Image roundSeparator;
 
         public int DisplayedRound { get; private set; }
 
         private void Awake()
         {
             ApplyReadabilityStyle();
+            EnsureInformationAccents();
         }
 
         private void ApplyReadabilityStyle()
@@ -53,9 +57,10 @@ namespace FungusToast.Unity.UI.GameLog
             }
         }
 
-        public void SetEntry(GameLogEntry entry)
+        public void SetEntry(GameLogEntry entry, bool beginsRoundGroup = false)
         {
             DisplayedRound = entry.Round;
+            startsRoundGroup = beginsRoundGroup;
 
             if (messageText != null)
             {
@@ -63,25 +68,45 @@ namespace FungusToast.Unity.UI.GameLog
                 messageText.color = GameLogColorSchemes.GetTextColor(entry.Category);
             }
             
-            if (timestampText != null)
-            {
-                timestampText.text = $"R{entry.Round}";
-                timestampText.color = UIStyleTokens.Text.Muted;
-                timestampText.textWrappingMode = TextWrappingModes.NoWrap;
-            }
+            ApplyRoundGroupPresentation();
 
             ApplyMessageLayoutSpacing();
             
             // Set background color based on category
             if (backgroundImage != null)
             {
-                backgroundImage.color = GameLogColorSchemes.GetBackgroundColor(entry.Category);
+                backgroundImage.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.48f);
             }
+
+            if (categoryAccent != null)
+                categoryAccent.color = GameLogColorSchemes.GetTextColor(entry.Category);
+            ApplyRoundGroupPresentation();
 
             UpdateDynamicHeightImmediate();
             // Schedule a deferred recalculation (width can finalize after first layout pass)
             if (!deferredScheduled && gameObject.activeInHierarchy)
                 StartCoroutine(DeferredHeightRecalc());
+        }
+
+        public void SetRoundGroupStart(bool value)
+        {
+            startsRoundGroup = value;
+            ApplyRoundGroupPresentation();
+            UpdateDynamicHeightImmediate();
+        }
+
+        private void ApplyRoundGroupPresentation()
+        {
+            if (timestampText != null)
+            {
+                timestampText.text = startsRoundGroup ? $"ROUND {DisplayedRound}" : string.Empty;
+                timestampText.color = startsRoundGroup ? UIStyleTokens.Text.Primary : UIStyleTokens.Text.Muted;
+                timestampText.fontStyle = startsRoundGroup ? FontStyles.Bold : FontStyles.Normal;
+                timestampText.textWrappingMode = TextWrappingModes.NoWrap;
+            }
+
+            if (roundSeparator != null)
+                roundSeparator.gameObject.SetActive(startsRoundGroup);
         }
         
         private void UpdateDynamicHeightImmediate()
@@ -140,7 +165,7 @@ namespace FungusToast.Unity.UI.GameLog
 
         private float GetReservedTimestampWidth()
         {
-            if (timestampText == null)
+            if (timestampText == null || !startsRoundGroup)
             {
                 return 0f;
             }
@@ -148,6 +173,37 @@ namespace FungusToast.Unity.UI.GameLog
             timestampText.ForceMeshUpdate();
             float preferredWidth = timestampText.GetPreferredValues(timestampText.text, 0f, 0f).x;
             return Mathf.Max(minimumReservedTimestampWidth, preferredWidth + timestampSpacing);
+        }
+
+        private void EnsureInformationAccents()
+        {
+            if (categoryAccent == null)
+            {
+                categoryAccent = CreateAccent("CategoryAccent", new Vector2(0f, 0f), new Vector2(0f, 1f), new Vector2(4f, 0f));
+            }
+
+            if (roundSeparator == null)
+            {
+                roundSeparator = CreateAccent("RoundSeparator", new Vector2(0f, 1f), new Vector2(1f, 1f), new Vector2(0f, 2f));
+                roundSeparator.color = UIStyleTokens.Accent.Spore;
+                roundSeparator.raycastTarget = false;
+            }
+        }
+
+        private Image CreateAccent(string name, Vector2 anchorMin, Vector2 anchorMax, Vector2 size)
+        {
+            var accentObject = new GameObject(name, typeof(RectTransform), typeof(Image));
+            accentObject.transform.SetParent(transform, false);
+            accentObject.transform.SetAsFirstSibling();
+            var rect = accentObject.GetComponent<RectTransform>();
+            rect.anchorMin = anchorMin;
+            rect.anchorMax = anchorMax;
+            rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = size;
+            rect.anchoredPosition = Vector2.zero;
+            var image = accentObject.GetComponent<Image>();
+            image.raycastTarget = false;
+            return image;
         }
 
         private IEnumerator DeferredHeightRecalc()
@@ -190,6 +246,11 @@ namespace FungusToast.Unity.UI.GameLog
                 timestampText.text = string.Empty;
 
             DisplayedRound = 0;
+            startsRoundGroup = false;
+            if (categoryAccent != null)
+                categoryAccent.color = Color.clear;
+            if (roundSeparator != null)
+                roundSeparator.gameObject.SetActive(false);
 
             var canvasGroup = GetComponent<CanvasGroup>();
             if (canvasGroup != null)

@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priorities 1–3 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–3 await focused Unity visual/interaction validation. Priority 4 has not started.
+- **State:** Priorities 1–6 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–6 await focused Unity visual/interaction validation. Priority 7 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -254,6 +254,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 6. P2 — Activity-log information architecture
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** Permanent Human and Global Activity panels waste space early and become dense, tiny, and scroll-heavy late. Current automatic bottom scrolling does not account for a player reading older entries.
 
 **Implementation intent:**
@@ -278,6 +280,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Late-game entries remain readable, grouped, and inspectable.
 - Incoming events do not steal scroll position while the player is reading history.
 - Human/global filtering, clear actions, special action prompts, reinitialization, and pooled-entry reuse remain correct.
+
+**Implemented checkpoint:**
+
+- Added independent compact `Hide`/`Show` controls to the player and global activity panels. Collapsed feeds reduce to their header height and release flexible sidebar space; expanding restores their normal shared-layout behavior.
+- Added a runtime `Latest` control that appears only when the reader has scrolled away from the bottom. New entries now follow automatically only while the reader is already at the latest position; otherwise the panel preserves the reading position and reports the count of unseen entries.
+- Preserved `ScrollRect` state through the existing entry creation, cap, clear, filtering, and pool-reuse paths. Reopening a collapsed feed deliberately returns to the latest activity.
+- Grouped the visual stream by round with an explicit `ROUND N` heading and separator at each round boundary, including after the 30-entry cap recycles the original first entry.
+- Replaced full-row lucky/unlucky fills with a stable readable panel row plus a category-colored leading strip, retaining semantic text color without making category recognition depend on a large background fill.
+- Preserved both manager interfaces, routing/filtering behavior, entry caps, fade-in, special top actions, and the existing `Clear` controls.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: independently collapse/expand both feeds during empty and active states; confirm released sidebar space at 1920x1080/1600x900/1280x720; read older entries while events arrive and use `Latest`; grouped round transitions and a 30-entry rollover; Human/global filtering; both `Clear` actions; special top-action prompts; hotseat perspective switching; restart/reinitialization; pooled reuse; normal speed, Time-Lapse, fast-forward; and Console cleanliness.
 
 ### 7. P2 — Scoreboard identity and rank comprehension
 

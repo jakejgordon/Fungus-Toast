@@ -16,6 +16,9 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
         private const float ClearButtonMinimumWidth = 64f;
+        private const float CollapsedHeight = 48f;
+        private const float ExpandedMinimumHeight = 180f;
+        private const float BottomFollowThreshold = 0.025f;
 
         [Header("UI References")]
         [SerializeField] private ScrollRect scrollRect;
@@ -46,10 +49,18 @@ namespace FungusToast.Unity.UI.GameLog
         private Vector2 scrollViewOriginalOffsetMax;
         private bool topActionAttentionActive;
         private float topActionAttentionUntilUnscaledTime;
+        private Button collapseButton;
+        private TextMeshProUGUI collapseButtonLabel;
+        private Button latestButton;
+        private TextMeshProUGUI latestButtonLabel;
+        private bool isCollapsed;
+        private int unseenEntryCount;
+        private bool topActionRequestedVisible;
 
         private void Awake()
         {
             EnsureTopActionUi();
+            EnsureActivityControlsUi();
             ApplyStyle();
 
             if (clearButton != null)
@@ -57,6 +68,9 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (headerText != null && string.IsNullOrEmpty(headerText.text))
                 headerText.text = defaultHeaderText;
+
+            if (scrollRect != null)
+                scrollRect.onValueChanged.AddListener(OnScrollPositionChanged);
 
             // Initialize the object pool for log entries.
             // defaultCapacity matches maxVisibleEntries; max is a safety cap.
@@ -171,7 +185,8 @@ namespace FungusToast.Unity.UI.GameLog
 
             topActionButtonLabel.text = label ?? string.Empty;
 
-            bool shouldShow = isVisible && onClick != null;
+            topActionRequestedVisible = isVisible && onClick != null;
+            bool shouldShow = topActionRequestedVisible && !isCollapsed;
             topActionButton.interactable = shouldShow;
             topActionRowRoot.gameObject.SetActive(shouldShow);
             ApplyTopActionLayout(shouldShow);
@@ -253,7 +268,9 @@ namespace FungusToast.Unity.UI.GameLog
                 }
 
                 QueueLayoutRefresh();
+                unseenEntryCount = 0;
                 QueueBottomScrollFollowup();
+                UpdateLatestButton();
             }
         }
 
@@ -297,6 +314,9 @@ namespace FungusToast.Unity.UI.GameLog
                 logManager.OnNewLogEntry -= AddLogEntry;
                 subscribed = false;
             }
+
+            if (scrollRect != null)
+                scrollRect.onValueChanged.RemoveListener(OnScrollPositionChanged);
         }
 
         public void AddLogEntry(GameLogEntry entry)
@@ -312,22 +332,30 @@ namespace FungusToast.Unity.UI.GameLog
                 if (activePlayerId < 0) return; // not yet bound
                 if (entry.PlayerId.HasValue && entry.PlayerId.Value != activePlayerId) return;
 
-                if (logManager != null)
-                {
-                    RebuildForPlayerEntries(logManager.GetRecentEntries(maxVisibleEntries));
-                    return;
-                }
             }
 
+            bool shouldFollowLatest = ShouldFollowLatest();
             CreateVisualEntry(entry);
+            QueueLayoutRefresh();
+
+            if (shouldFollowLatest)
+            {
+                QueueBottomScrollFollowup();
+            }
+            else
+            {
+                unseenEntryCount++;
+                UpdateLatestButton();
+            }
         }
 
         private void CreateVisualEntry(GameLogEntry entry)
         {
+            bool startsRoundGroup = entryUIs.Count == 0 || entryUIs[entryUIs.Count - 1].DisplayedRound != entry.Round;
             var entryUI = entryPool.Get();
             entryUI.transform.SetParent(contentParent, false);
             entryUI.transform.SetAsLastSibling();
-            entryUI.SetEntry(entry);
+            entryUI.SetEntry(entry, startsRoundGroup);
             entryUIs.Add(entryUI);
             entryUI.FadeIn();
 
@@ -339,8 +367,9 @@ namespace FungusToast.Unity.UI.GameLog
                     entryPool.Release(oldEntry);
             }
 
-            QueueLayoutRefresh();
-            QueueBottomScrollFollowup();
+            if (entryUIs.Count > 0)
+                entryUIs[0].SetRoundGroupStart(true);
+
         }
 
         private void ClearLog()
@@ -357,6 +386,8 @@ namespace FungusToast.Unity.UI.GameLog
 
             QueueLayoutRefresh();
             QueueBottomScrollFollowup();
+            unseenEntryCount = 0;
+            UpdateLatestButton();
         }
 
         private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
@@ -369,13 +400,15 @@ namespace FungusToast.Unity.UI.GameLog
                 CreateVisualEntry(entry);
             QueueLayoutRefresh();
             QueueBottomScrollFollowup();
+            unseenEntryCount = 0;
+            UpdateLatestButton();
         }
 
         private void QueueLayoutRefresh() => pendingLayoutRebuild = true;
 
         private void QueueBottomScrollFollowup()
         {
-            if (!autoScrollToBottom || scrollRect == null)
+            if (!autoScrollToBottom || scrollRect == null || isCollapsed)
             {
                 return;
             }
@@ -404,7 +437,7 @@ namespace FungusToast.Unity.UI.GameLog
             if (scrollRect != null && scrollRect.content != null)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content);
 
-            if (autoScrollToBottom && scrollRect != null)
+            if (autoScrollToBottom && scrollRect != null && ShouldFollowLatest())
             {
                 Canvas.ForceUpdateCanvases();
                 scrollRect.StopMovement();
@@ -422,6 +455,8 @@ namespace FungusToast.Unity.UI.GameLog
                 scrollRect.StopMovement();
                 scrollRect.verticalNormalizedPosition = 0f;
                 scrollRect.velocity = Vector2.zero;
+                unseenEntryCount = 0;
+                UpdateLatestButton();
             }
         }
         public void ScrollToTop()
@@ -500,6 +535,142 @@ namespace FungusToast.Unity.UI.GameLog
 
             topActionRowRoot.gameObject.SetActive(false);
             ApplyTopActionLayout(false);
+        }
+
+        private void EnsureActivityControlsUi()
+        {
+            if (headerRoot == null || scrollViewRoot == null)
+            {
+                EnsureTopActionUi();
+            }
+
+            if (headerRoot == null || scrollViewRoot == null)
+            {
+                return;
+            }
+
+            if (collapseButton == null)
+            {
+                collapseButton = CreateButton(headerRoot, "ActivityVisibilityButton", new Vector2(1f, 1f), new Vector2(-112f, -20f), new Vector2(72f, 36f), out collapseButtonLabel);
+                collapseButton.onClick.AddListener(ToggleCollapsed);
+            }
+
+            if (latestButton == null)
+            {
+                latestButton = CreateButton(scrollViewRoot, "ReturnToLatestButton", new Vector2(1f, 0f), new Vector2(-56f, 22f), new Vector2(96f, 36f), out latestButtonLabel);
+                latestButton.onClick.AddListener(ScrollToBottom);
+            }
+
+            UpdateCollapsedVisuals();
+            UpdateLatestButton();
+        }
+
+        private static Button CreateButton(RectTransform parent, string name, Vector2 anchor, Vector2 position, Vector2 size, out TextMeshProUGUI label)
+        {
+            var buttonObject = new GameObject(name, typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+            var buttonRect = buttonObject.GetComponent<RectTransform>();
+            buttonRect.anchorMin = anchor;
+            buttonRect.anchorMax = anchor;
+            buttonRect.pivot = new Vector2(0.5f, 0.5f);
+            buttonRect.anchoredPosition = position;
+            buttonRect.sizeDelta = size;
+
+            var button = buttonObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(4f, 2f);
+            labelRect.offsetMax = new Vector2(-4f, -2f);
+
+            label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.font = TMP_Settings.defaultFontAsset;
+            label.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            label.fontStyle = FontStyles.Bold;
+            label.alignment = TextAlignmentOptions.Center;
+            label.color = UIStyleTokens.Text.Primary;
+            label.raycastTarget = false;
+            return button;
+        }
+
+        private void ToggleCollapsed() => SetCollapsed(!isCollapsed);
+
+        private void SetCollapsed(bool collapsed)
+        {
+            if (isCollapsed == collapsed)
+            {
+                return;
+            }
+
+            isCollapsed = collapsed;
+            if (!isCollapsed)
+            {
+                unseenEntryCount = 0;
+                QueueBottomScrollFollowup();
+            }
+
+            UpdateCollapsedVisuals();
+            QueueLayoutRefresh();
+        }
+
+        private void UpdateCollapsedVisuals()
+        {
+            if (collapseButtonLabel != null)
+                collapseButtonLabel.text = isCollapsed ? "Show" : "Hide";
+
+            if (scrollViewRoot != null)
+                scrollViewRoot.gameObject.SetActive(!isCollapsed);
+
+            if (topActionRowRoot != null && isCollapsed)
+                topActionRowRoot.gameObject.SetActive(false);
+            else if (topActionRowRoot != null)
+                topActionRowRoot.gameObject.SetActive(topActionRequestedVisible);
+
+            ApplyTopActionLayout(!isCollapsed && topActionRequestedVisible);
+
+            var layoutElement = GetComponent<LayoutElement>();
+            if (layoutElement != null)
+            {
+                layoutElement.minHeight = isCollapsed ? CollapsedHeight : ExpandedMinimumHeight;
+                layoutElement.preferredHeight = isCollapsed ? CollapsedHeight : -1f;
+                layoutElement.flexibleHeight = isCollapsed ? 0f : 1f;
+            }
+
+            UpdateLatestButton();
+        }
+
+        private bool ShouldFollowLatest()
+        {
+            return !isCollapsed && (scrollRect == null || scrollRect.verticalNormalizedPosition <= BottomFollowThreshold);
+        }
+
+        private void OnScrollPositionChanged(Vector2 _)
+        {
+            if (ShouldFollowLatest())
+            {
+                unseenEntryCount = 0;
+            }
+
+            UpdateLatestButton();
+        }
+
+        private void UpdateLatestButton()
+        {
+            if (latestButton == null)
+            {
+                return;
+            }
+
+            bool shouldShow = !isCollapsed && !ShouldFollowLatest() && entryUIs.Count > 0;
+            latestButton.gameObject.SetActive(shouldShow);
+            if (latestButtonLabel != null)
+            {
+                latestButtonLabel.text = unseenEntryCount > 0 ? $"Latest ({unseenEntryCount})" : "Latest";
+            }
         }
 
         private void ApplyTopActionButtonNormalStyle()
