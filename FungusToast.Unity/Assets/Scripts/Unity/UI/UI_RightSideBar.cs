@@ -23,8 +23,8 @@ namespace FungusToast.Unity.UI
         private const float PlayerSummaryRowSpacing = 5f;
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
-        private const float SummaryIconColumnWidth = 50f;
-        private const float SummaryStatColumnWidth = 90f;
+        private const float SummaryIconColumnWidth = 80f;
+        private const float SummaryStatColumnWidth = 78f;
         private const int SummaryHorizontalInset = 15;
         private const float DraftHistoryAttentionDurationSeconds = 4f;
 
@@ -209,6 +209,13 @@ namespace FungusToast.Unity.UI
             ApplyColumnWidth(headerRow.Find("UI_AliveHeaderText"), SummaryStatColumnWidth);
             ApplyColumnWidth(headerRow.Find("UI_DeadHeaderText"), SummaryStatColumnWidth);
             ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), SummaryStatColumnWidth);
+
+            var identityHeader = headerRow.Find("UI_BlankPlayerMoldIconHeaderText")?.GetComponent<TextMeshProUGUI>();
+            if (identityHeader != null)
+            {
+                identityHeader.text = "PLAYER";
+                identityHeader.alignment = TextAlignmentOptions.Midline;
+            }
         }
 
         private static void ApplyColumnWidth(Transform cell, float width)
@@ -332,6 +339,8 @@ namespace FungusToast.Unity.UI
 
                 row.PlayerId = player.PlayerId; // <-- Set PlayerId
                 row.SetIcon(GameManager.Instance.GameUI.PlayerUIBinder.GetPlayerIcon(player.PlayerId));
+                row.SetPlayerIdentity(player.PlayerName);
+                row.SetRank(playerSummaryRows.Count + 1);
                 row.SetCounts(1, 0, 0);
                 playerSummaryRows[player.PlayerId] = row;
 
@@ -414,11 +423,14 @@ namespace FungusToast.Unity.UI
                 }
             }
             
-            // Sort by alive descending, then dead descending
+            // Sort by alive descending, then dead descending, then player ID. The
+            // final tie-break keeps hotseat and multiplayer rankings deterministic.
             rowPlayerPairs.Sort((a, b) => {
                 int cmp = b.alive.CompareTo(a.alive);
                 if (cmp != 0) return cmp;
-                return b.dead.CompareTo(a.dead);
+                cmp = b.dead.CompareTo(a.dead);
+                if (cmp != 0) return cmp;
+                return a.player.PlayerId.CompareTo(b.player.PlayerId);
             });
             
             // Set sibling index (header stays at index 0)
@@ -426,6 +438,7 @@ namespace FungusToast.Unity.UI
             {
                 var row = rowPlayerPairs[i].row;
                 row.transform.SetSiblingIndex(i + 1); // +1 to keep header at index 0
+                row.SetRank(i + 1);
             }
         }
 

@@ -17,7 +17,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
 - **Baseline scenario:** Seed Cracker 10x10, observed from initial placement through late-game congestion.
 - **Audit evidence:** Eight captured states covering untouched game start, cell inspection, mutation-tree entry, available and locked mutation inspection, growth-cycle progress, round 2, and a later-round phase banner; an additional late-game screenshot covers dense board/log conditions.
-- **State:** Priorities 1–6 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–6 await focused Unity visual/interaction validation. Priority 7 has not started.
+- **State:** Priorities 1–7 are implemented in code. Priority 1 is visually accepted by Jake; priorities 2–7 await focused Unity visual/interaction validation. Priority 8 has not started.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Tooltip authority:** `docs/ui/TOOLTIP_GUIDE.md`.
@@ -294,6 +294,8 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 ### 7. P2 — Scoreboard identity and rank comprehension
 
+**Implementation status (2026-08-14):** Completed in code; Unity Editor validation remains manual.
+
 **Problem:** Rows reorder by living cells and then dead cells, but the small `YOU` marker makes it slow to reacquire the human player after ranking changes.
 
 **Implementation intent:**
@@ -314,6 +316,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - The human player and current rank can be found immediately after any reorder.
 - Ties and multiplayer/hotseat identities remain deterministic and understandable.
 - Rows do not jump, overlap, or leave stale rank/identity state during rapid updates or game reset.
+
+**Implemented checkpoint:**
+
+- Added a readable `PLAYER` identity column with each player's actual configured name, plus a persistent `#rank` badge for every summary row.
+- Kept the full `YOU` chip, perspective surface, and left accent together with the identity/rank treatment so human-player recognition does not depend on color or an icon alone.
+- Rebalanced the identity/stat columns and row height for the added labels while retaining aligned `ALIVE`, `DEAD`, and `TOXIN` numeric columns.
+- Preserved score ordering (living cells, then dead cells) and added player ID as the final deterministic tie-breaker for hotseat and multiplayer ties.
+- Added restrained rank-badge pulse feedback only when a row's rank actually changes; no movement animation or transition can compete with rapid update/layout flow.
+- Preserved icon hover/highlight/pinned-tooltip handling, player perspective switching, stat formatting, mycovariant presentation, and restart initialization paths.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+- Manual Unity checks still required: 1–8 players; human and hotseat perspective changes; ties and rank reordering; high Alive/Dead/Toxin counts; long player names; mold-icon hover/pinning; rapid update/round transitions; restart; 1920x1080/1600x900/1280x720 layout fit; and Console cleanliness.
 
 ### 8. P2 — Late-game board legibility
 

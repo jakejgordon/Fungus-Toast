@@ -14,9 +14,13 @@ namespace FungusToast.Unity.UI
     public class PlayerSummaryRow : MonoBehaviour
     {
         private const float StatTextScale = 1.05f;
-        private const float StatColumnWidth = 90f;
+        private const float StatColumnWidth = 78f;
+        private const float IdentityColumnWidth = 80f;
+        private const float RowPreferredHeight = 64f;
         private const float YouBadgeWidth = 44f;
         private const float YouBadgeHeight = 20f;
+        private const float RankBadgeWidth = 34f;
+        private const float RankBadgeHeight = 20f;
         private static readonly Vector2 YouBadgeOffset = new Vector2(4f, -2f);
         private static readonly Color InactiveRowBackground = UIStyleTokens.WithAlpha(
             UIStyleTokens.Surface.PanelPrimary,
@@ -34,6 +38,11 @@ namespace FungusToast.Unity.UI
         private Image rowBackground;
         private Image leftAccentStrip;
         private GameObject youBadgeRoot;
+        private TextMeshProUGUI playerIdentityText;
+        private TextMeshProUGUI rankBadgeText;
+        private GameObject rankBadgeRoot;
+        private int currentRank;
+        private Coroutine rankPulseCoroutine;
 
         public int PlayerId { get; set; } // <-- Add this property
 
@@ -41,6 +50,7 @@ namespace FungusToast.Unity.UI
         {
             ApplyStyle();
             EnsurePerspectiveIndicatorVisuals();
+            EnsureIdentityVisuals();
             SetPerspectivePlayer(false);
         }
 
@@ -70,6 +80,26 @@ namespace FungusToast.Unity.UI
                 ConfigureNumericColumn(toxinCellsText);
                 ApplyColumnWidth(toxinCellsText.transform, StatColumnWidth);
             }
+
+            if (moldIconImage != null)
+            {
+                ApplyColumnWidth(moldIconImage.transform, IdentityColumnWidth);
+                var iconLayout = moldIconImage.GetComponent<LayoutElement>();
+                if (iconLayout != null)
+                {
+                    iconLayout.minHeight = RowPreferredHeight;
+                    iconLayout.preferredHeight = RowPreferredHeight;
+                }
+                moldIconImage.preserveAspect = true;
+            }
+
+            var rowLayout = GetComponent<LayoutElement>();
+            if (rowLayout == null)
+            {
+                rowLayout = gameObject.AddComponent<LayoutElement>();
+            }
+            rowLayout.minHeight = RowPreferredHeight;
+            rowLayout.preferredHeight = RowPreferredHeight;
         }
 
         private static void ApplyColumnWidth(Transform cell, float width)
@@ -209,6 +239,118 @@ namespace FungusToast.Unity.UI
             }
 
             youBadgeRoot = badgeObject;
+        }
+
+        private void EnsureIdentityVisuals()
+        {
+            if (moldIconImage == null)
+            {
+                return;
+            }
+
+            var identityObject = new GameObject("UI_PlayerIdentity", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            identityObject.transform.SetParent(moldIconImage.transform, false);
+            var identityRect = identityObject.GetComponent<RectTransform>();
+            identityRect.anchorMin = new Vector2(0f, 0f);
+            identityRect.anchorMax = new Vector2(1f, 0f);
+            identityRect.pivot = new Vector2(0.5f, 0f);
+            identityRect.offsetMin = new Vector2(2f, 2f);
+            identityRect.offsetMax = new Vector2(-2f, 18f);
+            identityObject.GetComponent<LayoutElement>().ignoreLayout = true;
+
+            playerIdentityText = identityObject.GetComponent<TextMeshProUGUI>();
+            playerIdentityText.font = livingCellsText != null ? livingCellsText.font : TMP_Settings.defaultFontAsset;
+            playerIdentityText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            playerIdentityText.color = UIStyleTokens.Text.Primary;
+            playerIdentityText.alignment = TextAlignmentOptions.Bottom;
+            playerIdentityText.fontStyle = FontStyles.Bold;
+            playerIdentityText.textWrappingMode = TextWrappingModes.NoWrap;
+            playerIdentityText.overflowMode = TextOverflowModes.Ellipsis;
+            playerIdentityText.raycastTarget = false;
+
+            var rankObject = new GameObject("UI_PlayerRank", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline), typeof(LayoutElement));
+            rankObject.transform.SetParent(moldIconImage.transform, false);
+            var rankRect = rankObject.GetComponent<RectTransform>();
+            rankRect.anchorMin = new Vector2(0f, 1f);
+            rankRect.anchorMax = new Vector2(0f, 1f);
+            rankRect.pivot = new Vector2(0f, 1f);
+            rankRect.anchoredPosition = new Vector2(2f, -2f);
+            rankRect.sizeDelta = new Vector2(RankBadgeWidth, RankBadgeHeight);
+            rankObject.GetComponent<LayoutElement>().ignoreLayout = true;
+
+            var rankBackground = rankObject.GetComponent<Image>();
+            rankBackground.color = UIStyleTokens.Surface.PanelElevated;
+            rankBackground.raycastTarget = false;
+            var rankOutline = rankObject.GetComponent<Outline>();
+            rankOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.35f);
+            rankOutline.effectDistance = new Vector2(1f, -1f);
+
+            var rankTextObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            rankTextObject.transform.SetParent(rankObject.transform, false);
+            var rankTextRect = rankTextObject.GetComponent<RectTransform>();
+            rankTextRect.anchorMin = Vector2.zero;
+            rankTextRect.anchorMax = Vector2.one;
+            rankTextRect.offsetMin = Vector2.zero;
+            rankTextRect.offsetMax = Vector2.zero;
+
+            rankBadgeText = rankTextObject.GetComponent<TextMeshProUGUI>();
+            rankBadgeText.font = playerIdentityText.font;
+            rankBadgeText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            rankBadgeText.color = UIStyleTokens.Text.Primary;
+            rankBadgeText.alignment = TextAlignmentOptions.Center;
+            rankBadgeText.fontStyle = FontStyles.Bold;
+            rankBadgeText.textWrappingMode = TextWrappingModes.NoWrap;
+            rankBadgeText.raycastTarget = false;
+            rankBadgeRoot = rankObject;
+        }
+
+        public void SetPlayerIdentity(string playerName)
+        {
+            if (playerIdentityText != null)
+            {
+                playerIdentityText.text = string.IsNullOrWhiteSpace(playerName) ? $"Player {PlayerId + 1}" : playerName;
+            }
+        }
+
+        public void SetRank(int rank)
+        {
+            rank = Mathf.Max(1, rank);
+            bool rankChanged = currentRank > 0 && currentRank != rank;
+            currentRank = rank;
+
+            if (rankBadgeText != null)
+            {
+                rankBadgeText.text = $"#{rank}";
+            }
+
+            if (rankChanged && rankBadgeRoot != null && gameObject.activeInHierarchy)
+            {
+                if (rankPulseCoroutine != null)
+                {
+                    StopCoroutine(rankPulseCoroutine);
+                }
+                rankPulseCoroutine = StartCoroutine(PulseRankBadge());
+            }
+        }
+
+        private System.Collections.IEnumerator PulseRankBadge()
+        {
+            const float duration = 0.28f;
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float pulse = Mathf.Sin((elapsed / duration) * Mathf.PI);
+                float scale = 1f + (pulse * 0.12f);
+                rankBadgeRoot.transform.localScale = new Vector3(scale, scale, 1f);
+                yield return null;
+            }
+
+            if (rankBadgeRoot != null)
+            {
+                rankBadgeRoot.transform.localScale = Vector3.one;
+            }
+            rankPulseCoroutine = null;
         }
 
         public void SetPerspectivePlayer(bool isPerspectivePlayer)
