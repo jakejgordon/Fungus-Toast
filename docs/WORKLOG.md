@@ -439,6 +439,14 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - Rebalanced the player-summary table to an 84-unit identity column, 66-unit stat columns, 6-unit gutters, and 12-unit outer padding. Player names retain safe autosizing; the header is title-case `Player`; the Toxin column retains a visible right gutter.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
 
+### HUD follow-up: shared log-control ownership and table gutters (2026-08-15)
+
+- Aligned the Spend Points row contents to its top edge instead of vertically centering them in the row, restoring a clear separation before the growth preview.
+- Replaced the mixed authored/runtime activity-header controls with one runtime action lane that contains `Hide` then `Clear` at the exact same size, inset, ordering, and style for Human and Global logs.
+- Standardized all runtime utility-button labels (`Hide`, `Clear`, and `Latest`) to no-wrap safe autosizing, so `Latest (N)` remains a single-line control in both logs.
+- Reduced the `Player` header's independent autosizing floor so the complete title fits; made summary rows flex to the full available content width so their background extends beyond the Toxin value and preserves an internal right gutter.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required for top-control/preview spacing, both log headers and Latest states, Player label, and summary-row right gutter.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.

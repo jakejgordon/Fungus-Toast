@@ -110,6 +110,7 @@ namespace FungusToast.Unity.UI
             }
             rowLayoutElement.minHeight = RowPreferredHeight;
             rowLayoutElement.preferredHeight = RowPreferredHeight;
+            rowLayoutElement.flexibleWidth = 1f;
         }
 
         private static void ApplyColumnWidth(Transform cell, float width)

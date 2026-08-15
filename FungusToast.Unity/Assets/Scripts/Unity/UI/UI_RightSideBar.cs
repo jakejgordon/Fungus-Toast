@@ -181,6 +181,11 @@ namespace FungusToast.Unity.UI
                 ConfigureSingleLineAutosize(label);
 
                 string normalized = label.text?.Trim().ToLowerInvariant() ?? string.Empty;
+                if (normalized.StartsWith("player"))
+                {
+                    label.fontSizeMax = Mathf.Min(label.fontSizeMax, 20f);
+                    label.fontSizeMin = 12f;
+                }
                 if (normalized.StartsWith("alive") || normalized.StartsWith("dead") || normalized.StartsWith("toxin"))
                 {
                     label.alignment = TextAlignmentOptions.Midline;

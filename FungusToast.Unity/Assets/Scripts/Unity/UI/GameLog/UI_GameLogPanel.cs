@@ -20,6 +20,8 @@ namespace FungusToast.Unity.UI.GameLog
         private const float ClearButtonMinimumWidth = 64f;
         private const float HeaderActionInset = 8f;
         private const float CollapseButtonWidth = 60f;
+        private const float HeaderActionSpacing = 4f;
+        private const float HeaderActionsWidth = ClearButtonMinimumWidth + CollapseButtonWidth + HeaderActionSpacing;
         private const float LatestButtonWidth = 72f;
         private const float ActivityButtonHeight = 32f;
         private const float CollapsedHeight = 48f;
@@ -50,6 +52,7 @@ namespace FungusToast.Unity.UI.GameLog
         private Button topActionButton;
         private TextMeshProUGUI topActionButtonLabel;
         private RectTransform headerRoot;
+        private RectTransform headerActionsRoot;
         private RectTransform scrollViewRoot;
         private Vector2 headerOriginalAnchoredPosition;
         private Vector2 scrollViewOriginalOffsetMax;
@@ -163,13 +166,18 @@ namespace FungusToast.Unity.UI.GameLog
         {
             if (clearButton != null && clearButton.transform is RectTransform buttonRect)
             {
-                buttonRect.sizeDelta = new Vector2(
-                    Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
-                    ActivityButtonHeight);
-                buttonRect.anchorMin = new Vector2(1f, 1f);
-                buttonRect.anchorMax = new Vector2(1f, 1f);
-                buttonRect.pivot = new Vector2(1f, 0.5f);
-                buttonRect.anchoredPosition = new Vector2(-HeaderActionInset, -20f);
+                if (headerActionsRoot == null)
+                {
+                    buttonRect.sizeDelta = new Vector2(
+                        Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
+                        ActivityButtonHeight);
+                    buttonRect.anchorMin = new Vector2(1f, 1f);
+                    buttonRect.anchorMax = new Vector2(1f, 1f);
+                    buttonRect.pivot = new Vector2(1f, 0.5f);
+                    buttonRect.anchoredPosition = new Vector2(-HeaderActionInset, -20f);
+                }
+
+                ConfigureHeaderActionLayout(clearButton, ClearButtonMinimumWidth);
             }
 
             // Both activity feeds share this header contract. Explicitly reserve
@@ -183,7 +191,7 @@ namespace FungusToast.Unity.UI.GameLog
                 headerTextRect.pivot = new Vector2(0.5f, 0.5f);
                 headerTextRect.offsetMin = new Vector2(HeaderActionInset, headerTextRect.offsetMin.y);
                 headerTextRect.offsetMax = new Vector2(
-                    -(ClearButtonMinimumWidth + CollapseButtonWidth + (HeaderActionInset * 3f)),
+                    -(HeaderActionsWidth + HeaderActionInset),
                     headerTextRect.offsetMax.y);
             }
 
@@ -196,7 +204,11 @@ namespace FungusToast.Unity.UI.GameLog
             for (int i = 0; i < labels.Length; i++)
             {
                 labels[i].fontSize = UIStyleTokens.Typography.CaptionMinimum;
-                labels[i].enableAutoSizing = false;
+                labels[i].fontSizeMax = UIStyleTokens.Typography.CaptionMinimum;
+                labels[i].fontSizeMin = 10f;
+                labels[i].enableAutoSizing = true;
+                labels[i].textWrappingMode = TextWrappingModes.NoWrap;
+                TMPOverflowUtility.SetSafeEllipsis(labels[i]);
             }
         }
 
@@ -580,11 +592,7 @@ namespace FungusToast.Unity.UI.GameLog
                 return;
             }
 
-            if (collapseButton == null)
-            {
-                collapseButton = CreateButton(headerRoot, "ActivityVisibilityButton", new Vector2(1f, 1f), new Vector2(-(HeaderActionInset + ClearButtonMinimumWidth + HeaderActionInset + (CollapseButtonWidth * 0.5f)), -20f), new Vector2(CollapseButtonWidth, ActivityButtonHeight), out collapseButtonLabel);
-                collapseButton.onClick.AddListener(ToggleCollapsed);
-            }
+            EnsureHeaderActionControls();
 
             ConfigureClearButtonReadability();
 
@@ -596,6 +604,72 @@ namespace FungusToast.Unity.UI.GameLog
 
             UpdateCollapsedVisuals();
             UpdateLatestButton();
+        }
+
+        private void EnsureHeaderActionControls()
+        {
+            if (headerRoot == null || headerActionsRoot != null)
+            {
+                return;
+            }
+
+            var actionsObject = new GameObject("ActivityHeaderActions", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            actionsObject.transform.SetParent(headerRoot, false);
+            actionsObject.transform.SetAsLastSibling();
+
+            headerActionsRoot = actionsObject.GetComponent<RectTransform>();
+            headerActionsRoot.anchorMin = new Vector2(1f, 0f);
+            headerActionsRoot.anchorMax = new Vector2(1f, 1f);
+            headerActionsRoot.pivot = new Vector2(1f, 0.5f);
+            headerActionsRoot.anchoredPosition = new Vector2(-HeaderActionInset, 0f);
+            headerActionsRoot.sizeDelta = new Vector2(HeaderActionsWidth, 0f);
+
+            var actionsLayout = actionsObject.GetComponent<HorizontalLayoutGroup>();
+            actionsLayout.padding = new RectOffset(0, 0, 0, 0);
+            actionsLayout.spacing = HeaderActionSpacing;
+            actionsLayout.childAlignment = TextAnchor.MiddleRight;
+            actionsLayout.childControlWidth = true;
+            actionsLayout.childControlHeight = true;
+            actionsLayout.childForceExpandWidth = false;
+            actionsLayout.childForceExpandHeight = false;
+
+            collapseButton = CreateButton(
+                headerActionsRoot,
+                "ActivityVisibilityButton",
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(CollapseButtonWidth, ActivityButtonHeight),
+                out collapseButtonLabel);
+            ConfigureHeaderActionLayout(collapseButton, CollapseButtonWidth);
+            collapseButton.onClick.AddListener(ToggleCollapsed);
+
+            if (clearButton != null)
+            {
+                clearButton.transform.SetParent(headerActionsRoot, false);
+                clearButton.transform.SetAsLastSibling();
+                ConfigureHeaderActionLayout(clearButton, ClearButtonMinimumWidth);
+            }
+        }
+
+        private static void ConfigureHeaderActionLayout(Button button, float width)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var layout = button.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = button.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layout.minWidth = width;
+            layout.preferredWidth = width;
+            layout.flexibleWidth = 0f;
+            layout.minHeight = ActivityButtonHeight;
+            layout.preferredHeight = ActivityButtonHeight;
+            layout.flexibleHeight = 0f;
         }
 
         private static Button CreateButton(RectTransform parent, string name, Vector2 anchor, Vector2 position, Vector2 size, out TextMeshProUGUI label)
@@ -623,8 +697,13 @@ namespace FungusToast.Unity.UI.GameLog
             label = labelObject.GetComponent<TextMeshProUGUI>();
             label.font = TMP_Settings.defaultFontAsset;
             label.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            label.fontSizeMax = UIStyleTokens.Typography.MicroMinimum;
+            label.fontSizeMin = 10f;
             label.fontStyle = FontStyles.Bold;
             label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.enableAutoSizing = true;
+            TMPOverflowUtility.SetSafeEllipsis(label);
             label.color = UIStyleTokens.Text.Primary;
             label.raycastTarget = false;
             return button;
