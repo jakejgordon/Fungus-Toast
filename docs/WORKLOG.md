@@ -424,6 +424,12 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 
 ## Historical Checkpoint — Startup Menu Polish
 
+### Game Setup background continuity (2026-08-14)
+
+- Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
+- Preserved the setup panel's raycast blocking and all setup flow behavior; no gameplay or scene-reference changes were made.
+- Core build and `git diff --check` passed. Unity Editor verification remains required: open Custom Game at 1920x1080 and confirm the animated mold background reads through both the outer veil and setup card while text and controls retain contrast.
+
 Startup tasks 1–11 were implemented and synchronized before this gameplay audit. They covered shared startup styling, main menu and setup flows, mold selection, campaign overview/creation, Settings, Credits, development-control gating, startup panel fades, and regression cleanup.
 
 Automated validation at that checkpoint:
