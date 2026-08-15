@@ -455,6 +455,13 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - Reduced the Hide action width slightly and marked the runtime header action lane as an anchored overlay, preventing the Global Log control from being reflowed beyond its header edge.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required at 1920x1080, 1600x900, and 1280x720 for all four screenshot corrections, including same-player Human Log refreshes while reading older entries.
 
+### HUD follow-up: left-sidebar vertical recovery (2026-08-15)
+
+- Reverted Common Symbols from labeled one-per-row cards to the shared compact 36px hoverable icon grid used by Adaptations and Mycovariants.
+- Preserved the existing per-symbol tooltip, hover feedback, and matching-board-tile highlight behavior; only the space-expensive visible labels were removed.
+- This recovers the vertical room needed to keep Random Decay below the Growth Preview and the Human Activity Log/Latest control within the sidebar.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required at 1920x1080, 1600x900, and 1280x720 with 0–7 live symbols, plus tooltip/highlight behavior and the Human Log while reading older entries.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
