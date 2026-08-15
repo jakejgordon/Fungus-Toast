@@ -159,12 +159,7 @@ namespace FungusToast.Unity.UI.GameLog
 
         private void ConfigureClearButtonReadability()
         {
-            if (clearButton == null)
-            {
-                return;
-            }
-
-            if (clearButton.transform is RectTransform buttonRect)
+            if (clearButton != null && clearButton.transform is RectTransform buttonRect)
             {
                 buttonRect.sizeDelta = new Vector2(
                     Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
@@ -175,10 +170,24 @@ namespace FungusToast.Unity.UI.GameLog
                 buttonRect.anchoredPosition = new Vector2(-HeaderActionInset, -20f);
             }
 
+            // Both activity feeds share this header contract. Explicitly reserve
+            // the same title lane so per-instance prefab layout does not push the
+            // Global Log title left or allow its actions to escape the panel.
             if (headerText != null)
             {
                 var headerTextRect = headerText.rectTransform;
-                headerTextRect.offsetMax = new Vector2(-(ClearButtonMinimumWidth + CollapseButtonWidth + (HeaderActionInset * 3f)), headerTextRect.offsetMax.y);
+                headerTextRect.anchorMin = new Vector2(0f, 0f);
+                headerTextRect.anchorMax = new Vector2(1f, 1f);
+                headerTextRect.pivot = new Vector2(0.5f, 0.5f);
+                headerTextRect.offsetMin = new Vector2(HeaderActionInset, headerTextRect.offsetMin.y);
+                headerTextRect.offsetMax = new Vector2(
+                    -(ClearButtonMinimumWidth + CollapseButtonWidth + (HeaderActionInset * 3f)),
+                    headerTextRect.offsetMax.y);
+            }
+
+            if (clearButton == null)
+            {
+                return;
             }
 
             var labels = clearButton.GetComponentsInChildren<TextMeshProUGUI>(true);
@@ -574,6 +583,8 @@ namespace FungusToast.Unity.UI.GameLog
                 collapseButton = CreateButton(headerRoot, "ActivityVisibilityButton", new Vector2(1f, 1f), new Vector2(-(HeaderActionInset + ClearButtonMinimumWidth + HeaderActionInset + (CollapseButtonWidth * 0.5f)), -20f), new Vector2(CollapseButtonWidth, ActivityButtonHeight), out collapseButtonLabel);
                 collapseButton.onClick.AddListener(ToggleCollapsed);
             }
+
+            ConfigureClearButtonReadability();
 
             if (latestButton == null)
             {

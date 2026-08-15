@@ -483,12 +483,21 @@ namespace FungusToast.Unity.UI
 
         private void AppendAnimationFlags(FungalCell cell)
         {
-            if (cell.IsNewlyGrown)
+            // IsNewlyGrown is a short-lived presentation flag that can remain set
+            // until an animation completes. Tooltip copy should instead reflect the
+            // player-facing definition: cells grown within the latest five cycles.
+            if (IsRecentlyGrown(cell))
                 sb.AppendLine(DetailBullet("Newly Grown", UIStyleTokens.State.Warning));
             if (cell.IsDying)
                 sb.AppendLine(DetailBullet("Dying", UIStyleTokens.State.Danger));
             if (cell.IsReceivingToxinDrop)
                 sb.AppendLine(DetailBullet("Receiving Toxin", UIStyleTokens.Category.Fungicide));
+        }
+
+        private static bool IsRecentlyGrown(FungalCell cell)
+        {
+            return cell.IsAlive
+                   && cell.GrowthCycleAge < UIEffectConstants.GrowthCycleAgeHighlightTextThreshold;
         }
 
         private void AppendNutrientPatch(NutrientPatch nutrientPatch)

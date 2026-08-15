@@ -23,7 +23,7 @@ namespace FungusToast.Unity.UI
         private const float PlayerSummaryRowSpacing = 5f;
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
-        private const float SummaryIconColumnWidth = 80f;
+        private const float SummaryIconColumnWidth = 112f;
         private const float SummaryStatColumnWidth = 78f;
         private const int SummaryHorizontalInset = 15;
         private const float DraftHistoryAttentionDurationSeconds = 4f;

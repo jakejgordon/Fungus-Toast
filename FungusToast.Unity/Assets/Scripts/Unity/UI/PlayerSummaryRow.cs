@@ -15,7 +15,9 @@ namespace FungusToast.Unity.UI
     {
         private const float StatTextScale = 1.05f;
         private const float StatColumnWidth = 78f;
-        private const float IdentityColumnWidth = 80f;
+        // The name sits beneath the mold icon, so reserve enough width for the
+        // roster's descriptive AI names without sacrificing their readability.
+        private const float IdentityColumnWidth = 112f;
         private const float RowPreferredHeight = 64f;
         private const float YouBadgeWidth = 44f;
         private const float YouBadgeHeight = 20f;

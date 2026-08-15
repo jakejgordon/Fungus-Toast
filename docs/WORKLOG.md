@@ -424,6 +424,14 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 
 ## Historical Checkpoint — Startup Menu Polish
 
+### HUD follow-up: tooltip age, activity-log header, and player identity (2026-08-14)
+
+- Made `Newly Grown` in the board-inspection tooltip age-based rather than dependent on the transient animation flag: living cells aged 0–4 growth cycles show the label, and older cells do not.
+- Normalized both activity-log headers into the same bounded title/action lane, so `Global Log`, `Hide`, and `Clear` share the Human Activity Log geometry.
+- Kept descriptive player/AI names and expanded the scoreboard identity column from 80 to 112 UI units rather than replacing names with generic `AI N` labels.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable here.
+- Manual Unity checks: hover cells at ages 0–5; Global and Human logs in expanded/collapsed states at 1920x1080, 1600x900, and 1280x720; long player names and high player counts.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
