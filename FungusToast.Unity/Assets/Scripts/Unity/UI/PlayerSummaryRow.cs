@@ -14,10 +14,11 @@ namespace FungusToast.Unity.UI
     public class PlayerSummaryRow : MonoBehaviour
     {
         private const float StatTextScale = 1.05f;
-        private const float StatColumnWidth = 78f;
+        private const float StatColumnWidth = 66f;
         // The name sits beneath the mold icon, so reserve enough width for the
         // roster's descriptive AI names without sacrificing their readability.
-        private const float IdentityColumnWidth = 112f;
+        private const float IdentityColumnWidth = 84f;
+        private const float ColumnSpacing = 6f;
         private const float RowPreferredHeight = 64f;
         private const float YouBadgeWidth = 44f;
         private const float YouBadgeHeight = 20f;
@@ -58,6 +59,13 @@ namespace FungusToast.Unity.UI
 
         private void ApplyStyle()
         {
+            var rowLayout = GetComponent<HorizontalLayoutGroup>();
+            if (rowLayout != null)
+            {
+                rowLayout.spacing = ColumnSpacing;
+                rowLayout.childForceExpandWidth = false;
+            }
+
             if (livingCellsText != null)
             {
                 livingCellsText.color = UIStyleTokens.Text.Primary;
@@ -95,13 +103,13 @@ namespace FungusToast.Unity.UI
                 moldIconImage.preserveAspect = true;
             }
 
-            var rowLayout = GetComponent<LayoutElement>();
-            if (rowLayout == null)
+            var rowLayoutElement = GetComponent<LayoutElement>();
+            if (rowLayoutElement == null)
             {
-                rowLayout = gameObject.AddComponent<LayoutElement>();
+                rowLayoutElement = gameObject.AddComponent<LayoutElement>();
             }
-            rowLayout.minHeight = RowPreferredHeight;
-            rowLayout.preferredHeight = RowPreferredHeight;
+            rowLayoutElement.minHeight = RowPreferredHeight;
+            rowLayoutElement.preferredHeight = RowPreferredHeight;
         }
 
         private static void ApplyColumnWidth(Transform cell, float width)
@@ -267,7 +275,10 @@ namespace FungusToast.Unity.UI
             playerIdentityText.alignment = TextAlignmentOptions.Bottom;
             playerIdentityText.fontStyle = FontStyles.Bold;
             playerIdentityText.textWrappingMode = TextWrappingModes.NoWrap;
-            playerIdentityText.overflowMode = TextOverflowModes.Ellipsis;
+            TMPOverflowUtility.SetSafeEllipsis(playerIdentityText);
+            playerIdentityText.enableAutoSizing = true;
+            playerIdentityText.fontSizeMax = UIStyleTokens.Typography.MicroMinimum;
+            playerIdentityText.fontSizeMin = 10f;
             playerIdentityText.raycastTarget = false;
 
             var rankObject = new GameObject("UI_PlayerRank", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline), typeof(LayoutElement));

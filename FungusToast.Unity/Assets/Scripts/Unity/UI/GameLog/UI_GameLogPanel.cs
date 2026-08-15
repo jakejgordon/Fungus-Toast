@@ -15,9 +15,11 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionReservedHeight = 45f;
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
-        private const float ClearButtonMinimumWidth = 72f;
-        private const float HeaderActionInset = 10f;
-        private const float CollapseButtonWidth = 68f;
+        // Keep the two header controls inside the narrowest sidebar while still
+        // exceeding the desktop minimum hit target.
+        private const float ClearButtonMinimumWidth = 64f;
+        private const float HeaderActionInset = 8f;
+        private const float CollapseButtonWidth = 60f;
         private const float LatestButtonWidth = 72f;
         private const float ActivityButtonHeight = 32f;
         private const float CollapsedHeight = 48f;

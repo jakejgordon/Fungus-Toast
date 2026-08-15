@@ -74,7 +74,10 @@ namespace FungusToast.Unity.UI
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const float StatsRootHeight = 44f;
-        private const float GrowthPreviewPreferredHeight = 364f;
+        // Let the dense 3x3 preview yield enough sidebar height for the always
+        // available Human Activity Log when legends and traits are populated.
+        private const float GrowthPreviewPreferredHeight = 320f;
+        private const float GrowthPreviewMinimumHeight = 300f;
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float RandomDecayChanceIconSize = 24f;
@@ -224,7 +227,7 @@ namespace FungusToast.Unity.UI
                 // The preview is a 3x3 board. Its original 375-unit allocation
                 // clips the bottom row once the sidebar is Canvas-scaled.
                 layout.preferredHeight = GrowthPreviewPreferredHeight;
-                layout.minHeight = GrowthPreviewPreferredHeight;
+                layout.minHeight = GrowthPreviewMinimumHeight;
                 layout.flexibleHeight = 0f;
             }
         }

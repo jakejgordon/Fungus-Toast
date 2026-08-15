@@ -23,9 +23,10 @@ namespace FungusToast.Unity.UI
         private const float PlayerSummaryRowSpacing = 5f;
         private const float TopStatsScale = 1.18f;
         private const float SummaryHeaderScale = 1.10f;
-        private const float SummaryIconColumnWidth = 112f;
-        private const float SummaryStatColumnWidth = 78f;
-        private const int SummaryHorizontalInset = 15;
+        private const float SummaryIconColumnWidth = 84f;
+        private const float SummaryStatColumnWidth = 66f;
+        private const float SummaryColumnSpacing = 6f;
+        private const int SummaryHorizontalInset = 12;
         private const float DraftHistoryAttentionDurationSeconds = 4f;
 
         [Header("Player Summary Panel")]
@@ -198,7 +199,7 @@ namespace FungusToast.Unity.UI
             var headerLayout = headerRow.GetComponent<HorizontalLayoutGroup>();
             if (headerLayout != null)
             {
-                headerLayout.spacing = 10f;
+                headerLayout.spacing = SummaryColumnSpacing;
                 headerLayout.childControlWidth = true;
                 headerLayout.childForceExpandWidth = false;
                 headerLayout.childControlHeight = true;
@@ -213,7 +214,7 @@ namespace FungusToast.Unity.UI
             var identityHeader = headerRow.Find("UI_BlankPlayerMoldIconHeaderText")?.GetComponent<TextMeshProUGUI>();
             if (identityHeader != null)
             {
-                identityHeader.text = "PLAYER";
+                identityHeader.text = "Player";
                 identityHeader.alignment = TextAlignmentOptions.Midline;
             }
         }

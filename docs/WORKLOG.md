@@ -432,6 +432,13 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable here.
 - Manual Unity checks: hover cells at ages 0–5; Global and Human logs in expanded/collapsed states at 1920x1080, 1600x900, and 1280x720; long player names and high player counts.
 
+### HUD follow-up: sidebar space rebalancing (2026-08-14)
+
+- Reduced the shared `Hide`/`Clear` control widths and insets while retaining 32px-high desktop targets, so both log headers fit their sidebar lanes.
+- Reduced the growth preview from a rigid 364-unit height to 320 preferred / 300 minimum, preserving the full 3x3 preview while allowing the Human Activity Log its guaranteed area when legends, adaptations, and Mycovariants are populated.
+- Rebalanced the player-summary table to an 84-unit identity column, 66-unit stat columns, 6-unit gutters, and 12-unit outer padding. Player names retain safe autosizing; the header is title-case `Player`; the Toxin column retains a visible right gutter.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor was unavailable in this environment.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
