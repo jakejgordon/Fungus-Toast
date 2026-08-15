@@ -15,6 +15,7 @@ namespace FungusToast.Unity.UI
     {
         private const float StatTextScale = 1.05f;
         private const float StatColumnWidth = 66f;
+        private const float ToxinColumnWidth = 96f;
         // The name sits beneath the mold icon, so reserve enough width for the
         // roster's descriptive AI names without sacrificing their readability.
         private const float IdentityColumnWidth = 84f;
@@ -88,7 +89,7 @@ namespace FungusToast.Unity.UI
                 toxinCellsText.fontStyle = FontStyles.Bold;
                 ApplyTextScale(toxinCellsText, StatTextScale);
                 ConfigureNumericColumn(toxinCellsText);
-                ApplyColumnWidth(toxinCellsText.transform, StatColumnWidth);
+                ApplyColumnWidth(toxinCellsText.transform, ToxinColumnWidth);
             }
 
             if (moldIconImage != null)

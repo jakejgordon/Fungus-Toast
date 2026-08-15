@@ -19,10 +19,14 @@ namespace FungusToast.Unity.UI.GameLog
         // exceeding the desktop minimum hit target.
         private const float ClearButtonMinimumWidth = 64f;
         private const float HeaderActionInset = 8f;
-        private const float CollapseButtonWidth = 60f;
+        // Keep the visibility control compact enough to stay inside the header
+        // gutter at every supported sidebar width.
+        private const float CollapseButtonWidth = 56f;
         private const float HeaderActionSpacing = 4f;
         private const float HeaderActionsWidth = ClearButtonMinimumWidth + CollapseButtonWidth + HeaderActionSpacing;
-        private const float LatestButtonWidth = 72f;
+        // "Latest (30)" must fit at the normal micro-text size.  The human
+        // activity feed uses the same control as the global feed.
+        private const float LatestButtonWidth = 88f;
         private const float ActivityButtonHeight = 32f;
         private const float CollapsedHeight = 48f;
         private const float ExpandedMinimumHeight = 180f;
@@ -341,12 +345,15 @@ namespace FungusToast.Unity.UI.GameLog
 
         public void SetActivePlayer(int playerId, string playerName)
         {
+            bool playerChanged = activePlayerId != playerId;
             activePlayerId = playerId;
             if (headerText != null)
                 headerText.text = $"{playerName} Activity Log";
             if (isPlayerSpecificPanel)
             {
-                RebuildForPlayerEntries(logManager?.GetRecentEntries(maxVisibleEntries) ?? Enumerable.Empty<GameLogEntry>());
+                RebuildForPlayerEntries(
+                    logManager?.GetRecentEntries(maxVisibleEntries) ?? Enumerable.Empty<GameLogEntry>(),
+                    resetUnseenCount: playerChanged);
             }
         }
 
@@ -433,7 +440,7 @@ namespace FungusToast.Unity.UI.GameLog
             UpdateLatestButton();
         }
 
-        private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries)
+        private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries, bool resetUnseenCount = true)
         {
             foreach (var e in entryUIs)
                 if (e != null) entryPool.Release(e);
@@ -443,7 +450,10 @@ namespace FungusToast.Unity.UI.GameLog
                 CreateVisualEntry(entry);
             QueueLayoutRefresh();
             QueueBottomScrollFollowup();
-            unseenEntryCount = 0;
+            if (resetUnseenCount)
+            {
+                unseenEntryCount = 0;
+            }
             UpdateLatestButton();
         }
 
@@ -623,6 +633,12 @@ namespace FungusToast.Unity.UI.GameLog
             headerActionsRoot.pivot = new Vector2(1f, 0.5f);
             headerActionsRoot.anchoredPosition = new Vector2(-HeaderActionInset, 0f);
             headerActionsRoot.sizeDelta = new Vector2(HeaderActionsWidth, 0f);
+
+            // This is an anchored overlay within the header, not a header-row
+            // child.  Prevent any prefab/layout variation from reflowing it
+            // beyond the Global Log edge.
+            var headerActionsLayoutElement = actionsObject.AddComponent<LayoutElement>();
+            headerActionsLayoutElement.ignoreLayout = true;
 
             var actionsLayout = actionsObject.GetComponent<HorizontalLayoutGroup>();
             actionsLayout.padding = new RectOffset(0, 0, 0, 0);

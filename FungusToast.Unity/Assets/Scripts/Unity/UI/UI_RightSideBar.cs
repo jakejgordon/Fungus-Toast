@@ -25,6 +25,9 @@ namespace FungusToast.Unity.UI
         private const float SummaryHeaderScale = 1.10f;
         private const float SummaryIconColumnWidth = 84f;
         private const float SummaryStatColumnWidth = 66f;
+        // Use the spare right-side space for the final statistic rather than
+        // leaving a conspicuous gutter after the toxin count.
+        private const float SummaryToxinColumnWidth = 96f;
         private const float SummaryColumnSpacing = 6f;
         private const int SummaryHorizontalInset = 12;
         private const float DraftHistoryAttentionDurationSeconds = 4f;
@@ -214,7 +217,7 @@ namespace FungusToast.Unity.UI
             ApplyColumnWidth(headerRow.Find("UI_BlankPlayerMoldIconHeaderText"), SummaryIconColumnWidth);
             ApplyColumnWidth(headerRow.Find("UI_AliveHeaderText"), SummaryStatColumnWidth);
             ApplyColumnWidth(headerRow.Find("UI_DeadHeaderText"), SummaryStatColumnWidth);
-            ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), SummaryStatColumnWidth);
+            ApplyColumnWidth(headerRow.Find("UI_ToxinHeaderText"), SummaryToxinColumnWidth);
 
             var identityHeader = headerRow.Find("UI_BlankPlayerMoldIconHeaderText")?.GetComponent<TextMeshProUGUI>();
             if (identityHeader != null)

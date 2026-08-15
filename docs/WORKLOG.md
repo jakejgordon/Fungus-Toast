@@ -447,6 +447,14 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - Reduced the `Player` header's independent autosizing floor so the complete title fits; made summary rows flex to the full available content width so their background extends beyond the Toxin value and preserves an internal right gutter.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required for top-control/preview spacing, both log headers and Latest states, Player label, and summary-row right gutter.
 
+### HUD follow-up: screenshot layout corrections (2026-08-15)
+
+- Increased and explicitly reserved the closed-tree Spend Points row to 82 UI units, with its icon/button pinned to the top of that lane so the growth preview cannot cover the action.
+- Kept unseen-entry counts when the Human Activity Log refreshes for the same player, and widened the shared Latest control so `Latest (N)` is visible in both Human and Global feeds.
+- Expanded the final Toxin column from 66 to 96 UI units in both the header and rows, reducing the unused right gutter without changing the other player-stat columns.
+- Reduced the Hide action width slightly and marked the runtime header action lane as an anchored overlay, preventing the Global Log control from being reflowed beyond its header edge.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required at 1920x1080, 1600x900, and 1280x720 for all four screenshot corrections, including same-player Human Log refreshes while reading older entries.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.

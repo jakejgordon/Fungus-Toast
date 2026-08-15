@@ -30,6 +30,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string TimeLapseTooltipText = "Skips most animations and speeds up Growth Cycles to reduce time between turns.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
+        private const float SpendPointsRowHeight = 82f;
         private const float StoreButtonMinWidth = 220f;
         private const float StoreButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float PresentationSpeedButtonMinWidth = 220f;
@@ -3001,6 +3002,30 @@ namespace FungusToast.Unity.UI.MutationTree
 
             spendPointsButton.gameObject.SetActive(true);
             spendPointsButton.transform.localScale = originalButtonScale;
+
+            // The closed-tree action row shares the left sidebar with the
+            // growth preview.  Reserve its full vertical lane and keep both
+            // controls top-aligned so the preview cannot cover this button.
+            if (spendPointsButton.transform.parent is RectTransform spendRowRect)
+            {
+                var spendRowLayout = spendRowRect.GetComponent<HorizontalLayoutGroup>();
+                if (spendRowLayout != null)
+                {
+                    spendRowLayout.childAlignment = TextAnchor.UpperLeft;
+                    spendRowLayout.childControlHeight = false;
+                    spendRowLayout.childForceExpandHeight = false;
+                }
+
+                var spendRowLayoutElement = spendRowRect.GetComponent<LayoutElement>();
+                if (spendRowLayoutElement == null)
+                {
+                    spendRowLayoutElement = spendRowRect.gameObject.AddComponent<LayoutElement>();
+                }
+
+                spendRowLayoutElement.minHeight = SpendPointsRowHeight;
+                spendRowLayoutElement.preferredHeight = SpendPointsRowHeight;
+                spendRowLayoutElement.flexibleHeight = 0f;
+            }
 
             if (spendPointsButton.TryGetComponent<RectTransform>(out var rectTransform))
             {
