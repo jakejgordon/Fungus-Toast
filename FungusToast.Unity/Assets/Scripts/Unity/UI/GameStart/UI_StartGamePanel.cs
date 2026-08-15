@@ -32,6 +32,8 @@ namespace FungusToast.Unity.UI.GameStart
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
         private const float ActionButtonHorizontalPadding = 12f;
+        private const float SetupScreenBackdropAlpha = 0.34f;
+        private const float SetupContentCardAlpha = 0.74f;
 
         private enum SetupStep
         {
@@ -1734,7 +1736,7 @@ namespace FungusToast.Unity.UI.GameStart
                 surface = contentRoot.gameObject.AddComponent<Image>();
             }
 
-            UIStyleTokens.Startup.ApplyCard(surface, alpha: 0.9f);
+            UIStyleTokens.Startup.ApplyCard(surface, alpha: SetupContentCardAlpha);
             surface.raycastTarget = false;
 
             var layoutGroup = contentRoot.GetComponent<VerticalLayoutGroup>();
@@ -1857,7 +1859,10 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
+            // Keep the active mode-select panel's ambient mold layer visible through setup.
+            UIStyleTokens.ApplyPanelSurface(
+                gameObject,
+                UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, SetupScreenBackdropAlpha));
 
             if (humanPlayerSectionRoot != null)
             {
