@@ -469,6 +469,11 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - Reworked the Random Decay emblem into a layered state marker: the current player's mold icon is dimmed beneath the dead-cell overlay, while the established label and tooltip remain the source of mechanic detail.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor is unavailable in this environment. Manual Unity checks: the left sidebar at 1920x1080, 1600x900, and 1280x720; disabled/available Spend Points states; all player mold sprites and hotseat switches; Random Decay refresh/tooltip; growth-preview toast-cell contrast; and Human Activity Log clearance/Console cleanliness.
 
+### HUD follow-up: Mycovariant hover input isolation (2026-08-15)
+
+- Constrained the Human Activity Log title's tooltip hitbox to the visible 25-unit header band. Previously its 50-unit raycast area extended upward into the Mycovariants row, causing its human-log tooltip to display when hovering a Mycovariant icon.
+- Core and Simulation builds passed; Core had one transient DLL file-lock retry warning before succeeding. Unity Editor verification remains required: hover every Mycovariant icon during the human player's mutation turn and each growth cycle, then hover the Human Activity Log title itself to confirm its tooltip remains available.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
