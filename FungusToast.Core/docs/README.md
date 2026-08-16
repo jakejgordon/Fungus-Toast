@@ -10,6 +10,7 @@ Use this file for the full hierarchy, secondary references, and discoverability 
 These are the main task-entry documents and are also referenced from `.github/copilot-instructions.md`.
 
 - `BUILD_INSTRUCTIONS.md` — canonical CLI build commands and platform notes
+- `ITCH_RELEASE_DEVLOG.md` — player-facing itch.io release-post workflow and template
 - `TESTING_HELPER.md` — unit test stack, testing conventions, and canonical test commands
 - `SIMULATION_HELPER.md` — simulation workflows, reproducibility, fairness testing, and output conventions
 - `NEW_BACKGROUND_HELPER.md` — board background authoring, contour-to-square baking, and irregular silhouette workflow

@@ -46,6 +46,8 @@ This order ensures all dependencies are built correctly and avoids circular depe
 
 For Windows-first local releases to itch.io, use the release helper script at `scripts/publish_itch_release.ps1`.
 
+Before publishing an update, draft its player-facing itch.io post with [ITCH_RELEASE_DEVLOG.md](ITCH_RELEASE_DEVLOG.md). The post should be based on changes since the prior public release and reviewed separately from the build/upload step.
+
 ### Deployment Version Confirmation
 
 Before any deployment or itch.io publish, confirm the intended semantic version with the requester and update `FungusToast.Unity/version.txt`.

@@ -13,6 +13,7 @@ If a task is unclear, use this routing order before making changes:
 
 - **Build + validation basics:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
 - **Local Windows itch.io release workflow:** `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md`
+- **Player-facing itch.io release devlog drafting:** `FungusToast.Core/docs/ITCH_RELEASE_DEVLOG.md`
 - **Unit test stack and canonical test commands:** `FungusToast.Core/docs/TESTING_HELPER.md`
 - **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md` (final balance/campaign calls must be artifact-backed, not console-only)
 - **Board background authoring and irregular silhouette baking:** `FungusToast.Core/docs/NEW_BACKGROUND_HELPER.md`
