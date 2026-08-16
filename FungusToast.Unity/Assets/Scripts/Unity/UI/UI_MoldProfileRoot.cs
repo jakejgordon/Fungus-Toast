@@ -32,6 +32,10 @@ namespace FungusToast.Unity.UI
         [SerializeField] private RectTransform randomDecayChanceRoot;
         [SerializeField] private TextMeshProUGUI randomDecayChanceText;
         [SerializeField] private Image randomDecayChanceIcon;
+        // Runtime-created base layer for the decay emblem.  Keeping the player
+        // mold beneath the dead-cell tile makes the row describe this player's
+        // decay state instead of reading as a generic global warning.
+        private Image randomDecayChancePlayerIcon;
 
         [Header("Adaptations")]
         [SerializeField] private RectTransform adaptationSectionRoot;
@@ -85,7 +89,9 @@ namespace FungusToast.Unity.UI
             ((GrowthPreviewGridDimension - 1) * GrowthPreviewGridVerticalSpacing);
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
-        private const float RandomDecayChanceIconSize = 24f;
+        private const float RandomDecayChanceIconSize = 28f;
+        private const float RandomDecayChanceIconInset = 6f;
+        private const float RandomDecayChanceIconGap = 8f;
         private const float AdaptationCoachmarkWidth = 340f;
         private const float AdaptationCoachmarkHeight = 170f;
         private const string GrowthPreviewRootName = "UI_GrowthPreviewRoot";
@@ -150,6 +156,7 @@ namespace FungusToast.Unity.UI
             }
 
             ApplyGrowthPreviewHeaderText();
+            ApplyGrowthPreviewSurface();
             EnsureRandomDecayChanceSectionExists();
             EnsureBoardOverlayLegendSectionExists();
             EnsureAdaptationSectionExists();
@@ -441,6 +448,7 @@ namespace FungusToast.Unity.UI
                 randomDecayChanceIcon.sprite = GameManager.Instance?.gridVisualizer?.deadTile?.sprite;
                 randomDecayChanceIcon.enabled = randomDecayChanceIcon.sprite != null;
             }
+            RefreshRandomDecayChancePlayerIcon(perspectivePlayer);
             ApplyChildLayoutBehavior(StatsRootName, ignoreIfEmpty: true);
             InitializeRandomDecayChanceTooltip(board, perspectivePlayer);
         }
@@ -592,6 +600,12 @@ namespace FungusToast.Unity.UI
             if (randomDecayChanceIcon == null)
             {
                 randomDecayChanceIcon = CreateRandomDecayChanceIcon(randomDecayChanceRoot);
+            }
+
+            randomDecayChancePlayerIcon = randomDecayChanceRoot.Find("PlayerMoldBaseIcon")?.GetComponent<Image>();
+            if (randomDecayChancePlayerIcon == null)
+            {
+                randomDecayChancePlayerIcon = CreateRandomDecayChancePlayerIcon(randomDecayChanceRoot);
             }
         }
 
@@ -920,18 +934,61 @@ namespace FungusToast.Unity.UI
             randomDecayChanceText.maxVisibleLines = 1;
 
             var textRect = randomDecayChanceText.rectTransform;
-            textRect.offsetMin = new Vector2(8f + RandomDecayChanceIconSize + 8f, 0f);
+            textRect.offsetMin = new Vector2(
+                RandomDecayChanceIconInset + RandomDecayChanceIconSize + RandomDecayChanceIconGap,
+                0f);
             textRect.offsetMax = new Vector2(-8f, 0f);
 
-            var iconRect = randomDecayChanceIcon.rectTransform;
+            ConfigureDecayEmblemRect(randomDecayChanceIcon.rectTransform);
+            randomDecayChanceIcon.preserveAspect = true;
+            randomDecayChanceIcon.color = UIStyleTokens.Text.Primary;
+            randomDecayChanceIcon.raycastTarget = false;
+
+            if (randomDecayChancePlayerIcon != null)
+            {
+                ConfigureDecayEmblemRect(randomDecayChancePlayerIcon.rectTransform);
+                randomDecayChancePlayerIcon.preserveAspect = true;
+                randomDecayChancePlayerIcon.color = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.58f);
+                randomDecayChancePlayerIcon.raycastTarget = false;
+                // The dead-cell tile is intentionally above the colony icon.
+                randomDecayChanceIcon.transform.SetAsLastSibling();
+            }
+        }
+
+        private static void ConfigureDecayEmblemRect(RectTransform iconRect)
+        {
             iconRect.anchorMin = new Vector2(0f, 0.5f);
             iconRect.anchorMax = new Vector2(0f, 0.5f);
             iconRect.pivot = new Vector2(0f, 0.5f);
-            iconRect.anchoredPosition = new Vector2(8f, 0f);
+            iconRect.anchoredPosition = new Vector2(RandomDecayChanceIconInset, 0f);
             iconRect.sizeDelta = new Vector2(RandomDecayChanceIconSize, RandomDecayChanceIconSize);
-            randomDecayChanceIcon.preserveAspect = true;
-            randomDecayChanceIcon.color = UIStyleTokens.Text.Muted;
-            randomDecayChanceIcon.raycastTarget = false;
+        }
+
+        private void ApplyGrowthPreviewSurface()
+        {
+            var growthPreviewRoot = FindDirectChildRect(GrowthPreviewRootName);
+            if (growthPreviewRoot == null)
+            {
+                return;
+            }
+
+            var grid = growthPreviewRoot.GetComponentInChildren<GridLayoutGroup>(true);
+            if (grid == null)
+            {
+                return;
+            }
+
+            var gridSurface = grid.gameObject.GetComponent<Image>();
+            if (gridSurface == null)
+            {
+                gridSurface = grid.gameObject.AddComponent<Image>();
+            }
+
+            // This renders behind the cells, giving the toast tiles intentional
+            // dark gutters and a restrained inset frame without changing their
+            // grid dimensions or the preview's sidebar reservation.
+            gridSurface.color = UIStyleTokens.Surface.PanelSecondary;
+            gridSurface.raycastTarget = false;
         }
 
         private void ApplyAdaptationSectionStyle()
@@ -1238,6 +1295,25 @@ namespace FungusToast.Unity.UI
             var iconObject = new GameObject("DeathIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
             iconObject.transform.SetParent(parent, false);
             return iconObject.GetComponent<Image>();
+        }
+
+        private static Image CreateRandomDecayChancePlayerIcon(RectTransform parent)
+        {
+            var iconObject = new GameObject("PlayerMoldBaseIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            iconObject.transform.SetParent(parent, false);
+            return iconObject.GetComponent<Image>();
+        }
+
+        private void RefreshRandomDecayChancePlayerIcon(Player player)
+        {
+            if (randomDecayChancePlayerIcon == null)
+            {
+                return;
+            }
+
+            var sprite = GameManager.Instance?.gridVisualizer?.GetMoldIconTileForPlayer(player.PlayerId)?.sprite;
+            randomDecayChancePlayerIcon.sprite = sprite;
+            randomDecayChancePlayerIcon.enabled = sprite != null;
         }
 
         private void InitializeRandomDecayChanceTooltip(GameBoard board, Player perspectivePlayer)

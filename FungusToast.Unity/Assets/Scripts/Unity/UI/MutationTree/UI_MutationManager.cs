@@ -3004,17 +3004,26 @@ namespace FungusToast.Unity.UI.MutationTree
             spendPointsButton.transform.localScale = originalButtonScale;
 
             // The closed-tree action row shares the left sidebar with the
-            // growth preview.  Reserve its full vertical lane and keep both
-            // controls top-aligned so the preview cannot cover this button.
+            // growth preview. Reserve its full vertical lane, then center the
+            // mold identity and action together so their visual baselines do
+            // not drift apart as the sidebar resizes.
             if (spendPointsButton.transform.parent is RectTransform spendRowRect)
             {
                 var spendRowLayout = spendRowRect.GetComponent<HorizontalLayoutGroup>();
                 if (spendRowLayout != null)
                 {
-                    spendRowLayout.childAlignment = TextAnchor.UpperLeft;
+                    spendRowLayout.childAlignment = TextAnchor.MiddleLeft;
                     spendRowLayout.childControlHeight = false;
                     spendRowLayout.childForceExpandHeight = false;
                 }
+
+                var rowSurface = spendRowRect.GetComponent<Image>();
+                if (rowSurface == null)
+                {
+                    rowSurface = spendRowRect.gameObject.AddComponent<Image>();
+                }
+                rowSurface.color = UIStyleTokens.Surface.PanelSecondary;
+                rowSurface.raycastTarget = false;
 
                 var spendRowLayoutElement = spendRowRect.GetComponent<LayoutElement>();
                 if (spendRowLayoutElement == null)

@@ -462,6 +462,13 @@ Ask Jake before implementing any decision that changes gameplay behavior, remove
 - This recovers the vertical room needed to keep Random Decay below the Growth Preview and the Human Activity Log/Latest control within the sidebar.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains required at 1920x1080, 1600x900, and 1280x720 with 0–7 live symbols, plus tooltip/highlight behavior and the Human Log while reading older entries.
 
+### HUD follow-up: colony status visual polish (2026-08-15)
+
+- Applied the fungal surface hierarchy to the closed-tree Spend Points lane and the Growth Preview grid, replacing their prototype-gray treatment with the shared `PanelSecondary` inset surface while retaining the `PanelPrimary` sidebar root and existing toast-cell art.
+- Centered the player mold icon and Spend Points button in the reserved 82-unit action row, so they remain aligned without sacrificing the preview clearance below.
+- Reworked the Random Decay emblem into a layered state marker: the current player's mold icon is dimmed beneath the dead-cell overlay, while the established label and tooltip remain the source of mechanic detail.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor is unavailable in this environment. Manual Unity checks: the left sidebar at 1920x1080, 1600x900, and 1280x720; disabled/available Spend Points states; all player mold sprites and hotseat switches; Random Decay refresh/tooltip; growth-preview toast-cell contrast; and Human Activity Log clearance/Console cleanliness.
+
 ### Game Setup background continuity (2026-08-14)
 
 - Reduced the Game Setup full-screen canvas veil to 34% opacity and its central setup card to 74% opacity, allowing the active main-menu ambient mold layer to remain visible behind the setup controls.
