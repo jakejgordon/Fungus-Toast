@@ -25,6 +25,25 @@ An itch.io devlog can also improve project discovery: itch.io says devlog posts 
 
 `FungusToast.Unity/last-deployed-version.txt` stores a version number, not the associated Git commit. Use a release tag, an explicit recorded commit, or ask for the baseline when it is unknown. Future releases should record a tag or commit SHA with the release so this remains deterministic.
 
+## Release provenance and Git tags
+
+Use an **annotated Git tag** as the canonical boundary for every public release. The tag gives the next devlog an unambiguous baseline without another tracking file:
+
+```bash
+git tag -a v<version> -m "Fungus Toast <version>"
+git push origin v<version>
+```
+
+Create and push the tag only after the itch.io upload has succeeded and the release-record commit has been committed. Target that release record when it contains the updated `FungusToast.Unity/version.txt` and `FungusToast.Unity/last-deployed-version.txt`; otherwise target the exact commit used to produce the uploaded build. Do not move an already-pushed tag casually: correcting one requires an explicit decision because existing clones and external references may already rely on it.
+
+For the next release, draft from the previous tag:
+
+```bash
+git log --reverse v<previous-version>..HEAD
+```
+
+Keep `last-deployed-version.txt`. It remains the deployment guard used by the release script; it is not the devlog baseline. A separate latest-commit file is unnecessary while release tags are maintained. If platforms later ship different versions or different commits, add a small release manifest that records version, platform/channel, commit, publish date, and tag.
+
 ## Writing rules
 
 - Keep the usual post to **120–250 words**. A small patch can be shorter.
