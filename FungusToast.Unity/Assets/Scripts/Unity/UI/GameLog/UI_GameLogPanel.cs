@@ -19,6 +19,10 @@ namespace FungusToast.Unity.UI.GameLog
         // exceeding the desktop minimum hit target.
         private const float ClearButtonMinimumWidth = 64f;
         private const float HeaderActionInset = 8f;
+        // The visible log-header band is 25 units tall. Keep the title's
+        // raycastable tooltip area inside that band so it cannot steal hover
+        // input from the profile icons immediately above the activity log.
+        private const float HeaderTitleHitHeight = 25f;
         // Keep the visibility control compact enough to stay inside the header
         // gutter at every supported sidebar width.
         private const float CollapseButtonWidth = 56f;
@@ -190,13 +194,13 @@ namespace FungusToast.Unity.UI.GameLog
             if (headerText != null)
             {
                 var headerTextRect = headerText.rectTransform;
-                headerTextRect.anchorMin = new Vector2(0f, 0f);
-                headerTextRect.anchorMax = new Vector2(1f, 1f);
+                headerTextRect.anchorMin = new Vector2(0f, 0.5f);
+                headerTextRect.anchorMax = new Vector2(1f, 0.5f);
                 headerTextRect.pivot = new Vector2(0.5f, 0.5f);
-                headerTextRect.offsetMin = new Vector2(HeaderActionInset, headerTextRect.offsetMin.y);
+                headerTextRect.offsetMin = new Vector2(HeaderActionInset, -HeaderTitleHitHeight * 0.5f);
                 headerTextRect.offsetMax = new Vector2(
                     -(HeaderActionsWidth + HeaderActionInset),
-                    headerTextRect.offsetMax.y);
+                    HeaderTitleHitHeight * 0.5f);
             }
 
             if (clearButton == null)
