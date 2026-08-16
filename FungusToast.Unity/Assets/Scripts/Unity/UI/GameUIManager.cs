@@ -8,7 +8,12 @@ namespace FungusToast.Unity.UI
 {
     public class GameUIManager : MonoBehaviour
     {
-            private const float FlexibleLogMinHeight = 180f;
+        // The activity log is deliberately the sidebar's pressure-release area.
+        // Gameplay controls above it must retain their complete footprint.
+        private const float HumanActivityLogMinHeight = 0f;
+        private const float GlobalActivityLogMinHeight = 180f;
+        private const float SpendPointsRowHeight = 82f;
+        private const string SpendPointsRowName = "UI_SpendPointsRow";
 
         [Header("Core UI")]
         [SerializeField] private UI_MutationManager mutationUIManager;
@@ -62,6 +67,8 @@ namespace FungusToast.Unity.UI
                         sidebarLayout.childControlHeight = true;
                         sidebarLayout.childForceExpandHeight = false;
                     }
+
+                    ApplyFixedSpendPointsLayout(leftSidebar.transform);
                 }
 
                 if (playerActivityLogPanel == null)
@@ -69,27 +76,46 @@ namespace FungusToast.Unity.UI
                         return;
                 }
 
-                    ApplyFlexibleLogLayout(playerActivityLogPanel);
-                    ApplyFlexibleLogLayout(globalEventsLogPanel);
+                    ApplyFlexibleLogLayout(playerActivityLogPanel, HumanActivityLogMinHeight);
+                    ApplyFlexibleLogLayout(globalEventsLogPanel, GlobalActivityLogMinHeight);
             }
 
-                private static void ApplyFlexibleLogLayout(UI_GameLogPanel logPanel)
-                {
-                    if (logPanel == null)
-                    {
-                        return;
-                    }
+        private static void ApplyFixedSpendPointsLayout(Transform sidebarTransform)
+        {
+            var spendPointsRow = sidebarTransform.Find(SpendPointsRowName);
+            if (spendPointsRow == null)
+            {
+                return;
+            }
 
-                    var layoutElement = logPanel.GetComponent<LayoutElement>();
-                    if (layoutElement == null)
-                    {
-                        layoutElement = logPanel.gameObject.AddComponent<LayoutElement>();
-                    }
+            var layoutElement = spendPointsRow.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = spendPointsRow.gameObject.AddComponent<LayoutElement>();
+            }
 
-                    layoutElement.minHeight = FlexibleLogMinHeight;
-                    layoutElement.preferredHeight = -1f;
-                    layoutElement.flexibleHeight = 1f;
-                }
+            layoutElement.minHeight = SpendPointsRowHeight;
+            layoutElement.preferredHeight = SpendPointsRowHeight;
+            layoutElement.flexibleHeight = 0f;
+        }
+
+        private static void ApplyFlexibleLogLayout(UI_GameLogPanel logPanel, float minimumHeight)
+        {
+            if (logPanel == null)
+            {
+                return;
+            }
+
+            var layoutElement = logPanel.GetComponent<LayoutElement>();
+            if (layoutElement == null)
+            {
+                layoutElement = logPanel.gameObject.AddComponent<LayoutElement>();
+            }
+
+            layoutElement.minHeight = minimumHeight;
+            layoutElement.preferredHeight = -1f;
+            layoutElement.flexibleHeight = 1f;
+        }
 
         // ── Core accessors ──
         public UI_MutationManager MutationUIManager => mutationUIManager;

@@ -74,10 +74,15 @@ namespace FungusToast.Unity.UI
         private const float AdaptationIconSpacing = 4f;
         private const float AdaptationSectionSpacing = 8f;
         private const float StatsRootHeight = 44f;
-        // Let the dense 3x3 preview yield enough sidebar height for the always
-        // available Human Activity Log when legends and traits are populated.
-        private const float GrowthPreviewPreferredHeight = 320f;
-        private const float GrowthPreviewMinimumHeight = 300f;
+        // The preview grid is 3 × 3 fixed 120-unit cells with 2-unit gutters.
+        // Its parent must reserve the full grid height before Random Decay is laid
+        // out below it; otherwise the last row paints into the decay row.
+        private const int GrowthPreviewGridDimension = 3;
+        private const float GrowthPreviewGridCellHeight = 120f;
+        private const float GrowthPreviewGridVerticalSpacing = 2f;
+        private const float GrowthPreviewReservedHeight =
+            (GrowthPreviewGridDimension * GrowthPreviewGridCellHeight) +
+            ((GrowthPreviewGridDimension - 1) * GrowthPreviewGridVerticalSpacing);
         private const float RandomDecayChanceRowHeight = 40f;
         private const float RandomDecayChanceFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float RandomDecayChanceIconSize = 24f;
@@ -219,11 +224,55 @@ namespace FungusToast.Unity.UI
             var growthPreviewRoot = FindDirectChildRect(GrowthPreviewRootName);
             if (growthPreviewRoot != null && growthPreviewRoot.TryGetComponent<LayoutElement>(out var layout))
             {
-                // The preview is a 3x3 board. Its original 375-unit allocation
-                // clips the bottom row once the sidebar is Canvas-scaled.
-                layout.preferredHeight = GrowthPreviewPreferredHeight;
-                layout.minHeight = GrowthPreviewMinimumHeight;
+                layout.preferredHeight = GrowthPreviewReservedHeight;
+                layout.minHeight = GrowthPreviewReservedHeight;
                 layout.flexibleHeight = 0f;
+            }
+        }
+
+        /// <summary>
+        /// Gives the parent sidebar the actual required height of every active
+        /// profile section. The legend, adaptation, and mycovariant grids can add
+        /// rows at runtime, so a scene-authored fixed profile height eventually
+        /// lets those rows overlap the log below it.
+        /// </summary>
+        private void RefreshProfileLayoutReservation()
+        {
+            if (transform is not RectTransform profileRoot ||
+                !TryGetComponent<LayoutElement>(out var rootLayout))
+            {
+                return;
+            }
+
+            float reservedHeight = 0f;
+            int activeChildCount = 0;
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                if (transform.GetChild(i) is not RectTransform child || !child.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                reservedHeight += Mathf.Max(
+                    LayoutUtility.GetMinHeight(child),
+                    LayoutUtility.GetPreferredHeight(child));
+                activeChildCount++;
+            }
+
+            if (TryGetComponent<VerticalLayoutGroup>(out var layoutGroup))
+            {
+                reservedHeight += layoutGroup.padding.top + layoutGroup.padding.bottom;
+                reservedHeight += Mathf.Max(0, activeChildCount - 1) * layoutGroup.spacing;
+            }
+
+            rootLayout.minHeight = reservedHeight;
+            rootLayout.preferredHeight = reservedHeight;
+            rootLayout.flexibleHeight = 0f;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(profileRoot);
+            if (profileRoot.parent is RectTransform sidebarRoot)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(sidebarRoot);
             }
         }
 
@@ -325,6 +374,7 @@ namespace FungusToast.Unity.UI
             RefreshBoardOverlayLegend();
             RefreshAdaptations();
             RefreshMycovariants();
+            RefreshProfileLayoutReservation();
 
             if (adaptationCoachmarkRoot != null && adaptationCoachmarkRoot.gameObject.activeSelf)
             {
