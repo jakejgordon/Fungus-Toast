@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slice 1 is complete; Slice 2 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–2 are complete; Slice 3 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -75,6 +75,15 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Keep formula/effect calculations sourced from Core mutation data and existing helpers.
 
 **Acceptance:** Every existing mutation produces non-empty simple content; technical content remains available; value/cost/state examples are covered by edit-mode or pure C# tests; no mutation effect or balance value changes.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added cached Core `MutationDescriptionSections` parsing so simple summary, technical detail, max-level bonus, and deduplicated synergy content all come from the existing canonical description rather than a second Unity-authored copy.
+- Added an immutable Core `MutationProgressSnapshot` with current/next levels, total-effect values, player-adjusted cost, projected remaining points, affordability/max/active-surge flags, prerequisite progress, and direct dependents. Full board/round purchase eligibility deliberately remains with the existing rules path.
+- Updated the existing mutation tooltip formatter to consume the structured sections while retaining its shared colored section-label treatment. Chemotactic Beacon's duplicate authored/catalog synergy line now deduplicates at the shared content seam instead of through a tooltip-only consecutive-line workaround.
+- Tests verify all 33 registered mutations have non-empty simple and technical content, optional section parsing, synergy deduplication, cache invalidation after enrichment, cost/effect projection, prerequisite progress, direct dependents, and max-level handling.
+- Focused tests passed (9/9). The canonical Core suite excluding the known unrelated campaign-strategy prefix assertion passed (520/520). Simulation built with 0 warnings/errors; the Unity Core DLL/PDB was refreshed; `git diff --check` passed.
+- Manual Unity check still required: compare several tooltips with and without max-level/synergy sections, especially Chemotactic Beacon, and confirm section spacing/colors and current/next summaries remain unchanged.
 
 ### 3. Persistent mutation inspector
 

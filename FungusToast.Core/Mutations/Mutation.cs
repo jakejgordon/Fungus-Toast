@@ -8,6 +8,14 @@ namespace FungusToast.Core.Mutations
         public string Name { get; private set; }
         public string Description { get; private set; }
         public string FlavorText { get; private set; } // Optional flavor text for the mutation
+        private MutationDescriptionSections? descriptionSections;
+
+        /// <summary>
+        /// Beginner-facing summary and optional advanced sections parsed from the canonical authored description.
+        /// Cached until description enrichment (such as a synergy line) changes the source copy.
+        /// </summary>
+        public MutationDescriptionSections DescriptionSections =>
+            descriptionSections ??= MutationDescriptionSections.Parse(Description);
 
         public MutationType Type { get; private set; }
         public float EffectPerLevel { get; private set; }
@@ -132,6 +140,7 @@ namespace FungusToast.Core.Mutations
             Description = string.IsNullOrWhiteSpace(Description)
                 ? additionalText
                 : $"{Description}\n{additionalText}";
+            descriptionSections = null;
         }
 
         /// <summary>

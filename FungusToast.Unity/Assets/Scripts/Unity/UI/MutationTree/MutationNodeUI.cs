@@ -634,7 +634,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
-            sb.AppendLine(FormatMutationDescription(mutation.Description));
+            sb.AppendLine(FormatMutationDescription());
 
             AppendDynamicMutationDetails(sb, currentLevel);
 
@@ -879,52 +879,40 @@ namespace FungusToast.Unity.UI.MutationTree
             return $"{baseChancePercent:0.00}% reclaim roll per living cell after the Growth Phase ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
         }
 
-        private string FormatMutationDescription(string description)
+        private string FormatMutationDescription()
         {
-            if (string.IsNullOrEmpty(description))
+            MutationDescriptionSections sections = mutation.DescriptionSections;
+            if (string.IsNullOrWhiteSpace(sections.Summary))
             {
                 return string.Empty;
             }
 
-            string formatted = description;
-            formatted = formatted.Replace("\n<b>Max Level Bonus:</b>", "\n[[MAX_LEVEL_BONUS]]");
-            formatted = formatted.Replace("<b>Max Level Bonus:</b>", "\n[[MAX_LEVEL_BONUS]]");
-            formatted = formatted.Replace("<b>Technical:</b>", BuildSectionLabel("Technical", TooltipSectionLabelColor));
-            formatted = formatted.Replace("[[MAX_LEVEL_BONUS]]", BuildSectionLabel("Max Level Bonus", TooltipBonusLabelColor));
-            formatted = formatted.Replace("\nBuffed by:", "\n[[BUFFED_BY]]");
-            formatted = formatted.Replace("Buffed by:", "[[BUFFED_BY]]");
-            formatted = formatted.Replace("[[BUFFED_BY]]", BuildSectionLabel("Buffed by", TooltipSectionLabelColor));
-            return CollapseConsecutiveDuplicateLines(formatted);
-        }
+            var builder = new StringBuilder();
+            builder.Append(sections.Summary);
 
-        private static string CollapseConsecutiveDuplicateLines(string text)
-        {
-            if (string.IsNullOrEmpty(text))
+            if (sections.HasTechnicalDetails)
             {
-                return string.Empty;
+                builder.AppendLine();
+                builder.AppendLine();
+                builder.Append(BuildSectionLabel("Technical", TooltipSectionLabelColor));
+                builder.Append(' ');
+                builder.Append(sections.TechnicalDetails);
             }
 
-            string[] lines = text.Split('\n');
-            var builder = new StringBuilder(text.Length);
-            string previousLine = string.Empty;
-            bool hasPreviousLine = false;
-
-            for (int index = 0; index < lines.Length; index++)
+            if (sections.HasMaxLevelBonus)
             {
-                string line = lines[index];
-                if (hasPreviousLine && !string.IsNullOrEmpty(line) && line == previousLine)
-                {
-                    continue;
-                }
+                builder.AppendLine();
+                builder.Append(BuildSectionLabel("Max Level Bonus", TooltipBonusLabelColor));
+                builder.Append(' ');
+                builder.Append(sections.MaxLevelBonus);
+            }
 
-                if (index > 0)
-                {
-                    builder.Append('\n');
-                }
-
-                builder.Append(line);
-                previousLine = line;
-                hasPreviousLine = true;
+            foreach (string buffingMutation in sections.BuffingMutations)
+            {
+                builder.AppendLine();
+                builder.Append(BuildSectionLabel("Buffed by", TooltipSectionLabelColor));
+                builder.Append(' ');
+                builder.Append(buffingMutation);
             }
 
             return builder.ToString();
