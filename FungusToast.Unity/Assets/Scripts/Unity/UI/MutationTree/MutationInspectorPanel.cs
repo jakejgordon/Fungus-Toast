@@ -34,6 +34,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI maxLevelBonusText = null!;
         private TextMeshProUGUI synergyText = null!;
         private TextMeshProUGUI emptyRequirementsText = null!;
+        private TextMeshProUGUI requirementsLabelText = null!;
         private TextMeshProUGUI emptyDependentsText = null!;
         private RectTransform requirementsRoot = null!;
         private RectTransform dependentsRoot = null!;
@@ -83,6 +84,9 @@ namespace FungusToast.Unity.UI.MutationTree
             stateText.text = BuildStateText(snapshot, player, manager);
             stateText.color = GetStateColor(snapshot, player, manager);
             costText.text = BuildCostText(snapshot);
+            requirementsLabelText.text = snapshot.Requirements.Count > 1
+                ? "Requirements — ALL required"
+                : "Requirements";
 
             currentLevelText.text = BuildLevelText(
                 $"Current level {snapshot.CurrentLevel} / {mutation.MaxLevel}",
@@ -184,7 +188,7 @@ namespace FungusToast.Unity.UI.MutationTree
             currentLevelText = CreateText("CurrentLevel", 16f, 70f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             nextLevelText = CreateText("NextLevel", 16f, 70f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
 
-            _ = CreateText("RequirementsLabel", 16f, 24f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements");
+            requirementsLabelText = CreateText("RequirementsLabel", 16f, 24f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements");
             requirementsRoot = CreateChipRoot("Requirements");
             emptyRequirementsText = CreateText("NoRequirements", 14f, 22f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites");
 

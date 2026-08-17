@@ -101,6 +101,13 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
 
+### Mutation Dependency Graph
+
+- `MutationDependencyGraphGraphic` is a runtime-built, non-raycasting child of the shared mutation scroll content. `UI_MutationManager` owns its creation, data binding, inspection state, and one-shot unlock traces.
+- Edges are derived only from registered Core `Mutation.Prerequisites`; do not author a second Unity dependency list. Repository integrity tests remain the guard against missing references and cycles.
+- The graph ignores horizontal layout and renders behind lane columns. It may redraw after layout/inspection changes and during the short unlock trace, but must remain idle otherwise.
+- Solid edges mean same-category dependency; dashed edges mean cross-category graft. The inspector must explicitly state that multiple requirements are conjunctive.
+
 ---
 
 ## Object Pooling

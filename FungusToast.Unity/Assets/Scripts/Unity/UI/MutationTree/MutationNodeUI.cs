@@ -1192,6 +1192,19 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateDisplay();
         }
 
+        public void SetRelationshipDimmed(bool dimmed)
+        {
+            if (canvasGroup == null)
+            {
+                return;
+            }
+
+            if (dimmed)
+            {
+                canvasGroup.alpha = Mathf.Min(canvasGroup.alpha, 0.58f);
+            }
+        }
+
         public void UpdateInteractable()
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);

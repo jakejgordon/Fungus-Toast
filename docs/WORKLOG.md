@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–4 are complete; Slice 5 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–5 are complete; Slice 6 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -142,6 +142,16 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Animate newly unlocked path growth once, without delaying input or replaying continuously.
 
 **Acceptance:** All prerequisite relationships match Core data; cycles/impossible references fail visibly in tests or development validation; hover/click/purchase remain responsive; connector graphics do not capture raycasts or allocate continuously.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added one clipped, non-raycasting `MaskableGraphic` behind the node lanes. It derives every edge directly from registered Core prerequisites, draws same-category dependencies as faint solid hyphae, and uses dashed grafts as a non-color-only cue for cross-category dependencies.
+- Inspection now highlights the complete recursive upstream path plus immediate dependents and dims unrelated cards without changing their state or interaction. Clearing or changing inspection restores each card's canonical display state.
+- Multi-prerequisite mutations now say `Requirements — ALL required` in the persistent inspector; their converging graph edges remain independently visible, avoiding accidental OR semantics.
+- Successful purchases compare prerequisite satisfaction before and after the upgrade. Any newly satisfied mutation gets one 0.55-second unscaled path-growth trace; the graph otherwise redraws only for layout/inspection changes and does not allocate continuously during idle frames.
+- The graph is runtime-owned under the shared mutation content, ignores horizontal layout, remains behind all lanes, and survives rebuilds without duplicate objects or raycast interception.
+- The focused repository integrity tests passed (2/2), retaining missing-reference and cycle protection for all registered prerequisites. Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor is unavailable in this environment.
+- Manual Unity checks required: every default edge against the inspector's requirements; deep upstream highlighting; immediate dependents; solid versus dashed distinction without relying on hue; ALL semantics on 2–5-way conjunctions; dim/restore behavior; path-growth traces after threshold purchases; clipping/scroll alignment; rapid hover and purchase responsiveness; repeated rebuild/restart; and Console/Profiler cleanliness.
 
 ### 6. Search and progressive technical detail
 

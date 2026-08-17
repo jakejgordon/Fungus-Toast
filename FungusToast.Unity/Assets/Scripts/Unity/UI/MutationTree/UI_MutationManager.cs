@@ -130,11 +130,14 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerRightSlotRect = null!;
         private RectTransform headerReturnSlotRect = null!;
         private MutationInspectorPanel? mutationInspector;
+        private MutationDependencyGraphGraphic? mutationDependencyGraph;
 
         private Player? humanPlayer;
         private bool humanTurnEnded = false;
         private List<MutationNodeUI> mutationButtons = new();
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
+        private Dictionary<int, Mutation> mutationsById = new();
+        private readonly HashSet<int> pendingPathGrowthMutationIds = new();
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
         private Mutation? selectedMutation;
@@ -442,11 +445,15 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutationPlayer = null;
 
             var mutations = mutationManager.GetAllMutations().ToList();
+            mutationsById = mutations.ToDictionary(mutation => mutation.Id);
             BuildDirectDependentLookup(mutations);
             var layout = UI_MutationLayoutProvider.GetDefaultLayout();
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            EnsureMutationDependencyGraph();
+            mutationDependencyGraph?.Configure(mutationButtons, mutations);
+            StartCoroutine(RefreshMutationDependencyGraphNextFrame());
             Mutation? initialMutation = selectedMutation != null
                 ? mutations.FirstOrDefault(candidate => candidate.Id == selectedMutation.Id)
                 : mutations.FirstOrDefault(candidate => candidate.Id == MutationIds.MycelialBloom) ?? mutations.FirstOrDefault();
@@ -480,11 +487,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // Get the observer through GameManager's GameUI.GameLogRouter
             var observer = GameManager.Instance.GameUI.GameLogRouter;
+            HashSet<int> satisfiedBeforePurchase = GetPrerequisiteSatisfiedMutationIds(player);
 
             if (player.TryUpgradeMutation(mutation, observer, currentRound, board, mutationAvailabilityBoardSummaries))
             {
                 RefreshSpendPointsButtonUI();
                 RefreshAllMutationButtons(); // <-- Ensures hourglass overlays update
+                GrowNewlyUnlockedPaths(satisfiedBeforePurchase, player);
                 PlayMutationUpgradeSuccessSound();
                 TryEndHumanTurn();
                 onResolved?.Invoke(true);
@@ -535,6 +544,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 yield break;
             }
 
+            HashSet<int> satisfiedBeforeTargetSelection = GetPrerequisiteSatisfiedMutationIds(humanPlayer);
             pendingTargetedSurgeSelection = new PendingTargetedSurgeSelection(mutation, reservedCost, currentRound);
             RefreshSpendPointsButtonUI();
             RefreshAllMutationButtons();
@@ -569,6 +579,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
                         RefreshSpendPointsButtonUI();
                         RefreshAllMutationButtons();
+                        GrowNewlyUnlockedPaths(satisfiedBeforeTargetSelection, humanPlayer);
                         PlayMutationUpgradeSuccessSound();
                         TryEndHumanTurn();
                     }
@@ -830,6 +841,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
             isSliding = false;
 
+            if (pendingPathGrowthMutationIds.Count > 0)
+            {
+                mutationDependencyGraph?.GrowNewlyUnlockedPaths(pendingPathGrowthMutationIds);
+                pendingPathGrowthMutationIds.Clear();
+            }
+
             // ── Play shimmer on affordable nodes after panel opens ──
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 StartCoroutine(PlayAffordableShimmer());
@@ -1077,9 +1094,19 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             MutationNodeUI? inspectedNode = mutationButtons.FirstOrDefault(node => node.MutationId == inspectedMutation.Id);
+            HashSet<int> prerequisitePathIds = GetPrerequisitePathIds(inspectedMutation);
+            prerequisitePathIds.Add(inspectedMutation.Id);
+            HashSet<int> directDependentIds = GetDirectDependentIds(inspectedMutation.Id);
             inspectedNode?.SetInspectedHighlight(true);
             HighlightPrerequisites(inspectedMutation, inspectedPlayer);
             HighlightDirectDependents(inspectedMutation);
+            foreach (MutationNodeUI node in mutationButtons)
+            {
+                bool related = prerequisitePathIds.Contains(node.MutationId)
+                    || directDependentIds.Contains(node.MutationId);
+                node.SetRelationshipDimmed(!related);
+            }
+            mutationDependencyGraph?.SetInspection(prerequisitePathIds, directDependentIds);
             if (inspectedNode != null)
             {
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
@@ -1392,6 +1419,51 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationInspector.transform.SetAsLastSibling();
         }
 
+        private void EnsureMutationDependencyGraph()
+        {
+            if (mutationDependencyGraph != null || mutationScrollViewContentRect == null)
+            {
+                return;
+            }
+
+            Transform existing = mutationScrollViewContentRect.Find("UI_MutationDependencyGraph");
+            if (existing != null)
+            {
+                mutationDependencyGraph = existing.GetComponent<MutationDependencyGraphGraphic>();
+                if (mutationDependencyGraph != null)
+                {
+                    return;
+                }
+            }
+
+            var graphObject = new GameObject(
+                "UI_MutationDependencyGraph",
+                typeof(RectTransform),
+                typeof(MutationDependencyGraphGraphic),
+                typeof(LayoutElement));
+            graphObject.layer = mutationScrollViewContentRect.gameObject.layer;
+            RectTransform graphRect = graphObject.GetComponent<RectTransform>();
+            graphRect.SetParent(mutationScrollViewContentRect, false);
+            graphRect.anchorMin = Vector2.zero;
+            graphRect.anchorMax = Vector2.one;
+            graphRect.offsetMin = Vector2.zero;
+            graphRect.offsetMax = Vector2.zero;
+            graphRect.SetAsFirstSibling();
+
+            LayoutElement layout = graphObject.GetComponent<LayoutElement>();
+            layout.ignoreLayout = true;
+
+            mutationDependencyGraph = graphObject.GetComponent<MutationDependencyGraphGraphic>();
+            mutationDependencyGraph.raycastTarget = false;
+        }
+
+        private IEnumerator RefreshMutationDependencyGraphNextFrame()
+        {
+            yield return null;
+            ForceMutationPanelLayoutRebuild();
+            mutationDependencyGraph?.RefreshGeometry();
+        }
+
         private void RefreshResponsiveMutationPanelLayout()
         {
             CacheMutationPanelLayoutReferences();
@@ -1523,9 +1595,9 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (mutation == null || player == null) return;
 
-            foreach (var prereq in mutation.Prerequisites)
+            foreach (int prerequisiteId in GetPrerequisitePathIds(mutation))
             {
-                var node = mutationButtons.FirstOrDefault(n => n.MutationId == prereq.MutationId);
+                var node = mutationButtons.FirstOrDefault(n => n.MutationId == prerequisiteId);
                 if (node != null)
                     node.SetPrerequisiteHighlight(true);
             }
@@ -1551,7 +1623,66 @@ namespace FungusToast.Unity.UI.MutationTree
         public void ClearAllHighlights()
         {
             foreach (var node in mutationButtons)
+            {
                 node.ClearHighlights();
+                node.SetRelationshipDimmed(false);
+            }
+
+            mutationDependencyGraph?.ClearInspection();
+        }
+
+        private HashSet<int> GetPrerequisitePathIds(Mutation mutation)
+        {
+            var result = new HashSet<int>();
+            CollectPrerequisitePathIds(mutation, result);
+            return result;
+        }
+
+        private void CollectPrerequisitePathIds(Mutation mutation, HashSet<int> result)
+        {
+            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites)
+            {
+                if (!result.Add(prerequisite.MutationId))
+                {
+                    continue;
+                }
+
+                if (mutationsById.TryGetValue(prerequisite.MutationId, out Mutation prerequisiteMutation))
+                {
+                    CollectPrerequisitePathIds(prerequisiteMutation, result);
+                }
+            }
+        }
+
+        private HashSet<int> GetDirectDependentIds(int mutationId)
+        {
+            return directDependentsByMutationId.TryGetValue(mutationId, out List<int> dependentIds)
+                ? new HashSet<int>(dependentIds)
+                : new HashSet<int>();
+        }
+
+        private HashSet<int> GetPrerequisiteSatisfiedMutationIds(Player player)
+        {
+            return mutationsById.Values
+                .Where(mutation => mutation.Prerequisites.Count > 0
+                    && mutation.Prerequisites.All(prerequisite =>
+                        player.GetMutationLevel(prerequisite.MutationId) >= prerequisite.RequiredLevel))
+                .Select(mutation => mutation.Id)
+                .ToHashSet();
+        }
+
+        private void GrowNewlyUnlockedPaths(HashSet<int> satisfiedBeforePurchase, Player player)
+        {
+            HashSet<int> newlySatisfied = GetPrerequisiteSatisfiedMutationIds(player);
+            newlySatisfied.ExceptWith(satisfiedBeforePurchase);
+            if (isTreeOpen)
+            {
+                mutationDependencyGraph?.GrowNewlyUnlockedPaths(newlySatisfied);
+            }
+            else
+            {
+                pendingPathGrowthMutationIds.UnionWith(newlySatisfied);
+            }
         }
 
         private void BuildDirectDependentLookup(List<Mutation> mutations)
