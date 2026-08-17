@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–8 are complete; Slice 9 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–9 are complete; Slice 10 is paused for Jake's roster/category-move approval.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -229,6 +229,17 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Present the roster and any mutation moves/tuning proposals to Jake before gameplay implementation if they materially change existing builds.
 
 **Acceptance:** The complete proposed graph is reachable, acyclic, mechanically non-overlapping, and specific enough to implement/test; open balance decisions are explicit rather than hidden in code.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added `second-level/SUBSTRATE_ECOLOGY_ROSTER.md` and linked it through the mutation helper/documentation map. It defines the lane boundary, a reachable acyclic tree, initial scaling hypotheses, exact trigger/limit semantics, AI implications, counterplay, tracking, persistence risks, and focused tests.
+- Proposed seven new Ecology mutations: Substrate Sensing, Aerated Frontier, Compaction Pressure, Detrital Enzymes, Rival Rhizosphere, Nutrient Afterglow, and Ecological Succession.
+- Recommended moving existing Necrophytic Bloom from Genetic Drift to Substrate Ecology with ID 22 and behavior preserved. Its prerequisite rebalance, category-sensitive AI/reporting consequences, and possible processor-ownership cleanup remain separately reviewable changes.
+- Proposed one later addition per existing lane: Apical Dominance, Septal Isolation, Toxin Anastomosis, Latent Polymorphism, and Saprotrophic Pulse. Seven new Ecology mutations plus these five additions bring the planned total from 33 to 45; moving Necrophytic Bloom does not change the count.
+- All 60 five-name-shortlist candidates passed exact local uniqueness checks across Mutation, Mycovariant, and Adaptation C# source, the 2–3 word rule, and the 28-character limit. Recommended Ecology first words are distinct within the lane.
+- The review recommends Substrate Sensing as Slice 10's first root because it is stateless and exercises Core/AI/Simulation/Unity integration with low persistence risk. Nutrient Afterglow and Septal Isolation are deferred because they require pending save state.
+- Open decisions are explicit: roster/name approval; Necrophytic Bloom move approval; shared conditional-growth cap; Creeping Mold versus Ecological Succession ordering; and all numeric hypotheses pending focused tests/simulation.
+- Documentation-only slice: `git diff --check` passed; no runtime, Core plugin, or balance state changed.
 
 ### 10. Substrate Ecology infrastructure and first playable root
 

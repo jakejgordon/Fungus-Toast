@@ -43,6 +43,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 ### Mutations
 - `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` — mutation-category philosophy and prerequisite design rules
+- `second-level/SUBSTRATE_ECOLOGY_ROSTER.md` — proposed sixth-category roster, existing-mutation move audit, and whole-tree expansion candidates
 - `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
 
 ### Shared naming

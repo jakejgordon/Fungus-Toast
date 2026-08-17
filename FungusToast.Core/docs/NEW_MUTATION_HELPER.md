@@ -14,6 +14,7 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 
 - **Naming and mutation-copy rules:** `NEW_MUTATION_HELPER.md` section below
 - **Mutation-category philosophy and prerequisite design rules:** [second-level/MUTATION_PREREQUISITE_GUIDELINES.md](second-level/MUTATION_PREREQUISITE_GUIDELINES.md)
+- **Substrate Ecology roster proposal:** [second-level/SUBSTRATE_ECOLOGY_ROSTER.md](second-level/SUBSTRATE_ECOLOGY_ROSTER.md)
 - **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
 - **Simulation tracking implementation details:** [second-level/SIMULATION_TRACKING_IMPLEMENTATION.md](second-level/SIMULATION_TRACKING_IMPLEMENTATION.md)
 
