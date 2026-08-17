@@ -100,6 +100,7 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 - Clicking a mutation card selects it without changing the existing immediate-purchase behavior. Requirement and direct-unlock chips focus and scroll to their related nodes.
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
+- Search and Simple/Technical controls live at the top of the inspector. Search is transient and only changes node emphasis; the disclosure preference uses scoped player settings, while held-Alt reveal is temporary.
 
 ### Mutation Dependency Graph
 

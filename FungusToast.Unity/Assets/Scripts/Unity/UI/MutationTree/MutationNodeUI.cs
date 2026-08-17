@@ -1205,6 +1205,48 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        public bool MatchesSearch(string normalizedQuery)
+        {
+            if (string.IsNullOrWhiteSpace(normalizedQuery))
+            {
+                return true;
+            }
+
+            MutationDescriptionSections sections = mutation.DescriptionSections;
+            string searchableText = string.Join(" ",
+                mutation.Name,
+                MutationCategoryPresentationCatalog.Get(mutation.Category).DisplayName,
+                sections.Summary,
+                sections.TechnicalDetails,
+                sections.MaxLevelBonus,
+                string.Join(" ", sections.BuffingMutations));
+            return searchableText.IndexOf(normalizedQuery, System.StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        public void SetSearchMatchState(bool searchActive, bool matches)
+        {
+            if (!searchActive)
+            {
+                return;
+            }
+
+            if (!matches)
+            {
+                if (canvasGroup != null)
+                {
+                    canvasGroup.alpha = Mathf.Min(canvasGroup.alpha, 0.26f);
+                }
+                return;
+            }
+
+            if (nodeStateBorder != null)
+            {
+                nodeStateBorder.enabled = true;
+                nodeStateBorder.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.95f);
+                nodeStateBorder.effectDistance = new Vector2(2f, -2f);
+            }
+        }
+
         public void UpdateInteractable()
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);

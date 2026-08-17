@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–5 are complete; Slice 6 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–6 are complete; Slice 7 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -164,6 +164,16 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Persist only presentation preference, not transient search/selection state.
 
 **Acceptance:** Search never alters availability or ordering; all nodes return cleanly after clear; preference survives workspace reopen/restart through the established settings path; simple and technical states remain readable at target resolutions.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added a clipped single-line search field and Simple/Technical toggle to the persistent inspector toolbar, preserving all lane width and header-action space.
+- Search matches mutation names, centralized category labels, plain summaries, technical descriptions, max-level copy, and authored synergy names. Matches receive a focus border while nonmatches dim in place; no card is hidden, reordered, moved, disabled, or made available by search.
+- `Ctrl+F` focuses search only when another text input does not own keyboard focus. Escape first clears a non-empty query, then releases the empty search field. Closing the workspace or resetting a game clears the transient query.
+- Simple mode retains the plain benefit and mechanic-specific current/next comparison. Technical mode adds the canonical parsed technical-description section; holding either Alt key temporarily reveals it without changing the saved preference.
+- The toggle preference uses `ScopedPlayerPrefs` and survives workspace/game restarts. Search, Alt reveal, and node emphasis remain runtime-only.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Core mechanics and the checked-in Unity Core plugin did not change. Unity Editor is unavailable in this environment.
+- Manual Unity checks required: name/category/summary/technical/synergy searches; zero/one/many matches; type/clear/Escape cycles; `Ctrl+F` with no focus, search focus, and another TMP input focused; Simple/Technical persistence; held-Alt press/release; locked/selected/relationship/search emphasis composition; purchases while filtered; workspace close/reopen and restart; supported resolutions; and Console cleanliness.
 
 ### 7. Compact node language and Directional Tendrils family
 

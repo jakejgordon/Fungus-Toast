@@ -21,12 +21,15 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float PanelPadding = 16f;
         private const float SectionSpacing = 10f;
         private const float ChipHeight = 36f;
+        private const float ToolbarHeight = 40f;
+        private const float ToolbarGap = 8f;
 
         private RectTransform rootRect = null!;
         private RectTransform contentRect = null!;
         private TextMeshProUGUI titleText = null!;
         private TextMeshProUGUI metadataText = null!;
         private TextMeshProUGUI summaryText = null!;
+        private TextMeshProUGUI technicalDetailsText = null!;
         private TextMeshProUGUI stateText = null!;
         private TextMeshProUGUI costText = null!;
         private TextMeshProUGUI currentLevelText = null!;
@@ -41,6 +44,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private readonly List<Button> requirementButtons = new();
         private readonly List<Button> dependentButtons = new();
         private TMP_FontAsset? font;
+        private TMP_InputField searchInput = null!;
+        private Button technicalModeButton = null!;
+        private TextMeshProUGUI technicalModeButtonLabel = null!;
 
         public static MutationInspectorPanel Create(RectTransform parent, TMP_FontAsset? font)
         {
@@ -81,6 +87,7 @@ namespace FungusToast.Unity.UI.MutationTree
             titleText.color = MutationTreeColors.GetCategoryAccent(mutation.Category);
             metadataText.text = $"Tier {mutation.TierNumber}  •  {GetCategoryDisplayName(mutation.Category)}";
             summaryText.text = sections.Summary;
+            technicalDetailsText.text = $"<b>Technical details</b>\n{sections.TechnicalDetails}";
             stateText.text = BuildStateText(snapshot, player, manager);
             stateText.color = GetStateColor(snapshot, player, manager);
             costText.text = BuildCostText(snapshot);
@@ -120,6 +127,8 @@ namespace FungusToast.Unity.UI.MutationTree
             titleText.color = UIStyleTokens.Text.Primary;
             metadataText.text = "Hover a node to compare its next level.";
             summaryText.text = "Requirements and direct unlocks stay here while you move around the tree.";
+            technicalDetailsText.text = string.Empty;
+            technicalDetailsText.gameObject.SetActive(false);
             stateText.text = string.Empty;
             costText.text = string.Empty;
             currentLevelText.text = string.Empty;
@@ -132,6 +141,31 @@ namespace FungusToast.Unity.UI.MutationTree
             emptyDependentsText.gameObject.SetActive(true);
         }
 
+        public void BindWorkspaceControls(Action<string> searchChanged, Action technicalModeToggled)
+        {
+            searchInput.onValueChanged.RemoveAllListeners();
+            searchInput.onValueChanged.AddListener(value => searchChanged?.Invoke(value));
+            technicalModeButton.onClick.RemoveAllListeners();
+            technicalModeButton.onClick.AddListener(() => technicalModeToggled?.Invoke());
+        }
+
+        public void SetTechnicalMode(bool enabled, bool temporaryReveal)
+        {
+            technicalDetailsText.gameObject.SetActive(enabled);
+            technicalModeButtonLabel.text = temporaryReveal ? "Technical (Alt)" : enabled ? "Technical" : "Simple";
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        }
+
+        public void FocusSearch()
+        {
+            searchInput.Select();
+            searchInput.ActivateInputField();
+        }
+
+        public void ClearSearch() => searchInput.text = string.Empty;
+
+        public bool IsSearchFocused => searchInput != null && searchInput.isFocused;
+
         private void Build()
         {
             rootRect = GetComponent<RectTransform>();
@@ -139,10 +173,13 @@ namespace FungusToast.Unity.UI.MutationTree
             background.color = UIStyleTokens.Surface.PanelPrimary;
             background.raycastTarget = true;
 
+            BuildWorkspaceToolbar();
+
             var scrollObject = new GameObject("ScrollView", typeof(RectTransform), typeof(ScrollRect));
             scrollObject.transform.SetParent(transform, false);
             RectTransform scrollRectTransform = scrollObject.GetComponent<RectTransform>();
             Stretch(scrollRectTransform, PanelPadding);
+            scrollRectTransform.offsetMax = new Vector2(-PanelPadding, -(PanelPadding + ToolbarHeight + ToolbarGap));
 
             var viewportObject = new GameObject("Viewport", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RectMask2D));
             viewportObject.transform.SetParent(scrollObject.transform, false);
@@ -183,6 +220,7 @@ namespace FungusToast.Unity.UI.MutationTree
             titleText = CreateText("Title", 26f, 42f, FontStyles.Bold, UIStyleTokens.Text.Primary);
             metadataText = CreateText("Metadata", 14f, 22f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
             summaryText = CreateText("Summary", 18f, 82f, FontStyles.Normal, UIStyleTokens.Text.Primary);
+            technicalDetailsText = CreateText("TechnicalDetails", 15f, 92f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
             stateText = CreateText("State", 16f, 26f, FontStyles.Bold, UIStyleTokens.State.Info);
             costText = CreateText("Cost", 16f, 30f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
             currentLevelText = CreateText("CurrentLevel", 16f, 70f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
@@ -201,6 +239,84 @@ namespace FungusToast.Unity.UI.MutationTree
             _ = CreateText("Hint", 14f, 42f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
 
             Clear();
+        }
+
+        private void BuildWorkspaceToolbar()
+        {
+            var toolbarObject = new GameObject("WorkspaceToolbar", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            toolbarObject.transform.SetParent(transform, false);
+            RectTransform toolbarRect = toolbarObject.GetComponent<RectTransform>();
+            toolbarRect.anchorMin = new Vector2(0f, 1f);
+            toolbarRect.anchorMax = new Vector2(1f, 1f);
+            toolbarRect.pivot = new Vector2(0.5f, 1f);
+            toolbarRect.anchoredPosition = new Vector2(0f, -PanelPadding);
+            toolbarRect.sizeDelta = new Vector2(-(PanelPadding * 2f), ToolbarHeight);
+
+            HorizontalLayoutGroup toolbarLayout = toolbarObject.GetComponent<HorizontalLayoutGroup>();
+            toolbarLayout.spacing = 8f;
+            toolbarLayout.childAlignment = TextAnchor.MiddleCenter;
+            toolbarLayout.childControlWidth = true;
+            toolbarLayout.childControlHeight = true;
+            toolbarLayout.childForceExpandWidth = false;
+            toolbarLayout.childForceExpandHeight = true;
+
+            var inputObject = new GameObject("Search", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(RectMask2D), typeof(TMP_InputField), typeof(LayoutElement));
+            inputObject.transform.SetParent(toolbarObject.transform, false);
+            Image inputBackground = inputObject.GetComponent<Image>();
+            inputBackground.color = UIStyleTokens.Surface.PanelSecondary;
+            LayoutElement inputLayout = inputObject.GetComponent<LayoutElement>();
+            inputLayout.flexibleWidth = 1f;
+            inputLayout.minWidth = 120f;
+            inputLayout.preferredHeight = ToolbarHeight;
+
+            var textObject = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(inputObject.transform, false);
+            Stretch(textObject.GetComponent<RectTransform>(), 8f);
+            TextMeshProUGUI inputText = textObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) inputText.font = font;
+            inputText.fontSize = 14f;
+            inputText.color = UIStyleTokens.Text.Primary;
+            inputText.alignment = TextAlignmentOptions.MidlineLeft;
+            inputText.enableWordWrapping = false;
+
+            var placeholderObject = new GameObject("Placeholder", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            placeholderObject.transform.SetParent(inputObject.transform, false);
+            Stretch(placeholderObject.GetComponent<RectTransform>(), 8f);
+            TextMeshProUGUI placeholder = placeholderObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) placeholder.font = font;
+            placeholder.text = "Search (Ctrl+F)";
+            placeholder.fontSize = 14f;
+            placeholder.fontStyle = FontStyles.Italic;
+            placeholder.color = UIStyleTokens.Text.Muted;
+            placeholder.alignment = TextAlignmentOptions.MidlineLeft;
+
+            searchInput = inputObject.GetComponent<TMP_InputField>();
+            searchInput.textViewport = inputObject.GetComponent<RectTransform>();
+            searchInput.textComponent = inputText;
+            searchInput.placeholder = placeholder;
+            searchInput.lineType = TMP_InputField.LineType.SingleLine;
+
+            var buttonObject = new GameObject("TechnicalMode", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
+            buttonObject.transform.SetParent(toolbarObject.transform, false);
+            LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
+            buttonLayout.minWidth = 102f;
+            buttonLayout.preferredWidth = 102f;
+            buttonLayout.preferredHeight = ToolbarHeight;
+            technicalModeButton = buttonObject.GetComponent<Button>();
+            technicalModeButton.targetGraphic = buttonObject.GetComponent<Image>();
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(technicalModeButton);
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            Stretch(labelObject.GetComponent<RectTransform>(), 6f);
+            technicalModeButtonLabel = labelObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) technicalModeButtonLabel.font = font;
+            technicalModeButtonLabel.fontSize = 14f;
+            technicalModeButtonLabel.fontStyle = FontStyles.Bold;
+            technicalModeButtonLabel.color = UIStyleTokens.Text.Primary;
+            technicalModeButtonLabel.alignment = TextAlignmentOptions.Center;
+            technicalModeButtonLabel.raycastTarget = false;
+            technicalModeButtonLabel.text = "Simple";
         }
 
         private void ConfigureRequirementButtons(IReadOnlyList<MutationRequirementProgress> requirements, Action<int> focusMutation)

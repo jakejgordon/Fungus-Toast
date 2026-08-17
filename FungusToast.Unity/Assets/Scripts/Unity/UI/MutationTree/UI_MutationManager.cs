@@ -17,6 +17,8 @@ using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Onboarding;
 using System.Linq;
 using FungusToast.Core.Metrics;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 #nullable enable
 
@@ -53,6 +55,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float StorePointsCoachmarkHeight = 190f;
         private const float StorePointsCoachmarkHorizontalOffset = 5f;
         private const float StorePointsCoachmarkVerticalOffset = -12f;
+        private const string TechnicalModePreferenceKey = "MutationWorkspace.TechnicalMode";
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager = null!;
@@ -138,6 +141,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
         private Dictionary<int, Mutation> mutationsById = new();
         private readonly HashSet<int> pendingPathGrowthMutationIds = new();
+        private string mutationSearchQuery = string.Empty;
+        private bool technicalModePreference;
+        private bool altTechnicalReveal;
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
         private Mutation? selectedMutation;
@@ -172,6 +178,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Awake()
         {
+            technicalModePreference = ScopedPlayerPrefs.GetInt(TechnicalModePreferenceKey, 0) != 0;
             if (mutationTreePanel != null)
             {
                 CacheMutationPanelLayoutReferences();
@@ -261,11 +268,79 @@ namespace FungusToast.Unity.UI.MutationTree
         private void Update()
         {
             RefreshResponsiveMutationPanelLayoutIfNeeded();
+            HandleMutationWorkspaceKeyboardInput();
 
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 AnimatePulse();
             else
                 ResetPulse();
+        }
+
+        private void HandleMutationWorkspaceKeyboardInput()
+        {
+            if (!isTreeOpen || mutationInspector == null)
+            {
+                return;
+            }
+
+            Keyboard keyboard = Keyboard.current;
+            if (keyboard == null)
+            {
+                return;
+            }
+
+            bool controlPressed = keyboard.leftCtrlKey.isPressed || keyboard.rightCtrlKey.isPressed;
+            if (controlPressed && keyboard.fKey.wasPressedThisFrame)
+            {
+                TMP_InputField? selectedInput = EventSystem.current?.currentSelectedGameObject
+                    ?.GetComponentInParent<TMP_InputField>();
+                if (selectedInput == null || mutationInspector.IsSearchFocused)
+                {
+                    mutationInspector.FocusSearch();
+                }
+            }
+
+            if (mutationInspector.IsSearchFocused && keyboard.escapeKey.wasPressedThisFrame)
+            {
+                if (!string.IsNullOrEmpty(mutationSearchQuery))
+                {
+                    mutationInspector.ClearSearch();
+                }
+                else
+                {
+                    EventSystem.current?.SetSelectedGameObject(null);
+                }
+            }
+
+            bool altPressed = keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed;
+            if (altPressed != altTechnicalReveal)
+            {
+                altTechnicalReveal = altPressed;
+                ReapplyInspectedMutationState();
+            }
+        }
+
+        private void HandleMutationSearchChanged(string query)
+        {
+            mutationSearchQuery = query?.Trim() ?? string.Empty;
+            ReapplyInspectedMutationState();
+        }
+
+        private void ToggleTechnicalModePreference()
+        {
+            technicalModePreference = !technicalModePreference;
+            ScopedPlayerPrefs.SetInt(TechnicalModePreferenceKey, technicalModePreference ? 1 : 0);
+            ScopedPlayerPrefs.Save();
+            ReapplyInspectedMutationState();
+        }
+
+        private void ApplyMutationSearchState()
+        {
+            bool searchActive = !string.IsNullOrWhiteSpace(mutationSearchQuery);
+            foreach (MutationNodeUI node in mutationButtons)
+            {
+                node.SetSearchMatchState(searchActive, node.MatchesSearch(mutationSearchQuery));
+            }
         }
 
         /// <summary>
@@ -284,11 +359,15 @@ namespace FungusToast.Unity.UI.MutationTree
             humanPlayer = null;
             mutationButtons.Clear();
             directDependentsByMutationId.Clear();
+            mutationsById.Clear();
+            mutationSearchQuery = string.Empty;
+            altTechnicalReveal = false;
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             selectedMutation = null;
             selectedMutationPlayer = null;
             mutationInspector?.Clear();
+            mutationInspector?.ClearSearch();
             pendingTargetedSurgeSelection = null;
             hasDismissedAlphaMutationIntroThisGame = false;
             hasDismissedTreeGuidanceThisGame = false;
@@ -861,6 +940,10 @@ namespace FungusToast.Unity.UI.MutationTree
             isSliding = true;
 
             isTreeOpen = false;
+            mutationSearchQuery = string.Empty;
+            altTechnicalReveal = false;
+            mutationInspector?.ClearSearch();
+            mutationInspector?.SetTechnicalMode(technicalModePreference, false);
             RefreshResponsiveMutationPanelLayout();
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
@@ -1089,6 +1172,10 @@ namespace FungusToast.Unity.UI.MutationTree
             if (inspectedMutation == null || inspectedPlayer == null)
             {
                 mutationInspector?.Clear();
+                mutationInspector?.SetTechnicalMode(
+                    technicalModePreference || altTechnicalReveal,
+                    altTechnicalReveal && !technicalModePreference);
+                ApplyMutationSearchState();
                 ClearProjectedCost();
                 return;
             }
@@ -1100,17 +1187,22 @@ namespace FungusToast.Unity.UI.MutationTree
             inspectedNode?.SetInspectedHighlight(true);
             HighlightPrerequisites(inspectedMutation, inspectedPlayer);
             HighlightDirectDependents(inspectedMutation);
+            bool searchActive = !string.IsNullOrWhiteSpace(mutationSearchQuery);
             foreach (MutationNodeUI node in mutationButtons)
             {
                 bool related = prerequisitePathIds.Contains(node.MutationId)
                     || directDependentIds.Contains(node.MutationId);
-                node.SetRelationshipDimmed(!related);
+                node.SetRelationshipDimmed(!searchActive && !related);
             }
             mutationDependencyGraph?.SetInspection(prerequisitePathIds, directDependentIds);
             if (inspectedNode != null)
             {
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
             }
+            mutationInspector?.SetTechnicalMode(
+                technicalModePreference || altTechnicalReveal,
+                altTechnicalReveal && !technicalModePreference);
+            ApplyMutationSearchState();
 
             int currentLevel = inspectedPlayer.GetMutationLevel(inspectedMutation.Id);
             bool isMaxed = currentLevel >= inspectedMutation.MaxLevel;
@@ -1417,6 +1509,8 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             mutationInspector.transform.SetAsLastSibling();
+            mutationInspector.BindWorkspaceControls(HandleMutationSearchChanged, ToggleTechnicalModePreference);
+            mutationInspector.SetTechnicalMode(technicalModePreference, false);
         }
 
         private void EnsureMutationDependencyGraph()
