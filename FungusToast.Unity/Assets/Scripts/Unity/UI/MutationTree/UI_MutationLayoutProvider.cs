@@ -6,8 +6,10 @@ namespace FungusToast.Unity.UI.MutationTree
     public static class UI_MutationLayoutProvider
     {
         /// <summary>
-        /// Column order: 0-Growth, 1-Cellular Resilience, 2-Fungicide, 3-Genetic Drift  
-        /// Row index increments downward within each column.
+        /// Playable column order: 0-Growth, 1-Cellular Resilience, 2-Fungicide,
+        /// 3-Genetic Drift, 4-Mycelial Surges. The UI appends a sixth planned
+        /// Substrate Ecology lane until that category has real Core mechanics.
+        /// Row index increments downward within each playable column.
         /// </summary>
         public static Dictionary<int, MutationLayoutMetadata> GetDefaultLayout() =>
             new Dictionary<int, MutationLayoutMetadata>

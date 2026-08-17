@@ -1352,6 +1352,13 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationScrollViewRect.pivot = new Vector2(0f, 1f);
             mutationScrollViewRect.anchoredPosition = new Vector2(0f, -topInset);
             mutationScrollViewRect.sizeDelta = new Vector2(-(inspectorWidth + (MutationInspectorPanel.OuterGap * 2f)), -topInset);
+
+            ScrollRect scrollRect = mutationScrollViewRect.GetComponent<ScrollRect>();
+            if (scrollRect != null)
+            {
+                scrollRect.horizontal = false;
+                scrollRect.vertical = true;
+            }
         }
 
         private float GetMutationInspectorWidth()

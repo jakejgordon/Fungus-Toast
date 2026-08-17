@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–3 are complete; Slice 4 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–4 are complete; Slice 5 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -120,6 +120,16 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Support at least eight common tier rows without horizontal scrolling at the primary target.
 
 **Acceptance:** Five populated lanes and the empty sixth lane remain aligned; headers and investment/ready summaries fit; 1920x1280 and 1920x1080 require no horizontal pan; 1600x900 and 1280x720 use the documented fallback without overlapping controls.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added one ordered presentation catalog for the five playable categories and planned Substrate Ecology, including display labels, stable icon lookup hooks, explanatory tooltips, restrained accents, preferred widths, and optional Core-category ownership.
+- Added Substrate Ecology as a runtime-built sixth lane with a clear `Roster in design / Not yet purchasable` empty state. It deliberately has no Core enum value, factory, AI eligibility, investment total, or purchase path before Slice 10 introduces its first real mechanic.
+- Standardized the workspace to one 200-unit Growth lane and five 190-unit lanes (1,150 units total plus existing 10-unit gutters), all inside the existing shared vertical scroll content. The mutation scroll view now explicitly disables horizontal movement.
+- Reused the centralized category labels in node tooltips and the persistent inspector, and routed all category accent lookup through the same catalog to prevent future switch drift.
+- Narrow-screen fallback keeps the fixed, spatially learnable lane widths while the inspector contracts from 340 to 300 units. The existing CanvasScaler supplies sufficient effective width at the four supported targets; Unity visual confirmation remains required.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Core mechanics and the checked-in Unity Core plugin did not change. Unity Editor is unavailable in this environment.
+- Manual Unity checks required: six aligned headers and shared vertical scrolling at 1920x1280/1920x1080/1600x900/1280x720; no horizontal pan or overlap; all five investment summaries; planned-lane empty copy and tooltip; inspector 340-to-300 fallback; repeated open/close and restart; and Console cleanliness.
 
 ### 5. Hyphal dependency graph and relationship navigation
 

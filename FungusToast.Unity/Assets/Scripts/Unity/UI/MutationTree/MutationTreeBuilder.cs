@@ -18,16 +18,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HeaderTotalHeight = HeaderTitleHeight + HeaderInvestmentSummaryHeight;
         private const float MutationNodeWidth = 132f;
         private const float MutationNodeHeight = 120f;
-        private const float DefaultColumnWidth = 200f;
-        private const float GrowthColumnWidth = 220f;
-        private static readonly IReadOnlyDictionary<MutationCategory, string> CategoryHeaderTooltipText = new Dictionary<MutationCategory, string>
-        {
-            { MutationCategory.Growth, "<b>Growth</b>\nMutations that help your colony spread faster across the toast." },
-            { MutationCategory.CellularResilience, "<b>Cellular Resilience</b>\nMutations that help your mold endure damage and reclaim dead cells." },
-            { MutationCategory.Fungicide, "<b>Fungicide</b>\nAggressive mutations that harry rival molds and weaken their foothold." },
-            { MutationCategory.GeneticDrift, "<b>Genetic Drift</b>\nMutations that warp your evolution, granting extra mutation points or unexpected gifts." },
-            { MutationCategory.MycelialSurges, "<b>Mycelial Surges</b>\nMutations that unleash brief but potent bursts of colony strength." },
-        };
+        private const float PlannedLaneCardHeight = 100f;
 
         [Header("Prefabs")]
         [SerializeField] private GameObject categoryHeaderPrefab;
@@ -39,6 +30,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform fungicideColumn;
         [SerializeField] private RectTransform driftColumn;
         [SerializeField] private RectTransform mycelialSurgesColumn;
+        private RectTransform plannedSubstrateEcologyColumn;
 
         // Cached header summary text references for investment display
         private readonly Dictionary<MutationCategory, TextMeshProUGUI> headerSummaryTexts = new();
@@ -55,30 +47,34 @@ namespace FungusToast.Unity.UI.MutationTree
                 return new List<MutationNodeUI>();
             }
 
+            EnsurePlannedSubstrateEcologyColumn();
+            if (plannedSubstrateEcologyColumn == null)
+            {
+                Debug.LogError("❌ MutationTreeBuilder: Could not create the planned Substrate Ecology column.");
+                return new List<MutationNodeUI>();
+            }
+
             ClearColumn(growthColumn);
             ClearColumn(resilienceColumn);
             ClearColumn(fungicideColumn);
             ClearColumn(driftColumn);
             ClearColumn(mycelialSurgesColumn);
+            ClearColumn(plannedSubstrateEcologyColumn);
             headerSummaryTexts.Clear();
 
             // Instantiate headers at index 0 in each column
-            var headerGOs = new Dictionary<MutationCategory, GameObject>();
-            foreach (var (category, parentColumn) in new[] {
-                (MutationCategory.Growth, growthColumn),
-                (MutationCategory.CellularResilience, resilienceColumn),
-                (MutationCategory.Fungicide, fungicideColumn),
-                (MutationCategory.GeneticDrift, driftColumn),
-                (MutationCategory.MycelialSurges, mycelialSurgesColumn)
-            })
+            foreach (MutationCategoryPresentation presentation in MutationCategoryPresentationCatalog.Ordered)
             {
-                ApplyColumnWidth(category, parentColumn);
+                RectTransform parentColumn = presentation.CoreCategory.HasValue
+                    ? GetColumnForCategory(presentation.CoreCategory.Value)
+                    : plannedSubstrateEcologyColumn;
+                ApplyColumnWidth(presentation, parentColumn);
 
                 GameObject headerGO = Instantiate(categoryHeaderPrefab, parentColumn);
-                headerGO.name = $"Header_{category}";
+                headerGO.name = $"Header_{presentation.Key}";
                 headerGO.transform.localScale = Vector3.one;
 
-                float columnWidth = GetColumnWidth(category);
+                float columnWidth = presentation.PreferredWidth;
 
                 // ── Ensure header has a background Image + readable label ──
                 // The prefab root has TMP (a Graphic). Unity allows only one Graphic
@@ -101,7 +97,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     var rootTMP = headerGO.GetComponent<TextMeshProUGUI>();
                     if (rootTMP != null)
                     {
-                        rootTMP.text = SplitCamelCase(category.ToString());
+                        rootTMP.text = presentation.DisplayName;
                         rootTMP.color = Color.clear; // invisible but drives preferred width
                     }
 
@@ -136,12 +132,12 @@ namespace FungusToast.Unity.UI.MutationTree
                     labelRect.offsetMax = Vector2.zero;
                 }
 
-                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(category, 0.95f);
+                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(presentation.Accent, 0.95f);
                 ConfigureHeaderTitleRect(headerBG.rectTransform);
 
                 if (headerText != null)
                 {
-                    headerText.text = SplitCamelCase(category.ToString());
+                    headerText.text = presentation.DisplayName;
                     if (headerText.gameObject != headerGO)
                     {
                         ConfigureHeaderTitleRect(headerText.rectTransform);
@@ -169,7 +165,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderTotalHeight);
                 }
 
-                AttachHeaderTooltip(headerGO, category);
+                AttachHeaderTooltip(headerGO, presentation.TooltipText);
 
                 // ── Investment summary label (child text, created dynamically) ──
                 var summaryGO = new GameObject("InvestmentSummary");
@@ -189,10 +185,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 summaryRect.pivot = new Vector2(0.5f, 1f);
                 summaryRect.anchoredPosition = new Vector2(0, -HeaderTitleHeight);
                 summaryRect.sizeDelta = new Vector2(0, HeaderInvestmentSummaryHeight);
-                headerSummaryTexts[category] = summaryText;
+                if (presentation.CoreCategory.HasValue)
+                {
+                    headerSummaryTexts[presentation.CoreCategory.Value] = summaryText;
+                }
+                else
+                {
+                    summaryText.text = "Planned • roster in design";
+                }
 
                 headerGO.transform.SetSiblingIndex(0); // Ensure header is always first
-                headerGOs[category] = headerGO;
+
+                if (presentation.IsPlanned)
+                {
+                    CreatePlannedLaneCard(parentColumn, presentation);
+                }
             }
 
             List<MutationNodeUI> createdNodes = new List<MutationNodeUI>();
@@ -294,9 +301,9 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private static void AttachHeaderTooltip(GameObject headerGO, MutationCategory category)
+        private static void AttachHeaderTooltip(GameObject headerGO, string tooltipText)
         {
-            if (headerGO == null || !CategoryHeaderTooltipText.TryGetValue(category, out string tooltipText))
+            if (headerGO == null || string.IsNullOrWhiteSpace(tooltipText))
             {
                 return;
             }
@@ -311,14 +318,14 @@ namespace FungusToast.Unity.UI.MutationTree
             tooltipTrigger.SetAutoPlacementOffsetX(12f);
         }
 
-        private void ApplyColumnWidth(MutationCategory category, RectTransform column)
+        private static void ApplyColumnWidth(MutationCategoryPresentation presentation, RectTransform column)
         {
             if (column == null)
             {
                 return;
             }
 
-            float width = GetColumnWidth(category);
+            float width = presentation.PreferredWidth;
             var layout = column.GetComponent<LayoutElement>();
             if (layout != null)
             {
@@ -328,11 +335,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             column.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
-        }
-
-        private static float GetColumnWidth(MutationCategory category)
-        {
-            return category == MutationCategory.Growth ? GrowthColumnWidth : DefaultColumnWidth;
         }
 
         private RectTransform GetColumnForCategory(MutationCategory category)
@@ -358,6 +360,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (growthColumn == null || resilienceColumn == null || fungicideColumn == null || driftColumn == null || mycelialSurgesColumn == null)
                 Debug.LogError("❌ One or more columns could not be found in AssignColumnParentsFromHierarchy().");
+            else
+                EnsurePlannedSubstrateEcologyColumn();
             //else
             //Debug.Log("✅ Successfully assigned all column parents at runtime.");
         }
@@ -370,13 +374,65 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        public static string SplitCamelCase(string input)
+        private void EnsurePlannedSubstrateEcologyColumn()
         {
-            return System.Text.RegularExpressions.Regex.Replace(
-                input,
-                "(\\B[A-Z])",
-                " $1"
-            );
+            if (plannedSubstrateEcologyColumn != null)
+            {
+                return;
+            }
+
+            RectTransform content = growthColumn != null ? growthColumn.parent as RectTransform : null;
+            if (content == null)
+            {
+                return;
+            }
+
+            var columnObject = new GameObject("Column_SubstrateEcology", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
+            columnObject.layer = content.gameObject.layer;
+            plannedSubstrateEcologyColumn = columnObject.GetComponent<RectTransform>();
+            plannedSubstrateEcologyColumn.SetParent(content, false);
+            plannedSubstrateEcologyColumn.SetAsLastSibling();
+
+            var group = columnObject.GetComponent<VerticalLayoutGroup>();
+            group.padding = new RectOffset(0, 0, 0, 0);
+            group.spacing = 10f;
+            group.childAlignment = TextAnchor.UpperCenter;
+            group.childControlWidth = true;
+            group.childControlHeight = false;
+            group.childForceExpandWidth = false;
+            group.childForceExpandHeight = false;
+        }
+
+        private static void CreatePlannedLaneCard(RectTransform parentColumn, MutationCategoryPresentation presentation)
+        {
+            var cardObject = new GameObject("PlannedRosterCard", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            cardObject.layer = parentColumn.gameObject.layer;
+            cardObject.transform.SetParent(parentColumn, false);
+
+            var image = cardObject.GetComponent<Image>();
+            image.color = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, presentation.Accent, 0.08f);
+
+            var layout = cardObject.GetComponent<LayoutElement>();
+            layout.preferredWidth = presentation.PreferredWidth;
+            layout.minWidth = presentation.PreferredWidth;
+            layout.preferredHeight = PlannedLaneCardHeight;
+            layout.minHeight = PlannedLaneCardHeight;
+
+            var textObject = new GameObject("Message", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.layer = cardObject.layer;
+            textObject.transform.SetParent(cardObject.transform, false);
+            var textRect = textObject.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.offsetMin = new Vector2(12f, 10f);
+            textRect.offsetMax = new Vector2(-12f, -10f);
+
+            var message = textObject.GetComponent<TextMeshProUGUI>();
+            message.text = "<b>Roster in design</b>\nNot yet purchasable";
+            message.fontSize = 15f;
+            message.alignment = TextAlignmentOptions.Center;
+            message.color = MutationTreeColors.SecondaryText;
+            message.textWrappingMode = TextWrappingModes.Normal;
         }
     }
 }

@@ -11,11 +11,7 @@ namespace FungusToast.Unity.UI.MutationTree
     public static class MutationTreeColors
     {
         // ── Category accent colors (lighter pastels for dark-background readability) ──
-        private static readonly Color GrowthAccent             = UIStyleTokens.Category.Growth;
-        private static readonly Color CellularResilienceAccent = UIStyleTokens.Category.CellularResilience;
         private static readonly Color FungicideAccent          = UIStyleTokens.Category.Fungicide;
-        private static readonly Color GeneticDriftAccent       = UIStyleTokens.Category.GeneticDrift;
-        private static readonly Color MycelialSurgesAccent     = UIStyleTokens.Category.MycelialSurges;
 
         // ── Universal state colors ──────────────────────────────────────
         public static readonly Color MaxedGold      = UIStyleTokens.Accent.Spore;
@@ -50,15 +46,7 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         public static Color GetCategoryAccent(MutationCategory category)
         {
-            return category switch
-            {
-                MutationCategory.Growth             => GrowthAccent,
-                MutationCategory.CellularResilience => CellularResilienceAccent,
-                MutationCategory.Fungicide          => FungicideAccent,
-                MutationCategory.GeneticDrift       => GeneticDriftAccent,
-                MutationCategory.MycelialSurges     => MycelialSurgesAccent,
-                _ => Color.white
-            };
+            return MutationCategoryPresentationCatalog.Get(category).Accent;
         }
 
         /// <summary>
@@ -66,8 +54,11 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         public static Color GetCategoryHeaderBG(MutationCategory category, float alpha = 0.95f)
         {
-            // Subtle category tint blended into the dark TopBar base
-            Color accent = GetCategoryAccent(category);
+            return GetCategoryHeaderBG(GetCategoryAccent(category), alpha);
+        }
+
+        public static Color GetCategoryHeaderBG(Color accent, float alpha = 0.95f)
+        {
             Color blended = Color.Lerp(TopBarBG, accent, 0.18f);
             blended.a = alpha;
             return blended;
@@ -120,14 +111,5 @@ namespace FungusToast.Unity.UI.MutationTree
             return UIStyleTokens.WithAlpha(c, 0.18f);
         }
 
-        // ── Helpers ─────────────────────────────────────────────────────
-
-        private static Color HexColor(string hex)
-        {
-            if (ColorUtility.TryParseHtmlString(hex, out Color color))
-                return color;
-            Debug.LogWarning($"MutationTreeColors: failed to parse '{hex}', returning white.");
-            return Color.white;
-        }
     }
 }

@@ -402,13 +402,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private static string GetCategoryDisplayName(MutationCategory category)
         {
-            return category switch
-            {
-                MutationCategory.CellularResilience => "Cellular Resilience",
-                MutationCategory.GeneticDrift => "Genetic Drift",
-                MutationCategory.MycelialSurges => "Mycelial Surges",
-                _ => category.ToString()
-            };
+            return MutationCategoryPresentationCatalog.Get(category).DisplayName;
         }
 
         private static void Stretch(RectTransform rect, float inset)

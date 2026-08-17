@@ -92,6 +92,7 @@ namespace FungusToast.Unity.UI
             public static readonly Color Fungicide = Hex("#6E5A86");
             public static readonly Color GeneticDrift = Hex("#7D6B4E");
             public static readonly Color MycelialSurges = Hex("#80607A");
+            public static readonly Color SubstrateEcology = Hex("#6C7F4A");
         }
 
         /// <summary>
