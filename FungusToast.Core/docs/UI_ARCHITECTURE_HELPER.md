@@ -91,6 +91,16 @@ public class MyWidget : MonoBehaviour, ITooltipContentProvider
 | `PlayerMoldIconHoverHandler` | `UI/PlayerMoldIconHoverHandler.cs` |
 | `CellTooltipUI` | `UI/CellTooltipUI.cs` |
 
+### Mutation Workspace Inspector
+
+The full-screen mutation workspace uses a persistent right-side inspector for decision-critical mutation information. It is not a hover tooltip and should not be implemented through `TooltipManager`.
+
+- `MutationInspectorPanel` is built once at runtime by `UI_MutationManager`; it uses semantic style tokens and introduces no scene/prefab reference.
+- Hover temporarily previews a mutation. Pointer exit restores the last selected mutation so the information surface never goes blank while the tree is populated.
+- Clicking a mutation card selects it without changing the existing immediate-purchase behavior. Requirement and direct-unlock chips focus and scroll to their related nodes.
+- Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
+- Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
+
 ---
 
 ## Object Pooling

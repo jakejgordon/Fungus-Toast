@@ -129,6 +129,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerCenterSlotRect = null!;
         private RectTransform headerRightSlotRect = null!;
         private RectTransform headerReturnSlotRect = null!;
+        private MutationInspectorPanel? mutationInspector;
 
         private Player? humanPlayer;
         private bool humanTurnEnded = false;
@@ -136,6 +137,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private Dictionary<int, List<int>> directDependentsByMutationId = new();
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
+        private Mutation? selectedMutation;
+        private Player? selectedMutationPlayer;
         private PendingTargetedSurgeSelection? pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
@@ -170,6 +173,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 CacheMutationPanelLayoutReferences();
                 ApplyPanelTheme();
+                EnsureMutationInspector();
             }
             else
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
@@ -190,6 +194,9 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             hoveredMutation = null;
             hoveredMutationPlayer = null;
+            selectedMutation = null;
+            selectedMutationPlayer = null;
+            mutationInspector?.Clear();
             HideTimeLapseCoachmarkImmediate(false);
             HideStorePointsCoachmarkImmediate(false);
             SetGlobalHudControlsSuppressed(false);
@@ -274,6 +281,11 @@ namespace FungusToast.Unity.UI.MutationTree
             humanPlayer = null;
             mutationButtons.Clear();
             directDependentsByMutationId.Clear();
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            selectedMutation = null;
+            selectedMutationPlayer = null;
+            mutationInspector?.Clear();
             pendingTargetedSurgeSelection = null;
             hasDismissedAlphaMutationIntroThisGame = false;
             hasDismissedTreeGuidanceThisGame = false;
@@ -435,6 +447,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            Mutation? initialMutation = selectedMutation != null
+                ? mutations.FirstOrDefault(candidate => candidate.Id == selectedMutation.Id)
+                : mutations.FirstOrDefault(candidate => candidate.Id == MutationIds.MycelialBloom) ?? mutations.FirstOrDefault();
+            if (initialMutation != null)
+            {
+                selectedMutation = initialMutation;
+                selectedMutationPlayer = humanPlayer;
+            }
             RefreshAllMutationButtons();
             RefreshResponsiveMutationPanelLayout();
         }
@@ -900,7 +920,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 button.UpdateDisplay();
             }
 
-            ReapplyHoveredMutationState();
+            ReapplyInspectedMutationState();
 
             // Also refresh category investment summaries
             if (mutationTreeBuilder != null && humanPlayer != null)
@@ -964,7 +984,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             hoveredMutation = mutation;
             hoveredMutationPlayer = player;
-            ReapplyHoveredMutationState();
+            ReapplyInspectedMutationState();
         }
 
         public void HandleMutationNodeHoverExit(Mutation mutation)
@@ -976,31 +996,104 @@ namespace FungusToast.Unity.UI.MutationTree
 
             hoveredMutation = null;
             hoveredMutationPlayer = null;
-            ClearAllHighlights();
-            ClearProjectedCost();
+            ReapplyInspectedMutationState();
         }
 
-        private void ReapplyHoveredMutationState()
+        public void HandleMutationNodeSelected(Mutation mutation, Player player)
         {
-            if (hoveredMutation == null || hoveredMutationPlayer == null)
+            if (mutation == null || player == null)
             {
                 return;
             }
 
-            ClearAllHighlights();
-            mutationButtons.FirstOrDefault(node => node.MutationId == hoveredMutation.Id)?.SetInspectedHighlight(true);
-            HighlightPrerequisites(hoveredMutation, hoveredMutationPlayer);
-            HighlightDirectDependents(hoveredMutation);
+            selectedMutation = mutation;
+            selectedMutationPlayer = player;
+            ReapplyInspectedMutationState();
+        }
 
-            int currentLevel = hoveredMutationPlayer.GetMutationLevel(hoveredMutation.Id);
-            bool isMaxed = currentLevel >= hoveredMutation.MaxLevel;
+        private void FocusMutationFromInspector(int mutationId)
+        {
+            if (humanPlayer == null)
+            {
+                return;
+            }
+
+            MutationNodeUI? node = mutationButtons.FirstOrDefault(candidate => candidate.MutationId == mutationId);
+            if (node == null)
+            {
+                return;
+            }
+
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            selectedMutation = node.GetMutation();
+            selectedMutationPlayer = humanPlayer;
+            ReapplyInspectedMutationState();
+            ScrollMutationNodeIntoView(node);
+        }
+
+        private void ScrollMutationNodeIntoView(MutationNodeUI node)
+        {
+            if (node == null || mutationScrollViewContentRect == null || mutationViewportRect == null)
+            {
+                return;
+            }
+
+            ScrollRect? scrollRect = mutationScrollViewRect != null
+                ? mutationScrollViewRect.GetComponent<ScrollRect>()
+                : null;
+            RectTransform? nodeRect = node.transform as RectTransform;
+            if (scrollRect == null || nodeRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            Bounds nodeBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(mutationScrollViewContentRect, nodeRect);
+            float scrollableHeight = mutationScrollViewContentRect.rect.height - mutationViewportRect.rect.height;
+            if (scrollableHeight <= 0f)
+            {
+                scrollRect.verticalNormalizedPosition = 1f;
+                return;
+            }
+
+            float desiredDistanceFromTop = mutationScrollViewContentRect.rect.yMax
+                - nodeBounds.center.y
+                - (mutationViewportRect.rect.height * 0.5f);
+            scrollRect.verticalNormalizedPosition = 1f - Mathf.Clamp01(desiredDistanceFromTop / scrollableHeight);
+        }
+
+        private void ReapplyInspectedMutationState()
+        {
+            Mutation? inspectedMutation = hoveredMutation ?? selectedMutation;
+            Player? inspectedPlayer = hoveredMutationPlayer ?? selectedMutationPlayer;
+
+            ClearAllHighlights();
+            if (inspectedMutation == null || inspectedPlayer == null)
+            {
+                mutationInspector?.Clear();
+                ClearProjectedCost();
+                return;
+            }
+
+            MutationNodeUI? inspectedNode = mutationButtons.FirstOrDefault(node => node.MutationId == inspectedMutation.Id);
+            inspectedNode?.SetInspectedHighlight(true);
+            HighlightPrerequisites(inspectedMutation, inspectedPlayer);
+            HighlightDirectDependents(inspectedMutation);
+            if (inspectedNode != null)
+            {
+                mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
+            }
+
+            int currentLevel = inspectedPlayer.GetMutationLevel(inspectedMutation.Id);
+            bool isMaxed = currentLevel >= inspectedMutation.MaxLevel;
             if (isMaxed)
             {
                 ClearProjectedCost();
                 return;
             }
 
-            int cost = hoveredMutationPlayer.GetMutationPointCost(hoveredMutation);
+            int cost = inspectedPlayer.GetMutationPointCost(inspectedMutation);
             ShowProjectedCost(cost);
         }
 
@@ -1074,7 +1167,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 ConfigureMutationPanelRect(targetWidth);
             }
 
-            ConfigureMutationScrollViewRect(GetMutationPanelTopInset());
+            float topInset = GetMutationPanelTopInset();
+            float inspectorWidth = GetMutationInspectorWidth();
+            ConfigureMutationScrollViewRect(topInset, inspectorWidth);
+            mutationInspector?.SetLayout(topInset, inspectorWidth);
 
             if (mutationViewportRect != null)
             {
@@ -1226,6 +1322,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationScrollViewRect ??= (mutationTreeRect.Find("UI_MutationScrollView") as RectTransform)!;
             mutationViewportRect ??= (mutationScrollViewRect?.Find("UI_MutationViewport") as RectTransform)!;
             mutationScrollViewContentRect ??= (mutationViewportRect?.Find("UI_MutationScrollViewContent") as RectTransform)!;
+            EnsureMutationInspector();
         }
 
         private void ConfigureMutationPanelRect(float targetWidth)
@@ -1243,7 +1340,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void ConfigureMutationScrollViewRect(float topInset)
+        private void ConfigureMutationScrollViewRect(float topInset, float inspectorWidth)
         {
             if (mutationScrollViewRect == null)
             {
@@ -1254,7 +1351,38 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationScrollViewRect.anchorMax = Vector2.one;
             mutationScrollViewRect.pivot = new Vector2(0f, 1f);
             mutationScrollViewRect.anchoredPosition = new Vector2(0f, -topInset);
-            mutationScrollViewRect.sizeDelta = new Vector2(0f, -topInset);
+            mutationScrollViewRect.sizeDelta = new Vector2(-(inspectorWidth + (MutationInspectorPanel.OuterGap * 2f)), -topInset);
+        }
+
+        private float GetMutationInspectorWidth()
+        {
+            Vector2 canvasSize = GetEffectiveCanvasSize();
+            if (canvasSize.x <= 0f)
+            {
+                return MutationInspectorPanel.PreferredWidth;
+            }
+
+            return Mathf.Clamp(canvasSize.x * 0.21f, 300f, MutationInspectorPanel.PreferredWidth);
+        }
+
+        private void EnsureMutationInspector()
+        {
+            if (mutationInspector != null || mutationTreeRect == null)
+            {
+                return;
+            }
+
+            Transform existing = mutationTreeRect.Find("UI_MutationInspector");
+            if (existing != null && existing.TryGetComponent(out MutationInspectorPanel existingInspector))
+            {
+                mutationInspector = existingInspector;
+            }
+            else
+            {
+                mutationInspector = MutationInspectorPanel.Create(mutationTreeRect, mutationPointsCounterText?.font);
+            }
+
+            mutationInspector.transform.SetAsLastSibling();
         }
 
         private void RefreshResponsiveMutationPanelLayout()
@@ -2869,6 +2997,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 // ── Skip dynamically-created mutation nodes; they theme themselves ──
                 if (child.GetComponent<MutationNodeUI>() != null)
+                    continue;
+
+                // The persistent inspector is runtime-built from shared semantic tokens.
+                if (child.GetComponent<MutationInspectorPanel>() != null)
                     continue;
 
                 // ── Skip category headers and their children; they have explicit styling ──

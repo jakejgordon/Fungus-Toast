@@ -14,7 +14,7 @@ using FungusToast.Core.Config;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
-    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ITooltipContentProvider
+    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ITooltipContentProvider
     {
         private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
@@ -464,6 +464,14 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateDisplay();
         }
 
+        public void OnPointerClick(PointerEventData eventData)
+        {
+            if (eventData.button == PointerEventData.InputButton.Left)
+            {
+                uiManager.HandleMutationNodeSelected(mutation, player);
+            }
+        }
+
         // ── Upgrade feedback animation ───────────────────────────────────
 
         private void PlayUpgradeEffect()
@@ -663,93 +671,48 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void AppendDynamicMutationDetails(StringBuilder sb, int currentLevel)
         {
-            switch (mutation.Id)
+            if (!HasLevelSummary())
             {
-                case MutationIds.HomeostaticHarmony:
-                    AppendHomeostaticHarmonyDetails(sb, currentLevel);
-                    break;
-                case MutationIds.ChronoresilientCytoplasm:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildChronoresilientCytoplasmSummary);
-                    break;
-                case MutationIds.Necrosporulation:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrosporulationSummary);
-                    break;
-                case MutationIds.NecrohyphalInfiltration:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrohyphalInfiltrationSummary);
-                    break;
-                case MutationIds.CatabolicRebirth:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildCatabolicRebirthSummary);
-                    break;
-                case MutationIds.HypersystemicRegeneration:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildHypersystemicRegenerationSummary);
-                    break;
-                case MutationIds.MycelialBloom:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycelialBloomSummary);
-                    break;
-                case MutationIds.TendrilNorthwest:
-                case MutationIds.TendrilNortheast:
-                case MutationIds.TendrilSoutheast:
-                case MutationIds.TendrilSouthwest:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildTendrilSummary);
-                    break;
-                case MutationIds.MycotropicInduction:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotropicInductionSummary);
-                    break;
-                case MutationIds.RegenerativeHyphae:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildRegenerativeHyphaeSummary);
-                    break;
-                case MutationIds.CreepingMold:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildCreepingMoldSummary);
-                    break;
-                case MutationIds.MycotoxinTracer:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinTracerSummary);
-                    break;
-                case MutationIds.MycotoxinPotentiation:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinPotentiationSummary);
-                    break;
-                case MutationIds.PutrefactiveMycotoxin:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveMycotoxinSummary);
-                    break;
-                case MutationIds.SporicidalBloom:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildSporicidalBloomSummary);
-                    break;
-                case MutationIds.NecrotoxicConversion:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrotoxicConversionSummary);
-                    break;
-                case MutationIds.PutrefactiveRejuvenation:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveRejuvenationSummary);
-                    break;
-                case MutationIds.PutrefactiveCascade:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildPutrefactiveCascadeSummary);
-                    break;
-                case MutationIds.MutatorPhenotype:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMutatorPhenotypeSummary);
-                    break;
-                case MutationIds.AdaptiveExpression:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildAdaptiveExpressionSummary);
-                    break;
-                case MutationIds.MycotoxinCatabolism:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildMycotoxinCatabolismSummary);
-                    break;
-                case MutationIds.AnabolicInversion:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildAnabolicInversionSummary);
-                    break;
-                case MutationIds.NecrophyticBloom:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildNecrophyticBloomSummary);
-                    break;
-                case MutationIds.HyperadaptiveDrift:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildHyperadaptiveDriftSummary);
-                    break;
-                case MutationIds.OntogenicRegression:
-                    AppendLevelSummaryBlock(sb, currentLevel, BuildOntogenicRegressionSummary);
-                    break;
+                return;
             }
+
+            AppendLevelSummaryBlock(sb, currentLevel, BuildLevelSummary);
         }
 
-        private void AppendHomeostaticHarmonyDetails(StringBuilder sb, int currentLevel)
+        public string BuildLevelSummary(int level)
         {
-            AppendLevelSummaryBlock(sb, currentLevel, BuildHomeostaticHarmonySummary);
+            return mutation.Id switch
+            {
+                MutationIds.HomeostaticHarmony => BuildHomeostaticHarmonySummary(level),
+                MutationIds.ChronoresilientCytoplasm => BuildChronoresilientCytoplasmSummary(level),
+                MutationIds.Necrosporulation => BuildNecrosporulationSummary(level),
+                MutationIds.NecrohyphalInfiltration => BuildNecrohyphalInfiltrationSummary(level),
+                MutationIds.CatabolicRebirth => BuildCatabolicRebirthSummary(level),
+                MutationIds.HypersystemicRegeneration => BuildHypersystemicRegenerationSummary(level),
+                MutationIds.MycelialBloom => BuildMycelialBloomSummary(level),
+                MutationIds.TendrilNorthwest or MutationIds.TendrilNortheast or MutationIds.TendrilSoutheast or MutationIds.TendrilSouthwest => BuildTendrilSummary(level),
+                MutationIds.MycotropicInduction => BuildMycotropicInductionSummary(level),
+                MutationIds.RegenerativeHyphae => BuildRegenerativeHyphaeSummary(level),
+                MutationIds.CreepingMold => BuildCreepingMoldSummary(level),
+                MutationIds.MycotoxinTracer => BuildMycotoxinTracerSummary(level),
+                MutationIds.MycotoxinPotentiation => BuildMycotoxinPotentiationSummary(level),
+                MutationIds.PutrefactiveMycotoxin => BuildPutrefactiveMycotoxinSummary(level),
+                MutationIds.SporicidalBloom => BuildSporicidalBloomSummary(level),
+                MutationIds.NecrotoxicConversion => BuildNecrotoxicConversionSummary(level),
+                MutationIds.PutrefactiveRejuvenation => BuildPutrefactiveRejuvenationSummary(level),
+                MutationIds.PutrefactiveCascade => BuildPutrefactiveCascadeSummary(level),
+                MutationIds.MutatorPhenotype => BuildMutatorPhenotypeSummary(level),
+                MutationIds.AdaptiveExpression => BuildAdaptiveExpressionSummary(level),
+                MutationIds.MycotoxinCatabolism => BuildMycotoxinCatabolismSummary(level),
+                MutationIds.AnabolicInversion => BuildAnabolicInversionSummary(level),
+                MutationIds.NecrophyticBloom => BuildNecrophyticBloomSummary(level),
+                MutationIds.HyperadaptiveDrift => BuildHyperadaptiveDriftSummary(level),
+                MutationIds.OntogenicRegression => BuildOntogenicRegressionSummary(level),
+                _ => string.Empty
+            };
         }
+
+        private bool HasLevelSummary() => !string.IsNullOrWhiteSpace(BuildLevelSummary(player.GetMutationLevel(mutation.Id)));
 
         private void AppendLevelSummaryBlock(StringBuilder sb, int currentLevel, System.Func<int, string> buildSummary)
         {

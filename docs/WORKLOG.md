@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–2 are complete; Slice 3 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–3 are complete; Slice 4 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -96,6 +96,18 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Preserve immediate purchase behavior and all targeted-selection/surge/banking flows.
 
 **Acceptance:** Every node state can be understood from node plus inspector; inspecting never moves cards or blocks rapid purchases; prerequisite chips focus reliably; repeated open/close/restart creates no stale selection, listeners, or raycast blockers.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added a persistent 300–340 unit right-side inspector rail and reserved its width from the existing mutation scroll viewport; it is runtime-built once with shared semantic tokens and requires no scene/prefab serialization.
+- Hover previews immediately; pointer exit restores the last selected mutation; the workspace defaults to Mycelial Bloom when first populated. Selection and inspector state reset across game/component lifecycle boundaries.
+- The inspector shows simple benefit, complete state, real player-adjusted cost, projected remaining points, current and next mechanic-specific summaries, max-level bonus, synergies, prerequisite progress, and direct unlocks.
+- Reused pooled requirement/unlock chip buttons. Clicking a chip selects, highlights, and scrolls the related node into the center of the shared tree viewport.
+- Added node click inspection without changing `Button` purchase behavior; purchases remain immediate and refresh the inspector through the established all-node refresh path.
+- Refactored the existing tooltip's mutation-specific current/next formatter into a public node summary seam so tooltip and inspector cannot drift.
+- Updated `UI_ARCHITECTURE_HELPER.md` with ownership and lifecycle rules for the persistent inspector.
+- `git diff --check` passed. Core/Simulation behavior did not change. Unity Editor is unavailable in this environment, so compile and interaction validation remain manual.
+- Manual Unity checks required: all five columns and every node state at 1920x1280/1920x1080/1600x900/1280x720; hover-to-selected restoration; locked/active/max/no-target/pending/cost states; current/next summaries; max/synergy sections; chip focus and vertical scrolling; rapid five-point purchase; targeted Chemotactic Beacon; repeated open/close; hotseat rebind; restart; tooltip coexistence; and Console cleanliness.
 
 ### 4. Six-lane responsive workspace shell
 
