@@ -13,16 +13,16 @@ The mutation tree is organized into five categories, each supporting a different
 ### Growth
 
 - Focus: territory expansion and colonization
-- Common mechanics: cardinal growth bonuses, diagonal tendrils, reclaim support, growth amplification, movement-based spread
+- Common mechanics: cardinal growth bonuses, diagonal tendrils, growth amplification, movement-based spread
 - Strategic role: board control and expansion tempo
-- Representative mutations: Mycelial Bloom, Tendril variants, Mycotropic Induction, Regenerative Hyphae
+- Representative mutations: Mycelial Bloom, Tendril variants, Mycotropic Induction, Creeping Mold
 
 ### Cellular Resilience
 
 - Focus: survival, death resistance, and recovery
 - Common mechanics: death-probability reduction, lifespan extension, spore-on-death, reclamation, dead-cell interaction
 - Strategic role: defensive stability and long-game persistence
-- Representative mutations: Homeostatic Harmony, Chronoresilient Cytoplasm, Necrosporulation, Necrohyphal Infiltration
+- Representative mutations: Homeostatic Harmony, Chronoresilient Cytoplasm, Necrosporulation, Regenerative Hyphae
 
 ### Fungicide
 
@@ -44,6 +44,14 @@ The mutation tree is organized into five categories, each supporting a different
 - Common mechanics: manual activation, limited duration, escalating activation cost, cooldown-style lockout while active
 - Strategic role: tactical burst effects that reward timing
 - Representative mutations: Hyphal Surge, Chemotactic Beacon
+
+### Proposed: Substrate Ecology
+
+- Focus: environmental opportunity, substrate condition, and territory context
+- Candidate mechanics: nutrient-patch interaction, composting and dead-zone use, crowded versus open substrate, edge/corner behavior, contested-tile ecology, and environmental conditioning
+- Strategic role: adapt expansion and recovery to the local board environment
+- Boundary: does not absorb raw expansion, mutation-point generation, direct toxin offense, or temporary activated effects from the existing categories
+- Status: reserved design space for the Mycelial Lab expansion; do not add the category to Core or AI until a coherent roster of at least six mutations is approved
 
 ## Category Design Philosophy
 

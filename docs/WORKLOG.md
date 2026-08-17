@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slice 1 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slice 1 is complete; Slice 2 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -53,6 +53,17 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Update the mutation-category guidelines so representative mutations and category philosophy match the corrected model and reserve Substrate Ecology's boundary without pretending its roster is finalized.
 
 **Acceptance:** Core and Simulation build; focused tests pass; existing saves remain ID-compatible; Regenerative Hyphae has exactly one definition and appears under Cellular Resilience in both data and UI metadata; no gameplay constant changes are bundled into this slice.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Moved the unchanged Regenerative Hyphae definition into `CellularResilienceMutationFactory` and changed its mechanical category from Growth to Cellular Resilience. ID 15, tier, prerequisites, costs, effect constants, processor timing, tracking, and Unity lane metadata remain unchanged.
+- This aligns category-filtered AI spending and mutation-header investment totals with the existing Cellular Resilience presentation. Explicit AI target goals remain ID-based and unchanged.
+- Construction after Necrosporulation now gives both prerequisite parents their correct Regenerative Hyphae child link; focused assertions cover that relationship.
+- Added repository integrity coverage for the 33 registered mutations: case-insensitive name uniqueness, ID uniqueness, prerequisite existence, registered-root termination, and cycle-free reachability.
+- Updated the category philosophy to place regeneration/reclamation under Cellular Resilience and documented Substrate Ecology as reserved design space rather than an active Core category.
+- Focused tests passed (3/3). The canonical Core suite excluding the known unrelated campaign-strategy prefix assertion passed (512/512). Simulation built with 0 warnings/errors; the Unity Core DLL/PDB was refreshed; `git diff --check` passed.
+- The unfiltered suite remains 512 passed / 1 known unrelated failure: `StrategyCatalogTests.Campaign_progression_board_presets_only_use_cmp_strategy_names` for `TST_Training_ResilientMycelium_Offset3`.
+- Manual Unity check still required: confirm Regenerative Hyphae remains in the Cellular Resilience lane and its category header total increases/decreases correctly when purchased or loaded from an existing save.
 
 ### 2. Mutation presentation model and inspector-ready content
 

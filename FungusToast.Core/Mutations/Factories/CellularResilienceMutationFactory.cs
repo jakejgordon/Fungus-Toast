@@ -58,6 +58,23 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier3
             ), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
 
+            // Tier-4
+            helper.MakeChild(new Mutation(
+                id: MutationIds.RegenerativeHyphae,
+                name: "Regenerative Hyphae",
+                description: $"Reclaims your own dead cells near your living colony.\n\n" +
+                             $"<b>Technical:</b> After the Growth Phase and before the Decay Phase, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned adjacent in a cardinal direction (up / down / left / right). Each dead cell is checked at most once per round.",
+                flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
+                type: MutationType.ReclaimOwnDeadCells,
+                effectPerLevel: GameBalance.RegenerativeHyphaeReclaimChance,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.RegenerativeHyphaeMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier4
+            ),
+                new MutationPrerequisite(MutationIds.Necrosporulation, 2),
+                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+
             // Tier-5
             helper.MakeChild(new Mutation(
                 id: MutationIds.NecrohyphalInfiltration,
