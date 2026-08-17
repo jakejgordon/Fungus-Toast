@@ -11,7 +11,190 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 5. After a meaningful completed slice, commit it, fetch, pull, and push.
 6. Record completed results and any remaining manual Unity checks here; use daily OpenClaw memory for session-only detail.
 
-## Active Thread
+## Active Thread — Mycelial Lab Mutation Expansion
+
+- **Focus:** Turn the full-screen mutation tree into a fast, professional, fungal upgrade workspace that can support six coherent categories and at least ten additional mutations.
+- **Product goal:** A new player can understand a mutation and its requirements without decoding its scientific name, while an experienced player can spend five points in a few seconds without panning, rearrangement, confirmation prompts, or blocking animation.
+- **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
+- **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
+- **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
+- **State:** Plan approved by Jake on 2026-08-17. Slice 1 is active.
+- **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
+- **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
+- **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
+
+## Product Decisions and Guardrails
+
+- Keep purchases one-click, immediate, stationary, and free of confirmation prompts or blocking animation.
+- Do not add pan-and-zoom as the primary navigation model. Six stable lanes should remain spatially learnable and scroll vertically together.
+- Use a persistent inspector as the primary explanation surface; large hover tooltips become fallback/compact support rather than the only way to understand a node.
+- Support progressive disclosure: plain-language benefit first, with technical timing, formulas, restrictions, caps, max-level behavior, and implemented synergies available on demand.
+- Search highlights and dims in place; it must never hide, reorder, or move cards. `Ctrl+F` should focus search when keyboard input is available.
+- Cross-category mutations remain in one primary category lane. Cross-category prerequisites use visibly distinct connector treatment rather than physically floating hybrid cards between lanes.
+- Category identity comes from restrained accents, icons, connectors, and small chips; body copy retains the shared high-contrast text system.
+- Regenerative Hyphae belongs mechanically and visually to Cellular Resilience. Moving it must preserve its mutation ID, owned levels, effect timing, and save compatibility. Category-sensitive AI and reporting behavior must be audited and tested.
+- A sixth category is only healthy with at least six coherent mechanics. Do not add filler mutations merely to populate the lane.
+- Raw expansion stays in Growth; mutation-point generation/random progression stays in Genetic Drift; direct toxin offense stays in Fungicide; temporary activations stay in Mycelial Surges.
+- New mutations follow the existing naming/copy workflow, deterministic Core ownership, observer/tracking requirements, prerequisite DAG rules, and Core/Simulation/Unity validation gates.
+- Balance-affecting mutation moves, prerequisites, costs, effect values, and AI weights must be isolated from UI-only commits and supported by tests or artifact-backed simulation evidence as appropriate.
+
+## Planned Slices
+
+Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.
+
+### 1. Category truth and expansion contract
+
+**Intent:** Remove the existing Regenerative Hyphae category mismatch and establish a reliable baseline before UI architecture begins.
+
+- Move the Regenerative Hyphae definition from Growth to Cellular Resilience while preserving ID, tier, prerequisites, costs, levels, processor timing, and effect behavior.
+- Keep its visual placement in Cellular Resilience and verify category investment totals now agree with the displayed lane.
+- Audit category-dependent AI spending, automatic-upgrade exclusions, analytics/reporting, campaign presets, mutation synergies, and prerequisite traversal for consequences.
+- Add focused repository tests for category membership, uniqueness, reachability, and the Regenerative Hyphae prerequisite chain where current coverage is insufficient.
+- Update the mutation-category guidelines so representative mutations and category philosophy match the corrected model and reserve Substrate Ecology's boundary without pretending its roster is finalized.
+
+**Acceptance:** Core and Simulation build; focused tests pass; existing saves remain ID-compatible; Regenerative Hyphae has exactly one definition and appears under Cellular Resilience in both data and UI metadata; no gameplay constant changes are bundled into this slice.
+
+### 2. Mutation presentation model and inspector-ready content
+
+**Intent:** Give the UI a stable, tested way to present beginner and advanced information without duplicating mutation mechanics in Unity.
+
+- Define a shared presentation contract for plain summary, technical detail, max-level bonus, and synergy lines using the existing authored descriptions.
+- Inventory all current mutation descriptions against that contract and fix only content/format defects needed for reliable rendering.
+- Expose current level, next-level value/delta, cost, points after purchase, prerequisites, dependents, and state through a view model or focused presenter owned at the appropriate Core/Unity seam.
+- Keep formula/effect calculations sourced from Core mutation data and existing helpers.
+
+**Acceptance:** Every existing mutation produces non-empty simple content; technical content remains available; value/cost/state examples are covered by edit-mode or pure C# tests; no mutation effect or balance value changes.
+
+### 3. Persistent mutation inspector
+
+**Intent:** Replace reading-heavy transient tooltips with a stable detail surface that supports fast hover and deliberate inspection.
+
+- Add a roughly 320–360 unit right-side inspector within the full-screen workspace.
+- Hover updates immediately; pointer exit restores the last deliberately inspected mutation; clicking/pinning makes keyboard and relationship navigation predictable.
+- Show simple benefit, current/next level, next-level delta, cost, points after purchase, requirements, direct unlocks, and purchase state.
+- Add clickable prerequisite/dependent chips that focus the corresponding node.
+- Preserve immediate purchase behavior and all targeted-selection/surge/banking flows.
+
+**Acceptance:** Every node state can be understood from node plus inspector; inspecting never moves cards or blocks rapid purchases; prerequisite chips focus reliably; repeated open/close/restart creates no stale selection, listeners, or raycast blockers.
+
+### 4. Six-lane responsive workspace shell
+
+**Intent:** Establish the stable spatial model before adding a sixth roster.
+
+- Centralize category presentation metadata (order, display label, icon hook, tooltip, accent) instead of expanding scattered category switches indefinitely.
+- Add a Substrate Ecology category shell with an explicit empty/planned state; do not make it purchasable or feed it to AI until real mutations exist.
+- Fit six approximately 190–200 unit lanes plus the inspector at the 1920x1280 effective workspace; provide an intentional narrower-screen fallback.
+- Make all lanes share one vertical scroll position so cross-lane prerequisite tracing stays aligned.
+- Support at least eight common tier rows without horizontal scrolling at the primary target.
+
+**Acceptance:** Five populated lanes and the empty sixth lane remain aligned; headers and investment/ready summaries fit; 1920x1280 and 1920x1080 require no horizontal pan; 1600x900 and 1280x720 use the documented fallback without overlapping controls.
+
+### 5. Hyphal dependency graph and relationship navigation
+
+**Intent:** Make prerequisites and unlock paths readable as part of the graph rather than tooltip trivia.
+
+- Render faint default connectors behind nodes with deterministic layout and no input interception.
+- On inspection, highlight the full upstream prerequisite path and immediate dependents while gently dimming unrelated nodes.
+- Distinguish cross-category graft edges with a split-category treatment that remains understandable without color alone.
+- Define and render conjunction semantics clearly; do not imply alternative prerequisites where all are required.
+- Animate newly unlocked path growth once, without delaying input or replaying continuously.
+
+**Acceptance:** All prerequisite relationships match Core data; cycles/impossible references fail visibly in tests or development validation; hover/click/purchase remain responsive; connector graphics do not capture raycasts or allocate continuously.
+
+### 6. Search and progressive technical detail
+
+**Intent:** Let both occasional and expert players find and understand upgrades quickly.
+
+- Add search across mutation name, plain summary, category, and meaningful mechanic terms.
+- Highlight matches and dim nonmatches in place; preserve card positions and graph context.
+- Add `Ctrl+F` focus and clear/escape behavior without stealing shortcuts while another text field owns input.
+- Add remembered `Simple / Technical` preference and a temporary `Alt` technical reveal where platform input supports it.
+- Persist only presentation preference, not transient search/selection state.
+
+**Acceptance:** Search never alters availability or ordering; all nodes return cleanly after clear; preference survives workspace reopen/restart through the established settings path; simple and technical states remain readable at target resolutions.
+
+### 7. Compact node language and Directional Tendrils family
+
+**Intent:** Increase information density without returning to tiny or opaque cards.
+
+- Give every node a two-line maximum name, one plain-language effect line, compact rank treatment, DNA cost, and one unambiguous state glyph/treatment.
+- Remove redundant prose state labels only where glyph, border, and inspector preserve accessibility.
+- Prototype one compound `Directional Tendrils` family card whose four quadrants remain independently upgradeable and whose underlying IDs/levels/prerequisites remain unchanged.
+- Ensure repeated clicks can spend five points in roughly three seconds on a stationary eligible target.
+
+**Acceptance:** All names and states fit without hiding cost/rank; four Tendril levels remain individually addressable by human, AI, save, simulation, and prerequisite logic; no accidental multi-buy action is introduced.
+
+### 8. Restrained fungal presentation pass
+
+**Intent:** Make the workspace feel authored and fungal after its interaction model is stable.
+
+- Add subtle substrate/microscope texture, category iconography, hyphal connector shapes, restrained purchased-node growth treatment, and short purchase/unlock feedback.
+- Reuse existing style tokens and audio architecture; add new tunables to their owning constants.
+- Limit spore particles and path growth to purchases/unlocks; no continuous decorative motion.
+- Keep response in the 150–250 ms range and never block the next purchase.
+
+**Acceptance:** Decoration does not reduce contrast, obscure graph state, capture input, or create visible frame/layout regression; reduced-motion or equivalent existing presentation-speed behavior is respected where applicable.
+
+### 9. Substrate Ecology roster and whole-tree design review
+
+**Intent:** Design the sixth category as a coherent strategic lane before implementing mechanics.
+
+- Produce at least seven candidate mechanics with tier, trigger, scaling, prerequisites, AI implications, interactions, counterplay, tracking needs, and focused test plans.
+- Follow the required five-name shortlist and uniqueness search for each mutation before final naming.
+- Review whether any existing mutations belong more naturally in Substrate Ecology or another category; propose moves separately with balance/AI consequences.
+- Design approximately one additional mutation for each existing category, targeting at least twelve additions overall without treating the count as more important than coherence.
+- Validate prerequisite depth, total investment ranges, cross-category diversity, reachability, DAG safety, and category roster balance.
+- Present the roster and any mutation moves/tuning proposals to Jake before gameplay implementation if they materially change existing builds.
+
+**Acceptance:** The complete proposed graph is reachable, acyclic, mechanically non-overlapping, and specific enough to implement/test; open balance decisions are explicit rather than hidden in code.
+
+### 10. Substrate Ecology infrastructure and first playable root
+
+**Intent:** Make the sixth category real through the smallest end-to-end gameplay slice.
+
+- Add the category to Core, repository/factory coordination, AI eligibility/weighting, Simulation reporting, Unity metadata, colors/icons, and tests.
+- Implement the category's Tier 1 root mutation end-to-end, including deterministic effect processing, observer events, analytics, UI node/inspector content, and focused tests.
+- Refresh the checked-in Core Unity plugin through the documented workflow when required.
+
+**Acceptance:** The new root can be bought and takes effect in Core, Unity, AI, and Simulation; tracking is exported correctly; existing five-category strategies retain intentional behavior; builds/tests and a focused smoke simulation pass.
+
+### 11. Remaining mutation implementation batches
+
+**Intent:** Add the approved roster in reviewable mechanic families rather than one risky bulk change.
+
+- Implement two or three closely related mutations per slice, or one per slice when the mechanic is novel/high-risk.
+- For every batch: constants, IDs/types, factory/prerequisites, processors/coordinator, events, Simulation tracking/export, AI metadata, Unity layout/inspector, tests, docs, and plugin refresh where required.
+- Run a focused deterministic scenario or smoke simulation for each mechanic family; do not use aggregate win rate as a substitute for effect correctness.
+- Commit and synchronize every completed batch independently.
+
+**Acceptance:** Each batch is independently testable/revertible; no placeholder effects or untracked mechanics; all descriptions match implementation timing, restrictions, and scaling.
+
+### 12. Whole-tree balance, usability, and release hardening
+
+**Intent:** Validate the expanded system as one game feature rather than a collection of passing unit tests.
+
+- Run artifact-backed simulations for category adoption, mutation pick/upgrade rates, effect incidence, win-rate association, dead paths, dominant rushes, AI spending failures, and game-length effects.
+- Perform timed novice/expert interaction checks, including five-point rapid spend, search, prerequisite tracing, simple/technical comprehension, banking, Time-Lapse, surges, targeted selections, hotseat, and restart.
+- Tune prerequisites/costs/effects in isolated evidence-backed commits.
+- Complete Unity visual/interaction checks at 1920x1280, 1920x1080, 1600x900, and 1280x720, including long names, every node state, deep cross-category paths, and dense late-tree investment.
+
+**Acceptance:** No unreachable or misleading nodes; no category is structurally mandatory or ignored without a deliberate reason; the primary desktop layouts require no horizontal navigation; rapid purchasing remains faster than the pre-expansion tree; Console/build/test/simulation validation is clean.
+
+## Cross-Slice Validation Matrix — Mycelial Lab
+
+Use the smallest relevant subset for each slice and the full matrix for slices 10–12:
+
+1. `git diff --check` and review for unrelated changes, serialized-reference risk, category-switch exhaustiveness, and save compatibility.
+2. `dotnet build FungusToast.Core/FungusToast.Core.csproj` for Core/shared changes.
+3. Relevant focused Core tests, plus full Core tests after category/prerequisite infrastructure changes.
+4. `dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj` and focused smoke simulation when gameplay, AI, or tracking changes.
+5. Refresh and commit the checked-in Unity Core DLL/PDB when Core API/behavior changes require it.
+6. Unity clean compile and Console check for Unity-facing changes.
+7. Mutation workspace at 1920x1280 and 1920x1080; shared-layout checks at 1600x900 and 1280x720.
+8. All node states, simple/technical content, search clear/reopen, graph focus, repeated purchases, purchases to zero, banking, targeted selection, surge activation, Time-Lapse, hotseat handoff, restart, and transition cleanup where affected.
+9. Artifact-backed Simulation analysis before final balance calls.
+
+## Historical Thread — Gameplay UX Audit
 
 - **Focus:** Gameplay UX audit and polish for 16:9 desktop displays.
 - **Primary target:** 1920x1080 or larger, using Unity's existing 1920x1080 CanvasScaler reference.
