@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–7 are complete; Slice 8 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–8 are complete; Slice 9 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -206,6 +206,16 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Keep response in the 150–250 ms range and never block the next purchase.
 
 **Acceptance:** Decoration does not reduce contrast, obscure graph state, capture input, or create visible frame/layout regression; reduced-motion or equivalent existing presentation-speed behavior is respected where applicable.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added a static, deterministic `MycelialBackdropGraphic` behind the shared mutation content: 72 very low-alpha substrate spores and nine sparse branching hyphae, rebuilt only when Unity dirties the viewport graphic.
+- The backdrop is clipped by the existing viewport, creates no texture asset, does not animate or allocate per frame, and has raycasts disabled. Nodes, dependency connectors, headers, and inspector retain their established contrast surfaces above it.
+- Activated the catalog's icon hook with restrained header sigils for all six lanes while retaining full text labels and tooltips; category meaning never depends on glyph or color alone.
+- Added a tiny `·•·` purchased-hypha mark to owned cards. It is decorative, non-raycasting, state-derived on refresh, and complements rather than replaces level/state text and the existing progress fill.
+- Tightened purchase bounce/flash and newly unlocked path growth to 220 ms in Normal presentation and 80 ms in Time-Lapse. Both remain immediate, unscaled/non-blocking where appropriate, and introduce no ongoing particles or motion.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Core mechanics and the checked-in Unity Core plugin did not change. Unity Editor is unavailable in this environment.
+- Manual Unity checks required: backdrop visibility without text/connector contrast loss; clipping and resize behavior; header glyph font coverage and fit; owned marks on regular/compound/max/locked/surge cards; rapid purchases during Normal and Time-Lapse; simultaneous unlock traces; no raycast interception; supported resolutions; and Console/Profiler cleanliness.
 
 ### 9. Substrate Ecology roster and whole-tree design review
 

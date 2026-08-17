@@ -109,6 +109,7 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 - The graph ignores horizontal layout and renders behind lane columns. It may redraw after layout/inspection changes and during the short unlock trace, but must remain idle otherwise.
 - Solid edges mean same-category dependency; dashed edges mean cross-category graft. The inspector must explicitly state that multiple requirements are conjunctive.
 - `MutationTreeBuilder` may visually group related nodes, as with the 2×2 Directional Tendrils card, but each quadrant must remain a real `MutationNodeUI` backed by its original Core mutation ID. Visual grouping must never introduce aggregate purchase or save state.
+- `MycelialBackdropGraphic` is a static, non-raycasting viewport child. Keep substrate grain/hyphae sparse and mesh-based; decorative mutation-workspace visuals must not add continuous animation, per-frame allocation, or authored gameplay state.
 
 ---
 

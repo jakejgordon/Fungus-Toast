@@ -134,6 +134,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerReturnSlotRect = null!;
         private MutationInspectorPanel? mutationInspector;
         private MutationDependencyGraphGraphic? mutationDependencyGraph;
+        private MycelialBackdropGraphic? mycelialBackdrop;
 
         private Player? humanPlayer;
         private bool humanTurnEnded = false;
@@ -1441,7 +1442,38 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationScrollViewRect ??= (mutationTreeRect.Find("UI_MutationScrollView") as RectTransform)!;
             mutationViewportRect ??= (mutationScrollViewRect?.Find("UI_MutationViewport") as RectTransform)!;
             mutationScrollViewContentRect ??= (mutationViewportRect?.Find("UI_MutationScrollViewContent") as RectTransform)!;
+            EnsureMycelialBackdrop();
             EnsureMutationInspector();
+        }
+
+        private void EnsureMycelialBackdrop()
+        {
+            if (mycelialBackdrop != null || mutationViewportRect == null)
+            {
+                return;
+            }
+
+            Transform existing = mutationViewportRect.Find("UI_MycelialBackdrop");
+            if (existing != null)
+            {
+                mycelialBackdrop = existing.GetComponent<MycelialBackdropGraphic>();
+                if (mycelialBackdrop != null)
+                {
+                    return;
+                }
+            }
+
+            var backdropObject = new GameObject("UI_MycelialBackdrop", typeof(RectTransform), typeof(MycelialBackdropGraphic));
+            backdropObject.layer = mutationViewportRect.gameObject.layer;
+            RectTransform backdropRect = backdropObject.GetComponent<RectTransform>();
+            backdropRect.SetParent(mutationViewportRect, false);
+            backdropRect.anchorMin = Vector2.zero;
+            backdropRect.anchorMax = Vector2.one;
+            backdropRect.offsetMin = Vector2.zero;
+            backdropRect.offsetMax = Vector2.zero;
+            backdropRect.SetAsFirstSibling();
+            mycelialBackdrop = backdropObject.GetComponent<MycelialBackdropGraphic>();
+            mycelialBackdrop.raycastTarget = false;
         }
 
         private void ConfigureMutationPanelRect(float targetWidth)

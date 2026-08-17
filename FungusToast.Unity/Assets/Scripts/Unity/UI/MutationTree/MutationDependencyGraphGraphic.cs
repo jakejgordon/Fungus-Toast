@@ -16,7 +16,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HighlightThickness = 3f;
         private const float DashLength = 9f;
         private const float DashGap = 6f;
-        private const float UnlockGrowthDuration = 0.55f;
+        private const float UnlockGrowthDuration = 0.22f;
 
         private readonly List<Edge> edges = new();
         private readonly HashSet<int> highlightedPrerequisiteIds = new();
@@ -95,7 +95,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            unlockGrowthProgress = Mathf.Min(1f, unlockGrowthProgress + (Time.unscaledDeltaTime / UnlockGrowthDuration));
+            float duration = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode
+                ? 0.08f
+                : UnlockGrowthDuration;
+            unlockGrowthProgress = Mathf.Min(1f, unlockGrowthProgress + (Time.unscaledDeltaTime / duration));
             SetVerticesDirty();
             if (unlockGrowthProgress >= 1f)
             {

@@ -15,6 +15,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "Growth",
             displayName: "Growth",
             iconKey: "growth",
+            iconGlyph: "✦",
             tooltipText: "<b>Growth</b>\nMutations that help your colony spread faster across the toast.",
             accent: UIStyleTokens.Category.Growth,
             preferredWidth: 200f,
@@ -24,6 +25,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "CellularResilience",
             displayName: "Cellular Resilience",
             iconKey: "cellular-resilience",
+            iconGlyph: "⬡",
             tooltipText: "<b>Cellular Resilience</b>\nMutations that help your mold endure damage and reclaim dead cells.",
             accent: UIStyleTokens.Category.CellularResilience,
             preferredWidth: 190f,
@@ -33,6 +35,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "Fungicide",
             displayName: "Fungicide",
             iconKey: "fungicide",
+            iconGlyph: "×",
             tooltipText: "<b>Fungicide</b>\nAggressive mutations that harry rival molds and weaken their foothold.",
             accent: UIStyleTokens.Category.Fungicide,
             preferredWidth: 190f,
@@ -42,6 +45,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "GeneticDrift",
             displayName: "Genetic Drift",
             iconKey: "genetic-drift",
+            iconGlyph: "≈",
             tooltipText: "<b>Genetic Drift</b>\nMutations that warp your evolution, granting extra mutation points or unexpected gifts.",
             accent: UIStyleTokens.Category.GeneticDrift,
             preferredWidth: 190f,
@@ -51,6 +55,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "MycelialSurges",
             displayName: "Mycelial Surges",
             iconKey: "mycelial-surges",
+            iconGlyph: "↯",
             tooltipText: "<b>Mycelial Surges</b>\nMutations that unleash brief but potent bursts of colony strength.",
             accent: UIStyleTokens.Category.MycelialSurges,
             preferredWidth: 190f,
@@ -60,6 +65,7 @@ namespace FungusToast.Unity.UI.MutationTree
             key: "SubstrateEcology",
             displayName: "Substrate Ecology",
             iconKey: "substrate-ecology",
+            iconGlyph: "○",
             tooltipText: "<b>Substrate Ecology</b>\nA planned category about nutrient patches, dead zones, crowding, edges, and environmental opportunity. Its roster is still in design and cannot be purchased yet.",
             accent: UIStyleTokens.Category.SubstrateEcology,
             preferredWidth: 190f,
@@ -87,6 +93,7 @@ namespace FungusToast.Unity.UI.MutationTree
             string key,
             string displayName,
             string iconKey,
+            string iconGlyph,
             string tooltipText,
             Color accent,
             float preferredWidth,
@@ -95,6 +102,7 @@ namespace FungusToast.Unity.UI.MutationTree
             Key = key;
             DisplayName = displayName;
             IconKey = iconKey;
+            IconGlyph = iconGlyph;
             TooltipText = tooltipText;
             Accent = accent;
             PreferredWidth = preferredWidth;
@@ -104,6 +112,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public string Key { get; }
         public string DisplayName { get; }
         public string IconKey { get; }
+        public string IconGlyph { get; }
         public string TooltipText { get; }
         public Color Accent { get; }
         public float PreferredWidth { get; }

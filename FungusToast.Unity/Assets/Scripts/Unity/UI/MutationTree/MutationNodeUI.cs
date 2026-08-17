@@ -79,6 +79,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
         private TextMeshProUGUI effectSummaryText;
+        private TextMeshProUGUI purchasedGrowthMark;
 
         private Mutation mutation;
         private UI_MutationManager uiManager;
@@ -120,6 +121,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Runtime-create MAX badge if not wired in prefab ──
             EnsureMaxBadge();
+            EnsurePurchasedGrowthMark();
 
             // ── Subtle border outline for visual node separation ──
             EnsureNodeBorder();
@@ -188,6 +190,10 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             int currentLevel = player.GetMutationLevel(mutation.Id);
             bool isMaxed = currentLevel >= mutation.MaxLevel;
+            if (purchasedGrowthMark != null)
+            {
+                purchasedGrowthMark.gameObject.SetActive(currentLevel > 0);
+            }
 
             // SURGE LOGIC
             bool isSurge = mutation.IsSurge;
@@ -445,6 +451,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 effectSummaryText.color = secondary;
             }
 
+            if (purchasedGrowthMark != null)
+            {
+                purchasedGrowthMark.color = secondary;
+            }
+
             if (upgradeCostText != null)
             {
                 upgradeCostText.color = primary;
@@ -493,7 +504,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private IEnumerator UpgradeEffectCoroutine()
         {
-            float duration = 0.3f;
+            float duration = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode
+                ? 0.08f
+                : 0.22f;
             float elapsed = 0f;
             float maxScale = 1.06f; // subtle bounce — halved from original 1.12
             Vector3 originalScale = Vector3.one;
@@ -1503,6 +1516,34 @@ namespace FungusToast.Unity.UI.MutationTree
 
             maxBadge = badgeGO;
             maxBadge.SetActive(false);
+        }
+
+        private void EnsurePurchasedGrowthMark()
+        {
+            if (purchasedGrowthMark != null || upgradeButton == null)
+            {
+                return;
+            }
+
+            var markObject = new GameObject("PurchasedHyphaMark", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            markObject.layer = gameObject.layer;
+            markObject.transform.SetParent(upgradeButton.transform, false);
+            RectTransform markRect = markObject.GetComponent<RectTransform>();
+            markRect.anchorMin = Vector2.zero;
+            markRect.anchorMax = Vector2.zero;
+            markRect.pivot = Vector2.zero;
+            markRect.anchoredPosition = new Vector2(7f, 4f);
+            markRect.sizeDelta = new Vector2(38f, 15f);
+
+            purchasedGrowthMark = markObject.GetComponent<TextMeshProUGUI>();
+            purchasedGrowthMark.font = mutationNameText != null ? mutationNameText.font : null;
+            purchasedGrowthMark.text = "·•·";
+            purchasedGrowthMark.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            purchasedGrowthMark.fontStyle = FontStyles.Bold;
+            purchasedGrowthMark.color = MutationTreeColors.GetCategoryAccent(mutation.Category);
+            purchasedGrowthMark.alignment = TextAlignmentOptions.BottomLeft;
+            purchasedGrowthMark.raycastTarget = false;
+            purchasedGrowthMark.gameObject.SetActive(false);
         }
 
         /// <summary>

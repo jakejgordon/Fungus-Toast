@@ -105,7 +105,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     var rootTMP = headerGO.GetComponent<TextMeshProUGUI>();
                     if (rootTMP != null)
                     {
-                        rootTMP.text = presentation.DisplayName;
+                        rootTMP.text = $"{presentation.IconGlyph}  {presentation.DisplayName}";
                         rootTMP.color = Color.clear; // invisible but drives preferred width
                     }
 
@@ -145,7 +145,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 if (headerText != null)
                 {
-                    headerText.text = presentation.DisplayName;
+                    headerText.text = $"{presentation.IconGlyph}  {presentation.DisplayName}";
                     if (headerText.gameObject != headerGO)
                     {
                         ConfigureHeaderTitleRect(headerText.rectTransform);
