@@ -108,6 +108,7 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 - Edges are derived only from registered Core `Mutation.Prerequisites`; do not author a second Unity dependency list. Repository integrity tests remain the guard against missing references and cycles.
 - The graph ignores horizontal layout and renders behind lane columns. It may redraw after layout/inspection changes and during the short unlock trace, but must remain idle otherwise.
 - Solid edges mean same-category dependency; dashed edges mean cross-category graft. The inspector must explicitly state that multiple requirements are conjunctive.
+- `MutationTreeBuilder` may visually group related nodes, as with the 2×2 Directional Tendrils card, but each quadrant must remain a real `MutationNodeUI` backed by its original Core mutation ID. Visual grouping must never introduce aggregate purchase or save state.
 
 ---
 

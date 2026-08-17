@@ -18,7 +18,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
 - **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
 - **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–6 are complete; Slice 7 is active.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–7 are complete; Slice 8 is active.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -185,6 +185,16 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Ensure repeated clicks can spend five points in roughly three seconds on a stationary eligible target.
 
 **Acceptance:** All names and states fit without hiding cost/rank; four Tendril levels remain individually addressable by human, AI, save, simulation, and prerequisite logic; no accidental multi-buy action is introduced.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Added a one-line, plain-language summary to every mutation card using the canonical parsed description. Names are capped at two lines, state remains compact, and cost/state treatments continue to own affordability/lock/max communication.
+- Rebalanced the existing 120-unit node's text stack to a fixed 28-unit name, 26-unit state, and 16-unit effect line. Text auto-sizing, truncation/ellipsis, and contrast updates remain centralized in `MutationNodeUI`.
+- Replaced four consecutive Growth-lane cards with one 200×292 `Directional Tendrils` family card containing a spatial 2×2 grid: `↖ NW`, `↗ NE`, `↙ SW`, `↘ SE`.
+- Each quadrant is still a complete `MutationNodeUI` initialized with the original mutation object. IDs 6–9, costs, independent levels, button listeners, inspector/search behavior, tooltips, prerequisite edges, saves, and Core growth effects are unchanged.
+- The compound card reduces the former four-card vertical footprint by roughly 218 units and does not move after purchases. Its four nodes remain in the manager's canonical node list for investment totals, relationship navigation, refreshes, and interaction locking.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Core mechanics and the checked-in Unity Core plugin did not change. Unity Editor is unavailable in this environment.
+- Manual Unity checks required: all regular nodes with short/long names and summaries; every state and multi-digit cost; all four quadrant labels/glyphs/click targets/tooltips; independent repeated purchases and save/load; Tendril prerequisite edges into Mycotropic Induction; inspector chips/search/highlights; lock/pending/max overlays within 91-unit quadrants; rapid five-point spend; supported resolutions; and Console cleanliness.
 
 ### 8. Restrained fungal presentation pass
 

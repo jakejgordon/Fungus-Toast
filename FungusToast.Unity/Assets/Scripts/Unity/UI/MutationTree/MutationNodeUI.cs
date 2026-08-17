@@ -21,7 +21,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private const int NodeTextTopPadding = 42;
         private const int NodeTextBottomPadding = 4;
         private const float NodeTextSpacing = 2f;
-        private const float NodeStateTextHeight = 32f;
+        private const float NodeNameTextHeight = 28f;
+        private const float NodeStateTextHeight = 26f;
+        private const float NodeEffectTextHeight = 16f;
+        private const float CompactNodeHeight = 120f;
         private const float MaxBadgeWidth = 44f;
         private const float MaxBadgeHeight = 20f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
@@ -75,6 +78,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Enhanced UX — MAX Badge")]
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
+        private TextMeshProUGUI effectSummaryText;
 
         private Mutation mutation;
         private UI_MutationManager uiManager;
@@ -105,6 +109,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureStatusIndicator(pendingUnlockOverlay);
             ConfigureStatusIndicator(surgeActiveOverlay);
             mutationNameText.text = mutation.Name;
+            EnsureEffectSummaryText();
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
             if (tierStripe != null)
@@ -433,6 +438,11 @@ namespace FungusToast.Unity.UI.MutationTree
             if (levelText != null)
             {
                 levelText.color = secondary;
+            }
+
+            if (effectSummaryText != null)
+            {
+                effectSummaryText.color = secondary;
             }
 
             if (upgradeCostText != null)
@@ -1562,6 +1572,72 @@ namespace FungusToast.Unity.UI.MutationTree
             LayoutRebuilder.ForceRebuildLayoutImmediate(groupRect);
         }
 
+        private void EnsureEffectSummaryText()
+        {
+            if (effectSummaryText != null || mutationNameText == null)
+            {
+                return;
+            }
+
+            Transform textContainer = mutationNameText.transform.parent;
+            var effectObject = new GameObject("UI_MutationNodeEffectSummary", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            effectObject.layer = gameObject.layer;
+            effectObject.transform.SetParent(textContainer, false);
+            effectSummaryText = effectObject.GetComponent<TextMeshProUGUI>();
+            effectSummaryText.font = mutationNameText.font;
+            effectSummaryText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+            effectSummaryText.fontStyle = FontStyles.Italic;
+            effectSummaryText.color = MutationTreeColors.SecondaryText;
+            effectSummaryText.alignment = TextAlignmentOptions.Center;
+            effectSummaryText.textWrappingMode = TextWrappingModes.NoWrap;
+            effectSummaryText.overflowMode = TextOverflowModes.Ellipsis;
+            effectSummaryText.raycastTarget = false;
+            effectSummaryText.text = mutation.DescriptionSections.Summary.Replace('\n', ' ');
+
+            LayoutElement layout = effectObject.GetComponent<LayoutElement>();
+            layout.minHeight = NodeEffectTextHeight;
+            layout.preferredHeight = NodeEffectTextHeight;
+            layout.flexibleHeight = 0f;
+        }
+
+        public void SetCompactLayout(string displayName)
+        {
+            if (mutationNameText != null && !string.IsNullOrWhiteSpace(displayName))
+            {
+                mutationNameText.text = displayName;
+            }
+
+            if (upgradeButton != null && upgradeButton.transform is RectTransform buttonRect)
+            {
+                buttonRect.anchorMin = new Vector2(0f, 1f);
+                buttonRect.anchorMax = new Vector2(1f, 1f);
+                buttonRect.pivot = new Vector2(0.5f, 1f);
+                buttonRect.anchoredPosition = Vector2.zero;
+                buttonRect.sizeDelta = new Vector2(0f, CompactNodeHeight);
+            }
+
+            if (lockOverlay != null && lockOverlay.transform is RectTransform lockRect)
+            {
+                ConfigureCompactStatusIndicator(lockRect);
+            }
+
+            if (pendingUnlockOverlay != null && pendingUnlockOverlay.transform is RectTransform pendingRect)
+            {
+                ConfigureCompactStatusIndicator(pendingRect);
+            }
+
+            if (surgeActiveOverlay != null && surgeActiveOverlay.transform is RectTransform surgeRect)
+            {
+                ConfigureCompactStatusIndicator(surgeRect);
+            }
+        }
+
+        private static void ConfigureCompactStatusIndicator(RectTransform indicatorRect)
+        {
+            indicatorRect.anchoredPosition = new Vector2(-29f, -16f);
+            indicatorRect.sizeDelta = new Vector2(30f, 30f);
+        }
+
         private void ConfigureMutationNameFit()
         {
             if (mutationNameText == null)
@@ -1598,6 +1674,14 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationNameText.overflowMode = TextOverflowModes.Truncate;
             mutationNameText.fontSizeMax = targetSize;
             mutationNameText.fontSizeMin = Mathf.Min(targetSize, MutationNameMinimumFontSize);
+            mutationNameText.maxVisibleLines = 2;
+
+            var nameLayout = mutationNameText.GetComponent<LayoutElement>();
+            if (nameLayout == null)
+                nameLayout = mutationNameText.gameObject.AddComponent<LayoutElement>();
+            nameLayout.minHeight = NodeNameTextHeight;
+            nameLayout.preferredHeight = NodeNameTextHeight;
+            nameLayout.flexibleHeight = 0f;
         }
 
         private void ConfigureStateTextFit()

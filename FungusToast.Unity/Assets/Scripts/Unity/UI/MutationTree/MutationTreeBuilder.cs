@@ -19,6 +19,14 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MutationNodeWidth = 132f;
         private const float MutationNodeHeight = 120f;
         private const float PlannedLaneCardHeight = 100f;
+        private const float DirectionalTendrilsCardHeight = 292f;
+        private static readonly int[] DirectionalTendrilOrder =
+        {
+            MutationIds.TendrilNorthwest,
+            MutationIds.TendrilNortheast,
+            MutationIds.TendrilSouthwest,
+            MutationIds.TendrilSoutheast
+        };
 
         [Header("Prefabs")]
         [SerializeField] private GameObject categoryHeaderPrefab;
@@ -212,41 +220,30 @@ namespace FungusToast.Unity.UI.MutationTree
 
             foreach (var group in mutationsWithLayout)
             {
+                bool directionalTendrilsCreated = false;
                 // Sort by row
                 foreach (var (mutation, meta) in group.OrderBy(t => t.meta.Row))
                 {
                     RectTransform parentColumn = GetColumnForCategory(meta.Category);
 
-                    GameObject nodeGO = Instantiate(mutationNodePrefab, parentColumn);
-                    nodeGO.name = $"MutationNode_{mutation.Name}";
-                    nodeGO.transform.localScale = Vector3.one;
-
-                    // Set to row+1 to account for header at index 0
-                    nodeGO.transform.SetSiblingIndex(meta.Row + 1);
-
-                    var mutationNodeLayout = nodeGO.GetComponent<LayoutElement>();
-                    if (mutationNodeLayout != null)
+                    if (DirectionalTendrilOrder.Contains(mutation.Id))
                     {
-                        mutationNodeLayout.preferredWidth = MutationNodeWidth;
-                        mutationNodeLayout.preferredHeight = MutationNodeHeight;
-                    }
-
-                    MutationNodeUI nodeUI = nodeGO.GetComponent<MutationNodeUI>();
-                    nodeUI.Initialize(mutation, player, uiManager);
-
-                    // Lock overlay and debug info
-                    var lockOverlay = nodeGO.transform.Find("UI_LockOverlay");
-                    if (lockOverlay != null)
-                    {
-                        lockOverlay.SetAsLastSibling();
-                        var image = lockOverlay.GetComponent<Image>();
-                        if (image != null && image.sprite == null)
+                        if (!directionalTendrilsCreated)
                         {
-                            Debug.LogWarning($"🔒 UI_LockOverlay exists on {mutation.Name} but has no sprite assigned.");
+                            IEnumerable<Mutation> tendrils = DirectionalTendrilOrder
+                                .Select(id => group.Select(entry => entry.mutation).First(candidate => candidate.Id == id));
+                            createdNodes.AddRange(CreateDirectionalTendrilsCard(
+                                tendrils,
+                                parentColumn,
+                                meta.Row + 1,
+                                player,
+                                uiManager));
+                            directionalTendrilsCreated = true;
                         }
+                        continue;
                     }
 
-                    createdNodes.Add(nodeUI);
+                    createdNodes.Add(CreateMutationNode(mutation, parentColumn, meta.Row + 1, player, uiManager));
                 }
             }
 
@@ -254,6 +251,120 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateCategoryInvestmentSummaries(createdNodes, player);
 
             return createdNodes;
+        }
+
+        private MutationNodeUI CreateMutationNode(
+            Mutation mutation,
+            RectTransform parent,
+            int siblingIndex,
+            Player player,
+            UI_MutationManager uiManager,
+            bool compact = false,
+            string compactName = null)
+        {
+            GameObject nodeObject = Instantiate(mutationNodePrefab, parent);
+            nodeObject.name = $"MutationNode_{mutation.Name}";
+            nodeObject.transform.localScale = Vector3.one;
+            nodeObject.transform.SetSiblingIndex(siblingIndex);
+
+            var nodeLayout = nodeObject.GetComponent<LayoutElement>();
+            if (nodeLayout != null)
+            {
+                nodeLayout.preferredWidth = compact ? 91f : MutationNodeWidth;
+                nodeLayout.preferredHeight = MutationNodeHeight;
+            }
+
+            MutationNodeUI node = nodeObject.GetComponent<MutationNodeUI>();
+            node.Initialize(mutation, player, uiManager);
+            if (compact)
+            {
+                node.SetCompactLayout(compactName);
+            }
+
+            Transform lockOverlay = nodeObject.transform.Find("UI_LockOverlay");
+            if (lockOverlay != null)
+            {
+                lockOverlay.SetAsLastSibling();
+                Image image = lockOverlay.GetComponent<Image>();
+                if (image != null && image.sprite == null)
+                {
+                    Debug.LogWarning($"🔒 UI_LockOverlay exists on {mutation.Name} but has no sprite assigned.");
+                }
+            }
+
+            return node;
+        }
+
+        private IEnumerable<MutationNodeUI> CreateDirectionalTendrilsCard(
+            IEnumerable<Mutation> tendrils,
+            RectTransform parentColumn,
+            int siblingIndex,
+            Player player,
+            UI_MutationManager uiManager)
+        {
+            var cardObject = new GameObject("DirectionalTendrils", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            cardObject.layer = parentColumn.gameObject.layer;
+            cardObject.transform.SetParent(parentColumn, false);
+            cardObject.transform.SetSiblingIndex(siblingIndex);
+            RectTransform cardRect = cardObject.GetComponent<RectTransform>();
+            cardRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, MutationCategoryPresentationCatalog.Growth.PreferredWidth);
+            cardRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, DirectionalTendrilsCardHeight);
+            Image background = cardObject.GetComponent<Image>();
+            background.color = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Category.Growth, 0.10f);
+            background.raycastTarget = false;
+            LayoutElement cardLayout = cardObject.GetComponent<LayoutElement>();
+            cardLayout.minWidth = MutationCategoryPresentationCatalog.Growth.PreferredWidth;
+            cardLayout.preferredWidth = MutationCategoryPresentationCatalog.Growth.PreferredWidth;
+            cardLayout.minHeight = DirectionalTendrilsCardHeight;
+            cardLayout.preferredHeight = DirectionalTendrilsCardHeight;
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            titleObject.layer = cardObject.layer;
+            titleObject.transform.SetParent(cardObject.transform, false);
+            RectTransform titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.anchoredPosition = Vector2.zero;
+            titleRect.sizeDelta = new Vector2(0f, 38f);
+            TextMeshProUGUI title = titleObject.GetComponent<TextMeshProUGUI>();
+            title.text = "Directional Tendrils";
+            title.fontSize = 16f;
+            title.fontStyle = FontStyles.Bold;
+            title.color = MutationTreeColors.PrimaryText;
+            title.alignment = TextAlignmentOptions.Center;
+            title.raycastTarget = false;
+
+            var gridObject = new GameObject("Quadrants", typeof(RectTransform), typeof(GridLayoutGroup));
+            gridObject.layer = cardObject.layer;
+            gridObject.transform.SetParent(cardObject.transform, false);
+            RectTransform gridRect = gridObject.GetComponent<RectTransform>();
+            gridRect.anchorMin = Vector2.zero;
+            gridRect.anchorMax = Vector2.one;
+            gridRect.offsetMin = new Vector2(6f, 6f);
+            gridRect.offsetMax = new Vector2(-6f, -38f);
+            GridLayoutGroup grid = gridObject.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(91f, MutationNodeHeight);
+            grid.spacing = new Vector2(6f, 6f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+            grid.childAlignment = TextAnchor.UpperCenter;
+
+            var compactNames = new Dictionary<int, string>
+            {
+                { MutationIds.TendrilNorthwest, "↖ NW" },
+                { MutationIds.TendrilNortheast, "↗ NE" },
+                { MutationIds.TendrilSouthwest, "↙ SW" },
+                { MutationIds.TendrilSoutheast, "↘ SE" }
+            };
+
+            var nodes = new List<MutationNodeUI>();
+            int index = 0;
+            foreach (Mutation tendril in tendrils)
+            {
+                nodes.Add(CreateMutationNode(tendril, gridRect, index++, player, uiManager, compact: true, compactName: compactNames[tendril.Id]));
+            }
+            return nodes;
         }
 
         private static void ConfigureHeaderTitleRect(RectTransform rectTransform)
@@ -417,6 +528,10 @@ namespace FungusToast.Unity.UI.MutationTree
             layout.minWidth = presentation.PreferredWidth;
             layout.preferredHeight = PlannedLaneCardHeight;
             layout.minHeight = PlannedLaneCardHeight;
+
+            RectTransform cardRect = cardObject.GetComponent<RectTransform>();
+            cardRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, presentation.PreferredWidth);
+            cardRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, PlannedLaneCardHeight);
 
             var textObject = new GameObject("Message", typeof(RectTransform), typeof(TextMeshProUGUI));
             textObject.layer = cardObject.layer;
