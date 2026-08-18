@@ -238,7 +238,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 pendingUnlockText.text = "1";
 
             if (canvasGroup != null)
-                canvasGroup.alpha = isLocked ? 0.72f : (isSurgeActive || showPendingUnlock) ? 0.82f : isDisabledBecauseNoEffect ? 0.88f : 1f;
+                canvasGroup.alpha = isLocked ? 0.9f : (isSurgeActive || showPendingUnlock) ? 0.88f : isDisabledBecauseNoEffect ? 0.9f : 1f;
 
             // Surge overlay (shows when surge is active)
             if (surgeActiveOverlay != null)
@@ -398,7 +398,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             else if (isLocked || isSurgeActive)
             {
-                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Disabled, 0.55f);
+                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Secondary, 0.78f);
             }
             else if (canAfford)
             {
@@ -425,8 +425,11 @@ namespace FungusToast.Unity.UI.MutationTree
             if (nodeBackground == null || upgradeButton == null) return;
             if (!upgradeButton.interactable) return;
 
-            nodeBackground.color = Color.Lerp(nodeBackground.color, MutationTreeColors.PrimaryText, 0.30f);
-            ApplyTextContrast(useDarkText: true);
+            nodeBackground.color = Color.Lerp(
+                nodeBackground.color,
+                MutationTreeColors.GetCategoryAccent(mutation.Category),
+                0.24f);
+            ApplyTextContrast(useDarkText: false);
         }
 
         private void ApplyTextContrast(bool useDarkText)
@@ -1176,6 +1179,14 @@ namespace FungusToast.Unity.UI.MutationTree
             highlightOutline.effectDistance = on ? new Vector2(3f, -3f) : DefaultHighlightEffectDistance;
         }
 
+        public void SetTechnicalDetailMode(bool enabled)
+        {
+            if (effectSummaryText != null)
+            {
+                effectSummaryText.gameObject.SetActive(enabled);
+            }
+        }
+
         public void SetDependentHighlight(bool on)
         {
             // Same issue as prerequisite highlight: the overlay sits above TMP text and kills contrast.
@@ -1460,9 +1471,9 @@ namespace FungusToast.Unity.UI.MutationTree
             if (nodeBackground != null)
             {
                 Color highlightedBackground = Color.Lerp(
-                    MutationTreeColors.GetAffordableNodeBG(mutation.Category, 0.24f),
-                    MutationTreeColors.PrimaryText,
-                    0.52f);
+                    MutationTreeColors.GetOwnedNodeBG(mutation.Category),
+                    MutationTreeColors.GetCategoryAccent(mutation.Category),
+                    0.28f);
                 highlightedBackground.a = 1f;
                 nodeBackground.color = highlightedBackground;
             }
@@ -1472,7 +1483,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 canvasGroup.alpha = 1f;
             }
 
-            ApplyTextContrast(useDarkText: true);
+            ApplyTextContrast(useDarkText: false);
         }
 
         private void EnsureMaxBadge()
@@ -1627,13 +1638,14 @@ namespace FungusToast.Unity.UI.MutationTree
             effectSummaryText = effectObject.GetComponent<TextMeshProUGUI>();
             effectSummaryText.font = mutationNameText.font;
             effectSummaryText.fontSize = UIStyleTokens.Typography.MicroMinimum;
-            effectSummaryText.fontStyle = FontStyles.Italic;
+            effectSummaryText.fontStyle = FontStyles.Normal;
             effectSummaryText.color = MutationTreeColors.SecondaryText;
             effectSummaryText.alignment = TextAlignmentOptions.Center;
             effectSummaryText.textWrappingMode = TextWrappingModes.NoWrap;
             effectSummaryText.overflowMode = TextOverflowModes.Ellipsis;
             effectSummaryText.raycastTarget = false;
             effectSummaryText.text = mutation.DescriptionSections.Summary.Replace('\n', ' ');
+            effectSummaryText.gameObject.SetActive(false);
 
             LayoutElement layout = effectObject.GetComponent<LayoutElement>();
             layout.minHeight = NodeEffectTextHeight;

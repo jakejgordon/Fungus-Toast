@@ -344,6 +344,15 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        private void ApplyMutationDetailMode()
+        {
+            bool technicalDetailsVisible = technicalModePreference || altTechnicalReveal;
+            foreach (MutationNodeUI node in mutationButtons)
+            {
+                node.SetTechnicalDetailMode(technicalDetailsVisible);
+            }
+        }
+
         /// <summary>
         /// Resets transient UI/runtime state between games so stale coroutines and flags
         /// cannot lock spend-point interactions in the next level.
@@ -531,6 +540,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
+            ApplyMutationDetailMode();
             EnsureMutationDependencyGraph();
             mutationDependencyGraph?.Configure(mutationButtons, mutations);
             StartCoroutine(RefreshMutationDependencyGraphNextFrame());
@@ -1203,6 +1213,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationInspector?.SetTechnicalMode(
                 technicalModePreference || altTechnicalReveal,
                 altTechnicalReveal && !technicalModePreference);
+            ApplyMutationDetailMode();
             ApplyMutationSearchState();
 
             int currentLevel = inspectedPlayer.GetMutationLevel(inspectedMutation.Id);

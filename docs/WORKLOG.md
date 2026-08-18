@@ -251,6 +251,18 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 
 **Acceptance:** The new root can be bought and takes effect in Core, Unity, AI, and Simulation; tracking is exported correctly; existing five-category strategies retain intentional behavior; builds/tests and a focused smoke simulation pass.
 
+**Pre-Slice 10 readability follow-up (2026-08-17):**
+
+- Kept the approved gameplay-design gate intact and made a presentation-only pass based on the latest workspace screenshot.
+- Simple mode now removes the one-line effect summary from cards; Technical mode and held-Alt reveal it, while the persistent inspector remains the primary explanation surface in both modes.
+- Inspector text blocks now grow to their wrapped TMP preferred height and scroll instead of truncating descriptions with ellipses.
+- Replaced category and Tendril direction symbols with font-safe ASCII labels to prevent missing-glyph squares in the active TMP font.
+- Raised locked-card opacity/background/border contrast and removed italic styling from the optional card summary.
+- Changed hover and relationship-card highlighting to a dark category tint with light text, leaving the inspected node's white outline as the primary selection treatment.
+- The compact Growth card now labels the full `Mycelial Bloom > 4 Tendrils > Mycotropic Induction` progression so the compound branch does not read as detached.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. The Unity Editor/project file is unavailable in this environment, so Unity compile and visual checks remain manual.
+- Manual Unity checks required: Simple/Technical/held-Alt card content; long inspector summaries and technical/current/next sections; all six headers and four Tendril labels; locked cards; selected/hovered/prerequisite/dependent/search states; Growth progression at supported resolutions; and Console cleanliness.
+
 ### 11. Remaining mutation implementation batches
 
 **Intent:** Add the approved roster in reviewable mechanic families rather than one risky bulk change.

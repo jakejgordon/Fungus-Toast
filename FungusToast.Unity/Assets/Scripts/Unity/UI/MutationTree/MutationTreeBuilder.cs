@@ -328,8 +328,13 @@ namespace FungusToast.Unity.UI.MutationTree
             titleRect.anchoredPosition = Vector2.zero;
             titleRect.sizeDelta = new Vector2(0f, 38f);
             TextMeshProUGUI title = titleObject.GetComponent<TextMeshProUGUI>();
-            title.text = "Directional Tendrils";
-            title.fontSize = 16f;
+            title.text = "Mycelial Bloom > 4 Tendrils > Mycotropic Induction";
+            title.fontSize = 14f;
+            title.fontSizeMax = 14f;
+            title.fontSizeMin = 10f;
+            title.enableAutoSizing = true;
+            title.textWrappingMode = TextWrappingModes.NoWrap;
+            title.overflowMode = TextOverflowModes.Truncate;
             title.fontStyle = FontStyles.Bold;
             title.color = MutationTreeColors.PrimaryText;
             title.alignment = TextAlignmentOptions.Center;
@@ -352,10 +357,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var compactNames = new Dictionary<int, string>
             {
-                { MutationIds.TendrilNorthwest, "↖ NW" },
-                { MutationIds.TendrilNortheast, "↗ NE" },
-                { MutationIds.TendrilSouthwest, "↙ SW" },
-                { MutationIds.TendrilSoutheast, "↘ SE" }
+                { MutationIds.TendrilNorthwest, "NW" },
+                { MutationIds.TendrilNortheast, "NE" },
+                { MutationIds.TendrilSouthwest, "SW" },
+                { MutationIds.TendrilSoutheast, "SE" }
             };
 
             var nodes = new List<MutationNodeUI>();

@@ -118,6 +118,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             ConfigureRequirementButtons(snapshot.Requirements, focusMutation);
             ConfigureDependentButtons(snapshot.DirectDependents, focusMutation);
+            RefreshTextHeights();
             LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         }
 
@@ -139,6 +140,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureButtons(dependentButtons, dependentsRoot, Array.Empty<ChipData>(), null);
             emptyRequirementsText.gameObject.SetActive(true);
             emptyDependentsText.gameObject.SetActive(true);
+            RefreshTextHeights();
         }
 
         public void BindWorkspaceControls(Action<string> searchChanged, Action technicalModeToggled)
@@ -153,6 +155,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             technicalDetailsText.gameObject.SetActive(enabled);
             technicalModeButtonLabel.text = temporaryReveal ? "Technical (Alt)" : enabled ? "Technical" : "Simple";
+            RefreshTextHeights();
             LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         }
 
@@ -458,7 +461,7 @@ namespace FungusToast.Unity.UI.MutationTree
             label.fontStyle = fontStyle;
             label.color = color;
             label.enableWordWrapping = true;
-            label.overflowMode = TextOverflowModes.Ellipsis;
+            label.overflowMode = TextOverflowModes.Overflow;
             label.alignment = TextAlignmentOptions.TopLeft;
             label.margin = background.HasValue ? new Vector4(10f, 8f, 10f, 8f) : Vector4.zero;
             label.raycastTarget = false;
@@ -467,6 +470,43 @@ namespace FungusToast.Unity.UI.MutationTree
             element.preferredHeight = preferredHeight;
             element.minHeight = preferredHeight;
             return label;
+        }
+
+        private void RefreshTextHeights()
+        {
+            FitTextHeight(summaryText, 82f);
+            FitTextHeight(technicalDetailsText, 92f);
+            FitTextHeight(stateText, 26f);
+            FitTextHeight(costText, 30f);
+            FitTextHeight(currentLevelText, 70f);
+            FitTextHeight(nextLevelText, 70f);
+            FitTextHeight(maxLevelBonusText, 64f);
+            FitTextHeight(synergyText, 52f);
+        }
+
+        private void FitTextHeight(TextMeshProUGUI label, float minimumHeight)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            LayoutElement? element = label.GetComponent<LayoutElement>()
+                ?? label.transform.parent?.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                return;
+            }
+
+            float contentWidth = contentRect != null && contentRect.rect.width > 0f
+                ? contentRect.rect.width
+                : Mathf.Max(120f, rootRect.rect.width - (PanelPadding * 2f));
+            float horizontalMargins = label.margin.x + label.margin.z;
+            float verticalMargins = label.margin.y + label.margin.w;
+            float textWidth = Mathf.Max(80f, contentWidth - horizontalMargins);
+            float requiredHeight = label.GetPreferredValues(label.text, textWidth, 0f).y + verticalMargins;
+            element.minHeight = minimumHeight;
+            element.preferredHeight = Mathf.Max(minimumHeight, requiredHeight);
         }
 
         private static string BuildStateText(MutationProgressSnapshot snapshot, Player player, UI_MutationManager manager)
