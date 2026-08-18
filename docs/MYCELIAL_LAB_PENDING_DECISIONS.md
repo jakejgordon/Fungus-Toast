@@ -15,7 +15,7 @@
 
 | # | Decision | Status |
 |---|---|---|
-| 1 | Substrate Sensing root | Pending |
+| 1 | Substrate Sensing root | Rejected; replacement pending |
 | 2 | Aerated Frontier branch | Pending |
 | 3 | Compaction Pressure branch | Pending |
 | 4 | Detrital Enzymes branch | Pending |
@@ -63,7 +63,14 @@ Approve the name, mechanic, Tier-1 placement, and 10-level shape. Treat +1.5 poi
 
 ### Answer
 
-Pending.
+Rejected (`1C`) on 2026-08-17.
+
+Reasons:
+
+- Nutrient patches are sparse and usually distant from the starting colony, so the mutation would often provide no early benefit despite being the Tier-1 root.
+- Its opportunity is self-erasing: growth onto the nutrient patch consumes the patch, making the surrounding bonus transient.
+
+Do not implement Substrate Sensing in its proposed form. Select a replacement Tier-1 root before revising downstream prerequisites or beginning Slice 10.
 
 ## 2. Approve Aerated Frontier as the Open-Substrate Branch?
 
