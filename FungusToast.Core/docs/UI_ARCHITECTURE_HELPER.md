@@ -96,8 +96,8 @@ public class MyWidget : MonoBehaviour, ITooltipContentProvider
 The full-screen mutation workspace uses a persistent right-side inspector for decision-critical mutation information. It is not a hover tooltip and should not be implemented through `TooltipManager`.
 
 - `MutationInspectorPanel` is built once at runtime by `UI_MutationManager`; it uses semantic style tokens and introduces no scene/prefab reference.
-- Hover temporarily previews a mutation. Pointer exit restores the last selected mutation so the information surface never goes blank while the tree is populated.
-- Clicking a mutation card selects it without changing the existing immediate-purchase behavior. Requirement and direct-unlock chips focus and scroll to their related nodes.
+- Hover temporarily previews a mutation. Switching previews uses a short hover-intent delay, and moving into the inspector preserves the current preview so the pointer can reach its controls without the content changing underneath it.
+- The inspector exposes an explicit `Pin` / `Pinned` control. A pinned mutation ignores later node previews until unpinned. Clicking a mutation card or a requirement/direct-unlock chip also pins that mutation without changing the existing immediate-purchase behavior; relationship chips still focus and scroll to their related nodes.
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
 - Search and Simple/Technical controls live at the top of the inspector. Search is transient and only changes node emphasis; the disclosure preference uses scoped player settings, while held-Alt reveal is temporary.

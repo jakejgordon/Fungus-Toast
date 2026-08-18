@@ -93,6 +93,12 @@ namespace FungusToast.Unity.UI.Tooltips
             maxWidth = Mathf.Max(0, value);
         }
 
+        public void SetHoverDelay(float seconds)
+        {
+            hoverDelay = Mathf.Max(0f, seconds);
+            useCustomDelay = true;
+        }
+
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (touchMode && !isHelpIcon)
@@ -100,8 +106,7 @@ namespace FungusToast.Unity.UI.Tooltips
             float delay = useCustomDelay ? hoverDelay : (TooltipManager.Instance != null ? TooltipManager.Instance.showDelay : 0.35f);
             if (TooltipManager.Instance != null)
             {
-                TooltipManager.Instance.showDelay = delay; // temporarily override
-                TooltipManager.Instance.ShowAfterDelay(this, BuildRequest());
+                TooltipManager.Instance.ShowAfterDelay(this, BuildRequest(), delay);
             }
         }
 
@@ -143,8 +148,7 @@ namespace FungusToast.Unity.UI.Tooltips
                 isPinned = true;
                 if (TooltipManager.Instance != null)
                 {
-                    TooltipManager.Instance.showDelay = 0f;
-                    TooltipManager.Instance.ShowAfterDelay(this, BuildRequest());
+                    TooltipManager.Instance.ShowAfterDelay(this, BuildRequest(), 0f);
                 }
                 tooltipVisible = true;
             }
@@ -161,8 +165,7 @@ namespace FungusToast.Unity.UI.Tooltips
             {
                 if (TooltipManager.Instance != null)
                 {
-                    TooltipManager.Instance.showDelay = 0f;
-                    TooltipManager.Instance.ShowAfterDelay(this, BuildRequest());
+                    TooltipManager.Instance.ShowAfterDelay(this, BuildRequest(), 0f);
                 }
                 tooltipVisible = true;
             }

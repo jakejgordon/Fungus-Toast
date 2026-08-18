@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.MutationTree
@@ -14,7 +15,7 @@ namespace FungusToast.Unity.UI.MutationTree
     /// Persistent, runtime-built mutation explanation surface. It reuses Core presentation
     /// snapshots and the node's mechanic-specific level summary without owning purchase rules.
     /// </summary>
-    internal sealed class MutationInspectorPanel : MonoBehaviour
+    internal sealed class MutationInspectorPanel : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
         public const float PreferredWidth = 340f;
         public const float OuterGap = 12f;
@@ -47,6 +48,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private TMP_InputField searchInput = null!;
         private Button technicalModeButton = null!;
         private TextMeshProUGUI technicalModeButtonLabel = null!;
+        private Button pinButton = null!;
+        private TextMeshProUGUI pinButtonLabel = null!;
+        private Action? pointerEntered;
+        private Action? pointerExited;
 
         public static MutationInspectorPanel Create(RectTransform parent, TMP_FontAsset? font)
         {
@@ -143,13 +148,42 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshTextHeights();
         }
 
-        public void BindWorkspaceControls(Action<string> searchChanged, Action technicalModeToggled)
+        public void BindWorkspaceControls(
+            Action<string> searchChanged,
+            Action technicalModeToggled,
+            Action pinToggled,
+            Action inspectorPointerEntered,
+            Action inspectorPointerExited)
         {
             searchInput.onValueChanged.RemoveAllListeners();
             searchInput.onValueChanged.AddListener(value => searchChanged?.Invoke(value));
             technicalModeButton.onClick.RemoveAllListeners();
             technicalModeButton.onClick.AddListener(() => technicalModeToggled?.Invoke());
+            pinButton.onClick.RemoveAllListeners();
+            pinButton.onClick.AddListener(() => pinToggled?.Invoke());
+            pointerEntered = inspectorPointerEntered;
+            pointerExited = inspectorPointerExited;
         }
+
+        public void SetPinState(bool isPinned, bool canPin)
+        {
+            pinButton.interactable = canPin;
+            pinButtonLabel.text = isPinned ? "Pinned" : "Pin";
+            if (isPinned)
+            {
+                UIStyleTokens.Button.ApplyStyle(pinButton, useSelectedAsNormal: true);
+                pinButtonLabel.color = UIStyleTokens.Text.OnAccent;
+            }
+            else
+            {
+                UIStyleTokens.Button.ApplyPanelSecondaryStyle(pinButton);
+                pinButtonLabel.color = canPin ? UIStyleTokens.Text.Primary : UIStyleTokens.Text.Disabled;
+            }
+        }
+
+        public void OnPointerEnter(PointerEventData eventData) => pointerEntered?.Invoke();
+
+        public void OnPointerExit(PointerEventData eventData) => pointerExited?.Invoke();
 
         public void SetTechnicalMode(bool enabled, bool temporaryReveal)
         {
@@ -269,7 +303,7 @@ namespace FungusToast.Unity.UI.MutationTree
             inputBackground.color = UIStyleTokens.Surface.PanelSecondary;
             LayoutElement inputLayout = inputObject.GetComponent<LayoutElement>();
             inputLayout.flexibleWidth = 1f;
-            inputLayout.minWidth = 120f;
+            inputLayout.minWidth = 90f;
             inputLayout.preferredHeight = ToolbarHeight;
 
             var textObject = new GameObject("Text", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
@@ -302,8 +336,8 @@ namespace FungusToast.Unity.UI.MutationTree
             var buttonObject = new GameObject("TechnicalMode", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
             buttonObject.transform.SetParent(toolbarObject.transform, false);
             LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
-            buttonLayout.minWidth = 102f;
-            buttonLayout.preferredWidth = 102f;
+            buttonLayout.minWidth = 86f;
+            buttonLayout.preferredWidth = 86f;
             buttonLayout.preferredHeight = ToolbarHeight;
             technicalModeButton = buttonObject.GetComponent<Button>();
             technicalModeButton.targetGraphic = buttonObject.GetComponent<Image>();
@@ -320,6 +354,28 @@ namespace FungusToast.Unity.UI.MutationTree
             technicalModeButtonLabel.alignment = TextAlignmentOptions.Center;
             technicalModeButtonLabel.raycastTarget = false;
             technicalModeButtonLabel.text = "Simple";
+
+            var pinObject = new GameObject("Pin", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
+            pinObject.transform.SetParent(toolbarObject.transform, false);
+            LayoutElement pinLayout = pinObject.GetComponent<LayoutElement>();
+            pinLayout.minWidth = 64f;
+            pinLayout.preferredWidth = 64f;
+            pinLayout.preferredHeight = ToolbarHeight;
+            pinButton = pinObject.GetComponent<Button>();
+            pinButton.targetGraphic = pinObject.GetComponent<Image>();
+            UIStyleTokens.Button.ApplyPanelSecondaryStyle(pinButton);
+
+            var pinLabelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            pinLabelObject.transform.SetParent(pinObject.transform, false);
+            Stretch(pinLabelObject.GetComponent<RectTransform>(), 6f);
+            pinButtonLabel = pinLabelObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) pinButtonLabel.font = font;
+            pinButtonLabel.fontSize = 14f;
+            pinButtonLabel.fontStyle = FontStyles.Bold;
+            pinButtonLabel.color = UIStyleTokens.Text.Primary;
+            pinButtonLabel.alignment = TextAlignmentOptions.Center;
+            pinButtonLabel.raycastTarget = false;
+            pinButtonLabel.text = "Pin";
         }
 
         private void ConfigureRequirementButtons(IReadOnlyList<MutationRequirementProgress> requirements, Action<int> focusMutation)

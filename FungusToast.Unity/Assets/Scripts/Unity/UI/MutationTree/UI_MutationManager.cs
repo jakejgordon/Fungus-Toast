@@ -145,10 +145,17 @@ namespace FungusToast.Unity.UI.MutationTree
         private string mutationSearchQuery = string.Empty;
         private bool technicalModePreference;
         private bool altTechnicalReveal;
+        private const float InspectorHoverIntentDelaySeconds = 0.5f;
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
         private Mutation? selectedMutation;
         private Player? selectedMutationPlayer;
+        private Mutation? pendingHoveredMutation;
+        private Player? pendingHoveredMutationPlayer;
+        private Coroutine? inspectorHoverIntentCoroutine;
+        private Coroutine? inspectorHoverExitCoroutine;
+        private bool isInspectorPinned;
+        private bool isPointerOverMutationInspector;
         private PendingTargetedSurgeSelection? pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
@@ -203,10 +210,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void OnDisable()
         {
+            CancelInspectorHoverTransitions();
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             selectedMutation = null;
             selectedMutationPlayer = null;
+            isInspectorPinned = false;
+            isPointerOverMutationInspector = false;
             mutationInspector?.Clear();
             HideTimeLapseCoachmarkImmediate(false);
             HideStorePointsCoachmarkImmediate(false);
@@ -376,7 +386,14 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutationPlayer = null;
             selectedMutation = null;
             selectedMutationPlayer = null;
+            pendingHoveredMutation = null;
+            pendingHoveredMutationPlayer = null;
+            inspectorHoverIntentCoroutine = null;
+            inspectorHoverExitCoroutine = null;
+            isInspectorPinned = false;
+            isPointerOverMutationInspector = false;
             mutationInspector?.Clear();
+            mutationInspector?.SetPinState(false, false);
             mutationInspector?.ClearSearch();
             pendingTargetedSurgeSelection = null;
             hasDismissedAlphaMutationIntroThisGame = false;
@@ -1093,21 +1110,41 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void HandleMutationNodeHover(Mutation mutation, Player player)
         {
-            hoveredMutation = mutation;
-            hoveredMutationPlayer = player;
-            ReapplyInspectedMutationState();
-        }
-
-        public void HandleMutationNodeHoverExit(Mutation mutation)
-        {
-            if (hoveredMutation != null && mutation != null && hoveredMutation.Id != mutation.Id)
+            CancelInspectorHoverExit();
+            if (isInspectorPinned)
             {
                 return;
             }
 
-            hoveredMutation = null;
-            hoveredMutationPlayer = null;
-            ReapplyInspectedMutationState();
+            if (hoveredMutation == null || hoveredMutation.Id == mutation.Id)
+            {
+                CancelInspectorHoverIntent();
+                hoveredMutation = mutation;
+                hoveredMutationPlayer = player;
+                ReapplyInspectedMutationState();
+                return;
+            }
+
+            CancelInspectorHoverIntent();
+            pendingHoveredMutation = mutation;
+            pendingHoveredMutationPlayer = player;
+            inspectorHoverIntentCoroutine = StartCoroutine(ApplyInspectorHoverAfterDelay());
+        }
+
+        public void HandleMutationNodeHoverExit(Mutation mutation)
+        {
+            if (pendingHoveredMutation != null && pendingHoveredMutation.Id == mutation.Id)
+            {
+                CancelInspectorHoverIntent();
+            }
+
+            if (isInspectorPinned || isPointerOverMutationInspector)
+            {
+                return;
+            }
+
+            CancelInspectorHoverExit();
+            inspectorHoverExitCoroutine = StartCoroutine(ClearInspectorHoverAfterDelay());
         }
 
         public void HandleMutationNodeSelected(Mutation mutation, Player player)
@@ -1117,9 +1154,113 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
+            CancelInspectorHoverTransitions();
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
             selectedMutation = mutation;
             selectedMutationPlayer = player;
+            isInspectorPinned = true;
             ReapplyInspectedMutationState();
+        }
+
+        private void ToggleMutationInspectorPin()
+        {
+            if (isInspectorPinned)
+            {
+                isInspectorPinned = false;
+                ReapplyInspectedMutationState();
+                return;
+            }
+
+            Mutation? mutationToPin = hoveredMutation ?? selectedMutation;
+            Player? playerToPin = hoveredMutationPlayer ?? selectedMutationPlayer;
+            if (mutationToPin == null || playerToPin == null)
+            {
+                return;
+            }
+
+            CancelInspectorHoverTransitions();
+            selectedMutation = mutationToPin;
+            selectedMutationPlayer = playerToPin;
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            isInspectorPinned = true;
+            ReapplyInspectedMutationState();
+        }
+
+        private void HandleMutationInspectorPointerEnter()
+        {
+            isPointerOverMutationInspector = true;
+            CancelInspectorHoverTransitions();
+        }
+
+        private void HandleMutationInspectorPointerExit()
+        {
+            isPointerOverMutationInspector = false;
+            if (!isInspectorPinned && hoveredMutation != null)
+            {
+                CancelInspectorHoverExit();
+                inspectorHoverExitCoroutine = StartCoroutine(ClearInspectorHoverAfterDelay());
+            }
+        }
+
+        private IEnumerator ApplyInspectorHoverAfterDelay()
+        {
+            yield return new WaitForSecondsRealtime(InspectorHoverIntentDelaySeconds);
+            inspectorHoverIntentCoroutine = null;
+            if (isInspectorPinned || isPointerOverMutationInspector || pendingHoveredMutation == null)
+            {
+                pendingHoveredMutation = null;
+                pendingHoveredMutationPlayer = null;
+                yield break;
+            }
+
+            hoveredMutation = pendingHoveredMutation;
+            hoveredMutationPlayer = pendingHoveredMutationPlayer;
+            pendingHoveredMutation = null;
+            pendingHoveredMutationPlayer = null;
+            ReapplyInspectedMutationState();
+        }
+
+        private IEnumerator ClearInspectorHoverAfterDelay()
+        {
+            yield return new WaitForSecondsRealtime(InspectorHoverIntentDelaySeconds);
+            inspectorHoverExitCoroutine = null;
+            if (isInspectorPinned || isPointerOverMutationInspector)
+            {
+                yield break;
+            }
+
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            ReapplyInspectedMutationState();
+        }
+
+        private void CancelInspectorHoverTransitions()
+        {
+            CancelInspectorHoverIntent();
+            CancelInspectorHoverExit();
+        }
+
+        private void CancelInspectorHoverIntent()
+        {
+            if (inspectorHoverIntentCoroutine != null)
+            {
+                StopCoroutine(inspectorHoverIntentCoroutine);
+                inspectorHoverIntentCoroutine = null;
+            }
+
+            pendingHoveredMutation = null;
+            pendingHoveredMutationPlayer = null;
+        }
+
+        private void CancelInspectorHoverExit()
+        {
+            if (inspectorHoverExitCoroutine != null)
+            {
+                StopCoroutine(inspectorHoverExitCoroutine);
+                inspectorHoverExitCoroutine = null;
+            }
         }
 
         private void FocusMutationFromInspector(int mutationId)
@@ -1139,6 +1280,7 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutationPlayer = null;
             selectedMutation = node.GetMutation();
             selectedMutationPlayer = humanPlayer;
+            isInspectorPinned = true;
             ReapplyInspectedMutationState();
             ScrollMutationNodeIntoView(node);
         }
@@ -1183,6 +1325,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (inspectedMutation == null || inspectedPlayer == null)
             {
                 mutationInspector?.Clear();
+                mutationInspector?.SetPinState(false, false);
                 mutationInspector?.SetTechnicalMode(
                     technicalModePreference || altTechnicalReveal,
                     altTechnicalReveal && !technicalModePreference);
@@ -1210,6 +1353,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
             }
+            mutationInspector?.SetPinState(isInspectorPinned, inspectedNode != null);
             mutationInspector?.SetTechnicalMode(
                 technicalModePreference || altTechnicalReveal,
                 altTechnicalReveal && !technicalModePreference);
@@ -1552,7 +1696,12 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             mutationInspector.transform.SetAsLastSibling();
-            mutationInspector.BindWorkspaceControls(HandleMutationSearchChanged, ToggleTechnicalModePreference);
+            mutationInspector.BindWorkspaceControls(
+                HandleMutationSearchChanged,
+                ToggleTechnicalModePreference,
+                ToggleMutationInspectorPin,
+                HandleMutationInspectorPointerEnter,
+                HandleMutationInspectorPointerExit);
             mutationInspector.SetTechnicalMode(technicalModePreference, false);
         }
 

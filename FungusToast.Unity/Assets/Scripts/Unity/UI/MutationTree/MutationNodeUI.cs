@@ -18,6 +18,7 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
+        private const float MutationTooltipHoverDelaySeconds = 0.5f;
         private const int NodeTextTopPadding = 42;
         private const int NodeTextBottomPadding = 4;
         private const float NodeTextSpacing = 2f;
@@ -153,6 +154,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (trigger == null)
                 trigger = gameObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(this);
+            trigger.SetHoverDelay(MutationTooltipHoverDelaySeconds);
             trigger.SetAutoPlacementOffsetX(60f);
             trigger.SetMaxWidth(520);
         }

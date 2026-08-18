@@ -24,6 +24,7 @@ namespace FungusToast.Unity.UI.Tooltips
         private TooltipTrigger currentSource;
         private TooltipRequest currentRequest;
         private float requestTime;
+        private float requestDelay;
         private bool pendingShow;
 
         private void Awake()
@@ -70,12 +71,13 @@ namespace FungusToast.Unity.UI.Tooltips
             go.SetActive(false);
         }
 
-        public void ShowAfterDelay(TooltipTrigger source, TooltipRequest request)
+        public void ShowAfterDelay(TooltipTrigger source, TooltipRequest request, float? delaySeconds = null)
         {
             EnsureInstance();
             currentSource = source;
             currentRequest = request;
             requestTime = Time.unscaledTime;
+            requestDelay = Mathf.Max(0f, delaySeconds ?? showDelay);
             pendingShow = true;
         }
 
@@ -103,7 +105,7 @@ namespace FungusToast.Unity.UI.Tooltips
 
         private void Update()
         {
-            if (pendingShow && Time.unscaledTime - requestTime >= showDelay)
+            if (pendingShow && Time.unscaledTime - requestTime >= requestDelay)
             {
                 pendingShow = false;
                 InternalShow();

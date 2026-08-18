@@ -275,6 +275,13 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - The former Tier-2 Aerated Frontier slot now requires a distinct replacement mechanic before the spatial-pair slice. No other pending Ecology mutation or category move was implemented.
 - Manual Unity checks required: Aerated Frontier appears as a purchasable Tier-1 node in the sixth lane; header investment total updates; inspector copy wraps; purchase/ownership/locked states use the existing Ecology accent; no planned-roster card remains; Unity compiles cleanly.
 
+**Persistent-inspector pinning follow-up (2026-08-18):**
+
+- Added an explicit `Pin` / `Pinned` control to the persistent mutation inspector. Pinning freezes the current mutation while browsing; clicking a mutation card or a relationship chip also pins it, while immediate card purchases remain unchanged.
+- Added a 0.5-second hover-intent/grace window when changing or leaving mutation previews. Entering the inspector cancels the pending change so players can cross the tree and interact with inspector controls without unrelated nodes replacing the intended mutation.
+- Set mutation-card hover tooltips to the same 0.5-second delay, reducing duplicate tooltip noise during pointer transit while retaining the established fallback detail surface.
+- Manual Unity checks required: preview several nodes in sequence; cross unrelated cards into the inspector; pin/unpin from the toolbar; pin through card and relationship-chip clicks; purchase while pinned; leave/re-enter the inspector; close/reopen/restart; and verify tooltip timing at supported resolutions.
+
 ### 11. Remaining mutation implementation batches
 
 **Intent:** Add the approved roster in reviewable mechanic families rather than one risky bulk change.
