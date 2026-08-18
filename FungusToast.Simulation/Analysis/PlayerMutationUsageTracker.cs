@@ -74,6 +74,13 @@ namespace FungusToast.Simulation.Analysis
 
             switch (mutationId)
             {
+                case MutationIds.AeratedFrontier:
+                    if (player.AeratedFrontierAttempts > 0)
+                        effects["Qualified Attempts"] = player.AeratedFrontierAttempts;
+                    if (player.AeratedFrontierBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.AeratedFrontierBonusGrowths;
+                    break;
+
                 case MutationIds.RegenerativeHyphae:
                     if (player.RegenerativeHyphaeReclaims > 0)
                         effects["Reclaims"] = player.RegenerativeHyphaeReclaims;
@@ -246,7 +253,8 @@ namespace FungusToast.Simulation.Analysis
                 { MutationCategory.CellularResilience, 1 },
                 { MutationCategory.Fungicide, 2 },
                 { MutationCategory.GeneticDrift, 3 },
-                { MutationCategory.MycelialSurges, 4 }
+                { MutationCategory.MycelialSurges, 4 },
+                { MutationCategory.SubstrateEcology, 5 }
             };
 
             Console.WriteLine("\nPlayer-Mutation Usage Summary (per Player, all games):");

@@ -45,13 +45,14 @@ The mutation tree is organized into five categories, each supporting a different
 - Strategic role: tactical burst effects that reward timing
 - Representative mutations: Hyphal Surge, Chemotactic Beacon
 
-### Proposed: Substrate Ecology
+### Substrate Ecology
 
 - Focus: environmental opportunity, substrate condition, and territory context
 - Candidate mechanics: nutrient-patch interaction, composting and dead-zone use, crowded versus open substrate, edge/corner behavior, contested-tile ecology, and environmental conditioning
 - Strategic role: adapt expansion and recovery to the local board environment
 - Boundary: does not absorb raw expansion, mutation-point generation, direct toxin offense, or temporary activated effects from the existing categories
-- Status: reserved design space for the Mycelial Lab expansion; do not add the category to Core or AI until a coherent roster of at least six mutations is approved
+- Representative mutation: Aerated Frontier, the Tier-1 root that rewards growth from cells with at least two open orthogonal neighbors
+- Status: active Core/AI category as of Slice 10; later roster entries remain individually approval-gated
 
 ## Category Design Philosophy
 

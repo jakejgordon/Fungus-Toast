@@ -115,6 +115,8 @@ namespace FungusToast.Simulation.Models
                     DirectedVectorColonized = tracking.GetDirectedVectorColonized(player.PlayerId),
                     DirectedVectorInvalid = tracking.GetDirectedVectorInvalid(player.PlayerId),
                     PutrefactiveRejuvenationCyclesReduced = tracking.GetPutrefactiveRejuvenationGrowthCyclesReduced(player.PlayerId),
+                    AeratedFrontierAttempts = tracking.GetAeratedFrontierAttempts(player.PlayerId),
+                    AeratedFrontierBonusGrowths = tracking.GetAeratedFrontierBonusGrowths(player.PlayerId),
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),

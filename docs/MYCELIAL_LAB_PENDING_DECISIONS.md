@@ -15,8 +15,8 @@
 
 | # | Decision | Status |
 |---|---|---|
-| 1 | Substrate Sensing root | Rejected; replacement pending |
-| 2 | Aerated Frontier branch | Pending |
+| 1 | Substrate Sensing root | Rejected; Aerated Frontier replacement implemented |
+| 2 | Aerated Frontier branch | Superseded by Tier-1 implementation; replacement branch pending |
 | 3 | Compaction Pressure branch | Pending |
 | 4 | Detrital Enzymes branch | Pending |
 | 5 | Rival Rhizosphere branch | Pending |
@@ -70,28 +70,33 @@ Reasons:
 - Nutrient patches are sparse and usually distant from the starting colony, so the mutation would often provide no early benefit despite being the Tier-1 root.
 - Its opportunity is self-erasing: growth onto the nutrient patch consumes the patch, making the surrounding bonus transient.
 
-Do not implement Substrate Sensing in its proposed form. Select a replacement Tier-1 root before revising downstream prerequisites or beginning Slice 10.
+Substrate Sensing must not be implemented in its proposed form. Its approved replacement is recorded below.
 
-## 2. Approve Aerated Frontier as the Open-Substrate Branch?
+### Approved replacement (`1R-A`)
 
-### Proposed mechanic
+Jake approved promoting **Aerated Frontier** to the Tier-1 root with a revised trigger: a source cell must have at least two orthogonally adjacent open spaces. The implemented first-pass shape is +0.5 percentage points per level, 20 levels. Cells, toxins, nutrient patches, permanent blocks, and active chemobeacons are not open. The bonus applies to cardinal and Tendril growth attempts from a qualifying source.
 
-Growth attempts from a living owned cell with at least five open tiles among its eight neighbors gain a bonus. Nutrient, blocked, occupied, dead, and toxin tiles are not open.
+Implemented across Core, AI, Simulation tracking/reporting, Unity mutation-tree presentation, and focused tests in Slice 10. Two Testing strategies begin with staged Aerated Frontier investment: `TST_EcologyFrontierExpansion` and `TST_EcologyFrontierResilience`.
+
+## 2. Replace the Vacated Tier-2 Open-Substrate Branch?
+
+### Superseded proposal
+
+Aerated Frontier was originally proposed as a Tier-2 branch using five open tiles among all eight neighbors. It has instead been promoted and reworked into the approved Tier-1 root described under Decision 1.
 
 ### Proposed shape
 
-- Tier 2; requires Substrate Sensing 10.
-- +2 percentage points per level; 5 levels.
-- Rewards sparse frontier expansion; edges, occupation, and toxins naturally suppress it.
-- Included in the shared Ecology cap.
+- Tier 2; requires the implemented Aerated Frontier root.
+- Must deepen open-substrate play without merely repeating the root's two-open-neighbor bonus.
+- Name, trigger, values, and prerequisites require a replacement proposal.
 
 ### Recommendation
 
-Approve. It is legible from board state and pairs cleanly with, but does not overlap, Compaction Pressure.
+Do not implement the old Tier-2 Aerated Frontier proposal. Design a replacement open-substrate specialization before the paired Tier-2 slice.
 
 ### Answer
 
-Pending.
+Original proposal superseded; replacement branch pending.
 
 ## 3. Approve Compaction Pressure as the Crowded-Substrate Branch?
 
@@ -101,7 +106,7 @@ Growth attempts from a living owned cell with only one or two legal neighboring 
 
 ### Proposed shape
 
-- Tier 2; requires Substrate Sensing 10.
+- Tier 2; proposed replacement prerequisite is Aerated Frontier 10.
 - +2 percentage points per level; 5 levels.
 - Helps colonies escape congestion without attacking, replacing, or bypassing occupants.
 - Included in the shared Ecology cap.
@@ -122,7 +127,7 @@ Growth into an empty tile adjacent to any dead, non-toxin cell gains a bonus. Th
 
 ### Proposed shape
 
-- Tier 3; requires Substrate Sensing 5, Aerated Frontier 3, and Necrosporulation 3.
+- Tier 3; proposed requirements are Aerated Frontier 5, the replacement open specialization at level 3, and Necrosporulation 3.
 - +3 percentage points per level; 5 levels.
 - Own and enemy dead cells qualify; multiple dead neighbors do not stack.
 - Reclamation, composting, or occupation removes the opportunity.
@@ -143,7 +148,7 @@ Growth into an empty tile adjacent to an enemy living cell gains a bonus. It nev
 
 ### Proposed shape
 
-- Tier 3; requires Substrate Sensing 5, Compaction Pressure 3, and Mycotoxin Tracer 5.
+- Tier 3; proposed requirements are Aerated Frontier 5, Compaction Pressure 3, and Mycotoxin Tracer 5.
 - +3 percentage points per level; 5 levels.
 - Enemy dead and toxin cells do not qualify; multiple adjacent rivals do not multiply the bonus.
 - Opponents can fill, toxify, or retreat from the contested boundary.
@@ -164,7 +169,7 @@ Consuming a nutrient patch stores a capped budget that strengthens a limited num
 
 ### Proposed shape
 
-- Tier 4; proposed requirements: Substrate Sensing 10, Aerated Frontier 3, and Adaptive Expression 3.
+- Tier 4; proposed requirements: Aerated Frontier 15, the replacement open specialization at level 3, and Adaptive Expression 3.
 - 5 levels; exact bonus and attempt-budget scaling remain unresolved.
 - One stored budget with a hard cap; repeated patch consumption cannot stack without limit.
 - Requires explicit save/resume state for a budget that survives between consumption and payoff.
@@ -175,7 +180,7 @@ Approve the delayed-payoff concept now, or rework it into an immediate/stateless
 
 ### Recommendation
 
-Approve the concept but defer implementation until its budget formula and save state are designed. Correct the impossible Substrate Sensing 15 prerequisite to 10 if Decision 1 retains a 10-level maximum.
+Approve the concept but defer implementation until its budget formula and save state are designed. The implemented 20-level Aerated Frontier root makes a level-15 root requirement possible, but the complete prerequisite set remains provisional until the replacement Tier-2 branch is designed.
 
 ### Answer
 
@@ -210,12 +215,12 @@ Pending.
 
 ### Proposed change
 
-Move the existing compost mechanic into Ecology because it turns dead-cell clusters into neutral environmental nutrient patches. Preserve mutation ID 22, owned levels, constants, timing, effect behavior, tracking, and save compatibility.
+Move the existing compost mechanic into Ecology because it turns dead-cell clusters into neutral environmental nutrient patches. Preserve mutation ID 18, owned levels, constants, timing, effect behavior, tracking, and save compatibility.
 
 ### Consequences
 
 - Category-filtered AI spending, Unity placement, investment totals, Simulation ordering, and reporting will change category.
-- Existing prerequisites should be rebalanced separately; the proposed Ecology chain is Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, and Substrate Sensing 5.
+- Existing prerequisites should be rebalanced separately; the revised Ecology chain is Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, and Aerated Frontier 5.
 - Hyperadaptive Drift's prerequisite remains linked by ID and need not change behavior.
 - Processor ownership may move out of `GeneticDriftMutationProcessor`, but Decay-end timing must remain unchanged.
 
@@ -253,8 +258,8 @@ Pending.
 
 ### Proposed sequence
 
-1. Add the Core Substrate Ecology category and implement Substrate Sensing end to end.
-2. Add Aerated Frontier and Compaction Pressure as the stateless spatial pair.
+1. Add the Core Substrate Ecology category and implement Aerated Frontier end to end. **Completed in Slice 10.**
+2. Design a replacement open-substrate specialization, then add it with Compaction Pressure as the stateless spatial pair.
 3. Add Detrital Enzymes and Rival Rhizosphere as the stateless contextual pair.
 4. Move Necrophytic Bloom in an isolated compatibility-focused slice.
 5. Design and add Nutrient Afterglow's pending state.

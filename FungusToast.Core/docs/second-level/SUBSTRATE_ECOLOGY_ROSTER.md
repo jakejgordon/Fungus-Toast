@@ -1,6 +1,6 @@
 # Substrate Ecology Roster Proposal
 
-> Status: design-approved implementation input is still required. No names, values, prerequisites, or category moves in this document change gameplay by themselves.
+> Status: Aerated Frontier is implemented as the Tier-1 root. Every other entry remains a proposal and does not change gameplay by itself.
 >
 > Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md), and the temporary [Mycelial Lab Pending Decisions](../../../docs/MYCELIAL_LAB_PENDING_DECISIONS.md) approval queue.
 
@@ -8,44 +8,41 @@
 
 Substrate Ecology rewards reading local board context. Its mechanics may modify growth around nutrients, open or compacted territory, dead matter, and rival boundaries. It does not own unconditional growth, direct death resistance/reclamation, direct toxin offense, mutation-point generation, or temporary activation.
 
-The initial implementation target is seven new mutations plus the proposed move of Necrophytic Bloom. All numeric values below are starting hypotheses for focused tests and simulation, not final balance calls. Context bonuses should share a configurable combined cap so stacking the lane cannot make growth automatic.
+The initial implementation target remains seven new mutations plus the proposed move of Necrophytic Bloom. Promoting Aerated Frontier to replace the rejected Substrate Sensing proposal leaves one Tier-2 open-substrate slot to redesign. Numeric values for unimplemented mutations remain starting hypotheses. Context bonuses share a configurable combined cap so stacking the lane cannot make growth automatic.
 
 ## Proposed Tree
 
 | Tier | Recommended name | Role | Proposed prerequisites | Initial scaling hypothesis |
 |---|---|---|---|---|
-| 1 | Substrate Sensing | Nutrient-adjacent root | Root | +1.5 percentage points/level, 10 levels |
-| 2 | Aerated Frontier | Open-substrate branch | Substrate Sensing 10 | +2 points/level, 5 levels |
-| 2 | Compaction Pressure | Crowded-substrate branch | Substrate Sensing 10 | +2 points/level, 5 levels |
-| 3 | Detrital Enzymes | Dead-matter branch | Substrate Sensing 5, Aerated Frontier 3, Necrosporulation 3 | +3 points/level, 5 levels |
-| 3 | Rival Rhizosphere | Contested-boundary branch | Substrate Sensing 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
-| 4 | Nutrient Afterglow | Patch-consumption payoff | Substrate Sensing 15, Aerated Frontier 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
-| 4 | Necrophytic Bloom | Existing compost mechanic; proposed category move | Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, Substrate Sensing 5 | Existing values; prerequisite rebalance isolated separately |
+| 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.5 percentage points/level, 20 levels |
+| 2 | Open specialization TBD | Replacement branch | Aerated Frontier 10 | Mechanic and scaling require approval |
+| 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
+| 3 | Detrital Enzymes | Dead-matter branch | Aerated Frontier 5, open specialization 3, Necrosporulation 3 | +3 points/level, 5 levels |
+| 3 | Rival Rhizosphere | Contested-boundary branch | Aerated Frontier 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
+| 4 | Nutrient Afterglow | Patch-consumption payoff | Aerated Frontier 15, open specialization 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
+| 4 | Necrophytic Bloom | Existing compost mechanic; proposed category move | Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, Aerated Frontier 5 | Existing values; prerequisite rebalance isolated separately |
 | 5 | Ecological Succession | Whole-lane capstone | Detrital Enzymes 5, Rival Rhizosphere 5, Nutrient Afterglow 3, Mycelial Bloom 15 | One retry/phase; +5 points/level, 3 levels |
 
-### 1. Substrate Sensing
+### 1. Aerated Frontier (Implemented)
 
-**Summary:** Growth attempts into empty tiles orthogonally adjacent to an unconsumed nutrient patch gain a small bonus. The nutrient tile itself does not qualify, preserving Rhizomorphic Hunger's direct-patch identity.
+**Summary:** Growth attempts from living cells with at least two orthogonally adjacent open spaces gain a small bonus.
 
-- Trigger/timing: per growth attempt, before its success roll.
-- Limits: empty, occupiable targets only; one bonus regardless of adjacent patch count; included in the Ecology combined cap.
-- AI: score reachable nutrient-adjacent empty tiles; remain legal but low priority when none exist.
-- Interaction/counterplay: competitors can consume the patch or occupy its perimeter first. Stacks with conditional Growth mechanics only up to the shared cap.
-- Tracking: qualified attempts, bonus-attributable successes, and qualifying tiles by patch type.
-- Focused tests: no patch; direct patch target excluded; one/multiple adjacent patches; blocked/occupied target; stacking cap; deterministic roll boundary; AI zero/opportunity boards.
-- Name shortlist: **Substrate Sensing**, Nutrient Sensing, Resource Tropism, Substrate Chemotaxis, Edaphic Sensing.
+- Trigger/timing: per cardinal or Tendril growth attempt, before its success roll; qualification is evaluated from the source cell's current orthogonal neighbors.
+- Scaling: +0.5 percentage points per level, 20 levels, included in the configurable Ecology combined cap.
+- Limits: cells, toxins, nutrient patches, permanent blocks, and active chemobeacons are not open. Off-board positions are absent rather than counted as closed, so corner cells can qualify with their two available neighbors.
+- AI: available as a normal Ecology root. Two Testing strategies begin with staged investment before branching into Growth or Cellular Resilience.
+- Interaction/counterplay: occupation and environmental blockers suppress the bonus; new frontier cells naturally create new opportunities as the colony expands.
+- Tracking: qualifying attempts and successes attributable specifically to the bonus are exported through Simulation.
+- Focused tests: root registration; exact scaling; 1/2-open threshold; cells/nutrients/blocks excluded; corner qualification; deterministic bonus-only success attribution; AI goal ordering.
+- Name shortlist checked before approval: **Aerated Frontier**, Porous Frontier, Open Hyphae, Sparse Branching, Frontier Aeration.
 
-### 2. Aerated Frontier
+### 2. Open-Substrate Specialization (Replacement Needed)
 
-**Summary:** Growth attempts from living cells with at least five open neighboring tiles gain a bonus, rewarding early expansion through sparse territory.
+The original Aerated Frontier Tier-2 proposal was promoted and reworked into the Tier-1 root. This slot needs a distinct mechanic that deepens open-substrate play without repeating the root bonus.
 
-- Trigger/timing: per growth attempt; count the eight neighboring tiles at attempt time using normal occupation/blocking rules.
-- Limits: source must be living and owned; nutrient and blocked tiles are not open; included in the Ecology combined cap.
-- AI: score living frontier sources meeting the threshold and nearby reachable area.
-- Interaction/counterplay: occupation, toxins, and board edges reduce openness. Compaction Pressure covers the opposite context without making either unconditional.
-- Tracking: qualifying sources, attempts, successes, and average open-neighbor count.
-- Focused tests: thresholds 4/5/6; edge/irregular-board neighbors; nutrient/toxin/dead/enemy states; source death between attempts; combined cap.
-- Name shortlist: **Aerated Frontier**, Porous Frontier, Open Hyphae, Sparse Branching, Frontier Aeration.
+- Required before implementation: mechanic, name shortlist, scaling, AI valuation, counterplay, tracking, and focused tests.
+- Intended prerequisite direction: Aerated Frontier 10.
+- Compaction Pressure remains the proposed opposite Tier-2 specialization.
 
 ### 3. Compaction Pressure
 
@@ -111,7 +108,7 @@ The initial implementation target is seven new mutations plus the proposed move 
 
 Move **Necrophytic Bloom** from Genetic Drift to Substrate Ecology when the Core category is introduced. Its primary mechanic converts dead-cell clusters into neutral environmental nutrient patches; randomness selects patch outcome, but it is not principally mutation economy or automatic progression.
 
-Preserve mutation ID 22, owned levels, constants, description/effect, tracking, and save compatibility. Isolate these reviewable consequences:
+Preserve mutation ID 18, owned levels, constants, description/effect, tracking, and save compatibility. Isolate these reviewable consequences:
 
 - update category factory/registration, Unity lane metadata, investment totals, Simulation sort order, AI category intent, and repository assertions;
 - decide whether to move processing ownership out of `GeneticDriftMutationProcessor` without changing Decay-end timing;
@@ -172,13 +169,14 @@ While active, successful growth into an Ecology-qualified dead-adjacent tile has
 
 ## Whole-Tree Review Verdict
 
-- The seven Ecology mechanics form a coherent contextual-growth lane without owning unconditional expansion or direct rewards.
+- Aerated Frontier now establishes the playable contextual-growth lane without owning unconditional expansion or direct rewards.
 - Open, crowded, nutrient-adjacent, dead-adjacent, and rival-adjacent states are mutually legible and testable from board state.
 - Necrophytic Bloom is the only recommended move; Regenerative Hyphae remains correctly in Cellular Resilience.
-- Ecology bonuses require one shared combined cap and deterministic attribution ordering before implementation.
+- Ecology bonuses use a shared configurable combined cap and deterministic attribution ordering established by Aerated Frontier.
 - Creeping Mold versus Ecological Succession failure ordering must be decided in Core tests before the capstone ships.
 - Nutrient Afterglow and Septal Isolation introduce pending runtime state and therefore require explicit save/resume design; they should not be in the first low-risk implementation batch.
-- Recommended first playable root: Substrate Sensing, because it is stateless, observable, easy for AI to value, and exercises the new category end to end.
+- Substrate Sensing was rejected because nutrient patches are sparse and consuming them makes the opportunity transient. Aerated Frontier replaced it as the implemented Tier-1 root.
+- A distinct Tier-2 open-substrate specialization is required to restore the planned seven-new-mutation roster.
 
 ## Local Name Check
 

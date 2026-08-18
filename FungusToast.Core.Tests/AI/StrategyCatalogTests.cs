@@ -1,10 +1,48 @@
 using System.Text.RegularExpressions;
 using FungusToast.Core.AI;
+using FungusToast.Core.Board;
+using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
+using FungusToast.Core.Tests.Mutations;
 
 namespace FungusToast.Core.Tests.AI;
 
 public class StrategyCatalogTests
 {
+    [Theory]
+    [InlineData("TST_EcologyFrontierExpansion")]
+    [InlineData("TST_EcologyFrontierResilience")]
+    public void Ecology_testing_strategies_begin_with_aerated_frontier(string strategyName)
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[strategyName]);
+
+        Assert.Equal(MutationIds.AeratedFrontier, strategy.TargetMutationGoals[0].MutationId);
+        Assert.Equal(EconomyBias.IgnoreEconomy, strategy.EconomyProfile);
+        Assert.Equal(MutationCategory.SubstrateEcology, strategy.PriorityMutationCategories![0]);
+        Assert.True(strategy.UsesSubstrateEcology);
+    }
+
+    [Theory]
+    [InlineData("TST_EcologyFrontierExpansion")]
+    [InlineData("TST_EcologyFrontierResilience")]
+    public void Ecology_testing_strategies_buy_aerated_frontier_first(string strategyName)
+    {
+        var strategy = AIRoster.TestingStrategiesByName[strategyName];
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Ecology AI", PlayerTypeEnum.AI) { MutationPoints = 1 };
+        board.Players.Add(player);
+
+        strategy.SpendMutationPoints(
+            player,
+            MutationRegistry.GetAll().ToList(),
+            board,
+            new Random(1),
+            new TestSimulationObserver());
+
+        Assert.Equal(1, player.GetMutationLevel(MutationIds.AeratedFrontier));
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.MutatorPhenotype));
+    }
+
     [Fact]
     public void Campaign_catalog_entries_expose_friendly_name_and_intentions()
     {

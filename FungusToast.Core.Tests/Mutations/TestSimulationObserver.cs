@@ -6,7 +6,7 @@ using FungusToast.Core.Mutations;
 
 namespace FungusToast.Core.Tests.Mutations;
 
-internal sealed class TestSimulationObserver : ISimulationObserver
+internal class TestSimulationObserver : ISimulationObserver
 {
     public int? LastMutationPointsSpent { get; private set; }
     public int? LastMutationPointIncome { get; private set; }
@@ -88,6 +88,8 @@ internal sealed class TestSimulationObserver : ISimulationObserver
     public void RecordSurgicalInoculationDrop(int playerId, int count) { }
     public void RecordPutrefactiveRejuvenationGrowthCyclesReduced(int playerId, int totalCyclesReduced) { }
     public void RecordPerimeterProliferatorGrowth(int playerId) { }
+    public virtual void RecordAeratedFrontierAttempt(int playerId) { }
+    public virtual void RecordAeratedFrontierBonusGrowth(int playerId) { }
     public void RecordHyphalResistanceTransfer(int playerId, int count) { }
     public void RecordSeptalAlarmResistance(int playerId, int count) { }
     public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }

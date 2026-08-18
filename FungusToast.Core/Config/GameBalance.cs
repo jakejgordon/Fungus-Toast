@@ -86,6 +86,12 @@ namespace FungusToast.Core.Config
         public const float MutatorPhenotypeEffectPerLevel = 0.1f;
         public const int MutatorPhenotypeMaxLevel = 10;
 
+        // Aerated Frontier (Tier 1 Substrate Ecology)
+        public const float AeratedFrontierEffectPerLevel = 0.005f;
+        public const int AeratedFrontierMaxLevel = 20;
+        public const int AeratedFrontierRequiredOpenOrthogonalSpaces = 2;
+        public const float SubstrateEcologyCombinedGrowthBonusCap = 0.25f;
+
         // Tendrils (Tier 2 Growth)
         public const float TendrilDiagonalGrowthEffectPerLevel = 0.017f;
         public const float TendrilOrthogonalGrowthPenaltyPerLevel = 0.004f;

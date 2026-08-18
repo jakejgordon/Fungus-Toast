@@ -23,6 +23,7 @@ namespace FungusToast.Core.AI
         public bool? UsesFungicide => true;
 
         public bool? UsesGeneticDrift => true;
+        public bool? UsesSubstrateEcology => true;
 
         public RandomMutationSpendingStrategy(string? strategyName = null)
         {

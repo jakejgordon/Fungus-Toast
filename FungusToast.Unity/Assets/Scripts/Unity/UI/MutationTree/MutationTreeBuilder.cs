@@ -462,6 +462,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationCategory.Fungicide => fungicideColumn,
                 MutationCategory.GeneticDrift => driftColumn,
                 MutationCategory.MycelialSurges => mycelialSurgesColumn,
+                MutationCategory.SubstrateEcology => plannedSubstrateEcologyColumn,
                 _ => throw new System.Exception($"❌ Unknown mutation category: {category}")
             };
         }

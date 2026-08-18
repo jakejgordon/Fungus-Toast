@@ -1123,6 +1123,42 @@ namespace FungusToast.Core.AI
         /// </summary>
         private static readonly List<IMutationSpendingStrategy> _rawTestingStrategies = new List<IMutationSpendingStrategy>
         {
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyFrontierExpansion",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.IgnoreEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 10),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 10),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyFrontierResilience",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.IgnoreEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 10),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel)
+                }
+            ),
+
             // Canonical 8-player archetype harness for ongoing balance tuning.
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Arch01_GrowthResilience",
@@ -1888,6 +1924,8 @@ namespace FungusToast.Core.AI
             {
                 ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
+                ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
+                ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
                 ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
                 ["TST_Arch02_ResilienceGrowth"] = StrategyTheme.Defense,
                 ["TST_Arch03_FungicideSurge"] = StrategyTheme.Offense,
@@ -2411,7 +2449,11 @@ namespace FungusToast.Core.AI
                     continue;
                 }
 
-                if (mutation.Category is MutationCategory.Growth or MutationCategory.CellularResilience or MutationCategory.Fungicide or MutationCategory.GeneticDrift)
+                if (mutation.Category is MutationCategory.Growth
+                    or MutationCategory.CellularResilience
+                    or MutationCategory.Fungicide
+                    or MutationCategory.GeneticDrift
+                    or MutationCategory.SubstrateEcology)
                 {
                     yield return mutation.Category;
                 }
@@ -3101,6 +3143,7 @@ namespace FungusToast.Core.AI
                 MutationCategory.Fungicide => "toxin pressure",
                 MutationCategory.GeneticDrift => "genetic mutation",
                 MutationCategory.MycelialSurges => "surge timing",
+                MutationCategory.SubstrateEcology => "environmental adaptation",
                 _ => "mutation pressure"
             };
         }

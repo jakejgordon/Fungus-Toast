@@ -7,8 +7,7 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         /// <summary>
         /// Playable column order: 0-Growth, 1-Cellular Resilience, 2-Fungicide,
-        /// 3-Genetic Drift, 4-Mycelial Surges. The UI appends a sixth planned
-        /// Substrate Ecology lane until that category has real Core mechanics.
+        /// 3-Genetic Drift, 4-Mycelial Surges, 5-Substrate Ecology.
         /// Row index increments downward within each playable column.
         /// </summary>
         public static Dictionary<int, MutationLayoutMetadata> GetDefaultLayout() =>
@@ -55,7 +54,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.ChemotacticBeacon,      new MutationLayoutMetadata(4, 1, MutationCategory.MycelialSurges) },
                 { MutationIds.ChitinFortification,    new MutationLayoutMetadata(4, 2, MutationCategory.MycelialSurges) },
                 { MutationIds.MimeticResilience,      new MutationLayoutMetadata(4, 3, MutationCategory.MycelialSurges) },
-                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(4, 4, MutationCategory.MycelialSurges) }
+                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(4, 4, MutationCategory.MycelialSurges) },
+
+                /* ------------ Substrate Ecology (col 5) ------------ */
+                { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) }
             };
     }
 }

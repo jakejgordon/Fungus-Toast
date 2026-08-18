@@ -16,9 +16,9 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Focus:** Turn the full-screen mutation tree into a fast, professional, fungal upgrade workspace that can support six coherent categories and at least ten additional mutations.
 - **Product goal:** A new player can understand a mutation and its requirements without decoding its scientific name, while an experienced player can spend five points in a few seconds without panning, rearrangement, confirmation prompts, or blocking animation.
 - **Primary target:** Desktop mouse/keyboard at 1920x1280 and 1920x1080; retain usable responsive behavior at 1600x900 and 1280x720.
-- **Current scale:** 33 logical mutations across five categories. The intended expansion is approximately 45 logical mutations across six categories, subject to mechanic design and balance validation.
-- **Proposed sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
-- **State:** Plan approved by Jake on 2026-08-17. Slices 1–9 are complete; Slice 10 is paused for Jake's roster/category-move approval.
+- **Current scale:** 34 logical mutations across six categories. The intended expansion is approximately 45 logical mutations, subject to mechanic design and balance validation.
+- **Sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
+- **State:** Plan approved by Jake on 2026-08-17. Slices 1–10 are complete; the remaining roster decisions are approval-gated.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
@@ -234,8 +234,8 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 **Implemented checkpoint (2026-08-17):**
 
 - Added `second-level/SUBSTRATE_ECOLOGY_ROSTER.md` and linked it through the mutation helper/documentation map. It defines the lane boundary, a reachable acyclic tree, initial scaling hypotheses, exact trigger/limit semantics, AI implications, counterplay, tracking, persistence risks, and focused tests.
-- Proposed seven new Ecology mutations: Substrate Sensing, Aerated Frontier, Compaction Pressure, Detrital Enzymes, Rival Rhizosphere, Nutrient Afterglow, and Ecological Succession.
-- Recommended moving existing Necrophytic Bloom from Genetic Drift to Substrate Ecology with ID 22 and behavior preserved. Its prerequisite rebalance, category-sensitive AI/reporting consequences, and possible processor-ownership cleanup remain separately reviewable changes.
+- Proposed seven new Ecology mutations: Substrate Sensing, Aerated Frontier, Compaction Pressure, Detrital Enzymes, Rival Rhizosphere, Nutrient Afterglow, and Ecological Succession. Jake later rejected Substrate Sensing and promoted a revised Aerated Frontier to the root, leaving one Tier-2 open-substrate slot to redesign.
+- Recommended moving existing Necrophytic Bloom from Genetic Drift to Substrate Ecology with ID 18 and behavior preserved. Its prerequisite rebalance, category-sensitive AI/reporting consequences, and possible processor-ownership cleanup remain separately reviewable changes.
 - Proposed one later addition per existing lane: Apical Dominance, Septal Isolation, Toxin Anastomosis, Latent Polymorphism, and Saprotrophic Pulse. Seven new Ecology mutations plus these five additions bring the planned total from 33 to 45; moving Necrophytic Bloom does not change the count.
 - All 60 five-name-shortlist candidates passed exact local uniqueness checks across Mutation, Mycovariant, and Adaptation C# source, the 2–3 word rule, and the 28-character limit. Recommended Ecology first words are distinct within the lane.
 - The review recommends Substrate Sensing as Slice 10's first root because it is stateless and exercises Core/AI/Simulation/Unity integration with low persistence risk. Nutrient Afterglow and Septal Isolation are deferred because they require pending save state.
@@ -263,6 +263,17 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - The compact Growth card now labels the full `Mycelial Bloom > 4 Tendrils > Mycotropic Induction` progression so the compound branch does not read as detached.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. The Unity Editor/project file is unavailable in this environment, so Unity compile and visual checks remain manual.
 - Manual Unity checks required: Simple/Technical/held-Alt card content; long inspector summaries and technical/current/next sections; all six headers and four Tendril labels; locked cards; selected/hovered/prerequisite/dependent/search states; Growth progression at supported resolutions; and Console cleanliness.
+
+**Implemented checkpoint (2026-08-17):**
+
+- Jake rejected Substrate Sensing because nutrient patches are sparse, distant from starting colonies, and consumed by growth. He approved (`1R-A`) promoting Aerated Frontier to the Tier-1 root with a trigger of at least two orthogonally adjacent open spaces.
+- Added `SubstrateEcology` to Core as the sixth active category and registered Aerated Frontier as root mutation ID 34. It grants +0.5 percentage points per level for 20 levels to cardinal and Tendril attempts from qualifying source cells.
+- Open spaces exclude fungal cells, toxins, nutrient patches, permanent blocks, and active chemobeacons. Board corners can qualify when both available orthogonal neighbors are open.
+- Added deterministic Core qualification/bonus processing, configurable combined Ecology cap, attempt and bonus-attributable-growth observer metrics, Simulation result/usage reporting, and active Unity lane/node metadata using the existing runtime-built sixth column.
+- Added `TST_EcologyFrontierExpansion` and `TST_EcologyFrontierResilience`. Both use Aerated Frontier as their first staged goal and then branch into Growth or Cellular Resilience. `IgnoreEconomy` now correctly suppresses the generic early-economy pass so those openings are real.
+- Added focused tests for registration, scaling, open-space exclusions, exact threshold, corner behavior, deterministic bonus attribution, and both AI goal orders. The canonical suite excluding the known unrelated campaign-prefix assertion passes; Core and Simulation builds pass with no warnings.
+- The former Tier-2 Aerated Frontier slot now requires a distinct replacement mechanic before the spatial-pair slice. No other pending Ecology mutation or category move was implemented.
+- Manual Unity checks required: Aerated Frontier appears as a purchasable Tier-1 node in the sixth lane; header investment total updates; inspector copy wraps; purchase/ownership/locked states use the existing Ecology accent; no planned-roster card remains; Unity compiles cleanly.
 
 ### 11. Remaining mutation implementation batches
 

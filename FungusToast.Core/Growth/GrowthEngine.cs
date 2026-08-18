@@ -134,6 +134,7 @@ namespace FungusToast.Core.Growth
             bool hasRhizomorphicHunger = owner.HasAdaptation(AdaptationIds.RhizomorphicHunger);
             bool hasOssifiedAdvance = owner.HasAdaptation(AdaptationIds.OssifiedAdvance);
             bool sourceIsResistant = sourceTile.FungalCell?.IsResistant == true;
+            float ecologyBonus = SubstrateEcologyMutationProcessor.GetAeratedFrontierGrowthBonus(owner, board, sourceTile);
             foreach (BoardTile tile in board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y))
             {
                 if (!tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId) && tile.TileId != sourceTile.TileId)
@@ -144,11 +145,16 @@ namespace FungusToast.Core.Growth
                     float ossifiedBonus = (hasOssifiedAdvance && sourceIsResistant)
                         ? AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus
                         : 0f;
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier + nutrientBonus + ossifiedBonus, null, surgeBonus));
+                    targets.Add(new GrowthTarget(
+                        tile,
+                        baseChance * edgeMultiplier + nutrientBonus + ossifiedBonus + ecologyBonus,
+                        null,
+                        surgeBonus,
+                        ecologyBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus, 0f));
                 }
             }
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
@@ -169,7 +175,7 @@ namespace FungusToast.Core.Growth
                 var maybeTile = board.GetTile(nx, ny);
                 if (maybeTile is { IsOccupied: false, TileId: var id } && !board.IsTileBlockedForOccupation(id) && id != sourceTile.TileId)
                 {
-                    targets.Add(new GrowthTarget(maybeTile, chance, dir, 0f));
+                    targets.Add(new GrowthTarget(maybeTile, chance + ecologyBonus, dir, 0f, ecologyBonus));
                 }
             }
             return targets;
@@ -184,6 +190,10 @@ namespace FungusToast.Core.Growth
             ISimulationObserver observer)
         {
             if (target.Tile.IsOccupied || board.IsTileBlockedForOccupation(target.Tile.TileId)) return false;
+            if (target.EcologyBonus > 0f)
+            {
+                observer.RecordAeratedFrontierAttempt(owner.PlayerId);
+            }
             double roll = rng.NextDouble();
             var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
             GrowthSource growthSource = target.DiagonalDirection.HasValue
@@ -196,6 +206,7 @@ namespace FungusToast.Core.Growth
                     if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, growthSource))
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
+                        MaybeRecordAeratedFrontierGrowth(observer, owner.PlayerId, roll, target);
                         observer.RecordStandardGrowth(owner.PlayerId);
                         return true;
                     }
@@ -216,6 +227,7 @@ namespace FungusToast.Core.Growth
                     if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, growthSource))
                     {
                         MaybeRecordPerimeterProliferatorGrowth(observer, owner.PlayerId, edgeMultiplier, roll, baseChance, target.Chance);
+                        MaybeRecordAeratedFrontierGrowth(observer, owner.PlayerId, roll, target);
                         if (target.DiagonalDirection.HasValue)
                             observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
                         return true;
@@ -223,6 +235,20 @@ namespace FungusToast.Core.Growth
                 }
             }
             return false;
+        }
+
+        private static void MaybeRecordAeratedFrontierGrowth(
+            ISimulationObserver observer,
+            int playerId,
+            double roll,
+            GrowthTarget target)
+        {
+            if (target.EcologyBonus > 0f
+                && roll >= target.Chance - target.EcologyBonus
+                && roll < target.Chance)
+            {
+                observer.RecordAeratedFrontierBonusGrowth(playerId);
+            }
         }
 
         /// <summary>
@@ -342,13 +368,15 @@ namespace FungusToast.Core.Growth
             public float Chance { get; }
             public DiagonalDirection? DiagonalDirection { get; }
             public float SurgeBonus { get; } // Only for orthogonal targets
+            public float EcologyBonus { get; }
 
-            public GrowthTarget(BoardTile tile, float chance, DiagonalDirection? dir, float surgeBonus)
+            public GrowthTarget(BoardTile tile, float chance, DiagonalDirection? dir, float surgeBonus, float ecologyBonus)
             {
                 Tile = tile;
                 Chance = chance;
                 DiagonalDirection = dir;
                 SurgeBonus = surgeBonus;
+                EcologyBonus = ecologyBonus;
             }
         }
 

@@ -38,5 +38,6 @@ namespace FungusToast.Core
         CompetitiveAntagonism,
         HyphalSurge,
         ChemotacticBeacon,
+        AeratedFrontierGrowthChance,
     }
 }

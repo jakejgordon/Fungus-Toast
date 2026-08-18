@@ -36,6 +36,7 @@ namespace FungusToast.Core.Mutations
             FungicideMutationFactory.CreateMutations(allMutations, rootMutations, helper);
             GeneticDriftMutationFactory.CreateMutations(allMutations, rootMutations, helper);
             MycelialSurgesMutationFactory.CreateMutations(allMutations, rootMutations, helper);
+            SubstrateEcologyMutationFactory.CreateMutations(allMutations, rootMutations, helper);
 
             foreach (var mutation in allMutations.Values)
             {
@@ -75,4 +76,3 @@ namespace FungusToast.Core.Mutations
         }
     }
 }
-

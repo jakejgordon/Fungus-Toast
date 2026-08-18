@@ -36,5 +36,6 @@
         public const int OntogenicRegression = 31;
         public const int CompetitiveAntagonism = 32;
         public const int ChemotacticBeacon = 33;
+        public const int AeratedFrontier = 34;
     }
 }

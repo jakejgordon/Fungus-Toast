@@ -61,6 +61,8 @@ The `Testing` set includes a themed roster intended for robust balance analysis:
 | `TST_CampaignMirror_AI7_Hyphal` | SurgeTempo | Testing mirror of campaign hyphal surge/vectoring line |
 | `TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst` | Control | Testing mirror of campaign AI12 progression |
 | `TST_CampaignMirror_AI13_BalancedControl_MaxEconomy` | Control | Testing mirror of campaign AI13 progression |
+| `TST_EcologyFrontierExpansion` | Control | Start with Aerated Frontier, then convert open-substrate tempo into Growth |
+| `TST_EcologyFrontierResilience` | Defense | Start with Aerated Frontier, then stabilize the expanded frontier through Cellular Resilience |
 
 ## Canonical 8-Player Archetype Harness
 

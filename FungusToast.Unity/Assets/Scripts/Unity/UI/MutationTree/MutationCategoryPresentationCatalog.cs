@@ -6,8 +6,7 @@ using UnityEngine;
 namespace FungusToast.Unity.UI.MutationTree
 {
     /// <summary>
-    /// Ordered mutation-lane presentation metadata. The planned Substrate Ecology lane
-    /// intentionally has no Core category until its first real mechanic is implemented.
+    /// Ordered mutation-lane presentation metadata.
     /// </summary>
     public static class MutationCategoryPresentationCatalog
     {
@@ -66,10 +65,10 @@ namespace FungusToast.Unity.UI.MutationTree
             displayName: "Substrate Ecology",
             iconKey: "substrate-ecology",
             iconGlyph: "E",
-            tooltipText: "<b>Substrate Ecology</b>\nA planned category about nutrient patches, dead zones, crowding, edges, and environmental opportunity. Its roster is still in design and cannot be purchased yet.",
+            tooltipText: "<b>Substrate Ecology</b>\nMutations that adapt growth to open space and other environmental opportunities.",
             accent: UIStyleTokens.Category.SubstrateEcology,
             preferredWidth: 190f,
-            coreCategory: null);
+            coreCategory: MutationCategory.SubstrateEcology);
 
         public static readonly IReadOnlyList<MutationCategoryPresentation> Ordered = new[]
         {

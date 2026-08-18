@@ -57,6 +57,7 @@ namespace FungusToast.Core.AI
         public override bool? UsesCellularResilience => GetCategories().Contains(MutationCategory.CellularResilience);
         public override bool? UsesFungicide => GetCategories().Contains(MutationCategory.Fungicide);
         public override bool? UsesGeneticDrift => GetCategories().Contains(MutationCategory.GeneticDrift);
+        public override bool? UsesSubstrateEcology => GetCategories().Contains(MutationCategory.SubstrateEcology);
 
         private readonly MutationTier maxTier;
         private readonly bool prioritizeHighTier;
@@ -282,7 +283,7 @@ namespace FungusToast.Core.AI
             var currentPhase = GetCurrentPhase(board.CurrentRound);
             
             // ==== NEW: Early Game Economy Priority ====
-            if (currentPhase == GamePhase.EarlyGame)
+            if (currentPhase == GamePhase.EarlyGame && economyBias != EconomyBias.IgnoreEconomy)
             {
                 var economyMutations = GetEarlyGameEconomyMutations(allMutations, player, board, board.CurrentRound);
                 if (economyMutations.Count > 0)

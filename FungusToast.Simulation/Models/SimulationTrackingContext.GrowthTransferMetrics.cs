@@ -2,6 +2,25 @@ namespace FungusToast.Simulation.Models
 {
     public partial class SimulationTrackingContext
     {
+        private readonly Dictionary<int, int> aeratedFrontierAttempts = new();
+        private readonly Dictionary<int, int> aeratedFrontierBonusGrowths = new();
+
+        public void RecordAeratedFrontierAttempt(int playerId)
+        {
+            aeratedFrontierAttempts[playerId] = GetAeratedFrontierAttempts(playerId) + 1;
+        }
+
+        public void RecordAeratedFrontierBonusGrowth(int playerId)
+        {
+            aeratedFrontierBonusGrowths[playerId] = GetAeratedFrontierBonusGrowths(playerId) + 1;
+        }
+
+        public int GetAeratedFrontierAttempts(int playerId)
+            => aeratedFrontierAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetAeratedFrontierBonusGrowths(int playerId)
+            => aeratedFrontierBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
         // ────────────────
         // Perimeter Proliferator Growths
         // ────────────────

@@ -18,6 +18,7 @@ namespace FungusToast.Core.AI
         public virtual bool? UsesCellularResilience { get; }
         public virtual bool? UsesFungicide { get; }
         public virtual bool? UsesGeneticDrift { get; }
+        public virtual bool? UsesSubstrateEcology { get; }
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver simulationObserver)
