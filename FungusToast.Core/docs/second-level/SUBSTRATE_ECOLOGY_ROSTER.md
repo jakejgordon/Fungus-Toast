@@ -2,7 +2,7 @@
 
 > Status: design-approved implementation input is still required. No names, values, prerequisites, or category moves in this document change gameplay by themselves.
 >
-> Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), and [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md).
+> Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md), and the temporary [Mycelial Lab Pending Decisions](../../../docs/MYCELIAL_LAB_PENDING_DECISIONS.md) approval queue.
 
 ## Lane Contract
 

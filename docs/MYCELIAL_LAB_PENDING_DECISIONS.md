@@ -1,0 +1,275 @@
+# Mycelial Lab Pending Decisions
+
+> Temporary decision log created 2026-08-17. This file records the approval gate before Slice 10; it does not change gameplay. Once every decision is resolved, fold the answers into the canonical mutation documents and remove this file only with Jake's approval.
+>
+> Detailed mechanic source: [Substrate Ecology Roster Proposal](../FungusToast.Core/docs/second-level/SUBSTRATE_ECOLOGY_ROSTER.md). Active implementation plan: [WORKLOG.md](WORKLOG.md).
+
+## How to Use This Log
+
+- Answer one numbered question at a time with **Approve**, **Approve with changes**, or **Rework**.
+- Names, prerequisites, and numeric values remain proposals until their question is resolved.
+- Initial numbers are test hypotheses, not final balance commitments.
+- Decisions 1-8 define Substrate Ecology. Decision 9 covers later additions to the existing lanes. Decision 10 controls implementation order.
+
+## Decision Status
+
+| # | Decision | Status |
+|---|---|---|
+| 1 | Substrate Sensing root | Pending |
+| 2 | Aerated Frontier branch | Pending |
+| 3 | Compaction Pressure branch | Pending |
+| 4 | Detrital Enzymes branch | Pending |
+| 5 | Rival Rhizosphere branch | Pending |
+| 6 | Nutrient Afterglow payoff | Pending |
+| 7 | Ecological Succession capstone | Pending |
+| 8 | Move Necrophytic Bloom to Ecology | Pending |
+| 9 | Five later additions to existing lanes | Pending |
+| 10 | Implementation sequence | Pending |
+
+## 1. Approve Substrate Sensing as the Tier-1 Ecology Root?
+
+### Proposed mechanic
+
+Before a normal growth roll, an attempt targeting an empty, occupiable tile orthogonally adjacent to an unconsumed nutrient patch receives a growth-chance bonus. The nutrient-patch tile itself does not qualify, and adjacency to multiple patches does not multiply the bonus.
+
+### Proposed shape
+
+- Category/tier: Substrate Ecology, Tier 1 root.
+- Initial value: +1.5 percentage points per level.
+- Initial maximum: 10 levels, or +15 percentage points before the shared Ecology cap.
+- Prerequisites: none.
+- Counterplay: consume the patch, occupy its perimeter, or deny legal approach tiles.
+- AI: value reachable nutrient-adjacent empty tiles; assign low utility when none exist.
+- Tracking: qualifying attempts, qualifying tiles, and successes attributable to the bonus.
+- Limits: empty/occupiable targets only; no bonus on the patch itself; one adjacency bonus per attempt.
+
+### Why this is recommended
+
+- It establishes Ecology's identity immediately: read and exploit the local substrate rather than gain unconditional growth.
+- It is deterministic to evaluate and requires no pending save state.
+- It creates visible counterplay around nutrient patches.
+- It does not replace Rhizomorphic Hunger or other mechanics that act directly on nutrient tiles.
+- It is a low-risk first mechanic for proving the new category across Core, AI, Simulation, tracking, and Unity.
+
+### Risks and questions inside the proposal
+
+- It has no effect when a board has no nutrient patches or all patches have been consumed. That is acceptable for a contextual lane only if the root remains understandable and AI does not overvalue it.
+- A +15-point maximum may be too strong when combined with other conditional bonuses, so the final value requires focused tests and the shared Ecology cap.
+- The roster currently gives Nutrient Afterglow a Substrate Sensing 15 prerequisite despite this proposed maximum of 10. Recommendation: retain the 10-level maximum and correct that later prerequisite to level 10.
+
+### Recommendation
+
+Approve the name, mechanic, Tier-1 placement, and 10-level shape. Treat +1.5 points per level and the combined cap as provisional balance values.
+
+### Answer
+
+Pending.
+
+## 2. Approve Aerated Frontier as the Open-Substrate Branch?
+
+### Proposed mechanic
+
+Growth attempts from a living owned cell with at least five open tiles among its eight neighbors gain a bonus. Nutrient, blocked, occupied, dead, and toxin tiles are not open.
+
+### Proposed shape
+
+- Tier 2; requires Substrate Sensing 10.
+- +2 percentage points per level; 5 levels.
+- Rewards sparse frontier expansion; edges, occupation, and toxins naturally suppress it.
+- Included in the shared Ecology cap.
+
+### Recommendation
+
+Approve. It is legible from board state and pairs cleanly with, but does not overlap, Compaction Pressure.
+
+### Answer
+
+Pending.
+
+## 3. Approve Compaction Pressure as the Crowded-Substrate Branch?
+
+### Proposed mechanic
+
+Growth attempts from a living owned cell with only one or two legal neighboring growth targets gain a bonus. A fully sealed cell receives no synthetic attempt.
+
+### Proposed shape
+
+- Tier 2; requires Substrate Sensing 10.
+- +2 percentage points per level; 5 levels.
+- Helps colonies escape congestion without attacking, replacing, or bypassing occupants.
+- Included in the shared Ecology cap.
+
+### Recommendation
+
+Approve. It creates the opposite spatial incentive from Aerated Frontier while keeping the qualification rules mutually clear.
+
+### Answer
+
+Pending.
+
+## 4. Approve Detrital Enzymes as the Dead-Matter Branch?
+
+### Proposed mechanic
+
+Growth into an empty tile adjacent to any dead, non-toxin cell gains a bonus. The dead cell is a catalyst; it is not reclaimed or consumed by this mutation.
+
+### Proposed shape
+
+- Tier 3; requires Substrate Sensing 5, Aerated Frontier 3, and Necrosporulation 3.
+- +3 percentage points per level; 5 levels.
+- Own and enemy dead cells qualify; multiple dead neighbors do not stack.
+- Reclamation, composting, or occupation removes the opportunity.
+
+### Recommendation
+
+Approve. It gives Ecology a clear relationship with dead zones without stealing direct reclamation from Cellular Resilience.
+
+### Answer
+
+Pending.
+
+## 5. Approve Rival Rhizosphere as the Contested-Boundary Branch?
+
+### Proposed mechanic
+
+Growth into an empty tile adjacent to an enemy living cell gains a bonus. It never attacks or overgrows the enemy cell.
+
+### Proposed shape
+
+- Tier 3; requires Substrate Sensing 5, Compaction Pressure 3, and Mycotoxin Tracer 5.
+- +3 percentage points per level; 5 levels.
+- Enemy dead and toxin cells do not qualify; multiple adjacent rivals do not multiply the bonus.
+- Opponents can fill, toxify, or retreat from the contested boundary.
+
+### Recommendation
+
+Approve. It rewards boundary competition while leaving direct offense in Fungicide.
+
+### Answer
+
+Pending.
+
+## 6. Approve Nutrient Afterglow as the Patch-Consumption Payoff?
+
+### Proposed mechanic
+
+Consuming a nutrient patch stores a capped budget that strengthens a limited number of Ecology-qualified growth attempts during the owner's next Growth Phase, then expires.
+
+### Proposed shape
+
+- Tier 4; proposed requirements: Substrate Sensing 10, Aerated Frontier 3, and Adaptive Expression 3.
+- 5 levels; exact bonus and attempt-budget scaling remain unresolved.
+- One stored budget with a hard cap; repeated patch consumption cannot stack without limit.
+- Requires explicit save/resume state for a budget that survives between consumption and payoff.
+
+### Main decision
+
+Approve the delayed-payoff concept now, or rework it into an immediate/stateless effect? The delayed version is strategically richer but materially more complex to persist, explain, value in AI, and test.
+
+### Recommendation
+
+Approve the concept but defer implementation until its budget formula and save state are designed. Correct the impossible Substrate Sensing 15 prerequisite to 10 if Decision 1 retains a 10-level maximum.
+
+### Answer
+
+Pending.
+
+## 7. Approve Ecological Succession as the Ecology Capstone?
+
+### Proposed mechanic
+
+Once per Growth Phase, the first failed growth attempt that qualified for any Ecology context immediately retries the same still-legal source and target. The retry cannot recurse.
+
+### Proposed shape
+
+- Tier 5; requires Detrital Enzymes 5, Rival Rhizosphere 5, Nutrient Afterglow 3, and Mycelial Bloom 15.
+- 3 levels; initial hypothesis adds +5 percentage points per level to the retry.
+- One retry per player per phase, regardless of how many Ecology contexts qualified.
+- Requires explicit deterministic ordering relative to Creeping Mold's failed-growth behavior.
+
+### Main decision
+
+Approve a once-per-phase retry capstone, with the Creeping Mold interaction settled by focused design/tests before implementation?
+
+### Recommendation
+
+Approve the concept. Prefer Ecological Succession's immediate same-target retry before Creeping Mold can reposition the source, but confirm that ordering during its implementation slice.
+
+### Answer
+
+Pending.
+
+## 8. Move Necrophytic Bloom from Genetic Drift to Substrate Ecology?
+
+### Proposed change
+
+Move the existing compost mechanic into Ecology because it turns dead-cell clusters into neutral environmental nutrient patches. Preserve mutation ID 22, owned levels, constants, timing, effect behavior, tracking, and save compatibility.
+
+### Consequences
+
+- Category-filtered AI spending, Unity placement, investment totals, Simulation ordering, and reporting will change category.
+- Existing prerequisites should be rebalanced separately; the proposed Ecology chain is Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, and Substrate Sensing 5.
+- Hyperadaptive Drift's prerequisite remains linked by ID and need not change behavior.
+- Processor ownership may move out of `GeneticDriftMutationProcessor`, but Decay-end timing must remain unchanged.
+
+### Recommendation
+
+Approve the category move. The mechanic is fundamentally environmental composting rather than mutation-point economy.
+
+### Answer
+
+Pending.
+
+## 9. Approve the Five Later Additions to Existing Lanes?
+
+These are later design inputs, not part of Slice 10:
+
+1. **Apical Dominance - Growth:** newly grown cells get a capped bonus on their first outward attempt in the same Growth Phase.
+2. **Septal Isolation - Cellular Resilience:** when a cell dies, adjacent friendly cells receive a capped reduction to their next death chance.
+3. **Toxin Anastomosis - Fungicide:** placing an owned toxin beside another can extend the older toxin's life by one round, capped per toxin.
+4. **Latent Polymorphism - Genetic Drift:** banking points can grant a capped chance for a later purchase to add a free level to a different Tier-1 mutation.
+5. **Saprotrophic Pulse - Mycelial Surges:** while active, Ecology-qualified growth near dead matter can reclaim one adjacent owned dead cell.
+
+### Main decision
+
+Approve these five as concepts for later detailed review, reject any now, or require replacements before the whole-tree target remains 45 mutations?
+
+### Recommendation
+
+Approve them only as backlog concepts. Each should receive its own values, prerequisites, save-state review, and implementation approval when its batch begins.
+
+### Answer
+
+Pending.
+
+## 10. Approve the Implementation Sequence?
+
+### Proposed sequence
+
+1. Add the Core Substrate Ecology category and implement Substrate Sensing end to end.
+2. Add Aerated Frontier and Compaction Pressure as the stateless spatial pair.
+3. Add Detrital Enzymes and Rival Rhizosphere as the stateless contextual pair.
+4. Move Necrophytic Bloom in an isolated compatibility-focused slice.
+5. Design and add Nutrient Afterglow's pending state.
+6. Add Ecological Succession after resolving failed-growth ordering.
+7. Review and batch the five existing-lane additions.
+8. Run whole-tree simulation, balance, and usability hardening.
+
+### Recommendation
+
+Approve. This proves the category with the least persistent-state risk and keeps every mechanic family independently testable and revertible.
+
+### Answer
+
+Pending.
+
+## Deferred Balance Decisions
+
+The following should not block conceptual approval unless Jake wants to set them now:
+
+- Exact shared cap for stacked Ecology growth bonuses.
+- Final per-level values and maximum levels.
+- AI weights after effect-correctness tests.
+- Exact Nutrient Afterglow budget formula and persistence representation.
+- Exact Creeping Mold/Ecological Succession failure ordering.
+- Final prerequisite thresholds after reachability and simulation review.

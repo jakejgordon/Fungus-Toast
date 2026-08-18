@@ -22,6 +22,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.
+- **Temporary approval queue:** `docs/MYCELIAL_LAB_PENDING_DECISIONS.md` records the ten numbered pre-Slice 10 questions, context, recommendations, and answers until the gate is resolved.
 
 ## Product Decisions and Guardrails
 
