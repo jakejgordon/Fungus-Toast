@@ -91,7 +91,7 @@ namespace FungusToast.Unity.UI.MutationTree
             MutationDescriptionSections sections = mutation.DescriptionSections;
 
             titleText.text = mutation.Name;
-            titleText.color = MutationTreeColors.GetCategoryAccent(mutation.Category);
+            titleText.color = MutationTreeColors.GetReadableCategoryAccent(mutation.Category);
             metadataText.text = $"Tier {mutation.TierNumber}  •  {GetCategoryDisplayName(mutation.Category)}";
             summaryText.text = sections.Summary;
             technicalDetailsText.text = $"<b>Technical details</b>\n{sections.TechnicalDetails}";
@@ -251,9 +251,9 @@ namespace FungusToast.Unity.UI.MutationTree
             titleText = CreateText("Title", 26f, 32f, FontStyles.Bold, UIStyleTokens.Text.Primary);
             metadataText = CreateText("Metadata", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
             summaryText = CreateText("Summary", 18f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
-            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
+            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             stateText = CreateText("State", 16f, 22f, FontStyles.Bold, UIStyleTokens.State.Info);
-            costText = CreateText("Cost", 16f, 22f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
+            costText = CreateText("Cost", 16f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
             currentLevelText = CreateText("CurrentLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             nextLevelText = CreateText("NextLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
 
@@ -268,7 +268,7 @@ namespace FungusToast.Unity.UI.MutationTree
             emptyDependentsText = CreateText("NoDependents", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents", parent: dependentsSection);
 
             maxLevelBonusText = CreateText("MaxLevelBonus", 15f, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
-            synergyText = CreateText("Synergy", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
+            synergyText = CreateText("Synergy", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             _ = CreateText("Hint", 14f, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
 
             Clear();
@@ -574,7 +574,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private static Color GetStateColor(MutationProgressSnapshot snapshot, Player player, UI_MutationManager manager)
         {
             if (snapshot.IsMaxed) return MutationTreeColors.MaxedGold;
-            if (snapshot.IsActiveSurge) return MutationTreeColors.GetCategoryAccent(snapshot.Mutation.Category);
+            if (snapshot.IsActiveSurge) return MutationTreeColors.GetReadableCategoryAccent(snapshot.Mutation.Category);
             if (IsPendingUntilNextRound(snapshot, player) || snapshot.HasUnmetPrerequisites || manager.IsMutationDisabledBecauseNoEffect(snapshot.Mutation, player))
                 return UIStyleTokens.State.Warning;
             if (snapshot.IsAffordable) return UIStyleTokens.State.Success;

@@ -271,6 +271,13 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Made inspector text blocks content-driven after their final responsive width is applied, reduced oversized minimum heights, grouped Requirements and Direct unlocks with their chips/empty states, and removed inactive chip containers from layout.
 - Core mechanics, mutation data, save state, prefabs, and serialized references are unchanged. Unity Editor verification remains required for wrapped technical text, inspector scrolling/density, toolbar Search/Pin layout, empty and populated relationship sections, and supported resolutions.
 
+**Inspector interaction, search, and contrast follow-up (2026-08-19):**
+
+- Hover now remembers the mutation it displays, so leaving the card keeps that mutation in the inspector instead of restoring an older selection. Card clicks and purchases update this remembered selection without enabling the explicit hard Pin; relationship-chip navigation still replaces and pins its focused mutation.
+- Search now isolates results: matches retain full opacity with a dedicated high-visibility focus outline, while nonmatches remain at 10% opacity as faint graph context. Search emphasis composes with relationship dimming and restores canonical node alpha when cleared.
+- Disabled button transitions no longer apply a half-transparent gray tint over the authored node backgrounds. Mutation-card state text uses the high-contrast primary text token, and inspector titles/active-surge text use a lightened category accent while dense technical/cost/synergy copy uses primary text.
+- Core builds with 0 warnings/errors and `git diff --check` passes. Unity Editor verification remains required for remembered hover/card/purchase selection, explicit Pin behavior, search type/clear cycles, every node state, inspector contrast, supported resolutions, and Console cleanliness.
+
 **Implemented checkpoint (2026-08-17):**
 
 - Jake rejected Substrate Sensing because nutrient patches are sparse, distant from starting colonies, and consumed by growth. He approved (`1R-A`) promoting Aerated Frontier to the Tier-1 root with a trigger of at least two orthogonally adjacent open spaces.

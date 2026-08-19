@@ -27,6 +27,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float CompactNodeHeight = 120f;
         private const float MaxBadgeWidth = 44f;
         private const float MaxBadgeHeight = 20f;
+        private const float SearchNonMatchAlpha = 0.10f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
@@ -78,12 +79,17 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Enhanced UX — MAX Badge")]
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
+        private Outline searchMatchOutline;
         private TextMeshProUGUI purchasedGrowthMark;
 
         private Mutation mutation;
         private UI_MutationManager uiManager;
         private Player player;
         private bool isPointerHovering;
+        private float baseCanvasAlpha = 1f;
+        private bool isRelationshipDimmed;
+        private bool isSearchActive;
+        private bool isSearchMatch;
 
         // Animation state
         private Coroutine upgradeEffectCoroutine;
@@ -123,6 +129,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Subtle border outline for visual node separation ──
             EnsureNodeBorder();
+            EnsureSearchMatchOutline();
+            ConfigureUpgradeButtonTransitions();
 
             // Initialise progress fill to current level immediately (no lerp on first draw)
             int currentLevel = player.GetMutationLevel(mutation.Id);
@@ -236,8 +244,9 @@ namespace FungusToast.Unity.UI.MutationTree
             if (pendingUnlockText != null)
                 pendingUnlockText.text = "1";
 
+            baseCanvasAlpha = isLocked ? 0.9f : (isSurgeActive || showPendingUnlock) ? 0.88f : isDisabledBecauseNoEffect ? 0.9f : 1f;
             if (canvasGroup != null)
-                canvasGroup.alpha = isLocked ? 0.9f : (isSurgeActive || showPendingUnlock) ? 0.88f : isDisabledBecauseNoEffect ? 0.9f : 1f;
+                canvasGroup.alpha = baseCanvasAlpha;
 
             // Surge overlay (shows when surge is active)
             if (surgeActiveOverlay != null)
@@ -298,6 +307,8 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 ApplyInteractableHoverVisual();
             }
+
+            ApplySearchVisual();
         }
 
         private void Update()
@@ -436,7 +447,7 @@ namespace FungusToast.Unity.UI.MutationTree
             Color primary = useDarkText ? HighlightedTextColor : MutationTreeColors.PrimaryText;
             Color secondary = useDarkText
                 ? HighlightedSecondaryTextColor
-                : MutationTreeColors.SecondaryText;
+                : MutationTreeColors.PrimaryText;
 
             if (mutationNameText != null)
             {
@@ -1214,15 +1225,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void SetRelationshipDimmed(bool dimmed)
         {
-            if (canvasGroup == null)
-            {
-                return;
-            }
-
-            if (dimmed)
-            {
-                canvasGroup.alpha = Mathf.Min(canvasGroup.alpha, 0.58f);
-            }
+            isRelationshipDimmed = dimmed;
+            ApplyEmphasisAlpha();
         }
 
         public bool MatchesSearch(string normalizedQuery)
@@ -1245,26 +1249,39 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void SetSearchMatchState(bool searchActive, bool matches)
         {
-            if (!searchActive)
+            isSearchActive = searchActive;
+            isSearchMatch = matches;
+            ApplySearchVisual();
+        }
+
+        private void ApplySearchVisual()
+        {
+            if (searchMatchOutline != null)
+            {
+                searchMatchOutline.enabled = isSearchActive && isSearchMatch;
+            }
+
+            ApplyEmphasisAlpha();
+        }
+
+        private void ApplyEmphasisAlpha()
+        {
+            if (canvasGroup == null)
             {
                 return;
             }
 
-            if (!matches)
+            if (isSearchActive)
             {
-                if (canvasGroup != null)
-                {
-                    canvasGroup.alpha = Mathf.Min(canvasGroup.alpha, 0.26f);
-                }
+                canvasGroup.alpha = isSearchMatch
+                    ? 1f
+                    : Mathf.Min(baseCanvasAlpha, SearchNonMatchAlpha);
                 return;
             }
 
-            if (nodeStateBorder != null)
-            {
-                nodeStateBorder.enabled = true;
-                nodeStateBorder.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.95f);
-                nodeStateBorder.effectDistance = new Vector2(2f, -2f);
-            }
+            canvasGroup.alpha = isRelationshipDimmed
+                ? Mathf.Min(baseCanvasAlpha, 0.58f)
+                : baseCanvasAlpha;
         }
 
         public void UpdateInteractable()
@@ -1399,6 +1416,28 @@ namespace FungusToast.Unity.UI.MutationTree
             nodeStateBorder.effectDistance = DefaultHighlightEffectDistance;
         }
 
+        private void EnsureSearchMatchOutline()
+        {
+            if (searchMatchOutline != null)
+                return;
+
+            GameObject target = upgradeButton != null ? upgradeButton.gameObject : gameObject;
+            searchMatchOutline = target.AddComponent<Outline>();
+            searchMatchOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 1f);
+            searchMatchOutline.effectDistance = new Vector2(3.5f, -3.5f);
+            searchMatchOutline.enabled = false;
+        }
+
+        private void ConfigureUpgradeButtonTransitions()
+        {
+            if (upgradeButton == null)
+                return;
+
+            ColorBlock colors = upgradeButton.colors;
+            colors.disabledColor = Color.white;
+            upgradeButton.colors = colors;
+        }
+
         private void EnsureDependentHighlightOverlay()
         {
             if (dependentHighlightOverlay != null) return;
@@ -1466,7 +1505,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (canvasGroup != null)
             {
-                canvasGroup.alpha = 1f;
+                baseCanvasAlpha = 1f;
+                ApplyEmphasisAlpha();
             }
 
             ApplyTextContrast(useDarkText: false);

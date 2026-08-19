@@ -96,11 +96,11 @@ public class MyWidget : MonoBehaviour, ITooltipContentProvider
 The full-screen mutation workspace uses a persistent right-side inspector for decision-critical mutation information. It is not a hover tooltip and should not be implemented through `TooltipManager`.
 
 - `MutationInspectorPanel` is built once at runtime by `UI_MutationManager`; it uses semantic style tokens and introduces no scene/prefab reference.
-- Hover temporarily previews a mutation. Switching previews uses a short hover-intent delay, and moving into the inspector preserves the current preview so the pointer can reach its controls without the content changing underneath it.
-- The inspector exposes an explicit `Pin` / `Pinned` control. A pinned mutation ignores later node previews until unpinned. Clicking a mutation card or a requirement/direct-unlock chip also pins that mutation without changing the existing immediate-purchase behavior; relationship chips still focus and scroll to their related nodes.
+- Hover inspects a mutation and remembers it as the fallback selection. Switching between nodes uses a short hover-intent delay; leaving a node keeps the last inspected mutation visible, and moving into the inspector preserves the current preview so the pointer can reach its controls without the content changing underneath it.
+- The inspector exposes an explicit `Pin` / `Pinned` control for players who want to freeze the current mutation against later hover previews. Clicking a mutation card or purchasing it remembers that mutation without hard-pinning it; requirement/direct-unlock chips replace and pin the focused mutation while still scrolling to its related node.
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
-- Search and Pin controls live at the top of the inspector. Search is transient and only changes node emphasis. The inspector always shows authored technical details when present; mutation cards remain compact and do not duplicate summary prose beneath their names.
+- Search and Pin controls live at the top of the inspector. Search is transient and isolates matches with a dedicated focus border while reducing nonmatches to faint graph context; it never changes availability or interaction. The inspector always shows authored technical details when present; mutation cards remain compact and do not duplicate summary prose beneath their names.
 
 ### Mutation Dependency Graph
 

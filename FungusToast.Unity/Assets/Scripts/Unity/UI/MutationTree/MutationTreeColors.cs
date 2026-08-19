@@ -50,6 +50,15 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         /// <summary>
+        /// Returns a category accent bright enough for contrast-critical text on dark panels.
+        /// Raw category accents remain reserved for borders, fills, and other non-text decoration.
+        /// </summary>
+        public static Color GetReadableCategoryAccent(MutationCategory category)
+        {
+            return Color.Lerp(GetCategoryAccent(category), UIStyleTokens.Text.Primary, 0.52f);
+        }
+
+        /// <summary>
         /// Returns the category accent at reduced alpha, suitable for header backgrounds.
         /// </summary>
         public static Color GetCategoryHeaderBG(MutationCategory category, float alpha = 0.95f)

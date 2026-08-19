@@ -1090,6 +1090,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 CancelInspectorHoverIntent();
                 hoveredMutation = mutation;
                 hoveredMutationPlayer = player;
+                RememberInspectedMutation(mutation, player);
                 ReapplyInspectedMutationState();
                 return;
             }
@@ -1128,7 +1129,7 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutationPlayer = null;
             selectedMutation = mutation;
             selectedMutationPlayer = player;
-            isInspectorPinned = true;
+            isInspectorPinned = false;
             ReapplyInspectedMutationState();
         }
 
@@ -1186,9 +1187,21 @@ namespace FungusToast.Unity.UI.MutationTree
 
             hoveredMutation = pendingHoveredMutation;
             hoveredMutationPlayer = pendingHoveredMutationPlayer;
+            RememberInspectedMutation(hoveredMutation, hoveredMutationPlayer);
             pendingHoveredMutation = null;
             pendingHoveredMutationPlayer = null;
             ReapplyInspectedMutationState();
+        }
+
+        private void RememberInspectedMutation(Mutation? mutation, Player? player)
+        {
+            if (mutation == null || player == null)
+            {
+                return;
+            }
+
+            selectedMutation = mutation;
+            selectedMutationPlayer = player;
         }
 
         private IEnumerator ClearInspectorHoverAfterDelay()
