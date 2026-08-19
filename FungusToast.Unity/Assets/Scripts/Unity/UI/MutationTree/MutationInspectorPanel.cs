@@ -376,7 +376,7 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 chips.Add(new ChipData(
                     dependent.Id,
-                    dependent.Name,
+                    $"> {dependent.Name}",
                     MutationTreeColors.GetCategoryAccent(dependent.Category)));
             }
 

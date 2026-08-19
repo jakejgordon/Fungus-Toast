@@ -130,7 +130,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // ── Subtle border outline for visual node separation ──
             EnsureNodeBorder();
             EnsureSearchMatchOutline();
-            ConfigureUpgradeButtonTransitions();
+            ConfigureNodeButtonPresentation();
 
             // Initialise progress fill to current level immediately (no lerp on first draw)
             int currentLevel = player.GetMutationLevel(mutation.Id);
@@ -1428,14 +1428,19 @@ namespace FungusToast.Unity.UI.MutationTree
             searchMatchOutline.enabled = false;
         }
 
-        private void ConfigureUpgradeButtonTransitions()
+        private void ConfigureNodeButtonPresentation()
         {
             if (upgradeButton == null)
                 return;
 
-            ColorBlock colors = upgradeButton.colors;
-            colors.disabledColor = Color.white;
-            upgradeButton.colors = colors;
+            // MutationNodeUI owns every card-state and hover color. Letting Selectable
+            // tint the same Image creates a second, stateful color layer that can wash
+            // locked cards toward the prefab's light disabled color.
+            upgradeButton.transition = Selectable.Transition.None;
+            if (nodeBackground != null)
+            {
+                nodeBackground.CrossFadeColor(Color.white, 0f, true, true);
+            }
         }
 
         private void EnsureDependentHighlightOverlay()

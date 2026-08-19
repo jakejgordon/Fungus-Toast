@@ -277,6 +277,7 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Search now isolates results: matches retain full opacity with a dedicated high-visibility focus outline, while nonmatches remain at 10% opacity as faint graph context. Search emphasis composes with relationship dimming and restores canonical node alpha when cleared.
 - Disabled button transitions no longer apply a half-transparent gray tint over the authored node backgrounds. Mutation-card state text uses the high-contrast primary text token, and inspector titles/active-surge text use a lightened category accent while dense technical/cost/synergy copy uses primary text.
 - Core builds with 0 warnings/errors and `git diff --check` passes. Unity Editor verification remains required for remembered hover/card/purchase selection, explicit Pin behavior, search type/clear cycles, every node state, inspector contrast, supported resolutions, and Console cleanliness.
+- Follow-up screenshot validation showed ordinary locked cards still receiving a competing Unity `Button` tint over the code-owned node surface. Node buttons now disable that redundant transition path and use a darker locked surface; Direct unlock chips use a font-safe `>` navigation marker while requirement chips retain their meaningful met/unmet status marker.
 
 **Implemented checkpoint (2026-08-17):**
 
