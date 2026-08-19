@@ -264,6 +264,13 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. The Unity Editor/project file is unavailable in this environment, so Unity compile and visual checks remain manual.
 - Manual Unity checks required: Simple/Technical/held-Alt card content; long inspector summaries and technical/current/next sections; all six headers and four Tendril labels; locked cards; selected/hovered/prerequisite/dependent/search states; Growth progression at supported resolutions; and Console cleanliness.
 
+**Inspector density follow-up (2026-08-19):**
+
+- Removed the Simple/Technical toggle, saved disclosure preference, held-Alt reveal, and truncated effect summaries beneath mutation-card names. Authored technical details now remain visible in the persistent inspector whenever present.
+- Expanded the responsive inspector to 400 units at 1920-wide, about 368 at 1600-wide, and a 320-unit minimum at 1280-wide.
+- Made inspector text blocks content-driven after their final responsive width is applied, reduced oversized minimum heights, grouped Requirements and Direct unlocks with their chips/empty states, and removed inactive chip containers from layout.
+- Core mechanics, mutation data, save state, prefabs, and serialized references are unchanged. Unity Editor verification remains required for wrapped technical text, inspector scrolling/density, toolbar Search/Pin layout, empty and populated relationship sections, and supported resolutions.
+
 **Implemented checkpoint (2026-08-17):**
 
 - Jake rejected Substrate Sensing because nutrient patches are sparse, distant from starting colonies, and consumed by growth. He approved (`1R-A`) promoting Aerated Frontier to the Tier-1 root with a trigger of at least two orthogonally adjacent open spaces.

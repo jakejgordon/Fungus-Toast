@@ -100,7 +100,7 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 - The inspector exposes an explicit `Pin` / `Pinned` control. A pinned mutation ignores later node previews until unpinned. Clicking a mutation card or a requirement/direct-unlock chip also pins that mutation without changing the existing immediate-purchase behavior; relationship chips still focus and scroll to their related nodes.
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
-- Search and Simple/Technical controls live at the top of the inspector. Search is transient and only changes node emphasis; the disclosure preference uses scoped player settings, while held-Alt reveal is temporary.
+- Search and Pin controls live at the top of the inspector. Search is transient and only changes node emphasis. The inspector always shows authored technical details when present; mutation cards remain compact and do not duplicate summary prose beneath their names.
 
 ### Mutation Dependency Graph
 

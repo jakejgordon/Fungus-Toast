@@ -17,10 +17,11 @@ namespace FungusToast.Unity.UI.MutationTree
     /// </summary>
     internal sealed class MutationInspectorPanel : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
     {
-        public const float PreferredWidth = 340f;
+        public const float PreferredWidth = 400f;
         public const float OuterGap = 12f;
         private const float PanelPadding = 16f;
-        private const float SectionSpacing = 10f;
+        private const float SectionSpacing = 8f;
+        private const float RelatedItemSpacing = 4f;
         private const float ChipHeight = 36f;
         private const float ToolbarHeight = 40f;
         private const float ToolbarGap = 8f;
@@ -46,8 +47,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private readonly List<Button> dependentButtons = new();
         private TMP_FontAsset? font;
         private TMP_InputField searchInput = null!;
-        private Button technicalModeButton = null!;
-        private TextMeshProUGUI technicalModeButtonLabel = null!;
         private Button pinButton = null!;
         private TextMeshProUGUI pinButtonLabel = null!;
         private Action? pointerEntered;
@@ -76,6 +75,9 @@ namespace FungusToast.Unity.UI.MutationTree
             rootRect.pivot = new Vector2(1f, 1f);
             rootRect.anchoredPosition = new Vector2(-OuterGap, -topInset);
             rootRect.sizeDelta = new Vector2(width, -(topInset + OuterGap));
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            RefreshTextHeights();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
         }
 
         public void Show(
@@ -93,6 +95,7 @@ namespace FungusToast.Unity.UI.MutationTree
             metadataText.text = $"Tier {mutation.TierNumber}  •  {GetCategoryDisplayName(mutation.Category)}";
             summaryText.text = sections.Summary;
             technicalDetailsText.text = $"<b>Technical details</b>\n{sections.TechnicalDetails}";
+            technicalDetailsText.gameObject.SetActive(sections.HasTechnicalDetails);
             stateText.text = BuildStateText(snapshot, player, manager);
             stateText.color = GetStateColor(snapshot, player, manager);
             costText.text = BuildCostText(snapshot);
@@ -143,6 +146,8 @@ namespace FungusToast.Unity.UI.MutationTree
             synergyText.gameObject.SetActive(false);
             ConfigureButtons(requirementButtons, requirementsRoot, Array.Empty<ChipData>(), null);
             ConfigureButtons(dependentButtons, dependentsRoot, Array.Empty<ChipData>(), null);
+            requirementsRoot.gameObject.SetActive(false);
+            dependentsRoot.gameObject.SetActive(false);
             emptyRequirementsText.gameObject.SetActive(true);
             emptyDependentsText.gameObject.SetActive(true);
             RefreshTextHeights();
@@ -150,15 +155,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void BindWorkspaceControls(
             Action<string> searchChanged,
-            Action technicalModeToggled,
             Action pinToggled,
             Action inspectorPointerEntered,
             Action inspectorPointerExited)
         {
             searchInput.onValueChanged.RemoveAllListeners();
             searchInput.onValueChanged.AddListener(value => searchChanged?.Invoke(value));
-            technicalModeButton.onClick.RemoveAllListeners();
-            technicalModeButton.onClick.AddListener(() => technicalModeToggled?.Invoke());
             pinButton.onClick.RemoveAllListeners();
             pinButton.onClick.AddListener(() => pinToggled?.Invoke());
             pointerEntered = inspectorPointerEntered;
@@ -184,14 +186,6 @@ namespace FungusToast.Unity.UI.MutationTree
         public void OnPointerEnter(PointerEventData eventData) => pointerEntered?.Invoke();
 
         public void OnPointerExit(PointerEventData eventData) => pointerExited?.Invoke();
-
-        public void SetTechnicalMode(bool enabled, bool temporaryReveal)
-        {
-            technicalDetailsText.gameObject.SetActive(enabled);
-            technicalModeButtonLabel.text = temporaryReveal ? "Technical (Alt)" : enabled ? "Technical" : "Simple";
-            RefreshTextHeights();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
-        }
 
         public void FocusSearch()
         {
@@ -238,7 +232,7 @@ namespace FungusToast.Unity.UI.MutationTree
             VerticalLayoutGroup layout = contentObject.GetComponent<VerticalLayoutGroup>();
             layout.spacing = SectionSpacing;
             layout.childControlWidth = true;
-            layout.childControlHeight = false;
+            layout.childControlHeight = true;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
 
@@ -254,26 +248,28 @@ namespace FungusToast.Unity.UI.MutationTree
             scrollRect.movementType = ScrollRect.MovementType.Clamped;
             scrollRect.scrollSensitivity = 24f;
 
-            titleText = CreateText("Title", 26f, 42f, FontStyles.Bold, UIStyleTokens.Text.Primary);
-            metadataText = CreateText("Metadata", 14f, 22f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
-            summaryText = CreateText("Summary", 18f, 82f, FontStyles.Normal, UIStyleTokens.Text.Primary);
-            technicalDetailsText = CreateText("TechnicalDetails", 15f, 92f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
-            stateText = CreateText("State", 16f, 26f, FontStyles.Bold, UIStyleTokens.State.Info);
-            costText = CreateText("Cost", 16f, 30f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
-            currentLevelText = CreateText("CurrentLevel", 16f, 70f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
-            nextLevelText = CreateText("NextLevel", 16f, 70f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
+            titleText = CreateText("Title", 26f, 32f, FontStyles.Bold, UIStyleTokens.Text.Primary);
+            metadataText = CreateText("Metadata", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
+            summaryText = CreateText("Summary", 18f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
+            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
+            stateText = CreateText("State", 16f, 22f, FontStyles.Bold, UIStyleTokens.State.Info);
+            costText = CreateText("Cost", 16f, 22f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
+            currentLevelText = CreateText("CurrentLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
+            nextLevelText = CreateText("NextLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
 
-            requirementsLabelText = CreateText("RequirementsLabel", 16f, 24f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements");
-            requirementsRoot = CreateChipRoot("Requirements");
-            emptyRequirementsText = CreateText("NoRequirements", 14f, 22f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites");
+            RectTransform requirementsSection = CreateSectionRoot("RequirementsSection");
+            requirementsLabelText = CreateText("RequirementsLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements", parent: requirementsSection);
+            requirementsRoot = CreateChipRoot("Requirements", requirementsSection);
+            emptyRequirementsText = CreateText("NoRequirements", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites", parent: requirementsSection);
 
-            _ = CreateText("UnlocksLabel", 16f, 24f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Direct unlocks");
-            dependentsRoot = CreateChipRoot("Dependents");
-            emptyDependentsText = CreateText("NoDependents", 14f, 22f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents");
+            RectTransform dependentsSection = CreateSectionRoot("DependentsSection");
+            _ = CreateText("UnlocksLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Direct unlocks", parent: dependentsSection);
+            dependentsRoot = CreateChipRoot("Dependents", dependentsSection);
+            emptyDependentsText = CreateText("NoDependents", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents", parent: dependentsSection);
 
-            maxLevelBonusText = CreateText("MaxLevelBonus", 15f, 64f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
-            synergyText = CreateText("Synergy", 15f, 52f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
-            _ = CreateText("Hint", 14f, 42f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
+            maxLevelBonusText = CreateText("MaxLevelBonus", 15f, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
+            synergyText = CreateText("Synergy", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.PanelSecondary);
+            _ = CreateText("Hint", 14f, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
 
             Clear();
         }
@@ -333,28 +329,6 @@ namespace FungusToast.Unity.UI.MutationTree
             searchInput.placeholder = placeholder;
             searchInput.lineType = TMP_InputField.LineType.SingleLine;
 
-            var buttonObject = new GameObject("TechnicalMode", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonObject.transform.SetParent(toolbarObject.transform, false);
-            LayoutElement buttonLayout = buttonObject.GetComponent<LayoutElement>();
-            buttonLayout.minWidth = 86f;
-            buttonLayout.preferredWidth = 86f;
-            buttonLayout.preferredHeight = ToolbarHeight;
-            technicalModeButton = buttonObject.GetComponent<Button>();
-            technicalModeButton.targetGraphic = buttonObject.GetComponent<Image>();
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(technicalModeButton);
-
-            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(buttonObject.transform, false);
-            Stretch(labelObject.GetComponent<RectTransform>(), 6f);
-            technicalModeButtonLabel = labelObject.GetComponent<TextMeshProUGUI>();
-            if (font != null) technicalModeButtonLabel.font = font;
-            technicalModeButtonLabel.fontSize = 14f;
-            technicalModeButtonLabel.fontStyle = FontStyles.Bold;
-            technicalModeButtonLabel.color = UIStyleTokens.Text.Primary;
-            technicalModeButtonLabel.alignment = TextAlignmentOptions.Center;
-            technicalModeButtonLabel.raycastTarget = false;
-            technicalModeButtonLabel.text = "Simple";
-
             var pinObject = new GameObject("Pin", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
             pinObject.transform.SetParent(toolbarObject.transform, false);
             LayoutElement pinLayout = pinObject.GetComponent<LayoutElement>();
@@ -391,6 +365,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             ConfigureButtons(requirementButtons, requirementsRoot, chips, focusMutation);
+            requirementsRoot.gameObject.SetActive(chips.Count > 0);
             emptyRequirementsText.gameObject.SetActive(chips.Count == 0);
         }
 
@@ -406,6 +381,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             ConfigureButtons(dependentButtons, dependentsRoot, chips, focusMutation);
+            dependentsRoot.gameObject.SetActive(chips.Count > 0);
             emptyDependentsText.gameObject.SetActive(chips.Count == 0);
         }
 
@@ -468,10 +444,26 @@ namespace FungusToast.Unity.UI.MutationTree
             return button;
         }
 
-        private RectTransform CreateChipRoot(string name)
+        private RectTransform CreateSectionRoot(string name)
         {
             var rootObject = new GameObject(name, typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
             rootObject.transform.SetParent(contentRect, false);
+            VerticalLayoutGroup layout = rootObject.GetComponent<VerticalLayoutGroup>();
+            layout.spacing = RelatedItemSpacing;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            ContentSizeFitter fitter = rootObject.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            return rootObject.GetComponent<RectTransform>();
+        }
+
+        private RectTransform CreateChipRoot(string name, RectTransform parent)
+        {
+            var rootObject = new GameObject(name, typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
+            rootObject.transform.SetParent(parent, false);
             VerticalLayoutGroup layout = rootObject.GetComponent<VerticalLayoutGroup>();
             layout.spacing = 6f;
             layout.childControlWidth = true;
@@ -491,12 +483,13 @@ namespace FungusToast.Unity.UI.MutationTree
             FontStyles fontStyle,
             Color color,
             Color? background = null,
-            string text = "")
+            string text = "",
+            RectTransform? parent = null)
         {
             var rootObject = background.HasValue
                 ? new GameObject(name, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement))
                 : new GameObject(name, typeof(RectTransform), typeof(LayoutElement));
-            rootObject.transform.SetParent(contentRect, false);
+            rootObject.transform.SetParent(parent != null ? parent : contentRect, false);
 
             GameObject textObject = rootObject;
             if (background.HasValue)
@@ -530,14 +523,16 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void RefreshTextHeights()
         {
-            FitTextHeight(summaryText, 82f);
-            FitTextHeight(technicalDetailsText, 92f);
-            FitTextHeight(stateText, 26f);
-            FitTextHeight(costText, 30f);
-            FitTextHeight(currentLevelText, 70f);
-            FitTextHeight(nextLevelText, 70f);
-            FitTextHeight(maxLevelBonusText, 64f);
-            FitTextHeight(synergyText, 52f);
+            FitTextHeight(titleText, 32f);
+            FitTextHeight(metadataText, 18f);
+            FitTextHeight(summaryText, 22f);
+            FitTextHeight(technicalDetailsText, 32f);
+            FitTextHeight(stateText, 22f);
+            FitTextHeight(costText, 22f);
+            FitTextHeight(currentLevelText, 32f);
+            FitTextHeight(nextLevelText, 32f);
+            FitTextHeight(maxLevelBonusText, 32f);
+            FitTextHeight(synergyText, 32f);
         }
 
         private void FitTextHeight(TextMeshProUGUI label, float minimumHeight)

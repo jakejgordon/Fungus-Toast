@@ -24,7 +24,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float NodeTextSpacing = 2f;
         private const float NodeNameTextHeight = 28f;
         private const float NodeStateTextHeight = 26f;
-        private const float NodeEffectTextHeight = 16f;
         private const float CompactNodeHeight = 120f;
         private const float MaxBadgeWidth = 44f;
         private const float MaxBadgeHeight = 20f;
@@ -79,7 +78,6 @@ namespace FungusToast.Unity.UI.MutationTree
         [Header("Enhanced UX — MAX Badge")]
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
-        private TextMeshProUGUI effectSummaryText;
         private TextMeshProUGUI purchasedGrowthMark;
 
         private Mutation mutation;
@@ -111,7 +109,6 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureStatusIndicator(pendingUnlockOverlay);
             ConfigureStatusIndicator(surgeActiveOverlay);
             mutationNameText.text = mutation.Name;
-            EnsureEffectSummaryText();
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
             if (tierStripe != null)
@@ -449,11 +446,6 @@ namespace FungusToast.Unity.UI.MutationTree
             if (levelText != null)
             {
                 levelText.color = secondary;
-            }
-
-            if (effectSummaryText != null)
-            {
-                effectSummaryText.color = secondary;
             }
 
             if (purchasedGrowthMark != null)
@@ -1181,14 +1173,6 @@ namespace FungusToast.Unity.UI.MutationTree
             highlightOutline.effectDistance = on ? new Vector2(3f, -3f) : DefaultHighlightEffectDistance;
         }
 
-        public void SetTechnicalDetailMode(bool enabled)
-        {
-            if (effectSummaryText != null)
-            {
-                effectSummaryText.gameObject.SetActive(enabled);
-            }
-        }
-
         public void SetDependentHighlight(bool on)
         {
             // Same issue as prerequisite highlight: the overlay sits above TMP text and kills contrast.
@@ -1624,35 +1608,6 @@ namespace FungusToast.Unity.UI.MutationTree
             fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(groupRect);
-        }
-
-        private void EnsureEffectSummaryText()
-        {
-            if (effectSummaryText != null || mutationNameText == null)
-            {
-                return;
-            }
-
-            Transform textContainer = mutationNameText.transform.parent;
-            var effectObject = new GameObject("UI_MutationNodeEffectSummary", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            effectObject.layer = gameObject.layer;
-            effectObject.transform.SetParent(textContainer, false);
-            effectSummaryText = effectObject.GetComponent<TextMeshProUGUI>();
-            effectSummaryText.font = mutationNameText.font;
-            effectSummaryText.fontSize = UIStyleTokens.Typography.MicroMinimum;
-            effectSummaryText.fontStyle = FontStyles.Normal;
-            effectSummaryText.color = MutationTreeColors.SecondaryText;
-            effectSummaryText.alignment = TextAlignmentOptions.Center;
-            effectSummaryText.textWrappingMode = TextWrappingModes.NoWrap;
-            effectSummaryText.overflowMode = TextOverflowModes.Ellipsis;
-            effectSummaryText.raycastTarget = false;
-            effectSummaryText.text = mutation.DescriptionSections.Summary.Replace('\n', ' ');
-            effectSummaryText.gameObject.SetActive(false);
-
-            LayoutElement layout = effectObject.GetComponent<LayoutElement>();
-            layout.minHeight = NodeEffectTextHeight;
-            layout.preferredHeight = NodeEffectTextHeight;
-            layout.flexibleHeight = 0f;
         }
 
         public void SetCompactLayout(string displayName)

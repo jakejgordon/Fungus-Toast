@@ -55,7 +55,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float StorePointsCoachmarkHeight = 190f;
         private const float StorePointsCoachmarkHorizontalOffset = 5f;
         private const float StorePointsCoachmarkVerticalOffset = -12f;
-        private const string TechnicalModePreferenceKey = "MutationWorkspace.TechnicalMode";
 
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager = null!;
@@ -143,8 +142,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private Dictionary<int, Mutation> mutationsById = new();
         private readonly HashSet<int> pendingPathGrowthMutationIds = new();
         private string mutationSearchQuery = string.Empty;
-        private bool technicalModePreference;
-        private bool altTechnicalReveal;
         private const float InspectorHoverIntentDelaySeconds = 0.5f;
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
@@ -186,7 +183,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Awake()
         {
-            technicalModePreference = ScopedPlayerPrefs.GetInt(TechnicalModePreferenceKey, 0) != 0;
             if (mutationTreePanel != null)
             {
                 CacheMutationPanelLayoutReferences();
@@ -323,25 +319,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 }
             }
 
-            bool altPressed = keyboard.leftAltKey.isPressed || keyboard.rightAltKey.isPressed;
-            if (altPressed != altTechnicalReveal)
-            {
-                altTechnicalReveal = altPressed;
-                ReapplyInspectedMutationState();
-            }
         }
 
         private void HandleMutationSearchChanged(string query)
         {
             mutationSearchQuery = query?.Trim() ?? string.Empty;
-            ReapplyInspectedMutationState();
-        }
-
-        private void ToggleTechnicalModePreference()
-        {
-            technicalModePreference = !technicalModePreference;
-            ScopedPlayerPrefs.SetInt(TechnicalModePreferenceKey, technicalModePreference ? 1 : 0);
-            ScopedPlayerPrefs.Save();
             ReapplyInspectedMutationState();
         }
 
@@ -351,15 +333,6 @@ namespace FungusToast.Unity.UI.MutationTree
             foreach (MutationNodeUI node in mutationButtons)
             {
                 node.SetSearchMatchState(searchActive, node.MatchesSearch(mutationSearchQuery));
-            }
-        }
-
-        private void ApplyMutationDetailMode()
-        {
-            bool technicalDetailsVisible = technicalModePreference || altTechnicalReveal;
-            foreach (MutationNodeUI node in mutationButtons)
-            {
-                node.SetTechnicalDetailMode(technicalDetailsVisible);
             }
         }
 
@@ -381,7 +354,6 @@ namespace FungusToast.Unity.UI.MutationTree
             directDependentsByMutationId.Clear();
             mutationsById.Clear();
             mutationSearchQuery = string.Empty;
-            altTechnicalReveal = false;
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             selectedMutation = null;
@@ -557,7 +529,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
             mutationButtons.Clear(); // reset in case we're rebuilding
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
-            ApplyMutationDetailMode();
             EnsureMutationDependencyGraph();
             mutationDependencyGraph?.Configure(mutationButtons, mutations);
             StartCoroutine(RefreshMutationDependencyGraphNextFrame());
@@ -969,9 +940,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             isTreeOpen = false;
             mutationSearchQuery = string.Empty;
-            altTechnicalReveal = false;
             mutationInspector?.ClearSearch();
-            mutationInspector?.SetTechnicalMode(technicalModePreference, false);
             RefreshResponsiveMutationPanelLayout();
 
             Vector2 startingPos = mutationTreeRect.anchoredPosition;
@@ -1326,9 +1295,6 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 mutationInspector?.Clear();
                 mutationInspector?.SetPinState(false, false);
-                mutationInspector?.SetTechnicalMode(
-                    technicalModePreference || altTechnicalReveal,
-                    altTechnicalReveal && !technicalModePreference);
                 ApplyMutationSearchState();
                 ClearProjectedCost();
                 return;
@@ -1354,10 +1320,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
             }
             mutationInspector?.SetPinState(isInspectorPinned, inspectedNode != null);
-            mutationInspector?.SetTechnicalMode(
-                technicalModePreference || altTechnicalReveal,
-                altTechnicalReveal && !technicalModePreference);
-            ApplyMutationDetailMode();
             ApplyMutationSearchState();
 
             int currentLevel = inspectedPlayer.GetMutationLevel(inspectedMutation.Id);
@@ -1675,7 +1637,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return MutationInspectorPanel.PreferredWidth;
             }
 
-            return Mathf.Clamp(canvasSize.x * 0.21f, 300f, MutationInspectorPanel.PreferredWidth);
+            return Mathf.Clamp(canvasSize.x * 0.23f, 320f, MutationInspectorPanel.PreferredWidth);
         }
 
         private void EnsureMutationInspector()
@@ -1698,11 +1660,9 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationInspector.transform.SetAsLastSibling();
             mutationInspector.BindWorkspaceControls(
                 HandleMutationSearchChanged,
-                ToggleTechnicalModePreference,
                 ToggleMutationInspectorPin,
                 HandleMutationInspectorPointerEnter,
                 HandleMutationInspectorPointerExit);
-            mutationInspector.SetTechnicalMode(technicalModePreference, false);
         }
 
         private void EnsureMutationDependencyGraph()
