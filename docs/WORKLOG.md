@@ -278,6 +278,7 @@ Treat each numbered item as its own implementation, validation, commit, fetch/pu
 - Disabled button transitions no longer apply a half-transparent gray tint over the authored node backgrounds. Mutation-card state text uses the high-contrast primary text token, and inspector titles/active-surge text use a lightened category accent while dense technical/cost/synergy copy uses primary text.
 - Core builds with 0 warnings/errors and `git diff --check` passes. Unity Editor verification remains required for remembered hover/card/purchase selection, explicit Pin behavior, search type/clear cycles, every node state, inspector contrast, supported resolutions, and Console cleanliness.
 - Follow-up screenshot validation showed ordinary locked cards still receiving a competing Unity `Button` tint over the code-owned node surface. Node buttons now disable that redundant transition path and use a darker locked surface; Direct unlock chips use a font-safe `>` navigation marker while requirement chips retain their meaningful met/unmet status marker.
+- A second Unity screenshot confirmed the final resting locked-card surface still renders light even after removing the `Selectable` tint. Ordinary locked cards now select dark text from their semantic state rather than the pre-composition background value; relationship-highlighted locked cards retain the existing dark surface with light text.
 
 **Implemented checkpoint (2026-08-17):**
 

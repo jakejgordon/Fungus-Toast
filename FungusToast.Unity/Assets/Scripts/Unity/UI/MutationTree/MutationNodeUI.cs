@@ -297,7 +297,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
-            ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
+            // Locked cards render through additional Canvas/Button state composition that
+            // is not represented by nodeBackground.color alone. Their resting surface is
+            // visibly light, so choose the contrast-safe text treatment from semantic state.
+            // Relationship highlighting repaints the card dark and explicitly restores
+            // light text in ApplyHighlightCardVisual().
+            ApplyTextContrast(useDarkText: isLocked || ShouldUseDarkTextForCurrentBackground());
             ApplyNodeStateBorder(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
             ApplyDisabledNoEffectOutline(isDisabledBecauseNoEffect);
 
