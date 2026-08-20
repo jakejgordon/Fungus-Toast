@@ -1320,13 +1320,6 @@ namespace FungusToast.Unity.UI.MutationTree
             inspectedNode?.SetInspectedHighlight(true);
             HighlightPrerequisites(inspectedMutation, inspectedPlayer);
             HighlightDirectDependents(inspectedMutation);
-            bool searchActive = !string.IsNullOrWhiteSpace(mutationSearchQuery);
-            foreach (MutationNodeUI node in mutationButtons)
-            {
-                bool related = prerequisitePathIds.Contains(node.MutationId)
-                    || directDependentIds.Contains(node.MutationId);
-                node.SetRelationshipDimmed(!searchActive && !related);
-            }
             mutationDependencyGraph?.SetInspection(prerequisitePathIds, directDependentIds);
             if (inspectedNode != null)
             {
@@ -1884,7 +1877,6 @@ namespace FungusToast.Unity.UI.MutationTree
             foreach (var node in mutationButtons)
             {
                 node.ClearHighlights();
-                node.SetRelationshipDimmed(false);
             }
 
             mutationDependencyGraph?.ClearInspection();

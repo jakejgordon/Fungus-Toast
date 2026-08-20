@@ -87,7 +87,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private Player player;
         private bool isPointerHovering;
         private float baseCanvasAlpha = 1f;
-        private bool isRelationshipDimmed;
         private bool isSearchActive;
         private bool isSearchMatch;
 
@@ -244,7 +243,10 @@ namespace FungusToast.Unity.UI.MutationTree
             if (pendingUnlockText != null)
                 pendingUnlockText.text = "1";
 
-            baseCanvasAlpha = isLocked ? 0.9f : (isSurgeActive || showPendingUnlock) ? 0.88f : isDisabledBecauseNoEffect ? 0.9f : 1f;
+            // State is communicated by the authored surface, labels, icons, and borders.
+            // Keep the whole card opaque so its text and background retain their contrast;
+            // Search is the only feature that intentionally fades mutation cards.
+            baseCanvasAlpha = 1f;
             if (canvasGroup != null)
                 canvasGroup.alpha = baseCanvasAlpha;
 
@@ -297,12 +299,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Affordability background tinting ──
             ApplyNodeBackgroundTint(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
-            // Locked cards render through additional Canvas/Button state composition that
-            // is not represented by nodeBackground.color alone. Their resting surface is
-            // visibly light, so choose the contrast-safe text treatment from semantic state.
-            // Relationship highlighting repaints the card dark and explicitly restores
-            // light text in ApplyHighlightCardVisual().
-            ApplyTextContrast(useDarkText: isLocked || ShouldUseDarkTextForCurrentBackground());
+            ApplyTextContrast(useDarkText: ShouldUseDarkTextForCurrentBackground());
             ApplyNodeStateBorder(currentLevel, isLocked, isMaxed, canAfford, isSurgeActive, showPendingUnlock, isDisabledBecauseNoEffect);
             ApplyDisabledNoEffectOutline(isDisabledBecauseNoEffect);
 
@@ -1228,12 +1225,6 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateDisplay();
         }
 
-        public void SetRelationshipDimmed(bool dimmed)
-        {
-            isRelationshipDimmed = dimmed;
-            ApplyEmphasisAlpha();
-        }
-
         public bool MatchesSearch(string normalizedQuery)
         {
             if (string.IsNullOrWhiteSpace(normalizedQuery))
@@ -1284,9 +1275,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            canvasGroup.alpha = isRelationshipDimmed
-                ? Mathf.Min(baseCanvasAlpha, 0.58f)
-                : baseCanvasAlpha;
+            canvasGroup.alpha = baseCanvasAlpha;
         }
 
         public void UpdateInteractable()
