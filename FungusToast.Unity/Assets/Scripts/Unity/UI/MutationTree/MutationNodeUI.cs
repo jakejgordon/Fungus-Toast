@@ -14,11 +14,11 @@ using FungusToast.Core.Config;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
-    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ITooltipContentProvider
+    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, ITooltipContentProvider
     {
         private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
-        private const float MutationTooltipHoverDelaySeconds = 0.5f;
+        private const float MutationTooltipHoverDelaySeconds = 0.3f;
         private const int NodeTextTopPadding = 42;
         private const int NodeTextBottomPadding = 4;
         private const float NodeTextSpacing = 2f;
@@ -495,7 +495,7 @@ namespace FungusToast.Unity.UI.MutationTree
             UpdateDisplay();
         }
 
-        public void OnPointerClick(PointerEventData eventData)
+        public void OnPointerDown(PointerEventData eventData)
         {
             if (eventData.button == PointerEventData.InputButton.Left)
             {

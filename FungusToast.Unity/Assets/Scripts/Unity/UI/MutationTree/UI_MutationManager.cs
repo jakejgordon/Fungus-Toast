@@ -142,7 +142,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Dictionary<int, Mutation> mutationsById = new();
         private readonly HashSet<int> pendingPathGrowthMutationIds = new();
         private string mutationSearchQuery = string.Empty;
-        private const float InspectorHoverIntentDelaySeconds = 0.5f;
+        private const float InspectorHoverIntentDelaySeconds = 0.3f;
         private Mutation? hoveredMutation;
         private Player? hoveredMutationPlayer;
         private Mutation? selectedMutation;
