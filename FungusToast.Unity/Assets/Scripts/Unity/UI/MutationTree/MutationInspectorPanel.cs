@@ -95,7 +95,7 @@ namespace FungusToast.Unity.UI.MutationTree
             metadataText.text = $"Tier {mutation.TierNumber}  •  {GetCategoryDisplayName(mutation.Category)}";
             summaryText.text = sections.Summary;
             technicalDetailsText.text = $"<b>Technical details</b>\n{sections.TechnicalDetails}";
-            technicalDetailsText.gameObject.SetActive(sections.HasTechnicalDetails);
+            SetTextBlockActive(technicalDetailsText, sections.HasTechnicalDetails);
             stateText.text = BuildStateText(snapshot, player, manager);
             stateText.color = GetStateColor(snapshot, player, manager);
             costText.text = BuildCostText(snapshot);
@@ -106,7 +106,7 @@ namespace FungusToast.Unity.UI.MutationTree
             currentLevelText.text = BuildLevelText(
                 $"Current level {snapshot.CurrentLevel} / {mutation.MaxLevel}",
                 node.BuildLevelSummary(snapshot.CurrentLevel));
-            nextLevelText.gameObject.SetActive(snapshot.NextLevel.HasValue);
+            SetTextBlockActive(nextLevelText, snapshot.NextLevel.HasValue);
             if (snapshot.NextLevel.HasValue)
             {
                 nextLevelText.text = BuildLevelText(
@@ -114,12 +114,12 @@ namespace FungusToast.Unity.UI.MutationTree
                     node.BuildLevelSummary(snapshot.NextLevel.Value));
             }
 
-            maxLevelBonusText.gameObject.SetActive(sections.HasMaxLevelBonus);
+            SetTextBlockActive(maxLevelBonusText, sections.HasMaxLevelBonus);
             maxLevelBonusText.text = sections.HasMaxLevelBonus
                 ? $"<b>Max-level bonus</b>\n{sections.MaxLevelBonus}"
                 : string.Empty;
 
-            synergyText.gameObject.SetActive(sections.HasBuffingMutations);
+            SetTextBlockActive(synergyText, sections.HasBuffingMutations);
             synergyText.text = sections.HasBuffingMutations
                 ? $"<b>Buffed by</b>\n{string.Join("\n", sections.BuffingMutations)}"
                 : string.Empty;
@@ -137,13 +137,13 @@ namespace FungusToast.Unity.UI.MutationTree
             metadataText.text = "Hover a node to compare its next level.";
             summaryText.text = "Requirements and direct unlocks stay here while you move around the tree.";
             technicalDetailsText.text = string.Empty;
-            technicalDetailsText.gameObject.SetActive(false);
+            SetTextBlockActive(technicalDetailsText, false);
             stateText.text = string.Empty;
             costText.text = string.Empty;
             currentLevelText.text = string.Empty;
-            nextLevelText.gameObject.SetActive(false);
-            maxLevelBonusText.gameObject.SetActive(false);
-            synergyText.gameObject.SetActive(false);
+            SetTextBlockActive(nextLevelText, false);
+            SetTextBlockActive(maxLevelBonusText, false);
+            SetTextBlockActive(synergyText, false);
             ConfigureButtons(requirementButtons, requirementsRoot, Array.Empty<ChipData>(), null);
             ConfigureButtons(dependentButtons, dependentsRoot, Array.Empty<ChipData>(), null);
             requirementsRoot.gameObject.SetActive(false);
@@ -558,6 +558,14 @@ namespace FungusToast.Unity.UI.MutationTree
             float requiredHeight = label.GetPreferredValues(label.text, textWidth, 0f).y + verticalMargins;
             element.minHeight = minimumHeight;
             element.preferredHeight = Mathf.Max(minimumHeight, requiredHeight);
+        }
+
+        private static void SetTextBlockActive(TextMeshProUGUI label, bool active)
+        {
+            LayoutElement? layoutElement = label.GetComponent<LayoutElement>()
+                ?? label.transform.parent?.GetComponent<LayoutElement>();
+            GameObject block = layoutElement != null ? layoutElement.gameObject : label.gameObject;
+            block.SetActive(active);
         }
 
         private static string BuildStateText(MutationProgressSnapshot snapshot, Player player, UI_MutationManager manager)
