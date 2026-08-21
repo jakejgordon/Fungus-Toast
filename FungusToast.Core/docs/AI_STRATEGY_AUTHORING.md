@@ -81,7 +81,7 @@ Use these via explicit `--strategy-names` when you want a stable 8-player compar
 
 ## ParameterizedSpendingStrategy Precedence
 
-For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand if you think in three layers:
+For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand if you think in four layers:
 
 1. **Build order**
    - `targetMutationGoals`
@@ -95,6 +95,9 @@ For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand i
    - `prioritizeHighTier`
    - `economyBias`
    - These mainly shape spending only when the AI is not currently able to make meaningful progress on its explicit goal chain.
+4. **Experiment exclusions**
+   - `excludedMutationIds`
+   - Removes named mutations from every normal spending candidate set. Use this for controlled simulation variants where fallback spending must not erase the treatment/control distinction.
 
 Actual spending flow, simplified:
 
@@ -121,6 +124,8 @@ Practical interpretation of the main knobs:
   - Within a candidate set, try higher-tier prerequisite-backed options first.
 - `economyBias`
   - **Fallback-only** weighting toward `GeneticDrift` mutations. This is not a full global economy strategy dial.
+- `excludedMutationIds`
+  - An experimental hard exclusion, including fallback spending. A mutation cannot be both targeted and excluded; the constructor rejects that configuration.
 
 ## Goal-Level Authoring Rules
 

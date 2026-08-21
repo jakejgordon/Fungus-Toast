@@ -119,6 +119,15 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Report acquisition rounds/rates, stalls, prerequisite point investment, and whether the powerful mutations now arrive in an appropriate late-game window.
 - Tune prerequisite levels only in isolated follow-up commits supported by exported simulation artifacts.
 
+**Ontogenic Regression A/B checkpoint (2026-08-21):**
+
+- Added exact no-Ontogenic controls for `TST_HyperEconomyRamp` and `TST_Arch04_DriftGrowth`. The controls preserve all other strategy settings and hard-exclude Ontogenic Regression so fallback spending cannot contaminate the comparison. Focused tests enforce that equivalence.
+- Ran three seeded, slot-rotated 50-game experiments with 8 players on 120x120 boards, nutrients and mycovariants enabled, and seed 2108218. All runs exported Parquet and completed with zero parity mismatches. The canonical treatment artifact is `FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/ontogenic_ab_treatment_g50_seed2108218`.
+- In the Hyper-only control, replacing only Hyper Economy with its no-Ontogenic twin reduced its win rate from 12% to 4%, reduced average living cells from 892.04 to 836.24, and increased average dead cells/toxins from 984.02/457.06 to 1220.78/714.68. Artifact: `ontogenic_ab_hyper_control_g50_seed2108218`.
+- In the Arch04-only control, replacing only Arch04 with its no-Ontogenic twin increased its win rate from 10% to 70% and average living cells from 1036.06 to 2009.78, while average dead cells/toxins rose from 599.06/27.94 to 1072.74/115.88. Artifact: `ontogenic_ab_arch_control_g50_seed2108218`.
+- A supplemental run excluding Ontogenic from both strategies produced the same interaction direction (Arch04 no-Ontogenic 72%, Hyper no-Ontogenic 0%), but it is not the primary causal comparison because the two substitutions interact. Artifact: `ontogenic_ab_control_excluded_g50_seed2108218`.
+- Conclusion: the new gate is reachable, and Ontogenic Regression is not generically overpowered under these conditions. It modestly benefits the Hyper Economy rebuild plan but severely damages Arch04's build. Do not weaken the 30-level/three-category gate based on this sample. Remove or reposition Arch04's explicit Ontogenic target before evaluating mutation-level tuning; retain Hyper Economy as the reachability/balance test strategy.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

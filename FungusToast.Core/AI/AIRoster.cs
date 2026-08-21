@@ -1251,6 +1251,29 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel)
                 }
             ),
+            // A/B control: exact Arch04 build with only Ontogenic Regression removed.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Arch04_DriftGrowth_NoOntogenic",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, GameBalance.AdaptiveExpressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel)
+                },
+                excludedMutationIds: new[] { MutationIds.OntogenicRegression }
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_Arch05_DriftResilience",
                 prioritizeHighTier: true,
@@ -1372,6 +1395,20 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
                 },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            // A/B control: exact HyperEconomy build with only Ontogenic Regression removed.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_HyperEconomyRamp_NoOntogenic",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                excludedMutationIds: new[] { MutationIds.OntogenicRegression },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
 
@@ -1923,6 +1960,7 @@ namespace FungusToast.Core.AI
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
+                ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyTheme.EconomyRamp,
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
                 ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
@@ -1930,6 +1968,7 @@ namespace FungusToast.Core.AI
                 ["TST_Arch02_ResilienceGrowth"] = StrategyTheme.Defense,
                 ["TST_Arch03_FungicideSurge"] = StrategyTheme.Offense,
                 ["TST_Arch04_DriftGrowth"] = StrategyTheme.EconomyRamp,
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyTheme.EconomyRamp,
                 ["TST_Arch05_DriftResilience"] = StrategyTheme.Counterplay,
                 ["TST_Arch06_SurgeGrowth"] = StrategyTheme.SurgeTempo,
                 ["TST_Arch07_DriftFungicide"] = StrategyTheme.Counterplay,
@@ -2028,6 +2067,7 @@ namespace FungusToast.Core.AI
                 ["TST_Arch02_ResilienceGrowth"] = StrategyPowerTier.Standard,
                 ["TST_Arch03_FungicideSurge"] = StrategyPowerTier.Spike,
                 ["TST_Arch04_DriftGrowth"] = StrategyPowerTier.Strong,
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyPowerTier.Strong,
                 ["TST_Arch05_DriftResilience"] = StrategyPowerTier.Standard,
                 ["TST_Arch06_SurgeGrowth"] = StrategyPowerTier.Standard,
                 ["TST_Arch07_DriftFungicide"] = StrategyPowerTier.Strong,
@@ -2093,11 +2133,13 @@ namespace FungusToast.Core.AI
                 ["TST_Arch02_ResilienceGrowth"] = StrategyRole.Experimental,
                 ["TST_Arch03_FungicideSurge"] = StrategyRole.Experimental,
                 ["TST_Arch04_DriftGrowth"] = StrategyRole.Experimental,
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyRole.Experimental,
                 ["TST_Arch05_DriftResilience"] = StrategyRole.Experimental,
                 ["TST_Arch06_SurgeGrowth"] = StrategyRole.Experimental,
                 ["TST_Arch07_DriftFungicide"] = StrategyRole.Experimental,
                 ["TST_Arch08_SurgeResilience"] = StrategyRole.Experimental,
                 ["TST_HyperEconomyRamp"] = StrategyRole.Experimental,
+                ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyRole.Experimental,
                 ["TST_EarlyReclaimerSwarm"] = StrategyRole.Experimental,
                 ["TST_ToxinSiege"] = StrategyRole.Experimental,
                 ["TST_HyphalSurgeTempo"] = StrategyRole.Experimental,
@@ -2171,6 +2213,8 @@ namespace FungusToast.Core.AI
                 ["TST_Arch02_ResilienceGrowth"] = StrategyLifecycle.Active,
                 ["TST_Arch03_FungicideSurge"] = StrategyLifecycle.Active,
                 ["TST_Arch04_DriftGrowth"] = StrategyLifecycle.Active,
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyLifecycle.NeedsTuning,
+                ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyLifecycle.NeedsTuning,
                 ["TST_Arch05_DriftResilience"] = StrategyLifecycle.Active,
                 ["TST_Arch06_SurgeGrowth"] = StrategyLifecycle.Active,
                 ["TST_Arch07_DriftFungicide"] = StrategyLifecycle.Active,
@@ -2227,6 +2271,7 @@ namespace FungusToast.Core.AI
                 ["TST_Arch02_ResilienceGrowth"] = new[] { DifficultyBand.Normal },
                 ["TST_Arch03_FungicideSurge"] = new[] { DifficultyBand.Hard },
                 ["TST_Arch04_DriftGrowth"] = new[] { DifficultyBand.Hard },
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = new[] { DifficultyBand.Hard },
                 ["TST_Arch05_DriftResilience"] = new[] { DifficultyBand.Normal },
                 ["TST_Arch06_SurgeGrowth"] = new[] { DifficultyBand.Normal },
                 ["TST_Arch07_DriftFungicide"] = new[] { DifficultyBand.Hard },

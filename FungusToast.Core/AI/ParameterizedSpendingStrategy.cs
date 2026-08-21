@@ -67,6 +67,7 @@ namespace FungusToast.Core.AI
         private readonly List<int> surgePriorityIds;
         private readonly EconomyBias economyBias;
         private readonly List<MycovariantPreference> mycovariantPreferences;
+        private readonly HashSet<int> excludedMutationIds;
         private readonly int startingSporeEdgeOffset;
 
         // Metadata exposure for validation/auditing tools.
@@ -75,6 +76,7 @@ namespace FungusToast.Core.AI
         public IReadOnlyList<MutationCategory>? PriorityMutationCategories => priorityMutationCategories;
         public EconomyBias EconomyProfile => economyBias;
         public int StartingSporeEdgeOffset => startingSporeEdgeOffset;
+        public IReadOnlyCollection<int> ExcludedMutationIds => excludedMutationIds;
 
         // ==== NEW: Dynamic Timing Awareness ====
         private enum GamePhase
@@ -95,6 +97,7 @@ namespace FungusToast.Core.AI
             EconomyBias economyBias = EconomyBias.Neutral,
             List<MycovariantPreference>? mycovariantPreferences = null,
             List<int>? preferredMycovariantIds = null,
+            IEnumerable<int>? excludedMutationIds = null,
             int startingSporeEdgeOffset = 0)
         {
             StrategyName = strategyName;
@@ -106,7 +109,11 @@ namespace FungusToast.Core.AI
             this.surgeAttemptTurnFrequency = surgeAttemptTurnFrequency;
             this.economyBias = economyBias;
             this.mycovariantPreferences = mycovariantPreferences ?? new();
+            this.excludedMutationIds = excludedMutationIds?.ToHashSet() ?? new HashSet<int>();
             this.startingSporeEdgeOffset = startingSporeEdgeOffset;
+
+            if (this.targetMutationGoals.Any(goal => this.excludedMutationIds.Contains(goal.MutationId)))
+                throw new ArgumentException("A target mutation goal cannot also be excluded.", nameof(excludedMutationIds));
             
             // Convert preferred mycovariant IDs to preferences if provided
             if (preferredMycovariantIds != null)
@@ -341,6 +348,13 @@ namespace FungusToast.Core.AI
             Random rnd,
             ISimulationObserver simulationObserver)
         {
+            if (excludedMutationIds.Count > 0)
+            {
+                allMutations = allMutations
+                    .Where(mutation => !excludedMutationIds.Contains(mutation.Id))
+                    .ToList();
+            }
+
             var currentPhase = GetCurrentPhase(board.CurrentRound);
             
             // ==== NEW: Early Game Economy Priority ====

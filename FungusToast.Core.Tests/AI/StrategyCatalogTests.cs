@@ -11,6 +11,30 @@ namespace FungusToast.Core.Tests.AI;
 public class StrategyCatalogTests
 {
     [Theory]
+    [InlineData("TST_HyperEconomyRamp", "TST_HyperEconomyRamp_NoOntogenic")]
+    [InlineData("TST_Arch04_DriftGrowth", "TST_Arch04_DriftGrowth_NoOntogenic")]
+    public void Ontogenic_ab_controls_remove_only_the_ontogenic_goal(
+        string treatmentName,
+        string controlName)
+    {
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[treatmentName]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[controlName]);
+
+        Assert.Contains(treatment.TargetMutationGoals, goal => goal.MutationId == MutationIds.OntogenicRegression);
+        Assert.DoesNotContain(control.TargetMutationGoals, goal => goal.MutationId == MutationIds.OntogenicRegression);
+        Assert.Contains(MutationIds.OntogenicRegression, control.ExcludedMutationIds);
+        Assert.DoesNotContain(MutationIds.OntogenicRegression, treatment.ExcludedMutationIds);
+        Assert.Equal(
+            treatment.TargetMutationGoals
+                .Where(goal => goal.MutationId != MutationIds.OntogenicRegression)
+                .Select(goal => (goal.MutationId, goal.TargetLevel)),
+            control.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)));
+        Assert.Equal(treatment.EconomyProfile, control.EconomyProfile);
+        Assert.Equal(treatment.PriorityMutationCategories, control.PriorityMutationCategories);
+        Assert.Equal(treatment.PrioritizeHighTier, control.PrioritizeHighTier);
+    }
+
+    [Theory]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]
     public void Ecology_testing_strategies_begin_with_aerated_frontier(string strategyName)
