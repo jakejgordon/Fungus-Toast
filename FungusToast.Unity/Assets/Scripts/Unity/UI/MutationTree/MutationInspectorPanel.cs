@@ -4,6 +4,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -42,8 +43,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI requirementsLabelText = null!;
         private TextMeshProUGUI emptyDependentsText = null!;
         private RectTransform requirementsRoot = null!;
+        private RectTransform groupedRequirementsRoot = null!;
         private RectTransform dependentsRoot = null!;
         private readonly List<Button> requirementButtons = new();
+        private readonly List<TextMeshProUGUI> groupedRequirementRows = new();
         private readonly List<Button> dependentButtons = new();
         private TMP_FontAsset? font;
         private TMP_InputField searchInput = null!;
@@ -99,7 +102,8 @@ namespace FungusToast.Unity.UI.MutationTree
             stateText.text = BuildStateText(snapshot, player, manager);
             stateText.color = GetStateColor(snapshot, player, manager);
             costText.text = BuildCostText(snapshot);
-            requirementsLabelText.text = snapshot.Requirements.Count > 1
+            int requirementGroupCount = GetRequirementGroupCount(snapshot);
+            requirementsLabelText.text = requirementGroupCount > 1
                 ? "Requirements — ALL required"
                 : "Requirements";
 
@@ -124,7 +128,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 ? $"<b>Buffed by</b>\n{string.Join("\n", sections.BuffingMutations)}"
                 : string.Empty;
 
-            ConfigureRequirementButtons(snapshot.Requirements, focusMutation);
+            ConfigureRequirements(snapshot, focusMutation);
             ConfigureDependentButtons(snapshot.DirectDependents, focusMutation);
             RefreshTextHeights();
             LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
@@ -145,8 +149,10 @@ namespace FungusToast.Unity.UI.MutationTree
             SetTextBlockActive(maxLevelBonusText, false);
             SetTextBlockActive(synergyText, false);
             ConfigureButtons(requirementButtons, requirementsRoot, Array.Empty<ChipData>(), null);
+            ConfigureGroupedRequirementRows(Array.Empty<GroupedRequirementData>());
             ConfigureButtons(dependentButtons, dependentsRoot, Array.Empty<ChipData>(), null);
             requirementsRoot.gameObject.SetActive(false);
+            groupedRequirementsRoot.gameObject.SetActive(false);
             dependentsRoot.gameObject.SetActive(false);
             emptyRequirementsText.gameObject.SetActive(true);
             emptyDependentsText.gameObject.SetActive(true);
@@ -259,6 +265,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             RectTransform requirementsSection = CreateSectionRoot("RequirementsSection");
             requirementsLabelText = CreateText("RequirementsLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements", parent: requirementsSection);
+            groupedRequirementsRoot = CreateChipRoot("GroupedRequirements", requirementsSection);
             requirementsRoot = CreateChipRoot("Requirements", requirementsSection);
             emptyRequirementsText = CreateText("NoRequirements", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites", parent: requirementsSection);
 
@@ -352,21 +359,103 @@ namespace FungusToast.Unity.UI.MutationTree
             pinButtonLabel.text = "Pin";
         }
 
-        private void ConfigureRequirementButtons(IReadOnlyList<MutationRequirementProgress> requirements, Action<int> focusMutation)
+        private void ConfigureRequirements(MutationProgressSnapshot snapshot, Action<int> focusMutation)
         {
-            var chips = new List<ChipData>(requirements.Count);
-            foreach (MutationRequirementProgress requirement in requirements)
+            bool groupDirectionalTendrils = IsCompleteDirectionalTendrilSet(snapshot);
+            var chips = new List<ChipData>(snapshot.Requirements.Count);
+            foreach (MutationRequirementProgress requirement in snapshot.Requirements)
             {
                 string marker = requirement.IsMet ? "✓" : "○";
+                string prefix = groupDirectionalTendrils && IsDirectionalTendril(requirement.MutationId)
+                    ? "↳ "
+                    : string.Empty;
                 chips.Add(new ChipData(
                     requirement.MutationId,
-                    $"{marker} {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
+                    $"{prefix}{marker} {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
                     requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
             }
 
             ConfigureButtons(requirementButtons, requirementsRoot, chips, focusMutation);
+            var groupedRows = new List<GroupedRequirementData>(snapshot.CategoryInvestmentRequirements.Count + 1);
+            if (groupDirectionalTendrils)
+            {
+                int metCount = snapshot.Requirements.Count(requirement => requirement.IsMet);
+                bool isMet = metCount == snapshot.Requirements.Count;
+                groupedRows.Add(new GroupedRequirementData(
+                    $"{(isMet ? "✓" : "○")} <b>All four Directional Tendrils</b>  {metCount}/4\nComplete each compass-direction Tendril below.",
+                    isMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
+            }
+
+            foreach (MutationCategoryInvestmentRequirementProgress requirement in snapshot.CategoryInvestmentRequirements)
+            {
+                string categoryLines = string.Join("\n", requirement.Categories.Select(category =>
+                    $"  {(category.IsMet ? "✓" : "○")} {GetCategoryDisplayName(category.Category)}  L{category.CurrentLevel}/{category.RequiredLevel}"));
+                groupedRows.Add(new GroupedRequirementData(
+                    $"{(requirement.IsMet ? "✓" : "○")} <b>Tier {(int)requirement.Tier} category foundations</b>  " +
+                    $"{requirement.SatisfiedCategoryCount}/{requirement.RequiredCategoryCount} categories\n" +
+                    $"Reach {requirement.RequiredLevelsPerCategory} root levels in each qualifying category.\n{categoryLines}",
+                    requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
+            }
+
+            ConfigureGroupedRequirementRows(groupedRows);
             requirementsRoot.gameObject.SetActive(chips.Count > 0);
-            emptyRequirementsText.gameObject.SetActive(chips.Count == 0);
+            groupedRequirementsRoot.gameObject.SetActive(groupedRows.Count > 0);
+            emptyRequirementsText.gameObject.SetActive(chips.Count == 0 && groupedRows.Count == 0);
+        }
+
+        private void ConfigureGroupedRequirementRows(IReadOnlyList<GroupedRequirementData> rows)
+        {
+            while (groupedRequirementRows.Count < rows.Count)
+            {
+                groupedRequirementRows.Add(CreateText(
+                    "GroupedRequirement",
+                    14f,
+                    ChipHeight,
+                    FontStyles.Normal,
+                    UIStyleTokens.Text.Primary,
+                    UIStyleTokens.Surface.PanelSecondary,
+                    parent: groupedRequirementsRoot));
+            }
+
+            for (int index = 0; index < groupedRequirementRows.Count; index++)
+            {
+                TextMeshProUGUI row = groupedRequirementRows[index];
+                bool active = index < rows.Count;
+                SetTextBlockActive(row, active);
+                if (!active)
+                {
+                    continue;
+                }
+
+                row.text = rows[index].Label;
+                row.color = Color.Lerp(UIStyleTokens.Text.Primary, rows[index].Accent, 0.3f);
+                FitTextHeight(row, ChipHeight);
+            }
+        }
+
+        private static int GetRequirementGroupCount(MutationProgressSnapshot snapshot)
+        {
+            int namedRequirementGroups = snapshot.Requirements.Count;
+            if (IsCompleteDirectionalTendrilSet(snapshot))
+            {
+                namedRequirementGroups -= 3;
+            }
+
+            return namedRequirementGroups + snapshot.CategoryInvestmentRequirements.Count;
+        }
+
+        private static bool IsCompleteDirectionalTendrilSet(MutationProgressSnapshot snapshot)
+        {
+            return snapshot.Mutation.Id == MutationIds.MycotropicInduction
+                && snapshot.Requirements.Count(requirement => IsDirectionalTendril(requirement.MutationId)) == 4;
+        }
+
+        private static bool IsDirectionalTendril(int mutationId)
+        {
+            return mutationId == MutationIds.TendrilNorthwest
+                || mutationId == MutationIds.TendrilNortheast
+                || mutationId == MutationIds.TendrilSoutheast
+                || mutationId == MutationIds.TendrilSouthwest;
         }
 
         private void ConfigureDependentButtons(IReadOnlyList<Mutation> dependents, Action<int> focusMutation)
@@ -642,6 +731,18 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             public int MutationId { get; }
+            public string Label { get; }
+            public Color Accent { get; }
+        }
+
+        private readonly struct GroupedRequirementData
+        {
+            public GroupedRequirementData(string label, Color accent)
+            {
+                Label = label;
+                Accent = accent;
+            }
+
             public string Label { get; }
             public Color Accent { get; }
         }

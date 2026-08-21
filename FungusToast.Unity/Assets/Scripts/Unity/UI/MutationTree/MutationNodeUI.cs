@@ -643,19 +643,54 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (MutationPrerequisiteEvaluator.HasRequirements(mutation))
             {
-                sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Requires:</color></i>");
-                foreach (var prereq in mutation.Prerequisites)
+                MutationProgressSnapshot prerequisiteSnapshot = MutationProgressSnapshot.Create(mutation, player);
+                sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Requirements — ALL required:</color></i>");
+                bool groupDirectionalTendrils = mutation.Id == MutationIds.MycotropicInduction
+                    && prerequisiteSnapshot.Requirements.Count == 4;
+                if (groupDirectionalTendrils)
                 {
-                    int ownedLevel = player.GetMutationLevel(prereq.MutationId);
-                    var prereqMutation = uiManager.GetMutationById(prereq.MutationId);
-                    string prereqText = $"- {prereqMutation?.Name ?? "Unknown"} — Level {ownedLevel} (requires {prereq.RequiredLevel})";
-                    if (ownedLevel < prereq.RequiredLevel)
+                    int completedTendrils = prerequisiteSnapshot.Requirements.Count(requirement => requirement.IsMet);
+                    sb.AppendLine($"- All four Directional Tendrils — {completedTendrils}/4 complete");
+                }
+
+                foreach (MutationRequirementProgress requirement in prerequisiteSnapshot.Requirements)
+                {
+                    string prefix = groupDirectionalTendrils ? "  ↳" : "-";
+                    string prerequisiteText = $"{prefix} {requirement.MutationName} — Level {requirement.CurrentLevel}/{requirement.RequiredLevel}";
+                    if (!requirement.IsMet)
                     {
-                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{prereqText}</color>");
+                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{prerequisiteText}</color>");
                     }
                     else
                     {
-                        sb.AppendLine(prereqText);
+                        sb.AppendLine(prerequisiteText);
+                    }
+                }
+
+                foreach (MutationCategoryInvestmentRequirementProgress requirement in prerequisiteSnapshot.CategoryInvestmentRequirements)
+                {
+                    string groupText = $"- Tier {(int)requirement.Tier} category foundations — " +
+                        $"{requirement.SatisfiedCategoryCount}/{requirement.RequiredCategoryCount} categories at Level {requirement.RequiredLevelsPerCategory}+";
+                    if (!requirement.IsMet)
+                    {
+                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{groupText}</color>");
+                    }
+                    else
+                    {
+                        sb.AppendLine(groupText);
+                    }
+
+                    foreach (MutationCategoryInvestmentProgress category in requirement.Categories)
+                    {
+                        string categoryText = $"  ↳ {GetMutationCategoryDisplayName(category.Category)} — Level {category.CurrentLevel}/{category.RequiredLevel}";
+                        if (!category.IsMet)
+                        {
+                            sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{categoryText}</color>");
+                        }
+                        else
+                        {
+                            sb.AppendLine(categoryText);
+                        }
                     }
                 }
                 sb.AppendLine();

@@ -104,6 +104,15 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Build shared projects, run relevant Core/edit-mode tests available outside Unity, refresh the plugin if needed, and record exact manual Unity checks for supported resolutions.
 - Commit, fetch, pull, and push independently.
 
+**Implemented checkpoint (2026-08-21):**
+
+- The persistent inspector now treats Mycotropic Induction's four real Tendril prerequisites as one `All four Directional Tendrils` group while retaining four indented, focusable child chips and the existing real graph edges.
+- Aggregate category gates render as one non-clickable foundation group with completed-category count and owned/required progress for every category. Ontogenic Regression therefore explains the 10-level-per-category, three-category rule without synthetic node edges.
+- The compact mutation hover tooltip mirrors the grouped `ALL required` semantics and category progress so fallback inspection cannot disagree with the persistent inspector.
+- Group rows are runtime-built only as needed, reused on later inspections, remain non-raycasting, and do not add per-frame work. Existing chip focus, graph navigation, immediate purchases, search, pinning, and relationship highlighting remain on their established paths.
+- Focused prerequisite/integrity tests passed 22/22; Core and Simulation built with 0 warnings/errors; `git diff --check` passed. Unity Editor compilation and visual checks remain manual in this environment.
+- Manual Unity checks: inspect Mycotropic Induction and Ontogenic Regression at 1920x1280, 1920x1080, 1600x900, and 1280x720; verify group wrapping/scrolling, met/unmet progress, four Tendril chip focus actions, named-edge highlighting, no aggregate fake edges, locked-to-next-round transitions, hover/pin/search coexistence, immediate purchase behavior, and Console cleanliness.
+
 ### Dependency Slice 4 — Balance and reachability evidence
 
 - Run explicit seeded AI strategies that target Hyperadaptive Drift, Mimetic Resilience, Ontogenic Regression, and each flattened late branch.
