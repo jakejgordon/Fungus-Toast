@@ -8,7 +8,7 @@ This document captures the design intent behind mutation categories, prerequisit
 
 ## Mutation System Categories
 
-The mutation tree is organized into five categories, each supporting a different strategic lane.
+The mutation tree is organized into six categories, each supporting a different strategic lane.
 
 ### Growth
 
@@ -56,11 +56,12 @@ The mutation tree is organized into five categories, each supporting a different
 
 ## Category Design Philosophy
 
-### Balanced investment
+### Readable specialization with selective bridges
 
-- High-tier mutations should encourage cross-category prerequisites.
-- Players should need multiple category investments to reach the strongest effects.
-- Categories should provide both early foundations and late specialization.
+- Most progression should form readable local ladders within a category.
+- Cross-category prerequisites are selective bridges, not a requirement imposed by tier.
+- A bridge should express a mechanical relationship players can predict and deliberately build toward.
+- Categories should provide both early foundations and late specialization without forcing every strong build through the same prerequisite package.
 
 ### Synergistic interactions
 
@@ -71,20 +72,45 @@ The mutation tree is organized into five categories, each supporting a different
 ### Tier progression
 
 - Tier 1 establishes root capabilities.
-- Mid tiers begin to demand broader investment.
-- Higher tiers should reflect cross-category planning rather than single-category rushing.
+- Mid tiers deepen a category and may introduce an occasional thematic bridge.
+- Higher tiers may combine systems when the destination mutation genuinely behaves like a fusion or capstone.
+
+## Strategic Complexity Principles
+
+All current prerequisites are `AND` requirements. Adding another prerequisite therefore adds obligation, not choice: it makes the build more prescribed unless the required mechanics already form a coherent strategy. More links should not be treated as inherently deeper or more interesting progression.
+
+Use cross-category complexity when it:
+
+- makes the destination feel like a recognizable fusion of the required systems;
+- rewards a coherent hybrid build the player may already want;
+- communicates the destination mutation's intended strategy; or
+- makes a rare, transformative capstone feel earned.
+
+Avoid cross-category complexity when it:
+
+- forces an otherwise unwanted purchase merely to slow access;
+- substitutes unrelated mutations for a point or investment gate;
+- makes unrelated builds converge on the same prerequisite package;
+- requires tracing several distant chains to understand one destination; or
+- cannot be explained in one short thematic sentence.
+
+When broad investment is required only for balance, prefer higher required levels, upgrade costs, or a future explicit category-investment gate over unrelated named prerequisites. If the rules later support `ANY` requirements, use them sparingly and present them distinctly: alternatives can create real build choice, while additional `ALL` requirements cannot.
 
 ## Prerequisite Design Rules
 
 ### 1. Category diversification
 
-- High-tier mutations should require prerequisites from different categories.
-- Tier 4 and above should include at least one non-primary-category prerequisite.
+- Tier 1 mutations are category roots.
+- Tier 2 mutations should normally use a simple same-category prerequisite.
+- Tier 3 mutations should remain mostly local; an occasional cross-category bridge is appropriate when the mechanics clearly reinforce each other.
+- Tier 4 and above should normally have one primary-category prerequisite and no more than one thematic cross-category prerequisite.
+- Three or more direct prerequisites are reserved for rare capstones or explicit set-completion mechanics.
 
 ### 2. Tier progression limits
 
 - Avoid requiring more than two prerequisites from the same tier.
 - Treat tightly linked systems, such as the tendril set, as one system requirement where appropriate rather than stacking same-tier gates excessively.
+- Do not add a redundant direct edge when an upstream prerequisite already guarantees the same mutation at an adequate level.
 
 ### 3. Prerequisite depth control
 
@@ -95,6 +121,7 @@ The mutation tree is organized into five categories, each supporting a different
 
 - High-tier prerequisites should support the mutation's theme.
 - The prerequisite set should make the destination mutation feel earned rather than arbitrary.
+- Every cross-category edge should have a one-sentence explanation connecting the prerequisite mechanic to the destination mechanic.
 
 ### 5. Early-game accessibility
 
@@ -105,6 +132,7 @@ The mutation tree is organized into five categories, each supporting a different
 
 - Stronger mutations should require meaningfully more total prerequisite investment.
 - Do not under-gate Tier 5 effects compared with their strategic impact.
+- Increase required levels or costs before adding a weakly related named prerequisite solely as a delay.
 
 ### 7. Reachability and DAG safety
 
@@ -115,32 +143,39 @@ The mutation tree is organized into five categories, each supporting a different
 
 ### Total prerequisite level ranges
 
+These ranges measure cumulative minimum investment across unique ancestors, not only the destination's direct edges. If several paths share an ancestor, count the highest required level for that ancestor once.
+
 - Tier 2: 5-15 total prerequisite levels
 - Tier 3: 10-25 total prerequisite levels
 - Tier 4: 15-35 total prerequisite levels
 - Tier 5: 25-50 total prerequisite levels
 
-### Category distribution targets
+### Direct prerequisite complexity budget
 
-- Tier 3 and above: at least two categories where practical
-- Tier 4 and above: at least two categories, including one non-primary category
-- Tier 5: explicit cross-category synergy expected
+| Destination | Direct prerequisites | Cross-category prerequisites | Mechanical themes combined |
+| --- | ---: | ---: | ---: |
+| Normal mutation | 1-2 | 0-1 | 1-2 |
+| Rare capstone or set completion | Up to 3 | Up to 2 | 2-3 |
+
+The target maximum chain depth remains three levels. A tightly linked named set may exceed three direct edges only when the UI groups and explains it as one requirement, rather than presenting it as several unrelated gates.
 
 ## Validation Checklist
 
 When adding or revising a mutation definition:
 
-1. Check category diversity for Tier 3 and above.
-2. Verify same-tier prerequisite counts are not overloaded.
-3. Calculate total prerequisite levels against the target tier.
-4. Confirm the mutation is reachable from root mutations.
-5. Review whether the prerequisites reinforce the mutation's theme.
+1. Explain each cross-category edge in one short thematic sentence.
+2. Verify direct, cross-category, and same-tier prerequisite counts are within the complexity budget.
+3. Remove redundant direct edges already guaranteed by the upstream graph.
+4. Calculate total prerequisite levels against the target tier.
+5. Confirm the mutation is reachable from root mutations without exceeding the depth limit.
+6. Check that the requirements reward a coherent build rather than an arbitrary shopping list.
 
 ## Current Review Hotspots
 
-1. Necrophytic Bloom chain: `Necrosporulation -> Sporocidal Bloom -> Necrophytic Bloom`
-2. Fungicide over-specialization in higher tiers
-3. Under-gated Tier 5 requirements such as low total-level investment
+1. Hyperadaptive Drift and Ontogenic Regression each have five direct `ALL` prerequisites.
+2. The longest Cellular Resilience, Genetic Drift, and Fungicide paths exceed the target three-level chain depth.
+3. Several cross-category edges need a clearer thematic case, especially Regenerative Hyphae, Catabolic Rebirth, Necrotoxic Conversion, and Mimetic Resilience.
+4. Mycotropic Induction's four Tendril prerequisites should remain an explicit set-completion exception only if the UI groups them as one readable requirement.
 
 ## Implementation References
 

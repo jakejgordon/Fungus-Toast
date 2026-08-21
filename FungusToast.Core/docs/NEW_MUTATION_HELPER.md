@@ -327,9 +327,10 @@ NewMutationGrowth,
 - Use `isSurge: true` and set surge-specific properties
 
 ### **Cross-Category Prerequisites**
-- Tier 3+ mutations should require prerequisites from multiple categories
-- Encourages strategic diversity and prevents over-specialization
-- Creates thematic synergy between mutation systems
+- Keep most progression within a readable category ladder
+- Use selective cross-category bridges only when the destination clearly combines the required systems
+- Do not use unrelated named prerequisites as a substitute for an investment or balance gate
+- Follow the direct-prerequisite complexity budget in `second-level/MUTATION_PREREQUISITE_GUIDELINES.md`
 
 ### **Event-Driven Architecture**
 - All effects should fire through observer pattern
@@ -497,7 +498,7 @@ public void RecordYourCustomEffect(int playerId, int count) { }
 - **Always follow this order**: ID → Type → Balance → Definition → UI → Logic → Tracking
 - **Choose correct factory**: Select the appropriate category-specific factory file
 - **Use MutationBuilderHelper**: Leverage formatting and building utilities for consistency
-- **Cross-category prerequisites**: Essential for Tier 3+ balance
+- **Cross-category prerequisites**: Selective thematic bridges, not a tier requirement
 - **Observer pattern**: Required for all trackable effects
 - **UI Integration**: Most mutations work automatically; only add custom UI for special effects
 - **Build frequently**: Run the Core + Simulation `dotnet build` commands after each major step
