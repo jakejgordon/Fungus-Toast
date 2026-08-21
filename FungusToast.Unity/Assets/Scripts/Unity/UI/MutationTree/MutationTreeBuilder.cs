@@ -20,6 +20,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MutationNodeHeight = 120f;
         private const float PlannedLaneCardHeight = 100f;
         private const float DirectionalTendrilsCardHeight = 292f;
+        private const float DirectionalTendrilsHorizontalPadding = 6f;
+        private const float DirectionalTendrilsGridSpacing = 6f;
         private static readonly int[] DirectionalTendrilOrder =
         {
             MutationIds.TendrilNorthwest,
@@ -260,7 +262,8 @@ namespace FungusToast.Unity.UI.MutationTree
             Player player,
             UI_MutationManager uiManager,
             bool compact = false,
-            string compactName = null)
+            string compactName = null,
+            float compactWidth = 0f)
         {
             GameObject nodeObject = Instantiate(mutationNodePrefab, parent);
             nodeObject.name = $"MutationNode_{mutation.Name}";
@@ -270,7 +273,7 @@ namespace FungusToast.Unity.UI.MutationTree
             var nodeLayout = nodeObject.GetComponent<LayoutElement>();
             if (nodeLayout != null)
             {
-                nodeLayout.preferredWidth = compact ? 91f : MutationNodeWidth;
+                nodeLayout.preferredWidth = compact ? compactWidth : MutationNodeWidth;
                 nodeLayout.preferredHeight = MutationNodeHeight;
             }
 
@@ -346,11 +349,14 @@ namespace FungusToast.Unity.UI.MutationTree
             RectTransform gridRect = gridObject.GetComponent<RectTransform>();
             gridRect.anchorMin = Vector2.zero;
             gridRect.anchorMax = Vector2.one;
-            gridRect.offsetMin = new Vector2(6f, 6f);
-            gridRect.offsetMax = new Vector2(-6f, -38f);
+            gridRect.offsetMin = new Vector2(DirectionalTendrilsHorizontalPadding, 6f);
+            gridRect.offsetMax = new Vector2(-DirectionalTendrilsHorizontalPadding, -38f);
             GridLayoutGroup grid = gridObject.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(91f, MutationNodeHeight);
-            grid.spacing = new Vector2(6f, 6f);
+            float tendrilCellWidth = (MutationCategoryPresentationCatalog.Growth.PreferredWidth
+                - (DirectionalTendrilsHorizontalPadding * 2f)
+                - DirectionalTendrilsGridSpacing) / 2f;
+            grid.cellSize = new Vector2(tendrilCellWidth, MutationNodeHeight);
+            grid.spacing = new Vector2(DirectionalTendrilsGridSpacing, DirectionalTendrilsGridSpacing);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = 2;
             grid.childAlignment = TextAnchor.UpperCenter;
@@ -367,7 +373,15 @@ namespace FungusToast.Unity.UI.MutationTree
             int index = 0;
             foreach (Mutation tendril in tendrils)
             {
-                nodes.Add(CreateMutationNode(tendril, gridRect, index++, player, uiManager, compact: true, compactName: compactNames[tendril.Id]));
+                nodes.Add(CreateMutationNode(
+                    tendril,
+                    gridRect,
+                    index++,
+                    player,
+                    uiManager,
+                    compact: true,
+                    compactName: compactNames[tendril.Id],
+                    compactWidth: tendrilCellWidth));
             }
             return nodes;
         }

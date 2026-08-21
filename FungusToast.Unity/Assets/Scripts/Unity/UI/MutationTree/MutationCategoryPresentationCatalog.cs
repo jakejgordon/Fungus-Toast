@@ -15,7 +15,7 @@ namespace FungusToast.Unity.UI.MutationTree
             displayName: "Growth",
             tooltipText: "<b>Growth</b>\nMutations that help your colony spread faster across the toast.",
             accent: UIStyleTokens.Category.Growth,
-            preferredWidth: 200f,
+            preferredWidth: 220f,
             coreCategory: MutationCategory.Growth);
 
         public static readonly MutationCategoryPresentation CellularResilience = new(
