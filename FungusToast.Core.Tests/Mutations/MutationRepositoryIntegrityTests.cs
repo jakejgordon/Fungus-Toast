@@ -44,6 +44,27 @@ public class MutationRepositoryIntegrityTests
         }
     }
 
+    [Fact]
+    public void Every_category_investment_prerequisite_has_enough_qualifying_root_capacity()
+    {
+        foreach (var mutation in MutationRegistry.All.Values)
+        {
+            foreach (var prerequisite in mutation.CategoryInvestmentPrerequisites)
+            {
+                int qualifyingCategories = MutationRegistry.Roots.Values
+                    .Where(root => root.Tier == prerequisite.Tier)
+                    .GroupBy(root => root.Category)
+                    .Count(category => category.Sum(root => root.MaxLevel) >= prerequisite.RequiredLevelsPerCategory);
+
+                Assert.True(
+                    qualifyingCategories >= prerequisite.RequiredCategoryCount,
+                    $"Mutation '{mutation.Name}' requires {prerequisite.RequiredCategoryCount} categories " +
+                    $"with {prerequisite.RequiredLevelsPerCategory} Tier {(int)prerequisite.Tier} levels, " +
+                    $"but only {qualifyingCategories} categories have enough root capacity.");
+            }
+        }
+    }
+
     private static void AssertReachesRoot(
         Mutation mutation,
         IReadOnlyDictionary<int, Mutation> all,
@@ -52,7 +73,7 @@ public class MutationRepositoryIntegrityTests
     {
         Assert.True(activePath.Add(mutation.Id), $"Mutation prerequisite cycle includes '{mutation.Name}' ({mutation.Id}).");
 
-        if (mutation.Prerequisites.Count == 0)
+        if (!MutationPrerequisiteEvaluator.HasRequirements(mutation))
         {
             Assert.True(roots.ContainsKey(mutation.Id), $"Mutation '{mutation.Name}' has no prerequisites but is not a registered root.");
         }

@@ -23,6 +23,7 @@ namespace FungusToast.Core.Mutations
         public bool IsActiveSurge { get; }
         public bool HasUnmetPrerequisites { get; }
         public IReadOnlyList<MutationRequirementProgress> Requirements { get; }
+        public IReadOnlyList<MutationCategoryInvestmentRequirementProgress> CategoryInvestmentRequirements { get; }
         public IReadOnlyList<Mutation> DirectDependents { get; }
 
         private MutationProgressSnapshot(
@@ -35,6 +36,7 @@ namespace FungusToast.Core.Mutations
             int availablePoints,
             bool isActiveSurge,
             IReadOnlyList<MutationRequirementProgress> requirements,
+            IReadOnlyList<MutationCategoryInvestmentRequirementProgress> categoryInvestmentRequirements,
             IReadOnlyList<Mutation> directDependents)
         {
             Mutation = mutation;
@@ -49,7 +51,9 @@ namespace FungusToast.Core.Mutations
             IsMaxed = currentLevel >= mutation.MaxLevel;
             IsActiveSurge = isActiveSurge;
             Requirements = requirements;
-            HasUnmetPrerequisites = requirements.Any(requirement => !requirement.IsMet);
+            CategoryInvestmentRequirements = categoryInvestmentRequirements;
+            HasUnmetPrerequisites = requirements.Any(requirement => !requirement.IsMet)
+                || categoryInvestmentRequirements.Any(requirement => !requirement.IsMet);
             DirectDependents = directDependents;
         }
 
@@ -68,6 +72,25 @@ namespace FungusToast.Core.Mutations
                         prerequisite.RequiredLevel);
                 })
                 .ToList();
+            var categoryInvestmentRequirements = mutation.CategoryInvestmentPrerequisites
+                .Select(prerequisite =>
+                {
+                    var investments = prerequisite.GetCategoryInvestments(player, MutationRegistry.Roots);
+                    var categoryProgress = investments
+                        .OrderBy(entry => entry.Key)
+                        .Select(entry => new MutationCategoryInvestmentProgress(
+                            entry.Key,
+                            entry.Value,
+                            prerequisite.RequiredLevelsPerCategory))
+                        .ToList();
+
+                    return new MutationCategoryInvestmentRequirementProgress(
+                        prerequisite.Tier,
+                        prerequisite.RequiredLevelsPerCategory,
+                        prerequisite.RequiredCategoryCount,
+                        categoryProgress);
+                })
+                .ToList();
             var directDependents = MutationRegistry.All.Values
                 .Where(candidate => candidate.Prerequisites.Any(prerequisite => prerequisite.MutationId == mutation.Id))
                 .OrderBy(candidate => candidate.Tier)
@@ -84,6 +107,7 @@ namespace FungusToast.Core.Mutations
                 player.MutationPoints,
                 mutation.IsSurge && player.IsSurgeActive(mutation.Id),
                 requirements,
+                categoryInvestmentRequirements,
                 directDependents);
         }
     }
@@ -104,6 +128,46 @@ namespace FungusToast.Core.Mutations
         {
             MutationId = mutationId;
             MutationName = mutationName;
+            CurrentLevel = currentLevel;
+            RequiredLevel = requiredLevel;
+        }
+    }
+
+    public sealed class MutationCategoryInvestmentRequirementProgress
+    {
+        public MutationTier Tier { get; }
+        public int RequiredLevelsPerCategory { get; }
+        public int RequiredCategoryCount { get; }
+        public IReadOnlyList<MutationCategoryInvestmentProgress> Categories { get; }
+        public int SatisfiedCategoryCount => Categories.Count(category => category.IsMet);
+        public bool IsMet => SatisfiedCategoryCount >= RequiredCategoryCount;
+
+        public MutationCategoryInvestmentRequirementProgress(
+            MutationTier tier,
+            int requiredLevelsPerCategory,
+            int requiredCategoryCount,
+            IReadOnlyList<MutationCategoryInvestmentProgress> categories)
+        {
+            Tier = tier;
+            RequiredLevelsPerCategory = requiredLevelsPerCategory;
+            RequiredCategoryCount = requiredCategoryCount;
+            Categories = categories;
+        }
+    }
+
+    public sealed class MutationCategoryInvestmentProgress
+    {
+        public MutationCategory Category { get; }
+        public int CurrentLevel { get; }
+        public int RequiredLevel { get; }
+        public bool IsMet => CurrentLevel >= RequiredLevel;
+
+        public MutationCategoryInvestmentProgress(
+            MutationCategory category,
+            int currentLevel,
+            int requiredLevel)
+        {
+            Category = category;
             CurrentLevel = currentLevel;
             RequiredLevel = requiredLevel;
         }

@@ -163,28 +163,86 @@ namespace FungusToast.Core.AI
         /// For a given goal (mutationId, targetLevel), returns the full prerequisite chain (ordered, no duplicates),
         /// with correct required levels for all prerequisites.
         /// </summary>
-        private List<(Mutation mutation, int requiredLevel)> BuildPrerequisiteChainWithLevels(TargetMutationGoal goal)
+        private List<(Mutation mutation, int requiredLevel)> BuildPrerequisiteChainWithLevels(
+            TargetMutationGoal goal,
+            Player player)
         {
             var chain = new List<(Mutation mutation, int requiredLevel)>();
-            var visited = new HashSet<int>();
+
+            int GetProjectedLevel(Mutation mutation)
+            {
+                var planned = chain.FirstOrDefault(entry => entry.mutation.Id == mutation.Id);
+                return planned.mutation == null
+                    ? player.GetMutationLevel(mutation.Id)
+                    : Math.Max(player.GetMutationLevel(mutation.Id), planned.requiredLevel);
+            }
+
+            void VisitCategoryInvestment(MutationCategoryInvestmentPrerequisite prerequisite)
+            {
+                var categoryPlans = MutationRepository.Roots.Values
+                    .Where(mutation => mutation.Tier == prerequisite.Tier)
+                    .GroupBy(mutation => mutation.Category)
+                    .Select(group => new
+                    {
+                        Category = group.Key,
+                        Mutations = group.OrderBy(mutation => mutation.Id).ToList(),
+                        ProjectedLevels = group.Sum(GetProjectedLevel),
+                        AvailableLevels = group.Sum(mutation => mutation.MaxLevel)
+                    })
+                    .Where(plan => plan.AvailableLevels >= prerequisite.RequiredLevelsPerCategory)
+                    .OrderByDescending(plan => plan.ProjectedLevels >= prerequisite.RequiredLevelsPerCategory)
+                    .ThenByDescending(plan => plan.ProjectedLevels)
+                    .ThenBy(plan => plan.Category)
+                    .Take(prerequisite.RequiredCategoryCount)
+                    .ToList();
+
+                foreach (var categoryPlan in categoryPlans)
+                {
+                    int remainingLevels = Math.Max(
+                        0,
+                        prerequisite.RequiredLevelsPerCategory - categoryPlan.ProjectedLevels);
+
+                    foreach (var mutation in categoryPlan.Mutations)
+                    {
+                        if (remainingLevels <= 0)
+                            break;
+
+                        int projectedLevel = GetProjectedLevel(mutation);
+                        int addedLevels = Math.Min(remainingLevels, mutation.MaxLevel - projectedLevel);
+                        if (addedLevels <= 0)
+                            continue;
+
+                        Visit(mutation.Id, projectedLevel + addedLevels);
+                        remainingLevels -= addedLevels;
+                    }
+                }
+            }
 
             void Visit(int mutationId, int requiredLevel)
             {
-                if (!MutationRepository.All.TryGetValue(mutationId, out var mutation))
+                if (!MutationRepository.All.TryGetValue(mutationId, out var mutation) || mutation == null)
                     return;
 
                 // Required level can't be higher than actual max level
                 int cappedLevel = Math.Min(requiredLevel, mutation.MaxLevel);
 
                 // Only keep highest required level if seen more than once
-                var existing = chain.FirstOrDefault(x => x.mutation.Id == mutationId);
-                if (!Equals(existing, default((Mutation mutation, int requiredLevel))))
+                int existingIndex = -1;
+                for (int index = 0; index < chain!.Count; index++)
                 {
+                    if (chain[index].mutation!.Id == mutationId)
+                    {
+                        existingIndex = index;
+                        break;
+                    }
+                }
+                if (existingIndex >= 0)
+                {
+                    var existing = chain[existingIndex];
                     if (cappedLevel > existing.requiredLevel)
                     {
                         // Replace with higher level requirement
-                        chain.Remove(existing);
-                        chain.Add((mutation, cappedLevel));
+                        chain[existingIndex] = (mutation, cappedLevel);
                     }
                     // Else skip, already added at equal or higher level
                     return;
@@ -193,6 +251,9 @@ namespace FungusToast.Core.AI
                 // Recurse on prerequisites
                 foreach (var prereq in mutation.Prerequisites)
                     Visit(prereq.MutationId, prereq.RequiredLevel);
+
+                foreach (var prerequisite in mutation.CategoryInvestmentPrerequisites)
+                    VisitCategoryInvestment(prerequisite);
 
                 chain.Add((mutation, cappedLevel));
             }
@@ -320,7 +381,9 @@ namespace FungusToast.Core.AI
                     continue; // goal already satisfied
 
                 // Build and attempt to upgrade prereqs first, then the goal
-                var prereqChain = BuildPrerequisiteChainWithLevels(new TargetMutationGoal(goal.MutationId, goalTargetLevel));
+                var prereqChain = BuildPrerequisiteChainWithLevels(
+                    new TargetMutationGoal(goal.MutationId, goalTargetLevel),
+                    player);
                 bool upgraded = false;
                 bool shouldBankForNextMutation = false;
 
@@ -443,7 +506,9 @@ namespace FungusToast.Core.AI
                 if (currentLevel < goalTargetLevel)
                 {
                     // Check if prerequisites are met
-                    var prereqChain = BuildPrerequisiteChainWithLevels(new TargetMutationGoal(goal.MutationId, goalTargetLevel));
+                    var prereqChain = BuildPrerequisiteChainWithLevels(
+                        new TargetMutationGoal(goal.MutationId, goalTargetLevel),
+                        player);
                     bool prereqsMet = true;
                     foreach (var (mutation, reqLevel) in prereqChain)
                     {
@@ -779,7 +844,7 @@ namespace FungusToast.Core.AI
             if (prioritizeHighTier)
             {
                 foreach (var m in candidates
-                    .Where(m => m.Prerequisites.Any())
+                    .Where(MutationPrerequisiteEvaluator.HasRequirements)
                     .OrderByDescending(m => m.Tier))
                 {
                     if (TryUpgradeWithTendrilAwareness(player, m, candidates, board, simulationObserver))

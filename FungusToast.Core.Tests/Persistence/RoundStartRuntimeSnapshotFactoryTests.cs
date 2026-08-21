@@ -15,6 +15,30 @@ namespace FungusToast.Core.Tests.Persistence;
 public class RoundStartRuntimeSnapshotFactoryTests
 {
     [Fact]
+    public void Export_and_restore_preserve_aggregate_prerequisite_progress_and_unlock_round()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Aggregate Gate", PlayerTypeEnum.AI) { MutationPoints = 20 };
+        board.Players.Add(player);
+
+        player.SetMutationLevel(MutationIds.HyperadaptiveDrift, 2, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 10, currentRound: 1);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 10, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycotoxinTracer, 10, currentRound: 2);
+
+        var ontogenicRegression = MutationRegistry.GetById(MutationIds.OntogenicRegression)!;
+        Assert.True(MutationPrerequisiteEvaluator.AreAllMet(ontogenicRegression, player));
+        Assert.Equal(2, player.PlayerMutations[MutationIds.OntogenicRegression].PrereqMetRound);
+
+        var snapshot = RoundStartRuntimeSnapshotFactory.Export(board);
+        var (restoredBoard, _) = RoundStartRuntimeSnapshotFactory.Restore(snapshot);
+        var restoredPlayer = Assert.Single(restoredBoard.Players);
+
+        Assert.True(MutationPrerequisiteEvaluator.AreAllMet(ontogenicRegression, restoredPlayer));
+        Assert.Equal(2, restoredPlayer.PlayerMutations[MutationIds.OntogenicRegression].PrereqMetRound);
+    }
+
+    [Fact]
     public void Export_and_restore_round_trips_representative_round_start_state()
     {
         var board = new GameBoard(width: 6, height: 6, playerCount: 2);

@@ -207,15 +207,7 @@ namespace FungusToast.Unity.UI.MutationTree
             int surgeTurns = isSurgeActive ? player.GetSurgeTurnsRemaining(mutation.Id) : 0;
 
             // PREREQS
-            bool isLocked = false;
-            foreach (var prereq in mutation.Prerequisites)
-            {
-                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
-                {
-                    isLocked = true;
-                    break;
-                }
-            }
+            bool isLocked = !MutationPrerequisiteEvaluator.AreAllMet(mutation, player);
 
             // COST CALC
             int upgradeCost = player.GetMutationPointCost(mutation);
@@ -223,7 +215,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bool canAfford = player.MutationPoints >= upgradeCost;
 
             // LOCK/SURGE/PENDING UI
-            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+            bool showPendingUnlock = MutationPrerequisiteEvaluator.HasRequirements(mutation)
                 && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
@@ -605,7 +597,7 @@ namespace FungusToast.Unity.UI.MutationTree
             sb.AppendLine();
 
             int currentLevel = player.GetMutationLevel(mutation.Id);
-            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+            bool showPendingUnlock = MutationPrerequisiteEvaluator.HasRequirements(mutation)
                 && player.PlayerMutations.TryGetValue(mutation.Id, out var pendingMutation)
                 && pendingMutation.PrereqMetRound.HasValue
                 && pendingMutation.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
@@ -639,7 +631,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
-            bool isLocked = mutation.Prerequisites.Any(prereq => player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel);
+            bool isLocked = !MutationPrerequisiteEvaluator.AreAllMet(mutation, player);
             bool isSurgeActive = mutation.IsSurge && player.IsSurgeActive(mutation.Id);
             bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, currentLevel >= mutation.MaxLevel);
             if (isDisabledBecauseNoEffect)
@@ -649,7 +641,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 sb.AppendLine();
             }
 
-            if (mutation.Prerequisites.Count > 0)
+            if (MutationPrerequisiteEvaluator.HasRequirements(mutation))
             {
                 sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Requires:</color></i>");
                 foreach (var prereq in mutation.Prerequisites)
@@ -1285,17 +1277,9 @@ namespace FungusToast.Unity.UI.MutationTree
             bool isSurgeActive = isSurge && player.IsSurgeActive(mutation.Id);
             int upgradeCost = player.GetMutationPointCost(mutation);
             bool canAfford = player.MutationPoints >= upgradeCost;
-            bool isLocked = false;
-            foreach (var prereq in mutation.Prerequisites)
-            {
-                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
-                {
-                    isLocked = true;
-                    break;
-                }
-            }
+            bool isLocked = !MutationPrerequisiteEvaluator.AreAllMet(mutation, player);
             // Check for pending unlock state (only for non-root mutations)
-            bool showPendingUnlock = mutation.Prerequisites.Count > 0
+            bool showPendingUnlock = MutationPrerequisiteEvaluator.HasRequirements(mutation)
                 && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;

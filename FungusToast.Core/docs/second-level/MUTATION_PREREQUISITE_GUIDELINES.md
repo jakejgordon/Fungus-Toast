@@ -96,6 +96,14 @@ Avoid cross-category complexity when it:
 
 When broad investment is required only for balance, prefer higher required levels, upgrade costs, or a future explicit category-investment gate over unrelated named prerequisites. If the rules later support `ANY` requirements, use them sparingly and present them distinctly: alternatives can create real build choice, while additional `ALL` requirements cannot.
 
+### Aggregate foundation gates
+
+- Use a category-investment prerequisite when a capstone should require broad development without prescribing unrelated named mutations.
+- Define the qualifying tier, minimum root-mutation levels per category, and minimum category count explicitly. Levels cannot be pooled across categories unless the prerequisite says so.
+- Aggregate gates complement named thematic prerequisites; they do not create synthetic mutation-to-mutation edges in the dependency graph.
+- AI planning, unlock timing, saves, progress snapshots, and purchase UI must all consume the shared Core evaluator.
+- Present one grouped progress requirement in the UI, including per-category owned/required levels and the number of qualifying categories completed.
+
 ## Prerequisite Design Rules
 
 ### 1. Category diversification
@@ -172,13 +180,15 @@ When adding or revising a mutation definition:
 
 ## Current Review Hotspots
 
-1. Ontogenic Regression still has five direct `ALL` prerequisites pending its aggregate category-foundation gate.
-2. Hypersystemic Regeneration and Ontogenic Regression remain rare four-edge capstone paths; the other live category paths now stay within the target three-edge depth.
+1. Ontogenic Regression now uses Hyperadaptive Drift 2 plus the explicit 10 Tier-1 levels in each of three categories foundation gate; acquisition timing still needs simulation evidence.
+2. Hypersystemic Regeneration remains a rare four-edge upstream capstone path; the other live category paths now stay within the target three-edge depth.
 3. Mycotropic Induction's four Tendril prerequisites remain an explicit set-completion exception and need grouped UI treatment.
 
 ## Implementation References
 
 - `FungusToast.Core.Mutations.MutationCategory`
 - `FungusToast.Core.Mutations.MutationRepository`
+- `FungusToast.Core.Mutations.MutationPrerequisiteEvaluator`
+- `FungusToast.Core.Mutations.MutationCategoryInvestmentPrerequisite`
 - Category factories under `FungusToast.Core/Mutations/Factories/`
 - `FungusToast.Core.Config.GameBalance`

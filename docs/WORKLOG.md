@@ -46,7 +46,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 **Approved direction (2026-08-21):**
 
 - Hyperadaptive Drift remains deliberately difficult to reach. Replace its five current requirements with Mutator Phenotype 8, Anabolic Inversion 3, and Chitin Fortification 1. Chitin is a non-targeted surge the AI can deliberately activate; do not use Mimetic Resilience as this gate because its board-state target eligibility could make Hyperadaptive Drift conditionally unreachable.
-- Ontogenic Regression retains Hyperadaptive Drift 2 and adds an aggregate foundation gate: at least 10 Tier-1 levels in each of at least three qualifying categories. Core owns this requirement and its progress model; AI strategies must be able to plan toward it; Unity must render it as one grouped requirement rather than several fake mutation edges. Jake may correct this interpretation before the aggregate-gate slice if “10 across three categories” was intended to mean 10 combined rather than 10 per category.
+- Ontogenic Regression retains Hyperadaptive Drift 2 and adds an aggregate foundation gate: at least 10 Tier-1 levels in each of at least three qualifying categories, for at least 30 Tier-1 levels total. Core owns this requirement and its progress model; AI strategies must be able to plan toward it; Unity must render it as one grouped requirement rather than several fake mutation edges. Jake confirmed this interpretation on 2026-08-21.
 - Mimetic Resilience requires Chitin Fortification 1 and Mycotoxin Tracer 10. Chitin establishes resistance; Tracer establishes airborne spore projection.
 - Flatten late Cellular Resilience into thematic branches:
   - Regenerative Hyphae: Necrosporulation 5.
@@ -85,6 +85,15 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Add focused Core tests for below/at/above threshold, category counting, root-only counting, deterministic AI planning, unlock timing, and existing-save compatibility.
 - Refresh the Unity Core DLL/PDB, build Core and Simulation, run focused and canonical Core tests, and run a seeded AI smoke simulation targeting Ontogenic Regression.
 - Commit, fetch, pull, and push independently.
+
+**Implemented checkpoint (2026-08-21):**
+
+- Added a reusable Core category-investment prerequisite and shared evaluator. Ontogenic Regression now requires Hyperadaptive Drift 2 plus at least 10 Tier-1 root levels in each of at least three categories (30+ qualifying levels total).
+- Integrated aggregate requirements into normal, surge, automatic, and restored upgrade eligibility; one-round unlock bookkeeping; progress snapshots; save/resume reconstruction; and existing Unity locked/pending state checks.
+- Extended deterministic AI goal planning to count current and already-planned root investment, prefer the closest qualifying categories, and fill each selected category to its threshold without relying on random fallback spending.
+- Added focused coverage for exact definition, insufficient category spread, root-only counting, unlock delay, progress reporting, save/resume state, AI category selection, and category capacity integrity.
+- Canonical Core tests excluding the known unrelated campaign preset naming assertion passed 542/542. Core and Simulation builds passed with 0 warnings/errors; the Unity Core DLL/PDB was refreshed; `git diff --check` passed.
+- A seeded one-game, four-player smoke simulation completed in 32 turns with zero parity mismatches. `TST_HyperEconomyRamp` deliberately targeted the gate, acquired Hyperadaptive Drift on round 8, and acquired Ontogenic Regression on round 11. This proves deterministic reachability but is also evidence that acquisition may still be too early; timing and possible retuning remain isolated to Dependency Slice 4.
 
 ### Dependency Slice 3 — Grouped prerequisite UI
 

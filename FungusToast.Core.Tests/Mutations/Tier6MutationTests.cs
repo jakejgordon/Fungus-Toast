@@ -49,12 +49,13 @@ public class Tier6MutationTests
         Assert.Equal(MutationCategory.GeneticDrift, mutation.Category);
         Assert.Equal(MutationTier.Tier6, mutation.Tier);
         Assert.Equal(MutationType.OntogenicRegression, mutation.Type);
-        Assert.Equal(5, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.HyperadaptiveDrift && p.RequiredLevel == 2);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycelialBloom && p.RequiredLevel == 10);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.HomeostaticHarmony && p.RequiredLevel == 10);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 10);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MutatorPhenotype && p.RequiredLevel == 10);
+        var namedPrerequisite = Assert.Single(mutation.Prerequisites);
+        Assert.Equal(MutationIds.HyperadaptiveDrift, namedPrerequisite.MutationId);
+        Assert.Equal(2, namedPrerequisite.RequiredLevel);
+        var categoryPrerequisite = Assert.Single(mutation.CategoryInvestmentPrerequisites);
+        Assert.Equal(MutationTier.Tier1, categoryPrerequisite.Tier);
+        Assert.Equal(10, categoryPrerequisite.RequiredLevelsPerCategory);
+        Assert.Equal(3, categoryPrerequisite.RequiredCategoryCount);
         Assert.Contains("Rolls twice", mutation.Description);
         Assert.Contains("70% chance to target a Tier 6 mutation instead of Tier 5", mutation.Description);
     }

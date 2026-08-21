@@ -70,5 +70,15 @@ namespace FungusToast.Core.Mutations.Factories
 
             return m;
         }
+
+        public Mutation MakeChildWithCategoryInvestmentPrerequisites(
+            Mutation m,
+            IEnumerable<MutationPrerequisite> mutationPrerequisites,
+            params MutationCategoryInvestmentPrerequisite[] categoryInvestmentPrerequisites)
+        {
+            MakeChild(m, new List<MutationPrerequisite>(mutationPrerequisites).ToArray());
+            m.CategoryInvestmentPrerequisites.AddRange(categoryInvestmentPrerequisites);
+            return m;
+        }
     }
 }

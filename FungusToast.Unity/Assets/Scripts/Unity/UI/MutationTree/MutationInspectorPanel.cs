@@ -593,7 +593,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             var board = GameManager.Instance?.Board;
             return board != null
-                && snapshot.Mutation.Prerequisites.Count > 0
+                && MutationPrerequisiteEvaluator.HasRequirements(snapshot.Mutation)
                 && player.PlayerMutations.TryGetValue(snapshot.Mutation.Id, out var playerMutation)
                 && playerMutation.PrereqMetRound.HasValue
                 && playerMutation.PrereqMetRound.Value == board.CurrentRound;

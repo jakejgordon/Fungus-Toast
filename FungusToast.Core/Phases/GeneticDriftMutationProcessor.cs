@@ -514,10 +514,8 @@ namespace FungusToast.Core.Phases
             if (mutation.Category == MutationCategory.MycelialSurges)
                 return false;
 
-            // Check prerequisites
-            foreach (var pre in mutation.Prerequisites)
-                if (player.GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
-                    return false;
+            if (!MutationPrerequisiteEvaluator.AreAllMet(mutation, player))
+                return false;
 
             // Check if not at max level
             int currentLevel = player.GetMutationLevel(mutation.Id);

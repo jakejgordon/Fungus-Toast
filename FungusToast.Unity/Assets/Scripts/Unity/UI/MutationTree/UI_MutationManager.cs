@@ -1915,9 +1915,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private HashSet<int> GetPrerequisiteSatisfiedMutationIds(Player player)
         {
             return mutationsById.Values
-                .Where(mutation => mutation.Prerequisites.Count > 0
-                    && mutation.Prerequisites.All(prerequisite =>
-                        player.GetMutationLevel(prerequisite.MutationId) >= prerequisite.RequiredLevel))
+                .Where(mutation => MutationPrerequisiteEvaluator.HasRequirements(mutation)
+                    && MutationPrerequisiteEvaluator.AreAllMet(mutation, player))
                 .Select(mutation => mutation.Id)
                 .ToHashSet();
         }

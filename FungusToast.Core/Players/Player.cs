@@ -275,6 +275,25 @@ namespace FungusToast.Core.Players
 
         public event Action<Player>? MutationsChanged; // Unified event for any mutation level change (manual, surge, auto, regression)
 
+        private void UpdateDependentPrerequisiteBookkeeping(Mutation upgradedMutation, int currentRound)
+        {
+            foreach (var dependent in MutationRegistry.All.Values)
+            {
+                if (!MutationPrerequisiteEvaluator.CouldBeAffectedByUpgrade(dependent, upgradedMutation))
+                    continue;
+
+                if (!MutationPrerequisiteEvaluator.AreAllMet(dependent, this))
+                    continue;
+
+                if (!PlayerMutations.ContainsKey(dependent.Id))
+                    PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
+
+                var dependentPlayerMutation = PlayerMutations[dependent.Id];
+                if (dependentPlayerMutation.PrereqMetRound == null)
+                    dependentPlayerMutation.PrereqMetRound = currentRound;
+            }
+        }
+
         private bool TryActivateSurgeInternal(
             Mutation mutation,
             ISimulationObserver simulationObserver,
@@ -287,12 +306,10 @@ namespace FungusToast.Core.Players
                 PlayerMutations[mutation.Id] = new PlayerMutation(PlayerId, mutation.Id, mutation);
             var pm = PlayerMutations[mutation.Id];
 
-            bool prereqsMet = true;
-            foreach (var pre in mutation.Prerequisites)
-                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
-                    prereqsMet = false;
+            bool prereqsMet = MutationPrerequisiteEvaluator.AreAllMet(mutation, this);
+            bool hasPrerequisites = MutationPrerequisiteEvaluator.HasRequirements(mutation);
 
-            if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
+            if (hasPrerequisites && prereqsMet && pm.PrereqMetRound == null)
                 pm.PrereqMetRound = currentRound;
 
             if (IsSurgeActive(mutation.Id)) return false;
@@ -302,7 +319,7 @@ namespace FungusToast.Core.Players
             if (MutationPoints < activationCost || pm.CurrentLevel >= mutation.MaxLevel)
                 return false;
 
-            if (mutation.Prerequisites.Count > 0 && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+            if (hasPrerequisites && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
                 return false;
 
             int oldLevel = pm.CurrentLevel;
@@ -316,18 +333,7 @@ namespace FungusToast.Core.Players
 
             ActiveSurges[mutation.Id] = new ActiveSurgeInfo(mutation.Id, newLevel, duration);
 
-            foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
-            {
-                if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
-                {
-                    if (!PlayerMutations.ContainsKey(dependent.Id))
-                        PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                    var depPlayerMutation = PlayerMutations[dependent.Id];
-                    bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                    if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                        depPlayerMutation.PrereqMetRound = currentRound;
-                }
-            }
+            UpdateDependentPrerequisiteBookkeeping(mutation, currentRound);
 
             simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, activationCost);
             simulationObserver.RecordMutationUpgradeEvent(
@@ -361,15 +367,13 @@ namespace FungusToast.Core.Players
             var pm = PlayerMutations[mutation.Id];
 
             // --- Prerequisite tracking logic ---
-            bool prereqsMet = true;
-            foreach (var pre in mutation.Prerequisites)
-                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
-                    prereqsMet = false;
+            bool prereqsMet = MutationPrerequisiteEvaluator.AreAllMet(mutation, this);
+            bool hasPrerequisites = MutationPrerequisiteEvaluator.HasRequirements(mutation);
             // Only set PrereqMetRound the first time prerequisites are met
-            if (mutation.Prerequisites.Count > 0 && prereqsMet && pm.PrereqMetRound == null)
+            if (hasPrerequisites && prereqsMet && pm.PrereqMetRound == null)
                 pm.PrereqMetRound = currentRound;
 
-            if (mutation.Prerequisites.Count > 0 && !prereqsMet)
+            if (hasPrerequisites && !prereqsMet)
                 return false;
 
             if (!CanUpgrade(mutation, currentRound, board, boardSummaries))
@@ -388,19 +392,7 @@ namespace FungusToast.Core.Players
                 int newLevel = pm.CurrentLevel;
                 TryApplyApicalYield(mutation, oldLevel, newLevel, simulationObserver);
 
-                // --- Set PrereqMetRound on dependents ---
-                foreach (var dependent in FungusToast.Core.Mutations.MutationRegistry.All.Values)
-                {
-                    if (dependent.Prerequisites.Any(p => p.MutationId == mutation.Id))
-                    {
-                        if (!PlayerMutations.ContainsKey(dependent.Id))
-                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                        var depPlayerMutation = PlayerMutations[dependent.Id];
-                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                            depPlayerMutation.PrereqMetRound = currentRound;
-                    }
-                }
+                UpdateDependentPrerequisiteBookkeeping(mutation, currentRound);
 
                 simulationObserver.RecordMutationPointsSpent(PlayerId, mutation.Tier, mutation.PointsPerUpgrade);
                 simulationObserver.RecordMutationUpgradeEvent(
@@ -488,9 +480,8 @@ namespace FungusToast.Core.Players
             if (mut.IsSurge && IsSurgeActive(mut.Id))
                 return false;
 
-            foreach (var pre in mut.Prerequisites)
-                if (GetMutationLevel(pre.MutationId) < pre.RequiredLevel)
-                    return false;
+            if (!MutationPrerequisiteEvaluator.AreAllMet(mut, this))
+                return false;
 
             int currentLevel = GetMutationLevel(mut.Id);
             int cost = mut.IsSurge
@@ -498,7 +489,10 @@ namespace FungusToast.Core.Players
                 : mut.PointsPerUpgrade;
 
             // Enforce one-round delay after prereqs met (only for non-root mutations)
-            if (mut.Prerequisites.Count > 0 && PlayerMutations.TryGetValue(mut.Id, out var pm) && pm.PrereqMetRound.HasValue && pm.PrereqMetRound.Value == currentRound)
+            if (MutationPrerequisiteEvaluator.HasRequirements(mut)
+                && PlayerMutations.TryGetValue(mut.Id, out var pm)
+                && pm.PrereqMetRound.HasValue
+                && pm.PrereqMetRound.Value == currentRound)
                 return false;
 
             if (MutationPoints < cost || currentLevel >= mut.MaxLevel)
@@ -568,19 +562,7 @@ namespace FungusToast.Core.Players
                 }
                 MutationsChanged?.Invoke(this);
 
-                // --- Set PrereqMetRound on dependents ---
-                foreach (var dependent in MutationRegistry.All.Values)
-                {
-                    if (dependent.Prerequisites.Any(p => p.MutationId == mut.Id))
-                    {
-                        if (!PlayerMutations.ContainsKey(dependent.Id))
-                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                        var depPlayerMutation = PlayerMutations[dependent.Id];
-                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                            depPlayerMutation.PrereqMetRound = currentRound;
-                    }
-                }
+                UpdateDependentPrerequisiteBookkeeping(mut, currentRound);
 
                 simulationObserver?.RecordMutationUpgradeEvent(
                     playerId: PlayerId,
@@ -773,19 +755,7 @@ namespace FungusToast.Core.Players
             // If the level increased and we have a current round, check if this change affects dependent mutations' PrereqMetRound
             if (newLevel > oldLevel && currentRound >= 0)
             {
-                // Check all mutations to see if any now have their prerequisites met for the first time
-                foreach (var dependent in MutationRegistry.All.Values)
-                {
-                    if (dependent.Prerequisites.Any(p => p.MutationId == id))
-                    {
-                        if (!PlayerMutations.ContainsKey(dependent.Id))
-                            PlayerMutations[dependent.Id] = new PlayerMutation(PlayerId, dependent.Id, dependent);
-                        var depPlayerMutation = PlayerMutations[dependent.Id];
-                        bool allMet = dependent.Prerequisites.All(p => GetMutationLevel(p.MutationId) >= p.RequiredLevel);
-                        if (dependent.Prerequisites.Count > 0 && allMet && depPlayerMutation.PrereqMetRound == null)
-                            depPlayerMutation.PrereqMetRound = currentRound;
-                    }
-                }
+                UpdateDependentPrerequisiteBookkeeping(mutation, currentRound);
             }
             if (newLevel != oldLevel)
                 MutationsChanged?.Invoke(this);

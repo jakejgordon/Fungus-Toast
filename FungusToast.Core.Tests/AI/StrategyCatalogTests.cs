@@ -76,6 +76,47 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Ontogenic_goal_finishes_the_three_closest_tier_one_category_foundations()
+    {
+        var strategy = new ParameterizedSpendingStrategy(
+            strategyName: "Ontogenic category prerequisite test",
+            prioritizeHighTier: true,
+            targetMutationGoals: new List<TargetMutationGoal>
+            {
+                new(MutationIds.OntogenicRegression, 1)
+            },
+            economyBias: EconomyBias.IgnoreEconomy);
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Ontogenic AI", PlayerTypeEnum.AI) { MutationPoints = 20 };
+        board.Players.Add(player);
+
+        player.SetMutationLevel(MutationIds.MutatorPhenotype, 10, currentRound: 0);
+        player.SetMutationLevel(MutationIds.AdaptiveExpression, 3, currentRound: 0);
+        player.SetMutationLevel(MutationIds.AnabolicInversion, 3, currentRound: 0);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 9, currentRound: 0);
+        player.SetMutationLevel(MutationIds.ChitinFortification, 1, currentRound: 0);
+        player.SetMutationLevel(MutationIds.HyperadaptiveDrift, 2, currentRound: 0);
+        player.SetMutationLevel(MutationIds.MycotoxinTracer, 9, currentRound: 0);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 8, currentRound: 0);
+
+        strategy.SpendMutationPoints(
+            player,
+            MutationRegistry.GetAll().ToList(),
+            board,
+            new Random(1),
+            new TestSimulationObserver());
+
+        Assert.Equal(10, player.GetMutationLevel(MutationIds.MutatorPhenotype));
+        Assert.Equal(10, player.GetMutationLevel(MutationIds.HomeostaticHarmony));
+        Assert.Equal(10, player.GetMutationLevel(MutationIds.MycotoxinTracer));
+        Assert.Equal(8, player.GetMutationLevel(MutationIds.MycelialBloom));
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.OntogenicRegression));
+        Assert.Equal(
+            board.CurrentRound,
+            player.PlayerMutations[MutationIds.OntogenicRegression].PrereqMetRound);
+    }
+
+    [Fact]
     public void Campaign_catalog_entries_expose_friendly_name_and_intentions()
     {
         var entries = AIRoster.GetStrategyCatalogEntries(StrategySetEnum.Campaign);

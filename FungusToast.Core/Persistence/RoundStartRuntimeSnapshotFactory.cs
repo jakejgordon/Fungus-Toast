@@ -277,6 +277,14 @@ public static class RoundStartRuntimeSnapshotFactory
             }
 
             player.SetMutationLevel(mutation.Id, mutationSnapshot.CurrentLevel);
+            if (!player.PlayerMutations.ContainsKey(mutation.Id)
+                && (mutationSnapshot.FirstUpgradeRound.HasValue || mutationSnapshot.PrereqMetRound.HasValue))
+            {
+                // Zero-level mutations may still carry unlock bookkeeping. Preserve that entry so
+                // save/resume cannot bypass or restart the one-round prerequisite delay.
+                player.PlayerMutations[mutation.Id] = new PlayerMutation(player.PlayerId, mutation.Id, mutation);
+            }
+
             if (player.PlayerMutations.TryGetValue(mutation.Id, out var playerMutation))
             {
                 playerMutation.RestoreBookkeeping(mutationSnapshot.FirstUpgradeRound, mutationSnapshot.PrereqMetRound);

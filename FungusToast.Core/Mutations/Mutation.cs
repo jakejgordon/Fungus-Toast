@@ -58,6 +58,7 @@ namespace FungusToast.Core.Mutations
         };
 
         public List<MutationPrerequisite> Prerequisites { get; private set; }
+        public List<MutationCategoryInvestmentPrerequisite> CategoryInvestmentPrerequisites { get; private set; }
         public List<Mutation> Children { get; private set; }
 
         /// <summary>
@@ -111,6 +112,7 @@ namespace FungusToast.Core.Mutations
             AITags = aiTags;
 
             Prerequisites = new List<MutationPrerequisite>();
+            CategoryInvestmentPrerequisites = new List<MutationCategoryInvestmentPrerequisite>();
             Children = new List<Mutation>();
         }
 

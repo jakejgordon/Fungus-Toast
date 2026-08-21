@@ -112,7 +112,7 @@ namespace FungusToast.Core.Mutations.Factories
             new MutationPrerequisite(MutationIds.ChitinFortification, 1));
 
             // Tier-6
-            helper.MakeChild(new Mutation(
+            helper.MakeChildWithCategoryInvestmentPrerequisites(new Mutation(
                 id: MutationIds.OntogenicRegression,
                 name: "Ontogenic Regression",
                 description: $"Can trade away early mutations to steer evolution toward stronger late-game mutations.\n\n" +
@@ -126,11 +126,14 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.HyperadaptiveDrift, 2),
-            new MutationPrerequisite(MutationIds.MycelialBloom, 10),
-            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 10),
-            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10),
-            new MutationPrerequisite(MutationIds.MutatorPhenotype, 10));
+            new[]
+            {
+                new MutationPrerequisite(MutationIds.HyperadaptiveDrift, 2)
+            },
+            new MutationCategoryInvestmentPrerequisite(
+                MutationTier.Tier1,
+                requiredLevelsPerCategory: 10,
+                requiredCategoryCount: 3));
         }
     }
 }
