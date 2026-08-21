@@ -39,6 +39,57 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - New mutations follow the existing naming/copy workflow, deterministic Core ownership, observer/tracking requirements, prerequisite DAG rules, and Core/Simulation/Unity validation gates.
 - Balance-affecting mutation moves, prerequisites, costs, effect values, and AI weights must be isolated from UI-only commits and supported by tests or artifact-backed simulation evidence as appropriate.
 
+## Active Subthread — Mutation Dependency Simplification
+
+**Intent:** Apply the selective-bridge prerequisite philosophy to the live mutation graph before further dependency-visualization work. Preserve strong late-game gates while replacing unrelated shopping lists and overly serial category trunks with readable thematic branches.
+
+**Approved direction (2026-08-21):**
+
+- Hyperadaptive Drift remains deliberately difficult to reach. Replace its five current requirements with Mutator Phenotype 8, Anabolic Inversion 3, and Chitin Fortification 1. Chitin is a non-targeted surge the AI can deliberately activate; do not use Mimetic Resilience as this gate because its board-state target eligibility could make Hyperadaptive Drift conditionally unreachable.
+- Ontogenic Regression retains Hyperadaptive Drift 2 and adds an aggregate foundation gate: at least 10 Tier-1 levels in each of at least three qualifying categories. Core owns this requirement and its progress model; AI strategies must be able to plan toward it; Unity must render it as one grouped requirement rather than several fake mutation edges. Jake may correct this interpretation before the aggregate-gate slice if “10 across three categories” was intended to mean 10 combined rather than 10 per category.
+- Mimetic Resilience requires Chitin Fortification 1 and Mycotoxin Tracer 10. Chitin establishes resistance; Tracer establishes airborne spore projection.
+- Flatten late Cellular Resilience into thematic branches:
+  - Regenerative Hyphae: Necrosporulation 5.
+  - Necrohyphal Infiltration: Necrosporulation 5 and Mycotoxin Potentiation 5.
+  - Catabolic Rebirth: Necrosporulation 5 and Mycotoxin Catabolism 5.
+  - Hypersystemic Regeneration: Regenerative Hyphae 3 and Mycotropic Induction 1.
+- Flatten late Fungicide into sibling specializations:
+  - Necrotoxic Conversion: Putrefactive Mycotoxin 5 and Necrosporulation 5.
+  - Putrefactive Cascade: Putrefactive Mycotoxin 5 and Chemotactic Beacon 1.
+- Retain Mycotropic Induction's four individual Tendril prerequisites in Core for save/rules compatibility, but group them as one `All four Tendrils` requirement in the UI.
+- Do not change mutation effects, costs, maximum levels, IDs, categories, processing timing, or save representation as part of these prerequisite slices.
+
+### Dependency Slice 1 — Named prerequisite graph
+
+- Change the approved named prerequisite edges and update focused definition, parent/child, reachability, and depth assertions.
+- Audit every explicit AI target path affected by the new graph. The existing recursive goal planner must be able to activate Chitin Fortification while pursuing Hyperadaptive Drift and Mimetic Resilience.
+- Refresh the Unity Core DLL/PDB, build Core and Simulation, run focused and canonical Core tests, and run a seeded smoke simulation.
+- Commit, fetch, pull, and push as an isolated balance-affecting slice.
+
+### Dependency Slice 2 — Aggregate category foundation gate
+
+- Add a reusable Core prerequisite type for minimum Tier-1 investment per category across a minimum number of categories; do not special-case Ontogenic Regression inside Unity or `Player.CanUpgrade`.
+- Integrate the gate into prerequisite satisfaction, one-round unlock timing, progress snapshots, save/resume reconstruction, and automatic/free-upgrade paths.
+- Extend AI prerequisite planning so an Ontogenic Regression goal selects qualifying Tier-1 category roots deterministically, accounts for current investment, and does not stall or rely on fallback randomness.
+- Add focused Core tests for below/at/above threshold, category counting, root-only counting, deterministic AI planning, unlock timing, and existing-save compatibility.
+- Refresh the Unity Core DLL/PDB, build Core and Simulation, run focused and canonical Core tests, and run a seeded AI smoke simulation targeting Ontogenic Regression.
+- Commit, fetch, pull, and push independently.
+
+### Dependency Slice 3 — Grouped prerequisite UI
+
+- Read the UI architecture/style/tooltip helpers before implementation.
+- Extend the inspector and relationship overlay to present aggregate/set requirements as grouped `ALL required` rows with owned/required progress.
+- Group the four Tendril edges under `All four Tendrils`; render Ontogenic Regression's category-foundation requirement without inventing node-to-node edges.
+- Preserve hover, pin, search, keyboard navigation, immediate purchase behavior, connector raycast safety, and zero-allocation idle rendering.
+- Build shared projects, run relevant Core/edit-mode tests available outside Unity, refresh the plugin if needed, and record exact manual Unity checks for supported resolutions.
+- Commit, fetch, pull, and push independently.
+
+### Dependency Slice 4 — Balance and reachability evidence
+
+- Run explicit seeded AI strategies that target Hyperadaptive Drift, Mimetic Resilience, Ontogenic Regression, and each flattened late branch.
+- Report acquisition rounds/rates, stalls, prerequisite point investment, and whether the powerful mutations now arrive in an appropriate late-game window.
+- Tune prerequisite levels only in isolated follow-up commits supported by exported simulation artifacts.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.
