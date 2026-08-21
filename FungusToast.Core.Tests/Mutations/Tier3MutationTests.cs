@@ -305,7 +305,7 @@ public class Tier3MutationTests
     }
 
     [Fact]
-    public void MimeticResilience_is_tier3_mycelial_surge_and_requires_homeostatic_harmony_five_and_mycotoxin_tracer_three()
+    public void MimeticResilience_is_tier3_mycelial_surge_and_requires_chitin_fortification_one_and_mycotoxin_tracer_ten()
     {
         var mutation = RequireMutation(MutationIds.MimeticResilience);
 
@@ -314,8 +314,8 @@ public class Tier3MutationTests
         Assert.True(mutation.IsSurge);
         Assert.Equal(MutationType.MimeticResilience, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.HomeostaticHarmony && p.RequiredLevel == 5);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 3);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChitinFortification && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 10);
         Assert.Contains("20.0%+ more living cells", mutation.Description);
         Assert.Contains("1.0%+ board control", mutation.Description);
         Assert.DoesNotContain(" %", mutation.Description);

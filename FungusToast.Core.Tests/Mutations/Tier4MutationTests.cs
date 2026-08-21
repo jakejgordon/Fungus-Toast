@@ -14,25 +14,25 @@ namespace FungusToast.Core.Tests.Mutations;
 public class Tier4MutationTests
 {
     [Fact]
-    public void RegenerativeHyphae_is_tier4_cellular_resilience_and_requires_necrosporulation_two_and_mycotropic_induction_one()
+    public void RegenerativeHyphae_is_tier4_cellular_resilience_and_requires_necrosporulation_five()
     {
         var mutation = RequireMutation(MutationIds.RegenerativeHyphae);
 
         Assert.Equal(MutationCategory.CellularResilience, mutation.Category);
         Assert.Equal(MutationTier.Tier4, mutation.Tier);
         Assert.Equal(MutationType.ReclaimOwnDeadCells, mutation.Type);
-        Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 2);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotropicInduction && p.RequiredLevel == 1);
+        var prerequisite = Assert.Single(mutation.Prerequisites);
+        Assert.Equal(MutationIds.Necrosporulation, prerequisite.MutationId);
+        Assert.Equal(5, prerequisite.RequiredLevel);
         Assert.Contains("Reclaims your own dead cells near your living colony", mutation.Description);
         Assert.Contains("After the Growth Phase and before the Decay Phase", mutation.Description);
         Assert.Contains("checked at most once per round", mutation.Description);
         Assert.Contains(mutation, RequireMutation(MutationIds.Necrosporulation).Children);
-        Assert.Contains(mutation, RequireMutation(MutationIds.MycotropicInduction).Children);
+        Assert.DoesNotContain(mutation, RequireMutation(MutationIds.MycotropicInduction).Children);
     }
 
     [Fact]
-    public void HypersystemicRegeneration_is_tier7_cellular_resilience_and_requires_catabolic_rebirth_one_and_mycotropic_induction_one()
+    public void HypersystemicRegeneration_is_tier7_cellular_resilience_and_requires_regenerative_hyphae_three_and_mycotropic_induction_one()
     {
         var mutation = RequireMutation(MutationIds.HypersystemicRegeneration);
 
@@ -40,7 +40,7 @@ public class Tier4MutationTests
         Assert.Equal(MutationTier.Tier7, mutation.Tier);
         Assert.Equal(MutationType.HypersystemicRegeneration, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.CatabolicRebirth && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 3);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotropicInduction && p.RequiredLevel == 1);
         Assert.Contains("Regenerative Hyphae can also reclaim diagonally adjacent cells", mutation.Description);
     }

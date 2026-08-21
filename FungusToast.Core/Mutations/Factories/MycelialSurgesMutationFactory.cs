@@ -76,8 +76,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointIncreasePerLevel: GameBalance.MimeticResiliencePointIncreasePerLevel,
                 aiTags: MutationAITags.CatchUp
             ),
-            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5),
-            new MutationPrerequisite(MutationIds.MycotoxinTracer, 3)
+            new MutationPrerequisite(MutationIds.ChitinFortification, 1),
+            new MutationPrerequisite(MutationIds.MycotoxinTracer, 10)
             );
 
             helper.MakeChild(new Mutation(

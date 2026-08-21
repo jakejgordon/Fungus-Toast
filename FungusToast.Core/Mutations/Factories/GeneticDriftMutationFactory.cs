@@ -107,11 +107,9 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.GeneticDrift,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.NecrophyticBloom, 1),
             new MutationPrerequisite(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel - 2),
-            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1),
-            new MutationPrerequisite(MutationIds.AdaptiveExpression, 1),
-            new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
+            new MutationPrerequisite(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+            new MutationPrerequisite(MutationIds.ChitinFortification, 1));
 
             // Tier-6
             helper.MakeChild(new Mutation(

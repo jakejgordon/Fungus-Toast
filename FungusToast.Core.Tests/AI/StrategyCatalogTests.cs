@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core.Tests.Mutations;
@@ -41,6 +42,37 @@ public class StrategyCatalogTests
 
         Assert.Equal(1, player.GetMutationLevel(MutationIds.AeratedFrontier));
         Assert.Equal(0, player.GetMutationLevel(MutationIds.MutatorPhenotype));
+    }
+
+    [Fact]
+    public void Hyperadaptive_goal_deliberately_activates_chitin_fortification_prerequisite()
+    {
+        var strategy = new ParameterizedSpendingStrategy(
+            strategyName: "Hyperadaptive prerequisite test",
+            prioritizeHighTier: true,
+            targetMutationGoals: new List<TargetMutationGoal>
+            {
+                new(MutationIds.HyperadaptiveDrift, 1)
+            },
+            economyBias: EconomyBias.IgnoreEconomy);
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Hyperadaptive AI", PlayerTypeEnum.AI) { MutationPoints = 20 };
+        board.Players.Add(player);
+
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 0);
+        player.SetMutationLevel(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel - 2, currentRound: 0);
+        player.SetMutationLevel(MutationIds.AdaptiveExpression, 3, currentRound: 0);
+        player.SetMutationLevel(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel, currentRound: 0);
+
+        strategy.SpendMutationPoints(
+            player,
+            MutationRegistry.GetAll().ToList(),
+            board,
+            new Random(1),
+            new TestSimulationObserver());
+
+        Assert.Equal(1, player.GetMutationLevel(MutationIds.ChitinFortification));
+        Assert.True(player.IsSurgeActive(MutationIds.ChitinFortification));
     }
 
     [Fact]

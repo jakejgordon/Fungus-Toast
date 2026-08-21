@@ -38,6 +38,21 @@ namespace FungusToast.Core.Mutations
             MycelialSurgesMutationFactory.CreateMutations(allMutations, rootMutations, helper);
             SubstrateEcologyMutationFactory.CreateMutations(allMutations, rootMutations, helper);
 
+            // Rebuild reverse edges after every factory has registered its mutations. Cross-category
+            // prerequisites can point to mutations created by a later factory, so linking children only
+            // during MakeChild would otherwise make reverse navigation depend on factory order.
+            foreach (var mutation in allMutations.Values)
+                mutation.Children.Clear();
+
+            foreach (var mutation in allMutations.Values)
+            {
+                foreach (var prerequisite in mutation.Prerequisites)
+                {
+                    if (allMutations.TryGetValue(prerequisite.MutationId, out var parent))
+                        parent.Children.Add(mutation);
+                }
+            }
+
             foreach (var mutation in allMutations.Values)
             {
                 string buffingMutations = MutationSynergyCatalog.DescribeBuffingMutations(mutation.Id, allMutations);

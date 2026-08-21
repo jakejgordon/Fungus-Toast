@@ -29,6 +29,21 @@ public class MutationRepositoryIntegrityTests
         }
     }
 
+    [Fact]
+    public void Every_prerequisite_has_the_destination_as_a_reverse_child_edge()
+    {
+        var all = MutationRegistry.All;
+
+        foreach (var mutation in all.Values)
+        {
+            foreach (var prerequisite in mutation.Prerequisites)
+            {
+                Assert.True(all.TryGetValue(prerequisite.MutationId, out var parent));
+                Assert.Contains(mutation, parent!.Children);
+            }
+        }
+    }
+
     private static void AssertReachesRoot(
         Mutation mutation,
         IReadOnlyDictionary<int, Mutation> all,

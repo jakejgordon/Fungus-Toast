@@ -66,6 +66,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Refresh the Unity Core DLL/PDB, build Core and Simulation, run focused and canonical Core tests, and run a seeded smoke simulation.
 - Commit, fetch, pull, and push as an isolated balance-affecting slice.
 
+**Implemented checkpoint (2026-08-21):**
+
+- Replaced Hyperadaptive Drift's five-item shopping list with Mutator Phenotype 8, Anabolic Inversion 3, and Chitin Fortification 1. A focused AI regression proves a Hyperadaptive target deliberately activates the non-targeted Chitin surge prerequisite.
+- Changed Mimetic Resilience to Chitin Fortification 1 plus Mycotoxin Tracer 10.
+- Flattened Cellular Resilience into the approved Necrosporulation/toxin-catabolism branches and made Hypersystemic Regeneration depend directly on Regenerative Hyphae 3 plus Mycotropic Induction 1.
+- Flattened Necrotoxic Conversion and Putrefactive Cascade into sibling Putrefactive Mycotoxin branches with their thematic cross-category requirements.
+- Rebuilt reverse `Children` edges after all category factories register, removing factory-order dependence for cross-category prerequisites such as Chitin Fortification -> Hyperadaptive Drift. Repository integrity coverage now verifies every prerequisite has the matching reverse edge.
+- Focused prerequisite/AI tests passed except for the known unrelated campaign preset naming failure. The canonical Core suite excluding that known failure passed 533/533; Core and Simulation builds passed with 0 warnings/errors; the Unity Core DLL/PDB was refreshed; `git diff --check` passed.
+- A seeded one-game, four-player smoke simulation with nutrient patches disabled completed in 35 turns with zero parity mismatches. It confirmed AI acquisition of the new branches and the Chitin -> Hyperadaptive path. One economy-heavy AI reached Hyperadaptive Drift on round 15, which is evidence for the later acquisition-timing balance slice rather than enough evidence to retune this structural commit.
+- Manual Unity check remains required after the grouped-UI slice; the current data-driven graph/inspector will show the new edges but does not yet group the four Tendrils.
+
 ### Dependency Slice 2 — Aggregate category foundation gate
 
 - Add a reusable Core prerequisite type for minimum Tier-1 investment per category across a minimum number of categories; do not special-case Ontogenic Regression inside Unity or `Player.CanUpgrade`.

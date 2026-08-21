@@ -95,8 +95,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.SporicidalBloom, 1),
-            new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
+            new MutationPrerequisite(MutationIds.Necrosporulation, 5));
 
             helper.MakeChild(new Mutation(
                 id: MutationIds.PutrefactiveRejuvenation,
@@ -130,7 +130,7 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveRejuvenation, 1),
+            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
             new MutationPrerequisite(MutationIds.ChemotacticBeacon, 1));
         }
     }

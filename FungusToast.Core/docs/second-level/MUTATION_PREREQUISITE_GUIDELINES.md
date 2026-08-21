@@ -172,10 +172,9 @@ When adding or revising a mutation definition:
 
 ## Current Review Hotspots
 
-1. Hyperadaptive Drift and Ontogenic Regression each have five direct `ALL` prerequisites.
-2. The longest Cellular Resilience, Genetic Drift, and Fungicide paths exceed the target three-level chain depth.
-3. Several cross-category edges need a clearer thematic case, especially Regenerative Hyphae, Catabolic Rebirth, Necrotoxic Conversion, and Mimetic Resilience.
-4. Mycotropic Induction's four Tendril prerequisites should remain an explicit set-completion exception only if the UI groups them as one readable requirement.
+1. Ontogenic Regression still has five direct `ALL` prerequisites pending its aggregate category-foundation gate.
+2. Hypersystemic Regeneration and Ontogenic Regression remain rare four-edge capstone paths; the other live category paths now stay within the target three-edge depth.
+3. Mycotropic Induction's four Tendril prerequisites remain an explicit set-completion exception and need grouped UI treatment.
 
 ## Implementation References
 

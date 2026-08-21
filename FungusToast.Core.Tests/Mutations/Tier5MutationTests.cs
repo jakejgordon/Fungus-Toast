@@ -21,8 +21,8 @@ public class Tier5MutationTests
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
         Assert.Equal(MutationType.NecrohyphalInfiltration, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 5);
         Assert.Contains("fails to expand normally", mutation.Description);
         Assert.Contains("reclaim another adjacent dead enemy cell", mutation.Description);
     }
@@ -36,8 +36,8 @@ public class Tier5MutationTests
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
         Assert.Equal(MutationType.NecrotoxicConversion, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.SporicidalBloom && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MutatorPhenotype && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveMycotoxin && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 5);
         Assert.Contains("instantly reclaim any cell killed by your toxin effects", mutation.Description);
     }
 
@@ -63,12 +63,11 @@ public class Tier5MutationTests
         Assert.Equal(MutationCategory.GeneticDrift, mutation.Category);
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
         Assert.Equal(MutationType.FreeMutationUpgrade, mutation.Type);
-        Assert.Equal(5, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.NecrophyticBloom && p.RequiredLevel == 1);
+        Assert.Equal(3, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MutatorPhenotype && p.RequiredLevel == GameBalance.MutatorPhenotypeMaxLevel - 2);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.AdaptiveExpression && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChronoresilientCytoplasm && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.AnabolicInversion && p.RequiredLevel == GameBalance.AnabolicInversionMaxLevel);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChitinFortification && p.RequiredLevel == 1);
+        Assert.Contains(mutation, RequireMutation(MutationIds.ChitinFortification).Children);
         Assert.Contains("target a Tier 2-4 non-surge mutation", mutation.Description);
         Assert.Contains("one extra Tier 1 upgrade attempt on a second mutation", mutation.Description);
     }

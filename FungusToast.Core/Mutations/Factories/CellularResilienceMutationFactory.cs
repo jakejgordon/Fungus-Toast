@@ -72,8 +72,7 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.Necrosporulation, 2),
-                new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
+                new MutationPrerequisite(MutationIds.Necrosporulation, 5));
 
             // Tier-5
             helper.MakeChild(new Mutation(
@@ -90,8 +89,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1),
-            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
+            new MutationPrerequisite(MutationIds.Necrosporulation, 5),
+            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 5));
 
             // Tier-6
             helper.MakeChild(new Mutation(
@@ -108,8 +107,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.NecrohyphalInfiltration, 1),
-            new MutationPrerequisite(MutationIds.AnabolicInversion, 1));
+            new MutationPrerequisite(MutationIds.Necrosporulation, 5),
+            new MutationPrerequisite(MutationIds.MycotoxinCatabolism, 5));
 
             // Tier-7
             helper.MakeChild(new Mutation(
@@ -126,8 +125,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier7
             ),
-            new MutationPrerequisite(MutationIds.CatabolicRebirth, 1), // Tier 6 CellularResilience
-            new MutationPrerequisite(MutationIds.MycotropicInduction, 1)); // Tier 3 Growth
+            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 3),
+            new MutationPrerequisite(MutationIds.MycotropicInduction, 1));
         }
     }
 }

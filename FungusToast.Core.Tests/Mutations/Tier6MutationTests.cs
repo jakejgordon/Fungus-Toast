@@ -21,8 +21,8 @@ public class Tier6MutationTests
         Assert.Equal(MutationTier.Tier6, mutation.Tier);
         Assert.Equal(MutationType.ToxinExpirationResurrection, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.NecrohyphalInfiltration && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.AnabolicInversion && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinCatabolism && p.RequiredLevel == 5);
         Assert.Contains("Expired toxins can reclaim your dead cells", mutation.Description);
         Assert.Contains("Enemy toxins next to your dead cells age twice as fast", mutation.Description);
     }
@@ -36,7 +36,7 @@ public class Tier6MutationTests
         Assert.Equal(MutationTier.Tier6, mutation.Tier);
         Assert.Equal(MutationType.PutrefactiveCascade, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveRejuvenation && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveMycotoxin && p.RequiredLevel == 5);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChemotacticBeacon && p.RequiredLevel == 1);
         Assert.Contains("Cascaded kills poison their targets instead of leaving dead cells", mutation.Description);
     }
