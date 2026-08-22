@@ -66,8 +66,8 @@ namespace FungusToast.Unity.UI.MutationTree
                         prerequisiteMutation.Id,
                         dependent.Id,
                         prerequisite.RequiredLevel,
-                        prerequisiteNode.transform as RectTransform,
-                        dependentNode.transform as RectTransform,
+                        prerequisiteNode.DependencyAnchorRect,
+                        dependentNode.DependencyAnchorRect,
                         prerequisiteMutation.Category != dependent.Category));
                     AddEdgeIndex(incomingEdgeIndexesByMutationId, dependent.Id, edgeIndex);
                     AddEdgeIndex(outgoingEdgeIndexesByMutationId, prerequisiteMutation.Id, edgeIndex);

@@ -178,8 +178,13 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 **Arrowhead edge correction (2026-08-22):**
 
-- The route tip already targeted the destination card boundary, but each arrowhead was constructed with its base extending back into the card. The final route segment now stops at the arrowhead base outside the destination, leaving the tip at the card edge. This corrects the visually in-card endpoints on Hyphal Surge and Chemotactic Beacon without changing the dependency graph or card layout.
+- The route arrowhead previously had its base extending back into the destination rect. The final route segment now stops at the arrowhead base, leaving the tip at its calculated endpoint. This is retained as the correct arrowhead treatment; the separate rendered-card correction below fixes which card boundary supplies that endpoint.
 - Manual Unity verification remains: confirm all directional arrowheads meet their target border from outside, particularly the Mycelial Bloom → Hyphal Surge and Mycotoxin Potentiation → Chemotactic Beacon cross-lane routes.
+
+**Rendered-card connector correction (2026-08-22):**
+
+- The prior edge calculation still used each `MutationNodeUI` root transform. That root is a layout container and can differ from the visible button/image rect, which explains endpoints landing inside Hyphal Surge and Chemotactic Beacon. Connector endpoints now use the actual rendered button background rect for both source and destination bounds.
+- Manual Unity verification remains: confirm the same two cross-lane routes now meet the visible left card border, then spot-check vertical and grouped Tendril routes while scrolling.
 
 ## Planned Slices
 

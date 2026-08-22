@@ -95,6 +95,29 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public int MutationId => mutation.Id;
 
+        /// <summary>
+        /// The actual rendered card surface. The root node is a layout container
+        /// and can be narrower or wider than the button image it hosts, so graph
+        /// connectors must use this rect rather than <see cref="transform"/>.
+        /// </summary>
+        public RectTransform DependencyAnchorRect
+        {
+            get
+            {
+                if (nodeBackground != null)
+                {
+                    return nodeBackground.rectTransform;
+                }
+
+                if (upgradeButton != null)
+                {
+                    return upgradeButton.GetComponent<RectTransform>();
+                }
+
+                return transform as RectTransform;
+            }
+        }
+
         /// <summary>Exposes the underlying Mutation for external queries (e.g. investment summaries).</summary>
         public Mutation GetMutation() => mutation;
 
