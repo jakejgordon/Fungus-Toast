@@ -172,6 +172,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 **Connector-port correction (2026-08-22):**
 
 - Dependency routes now use the two mutation-card borders that face each other on their dominant axis. Cross-lane routes leave through the prerequisite's left/right border and terminate at the dependent's facing left/right border; primarily vertical routes retain bottom/top ports. This keeps arrowheads outside the destination card—for example, Mycelial Bloom now enters Hyphal Surge from its left edge instead of pointing upward through the card.
+- Route ports are calculated from each card's transformed world bounds in the graph's coordinate space, rather than normalized local points. This ensures a right-to-left route ends at the rendered right edge (and a left-to-right route at the rendered left edge), even when the scroll content and viewport use different transforms.
 - Manual Unity verification remains: inspect same-row cross-lane, diagonal cross-lane, same-lane vertical, grouped Tendril, focused, unlock-growth, and inspector-route-pulse connectors while scrolling at all supported resolutions.
 
 ## Planned Slices

@@ -30,6 +30,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private readonly Dictionary<int, int> upstreamDepthByMutationId = new();
         private readonly List<int> traversalMutationIds = new();
         private readonly HashSet<int> growingDependentIds = new();
+        private readonly Vector3[] cardWorldCorners = new Vector3[4];
 
         private ScrollRect boundScrollRect;
         private Player inspectionPlayer;
@@ -379,14 +380,6 @@ namespace FungusToast.Unity.UI.MutationTree
             remaining -= visibleLength;
         }
 
-        private Vector2 ToLocalPoint(RectTransform target, Vector2 normalizedPoint)
-        {
-            Vector2 targetPoint = new(
-                Mathf.Lerp(target.rect.xMin, target.rect.xMax, normalizedPoint.x),
-                Mathf.Lerp(target.rect.yMin, target.rect.yMax, normalizedPoint.y));
-            return rectTransform.InverseTransformPoint(target.TransformPoint(targetPoint));
-        }
-
         private void BuildRoutePoints(
             RectTransform prerequisiteRect,
             RectTransform dependentRect,
@@ -395,8 +388,10 @@ namespace FungusToast.Unity.UI.MutationTree
             out Vector2 third,
             out Vector2 end)
         {
-            Vector2 prerequisiteCenter = ToLocalPoint(prerequisiteRect, new Vector2(0.5f, 0.5f));
-            Vector2 dependentCenter = ToLocalPoint(dependentRect, new Vector2(0.5f, 0.5f));
+            Bounds prerequisiteBounds = GetCardBoundsInGraphSpace(prerequisiteRect);
+            Bounds dependentBounds = GetCardBoundsInGraphSpace(dependentRect);
+            Vector2 prerequisiteCenter = prerequisiteBounds.center;
+            Vector2 dependentCenter = dependentBounds.center;
             Vector2 delta = dependentCenter - prerequisiteCenter;
 
             // Enter a card through the border facing its prerequisite. This keeps
@@ -405,12 +400,12 @@ namespace FungusToast.Unity.UI.MutationTree
             if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
             {
                 bool dependentIsToTheRight = delta.x >= 0f;
-                start = ToLocalPoint(prerequisiteRect, dependentIsToTheRight
-                    ? new Vector2(1f, 0.5f)
-                    : new Vector2(0f, 0.5f));
-                end = ToLocalPoint(dependentRect, dependentIsToTheRight
-                    ? new Vector2(0f, 0.5f)
-                    : new Vector2(1f, 0.5f));
+                start = new Vector2(
+                    dependentIsToTheRight ? prerequisiteBounds.max.x : prerequisiteBounds.min.x,
+                    prerequisiteCenter.y);
+                end = new Vector2(
+                    dependentIsToTheRight ? dependentBounds.min.x : dependentBounds.max.x,
+                    dependentCenter.y);
 
                 float middleX = (start.x + end.x) * 0.5f;
                 second = new Vector2(middleX, start.y);
@@ -419,16 +414,31 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             bool dependentIsBelow = delta.y < 0f;
-            start = ToLocalPoint(prerequisiteRect, dependentIsBelow
-                ? new Vector2(0.5f, 0f)
-                : new Vector2(0.5f, 1f));
-            end = ToLocalPoint(dependentRect, dependentIsBelow
-                ? new Vector2(0.5f, 1f)
-                : new Vector2(0.5f, 0f));
+            start = new Vector2(
+                prerequisiteCenter.x,
+                dependentIsBelow ? prerequisiteBounds.min.y : prerequisiteBounds.max.y);
+            end = new Vector2(
+                dependentCenter.x,
+                dependentIsBelow ? dependentBounds.max.y : dependentBounds.min.y);
 
             float middleY = (start.y + end.y) * 0.5f;
             second = new Vector2(start.x, middleY);
             third = new Vector2(end.x, middleY);
+        }
+
+        private Bounds GetCardBoundsInGraphSpace(RectTransform cardRect)
+        {
+            cardRect.GetWorldCorners(cardWorldCorners);
+            Vector3 minimum = rectTransform.InverseTransformPoint(cardWorldCorners[0]);
+            Vector3 maximum = minimum;
+            for (int index = 1; index < cardWorldCorners.Length; index++)
+            {
+                Vector3 corner = rectTransform.InverseTransformPoint(cardWorldCorners[index]);
+                minimum = Vector3.Min(minimum, corner);
+                maximum = Vector3.Max(maximum, corner);
+            }
+
+            return new Bounds((minimum + maximum) * 0.5f, maximum - minimum);
         }
 
         private static void DrawSegment(VertexHelper helper, Vector2 start, Vector2 end, float thickness, Color color, bool dashed)
