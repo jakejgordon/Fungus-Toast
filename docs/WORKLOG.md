@@ -169,6 +169,11 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - The mutation workspace is now deactivated in `UI_MutationManager.Awake` immediately after its serialized references and hidden position are initialized. This closes the startup/player-initialization window in which its off-screen rect could bleed into the left HUD before the player opens the tree. The existing `Start` guard remains as a later safety check; the opened tree and its dependency overlay are unchanged.
 - `git diff --check` and the Core build passed. Manual Unity verification remains: before opening the workspace, confirm the complete left panel at each supported resolution and a narrow/portrait Game view; then open the tree to confirm the unchanged route overlay and close/reopen behavior.
 
+**Connector-port correction (2026-08-22):**
+
+- Dependency routes now use the two mutation-card borders that face each other on their dominant axis. Cross-lane routes leave through the prerequisite's left/right border and terminate at the dependent's facing left/right border; primarily vertical routes retain bottom/top ports. This keeps arrowheads outside the destination card—for example, Mycelial Bloom now enters Hyphal Surge from its left edge instead of pointing upward through the card.
+- Manual Unity verification remains: inspect same-row cross-lane, diagonal cross-lane, same-lane vertical, grouped Tendril, focused, unlock-growth, and inspector-route-pulse connectors while scrolling at all supported resolutions.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

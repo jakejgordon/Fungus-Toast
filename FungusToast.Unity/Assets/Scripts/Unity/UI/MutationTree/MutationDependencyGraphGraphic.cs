@@ -251,11 +251,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     continue;
                 }
 
-                Vector2 start = ToLocalPoint(edge.PrerequisiteRect, new Vector2(0.5f, 0f));
-                Vector2 end = ToLocalPoint(edge.DependentRect, new Vector2(0.5f, 1f));
-                float middleY = (start.y + end.y) * 0.5f;
-                Vector2 second = new(start.x, middleY);
-                Vector2 third = new(end.x, middleY);
+                BuildRoutePoints(edge.PrerequisiteRect, edge.DependentRect, out Vector2 start, out Vector2 second, out Vector2 third, out Vector2 end);
 
                 if (edge.Relationship != EdgeRelationship.None)
                 {
@@ -389,6 +385,50 @@ namespace FungusToast.Unity.UI.MutationTree
                 Mathf.Lerp(target.rect.xMin, target.rect.xMax, normalizedPoint.x),
                 Mathf.Lerp(target.rect.yMin, target.rect.yMax, normalizedPoint.y));
             return rectTransform.InverseTransformPoint(target.TransformPoint(targetPoint));
+        }
+
+        private void BuildRoutePoints(
+            RectTransform prerequisiteRect,
+            RectTransform dependentRect,
+            out Vector2 start,
+            out Vector2 second,
+            out Vector2 third,
+            out Vector2 end)
+        {
+            Vector2 prerequisiteCenter = ToLocalPoint(prerequisiteRect, new Vector2(0.5f, 0.5f));
+            Vector2 dependentCenter = ToLocalPoint(dependentRect, new Vector2(0.5f, 0.5f));
+            Vector2 delta = dependentCenter - prerequisiteCenter;
+
+            // Enter a card through the border facing its prerequisite. This keeps
+            // arrowheads outside the card instead of routing up into its body when
+            // a cross-lane dependency happens to share a tier row.
+            if (Mathf.Abs(delta.x) >= Mathf.Abs(delta.y))
+            {
+                bool dependentIsToTheRight = delta.x >= 0f;
+                start = ToLocalPoint(prerequisiteRect, dependentIsToTheRight
+                    ? new Vector2(1f, 0.5f)
+                    : new Vector2(0f, 0.5f));
+                end = ToLocalPoint(dependentRect, dependentIsToTheRight
+                    ? new Vector2(0f, 0.5f)
+                    : new Vector2(1f, 0.5f));
+
+                float middleX = (start.x + end.x) * 0.5f;
+                second = new Vector2(middleX, start.y);
+                third = new Vector2(middleX, end.y);
+                return;
+            }
+
+            bool dependentIsBelow = delta.y < 0f;
+            start = ToLocalPoint(prerequisiteRect, dependentIsBelow
+                ? new Vector2(0.5f, 0f)
+                : new Vector2(0.5f, 1f));
+            end = ToLocalPoint(dependentRect, dependentIsBelow
+                ? new Vector2(0.5f, 1f)
+                : new Vector2(0.5f, 0f));
+
+            float middleY = (start.y + end.y) * 0.5f;
+            second = new Vector2(start.x, middleY);
+            third = new Vector2(end.x, middleY);
         }
 
         private static void DrawSegment(VertexHelper helper, Vector2 start, Vector2 end, float thickness, Color color, bool dashed)
