@@ -1722,19 +1722,26 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void EnsureMutationDependencyGraph()
         {
-            if (mutationDependencyGraph != null || mutationScrollViewContentRect == null)
+            if (mutationDependencyGraph != null || mutationViewportRect == null)
             {
                 return;
             }
 
-            Transform existing = mutationScrollViewContentRect.Find("UI_MutationDependencyGraph");
+            Transform existing = mutationViewportRect.Find("UI_MutationDependencyGraph");
+            if (existing == null && mutationScrollViewContentRect != null)
+            {
+                existing = mutationScrollViewContentRect.Find("UI_MutationDependencyGraph");
+            }
+
             if (existing != null)
             {
                 mutationDependencyGraph = existing.GetComponent<MutationDependencyGraphGraphic>();
                 if (mutationDependencyGraph != null)
                 {
-                    // Render above the column/card hierarchy. The graph is
-                    // non-raycasting and its routes terminate at card edges.
+                    ConfigureDependencyGraphRect(existing.GetComponent<RectTransform>());
+                    mutationDependencyGraph.BindScrollRect(mutationScrollViewRect != null
+                        ? mutationScrollViewRect.GetComponent<ScrollRect>()
+                        : null);
                     existing.SetAsLastSibling();
                     return;
                 }
@@ -1743,24 +1750,29 @@ namespace FungusToast.Unity.UI.MutationTree
             var graphObject = new GameObject(
                 "UI_MutationDependencyGraph",
                 typeof(RectTransform),
-                typeof(MutationDependencyGraphGraphic),
-                typeof(LayoutElement));
-            graphObject.layer = mutationScrollViewContentRect.gameObject.layer;
+                typeof(CanvasRenderer),
+                typeof(MutationDependencyGraphGraphic));
+            graphObject.layer = mutationViewportRect.gameObject.layer;
             RectTransform graphRect = graphObject.GetComponent<RectTransform>();
-            graphRect.SetParent(mutationScrollViewContentRect, false);
-            graphRect.anchorMin = Vector2.zero;
-            graphRect.anchorMax = Vector2.one;
-            graphRect.offsetMin = Vector2.zero;
-            graphRect.offsetMax = Vector2.zero;
-            // The content's category columns paint after earlier siblings. Keeping
-            // the graph last prevents cards from occluding connector arrowheads.
+            ConfigureDependencyGraphRect(graphRect);
             graphRect.SetAsLastSibling();
 
-            LayoutElement layout = graphObject.GetComponent<LayoutElement>();
-            layout.ignoreLayout = true;
-
             mutationDependencyGraph = graphObject.GetComponent<MutationDependencyGraphGraphic>();
+            mutationDependencyGraph.color = Color.white;
             mutationDependencyGraph.raycastTarget = false;
+            mutationDependencyGraph.BindScrollRect(mutationScrollViewRect != null
+                ? mutationScrollViewRect.GetComponent<ScrollRect>()
+                : null);
+        }
+
+        private void ConfigureDependencyGraphRect(RectTransform graphRect)
+        {
+            graphRect.SetParent(mutationViewportRect, false);
+            graphRect.anchorMin = Vector2.zero;
+            graphRect.anchorMax = Vector2.one;
+            graphRect.pivot = new Vector2(0.5f, 0.5f);
+            graphRect.anchoredPosition = Vector2.zero;
+            graphRect.sizeDelta = Vector2.zero;
         }
 
         private IEnumerator RefreshMutationDependencyGraphNextFrame()

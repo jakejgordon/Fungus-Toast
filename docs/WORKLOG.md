@@ -28,7 +28,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 
 - Keep purchases one-click, immediate, stationary, and free of confirmation prompts or blocking animation.
 - Do not add pan-and-zoom as the primary navigation model. Six stable lanes should remain spatially learnable and scroll vertically together.
-- Use a persistent inspector as the primary explanation surface; large hover tooltips become fallback/compact support rather than the only way to understand a node.
+- Use the persistent inspector as the detailed mutation-information surface; mutation cards must not open a duplicate hover tooltip.
 - Support progressive disclosure: plain-language benefit first, with technical timing, formulas, restrictions, caps, max-level behavior, and implemented synergies available on demand.
 - Search highlights and dims in place; it must never hide, reorder, or move cards. `Ctrl+F` should focus search when keyboard input is available.
 - Cross-category mutations remain in one primary category lane. Cross-category prerequisites use visibly distinct connector treatment rather than physically floating hybrid cards between lanes.
@@ -157,6 +157,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - First in-Editor verification showed two presentation regressions: the active-but-offscreen workspace could leave a visible panel edge over the board at narrow/unusual Game-view aspect ratios, and dependency routes were rendered below the category/card hierarchy so their arrowheads were occluded.
 - Keep the mutation workspace GameObject inactive until the explicit open flow. Render the still-non-raycasting dependency graphic as the last scroll-content sibling and use a larger filled arrow silhouette so direction remains legible independently of route color.
 - Manual recheck remains required at 1920x1280, 1920x1080, 1600x900, and 1280x720, plus a narrow/portrait Game view: confirm no workspace edge is visible before opening; confirm amber and blue/green arrowheads remain visible above cards, clip to the viewport while scrolling, and do not block node hover/click/purchase interactions.
+
+**Unity feedback correction (2026-08-22):**
+
+- The sibling-order correction did not make the dependency mesh visible in Unity, while card relationship highlighting proved that focus traversal and graph selection state were active. Move the graphic out of the horizontally fitted scroll content and make it a full-rect child of the clipped viewport above the content. Rebuild its mesh on scroll-value changes so routes track moving cards without per-frame redraws.
+- Remove `ITooltipContentProvider`, runtime `TooltipTrigger` creation, and the obsolete tooltip formatter from `MutationNodeUI`. Card hover now updates only the inspector, relationship emphasis, and card hover affordance; the persistent right inspector is the sole detailed mutation surface.
+- Manual recheck: no large tooltip after dwelling over any regular or Tendril card; inspector hover intent and purchases remain responsive; amber/blue-green routes and filled arrowheads appear for same- and cross-category relationships; routes track scrolling and clip at viewport edges; aggregate requirements still create no fake edges.
 
 ## Planned Slices
 

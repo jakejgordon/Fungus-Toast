@@ -5,20 +5,15 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
 using System.Collections;
-using System.Text;
-using System.Linq;
 using FungusToast.Unity;
-using FungusToast.Unity.UI.Tooltips;
-using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
-    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, ITooltipContentProvider
+    public class MutationNodeUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler
     {
         private const float MutationNameMinimumFontSize = UIStyleTokens.Typography.MicroMinimum;
         private const float MutationNameHorizontalPadding = 8f;
-        private const float MutationTooltipHoverDelaySeconds = 0.3f;
         private const int NodeTextTopPadding = 42;
         private const int NodeTextBottomPadding = 4;
         private const float NodeTextSpacing = 2f;
@@ -33,8 +28,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
         private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
-        private static readonly Color TooltipSectionLabelColor = UIStyleTokens.Accent.Spore;
-        private static readonly Color TooltipBonusLabelColor = UIStyleTokens.State.Warning;
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
@@ -155,22 +148,7 @@ namespace FungusToast.Unity.UI.MutationTree
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
 
-            // Wire up the new unified tooltip system via TooltipTrigger.
-            // TooltipTrigger auto-resolves ITooltipContentProvider from this component.
-            var trigger = GetComponent<TooltipTrigger>();
-            if (trigger == null)
-                trigger = gameObject.AddComponent<TooltipTrigger>();
-            trigger.SetDynamicProvider(this);
-            trigger.SetHoverDelay(MutationTooltipHoverDelaySeconds);
-            trigger.SetAutoPlacementOffsetX(60f);
-            trigger.SetMaxWidth(520);
         }
-
-        /// <summary>
-        /// ITooltipContentProvider implementation — supplies rich-text tooltip
-        /// content to the unified TooltipManager system.
-        /// </summary>
-        public string GetTooltipText() => BuildTooltip();
   
         private void OnUpgradeClicked()
         {
@@ -471,8 +449,6 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             isPointerHovering = true;
 
-            // Tooltip display is now handled by TooltipTrigger + ITooltipContentProvider.
-            // We only keep prerequisite highlighting here.
             uiManager.HandleMutationNodeHover(mutation, player);
 
             // Stronger hover affordance for clickable/upgradeable nodes.
@@ -483,7 +459,6 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             isPointerHovering = false;
 
-            // Tooltip hiding is handled by TooltipTrigger.OnPointerExit.
             uiManager.HandleMutationNodeHoverExit(mutation);
 
             // Restore correct base state tint after hover.
@@ -590,158 +565,6 @@ namespace FungusToast.Unity.UI.MutationTree
             return player.MutationPoints >= cost;
         }
 
-        private string BuildTooltip()
-        {
-            StringBuilder sb = new StringBuilder();
-            string categoryDisplayName = GetMutationCategoryDisplayName(mutation.Category);
-
-            sb.AppendLine($"<b>{mutation.Name}</b>");
-            sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>(Tier {mutation.TierNumber} • {categoryDisplayName})</color></i>");
-            sb.AppendLine();
-
-            int currentLevel = player.GetMutationLevel(mutation.Id);
-            bool showPendingUnlock = MutationPrerequisiteEvaluator.HasRequirements(mutation)
-                && player.PlayerMutations.TryGetValue(mutation.Id, out var pendingMutation)
-                && pendingMutation.PrereqMetRound.HasValue
-                && pendingMutation.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
-
-            if (showPendingUnlock)
-            {
-                sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Unlocks next turn</b></color>");
-                sb.AppendLine();
-            }
-
-            // Show maxed state prominently
-            if (currentLevel >= mutation.MaxLevel)
-            {
-                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.MaxedGold)}><b>* FULLY UPGRADED *</b></color>");
-                sb.AppendLine();
-            }
-
-            // Show surge state if relevant
-            if (mutation.IsSurge && player.IsSurgeActive(mutation.Id))
-            {
-                int turns = player.GetSurgeTurnsRemaining(mutation.Id);
-                sb.AppendLine($"<color=#{ToHex(MutationTreeColors.GetCategoryAccent(mutation.Category))}>Currently Active ({turns} turn{(turns == 1 ? "" : "s")} left)</color>");
-                sb.AppendLine();
-            }
-
-            if (currentLevel < mutation.MaxLevel)
-            {
-                int cost = player.GetMutationPointCost(mutation);
-
-                sb.AppendLine($"<b>Cost:</b> {cost} mutation point{(cost == 1 ? "" : "s")}");
-                sb.AppendLine();
-            }
-
-            bool isLocked = !MutationPrerequisiteEvaluator.AreAllMet(mutation, player);
-            bool isSurgeActive = mutation.IsSurge && player.IsSurgeActive(mutation.Id);
-            bool isDisabledBecauseNoEffect = ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, currentLevel >= mutation.MaxLevel);
-            if (isDisabledBecauseNoEffect)
-            {
-                sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}><b>Disabled right now</b></color>");
-                sb.AppendLine(GetNoEffectDisabledReasonText());
-                sb.AppendLine();
-            }
-
-            if (MutationPrerequisiteEvaluator.HasRequirements(mutation))
-            {
-                MutationProgressSnapshot prerequisiteSnapshot = MutationProgressSnapshot.Create(mutation, player);
-                sb.AppendLine($"<i><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Requirements — ALL required:</color></i>");
-                bool groupDirectionalTendrils = mutation.Id == MutationIds.MycotropicInduction
-                    && prerequisiteSnapshot.Requirements.Count == 4;
-                if (groupDirectionalTendrils)
-                {
-                    int completedTendrils = prerequisiteSnapshot.Requirements.Count(requirement => requirement.IsMet);
-                    sb.AppendLine($"- All four Directional Tendrils — {completedTendrils}/4 complete");
-                }
-
-                foreach (MutationRequirementProgress requirement in prerequisiteSnapshot.Requirements)
-                {
-                    string prefix = groupDirectionalTendrils ? "  ↳" : "-";
-                    string prerequisiteText = $"{prefix} {requirement.MutationName} — Level {requirement.CurrentLevel}/{requirement.RequiredLevel}";
-                    if (!requirement.IsMet)
-                    {
-                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{prerequisiteText}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine(prerequisiteText);
-                    }
-                }
-
-                foreach (MutationCategoryInvestmentRequirementProgress requirement in prerequisiteSnapshot.CategoryInvestmentRequirements)
-                {
-                    string groupText = $"- Tier {(int)requirement.Tier} category foundations — " +
-                        $"{requirement.SatisfiedCategoryCount}/{requirement.RequiredCategoryCount} categories at Level {requirement.RequiredLevelsPerCategory}+";
-                    if (!requirement.IsMet)
-                    {
-                        sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{groupText}</color>");
-                    }
-                    else
-                    {
-                        sb.AppendLine(groupText);
-                    }
-
-                    foreach (MutationCategoryInvestmentProgress category in requirement.Categories)
-                    {
-                        string categoryText = $"  ↳ {GetMutationCategoryDisplayName(category.Category)} — Level {category.CurrentLevel}/{category.RequiredLevel}";
-                        if (!category.IsMet)
-                        {
-                            sb.AppendLine($"<color=#{ToHex(UIStyleTokens.State.Warning)}>{categoryText}</color>");
-                        }
-                        else
-                        {
-                            sb.AppendLine(categoryText);
-                        }
-                    }
-                }
-                sb.AppendLine();
-            }
-
-            if (mutation.IsSurge)
-            {
-                sb.AppendLine(BuildSurgeDurationLine());
-                sb.AppendLine();
-            }
-
-            sb.AppendLine(FormatMutationDescription());
-
-            AppendDynamicMutationDetails(sb, currentLevel);
-
-            if (!string.IsNullOrEmpty(mutation.FlavorText))
-            {
-                sb.AppendLine();
-                sb.AppendLine($"<i>{mutation.FlavorText}</i>");
-            }
-
-            return sb.ToString();
-        }
-
-        private string BuildSurgeDurationLine()
-        {
-            int totalDuration = player.GetSurgeDuration(mutation);
-            int durationBonus = player.GetSurgeDurationBonus(mutation);
-
-            if (durationBonus <= 0)
-            {
-                return $"<b>Round Duration:</b> {totalDuration}";
-            }
-
-            string sourceName = player.GetAdaptation(AdaptationIds.HyphalEcho)?.Adaptation?.Name ?? "Hyphal Echo";
-            return $"<b>Round Duration:</b> {totalDuration} (including +{durationBonus} bonus from {sourceName})";
-        }
-
-        private void AppendDynamicMutationDetails(StringBuilder sb, int currentLevel)
-        {
-            if (!HasLevelSummary())
-            {
-                return;
-            }
-
-            AppendLevelSummaryBlock(sb, currentLevel, BuildLevelSummary);
-        }
-
         public string BuildLevelSummary(int level)
         {
             return mutation.Id switch
@@ -773,19 +596,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.OntogenicRegression => BuildOntogenicRegressionSummary(level),
                 _ => string.Empty
             };
-        }
-
-        private bool HasLevelSummary() => !string.IsNullOrWhiteSpace(BuildLevelSummary(player.GetMutationLevel(mutation.Id)));
-
-        private void AppendLevelSummaryBlock(StringBuilder sb, int currentLevel, System.Func<int, string> buildSummary)
-        {
-            sb.AppendLine();
-            sb.AppendLine($"{BuildSectionLabel($"Current Level ({currentLevel})", TooltipSectionLabelColor)} {buildSummary(currentLevel)}");
-
-            if (currentLevel < mutation.MaxLevel)
-            {
-                sb.AppendLine($"{BuildSectionLabel($"Next Level ({currentLevel + 1})", TooltipSectionLabelColor)} {buildSummary(currentLevel + 1)}");
-            }
         }
 
         private string BuildHomeostaticHarmonySummary(int level)
@@ -903,53 +713,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
             float effectiveChancePercent = (mutation.GetTotalEffect(level) * (1f + (hypersystemicLevel * GameBalance.HypersystemicRegenerationEffectivenessBonus))) * 100f;
             return $"{baseChancePercent:0.00}% reclaim roll per living cell after the Growth Phase ({effectiveChancePercent:0.00}% with Hypersystemic Regeneration)";
-        }
-
-        private string FormatMutationDescription()
-        {
-            MutationDescriptionSections sections = mutation.DescriptionSections;
-            if (string.IsNullOrWhiteSpace(sections.Summary))
-            {
-                return string.Empty;
-            }
-
-            var builder = new StringBuilder();
-            builder.Append(sections.Summary);
-
-            if (sections.HasTechnicalDetails)
-            {
-                builder.AppendLine();
-                builder.AppendLine();
-                builder.Append(BuildSectionLabel("Technical", TooltipSectionLabelColor));
-                builder.Append(' ');
-                builder.Append(sections.TechnicalDetails);
-            }
-
-            if (sections.HasMaxLevelBonus)
-            {
-                builder.AppendLine();
-                builder.Append(BuildSectionLabel("Max Level Bonus", TooltipBonusLabelColor));
-                builder.Append(' ');
-                builder.Append(sections.MaxLevelBonus);
-            }
-
-            foreach (string buffingMutation in sections.BuffingMutations)
-            {
-                builder.AppendLine();
-                builder.Append(BuildSectionLabel("Buffed by", TooltipSectionLabelColor));
-                builder.Append(' ');
-                builder.Append(buffingMutation);
-            }
-
-            return builder.ToString();
-        }
-
-        private static string BuildSectionLabel(string label, Color color)
-            => $"<color=#{ToHex(color)}><b>{label}:</b></color>";
-
-        private static string GetMutationCategoryDisplayName(MutationCategory category)
-        {
-            return MutationCategoryPresentationCatalog.Get(category).DisplayName;
         }
 
         private string BuildCreepingMoldSummary(int level)
@@ -1803,9 +1566,5 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private static string ToHex(Color color)
-        {
-            return ColorUtility.ToHtmlStringRGB(color);
-        }
     }
 }

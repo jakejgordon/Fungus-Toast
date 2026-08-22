@@ -31,6 +31,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private readonly List<int> traversalMutationIds = new();
         private readonly HashSet<int> growingDependentIds = new();
 
+        private ScrollRect boundScrollRect;
         private Player inspectionPlayer;
         private float unlockGrowthProgress = 1f;
         private int emphasizedEdgeIndex = -1;
@@ -143,6 +144,25 @@ namespace FungusToast.Unity.UI.MutationTree
             SetVerticesDirty();
         }
 
+        public void BindScrollRect(ScrollRect scrollRect)
+        {
+            if (boundScrollRect == scrollRect)
+            {
+                return;
+            }
+
+            if (boundScrollRect != null)
+            {
+                boundScrollRect.onValueChanged.RemoveListener(HandleScrollValueChanged);
+            }
+
+            boundScrollRect = scrollRect;
+            if (boundScrollRect != null)
+            {
+                boundScrollRect.onValueChanged.AddListener(HandleScrollValueChanged);
+            }
+        }
+
         public void EmphasizeDirectRoute(int firstMutationId, int secondMutationId)
         {
             emphasizedEdgeIndex = -1;
@@ -205,6 +225,19 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 SetVerticesDirty();
             }
+        }
+
+        private void OnDestroy()
+        {
+            if (boundScrollRect != null)
+            {
+                boundScrollRect.onValueChanged.RemoveListener(HandleScrollValueChanged);
+            }
+        }
+
+        private void HandleScrollValueChanged(Vector2 _)
+        {
+            SetVerticesDirty();
         }
 
         protected override void OnPopulateMesh(VertexHelper vertexHelper)
