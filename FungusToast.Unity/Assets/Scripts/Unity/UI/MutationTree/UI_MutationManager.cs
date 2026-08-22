@@ -251,6 +251,15 @@ namespace FungusToast.Unity.UI.MutationTree
             WireSpendPointsTooltip();
             RefreshResponsiveMutationPanelLayout();
 
+            // The workspace is authored active in the scene so its references are
+            // available during initialization. Keep it fully inactive until the
+            // explicit open flow; an off-screen active panel can otherwise leave a
+            // visible edge over the board at unusual Game-view aspect ratios.
+            if (!isTreeOpen && mutationTreePanel != null)
+            {
+                mutationTreePanel.SetActive(false);
+            }
+
             // ── Store Points button tooltip ──
             WireStorePointsTooltip();
         }
@@ -1724,6 +1733,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationDependencyGraph = existing.GetComponent<MutationDependencyGraphGraphic>();
                 if (mutationDependencyGraph != null)
                 {
+                    // Render above the column/card hierarchy. The graph is
+                    // non-raycasting and its routes terminate at card edges.
+                    existing.SetAsLastSibling();
                     return;
                 }
             }
@@ -1740,7 +1752,9 @@ namespace FungusToast.Unity.UI.MutationTree
             graphRect.anchorMax = Vector2.one;
             graphRect.offsetMin = Vector2.zero;
             graphRect.offsetMax = Vector2.zero;
-            graphRect.SetAsFirstSibling();
+            // The content's category columns paint after earlier siblings. Keeping
+            // the graph last prevents cards from occluding connector arrowheads.
+            graphRect.SetAsLastSibling();
 
             LayoutElement layout = graphObject.GetComponent<LayoutElement>();
             layout.ignoreLayout = true;

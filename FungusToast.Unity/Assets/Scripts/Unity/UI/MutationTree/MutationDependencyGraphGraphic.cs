@@ -18,8 +18,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MinimumThickness = 1.45f;
         private const float DashLength = 9f;
         private const float DashGap = 6f;
-        private const float ArrowLength = 9f;
-        private const float ArrowHalfWidth = 5f;
+        private const float ArrowLength = 15f;
+        private const float ArrowHalfWidth = 8f;
         private const float CrossCategoryKnotSize = 3.5f;
         private const float UnlockGrowthDuration = 0.22f;
         private const float RouteEmphasisDuration = 0.7f;

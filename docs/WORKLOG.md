@@ -152,6 +152,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Manual interactions: hover enter/switch/leave and inspector crossing; card focus; Pin/unpin; Escape with search focused/empty and with a pinned mutation; requirement/unlock chip focus, scroll, and route pulse; search plus relationship dimming; immediate repeated purchases; pending-next-round transitions; unlock growth traces; shared vertical scrolling and clipping; repeated open/close/restart; and Console/Profiler cleanliness.
 - Manual graph cases: same-category ladders; higher-tier cross-category grafts; deep multi-level upstream paths; multiple converging prerequisites; direct downstream fan-out; met/unmet transitions; Mycotropic Induction's four Tendril edges/group; and Ontogenic Regression with its one real Hyperadaptive edge and no aggregate fake edges.
 
+**Unity feedback correction (2026-08-21):**
+
+- First in-Editor verification showed two presentation regressions: the active-but-offscreen workspace could leave a visible panel edge over the board at narrow/unusual Game-view aspect ratios, and dependency routes were rendered below the category/card hierarchy so their arrowheads were occluded.
+- Keep the mutation workspace GameObject inactive until the explicit open flow. Render the still-non-raycasting dependency graphic as the last scroll-content sibling and use a larger filled arrow silhouette so direction remains legible independently of route color.
+- Manual recheck remains required at 1920x1280, 1920x1080, 1600x900, and 1280x720, plus a narrow/portrait Game view: confirm no workspace edge is visible before opening; confirm amber and blue/green arrowheads remain visible above cards, clip to the viewport while scrolling, and do not block node hover/click/purchase interactions.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.
