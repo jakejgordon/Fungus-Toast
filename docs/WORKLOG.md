@@ -128,6 +128,17 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - A supplemental run excluding Ontogenic from both strategies produced the same interaction direction (Arch04 no-Ontogenic 72%, Hyper no-Ontogenic 0%), but it is not the primary causal comparison because the two substitutions interact. Artifact: `ontogenic_ab_control_excluded_g50_seed2108218`.
 - Conclusion: the new gate is reachable, and Ontogenic Regression is not generically overpowered under these conditions. It modestly benefits the Hyper Economy rebuild plan but severely damages Arch04's build. Do not weaken the 30-level/three-category gate based on this sample. Remove or reposition Arch04's explicit Ontogenic target before evaluating mutation-level tuning; retain Hyper Economy as the reachability/balance test strategy.
 
+### Dependency Slice 5 — Contextual directional overlay
+
+- Reuse `MutationDependencyGraphGraphic` and registered Core named prerequisites as the only edge source. Aggregate category-investment requirements remain inspector-only and must never synthesize mutation edges.
+- Replace the always-on highlighted-edge treatment with a contextual subgraph: full recursive upstream paths flow toward the focused mutation in amber, direct downstream unlocks flow away in blue/green, and arrowheads carry direction independently of color.
+- Compute relationship depth only when inspection changes. Direct edges render strongest; multi-level upstream edges become progressively thinner/fainter. Met named prerequisites use solid routes and unmet named prerequisites use dashed routes.
+- Route connectors through predictable orthogonal lanes behind cards, hide unrelated default connectors while the overlay is active, and dim unrelated cards without changing availability, search, purchase, or raycast behavior.
+- Hover previews remain transient; card focus/pin remains inspectable; Escape clears pinned focus. Inspector requirement/unlock navigation shifts focus, scrolls the card into view, and briefly emphasizes the traversed direct route.
+- Keep direct downstream as the default noise budget. Deeper downstream expansion is deferred until Unity visual testing proves it is needed and can remain legible.
+- Validate with `git diff --check`, focused tests available outside Unity, and Core/Simulation builds. Core plugin refresh is unnecessary unless Core changes.
+- Manual Unity checks must cover all supported resolutions, same/cross-category routing, arrow direction, depth fading, met solid/unmet dashed paths, hover/pin/Escape/search coexistence, inspector route emphasis, immediate purchase/unlock traces, scrolling/clipping, grouped requirements, and Console/Profiler cleanliness.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.
