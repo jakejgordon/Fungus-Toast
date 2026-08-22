@@ -164,6 +164,11 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Remove `ITooltipContentProvider`, runtime `TooltipTrigger` creation, and the obsolete tooltip formatter from `MutationNodeUI`. Card hover now updates only the inspector, relationship emphasis, and card hover affordance; the persistent right inspector is the sole detailed mutation surface.
 - Manual recheck: no large tooltip after dwelling over any regular or Tendril card; inspector hover intent and purchases remain responsive; amber/blue-green routes and filled arrowheads appear for same- and cross-category relationships; routes track scrolling and clip at viewport edges; aggregate requirements still create no fake edges.
 
+**Closed-workspace correction (2026-08-22):**
+
+- The mutation workspace is now deactivated in `UI_MutationManager.Awake` immediately after its serialized references and hidden position are initialized. This closes the startup/player-initialization window in which its off-screen rect could bleed into the left HUD before the player opens the tree. The existing `Start` guard remains as a later safety check; the opened tree and its dependency overlay are unchanged.
+- `git diff --check` and the Core build passed. Manual Unity verification remains: before opening the workspace, confirm the complete left panel at each supported resolution and a narrow/portrait Game view; then open the tree to confirm the unchanged route overlay and close/reopen behavior.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

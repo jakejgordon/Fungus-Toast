@@ -194,6 +194,16 @@ namespace FungusToast.Unity.UI.MutationTree
                 Debug.LogError("mutationTreePanel is NULL at Awake()!");
 
             RefreshResponsiveMutationPanelLayout();
+
+            // The workspace is authored active so its serialized references can
+            // initialize, but it must not render during startup or player setup.
+            // Waiting until Start leaves a frame (and an Initialize race) where
+            // its off-screen edge can bleed into the closed left HUD.
+            if (!isTreeOpen && mutationTreePanel != null)
+            {
+                mutationTreePanel.SetActive(false);
+            }
+
             EnsureSoundEffectAudioSource();
         }
 
