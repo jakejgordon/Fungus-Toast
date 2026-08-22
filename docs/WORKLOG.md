@@ -19,6 +19,7 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - **Current scale:** 34 logical mutations across six categories. The intended expansion is approximately 45 logical mutations, subject to mechanic design and balance validation.
 - **Sixth category:** `Substrate Ecology`, covering nutrient patches, composting/dead zones, crowding/open-substrate responses, edge/corner ecology, contested territory, and environmental conditioning.
 - **State:** Plan approved by Jake on 2026-08-17. Slices 1–10 are complete; the remaining roster decisions are approval-gated.
+- **Boundary clarification (2026-08-22):** The canonical mutation guidelines now distinguish Growth's intrinsic spread capability from Substrate Ecology's conditional, inspectable local-board opportunities. The roster contract links to a three-step ownership test and prohibits Ecology from becoming disguised raw Growth through extra baseline attempts, movement/range, illegal-target bypasses, or universal bonuses.
 - **Design authority:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`.
 - **Architecture authority:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - **Mutation authority:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md` and `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`.

@@ -6,9 +6,13 @@
 
 ## Lane Contract
 
-Substrate Ecology rewards reading local board context. Its mechanics may modify growth around nutrients, open or compacted territory, dead matter, and rival boundaries. It does not own unconditional growth, direct death resistance/reclamation, direct toxin offense, mutation-point generation, or temporary activation.
+Substrate Ecology rewards reading local board context. Its mechanics may modify an existing action or resolve a payoff around nutrients, open or compacted territory, dead matter, rival boundaries, board edges, or other explicit environmental conditions. Its value must be conditional on that context being present and inspectable by the player.
 
-The initial implementation target remains seven new mutations plus the proposed move of Necrophytic Bloom. Promoting Aerated Frontier to replace the rejected Substrate Sensing proposal leaves one Tier-2 open-substrate slot to redesign. Numeric values for unimplemented mutations remain starting hypotheses. Context bonuses share a configurable combined cap so stacking the lane cannot make growth automatic.
+It does not own unconditional growth, extra baseline attempts, direction/range/movement capabilities, direct death resistance or reclamation, direct toxin offense, mutation-point generation, or temporary activation. Those remain Growth, Cellular Resilience, Fungicide, Genetic Drift, and Mycelial Surges respectively. Use the canonical [Growth versus Substrate Ecology ownership test](MUTATION_PREREQUISITE_GUIDELINES.md#growth-versus-substrate-ecology-ownership-test) before proposing a borderline mutation.
+
+Ecology may qualify or boost a legal attempt, but it must not invent an illegal target, bypass occupation or board restrictions, or make context bonuses universal. The shared configurable Ecology cap is the lane-level safeguard against conditional bonuses becoming disguised raw Growth.
+
+The initial implementation target remains seven new mutations plus the proposed move of Necrophytic Bloom. Promoting Aerated Frontier to replace the rejected Substrate Sensing proposal leaves one Tier-2 open-substrate slot to redesign. Numeric values for unimplemented mutations remain starting hypotheses.
 
 ## Proposed Tree
 

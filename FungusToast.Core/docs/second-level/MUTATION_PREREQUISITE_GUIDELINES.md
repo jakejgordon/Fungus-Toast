@@ -15,6 +15,7 @@ The mutation tree is organized into six categories, each supporting a different 
 - Focus: territory expansion and colonization
 - Common mechanics: cardinal growth bonuses, diagonal tendrils, growth amplification, movement-based spread
 - Strategic role: board control and expansion tempo
+- Ownership: the colony's intrinsic ability to create, redirect, or improve growth attempts. A Growth effect remains useful without a particular local environmental opportunity.
 - Representative mutations: Mycelial Bloom, Tendril variants, Mycotropic Induction, Creeping Mold
 
 ### Cellular Resilience
@@ -50,9 +51,20 @@ The mutation tree is organized into six categories, each supporting a different 
 - Focus: environmental opportunity, substrate condition, and territory context
 - Candidate mechanics: nutrient-patch interaction, composting and dead-zone use, crowded versus open substrate, edge/corner behavior, contested-tile ecology, and environmental conditioning
 - Strategic role: adapt expansion and recovery to the local board environment
-- Boundary: does not absorb raw expansion, mutation-point generation, direct toxin offense, or temporary activated effects from the existing categories
+- Ownership: conditional modifiers and payoffs whose value comes from a specific, inspectable local board state. Ecology reads an existing opportunity; it does not create a universal growth capability.
+- Boundary: does not absorb raw expansion, mutation-point generation, direct toxin offense, direct death resistance or reclamation, or temporary activated effects from the existing categories
 - Representative mutation: Aerated Frontier, the Tier-1 root that rewards growth from cells with at least two open orthogonal neighbors
 - Status: active Core/AI category as of Slice 10; later roster entries remain individually approval-gated
+
+### Growth versus Substrate Ecology ownership test
+
+Use this test before placing a mutation that affects spreading, movement, or a growth roll:
+
+1. **Start with the source of value.** If it improves the colony's baseline capacity to spread, make attempts, choose directions, or reposition, it belongs to **Growth**. If it pays off because the current source, target, or recent board event presents an environmental condition, it belongs to **Substrate Ecology**.
+2. **Remove the environmental condition.** If the mechanic should still apply at the same strength on ordinary legal growth attempts, it is Growth. If it should become inactive because there is no open, compacted, nutrient, dead-matter, contested, edge, or otherwise defined substrate context, it is Ecology.
+3. **Keep neighboring systems in their lanes.** A dead-cell payoff is Ecology only when the dead matter is a local catalyst for another action. Reclaiming or protecting cells is Cellular Resilience; converting dead matter into mutation points is Genetic Drift; damaging, replacing, or denying rivals with toxins is Fungicide; and an effect that exists only while manually activated is a Mycelial Surge.
+
+The test classifies the mutation's primary player value, not every implementation detail. For example, Creeping Mold checks local openness while it performs movement-based spread, so it remains Growth. Aerated Frontier modifies an already-existing attempt only when the source has enough open neighboring substrate, so it is Ecology. A future surge may require an Ecology condition, but the manual, temporary activation remains its primary category identity.
 
 ## Category Design Philosophy
 
