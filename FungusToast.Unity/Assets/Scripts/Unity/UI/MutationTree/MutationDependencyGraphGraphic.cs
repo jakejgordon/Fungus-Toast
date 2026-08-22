@@ -1,32 +1,46 @@
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Players;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.MutationTree
 {
     /// <summary>
-    /// Non-interactive connector layer drawn behind mutation nodes. Same-category
-    /// prerequisites are solid; cross-category grafts are dashed as a non-color cue.
+    /// Non-interactive contextual connector layer drawn behind mutation nodes.
+    /// Every edge is derived from a registered named Core prerequisite; aggregate
+    /// requirements deliberately have no node-to-node representation here.
     /// </summary>
     public sealed class MutationDependencyGraphGraphic : MaskableGraphic
     {
-        private const float DefaultThickness = 1.5f;
-        private const float HighlightThickness = 3f;
+        private const float DirectThickness = 3.4f;
+        private const float MinimumThickness = 1.45f;
         private const float DashLength = 9f;
         private const float DashGap = 6f;
+        private const float ArrowLength = 9f;
+        private const float ArrowHalfWidth = 5f;
+        private const float CrossCategoryKnotSize = 3.5f;
         private const float UnlockGrowthDuration = 0.22f;
+        private const float RouteEmphasisDuration = 0.7f;
 
         private readonly List<Edge> edges = new();
-        private readonly HashSet<int> highlightedPrerequisiteIds = new();
-        private readonly HashSet<int> highlightedDependentIds = new();
+        private readonly Dictionary<int, List<int>> incomingEdgeIndexesByMutationId = new();
+        private readonly Dictionary<int, List<int>> outgoingEdgeIndexesByMutationId = new();
+        private readonly Dictionary<int, int> upstreamDepthByMutationId = new();
+        private readonly List<int> traversalMutationIds = new();
         private readonly HashSet<int> growingDependentIds = new();
+
+        private Player inspectionPlayer;
         private float unlockGrowthProgress = 1f;
+        private int emphasizedEdgeIndex = -1;
+        private float routeEmphasisElapsed = RouteEmphasisDuration;
 
         public void Configure(IReadOnlyList<MutationNodeUI> nodes, IReadOnlyList<Mutation> mutations)
         {
             edges.Clear();
+            incomingEdgeIndexesByMutationId.Clear();
+            outgoingEdgeIndexesByMutationId.Clear();
             var nodesById = nodes.ToDictionary(node => node.MutationId);
             var mutationsById = mutations.ToDictionary(mutation => mutation.Id);
 
@@ -45,32 +59,105 @@ namespace FungusToast.Unity.UI.MutationTree
                         continue;
                     }
 
+                    int edgeIndex = edges.Count;
                     edges.Add(new Edge(
                         prerequisiteMutation.Id,
                         dependent.Id,
+                        prerequisite.RequiredLevel,
                         prerequisiteNode.transform as RectTransform,
                         dependentNode.transform as RectTransform,
                         prerequisiteMutation.Category != dependent.Category));
+                    AddEdgeIndex(incomingEdgeIndexesByMutationId, dependent.Id, edgeIndex);
+                    AddEdgeIndex(outgoingEdgeIndexesByMutationId, prerequisiteMutation.Id, edgeIndex);
+                }
+            }
+
+            inspectionPlayer = null;
+            emphasizedEdgeIndex = -1;
+            routeEmphasisElapsed = RouteEmphasisDuration;
+            SetVerticesDirty();
+        }
+
+        public void SetInspection(int focusedMutationId, Player player)
+        {
+            inspectionPlayer = player;
+            foreach (Edge edge in edges)
+            {
+                edge.Relationship = EdgeRelationship.None;
+                edge.Depth = 0;
+            }
+
+            upstreamDepthByMutationId.Clear();
+            traversalMutationIds.Clear();
+            upstreamDepthByMutationId[focusedMutationId] = 0;
+            traversalMutationIds.Add(focusedMutationId);
+
+            for (int traversalIndex = 0; traversalIndex < traversalMutationIds.Count; traversalIndex++)
+            {
+                int dependentId = traversalMutationIds[traversalIndex];
+                int dependentDepth = upstreamDepthByMutationId[dependentId];
+                if (!incomingEdgeIndexesByMutationId.TryGetValue(dependentId, out List<int> incomingIndexes))
+                {
+                    continue;
+                }
+
+                foreach (int edgeIndex in incomingIndexes)
+                {
+                    Edge edge = edges[edgeIndex];
+                    edge.Relationship = EdgeRelationship.Upstream;
+                    edge.Depth = dependentDepth;
+                    int prerequisiteDepth = dependentDepth + 1;
+                    if (upstreamDepthByMutationId.TryGetValue(edge.PrerequisiteId, out int knownDepth)
+                        && knownDepth <= prerequisiteDepth)
+                    {
+                        continue;
+                    }
+
+                    upstreamDepthByMutationId[edge.PrerequisiteId] = prerequisiteDepth;
+                    traversalMutationIds.Add(edge.PrerequisiteId);
+                }
+            }
+
+            if (outgoingEdgeIndexesByMutationId.TryGetValue(focusedMutationId, out List<int> outgoingIndexes))
+            {
+                foreach (int edgeIndex in outgoingIndexes)
+                {
+                    Edge edge = edges[edgeIndex];
+                    edge.Relationship = EdgeRelationship.Downstream;
+                    edge.Depth = 0;
                 }
             }
 
             SetVerticesDirty();
         }
 
-        public void SetInspection(IEnumerable<int> prerequisitePathIds, IEnumerable<int> directDependentIds)
+        public void ClearInspection()
         {
-            highlightedPrerequisiteIds.Clear();
-            highlightedDependentIds.Clear();
-            highlightedPrerequisiteIds.UnionWith(prerequisitePathIds);
-            highlightedDependentIds.UnionWith(directDependentIds);
+            inspectionPlayer = null;
+            foreach (Edge edge in edges)
+            {
+                edge.Relationship = EdgeRelationship.None;
+                edge.Depth = 0;
+            }
+
             SetVerticesDirty();
         }
 
-        public void ClearInspection()
+        public void EmphasizeDirectRoute(int firstMutationId, int secondMutationId)
         {
-            highlightedPrerequisiteIds.Clear();
-            highlightedDependentIds.Clear();
-            SetVerticesDirty();
+            emphasizedEdgeIndex = -1;
+            for (int index = 0; index < edges.Count; index++)
+            {
+                Edge edge = edges[index];
+                if ((edge.PrerequisiteId == firstMutationId && edge.DependentId == secondMutationId)
+                    || (edge.PrerequisiteId == secondMutationId && edge.DependentId == firstMutationId))
+                {
+                    emphasizedEdgeIndex = index;
+                    routeEmphasisElapsed = 0f;
+                    SetVerticesDirty();
+                    return;
+                }
+            }
         }
 
         public void RefreshGeometry() => SetVerticesDirty();
@@ -90,60 +177,139 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Update()
         {
-            if (unlockGrowthProgress >= 1f)
+            bool requiresRedraw = false;
+            if (unlockGrowthProgress < 1f)
             {
-                return;
+                float duration = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode
+                    ? 0.08f
+                    : UnlockGrowthDuration;
+                unlockGrowthProgress = Mathf.Min(1f, unlockGrowthProgress + (Time.unscaledDeltaTime / duration));
+                requiresRedraw = true;
+                if (unlockGrowthProgress >= 1f)
+                {
+                    growingDependentIds.Clear();
+                }
             }
 
-            float duration = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode
-                ? 0.08f
-                : UnlockGrowthDuration;
-            unlockGrowthProgress = Mathf.Min(1f, unlockGrowthProgress + (Time.unscaledDeltaTime / duration));
-            SetVerticesDirty();
-            if (unlockGrowthProgress >= 1f)
+            if (routeEmphasisElapsed < RouteEmphasisDuration)
             {
-                growingDependentIds.Clear();
+                routeEmphasisElapsed = Mathf.Min(RouteEmphasisDuration, routeEmphasisElapsed + Time.unscaledDeltaTime);
+                requiresRedraw = true;
+                if (routeEmphasisElapsed >= RouteEmphasisDuration)
+                {
+                    emphasizedEdgeIndex = -1;
+                }
+            }
+
+            if (requiresRedraw)
+            {
+                SetVerticesDirty();
             }
         }
 
         protected override void OnPopulateMesh(VertexHelper vertexHelper)
         {
             vertexHelper.Clear();
-            foreach (Edge edge in edges)
+            for (int edgeIndex = 0; edgeIndex < edges.Count; edgeIndex++)
             {
+                Edge edge = edges[edgeIndex];
                 if (edge.PrerequisiteRect == null || edge.DependentRect == null)
                 {
                     continue;
                 }
 
-                bool highlighted = (highlightedPrerequisiteIds.Contains(edge.PrerequisiteId)
-                        && highlightedPrerequisiteIds.Contains(edge.DependentId))
-                    || (highlightedDependentIds.Contains(edge.DependentId)
-                        && highlightedPrerequisiteIds.Contains(edge.PrerequisiteId));
-                Color edgeColor = highlighted
-                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.92f)
-                    : UIStyleTokens.WithAlpha(UIStyleTokens.Text.Muted, 0.28f);
-                float thickness = highlighted ? HighlightThickness : DefaultThickness;
-
                 Vector2 start = ToLocalPoint(edge.PrerequisiteRect, new Vector2(0.5f, 0f));
                 Vector2 end = ToLocalPoint(edge.DependentRect, new Vector2(0.5f, 1f));
                 float middleY = (start.y + end.y) * 0.5f;
+                Vector2 second = new(start.x, middleY);
+                Vector2 third = new(end.x, middleY);
 
-                DrawSegment(vertexHelper, start, new Vector2(start.x, middleY), thickness, edgeColor, edge.IsCrossCategory);
-                DrawSegment(vertexHelper, new Vector2(start.x, middleY), new Vector2(end.x, middleY), thickness, edgeColor, edge.IsCrossCategory);
-                DrawSegment(vertexHelper, new Vector2(end.x, middleY), end, thickness, edgeColor, edge.IsCrossCategory);
+                if (edge.Relationship != EdgeRelationship.None)
+                {
+                    bool prerequisiteMet = inspectionPlayer != null
+                        && inspectionPlayer.GetMutationLevel(edge.PrerequisiteId) >= edge.RequiredLevel;
+                    float depthFade = edge.Relationship == EdgeRelationship.Downstream
+                        ? 1f
+                        : Mathf.Pow(0.72f, edge.Depth);
+                    float thickness = Mathf.Max(MinimumThickness, DirectThickness * depthFade);
+                    float alpha = edge.Relationship == EdgeRelationship.Downstream
+                        ? 0.94f
+                        : Mathf.Lerp(0.42f, 0.96f, depthFade);
+                    Color relationshipColor = edge.Relationship == EdgeRelationship.Upstream
+                        ? UIStyleTokens.State.Warning
+                        : MutationTreeColors.DependentBorder;
+                    relationshipColor.a = alpha;
+
+                    DrawOrthogonalRoute(
+                        vertexHelper,
+                        start,
+                        second,
+                        third,
+                        end,
+                        thickness,
+                        relationshipColor,
+                        dashed: !prerequisiteMet,
+                        crossCategory: edge.IsCrossCategory,
+                        drawArrowhead: true);
+                }
 
                 if (growingDependentIds.Contains(edge.DependentId))
                 {
                     DrawGrowingPath(
                         vertexHelper,
                         start,
-                        new Vector2(start.x, middleY),
-                        new Vector2(end.x, middleY),
+                        second,
+                        third,
                         end,
                         unlockGrowthProgress,
                         UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.98f));
                 }
+
+                if (edgeIndex == emphasizedEdgeIndex && routeEmphasisElapsed < RouteEmphasisDuration)
+                {
+                    float pulse = 1f - (routeEmphasisElapsed / RouteEmphasisDuration);
+                    Color emphasisColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, Mathf.Lerp(0.18f, 0.92f, pulse));
+                    DrawOrthogonalRoute(
+                        vertexHelper,
+                        start,
+                        second,
+                        third,
+                        end,
+                        DirectThickness + (2.4f * pulse),
+                        emphasisColor,
+                        dashed: false,
+                        crossCategory: edge.IsCrossCategory,
+                        drawArrowhead: true);
+                }
+            }
+        }
+
+        private static void DrawOrthogonalRoute(
+            VertexHelper helper,
+            Vector2 first,
+            Vector2 second,
+            Vector2 third,
+            Vector2 fourth,
+            float thickness,
+            Color color,
+            bool dashed,
+            bool crossCategory,
+            bool drawArrowhead)
+        {
+            DrawSegment(helper, first, second, thickness, color, dashed);
+            DrawSegment(helper, second, third, thickness, color, dashed);
+            DrawSegment(helper, third, fourth, thickness, color, dashed);
+
+            if (crossCategory)
+            {
+                AddDiamond(helper, second, CrossCategoryKnotSize + (thickness * 0.25f), color);
+                AddDiamond(helper, third, CrossCategoryKnotSize + (thickness * 0.25f), color);
+            }
+
+            if (drawArrowhead)
+            {
+                Vector2 approach = Vector2.Distance(third, fourth) > 0.01f ? third : second;
+                AddArrowHead(helper, approach, fourth, color);
             }
         }
 
@@ -156,25 +322,32 @@ namespace FungusToast.Unity.UI.MutationTree
             float progress,
             Color color)
         {
-            Vector2[] points = { first, second, third, fourth };
             float totalLength = Vector2.Distance(first, second)
                 + Vector2.Distance(second, third)
                 + Vector2.Distance(third, fourth);
             float remaining = totalLength * Mathf.Clamp01(progress);
+            DrawGrowingSegment(helper, first, second, ref remaining, color);
+            DrawGrowingSegment(helper, second, third, ref remaining, color);
+            DrawGrowingSegment(helper, third, fourth, ref remaining, color);
+        }
 
-            for (int index = 0; index < points.Length - 1 && remaining > 0f; index++)
+        private static void DrawGrowingSegment(VertexHelper helper, Vector2 start, Vector2 end, ref float remaining, Color color)
+        {
+            if (remaining <= 0f)
             {
-                float segmentLength = Vector2.Distance(points[index], points[index + 1]);
-                if (segmentLength < 0.01f)
-                {
-                    continue;
-                }
-
-                float visibleLength = Mathf.Min(remaining, segmentLength);
-                Vector2 visibleEnd = Vector2.Lerp(points[index], points[index + 1], visibleLength / segmentLength);
-                AddQuad(helper, points[index], visibleEnd, HighlightThickness, color);
-                remaining -= visibleLength;
+                return;
             }
+
+            float segmentLength = Vector2.Distance(start, end);
+            if (segmentLength < 0.01f)
+            {
+                return;
+            }
+
+            float visibleLength = Mathf.Min(remaining, segmentLength);
+            Vector2 visibleEnd = Vector2.Lerp(start, end, visibleLength / segmentLength);
+            AddQuad(helper, start, visibleEnd, DirectThickness, color);
+            remaining -= visibleLength;
         }
 
         private Vector2 ToLocalPoint(RectTransform target, Vector2 normalizedPoint)
@@ -207,6 +380,34 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        private static void AddArrowHead(VertexHelper helper, Vector2 approach, Vector2 tip, Color color)
+        {
+            Vector2 direction = (tip - approach).normalized;
+            if (direction.sqrMagnitude < 0.01f)
+            {
+                return;
+            }
+
+            Vector2 normal = new(-direction.y, direction.x);
+            Vector2 baseCenter = tip - (direction * ArrowLength);
+            int index = helper.currentVertCount;
+            helper.AddVert(tip, color, Vector2.zero);
+            helper.AddVert(baseCenter + (normal * ArrowHalfWidth), color, Vector2.zero);
+            helper.AddVert(baseCenter - (normal * ArrowHalfWidth), color, Vector2.zero);
+            helper.AddTriangle(index, index + 1, index + 2);
+        }
+
+        private static void AddDiamond(VertexHelper helper, Vector2 center, float radius, Color color)
+        {
+            int index = helper.currentVertCount;
+            helper.AddVert(center + (Vector2.up * radius), color, Vector2.zero);
+            helper.AddVert(center + (Vector2.right * radius), color, Vector2.zero);
+            helper.AddVert(center + (Vector2.down * radius), color, Vector2.zero);
+            helper.AddVert(center + (Vector2.left * radius), color, Vector2.zero);
+            helper.AddTriangle(index, index + 1, index + 2);
+            helper.AddTriangle(index, index + 2, index + 3);
+        }
+
         private static void AddQuad(VertexHelper helper, Vector2 start, Vector2 end, float thickness, Color color)
         {
             Vector2 direction = (end - start).normalized;
@@ -221,12 +422,37 @@ namespace FungusToast.Unity.UI.MutationTree
             helper.AddTriangle(index, index + 2, index + 3);
         }
 
-        private readonly struct Edge
+        private static void AddEdgeIndex(Dictionary<int, List<int>> indexesByMutationId, int mutationId, int edgeIndex)
         {
-            public Edge(int prerequisiteId, int dependentId, RectTransform prerequisiteRect, RectTransform dependentRect, bool isCrossCategory)
+            if (!indexesByMutationId.TryGetValue(mutationId, out List<int> indexes))
+            {
+                indexes = new List<int>();
+                indexesByMutationId[mutationId] = indexes;
+            }
+
+            indexes.Add(edgeIndex);
+        }
+
+        private enum EdgeRelationship
+        {
+            None,
+            Upstream,
+            Downstream
+        }
+
+        private sealed class Edge
+        {
+            public Edge(
+                int prerequisiteId,
+                int dependentId,
+                int requiredLevel,
+                RectTransform prerequisiteRect,
+                RectTransform dependentRect,
+                bool isCrossCategory)
             {
                 PrerequisiteId = prerequisiteId;
                 DependentId = dependentId;
+                RequiredLevel = requiredLevel;
                 PrerequisiteRect = prerequisiteRect;
                 DependentRect = dependentRect;
                 IsCrossCategory = isCrossCategory;
@@ -234,9 +460,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
             public int PrerequisiteId { get; }
             public int DependentId { get; }
+            public int RequiredLevel { get; }
             public RectTransform PrerequisiteRect { get; }
             public RectTransform DependentRect { get; }
             public bool IsCrossCategory { get; }
+            public EdgeRelationship Relationship { get; set; }
+            public int Depth { get; set; }
         }
     }
 }

@@ -28,6 +28,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MaxBadgeWidth = 44f;
         private const float MaxBadgeHeight = 20f;
         private const float SearchNonMatchAlpha = 0.10f;
+        private const float UnrelatedRelationshipAlpha = 0.24f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
@@ -89,6 +90,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private float baseCanvasAlpha = 1f;
         private bool isSearchActive;
         private bool isSearchMatch;
+        private bool isRelationshipContextActive;
+        private bool isRelationshipRelated;
 
         // Animation state
         private Coroutine upgradeEffectCoroutine;
@@ -1277,6 +1280,13 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplySearchVisual();
         }
 
+        public void SetRelationshipContextState(bool contextActive, bool isRelated)
+        {
+            isRelationshipContextActive = contextActive;
+            isRelationshipRelated = isRelated;
+            ApplyEmphasisAlpha();
+        }
+
         private void ApplySearchVisual()
         {
             if (searchMatchOutline != null)
@@ -1302,7 +1312,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            canvasGroup.alpha = baseCanvasAlpha;
+            canvasGroup.alpha = isRelationshipContextActive && !isRelationshipRelated
+                ? Mathf.Min(baseCanvasAlpha, UnrelatedRelationshipAlpha)
+                : baseCanvasAlpha;
         }
 
         public void UpdateInteractable()

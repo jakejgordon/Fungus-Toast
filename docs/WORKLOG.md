@@ -139,6 +139,19 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Validate with `git diff --check`, focused tests available outside Unity, and Core/Simulation builds. Core plugin refresh is unnecessary unless Core changes.
 - Manual Unity checks must cover all supported resolutions, same/cross-category routing, arrow direction, depth fading, met solid/unmet dashed paths, hover/pin/Escape/search coexistence, inspector route emphasis, immediate purchase/unlock traces, scrolling/clipping, grouped requirements, and Console/Profiler cleanliness.
 
+**Implemented checkpoint (2026-08-21):**
+
+- Reworked the existing non-raycasting graph mesh into a contextual overlay. It still derives only named edges from registered Core prerequisites; Ontogenic Regression's aggregate category-foundation gate remains inspector-only and creates no edge.
+- Recursive upstream routes now flow into the focused mutation in amber, direct downstream routes flow out in blue/green, and every displayed route ends in a filled arrowhead. Direct upstream/downstream edges use the strongest weight; each deeper upstream level becomes progressively thinner and fainter.
+- Named prerequisite satisfaction is evaluated from the current player only when inspection changes. Met routes are solid and unmet routes are dashed; cross-category routes use corner diamonds instead of overloading the dash semantic.
+- Unrelated default edges are hidden while unrelated cards dim to 24% opacity. Search keeps its established stronger isolation behavior, node interaction and availability remain unchanged, and the graph/card state restores when an unpinned hover preview clears.
+- Card focus and Pin persist the overlay. Escape clears persistent/pinned focus while preserving search's existing first-Escape behavior. Requirement/direct-unlock chip navigation pins and scrolls to the destination, then briefly pulses the real direct edge between the two mutations.
+- Connector traversal dictionaries, edge presentation state, and node alpha state are reused. The mesh stays idle except for focus/layout changes, the existing unlock trace, and the new 0.7-second navigation pulse; the unlock trace no longer allocates a temporary point array per rendered edge.
+- Focused mutation repository/category-prerequisite tests passed 10/10. Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. No Core source changed, so the checked-in Unity Core DLL/PDB was not refreshed. Unity Editor compile/visual verification remains manual in this environment.
+- Manual resolutions: 1920x1280, 1920x1080, 1600x900, and 1280x720.
+- Manual interactions: hover enter/switch/leave and inspector crossing; card focus; Pin/unpin; Escape with search focused/empty and with a pinned mutation; requirement/unlock chip focus, scroll, and route pulse; search plus relationship dimming; immediate repeated purchases; pending-next-round transitions; unlock growth traces; shared vertical scrolling and clipping; repeated open/close/restart; and Console/Profiler cleanliness.
+- Manual graph cases: same-category ladders; higher-tier cross-category grafts; deep multi-level upstream paths; multiple converging prerequisites; direct downstream fan-out; met/unmet transitions; Mycotropic Induction's four Tendril edges/group; and Ontogenic Regression with its one real Hyperadaptive edge and no aggregate fake edges.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

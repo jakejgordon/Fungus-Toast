@@ -96,7 +96,7 @@ public class MyWidget : MonoBehaviour, ITooltipContentProvider
 The full-screen mutation workspace uses a persistent right-side inspector for decision-critical mutation information. It is not a hover tooltip and should not be implemented through `TooltipManager`.
 
 - `MutationInspectorPanel` is built once at runtime by `UI_MutationManager`; it uses semantic style tokens and introduces no scene/prefab reference.
-- Hover inspects a mutation and remembers it as the fallback selection. Switching between nodes uses a short hover-intent delay; leaving a node keeps the last inspected mutation visible, and moving into the inspector preserves the current preview so the pointer can reach its controls without the content changing underneath it.
+- Hover inspects a mutation and remembers it as the fallback inspector selection. Switching between nodes uses a short hover-intent delay; leaving a node keeps the last inspector content visible but clears an unpinned relationship overlay, and moving into the inspector preserves the current preview so the pointer can reach its controls without the content changing underneath it.
 - The inspector exposes an explicit `Pin` / `Pinned` control for players who want to freeze the current mutation against later hover previews. Clicking a mutation card or purchasing it remembers that mutation without hard-pinning it; requirement/direct-unlock chips replace and pin the focused mutation while still scrolling to its related node.
 - Authored simple/technical/max-level/synergy text comes from Core `MutationDescriptionSections`; level/cost/prerequisite/dependent facts come from `MutationProgressSnapshot` plus the existing mechanic-specific level summary.
 - Full purchase eligibility remains in `Player.CanUpgrade` and the established Unity availability checks. The inspector must not duplicate or override gameplay rules.
@@ -107,8 +107,10 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 
 - `MutationDependencyGraphGraphic` is a runtime-built, non-raycasting child of the shared mutation scroll content. `UI_MutationManager` owns its creation, data binding, inspection state, and one-shot unlock traces.
 - Edges are derived only from registered Core `Mutation.Prerequisites`; do not author a second Unity dependency list. Repository integrity tests remain the guard against missing references and cycles.
-- The graph ignores horizontal layout and renders behind lane columns. It may redraw after layout/inspection changes and during the short unlock trace, but must remain idle otherwise.
-- Solid edges mean same-category dependency; dashed edges mean cross-category graft. The inspector must explicitly state that multiple requirements are conjunctive.
+- The graph ignores horizontal layout and renders behind lane columns. It may redraw after layout/inspection changes, during a brief inspector-navigation route emphasis, and during the short unlock trace, but must remain idle otherwise.
+- Dependency edges are contextual rather than permanently visible. Recursive upstream routes point toward the focused mutation in amber; direct downstream routes point away in blue/green. Arrowheads carry direction, direct relationships are strongest, and deeper upstream levels progressively fade and narrow.
+- Solid routes mean the named prerequisite level is met; dashed routes mean it is unmet. Cross-category grafts add corner knots so category crossing remains distinguishable without reusing the met/unmet dash language. The inspector must explicitly state that multiple requirements are conjunctive.
+- Aggregate requirements remain inspector-only. They may affect eligibility and grouped progress but must never create synthetic graph edges.
 - `MutationTreeBuilder` may visually group related nodes, as with the 2×2 Directional Tendrils card, but each quadrant must remain a real `MutationNodeUI` backed by its original Core mutation ID. Visual grouping must never introduce aggregate purchase or save state.
 - `MycelialBackdropGraphic` is a static, non-raycasting viewport child. Keep substrate grain/hyphae sparse and mesh-based; decorative mutation-workspace visuals must not add continuous animation, per-frame allocation, or authored gameplay state.
 

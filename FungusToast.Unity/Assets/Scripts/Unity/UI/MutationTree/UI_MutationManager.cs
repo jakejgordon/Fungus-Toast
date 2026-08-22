@@ -152,6 +152,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Coroutine? inspectorHoverIntentCoroutine;
         private Coroutine? inspectorHoverExitCoroutine;
         private bool isInspectorPinned;
+        private bool hasPersistentRelationshipFocus;
         private bool isPointerOverMutationInspector;
         private PendingTargetedSurgeSelection? pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
@@ -317,6 +318,14 @@ namespace FungusToast.Unity.UI.MutationTree
                 {
                     EventSystem.current?.SetSelectedGameObject(null);
                 }
+
+                return;
+            }
+
+            if (keyboard.escapeKey.wasPressedThisFrame
+                && (isInspectorPinned || hasPersistentRelationshipFocus || hoveredMutation != null))
+            {
+                ClearMutationInspectorFocus();
             }
 
         }
@@ -363,6 +372,7 @@ namespace FungusToast.Unity.UI.MutationTree
             inspectorHoverIntentCoroutine = null;
             inspectorHoverExitCoroutine = null;
             isInspectorPinned = false;
+            hasPersistentRelationshipFocus = false;
             isPointerOverMutationInspector = false;
             mutationInspector?.Clear();
             mutationInspector?.SetPinState(false, false);
@@ -1090,7 +1100,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 CancelInspectorHoverIntent();
                 hoveredMutation = mutation;
                 hoveredMutationPlayer = player;
-                RememberInspectedMutation(mutation, player);
+                if (!hasPersistentRelationshipFocus)
+                {
+                    RememberInspectedMutation(mutation, player);
+                }
                 ReapplyInspectedMutationState();
                 return;
             }
@@ -1130,6 +1143,7 @@ namespace FungusToast.Unity.UI.MutationTree
             selectedMutation = mutation;
             selectedMutationPlayer = player;
             isInspectorPinned = false;
+            hasPersistentRelationshipFocus = true;
             ReapplyInspectedMutationState();
         }
 
@@ -1155,6 +1169,7 @@ namespace FungusToast.Unity.UI.MutationTree
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             isInspectorPinned = true;
+            hasPersistentRelationshipFocus = true;
             ReapplyInspectedMutationState();
         }
 
@@ -1187,7 +1202,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
             hoveredMutation = pendingHoveredMutation;
             hoveredMutationPlayer = pendingHoveredMutationPlayer;
-            RememberInspectedMutation(hoveredMutation, hoveredMutationPlayer);
+            if (!hasPersistentRelationshipFocus)
+            {
+                RememberInspectedMutation(hoveredMutation, hoveredMutationPlayer);
+            }
             pendingHoveredMutation = null;
             pendingHoveredMutationPlayer = null;
             ReapplyInspectedMutationState();
@@ -1258,13 +1276,28 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
+            int previousMutationId = (hoveredMutation ?? selectedMutation)?.Id ?? -1;
             hoveredMutation = null;
             hoveredMutationPlayer = null;
             selectedMutation = node.GetMutation();
             selectedMutationPlayer = humanPlayer;
             isInspectorPinned = true;
+            hasPersistentRelationshipFocus = true;
             ReapplyInspectedMutationState();
+            mutationDependencyGraph?.EmphasizeDirectRoute(previousMutationId, mutationId);
             ScrollMutationNodeIntoView(node);
+        }
+
+        private void ClearMutationInspectorFocus()
+        {
+            CancelInspectorHoverTransitions();
+            hoveredMutation = null;
+            hoveredMutationPlayer = null;
+            selectedMutation = null;
+            selectedMutationPlayer = null;
+            isInspectorPinned = false;
+            hasPersistentRelationshipFocus = false;
+            ReapplyInspectedMutationState();
         }
 
         private void ScrollMutationNodeIntoView(MutationNodeUI node)
@@ -1314,13 +1347,20 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             MutationNodeUI? inspectedNode = mutationButtons.FirstOrDefault(node => node.MutationId == inspectedMutation.Id);
-            HashSet<int> prerequisitePathIds = GetPrerequisitePathIds(inspectedMutation);
-            prerequisitePathIds.Add(inspectedMutation.Id);
-            HashSet<int> directDependentIds = GetDirectDependentIds(inspectedMutation.Id);
-            inspectedNode?.SetInspectedHighlight(true);
-            HighlightPrerequisites(inspectedMutation, inspectedPlayer);
-            HighlightDirectDependents(inspectedMutation);
-            mutationDependencyGraph?.SetInspection(prerequisitePathIds, directDependentIds);
+            bool relationshipContextActive = hoveredMutation != null
+                || isInspectorPinned
+                || hasPersistentRelationshipFocus;
+            if (relationshipContextActive)
+            {
+                HashSet<int> prerequisitePathIds = GetPrerequisitePathIds(inspectedMutation);
+                prerequisitePathIds.Add(inspectedMutation.Id);
+                HashSet<int> directDependentIds = GetDirectDependentIds(inspectedMutation.Id);
+                ApplyRelationshipContext(prerequisitePathIds, directDependentIds);
+                inspectedNode?.SetInspectedHighlight(true);
+                HighlightPrerequisites(inspectedMutation, inspectedPlayer);
+                HighlightDirectDependents(inspectedMutation);
+                mutationDependencyGraph?.SetInspection(inspectedMutation.Id, inspectedPlayer);
+            }
             if (inspectedNode != null)
             {
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
@@ -1877,9 +1917,20 @@ namespace FungusToast.Unity.UI.MutationTree
             foreach (var node in mutationButtons)
             {
                 node.ClearHighlights();
+                node.SetRelationshipContextState(false, false);
             }
 
             mutationDependencyGraph?.ClearInspection();
+        }
+
+        private void ApplyRelationshipContext(HashSet<int> prerequisitePathIds, HashSet<int> directDependentIds)
+        {
+            foreach (MutationNodeUI node in mutationButtons)
+            {
+                bool isRelated = prerequisitePathIds.Contains(node.MutationId)
+                    || directDependentIds.Contains(node.MutationId);
+                node.SetRelationshipContextState(true, isRelated);
+            }
         }
 
         private HashSet<int> GetPrerequisitePathIds(Mutation mutation)
