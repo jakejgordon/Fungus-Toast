@@ -176,6 +176,11 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Route ports are calculated from each card's transformed world bounds in the graph's coordinate space, rather than normalized local points. This ensures a right-to-left route ends at the rendered right edge (and a left-to-right route at the rendered left edge), even when the scroll content and viewport use different transforms.
 - Manual Unity verification remains: inspect same-row cross-lane, diagonal cross-lane, same-lane vertical, grouped Tendril, focused, unlock-growth, and inspector-route-pulse connectors while scrolling at all supported resolutions.
 
+**Arrowhead edge correction (2026-08-22):**
+
+- The route tip already targeted the destination card boundary, but each arrowhead was constructed with its base extending back into the card. The final route segment now stops at the arrowhead base outside the destination, leaving the tip at the card edge. This corrects the visually in-card endpoints on Hyphal Surge and Chemotactic Beacon without changing the dependency graph or card layout.
+- Manual Unity verification remains: confirm all directional arrowheads meet their target border from outside, particularly the Mycelial Bloom → Hyphal Surge and Mycotoxin Potentiation → Chemotactic Beacon cross-lane routes.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

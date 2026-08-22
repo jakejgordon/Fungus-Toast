@@ -328,7 +328,23 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             DrawSegment(helper, first, second, thickness, color, dashed);
             DrawSegment(helper, second, third, thickness, color, dashed);
-            DrawSegment(helper, third, fourth, thickness, color, dashed);
+
+            Vector2 arrowBase = fourth;
+            bool canDrawArrowhead = false;
+            if (drawArrowhead)
+            {
+                float finalSegmentLength = Vector2.Distance(third, fourth);
+                if (finalSegmentLength > ArrowLength + 0.01f)
+                {
+                    arrowBase = Vector2.MoveTowards(fourth, third, ArrowLength);
+                    canDrawArrowhead = true;
+                }
+            }
+
+            // Reserve the final segment for the arrowhead. Its base must remain
+            // outside the destination card; otherwise the arrow visibly finishes
+            // in the card body even though its tip is technically on the border.
+            DrawSegment(helper, third, arrowBase, thickness, color, dashed);
 
             if (crossCategory)
             {
@@ -336,10 +352,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 AddDiamond(helper, third, CrossCategoryKnotSize + (thickness * 0.25f), color);
             }
 
-            if (drawArrowhead)
+            if (canDrawArrowhead)
             {
-                Vector2 approach = Vector2.Distance(third, fourth) > 0.01f ? third : second;
-                AddArrowHead(helper, approach, fourth, color);
+                AddArrowHead(helper, arrowBase, fourth, color);
             }
         }
 
