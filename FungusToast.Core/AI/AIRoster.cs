@@ -1211,6 +1211,129 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
                 }
             ),
+            // Controlled dominance-diagnosis variants for TST_EcologyAutolyticReclaimer.
+            // Each keeps the baseline's economy/category profile and route where possible,
+            // while removing or delaying exactly one suspected early-path contributor.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyReclaimer_NoNecro",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 2),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 3),
+                    new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                excludedMutationIds: new[] { MutationIds.Necrosporulation }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyReclaimer_NoAutolytic",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 1),
+                    new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                excludedMutationIds: new[] { MutationIds.HyphalSurge }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyReclaimer_DelayedNecro",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 2),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 3),
+                    new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                }
+            ),
+            // Bare Necrosporulation probe: isolates the death-to-remote-colonization route
+            // from both Autolytic Surge and the entire Substrate Ecology category.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_NecroRush_Bare",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                excludedMutationIds: new[]
+                {
+                    MutationIds.HyphalSurge,
+                    MutationIds.AeratedFrontier,
+                    MutationIds.CrustwardTropism,
+                    MutationIds.DetritalEnzymes
+                }
+            ),
+            // Second-stage dominance probe: retain only Aerated Frontier from Ecology.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_NecroRush_AeratedOnly",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.CellularResilience,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                },
+                excludedMutationIds: new[]
+                {
+                    MutationIds.HyphalSurge,
+                    MutationIds.CrustwardTropism,
+                    MutationIds.DetritalEnzymes
+                }
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyFrontierExpansion",
                 prioritizeHighTier: true,

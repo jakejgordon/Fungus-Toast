@@ -3,6 +3,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Tests.Mutations;
 
@@ -154,6 +155,80 @@ public class StrategyCatalogTests
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
 
         Assert.DoesNotContain(strategy.TargetMutationGoals, goal => goal.MutationId == MutationIds.NecrophyticBloom);
+    }
+
+    [Fact]
+    public void Ecology_reclaimer_diagnosis_variants_isolate_necrosporulation_and_autolytic_surge()
+    {
+        var noNecro = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyReclaimer_NoNecro"]);
+        var noAutolytic = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyReclaimer_NoAutolytic"]);
+        var delayedNecro = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyReclaimer_DelayedNecro"]);
+
+        Assert.Contains(MutationIds.Necrosporulation, noNecro.ExcludedMutationIds);
+        Assert.DoesNotContain(noNecro.TargetMutationGoals, goal => goal.MutationId == MutationIds.Necrosporulation);
+
+        Assert.Contains(MutationIds.HyphalSurge, noAutolytic.ExcludedMutationIds);
+        Assert.DoesNotContain(noAutolytic.TargetMutationGoals, goal => goal.MutationId == MutationIds.HyphalSurge);
+
+        int detritalIndex = delayedNecro.TargetMutationGoals
+            .Select((goal, index) => (goal, index))
+            .Single(pair => pair.goal.MutationId == MutationIds.DetritalEnzymes).index;
+        int necroIndex = delayedNecro.TargetMutationGoals
+            .Select((goal, index) => (goal, index))
+            .Single(pair => pair.goal.MutationId == MutationIds.Necrosporulation).index;
+        Assert.True(necroIndex > detritalIndex);
+    }
+
+    [Fact]
+    public void Bare_necro_rush_excludes_autolytic_surge_and_all_substrate_ecology_mutations()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_NecroRush_Bare"]);
+
+        Assert.Equal(MutationIds.Necrosporulation, strategy.TargetMutationGoals[0].MutationId);
+        Assert.Equal(
+            new[]
+            {
+                MutationIds.HyphalSurge,
+                MutationIds.AeratedFrontier,
+                MutationIds.CrustwardTropism,
+                MutationIds.DetritalEnzymes
+            },
+            strategy.ExcludedMutationIds.OrderBy(id => id));
+    }
+
+    [Fact]
+    public void Bare_necro_rush_exclusions_apply_to_mutator_phenotype_auto_upgrades()
+    {
+        var strategy = AIRoster.TestingStrategiesByName["TST_NecroRush_Bare"];
+        var player = new Player(0, "Bare Necro", PlayerTypeEnum.AI);
+        player.SetMutationStrategy(strategy);
+        var mutations = MutationRegistry.GetAll().ToList();
+
+        foreach (var mutation in mutations.Where(mutation => mutation.Tier == MutationTier.Tier1 && mutation.Id != MutationIds.AeratedFrontier))
+            player.SetMutationLevel(mutation.Id, mutation.MaxLevel, currentRound: 1);
+
+        player.SetMutationLevel(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel, currentRound: 1);
+        GeneticDriftMutationProcessor.TryApplyMutatorPhenotype(
+            player,
+            mutations,
+            new Random(1),
+            currentRound: 2,
+            new TestSimulationObserver());
+
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.AeratedFrontier));
+    }
+
+    [Fact]
+    public void Aerated_only_necro_rush_keeps_aerated_frontier_but_excludes_other_ecology_and_autolytic_surge()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_NecroRush_AeratedOnly"]);
+
+        Assert.Contains(strategy.TargetMutationGoals, goal => goal.MutationId == MutationIds.AeratedFrontier);
+        Assert.Contains(strategy.TargetMutationGoals, goal => goal.MutationId == MutationIds.Necrosporulation);
+        Assert.DoesNotContain(MutationIds.AeratedFrontier, strategy.ExcludedMutationIds);
+        Assert.Equal(
+            new[] { MutationIds.HyphalSurge, MutationIds.CrustwardTropism, MutationIds.DetritalEnzymes },
+            strategy.ExcludedMutationIds.OrderBy(id => id));
     }
 
     [Fact]

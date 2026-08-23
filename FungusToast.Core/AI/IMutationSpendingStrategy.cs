@@ -15,6 +15,11 @@ namespace FungusToast.Core.AI
         bool? UsesFungicide { get; }
         bool? UsesGeneticDrift { get; }
         bool? UsesSubstrateEcology => null;
+        /// <summary>
+        /// Mutations intentionally excluded by an experimental strategy.  Random auto-upgrades
+        /// must respect this set so a controlled treatment cannot reacquire its removed lever.
+        /// </summary>
+        IReadOnlyCollection<int> ExcludedMutationIds => Array.Empty<int>();
 
         void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver simulationObserver);
