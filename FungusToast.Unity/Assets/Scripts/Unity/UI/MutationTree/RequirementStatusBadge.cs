@@ -14,7 +14,7 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private static Sprite? circleSprite;
         private static Sprite? checkSprite;
-        private static Sprite? lockSprite;
+        private static Sprite? xSprite;
 
         private Image background = null!;
         private Image symbol = null!;
@@ -46,7 +46,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             bool isMet = status == RequirementStatus.Met;
             background.color = isMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning;
-            symbol.sprite = isMet ? GetCheckSprite() : GetLockSprite();
+            symbol.sprite = isMet ? GetCheckSprite() : GetXSprite();
             symbol.color = UIStyleTokens.Text.OnAccent;
         }
 
@@ -62,7 +62,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private static Sprite GetCircleSprite() => circleSprite ??= CreateSprite("RequirementStatusCircle", DrawCircle);
         private static Sprite GetCheckSprite() => checkSprite ??= CreateSprite("RequirementStatusCheck", DrawCheck);
-        private static Sprite GetLockSprite() => lockSprite ??= CreateSprite("RequirementStatusLock", DrawLock);
+        private static Sprite GetXSprite() => xSprite ??= CreateSprite("RequirementStatusX", DrawX);
 
         private static Sprite CreateSprite(string name, System.Action<Color32[]> draw)
         {
@@ -107,23 +107,10 @@ namespace FungusToast.Unity.UI.MutationTree
             DrawLine(pixels, new Vector2(13f, 10f), new Vector2(25f, 23f), 4f);
         }
 
-        private static void DrawLock(Color32[] pixels)
+        private static void DrawX(Color32[] pixels)
         {
-            FillRect(pixels, 7, 7, 18, 14);
-            DrawLine(pixels, new Vector2(10f, 20f), new Vector2(10f, 24f), 3f);
-            DrawLine(pixels, new Vector2(10f, 24f), new Vector2(22f, 24f), 3f);
-            DrawLine(pixels, new Vector2(22f, 24f), new Vector2(22f, 20f), 3f);
-        }
-
-        private static void FillRect(Color32[] pixels, int left, int bottom, int width, int height)
-        {
-            for (int y = bottom; y < bottom + height; y++)
-            {
-                for (int x = left; x < left + width; x++)
-                {
-                    pixels[(y * 32) + x] = new Color32(255, 255, 255, 255);
-                }
-            }
+            DrawLine(pixels, new Vector2(8f, 8f), new Vector2(24f, 24f), 4f);
+            DrawLine(pixels, new Vector2(24f, 8f), new Vector2(8f, 24f), 4f);
         }
 
         private static void DrawLine(Color32[] pixels, Vector2 start, Vector2 end, float thickness)
