@@ -552,7 +552,7 @@ namespace FungusToast.Unity.UI.MutationTree
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             if (font != null) label.font = font;
             label.fontSize = 14f;
-            label.enableWordWrapping = false;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Ellipsis;
             label.alignment = TextAlignmentOptions.MidlineLeft;
             label.raycastTarget = false;
@@ -583,7 +583,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (font != null) label.font = font;
             label.fontSize = 14f;
             label.color = UIStyleTokens.Text.Primary;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.overflowMode = TextOverflowModes.Overflow;
             label.alignment = TextAlignmentOptions.TopLeft;
             label.raycastTarget = false;
@@ -677,7 +677,7 @@ namespace FungusToast.Unity.UI.MutationTree
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.color = color;
-            label.enableWordWrapping = true;
+            label.textWrappingMode = TextWrappingModes.Normal;
             label.overflowMode = TextOverflowModes.Overflow;
             label.alignment = TextAlignmentOptions.TopLeft;
             label.margin = background.HasValue ? new Vector4(10f, 8f, 10f, 8f) : Vector4.zero;

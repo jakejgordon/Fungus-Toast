@@ -84,7 +84,6 @@ namespace FungusToast.Unity.UI.Campaign
         [SerializeField] private TextMeshProUGUI hotseatDescriptionText = null;
         [SerializeField] private TextMeshProUGUI campaignDescriptionText = null;
         [SerializeField] private Sprite wideTitleLogoSprite = null;
-        [SerializeField] private Sprite settingsButtonIcon = null;
         [SerializeField] private Sprite backButtonIcon = null;
 
         private TextMeshProUGUI alphaSummaryText;
