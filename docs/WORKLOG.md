@@ -205,6 +205,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - The prior edge calculation still used each `MutationNodeUI` root transform. That root is a layout container and can differ from the visible button/image rect, which explains endpoints landing inside Hyphal Surge and Chemotactic Beacon. Connector endpoints now use the actual rendered button background rect for both source and destination bounds.
 - Manual Unity verification remains: confirm the same two cross-lane routes now meet the visible left card border, then spot-check vertical and grouped Tendril routes while scrolling.
 
+**Purchasable prerequisite pulse (2026-08-23):**
+
+- While hovering, selecting, or pinning a mutation, every named prerequisite remains outlined in the existing amber treatment. An unmet prerequisite now gains a separate, slow outer Lichen/Hyphae pulse only when the established `Player.CanUpgrade(...)` call confirms it is currently purchasable, including board-specific eligibility checks.
+- The pulse is presentation-only, uses no new assets or persistent state, and stops whenever inspection context is cleared or refreshed after a purchase/search change. Core mutation rules and dependency data remain unchanged.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. The full Core suite had the existing unrelated campaign-preset naming failure (`TST_Training_ResilientMycelium_Offset3`; 565 passed, 1 failed). Unity Editor validation remains manual: hover/pin a downstream card with a mix of unavailable and affordable unmet prerequisites; confirm only the affordable prerequisite pulses, the amber outline remains visible, repeated purchases immediately refresh the cue, search/focus clear it appropriately, and there are no Console or frame-time regressions at the supported resolutions.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

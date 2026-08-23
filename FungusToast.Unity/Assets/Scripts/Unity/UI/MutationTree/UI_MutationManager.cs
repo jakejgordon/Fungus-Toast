@@ -1927,8 +1927,60 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 var node = mutationButtons.FirstOrDefault(n => n.MutationId == prerequisiteId);
                 if (node != null)
+                {
                     node.SetPrerequisiteHighlight(true);
+                    node.SetPurchasablePrerequisitePulse(IsUnmetPurchasablePrerequisite(mutation, prerequisiteId, player));
+                }
             }
+        }
+
+        private bool IsUnmetPurchasablePrerequisite(Mutation inspectedMutation, int prerequisiteId, Player player)
+        {
+            if (!mutationsById.TryGetValue(prerequisiteId, out Mutation prerequisiteMutation)
+                || GameManager.Instance?.Board == null)
+            {
+                return false;
+            }
+
+            if (!IsUnmetPrerequisiteOnPath(inspectedMutation, prerequisiteId, player, new HashSet<int>()))
+            {
+                return false;
+            }
+
+            return player.CanUpgrade(
+                prerequisiteMutation,
+                GameManager.Instance.Board.CurrentRound,
+                GameManager.Instance.Board,
+                mutationAvailabilityBoardSummaries);
+        }
+
+        private bool IsUnmetPrerequisiteOnPath(
+            Mutation mutation,
+            int prerequisiteId,
+            Player player,
+            HashSet<int> visitedMutationIds)
+        {
+            if (!visitedMutationIds.Add(mutation.Id))
+            {
+                return false;
+            }
+
+            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites)
+            {
+                if (prerequisite.MutationId == prerequisiteId
+                    && player.GetMutationLevel(prerequisiteId) < prerequisite.RequiredLevel)
+                {
+                    return true;
+                }
+
+                if (mutationsById.TryGetValue(prerequisite.MutationId, out Mutation prerequisiteMutation)
+                    && IsUnmetPrerequisiteOnPath(prerequisiteMutation, prerequisiteId, player, visitedMutationIds))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // Highlights direct dependent nodes for a hovered, currently unlocked mutation.

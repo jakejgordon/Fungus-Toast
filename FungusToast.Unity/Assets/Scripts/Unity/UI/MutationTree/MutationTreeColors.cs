@@ -24,6 +24,9 @@ namespace FungusToast.Unity.UI.MutationTree
         public static readonly Color DependentHover  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.6f);
         public static readonly Color DependentBorder = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.State.Focus, UIStyleTokens.Text.Primary, 0.35f), 0.95f);
         public static readonly Color PrerequisiteBorder = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.95f);
+        public static readonly Color PurchasablePrerequisitePulse = UIStyleTokens.WithAlpha(
+            Color.Lerp(UIStyleTokens.Accent.Lichen, UIStyleTokens.Accent.Hyphae, 0.42f),
+            0.95f);
 
         // ── Panel-wide dark theme ───────────────────────────────────────
         public static readonly Color PanelBG         = UIStyleTokens.Surface.Canvas;

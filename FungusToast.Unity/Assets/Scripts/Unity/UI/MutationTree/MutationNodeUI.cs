@@ -24,6 +24,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MaxBadgeHeight = 20f;
         private const float SearchNonMatchAlpha = 0.10f;
         private const float UnrelatedRelationshipAlpha = 0.24f;
+        private const float PurchasablePrerequisitePulseDurationSeconds = 1f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
@@ -74,6 +75,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
         private Outline searchMatchOutline;
+        private Outline purchasablePrerequisitePulseOutline;
         private TextMeshProUGUI purchasedGrowthMark;
 
         private Mutation mutation;
@@ -85,6 +87,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool isSearchMatch;
         private bool isRelationshipContextActive;
         private bool isRelationshipRelated;
+        private bool isPurchasablePrerequisitePulseActive;
 
         // Animation state
         private Coroutine upgradeEffectCoroutine;
@@ -318,6 +321,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 var fillRect = levelProgressFill.rectTransform;
                 fillRect.anchorMax = new Vector2(currentProgressFill, 0f);
             }
+
+            UpdatePurchasablePrerequisitePulse();
         }
 
         // ── Affordability / state background tinting ──────────────────────
@@ -990,6 +995,27 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplyHighlightCardVisual();
         }
 
+        /// <summary>
+        /// Adds a distinct outer pulse to an unmet prerequisite that can be bought
+        /// immediately. This is deliberately separate from the static amber
+        /// prerequisite outline so relationship context remains readable.
+        /// </summary>
+        public void SetPurchasablePrerequisitePulse(bool on)
+        {
+            isPurchasablePrerequisitePulseActive = on;
+            if (on)
+            {
+                EnsurePurchasablePrerequisitePulseOutline();
+                UpdatePurchasablePrerequisitePulse();
+                return;
+            }
+
+            if (purchasablePrerequisitePulseOutline != null)
+            {
+                purchasablePrerequisitePulseOutline.enabled = false;
+            }
+        }
+
         public void SetInspectedHighlight(bool on)
         {
             if (highlightOutline == null)
@@ -1030,6 +1056,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void ClearHighlights()
         {
+            SetPurchasablePrerequisitePulse(false);
             SetPrerequisiteHighlight(false);
             SetDependentHighlight(false);
             if (highlightOutline != null)
@@ -1237,6 +1264,36 @@ namespace FungusToast.Unity.UI.MutationTree
             searchMatchOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 1f);
             searchMatchOutline.effectDistance = new Vector2(3.5f, -3.5f);
             searchMatchOutline.enabled = false;
+        }
+
+        private void EnsurePurchasablePrerequisitePulseOutline()
+        {
+            if (purchasablePrerequisitePulseOutline != null)
+            {
+                return;
+            }
+
+            GameObject target = upgradeButton != null ? upgradeButton.gameObject : gameObject;
+            purchasablePrerequisitePulseOutline = target.AddComponent<Outline>();
+            purchasablePrerequisitePulseOutline.enabled = false;
+        }
+
+        private void UpdatePurchasablePrerequisitePulse()
+        {
+            if (!isPurchasablePrerequisitePulseActive)
+            {
+                return;
+            }
+
+            EnsurePurchasablePrerequisitePulseOutline();
+            float phase = (Mathf.Sin((Time.unscaledTime / PurchasablePrerequisitePulseDurationSeconds) * Mathf.PI * 2f) + 1f) * 0.5f;
+            Color color = MutationTreeColors.PurchasablePrerequisitePulse;
+            color.a = Mathf.Lerp(0.38f, 1f, phase);
+            purchasablePrerequisitePulseOutline.effectColor = color;
+            purchasablePrerequisitePulseOutline.effectDistance = new Vector2(
+                Mathf.Lerp(4f, 6f, phase),
+                -Mathf.Lerp(4f, 6f, phase));
+            purchasablePrerequisitePulseOutline.enabled = true;
         }
 
         private void ConfigureNodeButtonPresentation()
