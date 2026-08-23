@@ -211,6 +211,12 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - The pulse is presentation-only, uses no new assets or persistent state, and stops whenever inspection context is cleared or refreshed after a purchase/search change. Core mutation rules and dependency data remain unchanged.
 - Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. The full Core suite had the existing unrelated campaign-preset naming failure (`TST_Training_ResilientMycelium_Offset3`; 565 passed, 1 failed). Unity Editor validation remains manual: hover/pin a downstream card with a mix of unavailable and affordable unmet prerequisites; confirm only the affordable prerequisite pulses, the amber outline remains visible, repeated purchases immediately refresh the cue, search/focus clear it appropriately, and there are no Console or frame-time regressions at the supported resolutions.
 
+**Requirement status badges (2026-08-23):**
+
+- Replaced the inspector's text-only `Complete` / `Needed` prefixes with an explicit left-side status badge: a green circle with a white check for met requirements and an amber circle with a white lock for unmet requirements. This applies to named prerequisite chips and grouped requirement summaries.
+- The badge is a cached procedural UI sprite, so the runtime-built inspector needs no prefab or imported artwork and cannot fall back to unsupported TMP glyphs. Requirement names and progress levels stay selectable/readable; direct unlock chips keep their existing text-only treatment.
+- Core and Simulation builds passed with 0 warnings/errors; `git diff --check` passed. Unity Editor verification remains manual: inspect met and unmet named requirements, all-four-Tendrils grouping, and category-foundation grouping at each supported resolution; confirm badge contrast, alignment, chip focus, scroll wrapping, repeat open/close behavior, and Console cleanliness.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

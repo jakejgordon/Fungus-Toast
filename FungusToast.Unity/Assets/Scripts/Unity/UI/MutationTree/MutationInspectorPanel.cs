@@ -26,6 +26,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float ChipHeight = 36f;
         private const float ToolbarHeight = 40f;
         private const float ToolbarGap = 8f;
+        private const float RequirementStatusBadgeSize = 22f;
+        private const float RequirementStatusBadgeLeftInset = 8f;
+        private const float RequirementStatusBadgeToLabelGap = 8f;
 
         private RectTransform rootRect = null!;
         private RectTransform contentRect = null!;
@@ -46,7 +49,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform groupedRequirementsRoot = null!;
         private RectTransform dependentsRoot = null!;
         private readonly List<Button> requirementButtons = new();
-        private readonly List<TextMeshProUGUI> groupedRequirementRows = new();
+        private readonly List<RequirementStatusRow> groupedRequirementRows = new();
         private readonly List<Button> dependentButtons = new();
         private TMP_FontAsset? font;
         private TMP_InputField searchInput = null!;
@@ -365,14 +368,14 @@ namespace FungusToast.Unity.UI.MutationTree
             var chips = new List<ChipData>(snapshot.Requirements.Count);
             foreach (MutationRequirementProgress requirement in snapshot.Requirements)
             {
-                string status = requirement.IsMet ? "Complete" : "Needed";
                 string prefix = groupDirectionalTendrils && IsDirectionalTendril(requirement.MutationId)
                     ? "  "
                     : string.Empty;
                 chips.Add(new ChipData(
                     requirement.MutationId,
-                    $"{prefix}{status} - {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
-                    requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
+                    $"{prefix}{requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
+                    requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
+                    requirement.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
             }
 
             ConfigureButtons(requirementButtons, requirementsRoot, chips, focusMutation);
@@ -382,19 +385,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 int metCount = snapshot.Requirements.Count(requirement => requirement.IsMet);
                 bool isMet = metCount == snapshot.Requirements.Count;
                 groupedRows.Add(new GroupedRequirementData(
-                    $"<b>{(isMet ? "Complete" : "Needed")} - All four Directional Tendrils</b>  {metCount}/4\nComplete each compass-direction Tendril below.",
-                    isMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
+                    $"<b>All four Directional Tendrils</b>  {metCount}/4\nComplete each compass-direction Tendril below.",
+                    isMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
+                    isMet ? RequirementStatus.Met : RequirementStatus.Unmet));
             }
 
             foreach (MutationCategoryInvestmentRequirementProgress requirement in snapshot.CategoryInvestmentRequirements)
             {
                 string categoryLines = string.Join("\n", requirement.Categories.Select(category =>
-                    $"  {(category.IsMet ? "Complete" : "Needed")} - {GetCategoryDisplayName(category.Category)}  L{category.CurrentLevel}/{category.RequiredLevel}"));
+                    $"  {GetCategoryDisplayName(category.Category)}  L{category.CurrentLevel}/{category.RequiredLevel}"));
                 groupedRows.Add(new GroupedRequirementData(
-                    $"<b>{(requirement.IsMet ? "Complete" : "Needed")} - Tier {(int)requirement.Tier} category foundations</b>  " +
+                    $"<b>Tier {(int)requirement.Tier} category foundations</b>  " +
                     $"{requirement.SatisfiedCategoryCount}/{requirement.RequiredCategoryCount} categories\n" +
                     $"Reach {requirement.RequiredLevelsPerCategory} root levels in each qualifying category.\n{categoryLines}",
-                    requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
+                    requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
+                    requirement.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
             }
 
             ConfigureGroupedRequirementRows(groupedRows);
@@ -407,29 +412,24 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             while (groupedRequirementRows.Count < rows.Count)
             {
-                groupedRequirementRows.Add(CreateText(
-                    "GroupedRequirement",
-                    14f,
-                    ChipHeight,
-                    FontStyles.Normal,
-                    UIStyleTokens.Text.Primary,
-                    UIStyleTokens.Surface.PanelSecondary,
-                    parent: groupedRequirementsRoot));
+                groupedRequirementRows.Add(CreateRequirementStatusRow(groupedRequirementsRoot));
             }
 
             for (int index = 0; index < groupedRequirementRows.Count; index++)
             {
-                TextMeshProUGUI row = groupedRequirementRows[index];
+                RequirementStatusRow row = groupedRequirementRows[index];
                 bool active = index < rows.Count;
-                SetTextBlockActive(row, active);
+                row.Root.gameObject.SetActive(active);
                 if (!active)
                 {
                     continue;
                 }
 
-                row.text = rows[index].Label;
-                row.color = Color.Lerp(UIStyleTokens.Text.Primary, rows[index].Accent, 0.3f);
-                FitTextHeight(row, ChipHeight);
+                GroupedRequirementData data = rows[index];
+                row.Label.text = data.Label;
+                row.Label.color = Color.Lerp(UIStyleTokens.Text.Primary, data.Accent, 0.3f);
+                SetRequirementStatusBadge(row.Badge, data.Status);
+                FitTextHeight(row.Label, ChipHeight);
             }
         }
 
@@ -466,7 +466,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 chips.Add(new ChipData(
                     dependent.Id,
                     $"> {dependent.Name}",
-                    MutationTreeColors.GetCategoryAccent(dependent.Category)));
+                    MutationTreeColors.GetCategoryAccent(dependent.Category),
+                    RequirementStatus.None));
             }
 
             ConfigureButtons(dependentButtons, dependentsRoot, chips, focusMutation);
@@ -500,6 +501,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
                 label.text = chip.Label;
                 label.color = UIStyleTokens.Text.Primary;
+                label.rectTransform.offsetMin = new Vector2(
+                    chip.Status == RequirementStatus.None
+                        ? 8f
+                        : RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset,
+                    8f);
+                SetRequirementStatusBadge(button.GetComponentInChildren<RequirementStatusBadge>(true), chip.Status);
                 Image image = button.GetComponent<Image>();
                 image.color = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, chip.Accent, 0.16f);
                 UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
@@ -522,6 +529,7 @@ namespace FungusToast.Unity.UI.MutationTree
             labelObject.transform.SetParent(buttonObject.transform, false);
             RectTransform labelRect = labelObject.GetComponent<RectTransform>();
             Stretch(labelRect, 8f);
+            labelRect.offsetMin = new Vector2(RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset, 8f);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             if (font != null) label.font = font;
             label.fontSize = 14f;
@@ -530,7 +538,59 @@ namespace FungusToast.Unity.UI.MutationTree
             label.alignment = TextAlignmentOptions.MidlineLeft;
             label.raycastTarget = false;
 
+            CreateRequirementStatusBadge(buttonObject.transform);
+
             return button;
+        }
+
+        private RequirementStatusRow CreateRequirementStatusRow(RectTransform parent)
+        {
+            var rootObject = new GameObject("GroupedRequirement", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            rootObject.transform.SetParent(parent, false);
+            Image background = rootObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelSecondary;
+            background.raycastTarget = false;
+            LayoutElement element = rootObject.GetComponent<LayoutElement>();
+            element.preferredHeight = ChipHeight;
+            element.minHeight = ChipHeight;
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(rootObject.transform, false);
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            Stretch(labelRect, 0f);
+            labelRect.offsetMin = new Vector2(RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset, 8f);
+            labelRect.offsetMax = new Vector2(-10f, -8f);
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) label.font = font;
+            label.fontSize = 14f;
+            label.color = UIStyleTokens.Text.Primary;
+            label.enableWordWrapping = true;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.alignment = TextAlignmentOptions.TopLeft;
+            label.raycastTarget = false;
+
+            return new RequirementStatusRow(rootObject.GetComponent<RectTransform>(), label, CreateRequirementStatusBadge(rootObject.transform));
+        }
+
+        private static RequirementStatusBadge CreateRequirementStatusBadge(Transform parent)
+        {
+            var badgeObject = new GameObject("RequirementStatusBadge", typeof(RectTransform), typeof(RequirementStatusBadge));
+            badgeObject.transform.SetParent(parent, false);
+            RectTransform badgeRect = badgeObject.GetComponent<RectTransform>();
+            badgeRect.anchorMin = new Vector2(0f, 0.5f);
+            badgeRect.anchorMax = new Vector2(0f, 0.5f);
+            badgeRect.pivot = new Vector2(0f, 0.5f);
+            badgeRect.anchoredPosition = new Vector2(RequirementStatusBadgeLeftInset, 0f);
+            badgeRect.sizeDelta = new Vector2(RequirementStatusBadgeSize, RequirementStatusBadgeSize);
+            return badgeObject.GetComponent<RequirementStatusBadge>();
+        }
+
+        private static void SetRequirementStatusBadge(RequirementStatusBadge? badge, RequirementStatus status)
+        {
+            if (badge != null)
+            {
+                badge.SetStatus(status);
+            }
         }
 
         private RectTransform CreateSectionRoot(string name)
@@ -723,28 +783,54 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private readonly struct ChipData
         {
-            public ChipData(int mutationId, string label, Color accent)
+            public ChipData(int mutationId, string label, Color accent, RequirementStatus status)
             {
                 MutationId = mutationId;
                 Label = label;
                 Accent = accent;
+                Status = status;
             }
 
             public int MutationId { get; }
             public string Label { get; }
             public Color Accent { get; }
+            public RequirementStatus Status { get; }
         }
 
         private readonly struct GroupedRequirementData
         {
-            public GroupedRequirementData(string label, Color accent)
+            public GroupedRequirementData(string label, Color accent, RequirementStatus status)
             {
                 Label = label;
                 Accent = accent;
+                Status = status;
             }
 
             public string Label { get; }
             public Color Accent { get; }
+            public RequirementStatus Status { get; }
         }
+
+        private readonly struct RequirementStatusRow
+        {
+            public RequirementStatusRow(RectTransform root, TextMeshProUGUI label, RequirementStatusBadge badge)
+            {
+                Root = root;
+                Label = label;
+                Badge = badge;
+            }
+
+            public RectTransform Root { get; }
+            public TextMeshProUGUI Label { get; }
+            public RequirementStatusBadge Badge { get; }
+        }
+
+    }
+
+    internal enum RequirementStatus
+    {
+        None,
+        Met,
+        Unmet
     }
 }
