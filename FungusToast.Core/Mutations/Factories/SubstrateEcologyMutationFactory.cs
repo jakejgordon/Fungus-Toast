@@ -109,6 +109,24 @@ namespace FungusToast.Core.Mutations.Factories
                 new MutationPrerequisite(MutationIds.HyphalSurge, 2),
                 new MutationPrerequisite(MutationIds.DetritalEnzymes, 3),
                 new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.MycotoxinFission,
+                name: "Mycotoxin Fission",
+                description: "Lets your colony turn a nearby toxin into a burst of new toxin pressure.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.MycotoxinFissionEffectPerLevel)} growth chance when an empty growth target is orthogonally adjacent to one of your toxins. After a successful qualifying growth, that toxin vacates its tile and creates up to one toxin near enemy cells per level, keeping only its remaining lifespan.\n" +
+                             "<b>Max Level Bonus:</b> Your newly colonized cell automatically grows into the vacated toxin tile. This bridge cannot trigger another fission.",
+                flavorText: "A toxin-bearing vesicle fractures along the advancing hyphae, scattering its chemical payload before the colony closes the path behind it.",
+                type: MutationType.MycotoxinFissionGrowthChance,
+                effectPerLevel: GameBalance.MycotoxinFissionEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
+                maxLevel: GameBalance.MycotoxinFissionMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier5
+            ),
+                new MutationPrerequisite(MutationIds.ToxinMargin, 5),
+                new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 5),
+                new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2));
         }
     }
 }

@@ -44,5 +44,6 @@ namespace FungusToast.Core
         DetritalEnzymesGrowthChance,
         ToxinMarginGrowthChance,
         LatentPolymorphismBankedInterest,
+        MycotoxinFissionGrowthChance,
     }
 }

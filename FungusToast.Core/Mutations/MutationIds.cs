@@ -42,5 +42,6 @@
         public const int CompactionPressure = 37;
         public const int ToxinMargin = 38;
         public const int LatentPolymorphism = 39;
+        public const int MycotoxinFission = 40;
     }
 }

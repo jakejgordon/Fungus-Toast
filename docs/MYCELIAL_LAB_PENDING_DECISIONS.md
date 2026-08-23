@@ -21,7 +21,7 @@
 | 4 | Detrital Enzymes branch | Approved and implemented |
 | 5 | Toxin Margin branch | Approved and implemented |
 | 6 | Nutrient Afterglow payoff | Pending |
-| 7 | Ecological Succession capstone | Pending |
+| 7 | Mycotoxin Fission capstone | Approved and implemented |
 | 8 | Move Necrophytic Bloom to Ecology | Approved and implemented |
 | 9 | Five later additions to existing lanes | Latent Polymorphism approved and implemented; remaining entries pending |
 | 10 | Implementation sequence | Pending |
@@ -187,30 +187,21 @@ Approve the concept but defer implementation until its budget formula and save s
 
 Pending.
 
-## 7. Approve Ecological Succession as the Ecology Capstone?
+## 7. Mycotoxin Fission Ecology Capstone
 
-### Proposed mechanic
+### Approved mechanic
 
-Once per Growth Phase, the first failed growth attempt that qualified for any Ecology context immediately retries the same still-legal source and target. The retry cannot recurse.
+Mycotoxin Fission is Tier 5 Substrate Ecology. Each of its three levels grants +3 percentage points growth chance when an empty growth target is orthogonally adjacent to an owned toxin. A successful qualifying growth makes the selected toxin vacate and create up to one toxin near enemy cells per level, inheriting only its remaining lifespan. At max level, the newly colonized cell automatically grows into the vacated toxin tile; this bonus growth cannot trigger another fission.
 
-### Proposed shape
+### Prerequisites
 
-- Tier 5; requires Detrital Enzymes 5, Toxin Margin 5, Nutrient Afterglow 3, and Mycelial Bloom 15.
-- 3 levels; initial hypothesis adds +5 percentage points per level to the retry.
-- One retry per player per phase, regardless of how many Ecology contexts qualified.
-- Requires explicit deterministic ordering relative to Creeping Mold's failed-growth behavior.
-
-### Main decision
-
-Approve a once-per-phase retry capstone, with the Creeping Mold interaction settled by focused design/tests before implementation?
-
-### Recommendation
-
-Approve the concept. Prefer Ecological Succession's immediate same-target retry before Creeping Mold can reposition the source, but confirm that ordering during its implementation slice.
+- Toxin Margin 5, to establish toxin-boundary Ecology play.
+- Mycotoxin Potentiation 5, to create durable toxin launch sites.
+- Putrefactive Mycotoxin 2, to ensure the capstone belongs to an intentional toxin build rather than incidental toxin use.
 
 ### Answer
 
-Pending.
+Approved by Jake on 2026-08-23 and implemented. Ecological Succession is retired from the active roster.
 
 ## 8. Move Necrophytic Bloom from Genetic Drift to Substrate Ecology?
 

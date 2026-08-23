@@ -1,5 +1,8 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Death;
+using FungusToast.Core.Growth;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using System.Linq;
@@ -131,6 +134,77 @@ namespace FungusToast.Core.Phases
             return System.Math.Min(level * GameBalance.ToxinMarginEffectPerLevel, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
         }
 
+        public static BoardTile? FindFriendlyToxinOrthogonalNeighbor(Player player, GameBoard board, BoardTile targetTile)
+        {
+            return board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
+                .Where(tile => tile.FungalCell is { IsToxin: true, OwnerPlayerId: int ownerPlayerId }
+                    && ownerPlayerId == player.PlayerId)
+                .OrderBy(tile => tile.TileId)
+                .FirstOrDefault();
+        }
+
+        public static bool QualifiesForMycotoxinFission(Player player, GameBoard board, BoardTile targetTile)
+            => FindFriendlyToxinOrthogonalNeighbor(player, board, targetTile) != null;
+
+        public static float GetMycotoxinFissionGrowthBonus(Player player, GameBoard board, BoardTile targetTile)
+        {
+            int level = player.GetMutationLevel(MutationIds.MycotoxinFission);
+            if (level <= 0 || !QualifiesForMycotoxinFission(player, board, targetTile))
+            {
+                return 0f;
+            }
+
+            return System.Math.Min(level * GameBalance.MycotoxinFissionEffectPerLevel, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
+        }
+
+        /// <summary>
+        /// Resolves the immediate post-growth toxin dispersal. The selected toxin keeps only its
+        /// remaining lifespan, so fission moves pressure rather than refreshing toxin duration.
+        /// </summary>
+        public static MycotoxinFissionResult TryResolveMycotoxinFission(
+            GameBoard board,
+            Player player,
+            int colonizedTileId,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.MycotoxinFission);
+            BoardTile? colonizedTile = board.GetTileById(colonizedTileId);
+            if (level <= 0 || colonizedTile == null)
+            {
+                return MycotoxinFissionResult.None;
+            }
+
+            BoardTile? toxinTile = FindFriendlyToxinOrthogonalNeighbor(player, board, colonizedTile);
+            FungalCell? toxinCell = toxinTile?.FungalCell;
+            if (toxinTile == null || toxinCell is not { IsToxin: true })
+            {
+                return MycotoxinFissionResult.None;
+            }
+
+            int remainingLifespan = System.Math.Max(1, toxinCell.ToxinExpirationAge - toxinCell.GrowthCycleAge);
+            int vacatedTileId = toxinTile.TileId;
+            board.RemoveCellInternal(vacatedTileId, removeControl: true);
+
+            List<BoardTile> candidateTiles = ToxinHelper.FindMycotoxinTargetTiles(board, player)
+                .Where(tile => tile.TileId != vacatedTileId)
+                .ToList();
+            int toxinsCreated = 0;
+            for (int split = 0; split < level && candidateTiles.Count > 0; split++)
+            {
+                int index = rng.Next(candidateTiles.Count);
+                BoardTile target = candidateTiles[index];
+                candidateTiles.RemoveAt(index);
+                ToxinHelper.ConvertToToxin(board, target.TileId, remainingLifespan, GrowthSource.MycotoxinFission, player);
+                toxinsCreated++;
+            }
+
+            bool bridgeGrown = level >= GameBalance.MycotoxinFissionMaxLevel
+                && TryGrowIntoVacatedToxinTile(board, player, colonizedTileId, vacatedTileId);
+            observer.RecordMycotoxinFission(player.PlayerId, toxinsCreated, bridgeGrown);
+            return new MycotoxinFissionResult(toxinsCreated, bridgeGrown);
+        }
+
         public static bool IsCrustwardTropismAutomaticCrustArrival(
             Player player,
             GameBoard board,
@@ -147,5 +221,36 @@ namespace FungusToast.Core.Phases
             return !tile.IsOccupiedForSporePlacement
                 && !board.IsTileBlockedForOccupation(tile.TileId);
         }
+
+        private static bool TryGrowIntoVacatedToxinTile(GameBoard board, Player player, int sourceTileId, int targetTileId)
+        {
+            BoardTile? targetTile = board.GetTileById(targetTileId);
+            if (targetTile == null || targetTile.IsOccupied || targetTile.IsResistant || board.IsTileBlockedForOccupation(targetTileId))
+            {
+                return false;
+            }
+
+            board.PlaceFungalCell(new FungalCell(
+                ownerPlayerId: player.PlayerId,
+                tileId: targetTileId,
+                source: GrowthSource.MycotoxinFission,
+                lastOwnerPlayerId: null));
+            board.OnHyphalGrowthVisualized(player.PlayerId, sourceTileId, targetTileId);
+            return true;
+        }
+    }
+
+    public readonly struct MycotoxinFissionResult
+    {
+        public static MycotoxinFissionResult None => new MycotoxinFissionResult(0, false);
+
+        public MycotoxinFissionResult(int toxinsCreated, bool bridgeGrown)
+        {
+            ToxinsCreated = toxinsCreated;
+            BridgeGrown = bridgeGrown;
+        }
+
+        public int ToxinsCreated { get; }
+        public bool BridgeGrown { get; }
     }
 }

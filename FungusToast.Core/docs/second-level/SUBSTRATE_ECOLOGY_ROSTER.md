@@ -25,7 +25,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 | 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
 | 4 | Nutrient Afterglow | Patch-consumption payoff | Aerated Frontier 15, open specialization 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
 | 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
-| 5 | Ecological Succession | Whole-lane capstone | Detrital Enzymes 5, Toxin Margin 5, Nutrient Afterglow 3, Mycelial Bloom 15 | One retry/phase; +5 points/level, 3 levels |
+| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +3 percentage points/level next to friendly toxins; up to one toxin split/level |
 
 ### 1. Aerated Frontier (Implemented)
 
@@ -103,17 +103,17 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Focused tests: each patch type; cluster sizes above cap; multiple consumptions; no qualifying attempts; phase expiry; save/resume; AI delayed utility.
 - Name shortlist: **Nutrient Afterglow**, Resource Afterglow, Trophic Memory, Patch Priming, Digestive Momentum.
 
-### 7. Ecological Succession
+### 7. Mycotoxin Fission
 
-**Summary:** Once per Growth Phase, the first failed attempt that qualified for an Ecology context gets one immediate retry.
+**Summary:** Successful growth beside a friendly toxin disperses that toxin into new toxin pressure near enemy cells.
 
-- Trigger/timing: after the failed roll; retry the same still-legal source/target once with the original chance plus capstone bonus.
-- Limits: one retry per player per phase; no recursive retry; revalidate legality; the retry cannot trigger a second growth attempt or bypass board restrictions.
-- AI: value breadth of unlocked Ecology contexts and current qualifying attempt density.
-- Interaction/counterplay: the opponent can invalidate the tile before a later phase, but not between the immediate roll and retry; the once-per-phase ceiling keeps the effect legible.
-- Tracking: qualifying failure, retry chance, retry result, context(s), and unused phase entitlement.
-- Focused tests: first/second failure; multi-context attempt; target legality; deterministic RNG order; no recursion; Time-Lapse parity; save boundary; interaction with Creeping Mold failed-growth handling (explicit ordering required).
-- Name shortlist: **Ecological Succession**, Successional Burst, Contextual Plasticity, Habitat Integration, Adaptive Substrate.
+- Trigger/timing: each level adds +3 percentage points to growth into an empty cardinal or enabled Tendril-diagonal target orthogonally adjacent to an owned toxin. On success, the lowest-ID qualifying toxin vacates and creates up to one toxin near enemy cells per level.
+- Limits: the launched toxins inherit only the source toxin's remaining lifespan. The fission target list excludes the vacated tile. A failed or unavailable toxin placement simply produces fewer splits.
+- Max-level bonus: after the toxin vacates, the newly colonized cell automatically grows into that tile. This bonus growth cannot trigger another fission.
+- AI: value friendly toxin adjacency plus reachable enemy-adjacent toxin targets; measure whether a purpose-built toxin build can access the capstone in practical games.
+- Interaction/counterplay: opponents can deny enemy-adjacent landing sites, while the owner can deliberately place toxins to create the local growth setup.
+- Tracking/persistence: toxins created and vacated-tile bridge growths; no deferred runtime state or save-snapshot field is required because the entire resolution is immediate.
+- Focused tests: friendly versus enemy toxin qualification; per-level chance; multi-split limits; remaining-lifespan inheritance; max-level bridge; no bridge recursion; unavailable landing sites; deterministic RNG and Time-Lapse parity.
 
 ## Proposed Existing Mutation Move
 

@@ -94,6 +94,11 @@ namespace FungusToast.Core.Growth
         MycotoxinTracer,
 
         /// <summary>
+        /// Toxins dispersed and the guaranteed bridge grown by Mycotoxin Fission.
+        /// </summary>
+        MycotoxinFission,
+
+        /// <summary>
         /// Resistant cell placed via Distal Spore adaptation
         /// </summary>
         DistalSpore,

@@ -93,6 +93,38 @@ namespace FungusToast.Simulation.Models
         public int GetToxinMarginBonusGrowths(int playerId)
             => toxinMarginBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> mycotoxinFissionToxinsCreated = new();
+        private readonly Dictionary<int, int> mycotoxinFissionBridgeGrowths = new();
+        private readonly Dictionary<int, int> mycotoxinFissionAttempts = new();
+        private readonly Dictionary<int, int> mycotoxinFissionBonusGrowths = new();
+
+        public void RecordMycotoxinFissionAttempt(int playerId)
+            => mycotoxinFissionAttempts[playerId] = GetMycotoxinFissionAttempts(playerId) + 1;
+
+        public void RecordMycotoxinFissionBonusGrowth(int playerId)
+            => mycotoxinFissionBonusGrowths[playerId] = GetMycotoxinFissionBonusGrowths(playerId) + 1;
+
+        public void RecordMycotoxinFission(int playerId, int toxinsCreated, bool bridgeGrown)
+        {
+            mycotoxinFissionToxinsCreated[playerId] = GetMycotoxinFissionToxinsCreated(playerId) + toxinsCreated;
+            if (bridgeGrown)
+            {
+                mycotoxinFissionBridgeGrowths[playerId] = GetMycotoxinFissionBridgeGrowths(playerId) + 1;
+            }
+        }
+
+        public int GetMycotoxinFissionToxinsCreated(int playerId)
+            => mycotoxinFissionToxinsCreated.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetMycotoxinFissionBridgeGrowths(int playerId)
+            => mycotoxinFissionBridgeGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetMycotoxinFissionAttempts(int playerId)
+            => mycotoxinFissionAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetMycotoxinFissionBonusGrowths(int playerId)
+            => mycotoxinFissionBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
         private readonly Dictionary<int, int> latentPolymorphismInterest = new();
 
         public void RecordLatentPolymorphismInterest(int playerId, int bonusPoints)

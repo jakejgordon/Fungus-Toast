@@ -108,6 +108,17 @@ namespace FungusToast.Simulation.Analysis
                         effects["Bonus Growths"] = player.ToxinMarginBonusGrowths;
                     break;
 
+                case MutationIds.MycotoxinFission:
+                    if (player.MycotoxinFissionAttempts > 0)
+                        effects["Friendly-toxin-adjacent Attempts"] = player.MycotoxinFissionAttempts;
+                    if (player.MycotoxinFissionBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.MycotoxinFissionBonusGrowths;
+                    if (player.MycotoxinFissionToxinsCreated > 0)
+                        effects["Fission Toxins Created"] = player.MycotoxinFissionToxinsCreated;
+                    if (player.MycotoxinFissionBridgeGrowths > 0)
+                        effects["Vacated-tile Bridge Growths"] = player.MycotoxinFissionBridgeGrowths;
+                    break;
+
                 case MutationIds.LatentPolymorphism:
                     if (player.LatentPolymorphismInterest > 0)
                         effects["Interest Mutation Points"] = player.LatentPolymorphismInterest;

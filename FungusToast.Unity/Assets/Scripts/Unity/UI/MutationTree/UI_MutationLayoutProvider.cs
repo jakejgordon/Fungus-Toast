@@ -62,7 +62,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.CompactionPressure,   new MutationLayoutMetadata(5, 2, MutationCategory.SubstrateEcology) },
                 { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(5, 3, MutationCategory.SubstrateEcology) },
                 { MutationIds.ToxinMargin,          new MutationLayoutMetadata(5, 4, MutationCategory.SubstrateEcology) },
-                { MutationIds.NecrophyticBloom,     new MutationLayoutMetadata(5, 5, MutationCategory.SubstrateEcology) }
+                { MutationIds.NecrophyticBloom,     new MutationLayoutMetadata(5, 5, MutationCategory.SubstrateEcology) },
+                { MutationIds.MycotoxinFission,     new MutationLayoutMetadata(5, 6, MutationCategory.SubstrateEcology) }
             };
     }
 }
