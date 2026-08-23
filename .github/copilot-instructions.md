@@ -1,8 +1,8 @@
 # Fungus Toast - GitHub Copilot Instructions
 
 ## Start Here
- 
-This file is the top-level router for AI-assisted development in this repository.
+
+This file is the top-level router for AI-assisted development in this repository. For human dev-environment setup (build prerequisites, testing, git workflow), see [CONTRIBUTORS.md](../CONTRIBUTORS.md).
 
 If a task is unclear, use this routing order before making changes:
 1. Match the task to a document in the list below.
