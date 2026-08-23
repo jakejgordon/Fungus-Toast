@@ -16,7 +16,7 @@ MonoBehaviour:
   boardWidth: 30
   boardHeight: 30
   aiPlayers:
-  - strategyName: TST_Training_ResilientMycelium_Offset3
+  - strategyName: CMP_Defense_ResilientShell_Easy
     startingAdaptationIds:
     - adaptation_1
   - strategyName: CMP_Mobility_Overextender_Training_Offset2
