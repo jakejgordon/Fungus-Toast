@@ -320,7 +320,7 @@ namespace FungusToast.Unity.UI.MutationTree
             inputText.fontSize = 14f;
             inputText.color = UIStyleTokens.Text.Primary;
             inputText.alignment = TextAlignmentOptions.MidlineLeft;
-            inputText.enableWordWrapping = false;
+            inputText.textWrappingMode = TextWrappingModes.NoWrap;
 
             var placeholderObject = new GameObject("Placeholder", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             placeholderObject.transform.SetParent(inputObject.transform, false);

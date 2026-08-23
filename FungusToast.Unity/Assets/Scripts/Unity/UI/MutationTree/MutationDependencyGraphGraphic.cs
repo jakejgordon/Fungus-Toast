@@ -228,12 +228,14 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             if (boundScrollRect != null)
             {
                 boundScrollRect.onValueChanged.RemoveListener(HandleScrollValueChanged);
             }
+
+            base.OnDestroy();
         }
 
         private void HandleScrollValueChanged(Vector2 _)
