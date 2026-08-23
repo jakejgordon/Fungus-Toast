@@ -369,6 +369,53 @@ namespace FungusToast.Core.Phases
             return Math.Min(tileCount, GameBalance.NecrophyticBloomMaxPatchSize);
         }
 
+        /// <summary>
+        /// Splits a dead-cell cluster into contiguous chunks of at most <paramref name="chunkSize"/> tiles each,
+        /// so a single oversized cluster can earn multiple independent compost rolls instead of just one.
+        /// </summary>
+        internal static List<List<int>> PartitionNecrophyticBloomClusterIntoChunks(GameBoard board, IReadOnlyList<int> clusterTileIds, int chunkSize)
+        {
+            var chunks = new List<List<int>>();
+            if (board == null || clusterTileIds == null || clusterTileIds.Count == 0 || chunkSize <= 0)
+            {
+                return chunks;
+            }
+
+            var remainingTileIds = clusterTileIds.ToHashSet();
+
+            while (remainingTileIds.Count > 0)
+            {
+                int seedTileId = remainingTileIds.Min();
+                var visitedTileIds = new HashSet<int> { seedTileId };
+                var frontier = new Queue<int>();
+                var chunkTileIds = new List<int>(chunkSize);
+
+                frontier.Enqueue(seedTileId);
+
+                while (frontier.Count > 0 && chunkTileIds.Count < chunkSize)
+                {
+                    int tileId = frontier.Dequeue();
+                    chunkTileIds.Add(tileId);
+
+                    foreach (int neighborTileId in board.GetOrthogonalNeighbors(tileId)
+                        .Select(tile => tile.TileId)
+                        .Where(remainingTileIds.Contains)
+                        .OrderBy(tileId => tileId))
+                    {
+                        if (visitedTileIds.Add(neighborTileId))
+                        {
+                            frontier.Enqueue(neighborTileId);
+                        }
+                    }
+                }
+
+                remainingTileIds.ExceptWith(chunkTileIds);
+                chunks.Add(chunkTileIds);
+            }
+
+            return chunks;
+        }
+
         internal static List<int> SelectNecrophyticBloomClusterTilesToConsume(GameBoard board, IReadOnlyList<int> clusterTileIds)
         {
             if (board == null || clusterTileIds == null || clusterTileIds.Count == 0)
@@ -495,32 +542,47 @@ namespace FungusToast.Core.Phases
 
             foreach (var clusterTileIds in GetNecrophyticBloomDeadClusters(board, player.PlayerId))
             {
-                if (clusterTileIds.Count < clusterThreshold || rng.NextDouble() > compostChance)
+                if (clusterTileIds.Count < clusterThreshold)
                 {
                     continue;
                 }
 
-                List<int> consumedClusterTileIds = SelectNecrophyticBloomClusterTilesToConsume(board, clusterTileIds);
-                if (consumedClusterTileIds.Count == 0)
+                // Split the cluster into groups of clusterThreshold tiles so a single oversized
+                // mass gets one independent compost roll per group instead of one roll total.
+                foreach (var chunkTileIds in PartitionNecrophyticBloomClusterIntoChunks(board, clusterTileIds, clusterThreshold))
                 {
-                    continue;
+                    if (chunkTileIds.Count < clusterThreshold || rng.NextDouble() > compostChance)
+                    {
+                        continue;
+                    }
+
+                    List<int> consumedClusterTileIds = SelectNecrophyticBloomClusterTilesToConsume(board, chunkTileIds);
+                    if (consumedClusterTileIds.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    NutrientPatch nutrientPatch = NutrientPatchPlacementUtility.CreateClusterPatch(
+                        nextClusterId,
+                        CalculateNecrophyticBloomPatchTileCount(consumedClusterTileIds.Count),
+                        rng.NextDouble(),
+                        rng.NextDouble(),
+                        NutrientPatchSource.NecrophyticBloom,
+                        allowHypervariation);
+
+                    if (!board.ConvertDeadClusterToNutrientPatch(consumedClusterTileIds, nutrientPatch, player.PlayerId))
+                    {
+                        continue;
+                    }
+
+                    nextClusterId++;
+                    createdPatchCount++;
+
+                    if (createdPatchCount >= GameBalance.NecrophyticBloomMaxPatchesPerRound)
+                    {
+                        break;
+                    }
                 }
-
-                NutrientPatch nutrientPatch = NutrientPatchPlacementUtility.CreateClusterPatch(
-                    nextClusterId,
-                    CalculateNecrophyticBloomPatchTileCount(consumedClusterTileIds.Count),
-                    rng.NextDouble(),
-                    rng.NextDouble(),
-                    NutrientPatchSource.NecrophyticBloom,
-                    allowHypervariation);
-
-                if (!board.ConvertDeadClusterToNutrientPatch(consumedClusterTileIds, nutrientPatch, player.PlayerId))
-                {
-                    continue;
-                }
-
-                nextClusterId++;
-                createdPatchCount++;
 
                 if (createdPatchCount >= GameBalance.NecrophyticBloomMaxPatchesPerRound)
                 {

@@ -82,6 +82,74 @@ public class NecrophyticBloomTests
     }
 
     [Fact]
+    public void PartitionNecrophyticBloomClusterIntoChunks_splits_an_oversized_cluster_into_contiguous_groups()
+    {
+        var setup = CreateBoard(width: 25, height: 1);
+
+        for (int tileId = 0; tileId < 25; tileId++)
+        {
+            CreateDeadCell(setup.board, setup.player, tileId);
+        }
+
+        List<int> clusterTileIds = GeneticDriftMutationProcessor
+            .GetNecrophyticBloomDeadClusters(setup.board, setup.player.PlayerId)
+            .Single();
+
+        List<List<int>> chunks = GeneticDriftMutationProcessor
+            .PartitionNecrophyticBloomClusterIntoChunks(setup.board, clusterTileIds, chunkSize: 10);
+
+        Assert.Equal(3, chunks.Count);
+        Assert.All(chunks, chunk => Assert.True(chunk.Count <= 10));
+        Assert.Equal(new[] { 10, 10, 5 }, chunks.Select(chunk => chunk.Count));
+        Assert.All(chunks, chunk => Assert.True(AreTilesOrthogonallyConnected(setup.board, chunk), "Expected each chunk to remain contiguous."));
+
+        var allChunkedTileIds = chunks.SelectMany(chunk => chunk).ToList();
+        Assert.Equal(clusterTileIds.Count, allChunkedTileIds.Count);
+        Assert.Equal(allChunkedTileIds.Distinct().Count(), allChunkedTileIds.Count);
+        Assert.Equal(clusterTileIds.OrderBy(tileId => tileId), allChunkedTileIds.OrderBy(tileId => tileId));
+    }
+
+    [Fact]
+    public void ResolveNecrophyticBloomComposting_gives_an_oversized_cluster_multiple_independent_rolls()
+    {
+        var setup = CreateBoard(width: 25, height: 1);
+        setup.player.SetMutationLevel(MutationIds.NecrophyticBloom, newLevel: 1, currentRound: 1);
+
+        for (int tileId = 0; tileId < 25; tileId++)
+        {
+            CreateDeadCell(setup.board, setup.player, tileId);
+        }
+
+        // First group (tiles 0-9) misses its roll; second group (tiles 10-19) hits.
+        // A single-roll-per-cluster design would have produced zero patches here.
+        var rng = new SequencedRandom(0.99, 0.0, 0.0, 0.0);
+
+        int createdPatchCount = GeneticDriftMutationProcessor.ResolveNecrophyticBloomComposting(
+            setup.player,
+            setup.board,
+            rng,
+            setup.observer);
+
+        Assert.Equal(1, createdPatchCount);
+        Assert.Equal(1, setup.observer.NecrophyticBloomPatchesByPlayer[setup.player.PlayerId]);
+
+        // First group's tiles were never touched: the miss did not consume or convert them.
+        Assert.All(Enumerable.Range(0, 10), tileId =>
+        {
+            Assert.True(setup.board.GetCell(tileId)?.IsDead == true, $"Expected tile {tileId} to remain an untouched dead cell.");
+            Assert.Null(setup.board.GetTileById(tileId)?.NutrientPatch);
+        });
+
+        // Second group's tiles were consumed by the successful roll.
+        Assert.All(Enumerable.Range(10, 10), tileId => Assert.Null(setup.board.GetCell(tileId)));
+        Assert.All(Enumerable.Range(10, 8), tileId => Assert.Equal(NutrientPatchSource.NecrophyticBloom, setup.board.GetTileById(tileId)?.NutrientPatch?.Source));
+        Assert.All(Enumerable.Range(18, 2), tileId => Assert.Null(setup.board.GetTileById(tileId)?.NutrientPatch));
+
+        // Third (undersized) remainder group never qualifies for a roll.
+        Assert.All(Enumerable.Range(20, 5), tileId => Assert.True(setup.board.GetCell(tileId)?.IsDead == true, $"Expected tile {tileId} to remain an untouched dead cell."));
+    }
+
+    [Fact]
     public void GetNecrophyticBloomDeadClusters_groups_only_friendly_dead_non_toxin_regions()
     {
         var setup = CreateBoard(width: 4, height: 4);
@@ -330,6 +398,32 @@ public class NecrophyticBloomTests
 
             return minValue + Next(span);
         }
+    }
+
+    /// <summary>
+    /// Returns a scripted sequence of NextDouble() values in order, then holds on the final value.
+    /// Used to prove that a single oversized cluster now gets more than one independent compost roll.
+    /// </summary>
+    private sealed class SequencedRandom : Random
+    {
+        private readonly double[] sequence;
+        private int index;
+
+        public SequencedRandom(params double[] sequence)
+        {
+            this.sequence = sequence;
+        }
+
+        public override double NextDouble()
+        {
+            double value = sequence[Math.Min(index, sequence.Length - 1)];
+            index++;
+            return value;
+        }
+
+        public override int Next(int maxValue) => maxValue <= 1 ? 0 : 0;
+
+        public override int Next(int minValue, int maxValue) => minValue;
     }
 
     private sealed class DeterministicLowRollRandom : Random
