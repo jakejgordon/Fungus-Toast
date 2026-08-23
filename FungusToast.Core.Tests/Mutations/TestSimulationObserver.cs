@@ -97,6 +97,8 @@ internal class TestSimulationObserver : ISimulationObserver
     public virtual void RecordDetritalEnzymesBonusGrowth(int playerId) { }
     public virtual void RecordDetritalEnzymesDenseDeadMatterAttempt(int playerId) { }
     public virtual void RecordDetritalEnzymesDenseDeadMatterBonusGrowth(int playerId) { }
+    public virtual void RecordToxinMarginAttempt(int playerId) { }
+    public virtual void RecordToxinMarginBonusGrowth(int playerId) { }
     public void RecordHyphalResistanceTransfer(int playerId, int count) { }
     public void RecordSeptalAlarmResistance(int playerId, int count) { }
     public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }

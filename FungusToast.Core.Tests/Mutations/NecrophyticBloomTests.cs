@@ -12,6 +12,21 @@ namespace FungusToast.Core.Tests.Mutations;
 public class NecrophyticBloomTests
 {
     [Fact]
+    public void NecrophyticBloom_is_a_tier4_substrate_ecology_mutation_with_its_approved_prerequisites()
+    {
+        var mutation = Assert.IsType<Mutation>(MutationRegistry.GetById(MutationIds.NecrophyticBloom));
+
+        Assert.Equal(MutationCategory.SubstrateEcology, mutation.Category);
+        Assert.Equal(MutationTier.Tier4, mutation.Tier);
+        Assert.Contains(mutation.Prerequisites, prerequisite =>
+            prerequisite.MutationId == MutationIds.HyphalSurge && prerequisite.RequiredLevel == 2);
+        Assert.Contains(mutation.Prerequisites, prerequisite =>
+            prerequisite.MutationId == MutationIds.DetritalEnzymes && prerequisite.RequiredLevel == 3);
+        Assert.Contains(mutation.Prerequisites, prerequisite =>
+            prerequisite.MutationId == MutationIds.AdaptiveExpression && prerequisite.RequiredLevel == 3);
+    }
+
+    [Fact]
     public void CalculateNecrophyticBloomClusterThreshold_decreases_by_level()
     {
         Assert.Equal(10, GeneticDriftMutationProcessor.CalculateNecrophyticBloomClusterThreshold(level: 1));

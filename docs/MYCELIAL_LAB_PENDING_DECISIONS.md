@@ -19,10 +19,10 @@
 | 2 | Crustward Tropism edgeward branch | Approved and implemented |
 | 3 | Compaction Pressure branch | Approved and implemented |
 | 4 | Detrital Enzymes branch | Approved and implemented |
-| 5 | Rival Rhizosphere branch | Pending |
+| 5 | Toxin Margin branch | Approved and implemented |
 | 6 | Nutrient Afterglow payoff | Pending |
 | 7 | Ecological Succession capstone | Pending |
-| 8 | Move Necrophytic Bloom to Ecology | Pending |
+| 8 | Move Necrophytic Bloom to Ecology | Approved and implemented |
 | 9 | Five later additions to existing lanes | Pending |
 | 10 | Implementation sequence | Pending |
 
@@ -141,26 +141,26 @@ Approve. It gives Ecology a clear relationship with dead zones without stealing 
 
 Approved on 2026-08-23 and implemented as the Tier-3 dead-matter branch. It remains entirely within Substrate Ecology and requires level 1 of either Tier-2 Ecology branch: Crustward Tropism or Compaction Pressure.
 
-## 5. Approve Rival Rhizosphere as the Contested-Boundary Branch?
+## 5. Approve Toxin Margin as the Toxin-Response Branch?
 
 ### Proposed mechanic
 
-Growth into an empty tile adjacent to an enemy living cell gains a bonus. It never attacks or overgrows the enemy cell.
+Growth into an empty tile adjacent to an enemy-owned toxin gains a bonus. It never grows into or removes the toxin tile.
 
 ### Proposed shape
 
-- Tier 3; proposed requirements are Aerated Frontier 5, Compaction Pressure 3, and Mycotoxin Tracer 5.
-- +3 percentage points per level; 5 levels.
-- Enemy dead and toxin cells do not qualify; multiple adjacent rivals do not multiply the bonus.
-- Opponents can fill, toxify, or retreat from the contested boundary.
+- Tier 3; requires Aerated Frontier 5 and Homeostatic Harmony 5.
+- +1.5 percentage points per level; 5 levels.
+- The target must be legal, empty, and orthogonally adjacent to an enemy-owned toxin. Multiple toxins do not multiply the bonus.
+- The bonus applies to cardinal and enabled Tendril diagonal attempts, remains under the shared Ecology cap, and never makes toxin tiles legal growth targets.
 
 ### Recommendation
 
-Approve. It rewards boundary competition while leaving direct offense in Fungicide.
+Approve. It creates a midgame toxin response that is distinct from Mycotoxin Catabolism: Catabolism removes toxins, while Toxin Margin makes routes around enemy toxin fields more reliable.
 
 ### Answer
 
-Pending.
+Approved on 2026-08-23 and implemented as **Toxin Margin**. It records enemy-toxin-adjacent attempts and bonus-attributable growths for Simulation.
 
 ## 6. Approve Nutrient Afterglow as the Patch-Consumption Payoff?
 
@@ -195,7 +195,7 @@ Once per Growth Phase, the first failed growth attempt that qualified for any Ec
 
 ### Proposed shape
 
-- Tier 5; requires Detrital Enzymes 5, Rival Rhizosphere 5, Nutrient Afterglow 3, and Mycelial Bloom 15.
+- Tier 5; requires Detrital Enzymes 5, Toxin Margin 5, Nutrient Afterglow 3, and Mycelial Bloom 15.
 - 3 levels; initial hypothesis adds +5 percentage points per level to the retry.
 - One retry per player per phase, regardless of how many Ecology contexts qualified.
 - Requires explicit deterministic ordering relative to Creeping Mold's failed-growth behavior.
@@ -221,7 +221,7 @@ Move the existing compost mechanic into Ecology because it turns dead-cell clust
 ### Consequences
 
 - Category-filtered AI spending, Unity placement, investment totals, Simulation ordering, and reporting will change category.
-- Existing prerequisites should be rebalanced separately; the revised Ecology chain is Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, and Aerated Frontier 5.
+- The approved Ecology prerequisites are Autolytic Surge 2, Detrital Enzymes 3, and Adaptive Expression 3.
 - Hyperadaptive Drift's prerequisite remains linked by ID and need not change behavior.
 - Processor ownership may move out of `GeneticDriftMutationProcessor`, but Decay-end timing must remain unchanged.
 
@@ -231,7 +231,7 @@ Approve the category move. The mechanic is fundamentally environmental compostin
 
 ### Answer
 
-Pending.
+Approved on 2026-08-23 and implemented. Mutation ID 18, owned levels, constants, Decay-end composting timing, effect behavior, tracking, and save compatibility are unchanged. Its category is now Substrate Ecology and its Tier-4 prerequisites are Autolytic Surge 2, Detrital Enzymes 3, and Adaptive Expression 3.
 
 ## 9. Approve the Five Later Additions to Existing Lanes?
 
@@ -261,8 +261,8 @@ Pending.
 
 1. Add the Core Substrate Ecology category and implement Aerated Frontier end to end. **Completed in Slice 10.**
 2. Design a replacement open-substrate specialization, then add it with Compaction Pressure as the stateless spatial pair.
-3. Add Detrital Enzymes and Rival Rhizosphere as the stateless contextual pair.
-4. Move Necrophytic Bloom in an isolated compatibility-focused slice.
+3. Add Detrital Enzymes and Toxin Margin as the stateless contextual pair. **Completed.**
+4. Move Necrophytic Bloom in an isolated compatibility-focused slice. **Completed.**
 5. Design and add Nutrient Afterglow's pending state.
 6. Add Ecological Succession after resolving failed-growth ordering.
 7. Review and batch the five existing-lane additions.

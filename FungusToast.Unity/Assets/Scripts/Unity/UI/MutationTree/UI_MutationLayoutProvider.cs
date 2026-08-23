@@ -45,7 +45,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.AdaptiveExpression,     new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
                 { MutationIds.MycotoxinCatabolism,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, 
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
-                { MutationIds.NecrophyticBloom,       new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },
                 { MutationIds.HyperadaptiveDrift,     new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
                 { MutationIds.OntogenicRegression,    new MutationLayoutMetadata(3, 6, MutationCategory.GeneticDrift) },
 
@@ -60,7 +59,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) },
                 { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(5, 1, MutationCategory.SubstrateEcology) },
                 { MutationIds.CompactionPressure,   new MutationLayoutMetadata(5, 2, MutationCategory.SubstrateEcology) },
-                { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(5, 3, MutationCategory.SubstrateEcology) }
+                { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(5, 3, MutationCategory.SubstrateEcology) },
+                { MutationIds.ToxinMargin,          new MutationLayoutMetadata(5, 4, MutationCategory.SubstrateEcology) },
+                { MutationIds.NecrophyticBloom,     new MutationLayoutMetadata(5, 5, MutationCategory.SubstrateEcology) }
             };
     }
 }

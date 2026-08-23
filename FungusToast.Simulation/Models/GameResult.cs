@@ -124,6 +124,8 @@ namespace FungusToast.Simulation.Models
                     DetritalEnzymesBonusGrowths = tracking.GetDetritalEnzymesBonusGrowths(player.PlayerId),
                     DetritalEnzymesDenseDeadMatterAttempts = tracking.GetDetritalEnzymesDenseDeadMatterAttempts(player.PlayerId),
                     DetritalEnzymesDenseDeadMatterBonusGrowths = tracking.GetDetritalEnzymesDenseDeadMatterBonusGrowths(player.PlayerId),
+                    ToxinMarginAttempts = tracking.GetToxinMarginAttempts(player.PlayerId),
+                    ToxinMarginBonusGrowths = tracking.GetToxinMarginBonusGrowths(player.PlayerId),
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),

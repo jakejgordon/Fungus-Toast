@@ -42,5 +42,6 @@ namespace FungusToast.Core
         CrustwardTropismGrowthChance,
         CompactionPressureGrowthChance,
         DetritalEnzymesGrowthChance,
+        ToxinMarginGrowthChance,
     }
 }

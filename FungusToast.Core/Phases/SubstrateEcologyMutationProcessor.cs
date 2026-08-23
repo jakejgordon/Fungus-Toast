@@ -110,6 +110,27 @@ namespace FungusToast.Core.Phases
             return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
         }
 
+        public static int CountEnemyToxinOrthogonalNeighbors(Player player, GameBoard board, BoardTile targetTile)
+        {
+            return board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
+                .Count(tile => tile.FungalCell is { IsToxin: true, OwnerPlayerId: int ownerPlayerId }
+                    && ownerPlayerId != player.PlayerId);
+        }
+
+        public static bool QualifiesForToxinMargin(Player player, GameBoard board, BoardTile targetTile)
+            => CountEnemyToxinOrthogonalNeighbors(player, board, targetTile) > 0;
+
+        public static float GetToxinMarginGrowthBonus(Player player, GameBoard board, BoardTile targetTile)
+        {
+            int level = player.GetMutationLevel(MutationIds.ToxinMargin);
+            if (level <= 0 || !QualifiesForToxinMargin(player, board, targetTile))
+            {
+                return 0f;
+            }
+
+            return System.Math.Min(level * GameBalance.ToxinMarginEffectPerLevel, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
+        }
+
         public static bool IsCrustwardTropismAutomaticCrustArrival(
             Player player,
             GameBoard board,

@@ -1,6 +1,6 @@
 # Substrate Ecology Roster Proposal
 
-> Status: Aerated Frontier is implemented as the Tier-1 root. Every other entry remains a proposal and does not change gameplay by itself.
+> Status: Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, and Necrophytic Bloom are implemented. Remaining entries are proposals and do not change gameplay by themselves.
 >
 > Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md), and the temporary [Mycelial Lab Pending Decisions](../../../docs/MYCELIAL_LAB_PENDING_DECISIONS.md) approval queue.
 
@@ -22,10 +22,10 @@ The initial implementation target remains seven new mutations plus the proposed 
 | 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +0.75 percentage points/level, 5 levels |
 | 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
 | 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
-| 3 | Rival Rhizosphere | Contested-boundary branch | Aerated Frontier 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
+| 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
 | 4 | Nutrient Afterglow | Patch-consumption payoff | Aerated Frontier 15, open specialization 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
-| 4 | Necrophytic Bloom | Existing compost mechanic; proposed category move | Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, Aerated Frontier 5 | Existing values; prerequisite rebalance isolated separately |
-| 5 | Ecological Succession | Whole-lane capstone | Detrital Enzymes 5, Rival Rhizosphere 5, Nutrient Afterglow 3, Mycelial Bloom 15 | One retry/phase; +5 points/level, 3 levels |
+| 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
+| 5 | Ecological Succession | Whole-lane capstone | Detrital Enzymes 5, Toxin Margin 5, Nutrient Afterglow 3, Mycelial Bloom 15 | One retry/phase; +5 points/level, 3 levels |
 
 ### 1. Aerated Frontier (Implemented)
 
@@ -80,17 +80,16 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Focused tests: definition/prerequisite/cost; orthogonal versus diagonal dead cells; toxin exclusion; normal and max-level scaling; dense-bonus attribution.
 - Name shortlist: **Detrital Enzymes**, Saprotrophic Margin, Necrotic Catalysis, Detritus Foraging, Lytic Frontier.
 
-### 5. Rival Rhizosphere
+### 5. Toxin Margin (Implemented)
 
-**Summary:** Growth into empty tiles adjacent to an enemy living cell gains a bonus, rewarding contested borders without damaging or overgrowing the enemy.
+**Summary:** Growth into empty tiles adjacent to enemy-owned toxins gains a bonus, helping a colony route around chemical blockades without consuming them.
 
-- Trigger/timing: per growth attempt before success roll.
-- Limits: only an empty/occupiable target qualifies; enemy dead/toxin cells do not; resistant adjacency may qualify but is never attacked.
-- AI: score reachable contested empty tiles and rival diversity; lower utility when isolated.
-- Interaction/counterplay: opponents can fill, toxify, or retreat from the boundary. Fungicide remains the direct-offense lane.
-- Tracking: qualifying attempts/successes by opposing player and contested tiles claimed.
-- Focused tests: friendly/enemy living; resistant adjacency; multiple rivals; enemy dead/toxin; target becomes occupied; no takeover event.
-- Name shortlist: **Rival Rhizosphere**, Contested Margin, Boundary Foraging, Competitive Sensing, Interfacial Hyphae.
+- Trigger/timing: per legal cardinal or enabled Tendril diagonal growth attempt before its success roll; the empty target must be orthogonally adjacent to an enemy-owned toxin.
+- Scaling: +1.5 percentage points per level for five levels, included in the shared Ecology cap.
+- Prerequisite: Aerated Frontier 5 and Homeostatic Harmony 5. This intentionally makes it a different toxin answer from Mycotoxin Catabolism, which removes toxins.
+- Limits: multiple toxins do not stack; toxin tiles remain blocked for normal growth; own toxins do not qualify.
+- Tracking: qualifying attempts and bonus-attributable successes.
+- Focused tests: approved definition/prerequisites; enemy versus own toxin; cardinal growth attribution; no synthetic target creation.
 
 ### 6. Nutrient Afterglow
 
@@ -118,14 +117,14 @@ The initial implementation target remains seven new mutations plus the proposed 
 
 ## Proposed Existing Mutation Move
 
-Move **Necrophytic Bloom** from Genetic Drift to Substrate Ecology when the Core category is introduced. Its primary mechanic converts dead-cell clusters into neutral environmental nutrient patches; randomness selects patch outcome, but it is not principally mutation economy or automatic progression.
+**Necrophytic Bloom** moved from Genetic Drift to Substrate Ecology. Its primary mechanic converts dead-cell clusters into neutral environmental nutrient patches; randomness selects patch outcome, but it is not principally mutation economy or automatic progression.
 
 Preserve mutation ID 18, owned levels, constants, description/effect, tracking, and save compatibility. Isolate these reviewable consequences:
 
-- update category factory/registration, Unity lane metadata, investment totals, Simulation sort order, AI category intent, and repository assertions;
-- decide whether to move processing ownership out of `GeneticDriftMutationProcessor` without changing Decay-end timing;
-- rebalance prerequisites separately because the current Tier-4 gate is below the documented range;
-- update Hyperadaptive Drift's prerequisite edge by ID only; its behavior need not change;
+- category factory/registration, Unity lane metadata, investment totals, and category-filtered reporting now use Ecology;
+- Decay-end processing remains in `GeneticDriftMutationProcessor` so effect timing stays unchanged;
+- approved prerequisites are Autolytic Surge 2, Detrital Enzymes 3, and Adaptive Expression 3;
+- Mutation ID 18, levels, constants, effect behavior, tracking, and save compatibility are unchanged;
 - measure how often generic AI can reach and benefit from composting before changing weights.
 
 No other existing move is recommended now. Mycotoxin Catabolism remains Genetic Drift because its primary payoff is mutation points; Putrefactive Rejuvenation remains Fungicide because it is driven by toxin expiration; all direct reclamation remains Cellular Resilience.

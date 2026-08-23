@@ -101,6 +101,13 @@ namespace FungusToast.Simulation.Analysis
                         effects["Dense Dead Matter Bonus Growths"] = player.DetritalEnzymesDenseDeadMatterBonusGrowths;
                     break;
 
+                case MutationIds.ToxinMargin:
+                    if (player.ToxinMarginAttempts > 0)
+                        effects["Enemy-toxin-adjacent Attempts"] = player.ToxinMarginAttempts;
+                    if (player.ToxinMarginBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.ToxinMarginBonusGrowths;
+                    break;
+
                 case MutationIds.RegenerativeHyphae:
                     if (player.RegenerativeHyphaeReclaims > 0)
                         effects["Reclaims"] = player.RegenerativeHyphaeReclaims;

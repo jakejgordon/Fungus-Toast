@@ -74,6 +74,41 @@ namespace FungusToast.Core.Mutations.Factories
             ),
                 new MutationPrerequisite(MutationIds.CrustwardTropism, 1),
                 new MutationPrerequisite(MutationIds.CompactionPressure, 1));
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.ToxinMargin,
+                name: "Toxin Margin",
+                description: "Helps your colony grow around enemy toxin fields.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.ToxinMarginEffectPerLevel)} growth chance to every legal cardinal or enabled Tendril diagonal attempt whose empty target is orthogonally adjacent to at least one enemy-owned toxin. Multiple toxins do not stack, and this bonus never grows into or removes toxin tiles.",
+                flavorText: "Stabilized hyphal tips trace the chemical boundary, finding the few viable pores around an inhibitory field.",
+                type: MutationType.ToxinMarginGrowthChance,
+                effectPerLevel: GameBalance.ToxinMarginEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
+                maxLevel: GameBalance.ToxinMarginMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier3
+            ),
+                new MutationPrerequisite(MutationIds.AeratedFrontier, 5),
+                new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.NecrophyticBloom,
+                name: "Necrophytic Bloom",
+                description:
+                    $"Large clusters of your dead cells can compost into neutral nutrient patches.\n\n" +
+                    $"<b>Technical:</b> At Decay Phase end, each dead non-toxin cluster of at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells has a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to convert into a neutral nutrient patch, up to {GameBalance.NecrophyticBloomMaxPatchSize} tiles and {GameBalance.NecrophyticBloomMaxPatchesPerRound} patches per round. Each level lowers the cluster requirement by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and increases compost chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}.\n" +
+                    $"<b>Max Level Bonus:</b> Can also create Hypervariation Development patches.",
+                flavorText: "The colony learns to compost its dead into concentrated nourishment, turning loss into contested resources.",
+                type: MutationType.NecrophyticBloomSporeDrop,
+                effectPerLevel: GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4) + 1,
+                maxLevel: GameBalance.NecrophyticBloomMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier4
+            ),
+                new MutationPrerequisite(MutationIds.HyphalSurge, 2),
+                new MutationPrerequisite(MutationIds.DetritalEnzymes, 3),
+                new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
         }
     }
 }

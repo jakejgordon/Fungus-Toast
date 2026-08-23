@@ -72,25 +72,6 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier3
             ), new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
 
-            // Tier-4
-            helper.MakeChild(new Mutation(
-                id: MutationIds.NecrophyticBloom,
-                name: "Necrophytic Bloom",
-                description:
-                    $"Large clusters of your dead cells can compost into neutral nutrient patches.\n\n" +
-                    $"<b>Technical:</b> At Decay Phase end, each dead non-toxin cluster of at least {GameBalance.NecrophyticBloomBaseClusterThreshold} cells has a {helper.FormatPercent(GameBalance.NecrophyticBloomBaseCompostChance, 1)} chance to convert into a neutral nutrient patch, up to {GameBalance.NecrophyticBloomMaxPatchSize} tiles and {GameBalance.NecrophyticBloomMaxPatchesPerRound} patches per round. Each level lowers the cluster requirement by {GameBalance.NecrophyticBloomClusterThresholdReductionPerLevel} and increases compost chance by {helper.FormatPercent(GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel, 1)}.\n" +
-                    $"<b>Max Level Bonus:</b> Can also create Hypervariation Development patches.",
-                flavorText: "The colony learns to compost its dead into concentrated nourishment, turning loss into contested resources.",
-                type: MutationType.NecrophyticBloomSporeDrop,
-                effectPerLevel: GameBalance.NecrophyticBloomCompostChanceIncreasePerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4) + 1,
-                maxLevel: GameBalance.NecrophyticBloomMaxLevel,
-                category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier4
-            ),
-            new MutationPrerequisite(MutationIds.AnabolicInversion, 1),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 1));
-
             // Tier-5
             helper.MakeChild(new Mutation(
                 id: MutationIds.HyperadaptiveDrift,

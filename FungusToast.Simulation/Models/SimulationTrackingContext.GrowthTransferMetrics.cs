@@ -78,6 +78,21 @@ namespace FungusToast.Simulation.Models
         public int GetDetritalEnzymesDenseDeadMatterBonusGrowths(int playerId)
             => detritalEnzymesDenseDeadMatterBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> toxinMarginAttempts = new();
+        private readonly Dictionary<int, int> toxinMarginBonusGrowths = new();
+
+        public void RecordToxinMarginAttempt(int playerId)
+            => toxinMarginAttempts[playerId] = GetToxinMarginAttempts(playerId) + 1;
+
+        public void RecordToxinMarginBonusGrowth(int playerId)
+            => toxinMarginBonusGrowths[playerId] = GetToxinMarginBonusGrowths(playerId) + 1;
+
+        public int GetToxinMarginAttempts(int playerId)
+            => toxinMarginAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetToxinMarginBonusGrowths(int playerId)
+            => toxinMarginBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
         // ────────────────
         // Perimeter Proliferator Growths
         // ────────────────
