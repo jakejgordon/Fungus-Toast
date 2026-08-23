@@ -43,5 +43,6 @@ namespace FungusToast.Core
         CompactionPressureGrowthChance,
         DetritalEnzymesGrowthChance,
         ToxinMarginGrowthChance,
+        LatentPolymorphismBankedInterest,
     }
 }

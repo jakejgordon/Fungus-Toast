@@ -15,6 +15,37 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class GeneticDriftMutationProcessor
     {
+        public static int CalculateLatentPolymorphismInterest(int level, int pointsBanked)
+        {
+            if (level <= 0 || pointsBanked <= 0)
+            {
+                return 0;
+            }
+
+            return Math.Min(
+                GameBalance.LatentPolymorphismMaxInterestPerRound,
+                (int)Math.Floor(pointsBanked * level * GameBalance.LatentPolymorphismInterestRatePerLevel));
+        }
+
+        public static int OnMutationPointsBanked_LatentPolymorphism(
+            Player player,
+            int pointsBanked,
+            ISimulationObserver? observer = null)
+        {
+            int interest = CalculateLatentPolymorphismInterest(
+                player.GetMutationLevel(MutationIds.LatentPolymorphism),
+                pointsBanked);
+            if (interest <= 0)
+            {
+                return 0;
+            }
+
+            player.MutationPoints += interest;
+            observer?.RecordLatentPolymorphismInterest(player.PlayerId, interest);
+            observer?.RecordMutationPointIncome(player.PlayerId, interest);
+            return interest;
+        }
+
         /// <summary>
         /// Tries to apply Mutator Phenotype auto-upgrade effect, including Hyperadaptive Drift bonuses.
         /// </summary>

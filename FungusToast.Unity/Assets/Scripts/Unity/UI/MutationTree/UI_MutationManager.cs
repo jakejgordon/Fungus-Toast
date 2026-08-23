@@ -1411,11 +1411,23 @@ namespace FungusToast.Unity.UI.MutationTree
                 int pointsBanked = humanPlayer.MutationPoints;
                 humanPlayer.WantsToBankPointsThisTurn = true;
                 AdaptationEffectProcessor.OnMutationPointsBanked(humanPlayer, pointsBanked);
+                int latentPolymorphismInterest = GeneticDriftMutationProcessor.OnMutationPointsBanked_LatentPolymorphism(humanPlayer, pointsBanked);
                 int bonusPointsAwarded = Math.Max(0, humanPlayer.MutationPoints - pointsBanked);
                 if (bonusPointsAwarded > 0)
                 {
                     RefreshSpendPointsButtonUI();
-                    GameManager.Instance?.GameUI?.GameLogRouter?.RecordCompoundReserveBonus(humanPlayer.PlayerId, bonusPointsAwarded);
+                    if (bonusPointsAwarded > latentPolymorphismInterest)
+                    {
+                        GameManager.Instance?.GameUI?.GameLogRouter?.RecordCompoundReserveBonus(
+                            humanPlayer.PlayerId,
+                            bonusPointsAwarded - latentPolymorphismInterest);
+                    }
+                    if (latentPolymorphismInterest > 0)
+                    {
+                        GameManager.Instance?.GameUI?.GameLogRouter?.RecordLatentPolymorphismInterest(
+                            humanPlayer.PlayerId,
+                            latentPolymorphismInterest);
+                    }
                 }
 
                 PlayMutationStorePointsSound();

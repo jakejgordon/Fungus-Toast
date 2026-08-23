@@ -23,7 +23,7 @@
 | 6 | Nutrient Afterglow payoff | Pending |
 | 7 | Ecological Succession capstone | Pending |
 | 8 | Move Necrophytic Bloom to Ecology | Approved and implemented |
-| 9 | Five later additions to existing lanes | Pending |
+| 9 | Five later additions to existing lanes | Latent Polymorphism approved and implemented; remaining entries pending |
 | 10 | Implementation sequence | Pending |
 
 ## 1. Approve Substrate Sensing as the Tier-1 Ecology Root?
@@ -240,7 +240,7 @@ These are later design inputs, not part of Slice 10:
 1. **Apical Dominance - Growth:** newly grown cells get a capped bonus on their first outward attempt in the same Growth Phase.
 2. **Septal Isolation - Cellular Resilience:** when a cell dies, adjacent friendly cells receive a capped reduction to their next death chance.
 3. **Toxin Anastomosis - Fungicide:** placing an owned toxin beside another can extend the older toxin's life by one round, capped per toxin.
-4. **Latent Polymorphism - Genetic Drift:** banking points can grant a capped chance for a later purchase to add a free level to a different Tier-1 mutation.
+4. **Latent Polymorphism - Genetic Drift:** approved and implemented as a capped interest payout when points are banked; see answer below.
 5. **Saprotrophic Pulse - Mycelial Surges:** while active, Ecology-qualified growth near dead matter can reclaim one adjacent owned dead cell.
 
 ### Main decision
@@ -253,7 +253,12 @@ Approve them only as backlog concepts. Each should receive its own values, prere
 
 ### Answer
 
-Pending.
+Latent Polymorphism was approved separately as the Tier-4 Genetic Drift replacement for Necrophytic Bloom and implemented on 2026-08-23.
+
+- Requires Mutator Phenotype 7, Adaptive Expression 5, and Anabolic Inversion 3.
+- Each of five levels grants 10% interest on the pre-interest banked amount, rounded down, capped at 5 bonus mutation points per Mutation Phase.
+- It resolves immediately for the existing human and AI bank actions, so it adds no deferred state or save/resume complexity. Compound Reserve remains a separate, additive adaptation reward.
+- The other four later-addition concepts remain pending.
 
 ## 10. Approve the Implementation Sequence?
 

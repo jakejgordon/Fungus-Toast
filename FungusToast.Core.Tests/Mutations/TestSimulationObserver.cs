@@ -58,7 +58,7 @@ internal class TestSimulationObserver : ISimulationObserver
         NecrophyticBloomPatchesByPlayer[playerId] += createdPatchCount;
     }
     public void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped) { }
-    public void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
+    public virtual void RecordMutationPointIncome(int playerId, int newMutationPoints) => LastMutationPointIncome = newMutationPoints;
     public void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded)
     {
         LastPrimePulseTriggerRound = triggerRound;
@@ -99,6 +99,7 @@ internal class TestSimulationObserver : ISimulationObserver
     public virtual void RecordDetritalEnzymesDenseDeadMatterBonusGrowth(int playerId) { }
     public virtual void RecordToxinMarginAttempt(int playerId) { }
     public virtual void RecordToxinMarginBonusGrowth(int playerId) { }
+    public virtual void RecordLatentPolymorphismInterest(int playerId, int bonusPoints) { }
     public void RecordHyphalResistanceTransfer(int playerId, int count) { }
     public void RecordSeptalAlarmResistance(int playerId, int count) { }
     public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }

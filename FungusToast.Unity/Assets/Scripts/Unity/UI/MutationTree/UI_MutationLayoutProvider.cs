@@ -45,6 +45,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.AdaptiveExpression,     new MutationLayoutMetadata(3, 1, MutationCategory.GeneticDrift) },
                 { MutationIds.MycotoxinCatabolism,    new MutationLayoutMetadata(3, 2, MutationCategory.GeneticDrift) }, 
                 { MutationIds.AnabolicInversion,      new MutationLayoutMetadata(3, 3, MutationCategory.GeneticDrift) },
+                { MutationIds.LatentPolymorphism,     new MutationLayoutMetadata(3, 4, MutationCategory.GeneticDrift) },
                 { MutationIds.HyperadaptiveDrift,     new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
                 { MutationIds.OntogenicRegression,    new MutationLayoutMetadata(3, 6, MutationCategory.GeneticDrift) },
 

@@ -162,12 +162,13 @@ Placing a toxin adjacent to an owned toxin has a chance to extend the older conn
 
 ### Genetic Drift - Latent Polymorphism (Tier 4)
 
-Banking mutation points gives the first eligible non-surge mutation purchased next turn a capped chance to receive one extra free level in a different Tier-1 mutation.
+Banking mutation points earns a capped interest payout, turning delayed spending into a late-game Genetic Drift economy engine.
 
-- Prerequisite direction: Mutator Phenotype 5, Adaptive Expression 3.
-- AI/tracking: bank decision utility, trigger/target/failure reason, free level.
-- Risks/tests: no valid target, automatic upgrades, cost order, banking zero points, save/resume, Ontogenic Regression.
-- Name shortlist: **Latent Polymorphism**, Banked Variation, Dormant Alleles, Stored Plasticity, Genetic Reserve.
+- Scaling: each of five levels grants 10% interest on the pre-interest banked amount, rounded down. Interest caps at 5 bonus mutation points per Mutation Phase and cannot compound within the same bank action.
+- Prerequisites: Mutator Phenotype 7, Adaptive Expression 5, Anabolic Inversion 3.
+- AI/tracking: existing deliberate AI bank actions receive the payout; track earned interest mutation points.
+- Risks/tests: zero/low banking thresholds, rounding, max cap, interaction with Compound Reserve, human store flow, AI bank flow, and no same-phase compounding.
+- Implementation: complete. No pending state or save-snapshot fields are needed because the payout resolves immediately when points are banked.
 
 ### Mycelial Surges - Saprotrophic Pulse (Tier 4 surge)
 

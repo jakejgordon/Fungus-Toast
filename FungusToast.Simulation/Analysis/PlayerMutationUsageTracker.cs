@@ -108,6 +108,11 @@ namespace FungusToast.Simulation.Analysis
                         effects["Bonus Growths"] = player.ToxinMarginBonusGrowths;
                     break;
 
+                case MutationIds.LatentPolymorphism:
+                    if (player.LatentPolymorphismInterest > 0)
+                        effects["Interest Mutation Points"] = player.LatentPolymorphismInterest;
+                    break;
+
                 case MutationIds.RegenerativeHyphae:
                     if (player.RegenerativeHyphaeReclaims > 0)
                         effects["Reclaims"] = player.RegenerativeHyphaeReclaims;

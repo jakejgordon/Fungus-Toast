@@ -41,5 +41,6 @@
         public const int DetritalEnzymes = 36;
         public const int CompactionPressure = 37;
         public const int ToxinMargin = 38;
+        public const int LatentPolymorphism = 39;
     }
 }

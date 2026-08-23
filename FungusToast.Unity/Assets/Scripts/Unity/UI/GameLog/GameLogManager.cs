@@ -961,6 +961,20 @@ namespace FungusToast.Unity.UI.GameLog
                     : $"Compound Reserve awarded {bonusPoints} bonus mutation points",
                 GameLogCategory.Lucky);
         }
+        public void RecordLatentPolymorphismInterest(int playerId, int bonusPoints)
+        {
+            if (!IsHuman(playerId) || bonusPoints <= 0)
+            {
+                return;
+            }
+
+            AddPlayerEvent(
+                playerId,
+                bonusPoints == 1
+                    ? "Latent Polymorphism earned 1 interest mutation point"
+                    : $"Latent Polymorphism earned {bonusPoints} interest mutation points",
+                GameLogCategory.Lucky);
+        }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordRetrogradeBloomUpgrade(int playerId, string evolvedMutationName, string devolvedMutationSummary, int devolvedPoints)

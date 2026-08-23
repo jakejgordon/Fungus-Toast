@@ -615,6 +615,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.AdaptiveExpression => BuildAdaptiveExpressionSummary(level),
                 MutationIds.MycotoxinCatabolism => BuildMycotoxinCatabolismSummary(level),
                 MutationIds.AnabolicInversion => BuildAnabolicInversionSummary(level),
+                MutationIds.LatentPolymorphism => BuildLatentPolymorphismSummary(level),
                 MutationIds.NecrophyticBloom => BuildNecrophyticBloomSummary(level),
                 MutationIds.HyperadaptiveDrift => BuildHyperadaptiveDriftSummary(level),
                 MutationIds.OntogenicRegression => BuildOntogenicRegressionSummary(level),
@@ -898,6 +899,17 @@ namespace FungusToast.Unity.UI.MutationTree
 
             float triggerBonusPercent = level * GameBalance.AnabolicInversionGapBonusPerLevel * 100f;
             return $"Adds +{triggerBonusPercent:0.00}% catch-up trigger chance based on living-cell deficit, payout 1-{GameBalance.AnabolicInversionMaxMutationPointsPerRound} mutation points";
+        }
+
+        private string BuildLatentPolymorphismSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No interest on banked mutation points yet.";
+            }
+
+            float interestPercent = level * GameBalance.LatentPolymorphismInterestRatePerLevel * 100f;
+            return $"Banked mutation points earn {interestPercent:0.00}% interest, up to {GameBalance.LatentPolymorphismMaxInterestPerRound} bonus points per Mutation Phase";
         }
 
         private string BuildNecrophyticBloomSummary(int level)

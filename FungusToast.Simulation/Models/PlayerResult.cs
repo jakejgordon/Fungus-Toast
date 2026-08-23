@@ -127,6 +127,7 @@ namespace FungusToast.Simulation.Models
         public int DetritalEnzymesDenseDeadMatterBonusGrowths { get; set; }
         public int ToxinMarginAttempts { get; set; }
         public int ToxinMarginBonusGrowths { get; set; }
+        public int LatentPolymorphismInterest { get; set; }
 
         /// <summary>
         /// The average AI score at draft time for all mycovariants picked by this player (AI only).

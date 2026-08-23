@@ -162,6 +162,12 @@ namespace FungusToast.Unity.UI.GameLog
             playerActivityLogManager?.RecordCompoundReserveBonus(playerId, bonusPoints);
         }
 
+        public void RecordLatentPolymorphismInterest(int playerId, int bonusPoints)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordLatentPolymorphismInterest(playerId, bonusPoints);
+        }
+
         public void RecordCellDeath(int playerId, DeathReason reason, int deathCount = 1)
         {
             if (IsSilentMode) return;

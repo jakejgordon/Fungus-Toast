@@ -93,6 +93,14 @@ namespace FungusToast.Simulation.Models
         public int GetToxinMarginBonusGrowths(int playerId)
             => toxinMarginBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> latentPolymorphismInterest = new();
+
+        public void RecordLatentPolymorphismInterest(int playerId, int bonusPoints)
+            => latentPolymorphismInterest[playerId] = GetLatentPolymorphismInterest(playerId) + bonusPoints;
+
+        public int GetLatentPolymorphismInterest(int playerId)
+            => latentPolymorphismInterest.TryGetValue(playerId, out int value) ? value : 0;
+
         // ────────────────
         // Perimeter Proliferator Growths
         // ────────────────

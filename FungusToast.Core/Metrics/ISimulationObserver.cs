@@ -70,6 +70,7 @@ namespace FungusToast.Core.Metrics
         void RecordDetritalEnzymesDenseDeadMatterBonusGrowth(int playerId) { }
         void RecordToxinMarginAttempt(int playerId) { }
         void RecordToxinMarginBonusGrowth(int playerId) { }
+        void RecordLatentPolymorphismInterest(int playerId, int bonusPoints) { }
         void RecordHyphalResistanceTransfer(int playerId, int count);
         void RecordSeptalAlarmResistance(int playerId, int count);
         void RecordSeptalSealResistance(int playerId, int count) { }

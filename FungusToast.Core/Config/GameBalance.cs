@@ -132,6 +132,11 @@ namespace FungusToast.Core.Config
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
         public const int MycotoxinCatabolismMaxLevel = 8;
 
+        // Latent Polymorphism (Tier 4 Genetic Drift)
+        public const float LatentPolymorphismInterestRatePerLevel = 0.10f;
+        public const int LatentPolymorphismMaxInterestPerRound = 5;
+        public const int LatentPolymorphismMaxLevel = 5;
+
         // Autolytic Surge (Tier 2 MycelialSurges; preserves the HyphalSurge save ID)
         public const float HyphalSurgeEffectPerLevel = .02f;
         public const float HyphalSurgeRandomDecayPenaltyPerLevel = .012f;

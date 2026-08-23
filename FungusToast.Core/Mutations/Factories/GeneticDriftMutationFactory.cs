@@ -72,6 +72,24 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier3
             ), new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
 
+            // Tier-4
+            helper.MakeChild(new Mutation(
+                id: MutationIds.LatentPolymorphism,
+                name: "Latent Polymorphism",
+                description: "Makes stored mutation points earn interest when you choose to bank them.\n\n" +
+                             $"<b>Technical:</b> When you bank mutation points, each level grants {helper.FormatPercent(GameBalance.LatentPolymorphismInterestRatePerLevel)} interest on the pre-interest banked amount, rounded down and capped at {GameBalance.LatentPolymorphismMaxInterestPerRound} bonus mutation points per Mutation Phase. Interest is awarded once for that bank action and cannot compound in the same phase.",
+                flavorText: "Quiescent gene networks accrue regulatory pressure until reserve metabolites release a sudden adaptive dividend.",
+                type: MutationType.LatentPolymorphismBankedInterest,
+                effectPerLevel: GameBalance.LatentPolymorphismInterestRatePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.LatentPolymorphismMaxLevel,
+                category: MutationCategory.GeneticDrift,
+                tier: MutationTier.Tier4
+            ),
+                new MutationPrerequisite(MutationIds.MutatorPhenotype, 7),
+                new MutationPrerequisite(MutationIds.AdaptiveExpression, 5),
+                new MutationPrerequisite(MutationIds.AnabolicInversion, 3));
+
             // Tier-5
             helper.MakeChild(new Mutation(
                 id: MutationIds.HyperadaptiveDrift,
