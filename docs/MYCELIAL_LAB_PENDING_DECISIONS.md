@@ -92,7 +92,7 @@ Approved as **Crustward Tropism** on 2026-08-22 and implemented as the Tier-2 re
 - Each of its 5 levels adds +0.75 percentage points to legal cardinal or enabled Tendril diagonal growth attempts whose target is strictly closer to the shape-aware playable crust than the source. Aerated Frontier is +0.4 percentage points per level for 20 levels after the approved light retune on 2026-08-22.
 - At max level, once per Growth Cycle, the first qualifying attempt that would place a new cell on the playable crust succeeds automatically. The allowance is per player, resets each cycle, and leaves the normal RNG draw in sequence.
 - It records qualifying attempts, bonus-attributable growths, and automatic crust arrivals for Simulation.
-- The active testing AIs finish Aerated Frontier, Crustward Tropism, and Detrital Enzymes before their shared Growth/Resilience build.
+- The active testing AIs max Crustward Tropism, then Creeping Mold, then Detrital Enzymes before their remaining Growth/Resilience build; their Aerated Frontier timing remains the distinguishing choice.
 
 ## 3. Approve Compaction Pressure as the Crowded-Substrate Branch?
 
