@@ -23,7 +23,7 @@ If a task is unclear, use this routing order before making changes:
 - **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
 - **Campaign systems and progression context:** `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
 - **Save/resume compatibility, migrations, and breaking-change risks:** `FungusToast.Core/docs/SAVE_COMPATIBILITY.md`
-- **Campaign modernization / recent curated roster tuning results:** `docs/campaign-modernization-2026-03-27.md`
+- **Campaign AI curation policy and current late-campaign snapshot:** `docs/CAMPAIGN_AI_CURATION.md`
 - **Moldiness meta-progression design and implementation helper:** `docs/MOLDINESS_HELPER.md`
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`
@@ -61,6 +61,7 @@ Main projects:
 - When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
+- Never commit scratch/debug output (bakeoff results, diagnostic dumps, one-off patch files, temp asset exports, etc.) at the repo root or anywhere else tracked. Put it in the repo-root `TEMP/` folder instead — it is gitignored (matches the existing `[Tt]emp/` rule) and safe to leave untracked.
 
 ## Build and Validation Expectations
 
@@ -127,6 +128,7 @@ Documentation strategy:
 - Use repository instructions and path-scoped instructions for routing, guardrails, and file-scope behavior.
 - Use agent skills only for repeatable execution workflows that benefit from an explicit step-by-step operating playbook.
 - Do not migrate general architecture, terminology, or design docs into skills unless the value is primarily workflow execution rather than shared reference.
+- Skills live only under `.agents/skills/`. `.claude/skills/` is a generated, gitignored mirror for Claude Code discovery — see `FungusToast.Core/docs/README.md` section 5 for the sync script.
 
 ## Search Guidance
 

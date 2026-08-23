@@ -7,9 +7,7 @@ Use it for:
 - current authored late-campaign snapshot
 - current keep/review guidance for campaign-safe molds
 
-Do **not** use it for detailed simulation history or long experiment logs. Those belong in:
-- `docs/WORKLOG.md`
-- experiment-specific notes such as `docs/campaign-modernization-2026-03-27.md`
+Do **not** use it for detailed simulation history or long experiment logs. Those belong in `docs/WORKLOG.md`, or a new dated experiment file if a future pass warrants one — fold any durable conclusions back into this file and delete the experiment file once it's superseded.
 
 ## Current policy direction
 
@@ -18,6 +16,7 @@ Do **not** use it for detailed simulation history or long experiment logs. Those
 - Late campaign should be validated with the safe proxy and artifact-backed reporting.
 - For balance conclusions, follow `FungusToast.Core/docs/SIMULATION_HELPER.md`.
 - Starting Adaptations are now a real authoring lever for curated elites/boss-like opponents.
+- Hard-tier molds (`*_Hard`) are too punishing before roughly Campaign10; even one hard mold as early as Campaign8 has driven the safe proxy to `0/20` in prior screens. Introduce hard identities gradually starting around Campaign10, and confirm with an artifact-backed run before locking in an earlier placement.
 
 ## Current naming / roster reality
 
@@ -136,6 +135,4 @@ When tuning campaign levels:
 - treat console output as progress only
 - make the final call from exported artifacts / analytics output
 
-For detailed evidence, commands, seeds, and prior experiments, see:
-- `docs/WORKLOG.md`
-- `docs/campaign-modernization-2026-03-27.md`
+For detailed evidence, commands, and seeds behind the current snapshot above, see `docs/WORKLOG.md`.
