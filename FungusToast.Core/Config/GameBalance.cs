@@ -104,8 +104,9 @@ namespace FungusToast.Core.Config
         public const int DetritalEnzymesDenseDeadMatterRequiredNeighbors = 2;
         public const float ToxinMarginEffectPerLevel = 0.015f;
         public const int ToxinMarginMaxLevel = 5;
-        public const float MycotoxinFissionEffectPerLevel = 0.03f;
+        public const float MycotoxinFissionEffectPerLevel = 0.06f;
         public const int MycotoxinFissionMaxLevel = 3;
+        public const int MycotoxinFissionToxinDropsPerLevel = 3;
         public const float SubstrateEcologyCombinedGrowthBonusCap = 0.25f;
 
         // Tendrils (Tier 2 Growth)

@@ -1187,6 +1187,29 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyToxinFissioner",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Fungicide,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 5),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
+                    new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Fungicide,
+                    MycovariantCategory.Resistance)
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyAutolyticDetrital",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -2198,6 +2221,7 @@ namespace FungusToast.Core.AI
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
                 ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
+                ["TST_EcologyToxinFissioner"] = StrategyTheme.Offense,
                 ["TST_EcologyAutolyticDetrital"] = StrategyTheme.Attrition,
                 ["TST_EcologyAutolyticReclaimer"] = StrategyTheme.Reclamation,
                 ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,

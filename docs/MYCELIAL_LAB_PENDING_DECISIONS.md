@@ -191,7 +191,7 @@ Not selected on 2026-08-23. The final Substrate Ecology roster is complete witho
 
 ### Approved mechanic
 
-Mycotoxin Fission is Tier 5 Substrate Ecology. Each of its three levels grants +3 percentage points growth chance when an empty growth target is orthogonally adjacent to an owned toxin. A successful qualifying growth makes the selected toxin vacate and create up to one toxin near enemy cells per level, inheriting only its remaining lifespan. At max level, the newly colonized cell automatically grows into the vacated toxin tile; this bonus growth cannot trigger another fission.
+Mycotoxin Fission is Tier 5 Substrate Ecology. Each of its three levels grants +6 percentage points growth chance when an empty growth target is orthogonally adjacent to an owned toxin. A successful qualifying growth makes the selected toxin vacate and create up to three toxins near enemy cells per level, inheriting only its remaining lifespan. At max level, the newly colonized cell automatically grows into the vacated toxin tile; this bonus growth cannot trigger another fission.
 
 ### Prerequisites
 

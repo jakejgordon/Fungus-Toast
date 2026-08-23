@@ -24,7 +24,7 @@ The lane is complete with six new mutations plus the Necrophytic Bloom move. Aer
 | 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 **or** Compaction Pressure 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
 | 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
 | 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
-| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +3 percentage points/level next to friendly toxins; up to one toxin split/level |
+| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +6 percentage points/level next to friendly toxins; up to three toxin splits/level |
 
 ### 1. Aerated Frontier (Implemented)
 
@@ -94,7 +94,7 @@ The lane is complete with six new mutations plus the Necrophytic Bloom move. Aer
 
 **Summary:** Successful growth beside a friendly toxin disperses that toxin into new toxin pressure near enemy cells.
 
-- Trigger/timing: each level adds +3 percentage points to growth into an empty cardinal or enabled Tendril-diagonal target orthogonally adjacent to an owned toxin. On success, the lowest-ID qualifying toxin vacates and creates up to one toxin near enemy cells per level.
+- Trigger/timing: each level adds +6 percentage points to growth into an empty cardinal or enabled Tendril-diagonal target orthogonally adjacent to an owned toxin. On success, the lowest-ID qualifying toxin vacates and creates up to three toxins near enemy cells per level.
 - Limits: the launched toxins inherit only the source toxin's remaining lifespan. The fission target list excludes the vacated tile. A failed or unavailable toxin placement simply produces fewer splits.
 - Max-level bonus: after the toxin vacates, the newly colonized cell automatically grows into that tile. This bonus growth cannot trigger another fission.
 - AI: value friendly toxin adjacency plus reachable enemy-adjacent toxin targets; measure whether a purpose-built toxin build can access the capstone in practical games.

@@ -25,14 +25,14 @@ public class MycotoxinFissionMutationTests
     }
 
     [Fact]
-    public void MycotoxinFission_grants_three_percent_per_level_only_next_to_a_friendly_toxin()
+    public void MycotoxinFission_grants_six_percent_per_level_only_next_to_a_friendly_toxin()
     {
         var (board, player, enemy, colonizedTile) = CreateBoard();
         player.SetMutationLevel(MutationIds.MycotoxinFission, 2, currentRound: 1);
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
 
         Assert.True(SubstrateEcologyMutationProcessor.QualifiesForMycotoxinFission(player, board, colonizedTile));
-        Assert.Equal(0.06f, SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(player, board, colonizedTile));
+        Assert.Equal(0.12f, SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(player, board, colonizedTile));
 
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, enemy);
 
@@ -65,14 +65,14 @@ public class MycotoxinFissionMutationTests
         Assert.Null(board.GetTileById(8)!.FungalCell);
         Assert.Equal(1, observer.Attempts);
         Assert.Equal(1, observer.BonusGrowths);
-        Assert.Equal(2, observer.ToxinsCreated);
+        Assert.Equal(2 * GameBalance.MycotoxinFissionToxinDropsPerLevel, observer.ToxinsCreated);
         Assert.Equal(0, observer.BridgeGrowths);
     }
 
     [Fact]
-    public void MycotoxinFission_at_max_level_splits_three_toxins_preserves_remaining_lifespan_and_grows_into_the_vacated_tile()
+    public void MycotoxinFission_at_max_level_splits_up_to_nine_toxins_preserves_remaining_lifespan_and_grows_into_the_vacated_tile()
     {
-        var (board, player, _, colonizedTile) = CreateBoard();
+        var (board, player, _, colonizedTile) = CreateHighCapacityBoard();
         player.SetMutationLevel(MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel, currentRound: 1);
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
         board.GetTileById(8)!.FungalCell!.SetGrowthCycleAge(2);
@@ -85,13 +85,14 @@ public class MycotoxinFissionMutationTests
             new LowestIndexRandom(),
             observer);
 
-        Assert.Equal(GameBalance.MycotoxinFissionMaxLevel, result.ToxinsCreated);
+        int expectedToxinsCreated = GameBalance.MycotoxinFissionMaxLevel * GameBalance.MycotoxinFissionToxinDropsPerLevel;
+        Assert.Equal(expectedToxinsCreated, result.ToxinsCreated);
         Assert.True(result.BridgeGrown);
         Assert.True(board.GetTileById(8)!.FungalCell!.IsAlive);
         Assert.Equal(GrowthSource.MycotoxinFission, board.GetTileById(8)!.FungalCell!.SourceOfGrowth);
-        Assert.Equal(GameBalance.MycotoxinFissionMaxLevel, board.AllToxinFungalCells().Count());
+        Assert.Equal(expectedToxinsCreated, board.AllToxinFungalCells().Count());
         Assert.All(board.AllToxinFungalCells(), toxin => Assert.Equal(GameBalance.DefaultToxinDuration - 2, toxin.ToxinExpirationAge));
-        Assert.Equal(GameBalance.MycotoxinFissionMaxLevel, observer.ToxinsCreated);
+        Assert.Equal(expectedToxinsCreated, observer.ToxinsCreated);
         Assert.Equal(1, observer.BridgeGrowths);
     }
 
@@ -105,6 +106,22 @@ public class MycotoxinFissionMutationTests
         Assert.True(board.SpawnSporeForPlayer(player, tileId: 13, GrowthSource.InitialSpore));
         Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 18, GrowthSource.InitialSpore));
         return (board, player, enemy, board.GetTileById(13)!);
+    }
+
+    private static (GameBoard board, Player player, Player enemy, BoardTile colonizedTile) CreateHighCapacityBoard()
+    {
+        var board = new GameBoard(width: 7, height: 7, playerCount: 2);
+        var player = new Player(0, "Player", PlayerTypeEnum.AI);
+        var enemy = new Player(1, "Enemy", PlayerTypeEnum.AI);
+        board.Players.Add(player);
+        board.Players.Add(enemy);
+        Assert.True(board.SpawnSporeForPlayer(player, tileId: 25, GrowthSource.InitialSpore));
+        Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 3, GrowthSource.InitialSpore));
+        Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 7, GrowthSource.InitialSpore));
+        Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 43, GrowthSource.InitialSpore));
+        Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 47, GrowthSource.InitialSpore));
+        ToxinHelper.ConvertToToxin(board, tileId: 18, GrowthSource.MycotoxinTracer, player);
+        return (board, player, enemy, board.GetTileById(25)!);
     }
 
     private sealed class LowestIndexRandom : Random

@@ -190,7 +190,8 @@ namespace FungusToast.Core.Phases
                 .Where(tile => tile.TileId != vacatedTileId)
                 .ToList();
             int toxinsCreated = 0;
-            for (int split = 0; split < level && candidateTiles.Count > 0; split++)
+            int toxinDropCap = level * GameBalance.MycotoxinFissionToxinDropsPerLevel;
+            for (int split = 0; split < toxinDropCap && candidateTiles.Count > 0; split++)
             {
                 int index = rng.Next(candidateTiles.Count);
                 BoardTile target = candidateTiles[index];

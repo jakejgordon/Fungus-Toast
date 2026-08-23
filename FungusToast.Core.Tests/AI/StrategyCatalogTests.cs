@@ -113,6 +113,25 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Ecology_toxin_fissioner_targets_the_full_toxin_margin_and_fission_chain()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyToxinFissioner"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.HomeostaticHarmony, 5),
+                (MutationIds.AeratedFrontier, 5),
+                (MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                (MutationIds.MycotoxinPotentiation, 5),
+                (MutationIds.PutrefactiveMycotoxin, 2),
+                (MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
+    }
+
+    [Fact]
     public void Ecology_autolytic_detrital_strategy_keeps_its_approved_staged_surge_order()
     {
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyAutolyticDetrital"]);
