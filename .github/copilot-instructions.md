@@ -127,6 +127,7 @@ Documentation strategy:
 - Use repository instructions and path-scoped instructions for routing, guardrails, and file-scope behavior.
 - Use agent skills only for repeatable execution workflows that benefit from an explicit step-by-step operating playbook.
 - Do not migrate general architecture, terminology, or design docs into skills unless the value is primarily workflow execution rather than shared reference.
+- Skills live only under `.agents/skills/`. `.claude/skills/` is a generated, gitignored mirror for Claude Code discovery — see `FungusToast.Core/docs/README.md` section 5 for the sync script.
 
 ## Search Guidance
 
