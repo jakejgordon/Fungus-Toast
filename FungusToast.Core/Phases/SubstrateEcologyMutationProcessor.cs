@@ -19,7 +19,7 @@ namespace FungusToast.Core.Phases
 
         public static bool QualifiesForAeratedFrontier(GameBoard board, BoardTile sourceTile)
         {
-            return sourceTile.FungalCell is { IsAlive: true, GrowthCycleAge: < GameBalance.AeratedFrontierMaximumEligibleGrowthCycleAge }
+            return sourceTile.FungalCell is { IsAlive: true, GrowthCycleAge: > GameBalance.AeratedFrontierMinimumExclusiveGrowthCycleAge }
                 && CountOpenOrthogonalSpaces(board, sourceTile)
                     >= GameBalance.AeratedFrontierRequiredOpenOrthogonalSpaces;
         }

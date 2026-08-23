@@ -27,6 +27,7 @@ public class AeratedFrontierMutationTests
     {
         var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 4, currentRound: 1);
+        sourceTile.FungalCell!.SetGrowthCycleAge(6);
 
         int openSpaces = SubstrateEcologyMutationProcessor.CountOpenOrthogonalSpaces(board, sourceTile);
         float bonus = SubstrateEcologyMutationProcessor.GetAeratedFrontierGrowthBonus(player, board, sourceTile);
@@ -59,15 +60,16 @@ public class AeratedFrontierMutationTests
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
 
         var sourceTile = board.GetTileById(0)!;
+        sourceTile.FungalCell!.SetGrowthCycleAge(6);
 
         Assert.Equal(2, SubstrateEcologyMutationProcessor.CountOpenOrthogonalSpaces(board, sourceTile));
         Assert.True(SubstrateEcologyMutationProcessor.QualifiesForAeratedFrontier(board, sourceTile));
     }
 
     [Theory]
-    [InlineData(4, true)]
     [InlineData(5, false)]
-    public void AeratedFrontier_requires_a_source_younger_than_five_growth_cycles(int growthCycleAge, bool expectedQualification)
+    [InlineData(6, true)]
+    public void AeratedFrontier_requires_a_source_older_than_five_growth_cycles(int growthCycleAge, bool expectedQualification)
     {
         var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
@@ -83,8 +85,9 @@ public class AeratedFrontierMutationTests
     [Fact]
     public void Growth_cycle_records_growth_that_only_succeeds_due_to_aerated_frontier()
     {
-        var (board, player, _) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
+        var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
+        sourceTile.FungalCell!.SetGrowthCycleAge(6);
         var observer = new AeratedFrontierObserver();
 
         GrowthEngine.ExecuteGrowthCycle(
