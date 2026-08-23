@@ -1124,6 +1124,39 @@ namespace FungusToast.Core.AI
         private static readonly List<IMutationSpendingStrategy> _rawTestingStrategies = new List<IMutationSpendingStrategy>
         {
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyCrustFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.IgnoreEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 10),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyFrontierFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.IgnoreEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyFrontierExpansion",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.IgnoreEconomy,

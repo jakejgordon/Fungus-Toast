@@ -18,8 +18,8 @@ The initial implementation target remains seven new mutations plus the proposed 
 
 | Tier | Recommended name | Role | Proposed prerequisites | Initial scaling hypothesis |
 |---|---|---|---|---|
-| 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.5 percentage points/level, 20 levels |
-| 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +1 percentage point/level, 5 levels |
+| 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.4 percentage points/level, 20 levels |
+| 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +0.75 percentage points/level, 5 levels |
 | 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
 | 3 | Detrital Enzymes | Dead-matter branch | Aerated Frontier 5, open specialization 3, Necrosporulation 3 | +3 points/level, 5 levels |
 | 3 | Rival Rhizosphere | Contested-boundary branch | Aerated Frontier 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
@@ -32,7 +32,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 **Summary:** Growth attempts from living cells with at least two orthogonally adjacent open spaces gain a small bonus.
 
 - Trigger/timing: per cardinal or Tendril growth attempt, before its success roll; qualification is evaluated from the source cell's current orthogonal neighbors.
-- Scaling: +0.5 percentage points per level, 20 levels, included in the configurable Ecology combined cap.
+- Scaling: +0.4 percentage points per level, 20 levels, included in the configurable Ecology combined cap.
 - Limits: cells, toxins, nutrient patches, permanent blocks, and active chemobeacons are not open. Off-board positions are absent rather than counted as closed, so corner cells can qualify with their two available neighbors.
 - AI: available as a normal Ecology root. Two Testing strategies begin with staged investment before branching into Growth or Cellular Resilience.
 - Interaction/counterplay: occupation and environmental blockers suppress the bonus; new frontier cells naturally create new opportunities as the colony expands.
@@ -45,7 +45,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 **Summary:** Legal growth attempts that move closer to the playable crust gain a bonus, making outward routes more reliable without creating a universal growth increase.
 
 - Trigger/timing: per legal cardinal or enabled Tendril diagonal growth attempt, before its success roll. The target must have a strictly lower shape-aware playable-edge distance than the source.
-- Scaling: +1 percentage point per level, 5 levels, included in the shared Ecology growth-bonus cap.
+- Scaling: +0.75 percentage points per level, 5 levels, included in the shared Ecology growth-bonus cap.
 - Max-level bonus: once per Growth Cycle, the first qualifying attempt that would place a new cell on the playable crust succeeds automatically. The per-player allowance resets at the next cycle and consumes the normal random roll to preserve deterministic RNG sequencing.
 - Limits: blocks, toxins, occupied tiles, and off-board directions cannot become targets. A diagonal still requires its matching Tendril to grant a non-zero growth chance. A sideways edge attempt does not qualify.
 - AI: the Ecology expansion testing strategy reaches Aerated Frontier 10, then maxes Crustward Tropism before its Growth investment.

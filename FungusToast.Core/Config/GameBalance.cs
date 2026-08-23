@@ -87,10 +87,10 @@ namespace FungusToast.Core.Config
         public const int MutatorPhenotypeMaxLevel = 10;
 
         // Aerated Frontier (Tier 1 Substrate Ecology)
-        public const float AeratedFrontierEffectPerLevel = 0.005f;
+        public const float AeratedFrontierEffectPerLevel = 0.004f;
         public const int AeratedFrontierMaxLevel = 20;
         public const int AeratedFrontierRequiredOpenOrthogonalSpaces = 2;
-        public const float CrustwardTropismEffectPerLevel = 0.01f;
+        public const float CrustwardTropismEffectPerLevel = 0.0075f;
         public const int CrustwardTropismMaxLevel = 5;
         public const float SubstrateEcologyCombinedGrowthBonusCap = 0.25f;
 

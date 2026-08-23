@@ -35,6 +35,8 @@ public class StrategyCatalogTests
     }
 
     [Theory]
+    [InlineData("TST_EcologyCrustFirst")]
+    [InlineData("TST_EcologyFrontierFirst")]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]
     public void Ecology_testing_strategies_begin_with_aerated_frontier(string strategyName)
@@ -48,6 +50,8 @@ public class StrategyCatalogTests
     }
 
     [Theory]
+    [InlineData("TST_EcologyCrustFirst")]
+    [InlineData("TST_EcologyFrontierFirst")]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]
     public void Ecology_testing_strategies_buy_aerated_frontier_first(string strategyName)
@@ -66,6 +70,31 @@ public class StrategyCatalogTests
 
         Assert.Equal(1, player.GetMutationLevel(MutationIds.AeratedFrontier));
         Assert.Equal(0, player.GetMutationLevel(MutationIds.MutatorPhenotype));
+    }
+
+    [Fact]
+    public void Ecology_crust_first_and_frontier_first_strategies_keep_their_approved_target_order()
+    {
+        var crustFirst = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyCrustFirst"]);
+        var frontierFirst = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyFrontierFirst"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.AeratedFrontier, 10),
+                (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+            },
+            crustFirst.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+            },
+            frontierFirst.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
     }
 
     [Fact]
