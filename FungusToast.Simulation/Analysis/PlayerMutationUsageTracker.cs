@@ -81,6 +81,15 @@ namespace FungusToast.Simulation.Analysis
                         effects["Bonus Growths"] = player.AeratedFrontierBonusGrowths;
                     break;
 
+                case MutationIds.CrustwardTropism:
+                    if (player.CrustwardTropismAttempts > 0)
+                        effects["Crustward Attempts"] = player.CrustwardTropismAttempts;
+                    if (player.CrustwardTropismBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.CrustwardTropismBonusGrowths;
+                    if (player.CrustwardTropismAutomaticGrowths > 0)
+                        effects["Automatic Crust Growths"] = player.CrustwardTropismAutomaticGrowths;
+                    break;
+
                 case MutationIds.RegenerativeHyphae:
                     if (player.RegenerativeHyphaeReclaims > 0)
                         effects["Reclaims"] = player.RegenerativeHyphaeReclaims;

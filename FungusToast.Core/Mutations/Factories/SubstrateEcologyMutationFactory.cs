@@ -26,6 +26,22 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.SubstrateEcology,
                 tier: MutationTier.Tier1
             ));
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.CrustwardTropism,
+                name: "Crustward Tropism",
+                description: "Helps your colony press outward toward the playable crust.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.CrustwardTropismEffectPerLevel)} growth chance to every legal cardinal or enabled Tendril diagonal attempt whose target is closer to the playable crust than its source.\n" +
+                             "<b>Max Level Bonus:</b> Once per Growth Cycle, the first qualifying attempt that would place a cell on the playable crust succeeds automatically.",
+                flavorText: "Hyphal tips align with the drying gradient at the loaf's perimeter, seeking the exposed crust.",
+                type: MutationType.CrustwardTropismGrowthChance,
+                effectPerLevel: GameBalance.CrustwardTropismEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.CrustwardTropismMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier2
+            ),
+                new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
         }
     }
 }

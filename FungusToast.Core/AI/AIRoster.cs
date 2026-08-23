@@ -1135,6 +1135,7 @@ namespace FungusToast.Core.AI
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.AeratedFrontier, 10),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
                     new TargetMutationGoal(MutationIds.MycelialBloom, 10),
                     new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)

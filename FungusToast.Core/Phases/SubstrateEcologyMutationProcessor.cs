@@ -35,6 +35,38 @@ namespace FungusToast.Core.Phases
             return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
         }
 
+        public static bool QualifiesForCrustwardTropism(GameBoard board, BoardTile sourceTile, BoardTile targetTile)
+        {
+            int? sourceDistance = board.GetPlayableEdgeDistance(sourceTile.TileId);
+            int? targetDistance = board.GetPlayableEdgeDistance(targetTile.TileId);
+            return sourceDistance.HasValue
+                && targetDistance.HasValue
+                && targetDistance.Value < sourceDistance.Value;
+        }
+
+        public static float GetCrustwardTropismGrowthBonus(Player player, GameBoard board, BoardTile sourceTile, BoardTile targetTile)
+        {
+            int level = player.GetMutationLevel(MutationIds.CrustwardTropism);
+            if (level <= 0 || !QualifiesForCrustwardTropism(board, sourceTile, targetTile))
+            {
+                return 0f;
+            }
+
+            float bonus = level * GameBalance.CrustwardTropismEffectPerLevel;
+            return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
+        }
+
+        public static bool IsCrustwardTropismAutomaticCrustArrival(
+            Player player,
+            GameBoard board,
+            BoardTile sourceTile,
+            BoardTile targetTile)
+        {
+            return player.GetMutationLevel(MutationIds.CrustwardTropism) >= GameBalance.CrustwardTropismMaxLevel
+                && board.IsPlayableEdgeTile(targetTile.TileId)
+                && QualifiesForCrustwardTropism(board, sourceTile, targetTile);
+        }
+
         private static bool IsOpenForAeratedFrontier(GameBoard board, BoardTile tile)
         {
             return !tile.IsOccupiedForSporePlacement

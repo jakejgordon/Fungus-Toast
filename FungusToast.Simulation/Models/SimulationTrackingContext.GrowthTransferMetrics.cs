@@ -21,6 +21,34 @@ namespace FungusToast.Simulation.Models
         public int GetAeratedFrontierBonusGrowths(int playerId)
             => aeratedFrontierBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> crustwardTropismAttempts = new();
+        private readonly Dictionary<int, int> crustwardTropismBonusGrowths = new();
+        private readonly Dictionary<int, int> crustwardTropismAutomaticGrowths = new();
+
+        public void RecordCrustwardTropismAttempt(int playerId)
+        {
+            crustwardTropismAttempts[playerId] = GetCrustwardTropismAttempts(playerId) + 1;
+        }
+
+        public void RecordCrustwardTropismBonusGrowth(int playerId)
+        {
+            crustwardTropismBonusGrowths[playerId] = GetCrustwardTropismBonusGrowths(playerId) + 1;
+        }
+
+        public void RecordCrustwardTropismAutomaticGrowth(int playerId)
+        {
+            crustwardTropismAutomaticGrowths[playerId] = GetCrustwardTropismAutomaticGrowths(playerId) + 1;
+        }
+
+        public int GetCrustwardTropismAttempts(int playerId)
+            => crustwardTropismAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetCrustwardTropismBonusGrowths(int playerId)
+            => crustwardTropismBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetCrustwardTropismAutomaticGrowths(int playerId)
+            => crustwardTropismAutomaticGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
         // ────────────────
         // Perimeter Proliferator Growths
         // ────────────────

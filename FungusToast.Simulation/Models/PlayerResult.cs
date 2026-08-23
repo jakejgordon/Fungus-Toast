@@ -118,6 +118,9 @@ namespace FungusToast.Simulation.Models
         public int PerimeterProliferatorGrowths { get; set; }
         public int AeratedFrontierAttempts { get; set; }
         public int AeratedFrontierBonusGrowths { get; set; }
+        public int CrustwardTropismAttempts { get; set; }
+        public int CrustwardTropismBonusGrowths { get; set; }
+        public int CrustwardTropismAutomaticGrowths { get; set; }
 
         /// <summary>
         /// The average AI score at draft time for all mycovariants picked by this player (AI only).

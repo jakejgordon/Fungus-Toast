@@ -61,6 +61,9 @@ namespace FungusToast.Core.Metrics
         void RecordPerimeterProliferatorGrowth(int playerId);
         void RecordAeratedFrontierAttempt(int playerId) { }
         void RecordAeratedFrontierBonusGrowth(int playerId) { }
+        void RecordCrustwardTropismAttempt(int playerId) { }
+        void RecordCrustwardTropismBonusGrowth(int playerId) { }
+        void RecordCrustwardTropismAutomaticGrowth(int playerId) { }
         void RecordHyphalResistanceTransfer(int playerId, int count);
         void RecordSeptalAlarmResistance(int playerId, int count);
         void RecordSeptalSealResistance(int playerId, int count) { }

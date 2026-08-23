@@ -117,6 +117,9 @@ namespace FungusToast.Simulation.Models
                     PutrefactiveRejuvenationCyclesReduced = tracking.GetPutrefactiveRejuvenationGrowthCyclesReduced(player.PlayerId),
                     AeratedFrontierAttempts = tracking.GetAeratedFrontierAttempts(player.PlayerId),
                     AeratedFrontierBonusGrowths = tracking.GetAeratedFrontierBonusGrowths(player.PlayerId),
+                    CrustwardTropismAttempts = tracking.GetCrustwardTropismAttempts(player.PlayerId),
+                    CrustwardTropismBonusGrowths = tracking.GetCrustwardTropismBonusGrowths(player.PlayerId),
+                    CrustwardTropismAutomaticGrowths = tracking.GetCrustwardTropismAutomaticGrowths(player.PlayerId),
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),

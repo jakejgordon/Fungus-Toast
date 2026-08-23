@@ -90,6 +90,8 @@ namespace FungusToast.Core.Config
         public const float AeratedFrontierEffectPerLevel = 0.005f;
         public const int AeratedFrontierMaxLevel = 20;
         public const int AeratedFrontierRequiredOpenOrthogonalSpaces = 2;
+        public const float CrustwardTropismEffectPerLevel = 0.01f;
+        public const int CrustwardTropismMaxLevel = 5;
         public const float SubstrateEcologyCombinedGrowthBonusCap = 0.25f;
 
         // Tendrils (Tier 2 Growth)

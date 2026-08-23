@@ -16,7 +16,7 @@
 | # | Decision | Status |
 |---|---|---|
 | 1 | Substrate Sensing root | Rejected; Aerated Frontier replacement implemented |
-| 2 | Aerated Frontier branch | Superseded by Tier-1 implementation; replacement branch pending |
+| 2 | Crustward Tropism edgeward branch | Approved and implemented |
 | 3 | Compaction Pressure branch | Pending |
 | 4 | Detrital Enzymes branch | Pending |
 | 5 | Rival Rhizosphere branch | Pending |
@@ -84,19 +84,15 @@ Implemented across Core, AI, Simulation tracking/reporting, Unity mutation-tree 
 
 Aerated Frontier was originally proposed as a Tier-2 branch using five open tiles among all eight neighbors. It has instead been promoted and reworked into the approved Tier-1 root described under Decision 1.
 
-### Proposed shape
-
-- Tier 2; requires the implemented Aerated Frontier root.
-- Must deepen open-substrate play without merely repeating the root's two-open-neighbor bonus.
-- Name, trigger, values, and prerequisites require a replacement proposal.
-
-### Recommendation
-
-Do not implement the old Tier-2 Aerated Frontier proposal. Design a replacement open-substrate specialization before the paired Tier-2 slice.
-
 ### Answer
 
-Original proposal superseded; replacement branch pending.
+Approved as **Crustward Tropism** on 2026-08-22 and implemented as the Tier-2 replacement.
+
+- Requires Aerated Frontier 10 and costs 2 mutation points per upgrade.
+- Each of its 5 levels adds +1 percentage point to legal cardinal or enabled Tendril diagonal growth attempts whose target is strictly closer to the shape-aware playable crust than the source.
+- At max level, once per Growth Cycle, the first qualifying attempt that would place a new cell on the playable crust succeeds automatically. The allowance is per player, resets each cycle, and leaves the normal RNG draw in sequence.
+- It records qualifying attempts, bonus-attributable growths, and automatic crust arrivals for Simulation.
+- The active testing AI reaches Aerated Frontier 10, then maxes Crustward Tropism before investing in Growth.
 
 ## 3. Approve Compaction Pressure as the Crowded-Substrate Branch?
 

@@ -39,5 +39,6 @@ namespace FungusToast.Core
         HyphalSurge,
         ChemotacticBeacon,
         AeratedFrontierGrowthChance,
+        CrustwardTropismGrowthChance,
     }
 }

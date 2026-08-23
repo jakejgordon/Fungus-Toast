@@ -19,7 +19,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 | Tier | Recommended name | Role | Proposed prerequisites | Initial scaling hypothesis |
 |---|---|---|---|---|
 | 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.5 percentage points/level, 20 levels |
-| 2 | Open specialization TBD | Replacement branch | Aerated Frontier 10 | Mechanic and scaling require approval |
+| 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +1 percentage point/level, 5 levels |
 | 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
 | 3 | Detrital Enzymes | Dead-matter branch | Aerated Frontier 5, open specialization 3, Necrosporulation 3 | +3 points/level, 5 levels |
 | 3 | Rival Rhizosphere | Contested-boundary branch | Aerated Frontier 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
@@ -40,13 +40,19 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Focused tests: root registration; exact scaling; 1/2-open threshold; cells/nutrients/blocks excluded; corner qualification; deterministic bonus-only success attribution; AI goal ordering.
 - Name shortlist checked before approval: **Aerated Frontier**, Porous Frontier, Open Hyphae, Sparse Branching, Frontier Aeration.
 
-### 2. Open-Substrate Specialization (Replacement Needed)
+### 2. Crustward Tropism (Implemented)
 
-The original Aerated Frontier Tier-2 proposal was promoted and reworked into the Tier-1 root. This slot needs a distinct mechanic that deepens open-substrate play without repeating the root bonus.
+**Summary:** Legal growth attempts that move closer to the playable crust gain a bonus, making outward routes more reliable without creating a universal growth increase.
 
-- Required before implementation: mechanic, name shortlist, scaling, AI valuation, counterplay, tracking, and focused tests.
-- Intended prerequisite direction: Aerated Frontier 10.
-- Compaction Pressure remains the proposed opposite Tier-2 specialization.
+- Trigger/timing: per legal cardinal or enabled Tendril diagonal growth attempt, before its success roll. The target must have a strictly lower shape-aware playable-edge distance than the source.
+- Scaling: +1 percentage point per level, 5 levels, included in the shared Ecology growth-bonus cap.
+- Max-level bonus: once per Growth Cycle, the first qualifying attempt that would place a new cell on the playable crust succeeds automatically. The per-player allowance resets at the next cycle and consumes the normal random roll to preserve deterministic RNG sequencing.
+- Limits: blocks, toxins, occupied tiles, and off-board directions cannot become targets. A diagonal still requires its matching Tendril to grant a non-zero growth chance. A sideways edge attempt does not qualify.
+- AI: the Ecology expansion testing strategy reaches Aerated Frontier 10, then maxes Crustward Tropism before its Growth investment.
+- Interaction/counterplay: the bonus ends on routes that do not approach the crust; blocked or occupied outer routes deny it. Test against Perimeter Proliferator, whose source-near-crust multiplier can create a strong but sequential edge strategy.
+- Tracking: qualifying attempts, bonus-attributable successes, and max-level automatic crust arrivals are exported through Simulation.
+- Focused tests: registration/cost/prerequisite; strict distance reduction; no same-distance bonus; cardinal bonus attribution; one automatic arrival per player per cycle; reset on next cycle; enabled diagonal Tendril arrival.
+- Name shortlist checked before approval: **Crustward Tropism**, Boundary Tropism, Edgeward Tropism, Marginward Growth, Peripheral Hyphae.
 
 ### 3. Compaction Pressure
 

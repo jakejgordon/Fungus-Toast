@@ -57,7 +57,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(4, 4, MutationCategory.MycelialSurges) },
 
                 /* ------------ Substrate Ecology (col 5) ------------ */
-                { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) }
+                { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) },
+                { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(5, 1, MutationCategory.SubstrateEcology) }
             };
     }
 }

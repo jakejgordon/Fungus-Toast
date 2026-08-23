@@ -39,7 +39,7 @@ internal class TestSimulationObserver : ISimulationObserver
     public void RecordCreepingMoldToxinJump(int playerId) { }
     public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
     public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount) { }
-    public void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
+    public virtual void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
     public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { }
     public void RecordNutrientPatchesPlaced(int count) { }
     public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount) { }
@@ -90,6 +90,9 @@ internal class TestSimulationObserver : ISimulationObserver
     public void RecordPerimeterProliferatorGrowth(int playerId) { }
     public virtual void RecordAeratedFrontierAttempt(int playerId) { }
     public virtual void RecordAeratedFrontierBonusGrowth(int playerId) { }
+    public virtual void RecordCrustwardTropismAttempt(int playerId) { }
+    public virtual void RecordCrustwardTropismBonusGrowth(int playerId) { }
+    public virtual void RecordCrustwardTropismAutomaticGrowth(int playerId) { }
     public void RecordHyphalResistanceTransfer(int playerId, int count) { }
     public void RecordSeptalAlarmResistance(int playerId, int count) { }
     public void RecordEnduringToxaphoresExtendedCycles(int playerId, int cycles) { }
