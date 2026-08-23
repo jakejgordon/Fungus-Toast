@@ -61,6 +61,7 @@ Main projects:
 - When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
+- Never commit scratch/debug output (bakeoff results, diagnostic dumps, one-off patch files, temp asset exports, etc.) at the repo root or anywhere else tracked. Put it in the repo-root `TEMP/` folder instead — it is gitignored (matches the existing `[Tt]emp/` rule) and safe to leave untracked.
 
 ## Build and Validation Expectations
 
