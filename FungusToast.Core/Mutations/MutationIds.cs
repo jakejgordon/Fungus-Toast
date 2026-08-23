@@ -39,5 +39,6 @@
         public const int AeratedFrontier = 34;
         public const int CrustwardTropism = 35;
         public const int DetritalEnzymes = 36;
+        public const int CompactionPressure = 37;
     }
 }

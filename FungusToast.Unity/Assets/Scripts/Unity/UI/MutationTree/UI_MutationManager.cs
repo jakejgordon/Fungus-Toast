@@ -1965,7 +1965,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return false;
             }
 
-            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites)
+            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites.Concat(mutation.AnyPrerequisiteGroups.SelectMany(group => group.Alternatives)))
             {
                 if (prerequisite.MutationId == prerequisiteId
                     && player.GetMutationLevel(prerequisiteId) < prerequisite.RequiredLevel)
@@ -2030,7 +2030,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void CollectPrerequisitePathIds(Mutation mutation, HashSet<int> result)
         {
-            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites)
+            foreach (MutationPrerequisite prerequisite in mutation.Prerequisites.Concat(mutation.AnyPrerequisiteGroups.SelectMany(group => group.Alternatives)))
             {
                 if (!result.Add(prerequisite.MutationId))
                 {
@@ -2081,7 +2081,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             foreach (var mutation in mutations)
             {
-                foreach (var prereq in mutation.Prerequisites)
+                foreach (var prereq in mutation.Prerequisites.Concat(mutation.AnyPrerequisiteGroups.SelectMany(group => group.Alternatives)))
                 {
                     if (!directDependentsByMutationId.TryGetValue(prereq.MutationId, out var dependents))
                     {

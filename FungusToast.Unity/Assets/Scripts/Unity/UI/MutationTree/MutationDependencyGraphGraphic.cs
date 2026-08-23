@@ -53,7 +53,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     continue;
                 }
 
-                foreach (MutationPrerequisite prerequisite in dependent.Prerequisites)
+                foreach (MutationPrerequisite prerequisite in dependent.Prerequisites.Concat(dependent.AnyPrerequisiteGroups.SelectMany(group => group.Alternatives)))
                 {
                     if (!nodesById.TryGetValue(prerequisite.MutationId, out MutationNodeUI prerequisiteNode)
                         || !mutationsById.TryGetValue(prerequisite.MutationId, out Mutation prerequisiteMutation))

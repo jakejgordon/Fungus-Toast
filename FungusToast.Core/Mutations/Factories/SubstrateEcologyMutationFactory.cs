@@ -44,6 +44,21 @@ namespace FungusToast.Core.Mutations.Factories
                 new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
 
             helper.MakeChild(new Mutation(
+                id: MutationIds.CompactionPressure,
+                name: "Compaction Pressure",
+                description: "Helps your colony push through cramped territory.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.CompactionPressureEffectPerLevel)} growth chance to every growth attempt from a living cell with {GameBalance.CompactionPressureMinimumLegalOrthogonalTargets}-{GameBalance.CompactionPressureMaximumLegalOrthogonalTargets} legal orthogonal growth targets. Fully sealed cells gain no attempt.",
+                flavorText: "Compressed hyphae redirect their force into the few pores that remain.",
+                type: MutationType.CompactionPressureGrowthChance,
+                effectPerLevel: GameBalance.CompactionPressureEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.CompactionPressureMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier2
+            ),
+                new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
+
+            helper.MakeChildWithAnyPrerequisiteGroup(new Mutation(
                 id: MutationIds.DetritalEnzymes,
                 name: "Detrital Enzymes",
                 description: "Helps your colony spread through nearby dead matter.\n\n" +
@@ -57,7 +72,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.SubstrateEcology,
                 tier: MutationTier.Tier3
             ),
-                new MutationPrerequisite(MutationIds.CrustwardTropism, 1));
+                new MutationPrerequisite(MutationIds.CrustwardTropism, 1),
+                new MutationPrerequisite(MutationIds.CompactionPressure, 1));
         }
     }
 }

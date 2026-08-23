@@ -259,6 +259,16 @@ namespace FungusToast.Core.AI
                 foreach (var prereq in mutation.Prerequisites)
                     Visit(prereq.MutationId, prereq.RequiredLevel);
 
+                foreach (var group in mutation.AnyPrerequisiteGroups)
+                {
+                    MutationPrerequisite selected = group.Alternatives
+                        .OrderByDescending(prerequisite => player.GetMutationLevel(prerequisite.MutationId) >= prerequisite.RequiredLevel)
+                        .ThenBy(prerequisite => Math.Max(0, prerequisite.RequiredLevel - player.GetMutationLevel(prerequisite.MutationId)))
+                        .ThenBy(prerequisite => prerequisite.MutationId)
+                        .First();
+                    Visit(selected.MutationId, selected.RequiredLevel);
+                }
+
                 foreach (var prerequisite in mutation.CategoryInvestmentPrerequisites)
                     VisitCategoryInvestment(prerequisite);
 

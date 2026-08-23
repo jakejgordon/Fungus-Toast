@@ -71,6 +71,16 @@ namespace FungusToast.Core.Mutations.Factories
             return m;
         }
 
+        public Mutation MakeChildWithAnyPrerequisiteGroup(Mutation m, params MutationPrerequisite[] alternatives)
+        {
+            m.AnyPrerequisiteGroups.Add(new MutationAnyPrerequisiteGroup(alternatives));
+            _allMutations[m.Id] = m;
+            foreach (var prerequisite in alternatives)
+                if (_allMutations.TryGetValue(prerequisite.MutationId, out var parent))
+                    parent.Children.Add(m);
+            return m;
+        }
+
         public Mutation MakeChildWithCategoryInvestmentPrerequisites(
             Mutation m,
             IEnumerable<MutationPrerequisite> mutationPrerequisites,

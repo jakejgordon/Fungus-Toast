@@ -583,11 +583,7 @@ namespace FungusToast.Unity.UI.MutationTree
             int currentLevel = player.GetMutationLevel(mutation.Id);
             if (currentLevel >= mutation.MaxLevel) return false;
 
-            foreach (var prereq in mutation.Prerequisites)
-            {
-                if (player.GetMutationLevel(prereq.MutationId) < prereq.RequiredLevel)
-                    return false;
-            }
+            if (!MutationPrerequisiteEvaluator.AreAllMet(mutation, player)) return false;
 
             int cost = player.GetMutationPointCost(mutation);
             return player.MutationPoints >= cost;

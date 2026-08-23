@@ -11,7 +11,7 @@ namespace FungusToast.Core.Tests.Mutations;
 public class DetritalEnzymesMutationTests
 {
     [Fact]
-    public void DetritalEnzymes_is_a_tier3_substrate_ecology_mutation_with_a_crustward_prerequisite()
+    public void DetritalEnzymes_is_a_tier3_substrate_ecology_mutation_with_an_either_branch_prerequisite()
     {
         var mutation = RequireMutation();
 
@@ -20,8 +20,11 @@ public class DetritalEnzymesMutationTests
         Assert.Equal(MutationType.DetritalEnzymesGrowthChance, mutation.Type);
         Assert.Equal(GameBalance.DetritalEnzymesMaxLevel, mutation.MaxLevel);
         Assert.Equal(GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3), mutation.PointsPerUpgrade);
-        Assert.Contains(mutation.Prerequisites, prerequisite =>
+        var branchGroup = Assert.Single(mutation.AnyPrerequisiteGroups);
+        Assert.Contains(branchGroup.Alternatives, prerequisite =>
             prerequisite.MutationId == MutationIds.CrustwardTropism && prerequisite.RequiredLevel == 1);
+        Assert.Contains(branchGroup.Alternatives, prerequisite =>
+            prerequisite.MutationId == MutationIds.CompactionPressure && prerequisite.RequiredLevel == 1);
     }
 
     [Fact]

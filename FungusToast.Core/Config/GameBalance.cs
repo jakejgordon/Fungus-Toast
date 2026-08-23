@@ -94,6 +94,10 @@ namespace FungusToast.Core.Config
         public const int AeratedFrontierMinimumEligibleGrowthCycleAge = 5;
         public const float CrustwardTropismEffectPerLevel = 0.0075f;
         public const int CrustwardTropismMaxLevel = 5;
+        public const float CompactionPressureEffectPerLevel = 0.02f;
+        public const int CompactionPressureMaxLevel = 5;
+        public const int CompactionPressureMinimumLegalOrthogonalTargets = 1;
+        public const int CompactionPressureMaximumLegalOrthogonalTargets = 2;
         public const float DetritalEnzymesEffectPerLevel = 0.01f;
         public const int DetritalEnzymesMaxLevel = 5;
         public const float DetritalEnzymesDenseDeadMatterBonus = 0.01f;

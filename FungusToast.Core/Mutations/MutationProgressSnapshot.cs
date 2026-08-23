@@ -23,6 +23,7 @@ namespace FungusToast.Core.Mutations
         public bool IsActiveSurge { get; }
         public bool HasUnmetPrerequisites { get; }
         public IReadOnlyList<MutationRequirementProgress> Requirements { get; }
+        public IReadOnlyList<MutationAnyRequirementGroupProgress> AnyRequirementGroups { get; }
         public IReadOnlyList<MutationCategoryInvestmentRequirementProgress> CategoryInvestmentRequirements { get; }
         public IReadOnlyList<Mutation> DirectDependents { get; }
 
@@ -36,6 +37,7 @@ namespace FungusToast.Core.Mutations
             int availablePoints,
             bool isActiveSurge,
             IReadOnlyList<MutationRequirementProgress> requirements,
+            IReadOnlyList<MutationAnyRequirementGroupProgress> anyRequirementGroups,
             IReadOnlyList<MutationCategoryInvestmentRequirementProgress> categoryInvestmentRequirements,
             IReadOnlyList<Mutation> directDependents)
         {
@@ -51,8 +53,10 @@ namespace FungusToast.Core.Mutations
             IsMaxed = currentLevel >= mutation.MaxLevel;
             IsActiveSurge = isActiveSurge;
             Requirements = requirements;
+            AnyRequirementGroups = anyRequirementGroups;
             CategoryInvestmentRequirements = categoryInvestmentRequirements;
             HasUnmetPrerequisites = requirements.Any(requirement => !requirement.IsMet)
+                || anyRequirementGroups.Any(group => !group.IsMet)
                 || categoryInvestmentRequirements.Any(requirement => !requirement.IsMet);
             DirectDependents = directDependents;
         }
@@ -91,6 +95,14 @@ namespace FungusToast.Core.Mutations
                         categoryProgress);
                 })
                 .ToList();
+            var anyRequirementGroups = mutation.AnyPrerequisiteGroups
+                .Select(group => new MutationAnyRequirementGroupProgress(group.Alternatives
+                    .Select(prerequisite =>
+                    {
+                        MutationRegistry.All.TryGetValue(prerequisite.MutationId, out var requiredMutation);
+                        return new MutationRequirementProgress(prerequisite.MutationId, requiredMutation?.Name ?? $"Unknown Mutation {prerequisite.MutationId}", player.GetMutationLevel(prerequisite.MutationId), prerequisite.RequiredLevel);
+                    }).ToList()))
+                .ToList();
             var directDependents = MutationRegistry.All.Values
                 .Where(candidate => candidate.Prerequisites.Any(prerequisite => prerequisite.MutationId == mutation.Id))
                 .OrderBy(candidate => candidate.Tier)
@@ -107,8 +119,20 @@ namespace FungusToast.Core.Mutations
                 player.MutationPoints,
                 mutation.IsSurge && player.IsSurgeActive(mutation.Id),
                 requirements,
+                anyRequirementGroups,
                 categoryInvestmentRequirements,
                 directDependents);
+        }
+    }
+
+    public sealed class MutationAnyRequirementGroupProgress
+    {
+        public IReadOnlyList<MutationRequirementProgress> Alternatives { get; }
+        public bool IsMet => Alternatives.Any(requirement => requirement.IsMet);
+
+        public MutationAnyRequirementGroupProgress(IReadOnlyList<MutationRequirementProgress> alternatives)
+        {
+            Alternatives = alternatives;
         }
     }
 

@@ -17,8 +17,8 @@
 |---|---|---|
 | 1 | Substrate Sensing root | Rejected; Aerated Frontier replacement implemented |
 | 2 | Crustward Tropism edgeward branch | Approved and implemented |
-| 3 | Compaction Pressure branch | Pending |
-| 4 | Detrital Enzymes branch | Pending |
+| 3 | Compaction Pressure branch | Approved and implemented |
+| 4 | Detrital Enzymes branch | Approved and implemented |
 | 5 | Rival Rhizosphere branch | Pending |
 | 6 | Nutrient Afterglow payoff | Pending |
 | 7 | Ecological Succession capstone | Pending |
@@ -113,7 +113,12 @@ Approve. It creates the opposite spatial incentive from Aerated Frontier while k
 
 ### Answer
 
-Pending.
+Approved on 2026-08-23 and implemented as the Tier-2 sibling of Crustward Tropism.
+
+- Requires Aerated Frontier 10 and costs 2 mutation points per upgrade.
+- Each of its 5 levels adds +2 percentage points to every legal cardinal or enabled Tendril diagonal growth attempt from a living source with one or two legal orthogonal growth targets. Fully sealed sources do not gain a synthetic attempt.
+- Detrital Enzymes now requires level 1 of either Crustward Tropism or Compaction Pressure. The prerequisite model represents this as a general ANY group: all ordinary requirements still apply, and each ANY group needs one satisfied alternative.
+- `TST_EcologyCompactionFirst` explicitly maxes Compaction Pressure, excludes Crustward Tropism from both paid and automatic spending, then follows the established Creeping Mold, Detrital Enzymes, and Growth/Resilience runway.
 
 ## 4. Approve Detrital Enzymes as the Dead-Matter Branch?
 
@@ -134,7 +139,7 @@ Approve. It gives Ecology a clear relationship with dead zones without stealing 
 
 ### Answer
 
-Approved on 2026-08-23 and implemented as the Tier-3 dead-matter branch. It remains entirely within Substrate Ecology, with Crustward Tropism 1 as its only prerequisite.
+Approved on 2026-08-23 and implemented as the Tier-3 dead-matter branch. It remains entirely within Substrate Ecology and requires level 1 of either Tier-2 Ecology branch: Crustward Tropism or Compaction Pressure.
 
 ## 5. Approve Rival Rhizosphere as the Contested-Boundary Branch?
 

@@ -9,7 +9,7 @@ public class MutationRepositoryIntegrityTests
     {
         var mutations = MutationRegistry.GetAll().ToList();
 
-        Assert.Equal(36, mutations.Count);
+        Assert.Equal(37, mutations.Count);
         Assert.Equal(mutations.Count, mutations.Select(mutation => mutation.Id).Distinct().Count());
         Assert.Equal(
             mutations.Count,

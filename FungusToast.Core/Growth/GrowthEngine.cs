@@ -161,10 +161,11 @@ namespace FungusToast.Core.Growth
                         : 0f;
                     float aeratedFrontierBonus = SubstrateEcologyMutationProcessor.GetAeratedFrontierGrowthBonus(owner, board, sourceTile);
                     float crustwardTropismBonus = SubstrateEcologyMutationProcessor.GetCrustwardTropismGrowthBonus(owner, board, sourceTile, tile);
+                    float compactionPressureBonus = SubstrateEcologyMutationProcessor.GetCompactionPressureGrowthBonus(owner, board, sourceTile);
                     float detritalEnzymesBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesGrowthBonus(owner, board, tile);
                     float detritalEnzymesDenseDeadMatterBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesDenseDeadMatterBonus(owner, board, tile);
                     float ecologyBonus = Math.Min(
-                        aeratedFrontierBonus + crustwardTropismBonus + detritalEnzymesBonus,
+                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus,
                         GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
                     targets.Add(new GrowthTarget(
                         tile,
@@ -174,12 +175,13 @@ namespace FungusToast.Core.Growth
                         ecologyBonus,
                         aeratedFrontierBonus,
                         crustwardTropismBonus,
+                        compactionPressureBonus,
                         detritalEnzymesBonus,
                         detritalEnzymesDenseDeadMatterBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
-                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus, 0f, 0f, 0f, 0f, 0f));
+                    targets.Add(new GrowthTarget(tile, baseChance * edgeMultiplier, null, surgeBonus, 0f, 0f, 0f, 0f, 0f, 0f));
                 }
             }
             var diagonalDirs = new (int dx, int dy, DiagonalDirection dir, int mutationId)[]
@@ -202,10 +204,11 @@ namespace FungusToast.Core.Growth
                 {
                     float aeratedFrontierBonus = SubstrateEcologyMutationProcessor.GetAeratedFrontierGrowthBonus(owner, board, sourceTile);
                     float crustwardTropismBonus = SubstrateEcologyMutationProcessor.GetCrustwardTropismGrowthBonus(owner, board, sourceTile, maybeTile);
+                    float compactionPressureBonus = SubstrateEcologyMutationProcessor.GetCompactionPressureGrowthBonus(owner, board, sourceTile);
                     float detritalEnzymesBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesGrowthBonus(owner, board, maybeTile);
                     float detritalEnzymesDenseDeadMatterBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesDenseDeadMatterBonus(owner, board, maybeTile);
                     float ecologyBonus = Math.Min(
-                        aeratedFrontierBonus + crustwardTropismBonus + detritalEnzymesBonus,
+                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus,
                         GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
                     targets.Add(new GrowthTarget(
                         maybeTile,
@@ -215,6 +218,7 @@ namespace FungusToast.Core.Growth
                         ecologyBonus,
                         aeratedFrontierBonus,
                         crustwardTropismBonus,
+                        compactionPressureBonus,
                         detritalEnzymesBonus,
                         detritalEnzymesDenseDeadMatterBonus));
                 }
@@ -477,6 +481,7 @@ namespace FungusToast.Core.Growth
             public float EcologyBonus { get; }
             public float AeratedFrontierBonus { get; }
             public float CrustwardTropismBonus { get; }
+            public float CompactionPressureBonus { get; }
             public float DetritalEnzymesBonus { get; }
             public float DetritalEnzymesDenseDeadMatterBonus { get; }
 
@@ -488,6 +493,7 @@ namespace FungusToast.Core.Growth
                 float ecologyBonus,
                 float aeratedFrontierBonus,
                 float crustwardTropismBonus,
+                float compactionPressureBonus,
                 float detritalEnzymesBonus,
                 float detritalEnzymesDenseDeadMatterBonus)
             {
@@ -498,6 +504,7 @@ namespace FungusToast.Core.Growth
                 EcologyBonus = ecologyBonus;
                 AeratedFrontierBonus = aeratedFrontierBonus;
                 CrustwardTropismBonus = crustwardTropismBonus;
+                CompactionPressureBonus = compactionPressureBonus;
                 DetritalEnzymesBonus = detritalEnzymesBonus;
                 DetritalEnzymesDenseDeadMatterBonus = detritalEnzymesDenseDeadMatterBonus;
             }

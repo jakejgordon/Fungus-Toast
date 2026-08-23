@@ -377,6 +377,17 @@ namespace FungusToast.Unity.UI.MutationTree
                     requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
                     requirement.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
             }
+            foreach (MutationAnyRequirementGroupProgress group in snapshot.AnyRequirementGroups)
+            {
+                foreach (MutationRequirementProgress requirement in group.Alternatives)
+                {
+                    chips.Add(new ChipData(
+                        requirement.MutationId,
+                        $"  {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
+                        requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
+                        requirement.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
+                }
+            }
 
             ConfigureButtons(requirementButtons, requirementsRoot, chips, focusMutation);
             var groupedRows = new List<GroupedRequirementData>(snapshot.CategoryInvestmentRequirements.Count + 1);
@@ -400,6 +411,14 @@ namespace FungusToast.Unity.UI.MutationTree
                     $"Reach {requirement.RequiredLevelsPerCategory} root levels in each qualifying category.\n{categoryLines}",
                     requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
                     requirement.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
+            }
+            foreach (MutationAnyRequirementGroupProgress group in snapshot.AnyRequirementGroups)
+            {
+                int metCount = group.Alternatives.Count(requirement => requirement.IsMet);
+                groupedRows.Add(new GroupedRequirementData(
+                    $"<b>One branch requirement</b>  {metCount}/{group.Alternatives.Count}\nReach the required level in any one option below.",
+                    group.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning,
+                    group.IsMet ? RequirementStatus.Met : RequirementStatus.Unmet));
             }
 
             ConfigureGroupedRequirementRows(groupedRows);
@@ -435,13 +454,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private static int GetRequirementGroupCount(MutationProgressSnapshot snapshot)
         {
-            int namedRequirementGroups = snapshot.Requirements.Count;
+            int namedRequirementGroups = snapshot.Requirements.Count + snapshot.AnyRequirementGroups.Sum(group => group.Alternatives.Count);
             if (IsCompleteDirectionalTendrilSet(snapshot))
             {
                 namedRequirementGroups -= 3;
             }
 
-            return namedRequirementGroups + snapshot.CategoryInvestmentRequirements.Count;
+            return namedRequirementGroups + snapshot.CategoryInvestmentRequirements.Count + snapshot.AnyRequirementGroups.Count;
         }
 
         private static bool IsCompleteDirectionalTendrilSet(MutationProgressSnapshot snapshot)

@@ -1165,6 +1165,28 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyCompactionFirst",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                excludedMutationIds: new[] { MutationIds.CrustwardTropism },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 10),
+                    new TargetMutationGoal(MutationIds.CompactionPressure, GameBalance.CompactionPressureMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyAutolyticDetrital",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,

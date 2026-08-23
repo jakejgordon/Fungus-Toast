@@ -57,6 +57,27 @@ namespace FungusToast.Core.Phases
             return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
         }
 
+        public static int CountLegalOrthogonalGrowthTargets(GameBoard board, BoardTile sourceTile)
+        {
+            return board.GetOrthogonalNeighbors(sourceTile.X, sourceTile.Y)
+                .Count(tile => !tile.IsOccupied && !board.IsTileBlockedForOccupation(tile.TileId));
+        }
+
+        public static bool QualifiesForCompactionPressure(GameBoard board, BoardTile sourceTile)
+        {
+            int targetCount = CountLegalOrthogonalGrowthTargets(board, sourceTile);
+            return sourceTile.FungalCell?.IsAlive == true
+                && targetCount >= GameBalance.CompactionPressureMinimumLegalOrthogonalTargets
+                && targetCount <= GameBalance.CompactionPressureMaximumLegalOrthogonalTargets;
+        }
+
+        public static float GetCompactionPressureGrowthBonus(Player player, GameBoard board, BoardTile sourceTile)
+        {
+            int level = player.GetMutationLevel(MutationIds.CompactionPressure);
+            if (level <= 0 || !QualifiesForCompactionPressure(board, sourceTile)) return 0f;
+            return System.Math.Min(level * GameBalance.CompactionPressureEffectPerLevel, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
+        }
+
         public static int CountNonToxinDeadOrthogonalNeighbors(GameBoard board, BoardTile targetTile)
         {
             return board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)

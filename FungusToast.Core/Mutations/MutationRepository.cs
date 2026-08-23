@@ -51,6 +51,10 @@ namespace FungusToast.Core.Mutations
                     if (allMutations.TryGetValue(prerequisite.MutationId, out var parent))
                         parent.Children.Add(mutation);
                 }
+                foreach (var group in mutation.AnyPrerequisiteGroups)
+                foreach (var prerequisite in group.Alternatives)
+                    if (allMutations.TryGetValue(prerequisite.MutationId, out var parent))
+                        parent.Children.Add(mutation);
             }
 
             foreach (var mutation in allMutations.Values)
@@ -82,6 +86,10 @@ namespace FungusToast.Core.Mutations
                         Visit(prereqMutation);
                     }
                 }
+                foreach (var group in m.AnyPrerequisiteGroups)
+                foreach (var prereq in group.Alternatives)
+                    if (allMutations.TryGetValue(prereq.MutationId, out var prereqMutation))
+                        Visit(prereqMutation);
 
                 chain.Add(m); // Add after visiting prereqs (post-order)
             }

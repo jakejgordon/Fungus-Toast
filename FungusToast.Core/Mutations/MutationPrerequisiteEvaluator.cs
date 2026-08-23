@@ -12,6 +12,7 @@ namespace FungusToast.Core.Mutations
         public static bool HasRequirements(Mutation mutation)
         {
             return mutation.Prerequisites.Count > 0
+                || mutation.AnyPrerequisiteGroups.Count > 0
                 || mutation.CategoryInvestmentPrerequisites.Count > 0;
         }
 
@@ -19,6 +20,7 @@ namespace FungusToast.Core.Mutations
         {
             return mutation.Prerequisites.All(
                        prerequisite => player.GetMutationLevel(prerequisite.MutationId) >= prerequisite.RequiredLevel)
+                && mutation.AnyPrerequisiteGroups.All(group => group.IsMet(player))
                 && mutation.CategoryInvestmentPrerequisites.All(
                        prerequisite => prerequisite.IsMet(player, MutationRegistry.Roots));
         }
@@ -26,6 +28,7 @@ namespace FungusToast.Core.Mutations
         public static bool CouldBeAffectedByUpgrade(Mutation dependent, Mutation upgradedMutation)
         {
             return dependent.Prerequisites.Any(prerequisite => prerequisite.MutationId == upgradedMutation.Id)
+                || dependent.AnyPrerequisiteGroups.Any(group => group.Includes(upgradedMutation))
                 || dependent.CategoryInvestmentPrerequisites.Any(
                        prerequisite => prerequisite.Includes(upgradedMutation, MutationRegistry.Roots));
         }
