@@ -16,10 +16,10 @@ namespace FungusToast.Core.Mutations.Factories
             // Tier-2
             helper.MakeChild(new Mutation(
                 id: MutationIds.HyphalSurge,
-                name: "Hyphal Surge",
-                description: $"Gives your normal growth a short burst of extra speed.\n\n" +
-                             $"<b>Technical:</b> While active, each level adds {helper.FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} normal growth chance for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per current level.",
-                flavorText: "A fleeting burst of energy, driving a furious wave of mycelial expansion across new ground.",
+                name: "Autolytic Surge",
+                description: $"Accelerates your colony's growth at the cost of making its cells more likely to die.\n\n" +
+                             $"<b>Technical:</b> While active, each level adds {helper.FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} cardinal growth chance per Growth Cycle and {helper.FormatPercent(GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel)} random decay chance per Decay Phase for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per current level.",
+                flavorText: "The colony drives rapid outward growth by dissolving part of its own living network into fresh substrate.",
                 type: MutationType.HyphalSurge,
                 effectPerLevel: GameBalance.HyphalSurgeEffectPerLevel,
                 pointsPerUpgrade: GameBalance.HyphalSurgePointsPerActivation,

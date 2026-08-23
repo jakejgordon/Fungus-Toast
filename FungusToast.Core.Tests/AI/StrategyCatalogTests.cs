@@ -112,6 +112,27 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Ecology_autolytic_detrital_strategy_keeps_its_approved_staged_surge_order()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_EcologyAutolyticDetrital"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                (MutationIds.HyphalSurge, 1),
+                (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                (MutationIds.HyphalSurge, 2),
+                (MutationIds.CreepingMold, 1),
+                (MutationIds.HyphalSurge, 3),
+                (MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                (MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+    }
+
+    [Fact]
     public void Hyperadaptive_goal_deliberately_activates_chitin_fortification_prerequisite()
     {
         var strategy = new ParameterizedSpendingStrategy(

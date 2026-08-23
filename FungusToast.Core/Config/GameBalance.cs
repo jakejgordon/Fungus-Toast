@@ -124,11 +124,12 @@ namespace FungusToast.Core.Config
         public const int MycotoxinCatabolismMaxMutationPointsPerRound = 3;
         public const int MycotoxinCatabolismMaxLevel = 8;
 
-        // Hyphal Surge (Tier 2 MycelialSurges)
-        public const float HyphalSurgeEffectPerLevel = .013f;
+        // Autolytic Surge (Tier 2 MycelialSurges; preserves the HyphalSurge save ID)
+        public const float HyphalSurgeEffectPerLevel = .02f;
+        public const float HyphalSurgeRandomDecayPenaltyPerLevel = .012f;
         public const int HyphalSurgeMaxLevel = 10;
         public const int HyphalSurgePointsPerActivation = 7;
-        public const int HyphalSurgeDurationRounds = 2;
+        public const int HyphalSurgeDurationRounds = 3;
         public const int HyphalSurgePointIncreasePerLevel = 1;
 
         // Directed vector surge tuning shared by Beacon-targeted projections

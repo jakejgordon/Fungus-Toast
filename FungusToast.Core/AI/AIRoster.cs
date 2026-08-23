@@ -1165,6 +1165,29 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyAutolyticDetrital",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 1),
+                    new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 2),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 1),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 3),
+                    new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyFrontierExpansion",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.IgnoreEconomy,
@@ -2006,6 +2029,7 @@ namespace FungusToast.Core.AI
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
                 ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
+                ["TST_EcologyAutolyticDetrital"] = StrategyTheme.Attrition,
                 ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
                 ["TST_Arch02_ResilienceGrowth"] = StrategyTheme.Defense,
                 ["TST_Arch03_FungicideSurge"] = StrategyTheme.Offense,
@@ -2183,6 +2207,7 @@ namespace FungusToast.Core.AI
                 ["TST_HyperEconomyRamp"] = StrategyRole.Experimental,
                 ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyRole.Experimental,
                 ["TST_EarlyReclaimerSwarm"] = StrategyRole.Experimental,
+                ["TST_EcologyAutolyticDetrital"] = StrategyRole.Experimental,
                 ["TST_ToxinSiege"] = StrategyRole.Experimental,
                 ["TST_HyphalSurgeTempo"] = StrategyRole.Experimental,
                 ["TST_FortressResilience"] = StrategyRole.Training,

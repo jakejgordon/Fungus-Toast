@@ -56,6 +56,55 @@ public class MycelialBloomTradeoffTests
             precision: 6);
     }
 
+    [Fact]
+    public void AutolyticSurge_increases_random_decay_only_while_active()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.HyphalSurge, newLevel: 2, currentRound: 1);
+
+        var inactiveResult = CalculateDeathChance(player);
+        player.ActiveSurges[MutationIds.HyphalSurge] = new Player.ActiveSurgeInfo(
+            MutationIds.HyphalSurge,
+            level: 2,
+            duration: GameBalance.HyphalSurgeDurationRounds);
+        var activeResult = CalculateDeathChance(player);
+
+        Assert.Equal(GameBalance.BaseRandomDecayChance, inactiveResult.Chance, precision: 6);
+        Assert.Equal(
+            GameBalance.BaseRandomDecayChance + (2 * GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel),
+            activeResult.Chance,
+            precision: 6);
+    }
+
+    [Fact]
+    public void AutolyticSurge_active_growth_bonus_scales_by_level()
+    {
+        var player = CreatePlayer();
+        player.SetMutationLevel(MutationIds.HyphalSurge, newLevel: 3, currentRound: 1);
+        player.ActiveSurges[MutationIds.HyphalSurge] = new Player.ActiveSurgeInfo(
+            MutationIds.HyphalSurge,
+            level: 3,
+            duration: GameBalance.HyphalSurgeDurationRounds);
+
+        var (baseChance, surgeBonus) = GrowthMutationProcessor.GetGrowthChancesWithHyphalSurge(player);
+
+        Assert.Equal(GameBalance.BaseGrowthChance, baseChance, precision: 6);
+        Assert.Equal(3 * GameBalance.HyphalSurgeEffectPerLevel, surgeBonus, precision: 6);
+    }
+
+    [Fact]
+    public void AutolyticSurge_definition_describes_the_three_round_growth_and_decay_tradeoff()
+    {
+        var mutation = RequireMutation(MutationIds.HyphalSurge);
+
+        Assert.Equal("Autolytic Surge", mutation.Name);
+        Assert.Equal(GameBalance.HyphalSurgeDurationRounds, mutation.SurgeDuration);
+        Assert.Equal(GameBalance.HyphalSurgeEffectPerLevel, mutation.EffectPerLevel);
+        Assert.Contains("random decay chance", mutation.Description);
+        Assert.Contains("Growth Cycle", mutation.Description);
+        Assert.Contains("Decay Phase", mutation.Description);
+    }
+
     private static DeathCalculationResult CalculateDeathChance(Player owner)
     {
         var board = new GameBoard(width: 3, height: 3, playerCount: 1);
