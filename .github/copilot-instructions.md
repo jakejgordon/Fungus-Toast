@@ -23,7 +23,7 @@ If a task is unclear, use this routing order before making changes:
 - **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
 - **Campaign systems and progression context:** `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
 - **Save/resume compatibility, migrations, and breaking-change risks:** `FungusToast.Core/docs/SAVE_COMPATIBILITY.md`
-- **Campaign modernization / recent curated roster tuning results:** `docs/campaign-modernization-2026-03-27.md`
+- **Campaign AI curation policy and current late-campaign snapshot:** `docs/CAMPAIGN_AI_CURATION.md`
 - **Moldiness meta-progression design and implementation helper:** `docs/MOLDINESS_HELPER.md`
 - **Dominance diagnosis / controlled balance investigation:** `FungusToast.Core/docs/DOMINANCE_DIAGNOSIS_WORKFLOW.md`
 - **Gameplay balance levers and canonical constants:** `FungusToast.Core/docs/GAME_BALANCE_CONSTANTS.md`

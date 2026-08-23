@@ -56,6 +56,7 @@ These are useful for narrower tasks and should remain discoverable here even whe
 
 - `../../docs/GIT_WORKTREE_WORKFLOW.md` — repo-specific Git worktree and branch workflow for isolated bug-fix or feature checkouts
 - `../../docs/ui/TOOLTIP_GUIDE.md` — taxonomy for onboarding tooltips, hover tooltips, cell/board inspection tooltips, and related guidance surfaces
+- `../../docs/CAMPAIGN_AI_CURATION.md` — durable campaign-AI curation policy and current keep/review guidance for campaign-safe molds
 - `second-level/ANIMATION_HELPER.md` — gameplay animation trigger/timing guidance
 - `second-level/PLAYER_ACTIVITY_LOG_HELPER.md` — player activity log semantics and aggregation
 - `second-level/FUTURE_IMPROVEMENTS.md` — backlog / longer-horizon ideas
