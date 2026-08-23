@@ -67,9 +67,9 @@ public class AeratedFrontierMutationTests
     }
 
     [Theory]
-    [InlineData(3, false)]
-    [InlineData(4, true)]
-    public void AeratedFrontier_requires_a_source_older_than_three_growth_cycles(int growthCycleAge, bool expectedQualification)
+    [InlineData(5, false)]
+    [InlineData(6, true)]
+    public void AeratedFrontier_requires_a_source_at_least_six_growth_cycles_old(int growthCycleAge, bool expectedQualification)
     {
         var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
@@ -87,7 +87,7 @@ public class AeratedFrontierMutationTests
     {
         var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
         player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
-        sourceTile.FungalCell!.SetGrowthCycleAge(4);
+        sourceTile.FungalCell!.SetGrowthCycleAge(6);
         var observer = new AeratedFrontierObserver();
 
         GrowthEngine.ExecuteGrowthCycle(

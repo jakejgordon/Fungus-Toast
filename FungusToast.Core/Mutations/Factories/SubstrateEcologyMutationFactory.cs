@@ -17,7 +17,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.AeratedFrontier,
                 name: "Aerated Frontier",
                 description: "Helps your colony spread from established cells with room to branch.\n\n" +
-                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.AeratedFrontierEffectPerLevel)} growth chance to every growth attempt from a living cell older than {GameBalance.AeratedFrontierMinimumExclusiveGrowthCycleAge} Growth Cycles with at least {GameBalance.AeratedFrontierRequiredOpenOrthogonalSpaces} open cardinal neighbors. An open neighbor has no cell, toxin, nutrient patch, permanent block, or active chemobeacon.",
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.AeratedFrontierEffectPerLevel)} growth chance to every growth attempt from a living cell at least {GameBalance.AeratedFrontierMinimumEligibleGrowthCycleAge} Growth Cycles old with at least {GameBalance.AeratedFrontierRequiredOpenOrthogonalSpaces} open cardinal neighbors. An open neighbor has no cell, toxin, nutrient patch, permanent block, or active chemobeacon.",
                 flavorText: "Loose pores around the hyphal tip keep oxygen and moisture flowing through the advancing substrate.",
                 type: MutationType.AeratedFrontierGrowthChance,
                 effectPerLevel: GameBalance.AeratedFrontierEffectPerLevel,

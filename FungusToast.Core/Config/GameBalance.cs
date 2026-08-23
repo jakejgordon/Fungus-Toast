@@ -90,8 +90,8 @@ namespace FungusToast.Core.Config
         public const float AeratedFrontierEffectPerLevel = 0.004f;
         public const int AeratedFrontierMaxLevel = 20;
         public const int AeratedFrontierRequiredOpenOrthogonalSpaces = 2;
-        // Aerated Frontier is available only after a cell has lived beyond this age.
-        public const int AeratedFrontierMinimumExclusiveGrowthCycleAge = 3;
+        // Aerated Frontier is available once a living cell reaches this age.
+        public const int AeratedFrontierMinimumEligibleGrowthCycleAge = 6;
         public const float CrustwardTropismEffectPerLevel = 0.0075f;
         public const int CrustwardTropismMaxLevel = 5;
         public const float DetritalEnzymesEffectPerLevel = 0.01f;
