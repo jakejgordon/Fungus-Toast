@@ -1,6 +1,6 @@
-# Substrate Ecology Roster Proposal
+# Substrate Ecology Roster
 
-> Status: Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, and Necrophytic Bloom are implemented. Remaining entries are proposals and do not change gameplay by themselves.
+> Status: Complete. Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, Necrophytic Bloom, and Mycotoxin Fission are the final implemented Substrate Ecology roster. Nutrient Afterglow was not selected; it remains a deliberately unimplemented historical concept.
 >
 > Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md), and the temporary [Mycelial Lab Pending Decisions](../../../docs/MYCELIAL_LAB_PENDING_DECISIONS.md) approval queue.
 
@@ -12,20 +12,19 @@ It does not own unconditional growth, extra baseline attempts, direction/range/m
 
 Ecology may qualify or boost a legal attempt, but it must not invent an illegal target, bypass occupation or board restrictions, or make context bonuses universal. The shared configurable Ecology cap is the lane-level safeguard against conditional bonuses becoming disguised raw Growth.
 
-The initial implementation target remains seven new mutations plus the proposed move of Necrophytic Bloom. Promoting Aerated Frontier to replace the rejected Substrate Sensing proposal leaves one Tier-2 open-substrate slot to redesign. Numeric values for unimplemented mutations remain starting hypotheses.
+The lane is complete with six new mutations plus the Necrophytic Bloom move. Aerated Frontier replaced the rejected Substrate Sensing proposal, and Compaction Pressure fills the second Tier-2 specialization. No further Ecology mutations are planned without a new design decision.
 
-## Proposed Tree
+## Final Tree
 
 | Tier | Recommended name | Role | Proposed prerequisites | Initial scaling hypothesis |
 |---|---|---|---|---|
 | 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.4 percentage points/level, 20 levels |
 | 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +0.75 percentage points/level, 5 levels |
-| 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
-| 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
+| 2 | Compaction Pressure | Crowded-substrate branch (implemented) | Aerated Frontier 10 | +2 points/level, 5 levels |
+| 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 **or** Compaction Pressure 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
 | 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
-| 4 | Nutrient Afterglow | Patch-consumption payoff | Aerated Frontier 15, open specialization 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
 | 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
-| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +3 percentage points/level next to friendly toxins; up to one toxin split/level |
+| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +3 percentage points/level next to friendly toxins; up to one toxin split/level |
 
 ### 1. Aerated Frontier (Implemented)
 
@@ -54,7 +53,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Focused tests: registration/cost/prerequisite; strict distance reduction; no same-distance bonus; cardinal bonus attribution; one automatic arrival per player per cycle; reset on next cycle; enabled diagonal Tendril arrival.
 - Name shortlist checked before approval: **Crustward Tropism**, Boundary Tropism, Edgeward Tropism, Marginward Growth, Peripheral Hyphae.
 
-### 3. Compaction Pressure
+### 3. Compaction Pressure (Implemented)
 
 **Summary:** Growth attempts from living cells with only one or two legal neighboring growth targets gain a bonus, helping colonies push out of congestion.
 
@@ -72,7 +71,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 
 - Trigger/timing: per legal cardinal or enabled Tendril diagonal growth attempt before its success roll; the target must be orthogonally adjacent to at least one non-toxic dead cell from any owner.
 - Scaling: +1 percentage point per level for five levels. At max level, a target beside two or more qualifying dead cells gains one additional percentage point; further dead cells do not stack.
-- Prerequisite: Crustward Tropism 1. Its Aerated Frontier 10 prerequisite gives the Tier-3 branch 11 cumulative local Ecology levels without requiring a cross-category toll.
+- Prerequisite: either Crustward Tropism 1 or Compaction Pressure 1. Crustward's Aerated Frontier 10 prerequisite gives that route 11 cumulative local Ecology levels without requiring a cross-category toll.
 - Limits: target remains empty/occupiable; toxin cells do not qualify; all bonuses remain under the shared Ecology cap.
 - AI: available to normal Ecology fallback spending; a dedicated Detrital testing build remains a future balance decision.
 - Interaction/counterplay: reclamation, composting, or occupation removes the catalyst; enemies can benefit from the same dead zone if positioned first.
@@ -91,19 +90,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Tracking: qualifying attempts and bonus-attributable successes.
 - Focused tests: approved definition/prerequisites; enemy versus own toxin; cardinal growth attribution; no synthetic target creation.
 
-### 6. Nutrient Afterglow
-
-**Summary:** Consuming a nutrient patch primes a limited number of context-qualified growth attempts in the next Growth Phase.
-
-- Trigger/timing: nutrient-consumption event records a capped attempt budget derived from consumed cluster size; the budget becomes active for the owning player's next Growth Phase and then expires.
-- Limits: does not change patch rewards, grant points/drafts, or apply to unconditional attempts; one stored budget with an explicit cap, not unlimited stacking.
-- AI: value available patches plus current Ecology-qualified target density; account for delayed payoff.
-- Interaction/counterplay: rivals can consume patches first; denying contextual targets wastes the budget.
-- Tracking/persistence: patch type/size, budget created/used/expired, qualified successes; include pending budget in runtime save snapshot if saves can occur before consumption and payoff are resolved.
-- Focused tests: each patch type; cluster sizes above cap; multiple consumptions; no qualifying attempts; phase expiry; save/resume; AI delayed utility.
-- Name shortlist: **Nutrient Afterglow**, Resource Afterglow, Trophic Memory, Patch Priming, Digestive Momentum.
-
-### 7. Mycotoxin Fission
+### 6. Mycotoxin Fission (Implemented)
 
 **Summary:** Successful growth beside a friendly toxin disperses that toxin into new toxin pressure near enemy cells.
 
@@ -129,9 +116,9 @@ Preserve mutation ID 18, owned levels, constants, description/effect, tracking, 
 
 No other existing move is recommended now. Mycotoxin Catabolism remains Genetic Drift because its primary payoff is mutation points; Putrefactive Rejuvenation remains Fungicide because it is driven by toxin expiration; all direct reclamation remains Cellular Resilience.
 
-## One Addition to Each Existing Lane
+## Deferred Concepts Outside This Feature
 
-These five candidates bring the planned total to about 45 logical mutations. They are design inputs for later batches, not part of the first Substrate Ecology implementation.
+These candidates are unrelated future work. They are not part of the completed Substrate Ecology feature and require separate approval, design, and validation before implementation.
 
 ### Growth - Apical Dominance (Tier 4)
 
@@ -179,16 +166,16 @@ While active, successful growth into an Ecology-qualified dead-adjacent tile has
 - Risks/tests: target ordering, no eligible dead cell, enemy dead exclusion, one reclaim/attempt cap, Catabolic Rebirth, active-surge persistence.
 - Name shortlist: **Saprotrophic Pulse**, Compost Surge, Detrital Burst, Reclamation Pulse, Necrotic Flush.
 
-## Whole-Tree Review Verdict
+## Final Roster Verdict
 
 - Aerated Frontier now establishes the playable contextual-growth lane without owning unconditional expansion or direct rewards.
-- Open, crowded, nutrient-adjacent, dead-adjacent, and rival-adjacent states are mutually legible and testable from board state.
+- Open, crowded, edgeward, dead-adjacent, enemy-toxin-adjacent, friendly-toxin-adjacent, and composting states are mutually legible and testable from board state.
 - Necrophytic Bloom is the only recommended move; Regenerative Hyphae remains correctly in Cellular Resilience.
 - Ecology bonuses use a shared configurable combined cap and deterministic attribution ordering established by Aerated Frontier.
-- Creeping Mold versus Ecological Succession failure ordering must be decided in Core tests before the capstone ships.
-- Nutrient Afterglow and Septal Isolation introduce pending runtime state and therefore require explicit save/resume design; they should not be in the first low-risk implementation batch.
+- Nutrient Afterglow was intentionally not selected because its delayed budget would add persistence and AI complexity without being needed for the final lane.
+- Septal Isolation and the other existing-lane candidates remain outside this feature and require separate save/resume design where applicable.
 - Substrate Sensing was rejected because nutrient patches are sparse and consuming them makes the opportunity transient. Aerated Frontier replaced it as the implemented Tier-1 root.
-- A distinct Tier-2 open-substrate specialization is required to restore the planned seven-new-mutation roster.
+- Compaction Pressure is the completed second Tier-2 specialization.
 
 ## Local Name Check
 

@@ -1,8 +1,8 @@
 # Mycelial Lab Pending Decisions
 
-> Temporary decision log created 2026-08-17. This file records the approval gate before Slice 10; it does not change gameplay. Once every decision is resolved, fold the answers into the canonical mutation documents and remove this file only with Jake's approval.
+> Historical decision log created 2026-08-17. It records the approval gate before Slice 10 and does not change gameplay. The final Ecology roster is documented in the canonical [Substrate Ecology Roster](../FungusToast.Core/docs/second-level/SUBSTRATE_ECOLOGY_ROSTER.md); retain this file as decision history unless Jake approves its removal.
 >
-> Detailed mechanic source: [Substrate Ecology Roster Proposal](../FungusToast.Core/docs/second-level/SUBSTRATE_ECOLOGY_ROSTER.md). Active implementation plan: [WORKLOG.md](WORKLOG.md).
+> Detailed mechanic source: [Substrate Ecology Roster](../FungusToast.Core/docs/second-level/SUBSTRATE_ECOLOGY_ROSTER.md). Active implementation plan: [WORKLOG.md](WORKLOG.md).
 
 ## How to Use This Log
 
@@ -20,11 +20,11 @@
 | 3 | Compaction Pressure branch | Approved and implemented |
 | 4 | Detrital Enzymes branch | Approved and implemented |
 | 5 | Toxin Margin branch | Approved and implemented |
-| 6 | Nutrient Afterglow payoff | Pending |
+| 6 | Nutrient Afterglow payoff | Not selected; Ecology roster complete |
 | 7 | Mycotoxin Fission capstone | Approved and implemented |
 | 8 | Move Necrophytic Bloom to Ecology | Approved and implemented |
-| 9 | Five later additions to existing lanes | Latent Polymorphism approved and implemented; remaining entries pending |
-| 10 | Implementation sequence | Pending |
+| 9 | Five later additions to existing lanes | Latent Polymorphism approved and implemented; remaining entries are deferred outside Ecology |
+| 10 | Implementation sequence | Complete; final Ecology roster selected |
 
 ## 1. Approve Substrate Sensing as the Tier-1 Ecology Root?
 
@@ -185,7 +185,7 @@ Approve the concept but defer implementation until its budget formula and save s
 
 ### Answer
 
-Pending.
+Not selected on 2026-08-23. The final Substrate Ecology roster is complete without a delayed nutrient-payoff mechanic. This concept remains historical only and requires a new approval if reconsidered.
 
 ## 7. Mycotoxin Fission Ecology Capstone
 
@@ -270,7 +270,7 @@ Approve. This proves the category with the least persistent-state risk and keeps
 
 ### Answer
 
-Pending.
+Complete on 2026-08-23. The implemented Ecology roster is Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, Necrophytic Bloom, and Mycotoxin Fission. Nutrient Afterglow and Ecological Succession are not in scope.
 
 ## Deferred Balance Decisions
 
