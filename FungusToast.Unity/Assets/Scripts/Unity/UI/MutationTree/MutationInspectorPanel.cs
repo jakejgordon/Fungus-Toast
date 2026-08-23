@@ -365,13 +365,13 @@ namespace FungusToast.Unity.UI.MutationTree
             var chips = new List<ChipData>(snapshot.Requirements.Count);
             foreach (MutationRequirementProgress requirement in snapshot.Requirements)
             {
-                string marker = requirement.IsMet ? "✓" : "○";
+                string status = requirement.IsMet ? "Complete" : "Needed";
                 string prefix = groupDirectionalTendrils && IsDirectionalTendril(requirement.MutationId)
-                    ? "↳ "
+                    ? "  "
                     : string.Empty;
                 chips.Add(new ChipData(
                     requirement.MutationId,
-                    $"{prefix}{marker} {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
+                    $"{prefix}{status} - {requirement.MutationName}  L{requirement.CurrentLevel}/{requirement.RequiredLevel}",
                     requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
             }
 
@@ -382,16 +382,16 @@ namespace FungusToast.Unity.UI.MutationTree
                 int metCount = snapshot.Requirements.Count(requirement => requirement.IsMet);
                 bool isMet = metCount == snapshot.Requirements.Count;
                 groupedRows.Add(new GroupedRequirementData(
-                    $"{(isMet ? "✓" : "○")} <b>All four Directional Tendrils</b>  {metCount}/4\nComplete each compass-direction Tendril below.",
+                    $"<b>{(isMet ? "Complete" : "Needed")} - All four Directional Tendrils</b>  {metCount}/4\nComplete each compass-direction Tendril below.",
                     isMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
             }
 
             foreach (MutationCategoryInvestmentRequirementProgress requirement in snapshot.CategoryInvestmentRequirements)
             {
                 string categoryLines = string.Join("\n", requirement.Categories.Select(category =>
-                    $"  {(category.IsMet ? "✓" : "○")} {GetCategoryDisplayName(category.Category)}  L{category.CurrentLevel}/{category.RequiredLevel}"));
+                    $"  {(category.IsMet ? "Complete" : "Needed")} - {GetCategoryDisplayName(category.Category)}  L{category.CurrentLevel}/{category.RequiredLevel}"));
                 groupedRows.Add(new GroupedRequirementData(
-                    $"{(requirement.IsMet ? "✓" : "○")} <b>Tier {(int)requirement.Tier} category foundations</b>  " +
+                    $"<b>{(requirement.IsMet ? "Complete" : "Needed")} - Tier {(int)requirement.Tier} category foundations</b>  " +
                     $"{requirement.SatisfiedCategoryCount}/{requirement.RequiredCategoryCount} categories\n" +
                     $"Reach {requirement.RequiredLevelsPerCategory} root levels in each qualifying category.\n{categoryLines}",
                     requirement.IsMet ? UIStyleTokens.State.Success : UIStyleTokens.State.Warning));
