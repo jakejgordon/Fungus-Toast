@@ -35,8 +35,6 @@ public class StrategyCatalogTests
     }
 
     [Theory]
-    [InlineData("TST_EcologyCrustFirst")]
-    [InlineData("TST_EcologyFrontierFirst")]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]
     public void Ecology_testing_strategies_begin_with_aerated_frontier(string strategyName)
@@ -44,14 +42,10 @@ public class StrategyCatalogTests
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[strategyName]);
 
         Assert.Equal(MutationIds.AeratedFrontier, strategy.TargetMutationGoals[0].MutationId);
-        Assert.Equal(EconomyBias.IgnoreEconomy, strategy.EconomyProfile);
-        Assert.Equal(MutationCategory.SubstrateEcology, strategy.PriorityMutationCategories![0]);
         Assert.True(strategy.UsesSubstrateEcology);
     }
 
     [Theory]
-    [InlineData("TST_EcologyCrustFirst")]
-    [InlineData("TST_EcologyFrontierFirst")]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]
     public void Ecology_testing_strategies_buy_aerated_frontier_first(string strategyName)
@@ -84,7 +78,10 @@ public class StrategyCatalogTests
                 (MutationIds.AeratedFrontier, 10),
                 (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
                 (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
-                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                (MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                (MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
             },
             crustFirst.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
         Assert.Equal(
@@ -92,9 +89,24 @@ public class StrategyCatalogTests
             {
                 (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
                 (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
-                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                (MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                (MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
             },
             frontierFirst.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+
+        var arch01 = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Arch01_GrowthResilience"]);
+        Assert.Equal(arch01.EconomyProfile, crustFirst.EconomyProfile);
+        Assert.Equal(arch01.EconomyProfile, frontierFirst.EconomyProfile);
+        Assert.Equal(arch01.PriorityMutationCategories, crustFirst.PriorityMutationCategories);
+        Assert.Equal(arch01.PriorityMutationCategories, frontierFirst.PriorityMutationCategories);
+        Assert.Equal(
+            arch01.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
+            crustFirst.TargetMutationGoals.Skip(3).Select(goal => (goal.MutationId, goal.TargetLevel)));
+        Assert.Equal(
+            arch01.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
+            frontierFirst.TargetMutationGoals.Skip(2).Select(goal => (goal.MutationId, goal.TargetLevel)));
     }
 
     [Fact]

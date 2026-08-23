@@ -1126,34 +1126,40 @@ namespace FungusToast.Core.AI
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.IgnoreEconomy,
+                economyBias: EconomyBias.ModerateEconomy,
                 priorityMutationCategories: new List<MutationCategory>
                 {
-                    MutationCategory.SubstrateEcology,
-                    MutationCategory.Growth
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.AeratedFrontier, 10),
                     new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
                     new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
                 }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyFrontierFirst",
                 prioritizeHighTier: true,
-                economyBias: EconomyBias.IgnoreEconomy,
+                economyBias: EconomyBias.ModerateEconomy,
                 priorityMutationCategories: new List<MutationCategory>
                 {
-                    MutationCategory.SubstrateEcology,
-                    MutationCategory.Growth
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
                     new TargetMutationGoal(MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel)
                 }
             ),
             new ParameterizedSpendingStrategy(
