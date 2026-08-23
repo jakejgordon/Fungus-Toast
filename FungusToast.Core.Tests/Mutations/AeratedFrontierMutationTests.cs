@@ -64,6 +64,22 @@ public class AeratedFrontierMutationTests
         Assert.True(SubstrateEcologyMutationProcessor.QualifiesForAeratedFrontier(board, sourceTile));
     }
 
+    [Theory]
+    [InlineData(4, true)]
+    [InlineData(5, false)]
+    public void AeratedFrontier_requires_a_source_younger_than_five_growth_cycles(int growthCycleAge, bool expectedQualification)
+    {
+        var (board, player, sourceTile) = CreateCenterSourceBoard(blockedTileIds: new[] { 0, 2, 5, 6, 7, 8 });
+        player.SetMutationLevel(MutationIds.AeratedFrontier, newLevel: 1, currentRound: 1);
+        sourceTile.FungalCell!.SetGrowthCycleAge(growthCycleAge);
+
+        Assert.Equal(expectedQualification, SubstrateEcologyMutationProcessor.QualifiesForAeratedFrontier(board, sourceTile));
+        Assert.Equal(
+            expectedQualification ? GameBalance.AeratedFrontierEffectPerLevel : 0f,
+            SubstrateEcologyMutationProcessor.GetAeratedFrontierGrowthBonus(player, board, sourceTile),
+            precision: 6);
+    }
+
     [Fact]
     public void Growth_cycle_records_growth_that_only_succeeds_due_to_aerated_frontier()
     {
