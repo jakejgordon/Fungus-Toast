@@ -78,6 +78,7 @@ public class StrategyCatalogTests
                 (MutationIds.AeratedFrontier, 10),
                 (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
                 (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
+                (MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
                 (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                 (MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
                 (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
@@ -89,6 +90,7 @@ public class StrategyCatalogTests
             {
                 (MutationIds.AeratedFrontier, GameBalance.AeratedFrontierMaxLevel),
                 (MutationIds.CrustwardTropism, GameBalance.CrustwardTropismMaxLevel),
+                (MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
                 (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                 (MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel),
                 (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
@@ -103,10 +105,10 @@ public class StrategyCatalogTests
         Assert.Equal(arch01.PriorityMutationCategories, frontierFirst.PriorityMutationCategories);
         Assert.Equal(
             arch01.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
-            crustFirst.TargetMutationGoals.Skip(3).Select(goal => (goal.MutationId, goal.TargetLevel)));
+            crustFirst.TargetMutationGoals.Skip(4).Select(goal => (goal.MutationId, goal.TargetLevel)));
         Assert.Equal(
             arch01.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
-            frontierFirst.TargetMutationGoals.Skip(2).Select(goal => (goal.MutationId, goal.TargetLevel)));
+            frontierFirst.TargetMutationGoals.Skip(3).Select(goal => (goal.MutationId, goal.TargetLevel)));
     }
 
     [Fact]
