@@ -121,6 +121,10 @@ namespace FungusToast.Simulation.Models
         public int CrustwardTropismAttempts { get; set; }
         public int CrustwardTropismBonusGrowths { get; set; }
         public int CrustwardTropismAutomaticGrowths { get; set; }
+        public int DetritalEnzymesAttempts { get; set; }
+        public int DetritalEnzymesBonusGrowths { get; set; }
+        public int DetritalEnzymesDenseDeadMatterAttempts { get; set; }
+        public int DetritalEnzymesDenseDeadMatterBonusGrowths { get; set; }
 
         /// <summary>
         /// The average AI score at draft time for all mycovariants picked by this player (AI only).

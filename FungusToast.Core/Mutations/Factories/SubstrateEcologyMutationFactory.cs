@@ -42,6 +42,22 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier2
             ),
                 new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
+
+            helper.MakeChild(new Mutation(
+                id: MutationIds.DetritalEnzymes,
+                name: "Detrital Enzymes",
+                description: "Helps your colony spread through nearby dead matter.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.DetritalEnzymesEffectPerLevel)} growth chance when the legal target has at least one orthogonally adjacent non-toxic dead cell. Dead cells from any colony qualify, and additional dead neighbors do not stack.\n" +
+                             $"<b>Max Level Bonus:</b> Gain an additional {helper.FormatPercent(GameBalance.DetritalEnzymesDenseDeadMatterBonus)} growth chance when the target has at least {GameBalance.DetritalEnzymesDenseDeadMatterRequiredNeighbors} adjacent non-toxic dead cells.",
+                flavorText: "Released enzymes soften the remnants of fallen colonies, opening a transient path through the detritus.",
+                type: MutationType.DetritalEnzymesGrowthChance,
+                effectPerLevel: GameBalance.DetritalEnzymesEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
+                maxLevel: GameBalance.DetritalEnzymesMaxLevel,
+                category: MutationCategory.SubstrateEcology,
+                tier: MutationTier.Tier3
+            ),
+                new MutationPrerequisite(MutationIds.CrustwardTropism, 1));
         }
     }
 }

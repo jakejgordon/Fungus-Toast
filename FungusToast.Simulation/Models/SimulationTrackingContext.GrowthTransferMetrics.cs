@@ -49,6 +49,35 @@ namespace FungusToast.Simulation.Models
         public int GetCrustwardTropismAutomaticGrowths(int playerId)
             => crustwardTropismAutomaticGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> detritalEnzymesAttempts = new();
+        private readonly Dictionary<int, int> detritalEnzymesBonusGrowths = new();
+        private readonly Dictionary<int, int> detritalEnzymesDenseDeadMatterAttempts = new();
+        private readonly Dictionary<int, int> detritalEnzymesDenseDeadMatterBonusGrowths = new();
+
+        public void RecordDetritalEnzymesAttempt(int playerId)
+            => detritalEnzymesAttempts[playerId] = GetDetritalEnzymesAttempts(playerId) + 1;
+
+        public void RecordDetritalEnzymesBonusGrowth(int playerId)
+            => detritalEnzymesBonusGrowths[playerId] = GetDetritalEnzymesBonusGrowths(playerId) + 1;
+
+        public void RecordDetritalEnzymesDenseDeadMatterAttempt(int playerId)
+            => detritalEnzymesDenseDeadMatterAttempts[playerId] = GetDetritalEnzymesDenseDeadMatterAttempts(playerId) + 1;
+
+        public void RecordDetritalEnzymesDenseDeadMatterBonusGrowth(int playerId)
+            => detritalEnzymesDenseDeadMatterBonusGrowths[playerId] = GetDetritalEnzymesDenseDeadMatterBonusGrowths(playerId) + 1;
+
+        public int GetDetritalEnzymesAttempts(int playerId)
+            => detritalEnzymesAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetDetritalEnzymesBonusGrowths(int playerId)
+            => detritalEnzymesBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetDetritalEnzymesDenseDeadMatterAttempts(int playerId)
+            => detritalEnzymesDenseDeadMatterAttempts.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetDetritalEnzymesDenseDeadMatterBonusGrowths(int playerId)
+            => detritalEnzymesDenseDeadMatterBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+
         // ────────────────
         // Perimeter Proliferator Growths
         // ────────────────

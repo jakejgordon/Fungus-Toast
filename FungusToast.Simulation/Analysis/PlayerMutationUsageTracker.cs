@@ -90,6 +90,17 @@ namespace FungusToast.Simulation.Analysis
                         effects["Automatic Crust Growths"] = player.CrustwardTropismAutomaticGrowths;
                     break;
 
+                case MutationIds.DetritalEnzymes:
+                    if (player.DetritalEnzymesAttempts > 0)
+                        effects["Dead-adjacent Attempts"] = player.DetritalEnzymesAttempts;
+                    if (player.DetritalEnzymesBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.DetritalEnzymesBonusGrowths;
+                    if (player.DetritalEnzymesDenseDeadMatterAttempts > 0)
+                        effects["Dense Dead Matter Attempts"] = player.DetritalEnzymesDenseDeadMatterAttempts;
+                    if (player.DetritalEnzymesDenseDeadMatterBonusGrowths > 0)
+                        effects["Dense Dead Matter Bonus Growths"] = player.DetritalEnzymesDenseDeadMatterBonusGrowths;
+                    break;
+
                 case MutationIds.RegenerativeHyphae:
                     if (player.RegenerativeHyphaeReclaims > 0)
                         effects["Reclaims"] = player.RegenerativeHyphaeReclaims;

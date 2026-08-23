@@ -123,9 +123,9 @@ Growth into an empty tile adjacent to any dead, non-toxin cell gains a bonus. Th
 
 ### Proposed shape
 
-- Tier 3; proposed requirements are Aerated Frontier 5, the replacement open specialization at level 3, and Necrosporulation 3.
-- +3 percentage points per level; 5 levels.
-- Own and enemy dead cells qualify; multiple dead neighbors do not stack.
+- Tier 3; requires Crustward Tropism 1, which already requires Aerated Frontier 10.
+- +1 percentage point per level; 5 levels.
+- Own and enemy non-toxic dead cells qualify. At max level, a target beside two or more qualifying dead cells gains an additional +1 percentage point; further dead neighbors do not stack.
 - Reclamation, composting, or occupation removes the opportunity.
 
 ### Recommendation
@@ -134,7 +134,7 @@ Approve. It gives Ecology a clear relationship with dead zones without stealing 
 
 ### Answer
 
-Pending.
+Approved on 2026-08-23 and implemented as the Tier-3 dead-matter branch. It remains entirely within Substrate Ecology, with Crustward Tropism 1 as its only prerequisite.
 
 ## 5. Approve Rival Rhizosphere as the Contested-Boundary Branch?
 

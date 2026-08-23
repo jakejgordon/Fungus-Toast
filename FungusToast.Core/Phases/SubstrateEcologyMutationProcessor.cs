@@ -56,6 +56,38 @@ namespace FungusToast.Core.Phases
             return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
         }
 
+        public static int CountNonToxinDeadOrthogonalNeighbors(GameBoard board, BoardTile targetTile)
+        {
+            return board.GetOrthogonalNeighbors(targetTile.X, targetTile.Y)
+                .Count(tile => tile.FungalCell?.IsReclaimable == true);
+        }
+
+        public static bool QualifiesForDetritalEnzymes(GameBoard board, BoardTile targetTile)
+        {
+            return CountNonToxinDeadOrthogonalNeighbors(board, targetTile) > 0;
+        }
+
+        public static float GetDetritalEnzymesDenseDeadMatterBonus(Player player, GameBoard board, BoardTile targetTile)
+        {
+            return player.GetMutationLevel(MutationIds.DetritalEnzymes) >= GameBalance.DetritalEnzymesMaxLevel
+                && CountNonToxinDeadOrthogonalNeighbors(board, targetTile) >= GameBalance.DetritalEnzymesDenseDeadMatterRequiredNeighbors
+                ? GameBalance.DetritalEnzymesDenseDeadMatterBonus
+                : 0f;
+        }
+
+        public static float GetDetritalEnzymesGrowthBonus(Player player, GameBoard board, BoardTile targetTile)
+        {
+            int level = player.GetMutationLevel(MutationIds.DetritalEnzymes);
+            if (level <= 0 || !QualifiesForDetritalEnzymes(board, targetTile))
+            {
+                return 0f;
+            }
+
+            float bonus = level * GameBalance.DetritalEnzymesEffectPerLevel
+                + GetDetritalEnzymesDenseDeadMatterBonus(player, board, targetTile);
+            return System.Math.Min(bonus, GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
+        }
+
         public static bool IsCrustwardTropismAutomaticCrustArrival(
             Player player,
             GameBoard board,

@@ -40,5 +40,6 @@ namespace FungusToast.Core
         ChemotacticBeacon,
         AeratedFrontierGrowthChance,
         CrustwardTropismGrowthChance,
+        DetritalEnzymesGrowthChance,
     }
 }

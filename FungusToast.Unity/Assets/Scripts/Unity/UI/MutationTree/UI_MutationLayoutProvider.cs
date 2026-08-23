@@ -58,7 +58,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 /* ------------ Substrate Ecology (col 5) ------------ */
                 { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) },
-                { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(5, 1, MutationCategory.SubstrateEcology) }
+                { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(5, 1, MutationCategory.SubstrateEcology) },
+                { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(5, 2, MutationCategory.SubstrateEcology) }
             };
     }
 }

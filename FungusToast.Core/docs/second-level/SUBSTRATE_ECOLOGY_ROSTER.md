@@ -21,7 +21,7 @@ The initial implementation target remains seven new mutations plus the proposed 
 | 1 | Aerated Frontier | Open-space root (implemented) | Root | +0.4 percentage points/level, 20 levels |
 | 2 | Crustward Tropism | Edgeward branch | Aerated Frontier 10 | +0.75 percentage points/level, 5 levels |
 | 2 | Compaction Pressure | Crowded-substrate branch | Aerated Frontier 10 | +2 points/level, 5 levels |
-| 3 | Detrital Enzymes | Dead-matter branch | Aerated Frontier 5, open specialization 3, Necrosporulation 3 | +3 points/level, 5 levels |
+| 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
 | 3 | Rival Rhizosphere | Contested-boundary branch | Aerated Frontier 5, Compaction Pressure 3, Mycotoxin Tracer 5 | +3 points/level, 5 levels |
 | 4 | Nutrient Afterglow | Patch-consumption payoff | Aerated Frontier 15, open specialization 3, Adaptive Expression 3 | +4 points/level to a capped attempt budget, 5 levels |
 | 4 | Necrophytic Bloom | Existing compost mechanic; proposed category move | Detrital Enzymes 3, Necrosporulation 5, Anabolic Inversion 3, Aerated Frontier 5 | Existing values; prerequisite rebalance isolated separately |
@@ -66,16 +66,18 @@ The initial implementation target remains seven new mutations plus the proposed 
 - Focused tests: 0/1/2/3 targets; irregular edges; resistant enemies/toxins/nutrients; no synthetic target creation; interaction with Aerated Frontier threshold.
 - Name shortlist: **Compaction Pressure**, Crowding Response, Dense Escape, Contact Pressure, Thigmic Branching.
 
-### 4. Detrital Enzymes
+### 4. Detrital Enzymes (Implemented)
 
 **Summary:** Growth into empty tiles adjacent to a dead non-toxin cell gains a bonus, using decay as a local catalyst without reclaiming the dead cell.
 
-- Trigger/timing: per growth attempt before success roll; any owner's dead cell may qualify.
-- Limits: target remains empty/occupiable; toxin cells do not qualify; multiple dead neighbors do not multiply the bonus.
-- AI: score reachable qualifying targets, with higher utility when dead-cell density is high.
+- Trigger/timing: per legal cardinal or enabled Tendril diagonal growth attempt before its success roll; the target must be orthogonally adjacent to at least one non-toxic dead cell from any owner.
+- Scaling: +1 percentage point per level for five levels. At max level, a target beside two or more qualifying dead cells gains one additional percentage point; further dead cells do not stack.
+- Prerequisite: Crustward Tropism 1. Its Aerated Frontier 10 prerequisite gives the Tier-3 branch 11 cumulative local Ecology levels without requiring a cross-category toll.
+- Limits: target remains empty/occupiable; toxin cells do not qualify; all bonuses remain under the shared Ecology cap.
+- AI: available to normal Ecology fallback spending; a dedicated Detrital testing build remains a future balance decision.
 - Interaction/counterplay: reclamation, composting, or occupation removes the catalyst; enemies can benefit from the same dead zone if positioned first.
-- Tracking: qualifying attempts by dead-cell owner, successes, and dead catalysts later removed.
-- Focused tests: own/enemy dead; toxin/non-toxin; multiple neighbors; reclaimed/converted dead cells; target occupancy; Ecology cap.
+- Tracking: qualifying attempts, bonus-attributable successes, dense-dead-matter attempts, and dense-bonus successes.
+- Focused tests: definition/prerequisite/cost; orthogonal versus diagonal dead cells; toxin exclusion; normal and max-level scaling; dense-bonus attribution.
 - Name shortlist: **Detrital Enzymes**, Saprotrophic Margin, Necrotic Catalysis, Detritus Foraging, Lytic Frontier.
 
 ### 5. Rival Rhizosphere
