@@ -69,6 +69,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameResultsRankWidth = 60f;
         private const float EndGameResultsIconWidth = 52f;
         private const float EndGameResultsMetricWidth = 92f;
+        private const float EndGameResultsSpentPointsWidth = 132f;
         private const float EndGameResultsDetailsWidth = 108f;
         private const float CampaignMoldinessSummaryPanelMinWidth = 280f;
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
@@ -808,6 +809,7 @@ namespace FungusToast.Unity.UI
                     summary.ResistantCells,
                     summary.DeadCells,
                     summary.ToxinCells,
+                    currentPlayerStatistics.GetPlayerStatistics(p.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
                 rank++;
             }
@@ -910,6 +912,7 @@ namespace FungusToast.Unity.UI
                     summary.ResistantCells,
                     summary.DeadCells,
                     summary.ToxinCells,
+                    currentPlayerStatistics.GetPlayerStatistics(player.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
                 rank++;
             }
@@ -1224,6 +1227,7 @@ namespace FungusToast.Unity.UI
                     rowData.resistantCells,
                     rowData.deadCells,
                     rowData.toxinCells,
+                    rowData.spentMutationPoints,
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
             }
 
@@ -3116,6 +3120,7 @@ namespace FungusToast.Unity.UI
             CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Toxins", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
+            CreateHeaderCell(header.transform, "Spent Points", EndGameResultsSpentPointsWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Details", EndGameResultsDetailsWidth, TextAlignmentOptions.Center, false);
         }
 

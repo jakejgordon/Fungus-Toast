@@ -64,5 +64,6 @@ namespace FungusToast.Unity.Campaign
         public int resistantCells;
         public int deadCells;
         public int toxinCells;
+        public int spentMutationPoints;
     }
 }

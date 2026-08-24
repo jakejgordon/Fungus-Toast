@@ -230,7 +230,8 @@ namespace FungusToast.Unity
                         livingCells = summary.LivingCells,
                         resistantCells = summary.ResistantCells,
                         deadCells = summary.DeadCells,
-                        toxinCells = summary.ToxinCells
+                        toxinCells = summary.ToxinCells,
+                        spentMutationPoints = endgamePlayerStatistics.GetPlayerStatistics(player.PlayerId).SpentMutationPoints
                     });
                 }
 

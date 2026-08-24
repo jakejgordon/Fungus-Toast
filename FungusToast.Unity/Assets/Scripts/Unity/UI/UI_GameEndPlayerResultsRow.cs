@@ -9,6 +9,7 @@ namespace FungusToast.Unity.UI
     public class UI_GameEndPlayerResultsRow : MonoBehaviour
     {
         private const float MetricColumnWidth = 92f;
+        private const float SpentPointsColumnWidth = 132f;
         private const float DetailsColumnWidth = 108f;
 
         [Header("References")]
@@ -19,6 +20,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI resistantText = null!;
         [SerializeField] private TextMeshProUGUI deadText;
         [SerializeField] private TextMeshProUGUI toxinText;
+        private TextMeshProUGUI spentPointsText = null!;
         [SerializeField] private Button detailsButton;
         [SerializeField] private Image rowBackground;
 
@@ -47,6 +49,7 @@ namespace FungusToast.Unity.UI
             if (resistantText != null) resistantText.color = UIStyleTokens.State.Success;
             if (deadText != null) deadText.color = UIStyleTokens.Text.Muted;
             if (toxinText != null) toxinText.color = UIStyleTokens.Text.Muted;
+            if (spentPointsText != null) spentPointsText.color = UIStyleTokens.Text.Secondary;
 
             ConfigureText(rankText, TextAlignmentOptions.Center, 23f, allowAutoSize: false);
             ConfigureText(nameText, TextAlignmentOptions.Left, 23f, allowAutoSize: true);
@@ -54,15 +57,17 @@ namespace FungusToast.Unity.UI
             EnsureResistantText();
             ConfigureText(deadText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
             EnsureToxinText();
+            EnsureSpentPointsText();
             EnsureDetailsButton();
             EnsureColumnWidths();
         }
 
         /* -------- public API -------- */
-        public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, Action onDetailsRequested = null)
+        public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, int spentPoints, Action onDetailsRequested = null)
         {
             EnsureResistantText();
             EnsureToxinText();
+            EnsureSpentPointsText();
 
             rankText.text = rank.ToString();
             iconImage.sprite = icon;
@@ -77,6 +82,11 @@ namespace FungusToast.Unity.UI
             if (toxinText != null)
             {
                 toxinText.text = FormatCountOrZero(toxins);
+            }
+
+            if (spentPointsText != null)
+            {
+                spentPointsText.text = FormatCountOrZero(spentPoints);
             }
 
             ConfigureDetailsButton(onDetailsRequested);
@@ -142,6 +152,37 @@ namespace FungusToast.Unity.UI
             layout.flexibleWidth = -1f;
         }
 
+        private void EnsureSpentPointsText()
+        {
+            if (spentPointsText != null || deadText == null)
+            {
+                return;
+            }
+
+            var clone = Instantiate(deadText.gameObject, deadText.transform.parent);
+            clone.name = "UI_PlayerResultsSpentPointsText";
+            int toxinSiblingIndex = toxinText != null ? toxinText.transform.GetSiblingIndex() : deadText.transform.GetSiblingIndex();
+            clone.transform.SetSiblingIndex(toxinSiblingIndex + 1);
+
+            spentPointsText = clone.GetComponent<TextMeshProUGUI>();
+            if (spentPointsText != null)
+            {
+                spentPointsText.color = UIStyleTokens.Text.Secondary;
+                ConfigureText(spentPointsText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
+                spentPointsText.text = "0";
+            }
+
+            var layout = clone.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = clone.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = SpentPointsColumnWidth;
+            layout.minWidth = SpentPointsColumnWidth;
+            layout.flexibleWidth = -1f;
+        }
+
         private void EnsureDetailsButton()
         {
             if (detailsButton != null)
@@ -200,6 +241,7 @@ namespace FungusToast.Unity.UI
             ApplyColumnWidth(resistantText, MetricColumnWidth);
             ApplyColumnWidth(deadText, MetricColumnWidth);
             ApplyColumnWidth(toxinText, MetricColumnWidth);
+            ApplyColumnWidth(spentPointsText, SpentPointsColumnWidth);
 
             if (detailsButton != null)
             {
