@@ -1,6 +1,6 @@
 # Substrate Ecology Roster
 
-> Status: Complete. Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, Necrophytic Bloom, and Mycotoxin Fission are the final implemented Substrate Ecology roster. Nutrient Afterglow was not selected; it remains a deliberately unimplemented historical concept.
+> Status: Complete. Aerated Frontier, Crustward Tropism, Compaction Pressure, Detrital Enzymes, Toxin Margin, Necrophytic Bloom, and Toxinborne Seeding are the final implemented Substrate Ecology roster. Nutrient Afterglow was not selected; it remains a deliberately unimplemented historical concept.
 >
 > Related: [../NEW_MUTATION_HELPER.md](../NEW_MUTATION_HELPER.md), [MUTATION_PREREQUISITE_GUIDELINES.md](MUTATION_PREREQUISITE_GUIDELINES.md), [../../../docs/WORKLOG.md](../../../docs/WORKLOG.md), and the temporary [Mycelial Lab Pending Decisions](../../../docs/MYCELIAL_LAB_PENDING_DECISIONS.md) approval queue.
 
@@ -24,7 +24,7 @@ The lane is complete with six new mutations plus the Necrophytic Bloom move. Aer
 | 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 **or** Compaction Pressure 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
 | 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
 | 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
-| 5 | Mycotoxin Fission | Friendly-toxin dispersal capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +6 percentage points/level next to friendly toxins; up to three toxin splits/level |
+| 5 | Toxinborne Seeding | Friendly-toxin foothold capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +10 percentage points/level next to friendly toxins; toxin carries one new cell to enemy territory |
 
 ### 1. Aerated Frontier (Implemented)
 
@@ -90,17 +90,16 @@ The lane is complete with six new mutations plus the Necrophytic Bloom move. Aer
 - Tracking: qualifying attempts and bonus-attributable successes.
 - Focused tests: approved definition/prerequisites; enemy versus own toxin; cardinal growth attribution; no synthetic target creation.
 
-### 6. Mycotoxin Fission (Implemented)
+### 6. Toxinborne Seeding (Implemented)
 
-**Summary:** Successful growth beside a friendly toxin disperses that toxin into new toxin pressure near enemy cells.
+**Summary:** Successful growth beside a friendly toxin sends that toxin and the new cell together into enemy territory.
 
-- Trigger/timing: each level adds +6 percentage points to growth into an empty cardinal or enabled Tendril-diagonal target orthogonally adjacent to an owned toxin. On success, the lowest-ID qualifying toxin vacates and creates up to three toxins near enemy cells per level.
-- Limits: the launched toxins inherit only the source toxin's remaining lifespan. The fission target list excludes the vacated tile. A failed or unavailable toxin placement simply produces fewer splits.
-- Max-level bonus: after the toxin vacates, the newly colonized cell automatically grows into that tile. This bonus growth cannot trigger another fission.
+- Trigger/timing: each level adds +10 percentage points to growth into an empty cardinal or enabled Tendril-diagonal target orthogonally adjacent to an owned toxin. On success, the lowest-ID qualifying toxin relocates to one empty tile next to an enemy living cell and carries the newly colonized cell with it.
+- Limits: the relocated toxin inherits only its remaining lifespan. The carried cell lands in one random open orthogonal tile next to the toxin; if none is open, the cell is lost. If no enemy-adjacent toxin landing tile exists, normal growth and the original toxin remain in place. A carried cell cannot trigger another seeding.
 - AI: value friendly toxin adjacency plus reachable enemy-adjacent toxin targets; measure whether a purpose-built toxin build can access the capstone in practical games.
 - Interaction/counterplay: opponents can deny enemy-adjacent landing sites, while the owner can deliberately place toxins to create the local growth setup.
-- Tracking/persistence: toxins created and vacated-tile bridge growths; no deferred runtime state or save-snapshot field is required because the entire resolution is immediate.
-- Focused tests: friendly versus enemy toxin qualification; per-level chance; multi-split limits; remaining-lifespan inheritance; max-level bridge; no bridge recursion; unavailable landing sites; deterministic RNG and Time-Lapse parity.
+- Tracking/persistence: qualifying attempts, bonus growths, toxin relocations, and carried-cell landings; no deferred runtime state or save-snapshot field is required because the entire resolution is immediate.
+- Focused tests: friendly versus enemy toxin qualification; per-level chance; bonus-only success attribution; one-toxin relocation; remaining-lifespan inheritance; carried-cell placement; unavailable enemy landing sites; deterministic RNG and Time-Lapse parity.
 
 ## Proposed Existing Mutation Move
 

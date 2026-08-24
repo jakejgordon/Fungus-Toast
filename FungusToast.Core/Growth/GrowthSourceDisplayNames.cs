@@ -23,6 +23,7 @@ namespace FungusToast.Core.Growth
             GrowthSource.CatabolicRebirth => "Catabolic Rebirth",
             GrowthSource.Ballistospore => "Ballistospore",
             GrowthSource.MycotoxinTracer => "Mycotoxin Tracers",
+            GrowthSource.ToxinborneSeeding => "Toxinborne Seeding",
             GrowthSource.DistalSpore => "Distal Spore",
             GrowthSource.Manual => "Manual",
             GrowthSource.Unknown => "Unknown",

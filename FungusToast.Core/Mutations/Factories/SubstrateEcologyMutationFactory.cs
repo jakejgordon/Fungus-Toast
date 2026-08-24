@@ -112,15 +112,14 @@ namespace FungusToast.Core.Mutations.Factories
 
             helper.MakeChild(new Mutation(
                 id: MutationIds.MycotoxinFission,
-                name: "Mycotoxin Fission",
-                description: "Lets your colony turn a nearby toxin into a burst of new toxin pressure.\n\n" +
-                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.MycotoxinFissionEffectPerLevel)} growth chance when an empty growth target is orthogonally adjacent to one of your toxins. After a successful qualifying growth, that toxin vacates its tile and creates up to {GameBalance.MycotoxinFissionToxinDropsPerLevel} toxins near enemy cells per level, keeping only its remaining lifespan.\n" +
-                             "<b>Max Level Bonus:</b> Your newly colonized cell automatically grows into the vacated toxin tile. This bridge cannot trigger another fission.",
-                flavorText: "A toxin-bearing vesicle fractures along the advancing hyphae, scattering its chemical payload before the colony closes the path behind it.",
-                type: MutationType.MycotoxinFissionGrowthChance,
-                effectPerLevel: GameBalance.MycotoxinFissionEffectPerLevel,
+                name: "Toxinborne Seeding",
+                description: "Lets a mobile toxin carry a newly grown cell into enemy territory.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.ToxinborneSeedingEffectPerLevel)} growth chance when an empty growth target is orthogonally adjacent to one of your toxins. After a successful qualifying growth, that toxin relocates to an empty tile next to an enemy living cell, keeping only its remaining lifespan. The newly grown cell travels with it and lands in a random open orthogonal tile next to the toxin. If no such tile is open, the carried cell is lost. The carried cell cannot trigger another seeding.",
+                flavorText: "A toxin-bearing vesicle carries a living hyphal fragment through the air, planting a fragile outpost where its chemical payload comes to rest.",
+                type: MutationType.ToxinborneSeedingGrowthChance,
+                effectPerLevel: GameBalance.ToxinborneSeedingEffectPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
-                maxLevel: GameBalance.MycotoxinFissionMaxLevel,
+                maxLevel: GameBalance.ToxinborneSeedingMaxLevel,
                 category: MutationCategory.SubstrateEcology,
                 tier: MutationTier.Tier5
             ),

@@ -652,6 +652,7 @@ namespace FungusToast.Unity.UI.GameLog
             GrowthSource.CytolyticBurst => "Cytolytic Burst",
             GrowthSource.SporicidalBloom => "Sporicidal Bloom",
             GrowthSource.MycotoxinTracer => "Mycotoxin Tracer",
+            GrowthSource.ToxinborneSeeding => "Toxinborne Seeding",
             GrowthSource.PutrefactiveCascade => "Putrefactive Cascade",
             GrowthSource.HyphalVectoring => "Chemotactic Beacon",
             GrowthSource.ChemotacticBeacon => "Chemotactic Beacon",

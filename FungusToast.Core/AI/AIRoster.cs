@@ -1203,7 +1203,7 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
-                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel)
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
                     MycovariantCategory.Fungicide,

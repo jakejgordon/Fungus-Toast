@@ -126,10 +126,10 @@ namespace FungusToast.Simulation.Models
                     DetritalEnzymesDenseDeadMatterBonusGrowths = tracking.GetDetritalEnzymesDenseDeadMatterBonusGrowths(player.PlayerId),
                     ToxinMarginAttempts = tracking.GetToxinMarginAttempts(player.PlayerId),
                     ToxinMarginBonusGrowths = tracking.GetToxinMarginBonusGrowths(player.PlayerId),
-                    MycotoxinFissionToxinsCreated = tracking.GetMycotoxinFissionToxinsCreated(player.PlayerId),
-                    MycotoxinFissionBridgeGrowths = tracking.GetMycotoxinFissionBridgeGrowths(player.PlayerId),
-                    MycotoxinFissionAttempts = tracking.GetMycotoxinFissionAttempts(player.PlayerId),
-                    MycotoxinFissionBonusGrowths = tracking.GetMycotoxinFissionBonusGrowths(player.PlayerId),
+                    ToxinborneSeedingRelocations = tracking.GetToxinborneSeedingRelocations(player.PlayerId),
+                    ToxinborneSeedingCarriedCellLandings = tracking.GetToxinborneSeedingCarriedCellLandings(player.PlayerId),
+                    ToxinborneSeedingAttempts = tracking.GetToxinborneSeedingAttempts(player.PlayerId),
+                    ToxinborneSeedingBonusGrowths = tracking.GetToxinborneSeedingBonusGrowths(player.PlayerId),
                     LatentPolymorphismInterest = tracking.GetLatentPolymorphismInterest(player.PlayerId),
 
                     // --- Surge mutation effect counters ---

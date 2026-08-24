@@ -127,10 +127,10 @@ namespace FungusToast.Simulation.Models
         public int DetritalEnzymesDenseDeadMatterBonusGrowths { get; set; }
         public int ToxinMarginAttempts { get; set; }
         public int ToxinMarginBonusGrowths { get; set; }
-        public int MycotoxinFissionToxinsCreated { get; set; }
-        public int MycotoxinFissionBridgeGrowths { get; set; }
-        public int MycotoxinFissionAttempts { get; set; }
-        public int MycotoxinFissionBonusGrowths { get; set; }
+        public int ToxinborneSeedingRelocations { get; set; }
+        public int ToxinborneSeedingCarriedCellLandings { get; set; }
+        public int ToxinborneSeedingAttempts { get; set; }
+        public int ToxinborneSeedingBonusGrowths { get; set; }
         public int LatentPolymorphismInterest { get; set; }
 
         /// <summary>

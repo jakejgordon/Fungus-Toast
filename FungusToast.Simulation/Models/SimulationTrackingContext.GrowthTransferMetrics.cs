@@ -93,37 +93,40 @@ namespace FungusToast.Simulation.Models
         public int GetToxinMarginBonusGrowths(int playerId)
             => toxinMarginBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
-        private readonly Dictionary<int, int> mycotoxinFissionToxinsCreated = new();
-        private readonly Dictionary<int, int> mycotoxinFissionBridgeGrowths = new();
-        private readonly Dictionary<int, int> mycotoxinFissionAttempts = new();
-        private readonly Dictionary<int, int> mycotoxinFissionBonusGrowths = new();
+        private readonly Dictionary<int, int> toxinborneSeedingRelocations = new();
+        private readonly Dictionary<int, int> toxinborneSeedingCarriedCellLandings = new();
+        private readonly Dictionary<int, int> toxinborneSeedingAttempts = new();
+        private readonly Dictionary<int, int> toxinborneSeedingBonusGrowths = new();
 
-        public void RecordMycotoxinFissionAttempt(int playerId)
-            => mycotoxinFissionAttempts[playerId] = GetMycotoxinFissionAttempts(playerId) + 1;
+        public void RecordToxinborneSeedingAttempt(int playerId)
+            => toxinborneSeedingAttempts[playerId] = GetToxinborneSeedingAttempts(playerId) + 1;
 
-        public void RecordMycotoxinFissionBonusGrowth(int playerId)
-            => mycotoxinFissionBonusGrowths[playerId] = GetMycotoxinFissionBonusGrowths(playerId) + 1;
+        public void RecordToxinborneSeedingBonusGrowth(int playerId)
+            => toxinborneSeedingBonusGrowths[playerId] = GetToxinborneSeedingBonusGrowths(playerId) + 1;
 
-        public void RecordMycotoxinFission(int playerId, int toxinsCreated, bool bridgeGrown)
+        public void RecordToxinborneSeeding(int playerId, bool toxinRelocated, bool carriedCellLanded)
         {
-            mycotoxinFissionToxinsCreated[playerId] = GetMycotoxinFissionToxinsCreated(playerId) + toxinsCreated;
-            if (bridgeGrown)
+            if (toxinRelocated)
             {
-                mycotoxinFissionBridgeGrowths[playerId] = GetMycotoxinFissionBridgeGrowths(playerId) + 1;
+                toxinborneSeedingRelocations[playerId] = GetToxinborneSeedingRelocations(playerId) + 1;
+            }
+            if (carriedCellLanded)
+            {
+                toxinborneSeedingCarriedCellLandings[playerId] = GetToxinborneSeedingCarriedCellLandings(playerId) + 1;
             }
         }
 
-        public int GetMycotoxinFissionToxinsCreated(int playerId)
-            => mycotoxinFissionToxinsCreated.TryGetValue(playerId, out int value) ? value : 0;
+        public int GetToxinborneSeedingRelocations(int playerId)
+            => toxinborneSeedingRelocations.TryGetValue(playerId, out int value) ? value : 0;
 
-        public int GetMycotoxinFissionBridgeGrowths(int playerId)
-            => mycotoxinFissionBridgeGrowths.TryGetValue(playerId, out int value) ? value : 0;
+        public int GetToxinborneSeedingCarriedCellLandings(int playerId)
+            => toxinborneSeedingCarriedCellLandings.TryGetValue(playerId, out int value) ? value : 0;
 
-        public int GetMycotoxinFissionAttempts(int playerId)
-            => mycotoxinFissionAttempts.TryGetValue(playerId, out int value) ? value : 0;
+        public int GetToxinborneSeedingAttempts(int playerId)
+            => toxinborneSeedingAttempts.TryGetValue(playerId, out int value) ? value : 0;
 
-        public int GetMycotoxinFissionBonusGrowths(int playerId)
-            => mycotoxinFissionBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
+        public int GetToxinborneSeedingBonusGrowths(int playerId)
+            => toxinborneSeedingBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
         private readonly Dictionary<int, int> latentPolymorphismInterest = new();
 

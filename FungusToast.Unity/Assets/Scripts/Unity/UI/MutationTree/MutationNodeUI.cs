@@ -617,7 +617,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.AnabolicInversion => BuildAnabolicInversionSummary(level),
                 MutationIds.LatentPolymorphism => BuildLatentPolymorphismSummary(level),
                 MutationIds.NecrophyticBloom => BuildNecrophyticBloomSummary(level),
-                MutationIds.MycotoxinFission => BuildMycotoxinFissionSummary(level),
+                MutationIds.MycotoxinFission => BuildToxinborneSeedingSummary(level),
                 MutationIds.HyperadaptiveDrift => BuildHyperadaptiveDriftSummary(level),
                 MutationIds.OntogenicRegression => BuildOntogenicRegressionSummary(level),
                 _ => string.Empty
@@ -913,21 +913,15 @@ namespace FungusToast.Unity.UI.MutationTree
             return $"Banked mutation points earn {interestPercent:0.00}% interest, up to {GameBalance.LatentPolymorphismMaxInterestPerRound} bonus points per Mutation Phase";
         }
 
-        private string BuildMycotoxinFissionSummary(int level)
+        private string BuildToxinborneSeedingSummary(int level)
         {
             if (level <= 0)
             {
-                return "No friendly-toxin growth bonus or toxin splits yet.";
+                return "No friendly-toxin growth bonus or toxin-carried cell seeding yet.";
             }
 
-            float growthChancePercent = level * GameBalance.MycotoxinFissionEffectPerLevel * 100f;
-            string summary = $"+{growthChancePercent:0.00}% growth chance next to friendly toxins; up to {level} toxin splits per trigger";
-            if (level >= GameBalance.MycotoxinFissionMaxLevel)
-            {
-                summary += "; guaranteed bridge into the vacated toxin tile";
-            }
-
-            return summary;
+            float growthChancePercent = level * GameBalance.ToxinborneSeedingEffectPerLevel * 100f;
+            return $"+{growthChancePercent:0.00}% growth chance next to friendly toxins; one toxin carries the new cell to enemy territory";
         }
 
         private string BuildNecrophyticBloomSummary(int level)

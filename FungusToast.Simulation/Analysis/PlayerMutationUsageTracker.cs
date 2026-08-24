@@ -109,14 +109,14 @@ namespace FungusToast.Simulation.Analysis
                     break;
 
                 case MutationIds.MycotoxinFission:
-                    if (player.MycotoxinFissionAttempts > 0)
-                        effects["Friendly-toxin-adjacent Attempts"] = player.MycotoxinFissionAttempts;
-                    if (player.MycotoxinFissionBonusGrowths > 0)
-                        effects["Bonus Growths"] = player.MycotoxinFissionBonusGrowths;
-                    if (player.MycotoxinFissionToxinsCreated > 0)
-                        effects["Fission Toxins Created"] = player.MycotoxinFissionToxinsCreated;
-                    if (player.MycotoxinFissionBridgeGrowths > 0)
-                        effects["Vacated-tile Bridge Growths"] = player.MycotoxinFissionBridgeGrowths;
+                    if (player.ToxinborneSeedingAttempts > 0)
+                        effects["Friendly-toxin-adjacent Attempts"] = player.ToxinborneSeedingAttempts;
+                    if (player.ToxinborneSeedingBonusGrowths > 0)
+                        effects["Bonus Growths"] = player.ToxinborneSeedingBonusGrowths;
+                    if (player.ToxinborneSeedingRelocations > 0)
+                        effects["Toxin Relocations"] = player.ToxinborneSeedingRelocations;
+                    if (player.ToxinborneSeedingCarriedCellLandings > 0)
+                        effects["Carried Cell Landings"] = player.ToxinborneSeedingCarriedCellLandings;
                     break;
 
                 case MutationIds.LatentPolymorphism:

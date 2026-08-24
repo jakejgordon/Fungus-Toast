@@ -99,9 +99,9 @@ internal class TestSimulationObserver : ISimulationObserver
     public virtual void RecordDetritalEnzymesDenseDeadMatterBonusGrowth(int playerId) { }
     public virtual void RecordToxinMarginAttempt(int playerId) { }
     public virtual void RecordToxinMarginBonusGrowth(int playerId) { }
-    public virtual void RecordMycotoxinFissionAttempt(int playerId) { }
-    public virtual void RecordMycotoxinFissionBonusGrowth(int playerId) { }
-    public virtual void RecordMycotoxinFission(int playerId, int toxinsCreated, bool bridgeGrown) { }
+    public virtual void RecordToxinborneSeedingAttempt(int playerId) { }
+    public virtual void RecordToxinborneSeedingBonusGrowth(int playerId) { }
+    public virtual void RecordToxinborneSeeding(int playerId, bool toxinRelocated, bool carriedCellLanded) { }
     public virtual void RecordLatentPolymorphismInterest(int playerId, int bonusPoints) { }
     public void RecordHyphalResistanceTransfer(int playerId, int count) { }
     public void RecordSeptalAlarmResistance(int playerId, int count) { }

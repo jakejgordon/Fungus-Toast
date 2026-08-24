@@ -125,7 +125,7 @@ public class StrategyCatalogTests
                 (MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
                 (MutationIds.MycotoxinPotentiation, 5),
                 (MutationIds.PutrefactiveMycotoxin, 2),
-                (MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel)
+                (MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
             },
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
         Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));

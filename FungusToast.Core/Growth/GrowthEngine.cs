@@ -165,9 +165,9 @@ namespace FungusToast.Core.Growth
                     float detritalEnzymesBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesGrowthBonus(owner, board, tile);
                     float detritalEnzymesDenseDeadMatterBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesDenseDeadMatterBonus(owner, board, tile);
                     float toxinMarginBonus = SubstrateEcologyMutationProcessor.GetToxinMarginGrowthBonus(owner, board, tile);
-                    float mycotoxinFissionBonus = SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(owner, board, tile);
+                    float toxinborneSeedingBonus = SubstrateEcologyMutationProcessor.GetToxinborneSeedingGrowthBonus(owner, board, tile);
                     float ecologyBonus = Math.Min(
-                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus + toxinMarginBonus + mycotoxinFissionBonus,
+                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus + toxinMarginBonus + toxinborneSeedingBonus,
                         GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
                     targets.Add(new GrowthTarget(
                         tile,
@@ -181,7 +181,7 @@ namespace FungusToast.Core.Growth
                         detritalEnzymesBonus,
                         detritalEnzymesDenseDeadMatterBonus,
                         toxinMarginBonus,
-                        mycotoxinFissionBonus));
+                        toxinborneSeedingBonus));
                 }
                 else if (hasMaxCreepingMold && tile.FungalCell != null && tile.FungalCell.IsToxin)
                 {
@@ -212,9 +212,9 @@ namespace FungusToast.Core.Growth
                     float detritalEnzymesBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesGrowthBonus(owner, board, maybeTile);
                     float detritalEnzymesDenseDeadMatterBonus = SubstrateEcologyMutationProcessor.GetDetritalEnzymesDenseDeadMatterBonus(owner, board, maybeTile);
                     float toxinMarginBonus = SubstrateEcologyMutationProcessor.GetToxinMarginGrowthBonus(owner, board, maybeTile);
-                    float mycotoxinFissionBonus = SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(owner, board, maybeTile);
+                    float toxinborneSeedingBonus = SubstrateEcologyMutationProcessor.GetToxinborneSeedingGrowthBonus(owner, board, maybeTile);
                     float ecologyBonus = Math.Min(
-                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus + toxinMarginBonus + mycotoxinFissionBonus,
+                        aeratedFrontierBonus + crustwardTropismBonus + compactionPressureBonus + detritalEnzymesBonus + toxinMarginBonus + toxinborneSeedingBonus,
                         GameBalance.SubstrateEcologyCombinedGrowthBonusCap);
                     targets.Add(new GrowthTarget(
                         maybeTile,
@@ -228,7 +228,7 @@ namespace FungusToast.Core.Growth
                         detritalEnzymesBonus,
                         detritalEnzymesDenseDeadMatterBonus,
                         toxinMarginBonus,
-                        mycotoxinFissionBonus));
+                        toxinborneSeedingBonus));
                 }
             }
             return targets;
@@ -256,8 +256,8 @@ namespace FungusToast.Core.Growth
                 observer.RecordDetritalEnzymesDenseDeadMatterAttempt(owner.PlayerId);
             if (target.ToxinMarginBonus > 0f)
                 observer.RecordToxinMarginAttempt(owner.PlayerId);
-            if (target.MycotoxinFissionBonus > 0f)
-                observer.RecordMycotoxinFissionAttempt(owner.PlayerId);
+            if (target.ToxinborneSeedingBonus > 0f)
+                observer.RecordToxinborneSeedingAttempt(owner.PlayerId);
 
             double roll = rng.NextDouble();
             var (edgeMultiplier, baseChance) = GetPerimeterProliferatorContext(board, owner, sourceTileId, target);
@@ -274,7 +274,7 @@ namespace FungusToast.Core.Growth
                 if (TryGrowWithCorrectSource(board, owner.PlayerId, sourceTileId, target.Tile.TileId, growthSource))
                 {
                     observer.RecordCrustwardTropismAutomaticGrowth(owner.PlayerId);
-                    ResolveMycotoxinFissionAfterGrowth(board, owner, target, rng, observer);
+                    ResolveToxinborneSeedingAfterGrowth(board, owner, target, rng, observer);
                     if (target.DiagonalDirection.HasValue)
                         observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
                     else
@@ -294,8 +294,8 @@ namespace FungusToast.Core.Growth
                         MaybeRecordCrustwardTropismGrowth(observer, owner.PlayerId, roll, target);
                         MaybeRecordDetritalEnzymesGrowth(observer, owner.PlayerId, roll, target);
                         MaybeRecordToxinMarginGrowth(observer, owner.PlayerId, roll, target);
-                        MaybeRecordMycotoxinFissionGrowth(observer, owner.PlayerId, roll, target);
-                        ResolveMycotoxinFissionAfterGrowth(board, owner, target, rng, observer);
+                        MaybeRecordToxinborneSeedingGrowth(observer, owner.PlayerId, roll, target);
+                        ResolveToxinborneSeedingAfterGrowth(board, owner, target, rng, observer);
                         observer.RecordStandardGrowth(owner.PlayerId);
                         return true;
                     }
@@ -320,8 +320,8 @@ namespace FungusToast.Core.Growth
                         MaybeRecordCrustwardTropismGrowth(observer, owner.PlayerId, roll, target);
                         MaybeRecordDetritalEnzymesGrowth(observer, owner.PlayerId, roll, target);
                         MaybeRecordToxinMarginGrowth(observer, owner.PlayerId, roll, target);
-                        MaybeRecordMycotoxinFissionGrowth(observer, owner.PlayerId, roll, target);
-                        ResolveMycotoxinFissionAfterGrowth(board, owner, target, rng, observer);
+                        MaybeRecordToxinborneSeedingGrowth(observer, owner.PlayerId, roll, target);
+                        ResolveToxinborneSeedingAfterGrowth(board, owner, target, rng, observer);
                         if (target.DiagonalDirection.HasValue)
                             observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
                         return true;
@@ -394,16 +394,16 @@ namespace FungusToast.Core.Growth
             }
         }
 
-        private static void ResolveMycotoxinFissionAfterGrowth(
+        private static void ResolveToxinborneSeedingAfterGrowth(
             GameBoard board,
             Player owner,
             GrowthTarget target,
             Random rng,
             ISimulationObserver observer)
         {
-            if (target.MycotoxinFissionBonus > 0f)
+            if (target.ToxinborneSeedingBonus > 0f)
             {
-                SubstrateEcologyMutationProcessor.TryResolveMycotoxinFission(
+                SubstrateEcologyMutationProcessor.TryResolveToxinborneSeeding(
                     board,
                     owner,
                     target.Tile.TileId,
@@ -412,17 +412,17 @@ namespace FungusToast.Core.Growth
             }
         }
 
-        private static void MaybeRecordMycotoxinFissionGrowth(
+        private static void MaybeRecordToxinborneSeedingGrowth(
             ISimulationObserver observer,
             int playerId,
             double roll,
             GrowthTarget target)
         {
-            if (target.MycotoxinFissionBonus > 0f
-                && roll >= target.Chance - target.MycotoxinFissionBonus
+            if (target.ToxinborneSeedingBonus > 0f
+                && roll >= target.Chance - target.ToxinborneSeedingBonus
                 && roll < target.Chance)
             {
-                observer.RecordMycotoxinFissionBonusGrowth(playerId);
+                observer.RecordToxinborneSeedingBonusGrowth(playerId);
             }
         }
 
@@ -550,7 +550,7 @@ namespace FungusToast.Core.Growth
             public float DetritalEnzymesBonus { get; }
             public float DetritalEnzymesDenseDeadMatterBonus { get; }
             public float ToxinMarginBonus { get; }
-            public float MycotoxinFissionBonus { get; }
+            public float ToxinborneSeedingBonus { get; }
 
             public GrowthTarget(
                 BoardTile tile,
@@ -564,7 +564,7 @@ namespace FungusToast.Core.Growth
                 float detritalEnzymesBonus,
                 float detritalEnzymesDenseDeadMatterBonus,
                 float toxinMarginBonus,
-                float mycotoxinFissionBonus)
+                float toxinborneSeedingBonus)
             {
                 Tile = tile;
                 Chance = chance;
@@ -577,7 +577,7 @@ namespace FungusToast.Core.Growth
                 DetritalEnzymesBonus = detritalEnzymesBonus;
                 DetritalEnzymesDenseDeadMatterBonus = detritalEnzymesDenseDeadMatterBonus;
                 ToxinMarginBonus = toxinMarginBonus;
-                MycotoxinFissionBonus = mycotoxinFissionBonus;
+                ToxinborneSeedingBonus = toxinborneSeedingBonus;
             }
         }
 

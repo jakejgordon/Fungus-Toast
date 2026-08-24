@@ -11,37 +11,38 @@ namespace FungusToast.Core.Tests.Mutations;
 public class MycotoxinFissionMutationTests
 {
     [Fact]
-    public void MycotoxinFission_is_a_tier5_ecology_mutation_with_the_approved_toxin_build_prerequisites()
+    public void ToxinborneSeeding_is_a_tier5_ecology_mutation_with_the_approved_toxin_build_prerequisites()
     {
         var mutation = Assert.IsType<Mutation>(MutationRegistry.GetById(MutationIds.MycotoxinFission));
 
+        Assert.Equal("Toxinborne Seeding", mutation.Name);
         Assert.Equal(MutationCategory.SubstrateEcology, mutation.Category);
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
-        Assert.Equal(MutationType.MycotoxinFissionGrowthChance, mutation.Type);
-        Assert.Equal(GameBalance.MycotoxinFissionMaxLevel, mutation.MaxLevel);
+        Assert.Equal(MutationType.ToxinborneSeedingGrowthChance, mutation.Type);
+        Assert.Equal(GameBalance.ToxinborneSeedingMaxLevel, mutation.MaxLevel);
         Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.ToxinMargin && prerequisite.RequiredLevel == 5);
         Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.MycotoxinPotentiation && prerequisite.RequiredLevel == 5);
         Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.PutrefactiveMycotoxin && prerequisite.RequiredLevel == 2);
     }
 
     [Fact]
-    public void MycotoxinFission_grants_six_percent_per_level_only_next_to_a_friendly_toxin()
+    public void ToxinborneSeeding_grants_ten_percent_per_level_only_next_to_a_friendly_toxin()
     {
         var (board, player, enemy, colonizedTile) = CreateBoard();
         player.SetMutationLevel(MutationIds.MycotoxinFission, 2, currentRound: 1);
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
 
-        Assert.True(SubstrateEcologyMutationProcessor.QualifiesForMycotoxinFission(player, board, colonizedTile));
-        Assert.Equal(0.12f, SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(player, board, colonizedTile));
+        Assert.True(SubstrateEcologyMutationProcessor.QualifiesForToxinborneSeeding(player, board, colonizedTile));
+        Assert.Equal(0.20f, SubstrateEcologyMutationProcessor.GetToxinborneSeedingGrowthBonus(player, board, colonizedTile));
 
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, enemy);
 
-        Assert.False(SubstrateEcologyMutationProcessor.QualifiesForMycotoxinFission(player, board, colonizedTile));
-        Assert.Equal(0f, SubstrateEcologyMutationProcessor.GetMycotoxinFissionGrowthBonus(player, board, colonizedTile));
+        Assert.False(SubstrateEcologyMutationProcessor.QualifiesForToxinborneSeeding(player, board, colonizedTile));
+        Assert.Equal(0f, SubstrateEcologyMutationProcessor.GetToxinborneSeedingGrowthBonus(player, board, colonizedTile));
     }
 
     [Fact]
-    public void MycotoxinFission_bonus_can_make_an_otherwise_failed_growth_succeed_and_trigger_a_split()
+    public void ToxinborneSeeding_bonus_can_make_an_otherwise_failed_growth_succeed_and_relocate_a_toxin_with_a_carried_cell()
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 2, permanentlyBlockedTileIds: new[] { 7, 11, 17 });
         var player = new Player(0, "Player", PlayerTypeEnum.AI);
@@ -52,48 +53,74 @@ public class MycotoxinFissionMutationTests
         Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 18, GrowthSource.InitialSpore));
         player.SetMutationLevel(MutationIds.MycotoxinFission, 2, currentRound: 1);
         ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
-        var observer = new FissionObserver();
+        var observer = new SeedingObserver();
 
         GrowthEngine.ExecuteGrowthCycle(
             board,
             board.Players,
-            new FixedRollRandom(GameBalance.BaseGrowthChance + 0.05f),
+            new FixedRollRandom(GameBalance.BaseGrowthChance + 0.15f),
             new RoundContext(),
             observer);
 
-        Assert.True(board.GetTileById(13)!.FungalCell!.IsAlive);
+        Assert.Null(board.GetTileById(13)!.FungalCell);
         Assert.Null(board.GetTileById(8)!.FungalCell);
+        FungalCell toxin = Assert.Single(board.AllToxinFungalCells());
+        FungalCell carriedCell = Assert.Single(board.AllLivingFungalCells().Where(cell => cell.SourceOfGrowth == GrowthSource.ToxinborneSeeding));
+        Assert.Contains(board.GetOrthogonalNeighbors(toxin.TileId), tile => tile.TileId == carriedCell.TileId);
         Assert.Equal(1, observer.Attempts);
         Assert.Equal(1, observer.BonusGrowths);
-        Assert.Equal(2 * GameBalance.MycotoxinFissionToxinDropsPerLevel, observer.ToxinsCreated);
-        Assert.Equal(0, observer.BridgeGrowths);
+        Assert.Equal(1, observer.Relocations);
+        Assert.Equal(1, observer.CarriedCellLandings);
     }
 
     [Fact]
-    public void MycotoxinFission_at_max_level_splits_up_to_nine_toxins_preserves_remaining_lifespan_and_grows_into_the_vacated_tile()
+    public void ToxinborneSeeding_relocates_one_toxin_preserves_remaining_lifespan_and_moves_the_new_cell_to_its_landing_site()
     {
         var (board, player, _, colonizedTile) = CreateHighCapacityBoard();
-        player.SetMutationLevel(MutationIds.MycotoxinFission, GameBalance.MycotoxinFissionMaxLevel, currentRound: 1);
-        ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
-        board.GetTileById(8)!.FungalCell!.SetGrowthCycleAge(2);
-        var observer = new FissionObserver();
+        player.SetMutationLevel(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel, currentRound: 1);
+        ToxinHelper.ConvertToToxin(board, tileId: 18, GrowthSource.MycotoxinTracer, player);
+        board.GetTileById(18)!.FungalCell!.SetGrowthCycleAge(2);
+        var observer = new SeedingObserver();
 
-        MycotoxinFissionResult result = SubstrateEcologyMutationProcessor.TryResolveMycotoxinFission(
+        ToxinborneSeedingResult result = SubstrateEcologyMutationProcessor.TryResolveToxinborneSeeding(
             board,
             player,
             colonizedTile.TileId,
             new LowestIndexRandom(),
             observer);
 
-        int expectedToxinsCreated = GameBalance.MycotoxinFissionMaxLevel * GameBalance.MycotoxinFissionToxinDropsPerLevel;
-        Assert.Equal(expectedToxinsCreated, result.ToxinsCreated);
-        Assert.True(result.BridgeGrown);
-        Assert.True(board.GetTileById(8)!.FungalCell!.IsAlive);
-        Assert.Equal(GrowthSource.MycotoxinFission, board.GetTileById(8)!.FungalCell!.SourceOfGrowth);
-        Assert.Equal(expectedToxinsCreated, board.AllToxinFungalCells().Count());
-        Assert.All(board.AllToxinFungalCells(), toxin => Assert.Equal(GameBalance.DefaultToxinDuration - 2, toxin.ToxinExpirationAge));
-        Assert.Equal(expectedToxinsCreated, observer.ToxinsCreated);
-        Assert.Equal(1, observer.BridgeGrowths);
+        Assert.True(result.ToxinRelocated);
+        Assert.True(result.CarriedCellLanded);
+        Assert.Null(board.GetTileById(18)!.FungalCell);
+        Assert.Null(board.GetTileById(colonizedTile.TileId)!.FungalCell);
+        FungalCell toxin = Assert.Single(board.AllToxinFungalCells());
+        FungalCell carriedCell = Assert.Single(board.AllLivingFungalCells().Where(cell => cell.SourceOfGrowth == GrowthSource.ToxinborneSeeding));
+        Assert.Equal(GameBalance.DefaultToxinDuration - 2, toxin.ToxinExpirationAge);
+        Assert.Contains(board.GetOrthogonalNeighbors(toxin.TileId), tile => tile.TileId == carriedCell.TileId);
+        Assert.Equal(1, observer.Relocations);
+        Assert.Equal(1, observer.CarriedCellLandings);
+    }
+
+    [Fact]
+    public void ToxinborneSeeding_leaves_the_original_growth_and_toxin_untouched_when_no_enemy_adjacent_landing_tile_exists()
+    {
+        var (board, player, _, colonizedTile) = CreateBoard();
+        player.SetMutationLevel(MutationIds.MycotoxinFission, 1, currentRound: 1);
+        ToxinHelper.ConvertToToxin(board, tileId: 8, GrowthSource.MycotoxinTracer, player);
+        var observer = new SeedingObserver();
+
+        ToxinborneSeedingResult result = SubstrateEcologyMutationProcessor.TryResolveToxinborneSeeding(
+            board,
+            player,
+            colonizedTile.TileId,
+            new LowestIndexRandom(),
+            observer);
+
+        Assert.False(result.ToxinRelocated);
+        Assert.False(result.CarriedCellLanded);
+        Assert.True(board.GetTileById(8)!.FungalCell!.IsToxin);
+        Assert.True(board.GetTileById(colonizedTile.TileId)!.FungalCell!.IsAlive);
+        Assert.Equal(0, observer.Relocations);
     }
 
     private static (GameBoard board, Player player, Player enemy, BoardTile colonizedTile) CreateBoard()
@@ -104,7 +131,6 @@ public class MycotoxinFissionMutationTests
         board.Players.Add(player);
         board.Players.Add(enemy);
         Assert.True(board.SpawnSporeForPlayer(player, tileId: 13, GrowthSource.InitialSpore));
-        Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 18, GrowthSource.InitialSpore));
         return (board, player, enemy, board.GetTileById(13)!);
     }
 
@@ -120,7 +146,6 @@ public class MycotoxinFissionMutationTests
         Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 7, GrowthSource.InitialSpore));
         Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 43, GrowthSource.InitialSpore));
         Assert.True(board.SpawnSporeForPlayer(enemy, tileId: 47, GrowthSource.InitialSpore));
-        ToxinHelper.ConvertToToxin(board, tileId: 18, GrowthSource.MycotoxinTracer, player);
         return (board, player, enemy, board.GetTileById(25)!);
     }
 
@@ -139,22 +164,25 @@ public class MycotoxinFissionMutationTests
         public override int Next(int minValue, int maxValue) => minValue;
     }
 
-    private sealed class FissionObserver : TestSimulationObserver
+    private sealed class SeedingObserver : TestSimulationObserver
     {
-        public int ToxinsCreated { get; private set; }
-        public int BridgeGrowths { get; private set; }
+        public int Relocations { get; private set; }
+        public int CarriedCellLandings { get; private set; }
         public int Attempts { get; private set; }
         public int BonusGrowths { get; private set; }
 
-        public override void RecordMycotoxinFissionAttempt(int playerId) => Attempts++;
-        public override void RecordMycotoxinFissionBonusGrowth(int playerId) => BonusGrowths++;
+        public override void RecordToxinborneSeedingAttempt(int playerId) => Attempts++;
+        public override void RecordToxinborneSeedingBonusGrowth(int playerId) => BonusGrowths++;
 
-        public override void RecordMycotoxinFission(int playerId, int toxinsCreated, bool bridgeGrown)
+        public override void RecordToxinborneSeeding(int playerId, bool toxinRelocated, bool carriedCellLanded)
         {
-            ToxinsCreated += toxinsCreated;
-            if (bridgeGrown)
+            if (toxinRelocated)
             {
-                BridgeGrowths++;
+                Relocations++;
+            }
+            if (carriedCellLanded)
+            {
+                CarriedCellLandings++;
             }
         }
     }
