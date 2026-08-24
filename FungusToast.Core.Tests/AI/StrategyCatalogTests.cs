@@ -131,6 +131,31 @@ public class StrategyCatalogTests
         Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
     }
 
+    [Theory]
+    [InlineData("TST_EcologyTracerBloomJetting")]
+    [InlineData("TST_EcologyTracerBloomBallistospore")]
+    public void Ecology_tracer_bloom_variants_establish_toxins_before_toxinborne_seeding(string strategyName)
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[strategyName]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.MycotoxinTracer, 10),
+                (MutationIds.MycelialBloom, 7),
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                (MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                (MutationIds.HomeostaticHarmony, 5),
+                (MutationIds.AeratedFrontier, 5),
+                (MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                (MutationIds.MycotoxinPotentiation, 5),
+                (MutationIds.PutrefactiveMycotoxin, 2),
+                (MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
+    }
+
     [Fact]
     public void Ecology_autolytic_detrital_strategy_keeps_its_approved_staged_surge_order()
     {

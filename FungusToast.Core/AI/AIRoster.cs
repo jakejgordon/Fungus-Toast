@@ -1210,6 +1210,72 @@ namespace FungusToast.Core.AI
                     MycovariantCategory.Resistance)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyTracerBloomJetting",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.Fungicide,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 5),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
+                    new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+                },
+                preferredMycovariantIds: new List<int>
+                {
+                    MycovariantIds.JettingMyceliumIId,
+                    MycovariantIds.JettingMyceliumIIId,
+                    MycovariantIds.JettingMyceliumIIIId,
+                    MycovariantIds.EnduringToxaphoresId,
+                    MycovariantIds.ChemotacticMycotoxinsId
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EcologyTracerBloomBallistospore",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.Fungicide,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 5),
+                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
+                    new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+                },
+                preferredMycovariantIds: new List<int>
+                {
+                    MycovariantIds.BallistosporeDischargeIIIId,
+                    MycovariantIds.BallistosporeDischargeIIId,
+                    MycovariantIds.BallistosporeDischargeIId,
+                    MycovariantIds.EnduringToxaphoresId,
+                    MycovariantIds.ChemotacticMycotoxinsId
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyAutolyticDetrital",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -2222,6 +2288,8 @@ namespace FungusToast.Core.AI
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
                 ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
                 ["TST_EcologyToxinFissioner"] = StrategyTheme.Offense,
+                ["TST_EcologyTracerBloomJetting"] = StrategyTheme.Offense,
+                ["TST_EcologyTracerBloomBallistospore"] = StrategyTheme.Offense,
                 ["TST_EcologyAutolyticDetrital"] = StrategyTheme.Attrition,
                 ["TST_EcologyAutolyticReclaimer"] = StrategyTheme.Reclamation,
                 ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
