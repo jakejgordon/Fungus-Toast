@@ -102,7 +102,10 @@ namespace FungusToast.Unity.UI.MutationTree
             CanvasGroup canvasGroup = popupRect.GetComponent<CanvasGroup>();
 
             float jitterX = Random.Range(-HorizontalJitter, HorizontalJitter);
-            Vector2 basePos = ComputeSpawnAnchoredPosition(anchor) + new Vector2(jitterX, slot * StackSpacing);
+            // The button marks the midpoint of the total rise, so the popup starts below
+            // it, passes through it, and finishes the same distance above it.
+            float halfTotalRise = (RiseDistance + FadeRiseDistance) / 2f;
+            Vector2 basePos = ComputeSpawnAnchoredPosition(anchor) + new Vector2(jitterX, slot * StackSpacing - halfTotalRise);
             Vector2 risenPos = basePos + new Vector2(0f, RiseDistance);
             Vector2 fadeEndPos = risenPos + new Vector2(0f, FadeRiseDistance);
 
