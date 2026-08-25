@@ -123,9 +123,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.SubstrateEcology,
                 tier: MutationTier.Tier5
             ),
-                new MutationPrerequisite(MutationIds.ToxinMargin, 5),
-                new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 5),
-                new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2));
+                new MutationPrerequisite(MutationIds.ToxinMargin, 3),
+                new MutationPrerequisite(MutationIds.SporicidalBloom, 1));
         }
     }
 }

@@ -11,7 +11,7 @@ namespace FungusToast.Core.Tests.Mutations;
 public class MycotoxinFissionMutationTests
 {
     [Fact]
-    public void ToxinborneSeeding_is_a_tier5_ecology_mutation_with_the_approved_toxin_build_prerequisites()
+    public void ToxinborneSeeding_is_a_tier5_ecology_mutation_with_only_toxin_margin_and_sporicidal_bloom_prerequisites()
     {
         var mutation = Assert.IsType<Mutation>(MutationRegistry.GetById(MutationIds.MycotoxinFission));
 
@@ -20,9 +20,9 @@ public class MycotoxinFissionMutationTests
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
         Assert.Equal(MutationType.ToxinborneSeedingGrowthChance, mutation.Type);
         Assert.Equal(GameBalance.ToxinborneSeedingMaxLevel, mutation.MaxLevel);
-        Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.ToxinMargin && prerequisite.RequiredLevel == 5);
-        Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.MycotoxinPotentiation && prerequisite.RequiredLevel == 5);
-        Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.PutrefactiveMycotoxin && prerequisite.RequiredLevel == 2);
+        Assert.Equal(2, mutation.Prerequisites.Count);
+        Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.ToxinMargin && prerequisite.RequiredLevel == 3);
+        Assert.Contains(mutation.Prerequisites, prerequisite => prerequisite.MutationId == MutationIds.SporicidalBloom && prerequisite.RequiredLevel == 1);
     }
 
     [Fact]
