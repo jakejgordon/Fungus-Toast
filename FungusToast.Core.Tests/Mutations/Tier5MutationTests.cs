@@ -28,7 +28,7 @@ public class Tier5MutationTests
     }
 
     [Fact]
-    public void NecrotoxicConversion_is_tier5_fungicide_and_has_expected_prerequisites()
+    public void NecrotoxicConversion_is_tier5_fungicide_and_requires_putrefactive_mycotoxin_and_regenerative_hyphae()
     {
         var mutation = RequireMutation(MutationIds.NecrotoxicConversion);
 
@@ -37,7 +37,7 @@ public class Tier5MutationTests
         Assert.Equal(MutationType.NecrotoxicConversion, mutation.Type);
         Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveMycotoxin && p.RequiredLevel == 5);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 5);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 1);
         Assert.Contains("instantly reclaim any cell killed by your toxin effects", mutation.Description);
     }
 
