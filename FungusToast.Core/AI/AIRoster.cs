@@ -1222,16 +1222,16 @@ namespace FungusToast.Core.AI
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
                     new TargetMutationGoal(MutationIds.MycelialBloom, 7),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
                     new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
-                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 5),
-                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
-                    new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
-                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
-                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
                 },
                 preferredMycovariantIds: new List<int>
                 {
@@ -1255,16 +1255,16 @@ namespace FungusToast.Core.AI
                 },
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
                     new TargetMutationGoal(MutationIds.MycelialBloom, 7),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
                     new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
-                    new TargetMutationGoal(MutationIds.HomeostaticHarmony, 5),
-                    new TargetMutationGoal(MutationIds.AeratedFrontier, 5),
-                    new TargetMutationGoal(MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
-                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2),
-                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
                 },
                 preferredMycovariantIds: new List<int>
                 {

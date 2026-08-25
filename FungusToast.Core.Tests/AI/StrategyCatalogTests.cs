@@ -134,23 +134,23 @@ public class StrategyCatalogTests
     [Theory]
     [InlineData("TST_EcologyTracerBloomJetting")]
     [InlineData("TST_EcologyTracerBloomBallistospore")]
-    public void Ecology_tracer_bloom_variants_establish_toxins_before_toxinborne_seeding(string strategyName)
+    public void Ecology_tracer_bloom_variants_reach_necrophytic_bloom_before_toxinborne_seeding(string strategyName)
     {
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[strategyName]);
 
         Assert.Equal(
             new (int MutationId, int? TargetLevel)[]
             {
-                (MutationIds.MycotoxinTracer, 10),
+                (MutationIds.MycotoxinTracer, 5),
                 (MutationIds.MycelialBloom, 7),
-                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                (MutationIds.SporicidalBloom, 1),
+                (MutationIds.NecrophyticBloom, 1),
+                (MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
+                (MutationIds.MycotoxinTracer, 10),
                 (MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
-                (MutationIds.HomeostaticHarmony, 5),
-                (MutationIds.AeratedFrontier, 5),
-                (MutationIds.ToxinMargin, GameBalance.ToxinMarginMaxLevel),
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
                 (MutationIds.MycotoxinPotentiation, 5),
-                (MutationIds.PutrefactiveMycotoxin, 2),
-                (MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
+                (MutationIds.PutrefactiveMycotoxin, 2)
             },
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
         Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
