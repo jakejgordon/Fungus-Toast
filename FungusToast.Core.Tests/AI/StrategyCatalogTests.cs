@@ -132,11 +132,11 @@ public class StrategyCatalogTests
     }
 
     [Theory]
-    [InlineData("TST_EcologyTracerBloomJetting")]
-    [InlineData("TST_EcologyTracerBloomBallistospore")]
+    [InlineData("CMP_Bloom_ToxinborneJetting_Medium")]
+    [InlineData("CMP_Bloom_ToxinborneBallistospore_Hard")]
     public void Ecology_tracer_bloom_variants_reach_necrophytic_bloom_before_toxinborne_seeding(string strategyName)
     {
-        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName[strategyName]);
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName[strategyName]);
 
         Assert.Equal(
             new (int MutationId, int? TargetLevel)[]

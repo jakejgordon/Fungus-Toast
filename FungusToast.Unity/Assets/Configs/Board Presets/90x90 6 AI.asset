@@ -15,10 +15,18 @@ MonoBehaviour:
   presetId: Campaign7
   boardWidth: 90
   boardHeight: 90
-  aiPlayers:
-  - strategyName: CMP_Surge_BeaconTempo_Medium
-  - strategyName: CMP_Control_AnabolicRebirth_Medium
-  - strategyName: CMP_Growth_PutridTendrils_Medium
-  - strategyName: CMP_Reclaim_Scavenger_Easy
-  - strategyName: CMP_Bloom_CreepingNecro_Medium
-  - strategyName: CMP_TierCap_GrowthResilience_Easy
+  aiPlayers: []
+  pooledAiPlayerCount: 6
+  aiStrategyPool:
+  - CMP_Surge_BeaconTempo_Medium
+  - CMP_Control_AnabolicRebirth_Medium
+  - CMP_Growth_PutridTendrils_Medium
+  - CMP_Reclaim_Scavenger_Easy
+  - CMP_Bloom_CreepingNecro_Medium
+  - CMP_TierCap_GrowthResilience_Easy
+  - CMP_Growth_Pressure_Medium
+  - CMP_Bloom_FortifyMimic_Medium
+  - CMP_Economy_TempoReclaim_Medium
+  - CMP_Bloom_BeaconRegression_Medium
+  - CMP_Bloom_AnabolicRegression_Medium
+  - CMP_Bloom_ToxinborneJetting_Medium

@@ -900,6 +900,39 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_ToxinborneJetting_Medium",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.Fungicide,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
+                },
+                preferredMycovariantIds: new List<int>
+                {
+                    MycovariantIds.JettingMyceliumIId,
+                    MycovariantIds.JettingMyceliumIIId,
+                    MycovariantIds.JettingMyceliumIIIId,
+                    MycovariantIds.EnduringToxaphoresId,
+                    MycovariantIds.ChemotacticMycotoxinsId
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Control_AnabolicFirst_Hard",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -912,6 +945,39 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation),
                 startingSporeEdgeOffset: 8
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Bloom_ToxinborneBallistospore_Hard",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.Fungicide,
+                    MutationCategory.SubstrateEcology,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
+                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
+                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
+                },
+                preferredMycovariantIds: new List<int>
+                {
+                    MycovariantIds.BallistosporeDischargeIIIId,
+                    MycovariantIds.BallistosporeDischargeIIId,
+                    MycovariantIds.BallistosporeDischargeIId,
+                    MycovariantIds.EnduringToxaphoresId,
+                    MycovariantIds.ChemotacticMycotoxinsId
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Economy_LateSpike_Hard",
@@ -1208,72 +1274,6 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
                     MycovariantCategory.Fungicide,
                     MycovariantCategory.Resistance)
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "TST_EcologyTracerBloomJetting",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.ModerateEconomy,
-                priorityMutationCategories: new List<MutationCategory>
-                {
-                    MutationCategory.Growth,
-                    MutationCategory.Fungicide,
-                    MutationCategory.SubstrateEcology,
-                    MutationCategory.CellularResilience
-                },
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
-                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
-                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
-                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
-                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
-                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
-                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
-                },
-                preferredMycovariantIds: new List<int>
-                {
-                    MycovariantIds.JettingMyceliumIId,
-                    MycovariantIds.JettingMyceliumIIId,
-                    MycovariantIds.JettingMyceliumIIIId,
-                    MycovariantIds.EnduringToxaphoresId,
-                    MycovariantIds.ChemotacticMycotoxinsId
-                }
-            ),
-            new ParameterizedSpendingStrategy(
-                strategyName: "TST_EcologyTracerBloomBallistospore",
-                prioritizeHighTier: true,
-                economyBias: EconomyBias.ModerateEconomy,
-                priorityMutationCategories: new List<MutationCategory>
-                {
-                    MutationCategory.Growth,
-                    MutationCategory.Fungicide,
-                    MutationCategory.SubstrateEcology,
-                    MutationCategory.CellularResilience
-                },
-                targetMutationGoals: new List<TargetMutationGoal>
-                {
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 5),
-                    new TargetMutationGoal(MutationIds.MycelialBloom, 7),
-                    new TargetMutationGoal(MutationIds.SporicidalBloom, 1),
-                    new TargetMutationGoal(MutationIds.NecrophyticBloom, 1),
-                    new TargetMutationGoal(MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel),
-                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 10),
-                    new TargetMutationGoal(MutationIds.SporicidalBloom, GameBalance.SporicidalBloomMaxLevel),
-                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
-                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 5),
-                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, 2)
-                },
-                preferredMycovariantIds: new List<int>
-                {
-                    MycovariantIds.BallistosporeDischargeIIIId,
-                    MycovariantIds.BallistosporeDischargeIIId,
-                    MycovariantIds.BallistosporeDischargeIId,
-                    MycovariantIds.EnduringToxaphoresId,
-                    MycovariantIds.ChemotacticMycotoxinsId
-                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyAutolyticDetrital",
@@ -2221,7 +2221,9 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = new("Gravebloom", "Likes slow spreading decay that keeps paying off after the first contact."),
                 ["CMP_Bloom_BeaconRegression_Medium"] = new("Beacon of Rot", "Uses guided pressure to open cracks, then deepens them with collapse effects."),
                 ["CMP_Bloom_AnabolicRegression_Medium"] = new("Voltaic Rot", "Starts with a strong engine and uses it to fuel a grinding decay plan."),
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = new("Jetting Rot", "Builds a toxin-bloom engine, then rides jetting mycelium to spread poison pressure into distant lanes."),
                 ["CMP_Control_AnabolicFirst_Hard"] = new("Voltaic Bloom", "Accelerates first, then pivots into flexible board control once it has breathing room."),
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = new("Ballistospore Rot", "Builds a toxin-bloom engine, then launches poison pressure across the board with ballistic spores."),
                 ["CMP_Economy_LateSpike_Hard"] = new("The Economancer", "Plays a patient economy game, then turns saved resources into a nasty late spike."),
                 ["CMP_Bloom_CreepingRegression_Elite"] = new("The Necrotoxin Gauntlet", "Pushes creeping decay from every angle and lets the board collapse behind it."),
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = new("Rhizolith Crown", "Builds a stubborn core, then projects pressure outward from carefully held anchors."),
@@ -2250,6 +2252,8 @@ namespace FungusToast.Core.AI
                 ["AI10"] = "CMP_Bloom_NecrotoxinGauntlet_Elite",
                 ["AI11"] = "CMP_Growth_WildfireBloom_Medium",
                 ["TST_AI10_AnabolicRegression"] = "CMP_Bloom_Thanatophyte_Elite",
+                ["TST_EcologyTracerBloomJetting"] = "CMP_Bloom_ToxinborneJetting_Medium",
+                ["TST_EcologyTracerBloomBallistospore"] = "CMP_Bloom_ToxinborneBallistospore_Hard",
                 ["TST_Training_Overextender"] = "CMP_Mobility_Overextender_Training",
                 ["TST_Training_Overextender_Offset1"] = "CMP_Mobility_Overextender_Training_Offset1",
                 ["TST_Training_Overextender_Offset2"] = "CMP_Mobility_Overextender_Training_Offset2",
@@ -2288,8 +2292,6 @@ namespace FungusToast.Core.AI
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
                 ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
                 ["TST_EcologyToxinFissioner"] = StrategyTheme.Offense,
-                ["TST_EcologyTracerBloomJetting"] = StrategyTheme.Offense,
-                ["TST_EcologyTracerBloomBallistospore"] = StrategyTheme.Offense,
                 ["TST_EcologyAutolyticDetrital"] = StrategyTheme.Attrition,
                 ["TST_EcologyAutolyticReclaimer"] = StrategyTheme.Reclamation,
                 ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
@@ -2340,7 +2342,9 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyTheme.Control,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyTheme.Offense,
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyTheme.Control,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyTheme.Offense,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyTheme.LateGameSpike,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyTheme.Control,
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyTheme.Control,
@@ -2377,6 +2381,8 @@ namespace FungusToast.Core.AI
                 ["CMP_Surge_GrowthTempo_Medium"] = StrategyStatus.Proven,
                 ["CMP_Growth_Pressure_Medium"] = StrategyStatus.Proven,
                 ["CMP_Bloom_FortifyMimic_Medium"] = StrategyStatus.Proven,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyStatus.Proven,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyStatus.Proven,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyStatus.Proven,
                 ["TST_CampaignPlayer_SafeBaseline"] = StrategyStatus.Testing,
                 ["TST_Training_ResilientMycelium"] = StrategyStatus.Testing,
@@ -2435,6 +2441,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign7_KillReclaim_Offset3"] = StrategyPowerTier.Standard,
                 ["TST_Campaign7_KillReclaim_Offset8"] = StrategyPowerTier.Standard,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyPowerTier.Standard,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyPowerTier.Strong,
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyPowerTier.Weak,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyPowerTier.Standard,
@@ -2510,7 +2518,9 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyRole.Experimental,
                 ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyRole.Experimental,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyRole.Experimental,
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyRole.Experimental,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyRole.Boss,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyRole.Boss,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyRole.Boss,
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyRole.Boss,
@@ -2576,7 +2586,9 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyLifecycle.Active,
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyLifecycle.Active,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyLifecycle.Active,
                 ["CMP_Economy_LateSpike_Hard"] = StrategyLifecycle.Active,
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyLifecycle.Active,
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyLifecycle.Active,
@@ -2650,7 +2662,9 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_BeaconRegression_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Bloom_AnabolicRegression_Medium"] = new[] { DifficultyBand.Normal },
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = new[] { DifficultyBand.Normal },
                 ["CMP_Control_AnabolicFirst_Hard"] = new[] { DifficultyBand.Hard },
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = new[] { DifficultyBand.Hard },
                 ["CMP_Economy_LateSpike_Hard"] = new[] { DifficultyBand.Hard },
                 ["CMP_Bloom_CreepingRegression_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
@@ -2716,8 +2730,10 @@ namespace FungusToast.Core.AI
                 ["CMP_Bloom_CreepingNecro_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_BeaconRegression_Medium"] = CampaignDifficulty.Medium,
                 ["CMP_Bloom_AnabolicRegression_Medium"] = CampaignDifficulty.Medium,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = CampaignDifficulty.Medium,
                 ["TST_BalancedControl_AnabolicFirst"] = CampaignDifficulty.Hard,
                 ["CMP_Control_AnabolicFirst_Hard"] = CampaignDifficulty.Hard,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = CampaignDifficulty.Hard,
                 ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
                 ["CMP_Economy_LateSpike_Hard"] = CampaignDifficulty.Hard,
                 ["CMP_Bloom_CreepingRegression_Elite"] = CampaignDifficulty.Elite,

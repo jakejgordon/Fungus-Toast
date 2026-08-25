@@ -26,6 +26,8 @@ What matters now is the actual authored and campaign-eligible roster in `AIRoste
 - `CMP_Control_AnabolicFirst_Hard`
 - `CMP_Economy_LateSpike_Hard`
 - `CMP_Bloom_CreepingRegression_Elite`
+- `CMP_Bloom_ToxinborneJetting_Medium`
+- `CMP_Bloom_ToxinborneBallistospore_Hard`
 
 Legacy `AI1`-style identifiers still exist and are still used in authored campaign presets where appropriate.
 
@@ -33,23 +35,20 @@ Legacy `AI1`-style identifiers still exist and are still used in authored campai
 
 Current real authored presets in Unity:
 
+- `Campaign7` (`90x90 6 AI.asset`)
 - `Campaign12` (`130x130 7 AI.asset`)
 - `Campaign13` (`140x140 7 AI.asset`)
 - `Campaign14` (`150x150 7 AI.asset`)
 - `Campaign15` (`160x160 7 AI.asset`)
 
+### Campaign7
+Current authored pool resolves six unique opponents from twelve medium/easy candidates, including `CMP_Bloom_ToxinborneJetting_Medium`. It is intentionally a pool, not a fixed lineup, so Jetting Rot is eligible but not guaranteed every run.
+
 ### Campaign12
-Current authored lineup:
-- `AI1`
-- `AI2`
-- `AI3`
-- `AI10`
-- `AI7`
-- `AI8`
-- `AI10`
+Current authored pool resolves seven unique opponents from ten hard/elite/medium candidates, including `CMP_Bloom_ToxinborneBallistospore_Hard`. It is intentionally a pool, not a fixed lineup, so Ballistospore Rot is eligible but not guaranteed every run.
 
 Current status:
-- still softer than the intended late-campaign blocker band in recent validation
+- late-campaign acceptance targets are not settled beyond Campaign10
 - keep under review if late-campaign tuning resumes
 
 ### Campaign13
@@ -60,6 +59,7 @@ Current authored lineup:
 - `CMP_Control_AnabolicFirst_Hard`
 - `CMP_Economy_LateSpike_Hard`
 - `CMP_Bloom_CreepingRegression_Elite`
+- `CMP_Bloom_ToxinborneBallistospore_Hard`
 - `AI1`
 
 Current status:
@@ -121,6 +121,7 @@ Current status:
 - `CMP_Economy_KillReclaim_Medium`
 - `CMP_Bloom_CreepingNecro_Medium`
 - `CMP_Bloom_BeaconRegression_Medium`
+- `CMP_Bloom_ToxinborneJetting_Medium`
 
 ### Review before relying on them for campaign curation
 - `AI4`
