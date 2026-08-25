@@ -83,6 +83,8 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
         [SerializeField] private AudioClip? mutationStorePointsClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationStorePointsVolume = 1f;
+        [SerializeField] private AudioClip? mutationPointBonusPopClip = null;
+        [SerializeField, Range(0f, 1f)] private float mutationPointBonusPopVolume = 1f;
 
         [Header("Tree Sliding Settings")]
         public float slideDuration = 0.5f;
@@ -182,6 +184,9 @@ namespace FungusToast.Unity.UI.MutationTree
         public bool IsTreeOpen => isTreeOpen;
         public RectTransform MutationTreeRect => mutationTreeRect;
         public Transform MutationTreeTransform => mutationTreePanel != null ? mutationTreePanel.transform : transform;
+        public RectTransform? SpendPointsButtonRectTransform => spendPointsButton != null ? (RectTransform)spendPointsButton.transform : null;
+        public AudioClip? MutationPointBonusPopClip => mutationPointBonusPopClip;
+        public float MutationPointBonusPopVolume => mutationPointBonusPopVolume;
 
         private void Awake()
         {

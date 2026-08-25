@@ -159,9 +159,10 @@ namespace FungusToast.Unity.UI
                 if (gameLogRouter == null)
                 {
                     gameLogRouter = new GameLogRouter(playerActivityLogManager, globalEventsLogManager, MutationTreeToastPresenter);
-                    
+
                     // Set the router reference on the player activity log manager for silent mode awareness
                     playerActivityLogManager?.SetGameLogRouter(gameLogRouter);
+                    playerActivityLogManager?.SetMutationPointBonusPopupPresenter(MutationPointBonusPopupPresenter);
                 }
                 return gameLogRouter;
             }
@@ -190,10 +191,33 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        public UI_MutationPointBonusPopupPresenter MutationPointBonusPopupPresenter
+        {
+            get
+            {
+                if (mutationPointBonusPopupPresenter == null)
+                {
+                    mutationPointBonusPopupPresenter = GetComponent<UI_MutationPointBonusPopupPresenter>();
+                    if (mutationPointBonusPopupPresenter == null)
+                    {
+                        mutationPointBonusPopupPresenter = gameObject.AddComponent<UI_MutationPointBonusPopupPresenter>();
+                    }
+
+                    mutationPointBonusPopupPresenter.Initialize(
+                        mutationUIManager,
+                        mutationUIManager != null ? mutationUIManager.MutationPointBonusPopClip : null,
+                        mutationUIManager != null ? mutationUIManager.MutationPointBonusPopVolume : 1f);
+                }
+
+                return mutationPointBonusPopupPresenter;
+            }
+        }
+
         public void RegisterPauseMenuPanel(UI_PauseMenuPanel panel) => pauseMenuPanel = panel;
 
         // Routing observer for unified event handling
         private GameLogRouter gameLogRouter;
         private UI_MutationTreeToastPresenter mutationTreeToastPresenter;
+        private UI_MutationPointBonusPopupPresenter mutationPointBonusPopupPresenter;
     }
 }

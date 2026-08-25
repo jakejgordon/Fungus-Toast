@@ -8,6 +8,7 @@ using FungusToast.Core.Death;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
+using FungusToast.Unity.UI.MutationTree;
 
 namespace FungusToast.Unity.UI.GameLog
 {
@@ -130,6 +131,7 @@ namespace FungusToast.Unity.UI.GameLog
 
         private GameBoard board;
         private GameLogRouter router;
+        private UI_MutationPointBonusPopupPresenter bonusPointsPopupPresenter;
 
         private readonly Dictionary<int, PlayerLogSummary> summaries = new();
         private readonly Dictionary<int, PlayerSnapshot> roundStartSnapshots = new();
@@ -205,6 +207,8 @@ namespace FungusToast.Unity.UI.GameLog
         }
 
         public void SetGameLogRouter(GameLogRouter r) => router = r;
+
+        public void SetMutationPointBonusPopupPresenter(UI_MutationPointBonusPopupPresenter presenter) => bonusPointsPopupPresenter = presenter;
 
         private void OnDestroy()
         {
@@ -788,6 +792,22 @@ namespace FungusToast.Unity.UI.GameLog
             var agg = Agg(playerId);
             if (!agg.FreePointsBySource.ContainsKey(source)) agg.FreePointsBySource[source] = 0;
             agg.FreePointsBySource[source] += points;
+
+            TriggerBonusPointsPopup(playerId, points);
+        }
+
+        /// <summary>
+        /// Shows a floating "+N Points!" popup next to the Spend Points button for bonus
+        /// mutation points earned beyond the base per-round income. Human player only.
+        /// </summary>
+        private void TriggerBonusPointsPopup(int playerId, int points)
+        {
+            if (points <= 0 || !IsHuman(playerId))
+            {
+                return;
+            }
+
+            bonusPointsPopupPresenter?.ShowBonus(points);
         }
 
         private void AddFreeUpgrade(int playerId, string source, string mutationName, int levels)
@@ -865,6 +885,7 @@ namespace FungusToast.Unity.UI.GameLog
                 playerId,
                 $"Prime Pulse fires on round {triggerRound}, granting {mutationPointsAwarded} mutation {pointLabel}",
                 GameLogCategory.Lucky);
+            TriggerBonusPointsPopup(playerId, mutationPointsAwarded);
         }
         public void RecordNutrientPatchesPlaced(int count) { }
         public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
@@ -883,6 +904,11 @@ namespace FungusToast.Unity.UI.GameLog
             };
 
             AddPlayerEvent(playerId, message, GameLogCategory.Lucky);
+
+            if (rewardType == NutrientRewardType.MutationPoints)
+            {
+                TriggerBonusPointsPopup(playerId, rewardAmount);
+            }
         }
         public void RecordMutatorPhenotypeMutationPointsEarned(int playerId, int freePointsEarned) { /* Mutator Phenotype grants free upgrades, not spendable points – exclude from Free Points summary */ }
         public void RecordHyperadaptiveDriftMutationPointsEarned(int playerId, int freePointsEarned) { if (freePointsEarned > 0 && IsHuman(playerId)) AddFreePoints(playerId, "Hyperadaptive Drift", freePointsEarned); }
@@ -916,6 +942,7 @@ namespace FungusToast.Unity.UI.GameLog
                 playerId,
                 $"Perispore Crown triggered on draft, granting {mutationPointsAwarded} mutation {pointsLabel}",
                 GameLogCategory.Lucky);
+            TriggerBonusPointsPopup(playerId, mutationPointsAwarded);
         }
         public void RecordOntogenicRegressionFailureBonus(int playerId, int bonusPoints)
         {
@@ -947,7 +974,16 @@ namespace FungusToast.Unity.UI.GameLog
             roundActivityTotals[playerId] = activityTotals;
         }
         public void RecordAttributedKill(int playerId, DeathReason reason, int killCount = 1) { }
-        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { if (catabolizedMutationPoints > 0 && IsHuman(playerId)) AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky); }
+        public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints)
+        {
+            if (catabolizedMutationPoints <= 0 || !IsHuman(playerId))
+            {
+                return;
+            }
+
+            AddPlayerEvent(playerId, catabolizedMutationPoints == 1 ? "Earned 1 mutation point from Mycotoxin Catabolism" : $"Earned {catabolizedMutationPoints} mutation points from Mycotoxin Catabolism", GameLogCategory.Lucky);
+            TriggerBonusPointsPopup(playerId, catabolizedMutationPoints);
+        }
         public void RecordCompoundReserveBonus(int playerId, int bonusPoints)
         {
             if (!IsHuman(playerId) || bonusPoints <= 0)
@@ -961,6 +997,7 @@ namespace FungusToast.Unity.UI.GameLog
                     ? "Compound Reserve awarded 1 bonus mutation point"
                     : $"Compound Reserve awarded {bonusPoints} bonus mutation points",
                 GameLogCategory.Lucky);
+            TriggerBonusPointsPopup(playerId, bonusPoints);
         }
         public void RecordLatentPolymorphismInterest(int playerId, int bonusPoints)
         {
@@ -975,6 +1012,7 @@ namespace FungusToast.Unity.UI.GameLog
                     ? "Latent Polymorphism earned 1 interest mutation point"
                     : $"Latent Polymorphism earned {bonusPoints} interest mutation points",
                 GameLogCategory.Lucky);
+            TriggerBonusPointsPopup(playerId, bonusPoints);
         }
         public void RecordMutatorPhenotypeUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
         public void RecordSpecificMutationUpgrade(int playerId, string mutationName) { if (IsHuman(playerId) && !string.IsNullOrEmpty(mutationName)) AddFreeUpgrade(playerId, "Mutator Phenotype", mutationName, 1); }
