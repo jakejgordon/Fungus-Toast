@@ -427,11 +427,15 @@ namespace FungusToast.Unity
         public bool TestingForceMoldinessRewards => testingForceMoldinessRewards;
         public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
-        private bool isFastForwarding = false; 
-        public bool IsFastForwarding => isFastForwarding; 
+        private const string RoundPresentationSpeedModeKey = "Settings.RoundPresentationSpeedMode";
+
+        private bool isFastForwarding = false;
+        public bool IsFastForwarding => isFastForwarding;
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
         public bool IsFastRoundPresentationMode => roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
+        private bool timeLapseCarriedOverFromPersistedSettings;
+        public bool WasTimeLapseCarriedOverFromPersistedSettings => timeLapseCarriedOverFromPersistedSettings;
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
         private bool skipMutationPointAssignmentForRoundStart;
@@ -476,6 +480,7 @@ namespace FungusToast.Unity
             Instance = this;
             AlphaDataResetService.ApplyIfNeeded();
             BoardLayoutCompatibilityService.ApplyIfNeeded(campaignProgression, gridVisualizer != null ? gridVisualizer.ActiveBoardMedium : null);
+            LoadPersistedRoundPresentationSpeedMode();
             rng = new System.Random();
             BootstrapServices();
             // Create campaign controller if progression present
@@ -521,7 +526,17 @@ namespace FungusToast.Unity
         public void SetRoundPresentationSpeedMode(RoundPresentationSpeedMode mode)
         {
             roundPresentationSpeedMode = mode;
+            ScopedPlayerPrefs.SetInt(RoundPresentationSpeedModeKey, (int)mode);
+            ScopedPlayerPrefs.Save();
             gameUIManager?.MutationUIManager?.RefreshPresentationSpeedModeUI();
+        }
+
+        private void LoadPersistedRoundPresentationSpeedMode()
+        {
+            roundPresentationSpeedMode = (RoundPresentationSpeedMode)ScopedPlayerPrefs.GetInt(
+                RoundPresentationSpeedModeKey,
+                (int)RoundPresentationSpeedMode.Normal);
+            timeLapseCarriedOverFromPersistedSettings = roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
         }
 
         public float GetRoundPresentationDelaySeconds(float baseSeconds)

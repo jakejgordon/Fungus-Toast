@@ -159,6 +159,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private int lastKnownScreenWidth = -1;
         private int lastKnownScreenHeight = -1;
         private bool hasDismissedTimeLapseCoachmarkThisGame;
+        private NewPlayerTooltipId activeTimeLapseCoachmarkTooltipId = NewPlayerTooltipId.TimeLapseModeIntro;
         private bool hasDismissedStorePointsCoachmarkThisGame;
         private Dictionary<int, PlayerBoardSummary>? mutationAvailabilityBoardSummaries;
         private bool humanMimeticResilienceHasEligibleTargets = true;
@@ -2611,11 +2612,27 @@ namespace FungusToast.Unity.UI.MutationTree
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
             int currentRound = gameManager?.Board?.CurrentRound ?? 0;
-            if (!NewPlayerTooltipRules.ShouldShowTimeLapseModeIntro(
+
+            NewPlayerTooltipId tooltipIdToShow;
+            if (NewPlayerTooltipRules.ShouldShowTimeLapseCarriedOverIntro(
+                    forceFirstGame,
+                    currentRound,
+                    gameManager != null && gameManager.WasTimeLapseCarriedOverFromPersistedSettings,
+                    gameManager != null && gameManager.IsFastRoundPresentationMode,
+                    hasDismissedTimeLapseCoachmarkThisGame,
+                    isFastForwarding))
+            {
+                tooltipIdToShow = NewPlayerTooltipId.TimeLapseCarriedOverIntro;
+            }
+            else if (NewPlayerTooltipRules.ShouldShowTimeLapseModeIntro(
                     forceFirstGame,
                     currentRound,
                     hasDismissedTimeLapseCoachmarkThisGame,
                     isFastForwarding))
+            {
+                tooltipIdToShow = NewPlayerTooltipId.TimeLapseModeIntro;
+            }
+            else
             {
                 return;
             }
@@ -2626,7 +2643,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.TimeLapseModeIntro);
+            activeTimeLapseCoachmarkTooltipId = tooltipIdToShow;
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(tooltipIdToShow);
             timeLapseCoachmarkTitleTextLabel.text = definition.Title;
             timeLapseCoachmarkBodyTextLabel.text = definition.Body;
             PositionTimeLapseCoachmark();
@@ -2964,7 +2982,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.TimeLapseModeIntro);
+                NewPlayerTooltipCatalog.MarkSeen(activeTimeLapseCoachmarkTooltipId);
             }
 
             HideTimeLapseCoachmarkImmediate(false);

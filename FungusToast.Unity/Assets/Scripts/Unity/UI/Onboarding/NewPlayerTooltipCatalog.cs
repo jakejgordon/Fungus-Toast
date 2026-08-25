@@ -9,6 +9,7 @@ namespace FungusToast.Unity.UI.Onboarding
         AlphaMutationPhaseIntro,
         MutationTreeGuidance,
         TimeLapseModeIntro,
+        TimeLapseCarriedOverIntro,
         StoreMutationPointsIntro,
         ScoreboardWinCondition,
         AdaptationPanelIntro,
@@ -79,6 +80,13 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Time-Lapse mode skips most animations so you can fly through the Growth and Decay Phases. Toggle it here whenever you want a faster pace.",
                 NewPlayerTooltipSurface.MutationTreeCoachmark,
                 "Show when the mutation tree opens on round 5 unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.TimeLapseCarriedOverIntro,
+                "Onboarding.TimeLapseCarriedOverIntroSeen",
+                "Time-Lapse Still On",
+                "Time-Lapse remained on since your last session. You can toggle it off at any time.",
+                NewPlayerTooltipSurface.MutationTreeCoachmark,
+                "Show when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting and is currently enabled, unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.StoreMutationPointsIntro,
                 "Onboarding.StoreMutationPointsIntroSeen",
@@ -228,6 +236,26 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseModeIntro);
+        }
+
+        public static bool ShouldShowTimeLapseCarriedOverIntro(
+            bool forceFirstGameExperience,
+            int currentRound,
+            bool timeLapseCarriedOverFromPersistedSettings,
+            bool isTimeLapseCurrentlyEnabled,
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
+        {
+            if (currentRound != 1
+                || !timeLapseCarriedOverFromPersistedSettings
+                || !isTimeLapseCurrentlyEnabled
+                || hasDismissedThisGame
+                || isFastForwarding)
+            {
+                return false;
+            }
+
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseCarriedOverIntro);
         }
 
         public static bool ShouldShowStoreMutationPointsIntro(
