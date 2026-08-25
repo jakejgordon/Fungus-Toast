@@ -620,8 +620,142 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.MycotoxinFission => BuildToxinborneSeedingSummary(level),
                 MutationIds.HyperadaptiveDrift => BuildHyperadaptiveDriftSummary(level),
                 MutationIds.OntogenicRegression => BuildOntogenicRegressionSummary(level),
-                _ => string.Empty
+                MutationIds.HyphalSurge => BuildAutolyticSurgeSummary(level),
+                MutationIds.ChemotacticBeacon => BuildChemotacticBeaconSummary(level),
+                MutationIds.MimeticResilience => BuildMimeticResilienceSummary(level),
+                MutationIds.CompetitiveAntagonism => BuildCompetitiveAntagonismSummary(level),
+                MutationIds.ChitinFortification => BuildChitinFortificationSummary(level),
+                MutationIds.AeratedFrontier => BuildAeratedFrontierSummary(level),
+                MutationIds.CrustwardTropism => BuildCrustwardTropismSummary(level),
+                MutationIds.CompactionPressure => BuildCompactionPressureSummary(level),
+                MutationIds.DetritalEnzymes => BuildDetritalEnzymesSummary(level),
+                MutationIds.ToxinMargin => BuildToxinMarginSummary(level),
+                _ => BuildFallbackLevelSummary(level)
             };
+        }
+
+        private string BuildAutolyticSurgeSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No active cardinal growth or random-decay change yet.";
+            }
+
+            float growthChancePercent = level * GameBalance.HyphalSurgeEffectPerLevel * 100f;
+            float randomDecayChancePercent = level * GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel * 100f;
+            return $"While active: cardinal growth +{growthChancePercent:0.00}%, random decay +{randomDecayChancePercent:0.00}% for {GameBalance.HyphalSurgeDurationRounds} rounds";
+        }
+
+        private string BuildChemotacticBeaconSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No beacon growth line yet.";
+            }
+
+            int projectedCells = GameBalance.ChemotacticBeaconBaseTiles
+                + (level * GameBalance.ChemotacticBeaconTilesPerLevel);
+            return $"While active: projects up to {projectedCells} living cells toward the marker at Growth Phase end";
+        }
+
+        private string BuildMimeticResilienceSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No resistant foothold attempts yet.";
+            }
+
+            return $"While active: one resistant foothold attempt around each qualifying stronger rival within {level + 1} tiles (max 20 successes per rival per Growth Phase)";
+        }
+
+        private string BuildCompetitiveAntagonismSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No stronger-colony targeting priority yet.";
+            }
+
+            return $"While active: toxin effects prioritize stronger colonies; level changes activation cost, not targeting strength";
+        }
+
+        private string BuildChitinFortificationSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No cells fortified yet.";
+            }
+
+            int cellsPerGrowthPhase = level * GameBalance.ChitinFortificationCellsPerLevel;
+            return $"While active: permanently fortifies {cellsPerGrowthPhase} living cells per Growth Phase for {GameBalance.ChitinFortificationSurgeDuration} rounds";
+        }
+
+        private string BuildAeratedFrontierSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No established-frontier growth bonus yet.";
+            }
+
+            float chancePercent = level * GameBalance.AeratedFrontierEffectPerLevel * 100f;
+            return $"+{chancePercent:0.00}% growth chance from cells aged {GameBalance.AeratedFrontierMinimumEligibleGrowthCycleAge}+ cycles with {GameBalance.AeratedFrontierRequiredOpenOrthogonalSpaces}+ open cardinal neighbors";
+        }
+
+        private string BuildCrustwardTropismSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No outward crustward growth bonus yet.";
+            }
+
+            float chancePercent = level * GameBalance.CrustwardTropismEffectPerLevel * 100f;
+            string summary = $"+{chancePercent:0.00}% growth chance when the target is closer to the playable crust";
+            return level >= GameBalance.CrustwardTropismMaxLevel
+                ? summary + "; first qualifying crust placement each Growth Cycle succeeds automatically"
+                : summary;
+        }
+
+        private string BuildCompactionPressureSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No cramped-territory growth bonus yet.";
+            }
+
+            float chancePercent = level * GameBalance.CompactionPressureEffectPerLevel * 100f;
+            return $"+{chancePercent:0.00}% growth chance from cells with {GameBalance.CompactionPressureMinimumLegalOrthogonalTargets}-{GameBalance.CompactionPressureMaximumLegalOrthogonalTargets} legal cardinal targets";
+        }
+
+        private string BuildDetritalEnzymesSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No dead-matter growth bonus yet.";
+            }
+
+            float chancePercent = level * GameBalance.DetritalEnzymesEffectPerLevel * 100f;
+            string summary = $"+{chancePercent:0.00}% growth chance next to non-toxic dead cells";
+            return level >= GameBalance.DetritalEnzymesMaxLevel
+                ? summary + $"; +{GameBalance.DetritalEnzymesDenseDeadMatterBonus * 100f:0.00}% with {GameBalance.DetritalEnzymesDenseDeadMatterRequiredNeighbors}+ adjacent dead cells"
+                : summary;
+        }
+
+        private string BuildToxinMarginSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No enemy-toxin boundary growth bonus yet.";
+            }
+
+            float chancePercent = level * GameBalance.ToxinMarginEffectPerLevel * 100f;
+            return $"+{chancePercent:0.00}% growth chance into empty targets next to enemy-owned toxins";
+        }
+
+        private string BuildFallbackLevelSummary(int level)
+        {
+            float totalEffect = mutation.GetTotalEffect(level);
+            return totalEffect == 0f
+                ? "No level-scaled effect is defined."
+                : $"Total effect: {totalEffect:0.##}";
         }
 
         private string BuildHomeostaticHarmonySummary(int level)

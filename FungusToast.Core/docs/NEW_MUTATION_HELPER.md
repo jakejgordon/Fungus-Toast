@@ -100,6 +100,21 @@ Notes:
 
 ## Implementation Checklist
 
+### Level-effect preview contract
+
+The mutation workspace inspector always shows a **Current level** and, when
+available, a **Next level** effect summary. Every mutation must provide a
+mechanic-specific summary for both states in
+`MutationNodeUI.BuildLevelSummary`; do not leave a mutation to the generic
+fallback. The summary must state the actual effect at that level, including
+surge duration or activation-only context when relevant. If levels deliberately
+do not change the strength of an effect, say so plainly and state what the
+level does change (for example, activation cost).
+
+When adding a mutation, verify level 0, a normal owned level, the next
+purchase level, and max level in the inspector. Update the summary whenever
+the mechanic's constants or level scaling change.
+
 ### **1. Core Infrastructure (Required)**
 
 #### **A. Add Mutation ID**
