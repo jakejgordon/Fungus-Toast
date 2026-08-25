@@ -71,6 +71,10 @@ namespace FungusToast.Unity.UI
         private const float EndGameResultsMetricWidth = 92f;
         private const float EndGameResultsSpentPointsWidth = 132f;
         private const float EndGameResultsDetailsWidth = 108f;
+        // Must match UI_GameEndPlayerResultsRow.prefab's row HorizontalLayoutGroup spacing and nameText preferred width,
+        // otherwise the header cells drift out of alignment with the data row columns.
+        private const float EndGameResultsRowSpacing = 14f;
+        private const float EndGameResultsPlayerColumnWidth = 260f;
         private const float CampaignMoldinessSummaryPanelMinWidth = 280f;
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
         private const float CampaignMoldinessSummaryTextWidth = 248f;
@@ -3103,7 +3107,7 @@ namespace FungusToast.Unity.UI
 
             var layout = header.GetComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.spacing = 8f;
+            layout.spacing = EndGameResultsRowSpacing;
             layout.padding = new RectOffset((int)EndGameResultsHeaderHorizontalPadding, (int)EndGameResultsHeaderHorizontalPadding, 2, 2);
             layout.childControlWidth = true;
             layout.childControlHeight = true;
@@ -3115,7 +3119,7 @@ namespace FungusToast.Unity.UI
 
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsRankWidth, TextAlignmentOptions.Center, false);
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsIconWidth, TextAlignmentOptions.Center, false);
-            CreateHeaderCell(header.transform, "Player", 210f, TextAlignmentOptions.Left, true);
+            CreateHeaderCell(header.transform, "Player", EndGameResultsPlayerColumnWidth, TextAlignmentOptions.Left, true);
             CreateHeaderCell(header.transform, "Alive", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
             CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
