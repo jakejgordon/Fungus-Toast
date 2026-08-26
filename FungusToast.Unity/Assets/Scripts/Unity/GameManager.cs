@@ -2198,7 +2198,7 @@ namespace FungusToast.Unity
             {
                 StartCoroutine(StartImmediateTestingDraftAfterUiSettles());
             }
-            else if (!(testingModeEnabled && (fastForwardRounds > 0 || testingHasMycovariantOverride)))
+            else if (!willFastForward)
             {
                 StartNextRound();
             }
