@@ -635,11 +635,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		private static readonly Color AdaptogenPatchTextColor = new(0.05f, 0.31f, 0.5f, 1f);
 		private static readonly Color SporemealPatchTextColor = new(0.12f, 0.35f, 0.11f, 1f);
 		private static readonly Color HypervariationPatchTextColor = new(0.35f, 0.12f, 0.42f, 1f);
-		private static readonly Color DirectedVectorToastColor = new(0.45f, 0.08f, 0.12f, 1f);
-		private static readonly Color TropicLysisToastColor = new(0.46f, 0.19f, 0.07f, 1f);
+		private static readonly Color DirectedVectorToastColor = new(1f, 0.87f, 0.56f, 1f);
+		private static readonly Color TropicLysisToastColor = new(1f, 0.78f, 0.46f, 1f);
 		private static readonly Color BoardToastOutlineColor = new(0.02f, 0.01f, 0f, 1f);
 		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
-		private static readonly Color BoardToastBackgroundColor = new(0f, 0f, 0f, 0.55f);
+		private static readonly Color BoardToastBackgroundColor = new(0.04f, 0.03f, 0.03f, 0.85f);
 		private const float BoardToastBackgroundHorizontalPaddingWorld = 0.3f;
 		private const float BoardToastBackgroundVerticalPaddingWorld = 0.18f;
 
