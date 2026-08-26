@@ -128,7 +128,7 @@ When adding explanatory UI, use this decision order:
 
 These currently live in `NewPlayerTooltipCatalog.cs`:
 - `AlphaMutationPhaseIntro`
-- `MutationTreeGuidance`
+- `MutationInspectorIntro`
 - `TimeLapseModeIntro`
 - `TimeLapseCarriedOverIntro`
 - `StoreMutationPointsIntro`
@@ -152,7 +152,7 @@ Use this section when you want a quick description of what already exists withou
 | Tooltip | Surface | When it appears |
 | --- | --- | --- |
 | `AlphaMutationPhaseIntro` | mutation tree toast | Shown the first time the mutation tree opens during round 1 for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
-| `MutationTreeGuidance` | mutation tree toast | Explains the persistent mutation inspector: hover to inspect, use requirement/direct-unlock chips to navigate, and Pin to hold a selection. It appears on the first mutation-tree opening after the player stores mutation points. It is then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
+| `MutationInspectorIntro` | mutation tree toast | Explains the persistent mutation inspector: hover to inspect, use requirement/direct-unlock chips to navigate, and Pin to hold a selection. It appears on the first mutation-card hover while the tree is open; it never depends on storing points. It is suppressed while fast-forwarding, then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
 | `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
 | `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

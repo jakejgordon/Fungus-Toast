@@ -110,8 +110,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool isTreeOpen = false;
         private bool isSliding = false;
         private bool hasDismissedAlphaMutationIntroThisGame;
-        private bool hasDismissedTreeGuidanceThisGame;
-        private bool hasBankedMutationPointsThisGame;
+        private bool hasDismissedMutationInspectorIntroThisGame;
         private TooltipTrigger spendPointsTooltipTrigger = null!;
         private TooltipTrigger presentationSpeedTooltipTrigger = null!;
         private AudioSource soundEffectAudioSource = null!;
@@ -405,8 +404,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationInspector?.ClearSearch();
             pendingTargetedSurgeSelection = null;
             hasDismissedAlphaMutationIntroThisGame = false;
-            hasDismissedTreeGuidanceThisGame = false;
-            hasBankedMutationPointsThisGame = false;
+            hasDismissedMutationInspectorIntroThisGame = false;
             hasDismissedTimeLapseCoachmarkThisGame = false;
             hasDismissedStorePointsCoachmarkThisGame = false;
             HideTimeLapseCoachmarkImmediate(true);
@@ -1122,6 +1120,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
+            TryShowMutationInspectorIntro();
+
             if (hoveredMutation == null || hoveredMutation.Id == mutation.Id)
             {
                 CancelInspectorHoverIntent();
@@ -1417,7 +1417,6 @@ namespace FungusToast.Unity.UI.MutationTree
             if (humanPlayer != null)
             {
                 int pointsBanked = humanPlayer.MutationPoints;
-                hasBankedMutationPointsThisGame |= pointsBanked > 0;
                 humanPlayer.WantsToBankPointsThisTurn = true;
                 AdaptationEffectProcessor.OnMutationPointsBanked(humanPlayer, pointsBanked);
                 int latentPolymorphismInterest = GeneticDriftMutationProcessor.OnMutationPointsBanked_LatentPolymorphism(humanPlayer, pointsBanked);
@@ -2575,19 +2574,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            if (!NewPlayerTooltipRules.ShouldShowMutationTreeGuidance(
-                    forceFirstGame,
-                    hasBankedMutationPointsThisGame,
-                    hasDismissedTreeGuidanceThisGame))
-            {
-                return;
-            }
-
-            NewPlayerTooltipDefinition treeGuidanceDefinition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationTreeGuidance);
-            toastPresenter.ShowModalIfTreeOpen(
-                treeGuidanceDefinition.Title,
-                treeGuidanceDefinition.Body,
-                OnFirstTreeGuidanceDismissed);
         }
 
         private void OnAlphaMutationIntroDismissed()
@@ -2601,14 +2587,40 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void OnFirstTreeGuidanceDismissed()
+        private void TryShowMutationInspectorIntro()
         {
-            hasDismissedTreeGuidanceThisGame = true;
+            GameManager? gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowMutationInspectorIntro(
+                    forceFirstGame,
+                    hasDismissedMutationInspectorIntroThisGame,
+                    isFastForwarding))
+            {
+                return;
+            }
+
+            UI_MutationTreeToastPresenter? toastPresenter = gameManager?.GameUI?.MutationTreeToastPresenter;
+            if (toastPresenter == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationInspectorIntro);
+            toastPresenter.ShowModalIfTreeOpen(
+                definition.Title,
+                definition.Body,
+                OnMutationInspectorIntroDismissed);
+        }
+
+        private void OnMutationInspectorIntroDismissed()
+        {
+            hasDismissedMutationInspectorIntroThisGame = true;
 
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MutationTreeGuidance);
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MutationInspectorIntro);
             }
         }
 

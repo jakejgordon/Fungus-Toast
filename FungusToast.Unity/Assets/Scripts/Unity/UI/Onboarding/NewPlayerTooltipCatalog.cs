@@ -7,7 +7,7 @@ namespace FungusToast.Unity.UI.Onboarding
     public enum NewPlayerTooltipId
     {
         AlphaMutationPhaseIntro,
-        MutationTreeGuidance,
+        MutationInspectorIntro,
         TimeLapseModeIntro,
         TimeLapseCarriedOverIntro,
         StoreMutationPointsIntro,
@@ -67,12 +67,12 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipSurface.MutationTreeToast,
                 "Show the first time the mutation tree opens during round 1 for a human player unless the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
             new NewPlayerTooltipDefinition(
-                NewPlayerTooltipId.MutationTreeGuidance,
-                "Onboarding.AlphaMutationTreeGuidanceSeen",
+                NewPlayerTooltipId.MutationInspectorIntro,
+                "Onboarding.MutationInspectorIntroSeen",
                 "Inspect Mutations",
                 "Hover a mutation to see what it does, what it requires, and what it unlocks.\n\nClick a requirement or unlock to jump to it. Use Pin to keep a mutation selected while you explore.",
                 NewPlayerTooltipSurface.MutationTreeToast,
-                "Show on the first mutation-tree opening after the player stores mutation points. Do not show again after dismissal in the current game; outside forced first-game experience, show once per profile."),
+                "Show the first time the player hovers a mutation card while the mutation tree is open. Do not show again after dismissal in the current game; suppress while fast-forwarding and, outside forced first-game experience, show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
@@ -200,17 +200,17 @@ namespace FungusToast.Unity.UI.Onboarding
             return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
         }
 
-        public static bool ShouldShowMutationTreeGuidance(
+        public static bool ShouldShowMutationInspectorIntro(
             bool forceFirstGameExperience,
-            bool hasBankedMutationPointsThisGame,
-            bool hasDismissedThisGame)
+            bool hasDismissedThisGame,
+            bool isFastForwarding)
         {
-            if (!hasBankedMutationPointsThisGame || hasDismissedThisGame)
+            if (hasDismissedThisGame || isFastForwarding)
             {
                 return false;
             }
 
-            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.MutationTreeGuidance);
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.MutationInspectorIntro);
         }
 
         public static bool ShouldShowScoreboardWinCondition(
