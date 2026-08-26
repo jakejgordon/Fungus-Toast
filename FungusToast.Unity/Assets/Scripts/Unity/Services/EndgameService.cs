@@ -503,6 +503,7 @@ namespace FungusToast.Unity
             if (selectionPromptText != null)
             {
                 selectionPromptText.text = message;
+                selectionPromptText.color = UIStyleTokens.Text.Primary;
             }
 
             ConfigureSelectionPromptCancelButton(showCancelButton, cancelButtonLabel, onCancel);
@@ -681,13 +682,13 @@ namespace FungusToast.Unity
                 return;
             }
 
-            if (selectionPromptPanel.GetComponent<Graphic>() != null)
+            var background = selectionPromptPanel.GetComponent<Image>();
+            if (background == null)
             {
-                return;
+                background = selectionPromptPanel.AddComponent<Image>();
             }
 
-            var blocker = selectionPromptPanel.AddComponent<Image>();
-            blocker.color = new Color(1f, 1f, 1f, 0f);
+            background.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0.88f);
         }
 
         private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
