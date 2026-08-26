@@ -141,19 +141,14 @@ namespace FungusToast.Unity.Grid
 
         private bool IsPointerBlockedByUi(Vector2 pointerScreen)
         {
-            if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
-            {
-                return true;
-            }
-
-            var selectionPromptPanel = GameManager.Instance?.SelectionPromptPanel;
-            if (selectionPromptPanel == null || !selectionPromptPanel.activeInHierarchy)
-            {
-                return false;
-            }
-
-            var promptRect = selectionPromptPanel.GetComponent<RectTransform>();
-            return promptRect != null && RectTransformUtility.RectangleContainsScreenPoint(promptRect, pointerScreen, null);
+            // Rely solely on the EventSystem raycast rather than also treating the
+            // entire (much wider) selection-prompt banner rect as blocking. The
+            // banner's own background graphic is non-raycastable, and its Cancel/
+            // Action buttons toggle their own raycastTarget when visible, so the
+            // EventSystem check alone still protects those buttons from stray board
+            // clicks while letting clicks on tiles under the plain message text
+            // (or anywhere else in the banner with no button) reach the board.
+            return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
         }
 
         bool IsSelectable(Vector3Int cell)
