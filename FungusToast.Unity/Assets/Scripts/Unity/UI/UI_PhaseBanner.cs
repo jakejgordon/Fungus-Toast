@@ -20,13 +20,13 @@ namespace FungusToast.Unity.UI
         private const float CampaignIntroStartScale = 0.94f;
         private const float CampaignIntroOvershootScale = 1.04f;
         private const float GameStartSlamDurationSeconds = 0.12f;
-        private const float GameStartSurfaceNameDelaySeconds = 0.32f;
-        private const float GameStartSurfaceNameStampDurationSeconds = 0.16f;
+        private const float GameStartSurfaceNameDelaySeconds = 0.52f;
+        private const float GameStartSurfaceNameStampDurationSeconds = 0.24f;
         private const float GameStartHoldDurationSeconds = 2.65f;
         private const float GameStartExitDurationSeconds = 0.18f;
         private const float GameStartTitleFontSize = 72f;
         private const float GameStartTitleCardWidth = 1400f;
-        private const float GameStartTitleCardHeight = 240f;
+        private const float GameStartTitleCardHeight = 160f;
         private const float GameStartSlamStartYOffset = 480f;
         private const float GameStartSlamOvershootScale = 2.6f;
         private const float GameStartSurfaceNameStartXOffset = 200f;
