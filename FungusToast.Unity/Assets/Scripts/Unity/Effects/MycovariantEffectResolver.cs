@@ -44,18 +44,46 @@ namespace FungusToast.Unity.Effects
 
         public static bool IsPerisporeCrown(int id) => id == MycovariantIds.PerisporeCrownId;
 
+        /// <summary>
+        /// Returns true if resolving this mycovariant plays a board animation (as opposed to
+        /// resolving instantly/silently). Used to decide whether an AI pick should recenter the
+        /// camera so the player can actually see the animation play out.
+        /// </summary>
+        public static bool HasAnimatedResolution(int id) =>
+            IsJettingMycelium(id) ||
+            IsHyphalDraw(id) ||
+            IsSporalSnare(id) ||
+            IsPerisporeCrown(id) ||
+            id == MycovariantIds.MycelialBastionIId ||
+            id == MycovariantIds.MycelialBastionIIId ||
+            id == MycovariantIds.MycelialBastionIIIId ||
+            id == MycovariantIds.SurgicalInoculationId ||
+            id == MycovariantIds.BallistosporeDischargeIId ||
+            id == MycovariantIds.BallistosporeDischargeIIId ||
+            id == MycovariantIds.BallistosporeDischargeIIIId ||
+            id == MycovariantIds.CytolyticBurstId;
+
         public IEnumerator ResolveEffect(
             Player player,
             Mycovariant mycovariant,
             PlayerMycovariant playerMyco,
             Action onComplete)
         {
-            // Note: AutoMarkTriggered mycovariants are automatically marked as triggered 
+            // Note: AutoMarkTriggered mycovariants are automatically marked as triggered
             // when added to the player in Player.AddMycovariant()
             // Manual marking is only needed for active mycovariants that require user interaction
             if (playerMyco != null && !mycovariant.AutoMarkTriggered)
             {
                 playerMyco.MarkTriggered();
+            }
+
+            // If the player is zoomed into part of the board, an AI pick with a board animation
+            // (e.g. Jetting Mycelium) can play off-screen. Recenter the camera on the whole board
+            // first so the player can actually watch it happen.
+            if (player.PlayerType == PlayerTypeEnum.AI && HasAnimatedResolution(mycovariant.Id))
+            {
+                GameManager.Instance?.cameraCenterer?.RestoreInitialFramingSmooth(
+                    UIEffectConstants.DraftCameraRecenteringDurationSeconds);
             }
 
             if (IsJettingMycelium(mycovariant.Id))
