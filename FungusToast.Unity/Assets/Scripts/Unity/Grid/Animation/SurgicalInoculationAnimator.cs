@@ -37,6 +37,12 @@ namespace FungusToast.Unity.Grid.Animation
             UIEffectConstants.JettingMyceliumArcHeightPerTile,
             UIEffectConstants.JettingMyceliumArcPeakScale);
 
+        private static readonly ArcAnimationSettings PerisporeCrownArcSettings = new(
+            UIEffectConstants.PerisporeCrownArcDurationSeconds,
+            UIEffectConstants.JettingMyceliumArcBaseHeightWorld,
+            UIEffectConstants.JettingMyceliumArcHeightPerTile,
+            UIEffectConstants.JettingMyceliumArcPeakScale);
+
         public SurgicalInoculationAnimator(GridVisualizer viz) => _viz = viz;
 
         public IEnumerator RunArcAndDrop(int playerId, int targetTileId, Sprite sprite)
@@ -68,6 +74,30 @@ namespace FungusToast.Unity.Grid.Animation
         }
 
         public IEnumerator RunArcVolley(int sourceTileId, IReadOnlyList<int> targetTileIds, Sprite sprite, System.Action<int> onImpact = null)
+            => RunArcVolley(
+                sourceTileId,
+                targetTileIds,
+                sprite,
+                JettingArcSettings,
+                UIEffectConstants.JettingMyceliumArcVolleyStaggerSeconds,
+                onImpact);
+
+        public IEnumerator RunPerisporeCrownArcVolley(int sourceTileId, IReadOnlyList<int> targetTileIds, Sprite sprite, System.Action<int> onImpact = null)
+            => RunArcVolley(
+                sourceTileId,
+                targetTileIds,
+                sprite,
+                PerisporeCrownArcSettings,
+                UIEffectConstants.PerisporeCrownArcVolleyStaggerSeconds,
+                onImpact);
+
+        private IEnumerator RunArcVolley(
+            int sourceTileId,
+            IReadOnlyList<int> targetTileIds,
+            Sprite sprite,
+            ArcAnimationSettings settings,
+            float volleyStaggerSeconds,
+            System.Action<int> onImpact)
         {
             var board = _viz.ActiveBoard;
             if (board == null || sprite == null || targetTileIds == null || targetTileIds.Count == 0)
@@ -90,15 +120,15 @@ namespace FungusToast.Unity.Grid.Animation
                 var (tx, ty) = board.GetXYFromTileId(targetTileId);
                 var endCell = new Vector3Int(tx, ty, 0);
                 activeArcs++;
-                _viz.StartCoroutine(RunArcWithCompletion(startCell, endCell, sprite, JettingArcSettings, () =>
+                _viz.StartCoroutine(RunArcWithCompletion(startCell, endCell, sprite, settings, () =>
                 {
                     onImpact?.Invoke(targetTileId);
                     activeArcs--;
                 }));
 
-                if (UIEffectConstants.JettingMyceliumArcVolleyStaggerSeconds > 0f)
+                if (volleyStaggerSeconds > 0f)
                 {
-                    yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumArcVolleyStaggerSeconds);
+                    yield return new WaitForSeconds(volleyStaggerSeconds);
                 }
             }
 

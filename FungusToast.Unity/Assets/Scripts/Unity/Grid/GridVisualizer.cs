@@ -808,6 +808,11 @@ namespace FungusToast.Unity.Grid
             ? _surgicalAnimator.RunArcVolley(sourceTileId, destinationTileIds, toxinOverlayTile.sprite, onImpact)
                 : null;
 
+        public IEnumerator PlayPerisporeCrownToxinVolleyAnimation(int sourceTileId, IReadOnlyList<int> destinationTileIds, Action<int> onImpact = null)
+            => _surgicalAnimator != null && toxinOverlayTile != null
+                ? _surgicalAnimator.RunPerisporeCrownArcVolley(sourceTileId, destinationTileIds, toxinOverlayTile.sprite, onImpact)
+                : null;
+
         private IEnumerator PlayToxinLaunchBatch(int sourceTileId, IReadOnlyList<int> destinationTileIds)
         {
             if (arcHelper == null || toxinOverlayTile == null || toxinOverlayTile.sprite == null || ActiveBoard == null || destinationTileIds == null || destinationTileIds.Count == 0)

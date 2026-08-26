@@ -737,6 +737,15 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float JettingMyceliumPostVolleyHoldSeconds = 0.3f;
         /// <summary>
+        /// Perispore Crown's AI presentation timings. Each value is 60% of the
+        /// shared Jetting Mycelium baseline so the Crown resolves 40% sooner
+        /// without changing other toxin volleys.
+        /// </summary>
+        public const float PerisporeCrownAIStaggerSeconds = 0.15f;
+        public const float PerisporeCrownArcVolleyStaggerSeconds = 0.036f;
+        public const float PerisporeCrownArcDurationSeconds = 0.204f;
+        public const float PerisporeCrownPostVolleyHoldSeconds = 0.18f;
+        /// <summary>
         /// Optional delay after human-triggered Mycelial Bastion resolves to allow custom animations.
         /// </summary>
         public const float MycelialBastionHumanPostEffectDelaySeconds = 0.65f;

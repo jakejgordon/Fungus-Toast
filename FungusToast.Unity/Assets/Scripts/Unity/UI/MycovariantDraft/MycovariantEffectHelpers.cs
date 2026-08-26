@@ -476,7 +476,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
-                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                yield return new WaitForSeconds(UIEffectConstants.PerisporeCrownAIStaggerSeconds);
                 var resolution = MycovariantEffectProcessor.ResolvePerisporeCrown(
                     playerMyco,
                     board,
@@ -505,7 +505,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 if (animatedTileIds.Count > 0 && resolution != null && resolution.SourceTileId >= 0)
                 {
                     gameManager.PlayJettingMyceliumVolleySound();
-                    var toxinVolley = gridVisualizer.PlayJettingMyceliumToxinVolleyAnimation(
+                    var toxinVolley = gridVisualizer.PlayPerisporeCrownToxinVolleyAnimation(
                         resolution.SourceTileId,
                         animatedTileIds,
                         toxinTileId =>
@@ -519,10 +519,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     }
 
                     gameManager.StopJettingMyceliumVolleySound();
-                    yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
+                    yield return new WaitForSeconds(UIEffectConstants.PerisporeCrownPostVolleyHoldSeconds);
                 }
 
-                yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
+                yield return new WaitForSeconds(UIEffectConstants.PerisporeCrownAIStaggerSeconds);
                 onComplete?.Invoke();
                 yield break;
             }

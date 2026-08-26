@@ -34,6 +34,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 Use the same GridVisualizer entry points; only the triggering context differs.
 - Mycelial Bastion: calls `BastionResistantPulseAnimation` (batch via `PlayResistancePulseBatchScaled`) → duration: `MycelialBastionPulseDurationSeconds`.
 - Surgical Inoculation: `SurgicalInoculationArcAnimation` (duration: `SurgicalInoculationArcDurationSeconds`). If the arc cannot be staged, it falls back to `ResistantDropAnimation` (duration: `SurgicalInoculationDropDurationSeconds`).
+- Perispore Crown: `PlayPerisporeCrownToxinVolleyAnimation` → `RunPerisporeCrownArcVolley`; its AI delays, arc stagger/duration, and post-volley hold are each 60% of the shared Jetting Mycelium baselines.
 - Regenerative Hyphae reclaim already covered (triggered during post-growth when tiles reclaimed by effect logic).
 - To uniformly slow a new active effect: add a single total duration constant to `UIEffectConstants` and multiply internal sub‑phase portions.
 
