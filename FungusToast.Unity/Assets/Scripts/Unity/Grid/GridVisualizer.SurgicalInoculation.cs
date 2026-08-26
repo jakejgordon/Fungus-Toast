@@ -639,6 +639,11 @@ namespace FungusToast.Unity.Grid.Helpers
 		private static readonly Color TropicLysisToastColor = new(0.46f, 0.19f, 0.07f, 1f);
 		private static readonly Color BoardToastOutlineColor = new(0.02f, 0.01f, 0f, 1f);
 		private static readonly Color DirectedVectorPulseColor = new(1f, 0.92f, 0.38f, 0.96f);
+		private static readonly Color BoardToastBackgroundColor = new(0f, 0f, 0f, 0.55f);
+		private const float BoardToastBackgroundHorizontalPaddingWorld = 0.3f;
+		private const float BoardToastBackgroundVerticalPaddingWorld = 0.18f;
+
+		private static Sprite _boardToastBackgroundSprite;
 
 		private readonly Func<GameBoard> _getBoard;
 		private readonly Func<Tilemap> _getMoldTilemap;
@@ -1767,7 +1772,56 @@ namespace FungusToast.Unity.Grid.Helpers
 				renderer.sortingOrder = 61;
 			}
 
+			AddBoardToastBackground(tmp, renderer != null ? renderer.sortingOrder : 61);
+
 			return tmp;
+		}
+
+		private static Sprite GetBoardToastBackgroundSprite()
+		{
+			if (_boardToastBackgroundSprite == null)
+			{
+				var texture = Texture2D.whiteTexture;
+				_boardToastBackgroundSprite = Sprite.Create(
+					texture,
+					new Rect(0f, 0f, texture.width, texture.height),
+					new Vector2(0.5f, 0.5f),
+					texture.width);
+			}
+
+			return _boardToastBackgroundSprite;
+		}
+
+		/// <summary>
+		/// Adds a dark, semi-transparent backing quad sized to the toast's text bounds so it
+		/// stays legible over a busy, populated board instead of relying on the outline alone.
+		/// </summary>
+		private static void AddBoardToastBackground(TextMeshPro tmp, int textSortingOrder)
+		{
+			if (tmp == null)
+			{
+				return;
+			}
+
+			tmp.ForceMeshUpdate();
+			Bounds bounds = tmp.textBounds;
+			if (bounds.size.x <= 0f || bounds.size.y <= 0f)
+			{
+				return;
+			}
+
+			var backgroundObject = new GameObject("ToastBackground", typeof(SpriteRenderer));
+			backgroundObject.transform.SetParent(tmp.transform, false);
+			backgroundObject.transform.localPosition = new Vector3(bounds.center.x, bounds.center.y, 0f);
+			backgroundObject.transform.localScale = new Vector3(
+				bounds.size.x + BoardToastBackgroundHorizontalPaddingWorld,
+				bounds.size.y + BoardToastBackgroundVerticalPaddingWorld,
+				1f);
+
+			var backgroundRenderer = backgroundObject.GetComponent<SpriteRenderer>();
+			backgroundRenderer.sprite = GetBoardToastBackgroundSprite();
+			backgroundRenderer.color = BoardToastBackgroundColor;
+			backgroundRenderer.sortingOrder = textSortingOrder - 1;
 		}
 
 		private static IEnumerator AnimateFloatingToast(TextMeshPro toast, float duration, Color baseColor, float riseWorld, bool useAnimatedScale)
@@ -1776,6 +1830,9 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				yield break;
 			}
+
+			var backgroundRenderer = toast.GetComponentInChildren<SpriteRenderer>();
+			Color backgroundBaseColor = backgroundRenderer != null ? backgroundRenderer.color : default;
 
 			Vector3 start = toast.transform.position;
 			Vector3 end = start + new Vector3(0f, riseWorld, 0f);
@@ -1790,6 +1847,12 @@ namespace FungusToast.Unity.Grid.Helpers
 				float fadeT = Mathf.Clamp01((t - 0.48f) / 0.52f);
 				textColor.a = 1f - fadeT;
 				toast.color = textColor;
+				if (backgroundRenderer != null)
+				{
+					Color backgroundColor = backgroundBaseColor;
+					backgroundColor.a = backgroundBaseColor.a * (1f - fadeT);
+					backgroundRenderer.color = backgroundColor;
+				}
 				yield return null;
 			}
 		}

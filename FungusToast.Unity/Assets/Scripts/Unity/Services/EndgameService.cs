@@ -687,7 +687,7 @@ namespace FungusToast.Unity
             }
 
             var blocker = selectionPromptPanel.AddComponent<Image>();
-            blocker.color = new Color(0f, 0f, 0f, 0.65f);
+            blocker.color = new Color(1f, 1f, 1f, 0f);
         }
 
         private void ConfigureSelectionPromptCancelButton(bool visible, string cancelButtonLabel, Action onCancel)
