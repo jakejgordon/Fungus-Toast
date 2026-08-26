@@ -3559,7 +3559,11 @@ namespace FungusToast.Unity.UI
                 new OtherStatisticDescriptor(
                     "Cells Poisoned",
                     statistics.CellsPoisoned,
-                    "Poison: place toxin over a living cell, killing it and converting it into a toxin tile.")
+                    "Poison: place toxin over a living cell, killing it and converting it into a toxin tile."),
+                new OtherStatisticDescriptor(
+                    "Nutrient Patches Claimed",
+                    statistics.NutrientPatchesClaimed,
+                    "Nutrient patches claimed by this player. Each connected patch cluster counts once when the player grows into it.")
             };
 
             var section = CreateDetailsSectionContainer("Other Statistics");

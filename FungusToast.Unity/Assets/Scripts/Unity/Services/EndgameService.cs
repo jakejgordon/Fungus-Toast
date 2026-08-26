@@ -1728,7 +1728,8 @@ namespace FungusToast.Unity.Endgame
             cellsReclaimed: 0,
             cellsOvergrown: 0,
             cellsInfested: 0,
-            cellsPoisoned: 0);
+            cellsPoisoned: 0,
+            nutrientPatchesClaimed: 0);
 
         public int SpentMutationPoints { get; }
         public int TilesColonized { get; }
@@ -1737,6 +1738,7 @@ namespace FungusToast.Unity.Endgame
         public int CellsOvergrown { get; }
         public int CellsInfested { get; }
         public int CellsPoisoned { get; }
+        public int NutrientPatchesClaimed { get; }
 
         public EndgamePlayerStatistics(
             int spentMutationPoints,
@@ -1745,7 +1747,8 @@ namespace FungusToast.Unity.Endgame
             int cellsReclaimed,
             int cellsOvergrown,
             int cellsInfested,
-            int cellsPoisoned)
+            int cellsPoisoned,
+            int nutrientPatchesClaimed)
         {
             SpentMutationPoints = spentMutationPoints;
             TilesColonized = tilesColonized;
@@ -1754,6 +1757,7 @@ namespace FungusToast.Unity.Endgame
             CellsOvergrown = cellsOvergrown;
             CellsInfested = cellsInfested;
             CellsPoisoned = cellsPoisoned;
+            NutrientPatchesClaimed = nutrientPatchesClaimed;
         }
     }
 
@@ -1787,6 +1791,7 @@ namespace FungusToast.Unity.Endgame
             public int CellsOvergrown;
             public int CellsInfested;
             public int CellsPoisoned;
+            public int NutrientPatchesClaimed;
 
             public EndgamePlayerStatistics ToSnapshot()
             {
@@ -1797,7 +1802,8 @@ namespace FungusToast.Unity.Endgame
                     CellsReclaimed,
                     CellsOvergrown,
                     CellsInfested,
-                    CellsPoisoned);
+                    CellsPoisoned,
+                    NutrientPatchesClaimed);
             }
         }
 
@@ -1832,6 +1838,7 @@ namespace FungusToast.Unity.Endgame
             subscribedBoard.CellOvergrown += OnCellOvergrown;
             subscribedBoard.CellInfested += OnCellInfested;
             subscribedBoard.CellPoisoned += OnCellPoisoned;
+            subscribedBoard.NutrientPatchConsumed += OnNutrientPatchConsumed;
         }
 
         public void Detach()
@@ -1847,6 +1854,7 @@ namespace FungusToast.Unity.Endgame
             subscribedBoard.CellOvergrown -= OnCellOvergrown;
             subscribedBoard.CellInfested -= OnCellInfested;
             subscribedBoard.CellPoisoned -= OnCellPoisoned;
+            subscribedBoard.NutrientPatchConsumed -= OnNutrientPatchConsumed;
             subscribedBoard = null;
         }
 
@@ -1901,6 +1909,11 @@ namespace FungusToast.Unity.Endgame
         private void OnCellPoisoned(int playerId, int tileId, int oldOwnerId, GrowthSource source)
         {
             EnsurePlayerInitialized(playerId).CellsPoisoned++;
+        }
+
+        private void OnNutrientPatchConsumed(int playerId, int nutrientTileId, int destinationTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount)
+        {
+            EnsurePlayerInitialized(playerId).NutrientPatchesClaimed++;
         }
 
         private void EnsurePlayersInitialized(IEnumerable<Player> players)
