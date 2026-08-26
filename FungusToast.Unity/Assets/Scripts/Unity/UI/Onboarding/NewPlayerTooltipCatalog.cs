@@ -72,7 +72,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Inspect Mutations",
                 "Hover a mutation to see what it does, what it requires, and what it unlocks.\n\nClick a requirement or unlock to jump to it. Use Pin to keep a mutation selected while you explore.",
                 NewPlayerTooltipSurface.MutationTreeToast,
-                "Show on the next mutation-tree opening after the round-1 Mutation Phase introduction is dismissed. If that introduction is not shown, show on the first opening. Do not show again after dismissal in the current game; outside forced first-game experience, show once per profile."),
+                "Show on the first mutation-tree opening after the player stores mutation points. Do not show again after dismissal in the current game; outside forced first-game experience, show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
@@ -200,9 +200,12 @@ namespace FungusToast.Unity.UI.Onboarding
             return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
         }
 
-        public static bool ShouldShowMutationTreeGuidance(bool forceFirstGameExperience, bool hasDismissedThisGame)
+        public static bool ShouldShowMutationTreeGuidance(
+            bool forceFirstGameExperience,
+            bool hasBankedMutationPointsThisGame,
+            bool hasDismissedThisGame)
         {
-            if (hasDismissedThisGame)
+            if (!hasBankedMutationPointsThisGame || hasDismissedThisGame)
             {
                 return false;
             }
