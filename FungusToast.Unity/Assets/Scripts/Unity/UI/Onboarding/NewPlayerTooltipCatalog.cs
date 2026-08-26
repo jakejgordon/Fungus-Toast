@@ -69,10 +69,10 @@ namespace FungusToast.Unity.UI.Onboarding
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.MutationTreeGuidance,
                 "Onboarding.AlphaMutationTreeGuidanceSeen",
-                "Mutation Tree Guidance",
-                "Hover upgrades to inspect them, then click an affordable one to buy it.\n\nIf you want stronger upgrades later, use Store Mutation Points at the top of this panel.",
+                "Inspect Mutations",
+                "Hover a mutation to see what it does, what it requires, and what it unlocks.\n\nClick a requirement or unlock to jump to it. Use Pin to keep a mutation selected while you explore.",
                 NewPlayerTooltipSurface.MutationTreeToast,
-                "Show when the mutation tree is opened for a player who has not dismissed it this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+                "Show on the next mutation-tree opening after the round-1 Mutation Phase introduction is dismissed. If that introduction is not shown, show on the first opening. Do not show again after dismissal in the current game; outside forced first-game experience, show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
