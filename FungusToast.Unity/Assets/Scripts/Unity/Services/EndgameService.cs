@@ -17,6 +17,7 @@ using FungusToast.Unity.Save;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.GameStart;
 using FungusToast.Unity.UI.MycovariantDraft;
+using FungusToast.Unity.UI.Onboarding;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using TMPro;
@@ -459,6 +460,8 @@ namespace FungusToast.Unity
         private const float PromptActionButtonWidth = 190f;
         private const float PromptButtonInset = 18f;
         private const float PromptButtonGap = 12f;
+        private const float AutoPlacementCoachmarkWidth = 340f;
+        private const float AutoPlacementCoachmarkHeight = 142f;
 
         private readonly GameObject selectionPromptPanel;
         private readonly TextMeshProUGUI selectionPromptText;
@@ -469,6 +472,10 @@ namespace FungusToast.Unity
         private TextMeshProUGUI selectionPromptActionButtonText;
         private MoldButtonTooltipProvider selectionPromptActionTooltipProvider;
         private TooltipTrigger selectionPromptActionTooltipTrigger;
+        private RectTransform autoPlacementCoachmarkRoot;
+        private CanvasGroup autoPlacementCoachmarkCanvasGroup;
+        private TextMeshProUGUI autoPlacementCoachmarkTitleText;
+        private TextMeshProUGUI autoPlacementCoachmarkBodyText;
 
         public SelectionPromptService(
             GameObject selectionPromptPanel,
@@ -511,10 +518,12 @@ namespace FungusToast.Unity
             ConfigureSelectionPromptButtonLayout(showCancelButton, showActionButton);
             ConfigureSelectionPromptTextLayout(showCancelButton, showActionButton);
             ConfigureSelectionPromptRaycasts(showCancelButton, showActionButton);
+            TryShowAutoPlacementCoachmark(showActionButton, actionButtonLabel);
         }
 
         public void Hide()
         {
+            HideAutoPlacementCoachmark();
             ConfigureSelectionPromptCancelButton(false, "Cancel", null);
             ConfigureSelectionPromptActionButton(false, "Action", null, null);
             ConfigureSelectionPromptButtonLayout(false, false);
@@ -742,6 +751,156 @@ namespace FungusToast.Unity
             if (selectionPromptActionTooltipTrigger != null)
             {
                 selectionPromptActionTooltipTrigger.enabled = visible && !string.IsNullOrWhiteSpace(actionButtonTooltip);
+            }
+        }
+
+        private void TryShowAutoPlacementCoachmark(bool actionButtonVisible, string actionButtonLabel)
+        {
+            if (!actionButtonVisible
+                || !string.Equals(actionButtonLabel, "Auto Placement", StringComparison.Ordinal)
+                || !NewPlayerTooltipRules.ShouldShowAutoPlacementIntro(GameManager.Instance != null && GameManager.Instance.IsFastForwarding))
+            {
+                HideAutoPlacementCoachmark();
+                return;
+            }
+
+            EnsureAutoPlacementCoachmarkUi();
+            if (autoPlacementCoachmarkRoot == null || autoPlacementCoachmarkCanvasGroup == null || selectionPromptActionButton == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AutoPlacementIntro);
+            autoPlacementCoachmarkTitleText.text = definition.Title;
+            autoPlacementCoachmarkBodyText.text = definition.Body;
+            PositionAutoPlacementCoachmark();
+            autoPlacementCoachmarkRoot.gameObject.SetActive(true);
+            autoPlacementCoachmarkRoot.SetAsLastSibling();
+            autoPlacementCoachmarkCanvasGroup.alpha = 1f;
+            autoPlacementCoachmarkCanvasGroup.blocksRaycasts = true;
+            autoPlacementCoachmarkCanvasGroup.interactable = true;
+            NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AutoPlacementIntro);
+        }
+
+        private void EnsureAutoPlacementCoachmarkUi()
+        {
+            if (autoPlacementCoachmarkRoot != null || selectionPromptActionButton == null)
+            {
+                return;
+            }
+
+            Canvas canvas = selectionPromptActionButton.GetComponentInParent<Canvas>()?.rootCanvas;
+            if (canvas == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_AutoPlacementCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.layer = selectionPromptActionButton.gameObject.layer;
+            rootObject.transform.SetParent(canvas.transform, false);
+
+            autoPlacementCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            autoPlacementCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            autoPlacementCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            autoPlacementCoachmarkRoot.pivot = new Vector2(1f, 0f);
+            autoPlacementCoachmarkRoot.sizeDelta = new Vector2(AutoPlacementCoachmarkWidth, AutoPlacementCoachmarkHeight);
+
+            autoPlacementCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            autoPlacementCoachmarkCanvasGroup.alpha = 0f;
+            autoPlacementCoachmarkCanvasGroup.blocksRaycasts = false;
+            autoPlacementCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            background.color = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f), 0.98f);
+            background.raycastTarget = true;
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.Left, new Vector2(14f, -46f), new Vector2(-52f, -10f));
+            autoPlacementCoachmarkTitleText.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(autoPlacementCoachmarkTitleText);
+
+            autoPlacementCoachmarkBodyText = CreateCoachmarkText(rootObject.transform, "Body", 18f, FontStyles.Normal, TextAlignmentOptions.TopLeft, new Vector2(14f, 12f), new Vector2(-14f, -48f));
+            autoPlacementCoachmarkBodyText.textWrappingMode = TextWrappingModes.Normal;
+            autoPlacementCoachmarkBodyText.overflowMode = TextOverflowModes.Overflow;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.layer = rootObject.layer;
+            closeObject.transform.SetParent(rootObject.transform, false);
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = Vector2.one;
+            closeRect.anchorMax = Vector2.one;
+            closeRect.pivot = Vector2.one;
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeObject.GetComponent<Image>().color = UIStyleTokens.Surface.PanelElevated;
+            var closeButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(closeButton);
+            closeButton.onClick.AddListener(HideAutoPlacementCoachmark);
+            var closeLabel = CreateCoachmarkText(closeObject.transform, "Label", 20f, FontStyles.Bold, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero);
+            closeLabel.text = "X";
+            closeLabel.rectTransform.anchorMin = Vector2.zero;
+            closeLabel.rectTransform.anchorMax = Vector2.one;
+            closeLabel.rectTransform.offsetMin = Vector2.zero;
+            closeLabel.rectTransform.offsetMax = Vector2.zero;
+
+            rootObject.SetActive(false);
+        }
+
+        private static TextMeshProUGUI CreateCoachmarkText(Transform parent, string name, float fontSize, FontStyles fontStyle, TextAlignmentOptions alignment, Vector2 offsetMin, Vector2 offsetMax)
+        {
+            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObject.transform.SetParent(parent, false);
+            var rect = textObject.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = offsetMin;
+            rect.offsetMax = offsetMax;
+            var text = textObject.GetComponent<TextMeshProUGUI>();
+            text.font = TMP_Settings.defaultFontAsset;
+            text.fontSize = fontSize;
+            text.fontStyle = fontStyle;
+            text.alignment = alignment;
+            text.color = UIStyleTokens.Text.Primary;
+            text.raycastTarget = false;
+            return text;
+        }
+
+        private void PositionAutoPlacementCoachmark()
+        {
+            RectTransform actionRect = selectionPromptActionButton != null ? selectionPromptActionButton.transform as RectTransform : null;
+            RectTransform parentRect = autoPlacementCoachmarkRoot != null ? autoPlacementCoachmarkRoot.parent as RectTransform : null;
+            Canvas canvas = selectionPromptActionButton != null ? selectionPromptActionButton.GetComponentInParent<Canvas>()?.rootCanvas : null;
+            if (actionRect == null || parentRect == null || canvas == null || autoPlacementCoachmarkRoot == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            Vector3[] corners = new Vector3[4];
+            actionRect.GetWorldCorners(corners);
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                autoPlacementCoachmarkRoot,
+                parentRect,
+                canvas,
+                corners[1],
+                new Vector2(-10f, 12f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
+        }
+
+        private void HideAutoPlacementCoachmark()
+        {
+            if (autoPlacementCoachmarkCanvasGroup != null)
+            {
+                autoPlacementCoachmarkCanvasGroup.alpha = 0f;
+                autoPlacementCoachmarkCanvasGroup.blocksRaycasts = false;
+                autoPlacementCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (autoPlacementCoachmarkRoot != null)
+            {
+                autoPlacementCoachmarkRoot.gameObject.SetActive(false);
             }
         }
 

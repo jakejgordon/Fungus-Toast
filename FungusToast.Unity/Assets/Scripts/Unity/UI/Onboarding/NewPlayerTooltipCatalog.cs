@@ -15,6 +15,7 @@ namespace FungusToast.Unity.UI.Onboarding
         AdaptationPanelIntro,
         CameraPanIntro,
         MycovariantDraftIntro,
+        AutoPlacementIntro,
         EndgameCountdownIntro,
     }
 
@@ -27,6 +28,7 @@ namespace FungusToast.Unity.UI.Onboarding
         MoldProfileCoachmark,
         BoardCoachmark,
         DraftCoachmark,
+        SelectionPromptCoachmark,
     }
 
     public sealed class NewPlayerTooltipDefinition
@@ -122,6 +124,13 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Mycovariants are special mutations that either improve your mold for the rest of the level or provide a one-time active boost immediately. Draft order goes from the fewest living cells to the most. Each drafted card is replaced by a random new one for the next player.",
                 NewPlayerTooltipSurface.DraftCoachmark,
                 "Show the first time the Mycovariant draft panel opens unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.AutoPlacementIntro,
+                "Onboarding.AutoPlacementIntroSeen",
+                "Auto Placement",
+                "Short on time? Click Auto Placement to choose the remaining cells automatically.",
+                NewPlayerTooltipSurface.SelectionPromptCoachmark,
+                "Show the first time an active Mycovariant exposes the Auto Placement button. Suppress while fast-forwarding and mark it seen as soon as it is displayed, so a player who first encounters this feature several games in is coached exactly once."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.EndgameCountdownIntro,
                 "Onboarding.EndgameCountdownIntroSeen",
@@ -333,6 +342,12 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.EndgameCountdownIntro);
+        }
+
+        public static bool ShouldShowAutoPlacementIntro(bool isFastForwarding)
+        {
+            return !isFastForwarding
+                && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.AutoPlacementIntro);
         }
     }
 }
