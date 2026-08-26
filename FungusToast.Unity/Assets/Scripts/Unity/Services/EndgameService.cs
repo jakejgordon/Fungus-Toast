@@ -813,14 +813,16 @@ namespace FungusToast.Unity
                 graphic.raycastTarget = false;
             }
 
-            // Only block raycasts through the (invisible) panel background when a
-            // Cancel/Action button is present. A plain instructional message (e.g.
-            // "Select a tile...") should let clicks pass through to the board
-            // underneath instead of eating tile clicks wherever the panel overlaps it.
+            // The (invisible) panel background spans the whole prompt banner, well
+            // beyond the Cancel/Action buttons themselves, so it must never block
+            // raycasts - otherwise it eats clicks on board tiles that happen to sit
+            // under the message text. Each button already has its own Graphic below
+            // whose raycastTarget is toggled with that button's visibility, so button
+            // clicks still work without this background ever blocking anything.
             var backgroundGraphic = selectionPromptPanel.GetComponent<Graphic>();
             if (backgroundGraphic != null)
             {
-                backgroundGraphic.raycastTarget = cancelButtonVisible || actionButtonVisible;
+                backgroundGraphic.raycastTarget = false;
             }
 
             if (selectionPromptCancelButton != null)
