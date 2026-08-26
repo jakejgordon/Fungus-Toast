@@ -9,6 +9,8 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationTreeToastPresenter : MonoBehaviour
     {
+        private static readonly Vector2 CenteredModalPosition = new(0f, -10f);
+        private static readonly Vector2 InspectorAdjacentModalPosition = new(250f, -10f);
         [SerializeField] private UI_MutationManager mutationManager;
         [SerializeField] private float displayDuration = 2.1f;
         [SerializeField] private float fadeDuration = 0.18f;
@@ -20,6 +22,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI messageText;
         private Coroutine activeRoutine;
         private RectTransform modalRoot;
+        private RectTransform modalPanelRoot;
         private CanvasGroup modalCanvasGroup;
         private TextMeshProUGUI modalTitleText;
         private TextMeshProUGUI modalMessageText;
@@ -72,7 +75,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        public void ShowModalIfTreeOpen(string title, string message, Action onDismissed = null)
+        public void ShowModalIfTreeOpen(string title, string message, Action onDismissed = null, bool positionNearInspector = false)
         {
             if (mutationManager == null
                 || !mutationManager.IsTreeOpen
@@ -82,6 +85,9 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             EnsureModalUi();
+            modalPanelRoot.anchoredPosition = positionNearInspector
+                ? InspectorAdjacentModalPosition
+                : CenteredModalPosition;
             modalDismissedCallback = onDismissed;
             if (modalTitleText != null)
             {
@@ -190,12 +196,12 @@ namespace FungusToast.Unity.UI.MutationTree
             var panelObject = new GameObject("Panel", typeof(RectTransform), typeof(Image), typeof(Outline));
             panelObject.transform.SetParent(rootObject.transform, false);
 
-            var panelRect = panelObject.GetComponent<RectTransform>();
-            panelRect.anchorMin = new Vector2(0.5f, 0.5f);
-            panelRect.anchorMax = new Vector2(0.5f, 0.5f);
-            panelRect.pivot = new Vector2(0.5f, 0.5f);
-            panelRect.sizeDelta = new Vector2(660f, 240f);
-            panelRect.anchoredPosition = new Vector2(0f, -10f);
+            modalPanelRoot = panelObject.GetComponent<RectTransform>();
+            modalPanelRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            modalPanelRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            modalPanelRoot.pivot = new Vector2(0.5f, 0.5f);
+            modalPanelRoot.sizeDelta = new Vector2(660f, 240f);
+            modalPanelRoot.anchoredPosition = CenteredModalPosition;
 
             var panelBackground = panelObject.GetComponent<Image>();
             var panelColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Success, 0.12f);

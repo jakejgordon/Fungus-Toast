@@ -10,8 +10,8 @@ For general Unity UI architecture, also see `../../FungusToast.Core/docs/UI_ARCH
 **Purpose:** teach first-time or returning players something important about the game flow.
 
 **Examples:**
-- mutation phase intro tutorial tooltip
-- mutation tree first-open guidance
+- Spend Points coachmark
+- mutation-workspace guidance modal
 - scoreboard win-condition coachmark
 - camera movement coachmark
 
@@ -127,8 +127,8 @@ When adding explanatory UI, use this decision order:
 ## 3. Current New-player Onboarding Inventory
 
 These currently live in `NewPlayerTooltipCatalog.cs`:
-- `AlphaMutationPhaseIntro`
-- `MutationInspectorIntro`
+- `SpendMutationPointsIntro`
+- `MutationWorkspaceIntro`
 - `TimeLapseModeIntro`
 - `TimeLapseCarriedOverIntro`
 - `StoreMutationPointsIntro`
@@ -151,8 +151,8 @@ Use this section when you want a quick description of what already exists withou
 
 | Tooltip | Surface | When it appears |
 | --- | --- | --- |
-| `AlphaMutationPhaseIntro` | mutation tree toast | Shown the first time the mutation tree opens during round 1 for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. |
-| `MutationInspectorIntro` | mutation tree toast | Explains the persistent mutation inspector: hover to inspect, use requirement/direct-unlock chips to navigate, and Pin to hold a selection. It appears on the first mutation-card hover while the tree is open; it never depends on storing points. It is suppressed while fast-forwarding, then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
+| `SpendMutationPointsIntro` | sidebar coachmark | Shown beside the Spend Points button during round 1 for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. Clicking Spend Points acknowledges and closes it. |
+| `MutationWorkspaceIntro` | mutation tree modal | Shown the first time the player opens the mutation tree by clicking Spend Points. It combines spending and inspector guidance in one modal positioned toward the inspector side of the workspace. It is suppressed while fast-forwarding, then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
 | `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
 | `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

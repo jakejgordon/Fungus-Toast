@@ -6,8 +6,8 @@ namespace FungusToast.Unity.UI.Onboarding
 {
     public enum NewPlayerTooltipId
     {
-        AlphaMutationPhaseIntro,
-        MutationInspectorIntro,
+        SpendMutationPointsIntro,
+        MutationWorkspaceIntro,
         TimeLapseModeIntro,
         TimeLapseCarriedOverIntro,
         StoreMutationPointsIntro,
@@ -60,19 +60,19 @@ namespace FungusToast.Unity.UI.Onboarding
         private static readonly IReadOnlyList<NewPlayerTooltipDefinition> Definitions = new[]
         {
             new NewPlayerTooltipDefinition(
-                NewPlayerTooltipId.AlphaMutationPhaseIntro,
-                "Onboarding.AlphaMutationPhaseSeen",
-                "Mutation Phase",
-                "Goal: control the largest share of the toast.\nSpend mutation points for upgrades now or store them to save for stronger upgrades later.\nAfter that, your colony grows automatically.",
-                NewPlayerTooltipSurface.MutationTreeToast,
-                "Show the first time the mutation tree opens during round 1 for a human player unless the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
+                NewPlayerTooltipId.SpendMutationPointsIntro,
+                "Onboarding.SpendMutationPointsIntroSeen",
+                "Spend Mutation Points",
+                "Click Spend Points to open the Mutation Workshop and upgrade your mold.",
+                NewPlayerTooltipSurface.SidebarCoachmark,
+                "Show beside the Spend Points button during round 1 for a human player unless the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
             new NewPlayerTooltipDefinition(
-                NewPlayerTooltipId.MutationInspectorIntro,
-                "Onboarding.MutationInspectorIntroSeen",
-                "Inspect Mutations",
-                "Hover a mutation to see what it does, what it requires, and what it unlocks.\n\nClick a requirement or unlock to jump to it. Use Pin to keep a mutation selected while you explore.",
+                NewPlayerTooltipId.MutationWorkspaceIntro,
+                "Onboarding.MutationWorkspaceIntroSeen",
+                "Mutation Workshop",
+                "Spend points by clicking an available mutation. Hover a mutation to inspect what it does, what it requires, and what it unlocks in this panel.\n\nClick a requirement or unlock to jump to it. Use Pin to keep a mutation selected while you explore.",
                 NewPlayerTooltipSurface.MutationTreeToast,
-                "Show the first time the player hovers a mutation card while the mutation tree is open. Do not show again after dismissal in the current game; suppress while fast-forwarding and, outside forced first-game experience, show once per profile."),
+                "Show the first time the player opens the mutation tree by clicking Spend Points. Position the modal beside the persistent inspector. Do not show again after dismissal in the current game; suppress while fast-forwarding and, outside forced first-game experience, show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
@@ -180,7 +180,7 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
-        public static bool ShouldQueueAlphaMutationPhaseIntro(
+        public static bool ShouldShowSpendMutationPointsIntro(
             bool forceFirstGameExperience,
             int currentRound,
             int humanPlayerCount,
@@ -197,10 +197,10 @@ namespace FungusToast.Unity.UI.Onboarding
                 return true;
             }
 
-            return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
+            return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.SpendMutationPointsIntro);
         }
 
-        public static bool ShouldShowMutationInspectorIntro(
+        public static bool ShouldShowMutationWorkspaceIntro(
             bool forceFirstGameExperience,
             bool hasDismissedThisGame,
             bool isFastForwarding)
@@ -210,7 +210,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 return false;
             }
 
-            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.MutationInspectorIntro);
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.MutationWorkspaceIntro);
         }
 
         public static bool ShouldShowScoreboardWinCondition(

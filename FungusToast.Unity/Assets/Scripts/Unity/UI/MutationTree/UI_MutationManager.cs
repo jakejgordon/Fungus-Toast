@@ -109,8 +109,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
-        private bool hasDismissedAlphaMutationIntroThisGame;
-        private bool hasDismissedMutationInspectorIntroThisGame;
+        private bool hasDismissedSpendMutationPointsIntroThisGame;
+        private bool hasDismissedMutationWorkspaceIntroThisGame;
         private TooltipTrigger spendPointsTooltipTrigger = null!;
         private TooltipTrigger presentationSpeedTooltipTrigger = null!;
         private AudioSource soundEffectAudioSource = null!;
@@ -162,6 +162,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private int lastKnownScreenHeight = -1;
         private bool hasDismissedTimeLapseCoachmarkThisGame;
         private NewPlayerTooltipId activeTimeLapseCoachmarkTooltipId = NewPlayerTooltipId.TimeLapseModeIntro;
+        private NewPlayerTooltipId activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
         private bool hasDismissedStorePointsCoachmarkThisGame;
         private Dictionary<int, PlayerBoardSummary>? mutationAvailabilityBoardSummaries;
         private bool humanMimeticResilienceHasEligibleTargets = true;
@@ -403,9 +404,10 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationInspector?.SetPinState(false, false);
             mutationInspector?.ClearSearch();
             pendingTargetedSurgeSelection = null;
-            hasDismissedAlphaMutationIntroThisGame = false;
-            hasDismissedMutationInspectorIntroThisGame = false;
+            hasDismissedSpendMutationPointsIntroThisGame = false;
+            hasDismissedMutationWorkspaceIntroThisGame = false;
             hasDismissedTimeLapseCoachmarkThisGame = false;
+            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
             hasDismissedStorePointsCoachmarkThisGame = false;
             HideTimeLapseCoachmarkImmediate(true);
             HideStorePointsCoachmarkImmediate(true);
@@ -531,6 +533,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(SlideInTree());
             else
                 StartCoroutine(SlideOutTree());
+
+            AcknowledgeSpendMutationPointsIntro();
         }
 
         public void SetSpendPointsButtonVisible(bool visible)
@@ -542,6 +546,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 if (shouldShow)
                 {
                     RestoreActionRowLayout();
+                    TryShowSpendMutationPointsCoachmark();
                 }
             }
         }
@@ -964,7 +969,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (humanPlayer != null && humanPlayer.MutationPoints > 0)
                 StartCoroutine(PlayAffordableShimmer());
 
-            ShowFirstTreeGuidanceToast();
+            TryShowMutationWorkspaceIntro();
             TryShowTimeLapseCoachmark();
             TryShowStorePointsCoachmark();
         }
@@ -1119,8 +1124,6 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 return;
             }
-
-            TryShowMutationInspectorIntro();
 
             if (hoveredMutation == null || hoveredMutation.Id == mutation.Id)
             {
@@ -1825,7 +1828,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (IsStorePointsCoachmarkVisible())
             {
-                PositionStorePointsCoachmark();
+                Button? activeAnchorButton = activeMutationPointsCoachmarkTooltipId == NewPlayerTooltipId.SpendMutationPointsIntro
+                    ? spendPointsButton
+                    : storePointsButton;
+                if (activeAnchorButton != null)
+                {
+                    PositionStorePointsCoachmark(activeAnchorButton);
+                }
             }
 
             CaptureResponsiveMutationPanelLayoutState();
@@ -2544,57 +2553,64 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void ShowFirstTreeGuidanceToast()
+        private void TryShowSpendMutationPointsCoachmark()
         {
-            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
-            var toastPresenter = GameManager.Instance?.GameUI?.MutationTreeToastPresenter;
-            if (toastPresenter == null)
+            if (isTreeOpen || spendPointsButton == null || !spendPointsButton.gameObject.activeInHierarchy)
             {
                 return;
             }
 
-            var gameManager = GameManager.Instance;
+            GameManager? gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
             int currentRound = gameManager?.Board?.CurrentRound ?? 0;
-            bool shouldShowAlphaMutationIntro = NewPlayerTooltipRules.ShouldQueueAlphaMutationPhaseIntro(
+            if (!NewPlayerTooltipRules.ShouldShowSpendMutationPointsIntro(
                 forceFirstGame,
                 currentRound,
                 humanPlayer != null ? 1 : 0,
                 isFastForwarding,
                 gameManager != null && gameManager.IsTestingModeEnabled)
-                && !hasDismissedAlphaMutationIntroThisGame;
-
-            if (shouldShowAlphaMutationIntro)
+                || hasDismissedSpendMutationPointsIntroThisGame)
             {
-                NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AlphaMutationPhaseIntro);
-                toastPresenter.ShowModalIfTreeOpen(
-                    definition.Title,
-                    definition.Body,
-                    OnAlphaMutationIntroDismissed);
                 return;
             }
 
+            EnsureStorePointsCoachmarkUi();
+            if (storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.SpendMutationPointsIntro;
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(activeMutationPointsCoachmarkTooltipId);
+            ShowMutationPointsCoachmark(definition, spendPointsButton);
         }
 
-        private void OnAlphaMutationIntroDismissed()
+        private void AcknowledgeSpendMutationPointsIntro()
         {
-            hasDismissedAlphaMutationIntroThisGame = true;
+            if (activeMutationPointsCoachmarkTooltipId != NewPlayerTooltipId.SpendMutationPointsIntro)
+            {
+                return;
+            }
 
+            hasDismissedSpendMutationPointsIntroThisGame = true;
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AlphaMutationPhaseIntro);
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.SpendMutationPointsIntro);
             }
+
+            HideStorePointsCoachmarkImmediate(false);
         }
 
-        private void TryShowMutationInspectorIntro()
+        private void TryShowMutationWorkspaceIntro()
         {
             GameManager? gameManager = GameManager.Instance;
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
-            if (!NewPlayerTooltipRules.ShouldShowMutationInspectorIntro(
+            if (!NewPlayerTooltipRules.ShouldShowMutationWorkspaceIntro(
                     forceFirstGame,
-                    hasDismissedMutationInspectorIntroThisGame,
+                    hasDismissedMutationWorkspaceIntroThisGame,
                     isFastForwarding))
             {
                 return;
@@ -2606,21 +2622,22 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationInspectorIntro);
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MutationWorkspaceIntro);
             toastPresenter.ShowModalIfTreeOpen(
                 definition.Title,
                 definition.Body,
-                OnMutationInspectorIntroDismissed);
+                OnMutationWorkspaceIntroDismissed,
+                positionNearInspector: true);
         }
 
-        private void OnMutationInspectorIntroDismissed()
+        private void OnMutationWorkspaceIntroDismissed()
         {
-            hasDismissedMutationInspectorIntroThisGame = true;
+            hasDismissedMutationWorkspaceIntroThisGame = true;
 
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MutationInspectorIntro);
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.MutationWorkspaceIntro);
             }
         }
 
@@ -2704,10 +2721,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.StoreMutationPointsIntro);
+            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(activeMutationPointsCoachmarkTooltipId);
+            ShowMutationPointsCoachmark(definition, storePointsButton);
+        }
+
+        private void ShowMutationPointsCoachmark(NewPlayerTooltipDefinition definition, Button anchorButton)
+        {
+            if (definition == null || anchorButton == null || storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
             storePointsCoachmarkTitleTextLabel.text = definition.Title;
             storePointsCoachmarkBodyTextLabel.text = definition.Body;
-            PositionStorePointsCoachmark();
+            PositionStorePointsCoachmark(anchorButton);
             storePointsCoachmarkRoot.gameObject.SetActive(true);
             storePointsCoachmarkRoot.SetAsLastSibling();
             storePointsCoachmarkCanvasGroup.alpha = 1f;
@@ -2921,7 +2949,7 @@ namespace FungusToast.Unity.UI.MutationTree
             storePointsCoachmarkCloseButton = closeObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyStyle(storePointsCoachmarkCloseButton);
             storePointsCoachmarkCloseButton.onClick.RemoveAllListeners();
-            storePointsCoachmarkCloseButton.onClick.AddListener(OnStorePointsCoachmarkDismissed);
+            storePointsCoachmarkCloseButton.onClick.AddListener(OnMutationPointsCoachmarkDismissed);
 
             var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             closeLabelObject.transform.SetParent(closeObject.transform, false);
@@ -2974,11 +3002,11 @@ namespace FungusToast.Unity.UI.MutationTree
                 CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
-        private void PositionStorePointsCoachmark()
+        private void PositionStorePointsCoachmark(Button anchorButton)
         {
-            RectTransform? anchorRect = storePointsButton != null ? storePointsButton.transform as RectTransform : null;
+            RectTransform? anchorRect = anchorButton != null ? anchorButton.transform as RectTransform : null;
             RectTransform? parentRect = storePointsCoachmarkRoot != null ? storePointsCoachmarkRoot.parent as RectTransform : null;
-            Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : storePointsButton?.GetComponentInParent<Canvas>()?.rootCanvas;
+            Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : anchorButton?.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null || storePointsCoachmarkRoot == null)
             {
                 return;
@@ -3011,13 +3039,21 @@ namespace FungusToast.Unity.UI.MutationTree
             HideTimeLapseCoachmarkImmediate(false);
         }
 
-        private void OnStorePointsCoachmarkDismissed()
+        private void OnMutationPointsCoachmarkDismissed()
         {
-            hasDismissedStorePointsCoachmarkThisGame = true;
+            if (activeMutationPointsCoachmarkTooltipId == NewPlayerTooltipId.SpendMutationPointsIntro)
+            {
+                hasDismissedSpendMutationPointsIntroThisGame = true;
+            }
+            else
+            {
+                hasDismissedStorePointsCoachmarkThisGame = true;
+            }
+
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)
             {
-                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.StoreMutationPointsIntro);
+                NewPlayerTooltipCatalog.MarkSeen(activeMutationPointsCoachmarkTooltipId);
             }
 
             HideStorePointsCoachmarkImmediate(false);
