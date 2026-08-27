@@ -817,7 +817,7 @@ namespace FungusToast.Unity
             outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
             outline.effectDistance = new Vector2(1f, -1f);
 
-            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.Left, new Vector2(14f, -46f), new Vector2(-52f, -10f));
+            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.TopLeft, new Vector2(14f, -46f), new Vector2(-52f, -10f));
             autoPlacementCoachmarkTitleText.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(autoPlacementCoachmarkTitleText);
 
