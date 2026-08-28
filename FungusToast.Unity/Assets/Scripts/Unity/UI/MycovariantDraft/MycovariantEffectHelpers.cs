@@ -304,8 +304,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                 gameLogRouter);
 
-            gridVisualizer.RenderBoard(board);
-
             if (resolution?.HasAnyMovement == true)
             {
                 var movePairs = resolution.Moves
@@ -315,6 +313,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 yield return gridVisualizer.PlayHyphalDrawAnimation(player.PlayerId, movePairs);
                 yield return gridVisualizer.WaitForAllAnimations();
             }
+
+            // Keep the pre-resolution board visible while the relocation arcs play. Rendering
+            // immediately after the Core resolution removes every source cell and shows every
+            // destination cell before the animation has a chance to communicate the movement.
+            gridVisualizer.RenderBoard(board);
 
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
