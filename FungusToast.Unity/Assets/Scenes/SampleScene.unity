@@ -4695,10 +4695,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name:
-  m_EditorClassIdentifier:
+  m_Name: 
+  m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.101960786}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.65}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -111038,6 +111038,7 @@ MonoBehaviour:
   growthPreviewHeaderText: {fileID: 0}
   randomDecayChanceRoot: {fileID: 0}
   randomDecayChanceText: {fileID: 0}
+  randomDecayChanceIcon: {fileID: 0}
   adaptationSectionRoot: {fileID: 0}
   adaptationHeaderText: {fileID: 0}
   adaptationIconGridRoot: {fileID: 0}
@@ -116734,6 +116735,8 @@ MonoBehaviour:
   mutationUpgradeSuccessVolume: 1
   mutationStorePointsClip: {fileID: 8300000, guid: 56a96171dbfe1444788af0082dffa3f7, type: 3}
   mutationStorePointsVolume: 1
+  mutationPointBonusPopClip: {fileID: 0}
+  mutationPointBonusPopVolume: 1
   slideDuration: 0.5
   hiddenPosition: {x: -1920, y: 0}
   visiblePosition: {x: 0, y: 0}
@@ -117707,7 +117710,6 @@ MonoBehaviour:
   hotseatDescriptionText: {fileID: 2072126646}
   campaignDescriptionText: {fileID: 1467730301}
   wideTitleLogoSprite: {fileID: -8837426643450192954, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
-  settingsButtonIcon: {fileID: 21300000, guid: 46aeb8cdc6649454a9ee233d43938d90, type: 3}
   backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
 --- !u!1 &1550400849
 GameObject:
@@ -118080,7 +118082,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2143743642}
   m_HandleRect: {fileID: 2143743641}
   m_Direction: 0
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -125351,7 +125353,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 853.7838
+      value: 854.4817
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -125359,7 +125361,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 474.8919
+      value: 475.24084
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.y
