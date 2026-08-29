@@ -914,7 +914,9 @@ namespace FungusToast.Unity.Grid
                     overlayScale: 1f,
                     restoreBoardStateOnFinish: false,
                     durationScale: 1f,
-                    allowOverlayFallback: false)
+                    // Hyphal Draw needs a readable projectile even on sparse or busy boards.
+                    // The fallback shield overlay gives the relocation arc a stable contrast.
+                    allowOverlayFallback: true)
                 : null;
         public IEnumerator PlayConidiaAscentAnimation(int playerId, int sourceTileId, int destinationTileId, IReadOnlyList<int> deadZoneTileIds)
             => _conidiaAscentAnimator != null

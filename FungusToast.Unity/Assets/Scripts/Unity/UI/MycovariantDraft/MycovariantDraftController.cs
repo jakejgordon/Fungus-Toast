@@ -459,6 +459,11 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             PlayDraftPickConfirmSound();
             GameManager.Instance.GameUI.GameLogRouter?.OnDraftPick(currentPlayer.PlayerName, picked.Name);
 
+            // Active picks may take ownership of the board for a presentation coroutine.
+            // Block draft progression before resolving one so no subsequent pick can run
+            // while that presentation is starting.
+            SetDraftState(DraftUIState.AnimatingPick);
+
             GameManager.Instance.ResolveMycovariantDraftPick(currentPlayer, picked);
 
             if (!picked.IsUniversal)

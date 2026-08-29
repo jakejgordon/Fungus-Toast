@@ -293,6 +293,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             draftPanel?.SetActive(false);
 
+            // Let the hidden draft panel and interaction blocker reach the renderer before
+            // the relocation begins, so the board animation owns a full visible frame.
+            yield return null;
+
             if (player.PlayerType == PlayerTypeEnum.AI)
             {
                 yield return new WaitForSeconds(UIEffectConstants.AIActiveMycovariantStaggerSeconds);
