@@ -507,13 +507,15 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 picked,
                 playerMyco,
                 () => {
+                    // Active-effect helpers hide this panel while presenting the board. Restore
+                    // the controller before feed updates start their scroll coroutines.
+                    draftPanel.SetActive(true);
                     gridVisualizer.RenderBoard(GameManager.Instance.Board);
                     GameManager.Instance?.RefreshRightSidebarBoardState();
                     string resolvedAnnouncement = BuildPickAnnouncement(currentPlayer, picked, playerMyco);
                     ReplaceCurrentPlayerEntry(resolvedAnnouncement);
                     string resultMessage = AddDraftResultMessage(currentPlayer, picked, playerMyco);
                     RecordDraftHistoryEntry(currentPlayer, resolvedAnnouncement, resultMessage);
-                    draftPanel.SetActive(true);
                     SetDraftState(DraftUIState.AnimatingPick);
                     AnimatePickFeedback(picked, () => {
                         ReplacePickedCardAndContinue(picked);

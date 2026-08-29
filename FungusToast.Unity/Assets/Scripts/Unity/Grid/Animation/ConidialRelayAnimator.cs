@@ -150,13 +150,8 @@ namespace FungusToast.Unity.Grid.Animation
                 .ToList();
             if (orderedMoves.Count == 0)
             {
-                Debug.LogWarning($"[HyphalDraw] Launch batch discarded all {moves.Count} supplied moves as invalid.");
                 yield break;
             }
-
-            Debug.Log(
-                $"[HyphalDraw] Launch batch starting: player={playerId}, moves={orderedMoves.Count}, " +
-                $"visualizerActive={viz.isActiveAndEnabled}, timeScale={Time.timeScale:0.###}.");
 
             // Hyphal Draw removes its sources in Core before this presenter runs. Hide their
             // still-rendered pre-resolution visuals as well, so the projectile unmistakably
@@ -189,8 +184,6 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 yield return null;
             }
-
-            Debug.Log($"[HyphalDraw] Launch batch completed for player {playerId}.");
         }
 
         public IEnumerator PlayCreepingMoldHopBatch(
@@ -245,15 +238,16 @@ namespace FungusToast.Unity.Grid.Animation
             var board = viz.ActiveBoard;
             if (board == null)
             {
-                Debug.LogError("[HyphalDraw] Launch segment skipped because GridVisualizer has no active board.");
+                Debug.LogError("[CompositeLaunchArc] Launch segment skipped because GridVisualizer has no active board.");
                 yield break;
             }
 
-            var moldSprite = ResolveMoldSprite(playerId);
+            var sourceCell = ToCell(board, sourceTileId);
+            var moldSprite = ResolveMoldSprite(playerId, sourceCell);
             var projectileOverlaySprite = overlaySprite ?? (allowOverlayFallback && viz.goldShieldOverlayTile != null ? viz.goldShieldOverlayTile.sprite : null);
             if (moldSprite == null)
             {
-                Debug.LogError($"[HyphalDraw] Launch segment skipped because player {playerId} has no usable mold sprite.");
+                Debug.LogError($"[CompositeLaunchArc] Launch segment skipped because player {playerId} has no usable rendered or configured mold sprite.");
                 RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
             }
@@ -261,12 +255,11 @@ namespace FungusToast.Unity.Grid.Animation
             var referenceTilemap = viz.overlayTilemap != null ? viz.overlayTilemap : viz.moldTilemap;
             if (referenceTilemap == null)
             {
-                Debug.LogError("[HyphalDraw] Launch segment skipped because GridVisualizer has no mold or overlay tilemap.");
+                Debug.LogError("[CompositeLaunchArc] Launch segment skipped because GridVisualizer has no mold or overlay tilemap.");
                 RestoreTile(destinationState, destinationTileId, restoreBoardStateOnFinish);
                 yield break;
             }
 
-            var sourceCell = ToCell(board, sourceTileId);
             var destinationCell = destinationState.Cell;
 
             var compositeRoot = BuildComposite(referenceTilemap, moldSprite, projectileOverlaySprite, overlayScale);
@@ -277,9 +270,6 @@ namespace FungusToast.Unity.Grid.Animation
             }
 
             viz.BeginAnimation();
-            Debug.Log(
-                $"[HyphalDraw] Launch segment began: player={playerId}, " +
-                $"source={sourceTileId}, destination={destinationTileId}.");
             try
             {
                 if (emphasizeSource)
@@ -373,7 +363,8 @@ namespace FungusToast.Unity.Grid.Animation
                 yield break;
             }
 
-            var moldSprite = ResolveMoldSprite(playerId);
+            var sourceCell = ToCell(board, sourceTileId);
+            var moldSprite = ResolveMoldSprite(playerId, sourceCell);
             var referenceTilemap = viz.overlayTilemap != null ? viz.overlayTilemap : viz.moldTilemap;
             if (moldSprite == null || referenceTilemap == null)
             {
@@ -392,7 +383,6 @@ namespace FungusToast.Unity.Grid.Animation
                 yield break;
             }
 
-            var sourceCell = ToCell(board, sourceTileId);
             viz.BeginAnimation();
             try
             {
@@ -632,12 +622,16 @@ namespace FungusToast.Unity.Grid.Animation
             return root;
         }
 
-        private Sprite ResolveMoldSprite(int playerId)
+        private Sprite ResolveMoldSprite(int playerId, Vector3Int sourceCell)
         {
-            // Most board cells use the alive-variant tile set. Several legacy base mold tiles
-            // no longer have an imported sprite, so using only the base tile makes launch arcs
-            // silently complete without ever reaching BeginAnimation().
-            return viz.GetTileForPlayer(playerId)?.sprite
+            // Use the sprite that is actually rendered at the launch source. This remains
+            // available after the Core relocation because Hyphal Draw intentionally preserves
+            // the pre-resolution tilemap until its presentation completes.
+            Sprite renderedSourceSprite = viz.moldTilemap != null
+                ? viz.moldTilemap.GetSprite(sourceCell)
+                : null;
+            return renderedSourceSprite
+                ?? viz.GetTileForPlayer(playerId)?.sprite
                 ?? viz.GetMoldIconTileForPlayer(playerId)?.sprite;
         }
 

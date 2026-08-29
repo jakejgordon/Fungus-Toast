@@ -308,14 +308,6 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 new System.Random(UnityEngine.Random.Range(0, int.MaxValue)),
                 gameLogRouter);
 
-            Debug.Log(
-                $"[HyphalDraw] Resolution completed for player {player.PlayerId}: " +
-                $"moves={resolution?.Moves?.Count ?? 0}, " +
-                $"timeLapse={gameManager.IsFastRoundPresentationMode}, " +
-                $"fastForward={gameManager.IsFastForwarding}, " +
-                $"gridActive={gridVisualizer != null && gridVisualizer.isActiveAndEnabled}, " +
-                $"timeScale={Time.timeScale:0.###}.");
-
             if (resolution?.HasAnyMovement == true)
             {
                 var movePairs = resolution.Moves
