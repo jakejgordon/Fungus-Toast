@@ -58,7 +58,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.CreepingMold,
                 name: "Creeping Mold",
                 description: $"Failed growth can become repositioning, letting a cell crawl into the tile it missed.\n\n" +
-                             $"<b>Technical:</b> When a growth attempt fails, each level gives a {helper.FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into that target tile instead if it is at least as open as the source and has at least two open sides.\n" +
+                             $"<b>Technical:</b> When a growth attempt fails, each level gives a {helper.FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into that target tile instead if it is at least as open as the source and has at least two open sides. Resistant cells are fixed anchors and never crawl.\n" +
                              $"<b>Max Level Bonus:</b> Can jump over one blocking toxin in a cardinal direction (up / down / left / right) to land on the next open tile beyond it.",
                 flavorText: "Hyphal strands abandon anchor points to invade fresh substrate through pseudopodial crawling.",
                 type: MutationType.CreepingMovementOnFailedGrowth,
