@@ -340,6 +340,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 upgradeCostGroup.transform.localScale = Vector3.one;
             if (lockOverlay != null)
                 lockOverlay.transform.localScale = Vector3.one;
+            if (pendingUnlockOverlay != null)
+                pendingUnlockOverlay.transform.localScale = Vector3.one;
             transform.localScale = Vector3.one;
         }
 
@@ -552,8 +554,9 @@ namespace FungusToast.Unity.UI.MutationTree
         /// attention pulse over the specific blocker so the reason is obvious:
         ///  • unlocked but unaffordable → pulse the "NEED POINTS" line and the cost badge
         ///  • locked → pulse this node's lock indicator and the unmet prerequisite node(s) on its path
-        /// Maxed / pending-next-round / active-surge / no-target states are left alone;
-        /// they already read clearly and are not something the player can act on here.
+        ///  • unlocking next round → pulse the hourglass countdown badge
+        /// Maxed / active-surge / no-target states are left alone; they already read
+        /// clearly and are not something the player can act on here.
         /// </summary>
         private void PlayBlockedInvestmentFeedbackIfNeeded()
         {
@@ -579,7 +582,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 && pm.PrereqMetRound.HasValue
                 && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
             if (showPendingUnlock)
+            {
+                PlayPendingUnlockAttentionPulse();
                 return;
+            }
 
             if (isLocked)
             {
@@ -719,6 +725,30 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 // Scale-only for the lock glyph; the "LOCKED" line below carries the colour cue.
                 targets.Add(new PulseTarget(lockRect, graphic: null, warning));
+            }
+
+            if (levelText != null)
+                targets.Add(new PulseTarget(levelText.rectTransform, levelText, warning));
+
+            StartBlockedInvestmentPulse(targets);
+        }
+
+        /// <summary>
+        /// Pulses the hourglass countdown badge when the player clicks a mutation whose
+        /// prerequisites were only met this round, so it is clear the upgrade is coming
+        /// and just needs the next Mutation Phase.
+        /// </summary>
+        public void PlayPendingUnlockAttentionPulse()
+        {
+            RestoreBlockedInvestmentPulseTargets();
+
+            var targets = new List<PulseTarget>(2);
+            Color warning = UIStyleTokens.State.Warning;
+
+            if (pendingUnlockOverlay != null && pendingUnlockOverlay.activeInHierarchy
+                && pendingUnlockOverlay.transform is RectTransform pendingRect)
+            {
+                targets.Add(new PulseTarget(pendingRect, graphic: null, warning));
             }
 
             if (levelText != null)
