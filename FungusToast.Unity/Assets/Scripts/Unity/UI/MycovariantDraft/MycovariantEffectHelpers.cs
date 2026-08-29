@@ -317,6 +317,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 yield return gridVisualizer.PlayHyphalDrawAnimation(player.PlayerId, movePairs);
                 yield return gridVisualizer.WaitForAllAnimations();
             }
+            else
+            {
+                // Hyphal Draw can be drafted before the player has a non-Resistant living cell
+                // on the route to an enemy start. There is no legal relocation in that case, so
+                // make the spent one-time effect explicit instead of advancing the draft silently.
+                gameManager.GameUI.PhaseBanner?.Show(
+                    "Hyphal Draw: no eligible cells on the attack route.",
+                    UIEffectConstants.HyphalDrawNoMoveFeedbackSeconds);
+                yield return new WaitForSeconds(UIEffectConstants.HyphalDrawNoMoveFeedbackSeconds);
+            }
 
             // Keep the pre-resolution board visible while the relocation arcs play. Rendering
             // immediately after the Core resolution removes every source cell and shows every

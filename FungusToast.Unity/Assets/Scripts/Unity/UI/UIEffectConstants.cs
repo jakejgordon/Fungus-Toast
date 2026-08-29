@@ -1139,6 +1139,12 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float DraftCameraRecenteringDurationSeconds = 0.5f;
 
+        /// <summary>
+        /// Hold shown when Hyphal Draw has no non-Resistant living cells on its attack route.
+        /// This prevents a spent active draft pick from appearing to resolve silently.
+        /// </summary>
+        public const float HyphalDrawNoMoveFeedbackSeconds = 1.25f;
+
         // ==================== JETTING MYCELIUM HOVER PREVIEW ====================
         /// <summary>
         /// Pulse cycle duration (seconds) for the Jetting Mycelium placement preview overlay.
