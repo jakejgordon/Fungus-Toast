@@ -654,7 +654,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration of the coachmark fade-and-scale entrance before its border pulses.
         /// </summary>
-        public const float CoachmarkEntranceDurationSeconds = 0.2f;
+        public const float CoachmarkEntranceDurationSeconds = 0.3f;
 
         /// <summary>
         /// Duration of each finite coachmark border pulse.
@@ -672,9 +672,14 @@ namespace FungusToast.Unity.UI
         public const float CoachmarkEntranceStartScale = 0.97f;
 
         /// <summary>
+        /// Multiplier applied to the authored coachmark outline width while visible.
+        /// </summary>
+        public const float CoachmarkBorderWidthMultiplier = 2f;
+
+        /// <summary>
         /// Maximum outline offset used at the peak of a coachmark border pulse.
         /// </summary>
-        public const float CoachmarkBorderPulsePeakDistance = 3f;
+        public const float CoachmarkBorderPulsePeakDistance = 6f;
 
         /// <summary>
         /// Opacity of the non-blocking backdrop placed behind a visible coachmark.

@@ -167,7 +167,7 @@ namespace FungusToast.Unity.UI
             {
                 restingScale = coachmarkRect.localScale;
                 restingOutlineColor = outline.effectColor;
-                restingOutlineDistance = outline.effectDistance;
+                restingOutlineDistance = outline.effectDistance * UIEffectConstants.CoachmarkBorderWidthMultiplier;
                 hasCapturedRestingVisuals = true;
             }
         }
