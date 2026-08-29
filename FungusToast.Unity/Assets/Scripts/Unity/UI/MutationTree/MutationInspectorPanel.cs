@@ -74,12 +74,12 @@ namespace FungusToast.Unity.UI.MutationTree
             return inspector;
         }
 
-        public void SetLayout(float topInset, float width)
+        public void SetLayout(float topInset, float width, float leftInset)
         {
-            rootRect.anchorMin = new Vector2(1f, 0f);
-            rootRect.anchorMax = new Vector2(1f, 1f);
-            rootRect.pivot = new Vector2(1f, 1f);
-            rootRect.anchoredPosition = new Vector2(-OuterGap, -topInset);
+            rootRect.anchorMin = new Vector2(0f, 0f);
+            rootRect.anchorMax = new Vector2(0f, 1f);
+            rootRect.pivot = new Vector2(0f, 1f);
+            rootRect.anchoredPosition = new Vector2(leftInset, -topInset);
             rootRect.sizeDelta = new Vector2(width, -(topInset + OuterGap));
             LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
             RefreshTextHeights();

@@ -56,6 +56,12 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float StorePointsCoachmarkHorizontalOffset = 5f;
         private const float StorePointsCoachmarkVerticalOffset = -12f;
 
+        private enum MutationInspectorDockSide
+        {
+            Left,
+            Right
+        }
+
         [Header("General UI References")]
         [SerializeField] private MutationManager mutationManager = null!;
         [SerializeField] private GameObject mutationTreePanel = null!;
@@ -156,6 +162,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool isInspectorPinned;
         private bool hasPersistentRelationshipFocus;
         private bool isPointerOverMutationInspector;
+        private MutationInspectorDockSide mutationInspectorDockSide = MutationInspectorDockSide.Right;
         private PendingTargetedSurgeSelection? pendingTargetedSurgeSelection;
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
@@ -1393,6 +1400,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             if (inspectedNode != null)
             {
+                UpdateMutationInspectorDockSide(inspectedNode);
                 mutationInspector?.Show(inspectedNode, inspectedMutation, inspectedPlayer, this, FocusMutationFromInspector);
             }
             mutationInspector?.SetPinState(isInspectorPinned, inspectedNode != null);
@@ -1495,7 +1503,6 @@ namespace FungusToast.Unity.UI.MutationTree
             float topInset = GetMutationPanelTopInset();
             float inspectorWidth = GetMutationInspectorWidth();
             ConfigureMutationScrollViewRect(topInset, inspectorWidth);
-            mutationInspector?.SetLayout(topInset, inspectorWidth);
 
             if (mutationViewportRect != null)
             {
@@ -1728,6 +1735,58 @@ namespace FungusToast.Unity.UI.MutationTree
             return Mathf.Clamp(canvasSize.x * 0.23f, 320f, MutationInspectorPanel.PreferredWidth);
         }
 
+        private void PositionMutationInspector()
+        {
+            if (mutationInspector == null || mutationTreeRect == null || mutationScrollViewContentRect == null)
+            {
+                return;
+            }
+
+            float inspectorWidth = GetMutationInspectorWidth();
+            float topInset = GetMutationPanelTopInset();
+            Bounds treeBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                mutationTreeRect,
+                mutationScrollViewContentRect);
+
+            float panelWidth = mutationTreeRect.rect.width;
+            float rightDockLeft = treeBounds.max.x + MutationInspectorPanel.OuterGap;
+            float leftDockLeft = treeBounds.min.x - MutationInspectorPanel.OuterGap - inspectorWidth;
+            bool canDockLeft = leftDockLeft >= MutationInspectorPanel.OuterGap;
+
+            float requestedLeft = mutationInspectorDockSide == MutationInspectorDockSide.Left && canDockLeft
+                ? leftDockLeft
+                : rightDockLeft;
+            float clampedLeft = Mathf.Clamp(
+                requestedLeft,
+                MutationInspectorPanel.OuterGap,
+                Mathf.Max(MutationInspectorPanel.OuterGap, panelWidth - inspectorWidth - MutationInspectorPanel.OuterGap));
+
+            mutationInspector.SetLayout(topInset, inspectorWidth, clampedLeft);
+        }
+
+        private void UpdateMutationInspectorDockSide(MutationNodeUI inspectedNode)
+        {
+            if (isInspectorPinned || isPointerOverMutationInspector || mutationScrollViewContentRect == null)
+            {
+                return;
+            }
+
+            Bounds nodeBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
+                mutationScrollViewContentRect,
+                inspectedNode.DependencyAnchorRect);
+            MutationInspectorDockSide requestedSide = nodeBounds.center.x < mutationScrollViewContentRect.rect.center.x
+                ? MutationInspectorDockSide.Left
+                : MutationInspectorDockSide.Right;
+
+            if (requestedSide == mutationInspectorDockSide)
+            {
+                return;
+            }
+
+            mutationInspectorDockSide = requestedSide;
+            PositionMutationInspector();
+        }
+
         private void EnsureMutationInspector()
         {
             if (mutationInspector != null || mutationTreeRect == null)
@@ -1820,6 +1879,7 @@ namespace FungusToast.Unity.UI.MutationTree
             CacheMutationPanelLayoutReferences();
             ApplyResponsiveMutationPanelLayout();
             ForceMutationPanelLayoutRebuild();
+            PositionMutationInspector();
 
             if (IsTimeLapseCoachmarkVisible())
             {

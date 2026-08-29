@@ -92,7 +92,7 @@ public class MyWidget : MonoBehaviour, ITooltipContentProvider
 
 ### Mutation Workspace Inspector
 
-The full-screen mutation workspace uses a persistent right-side inspector for decision-critical mutation information. It is not a hover tooltip and should not be implemented through `TooltipManager`.
+The full-screen mutation workspace uses a persistent, tree-adjacent inspector for decision-critical mutation information. On sufficiently wide layouts it docks to the left for nodes in the left half of the tree and to the right for nodes in the right half; narrower layouts fall back to the right without covering mutation cards. It is not a hover tooltip and should not be implemented through `TooltipManager`.
 
 - `MutationInspectorPanel` is built once at runtime by `UI_MutationManager`; it uses semantic style tokens and introduces no scene/prefab reference.
 - Mutation cards do not create hover tooltips. Hover updates the persistent inspector and contextual dependency overlay; the inspector is the sole detailed mutation-information surface.
