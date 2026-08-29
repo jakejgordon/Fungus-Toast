@@ -113,6 +113,11 @@ namespace FungusToast.Unity.Grid
         private readonly HashSet<Vector3Int> startingTileEmphasisPositions = new();
         private Coroutine playerHoverEmphasisCoroutine;
 
+        // Procedurally generated targeting-reticle sprite used for the persistent starting-spore emphasis.
+        private Tile startingSporeReticleTile;
+        private Sprite startingSporeReticleSprite;
+        private Texture2D startingSporeReticleTexture;
+
         private sealed class PlayerHoverEmphasisSnapshot
         {
             public Vector3Int Position;
@@ -310,6 +315,7 @@ namespace FungusToast.Unity.Grid
         private void OnDestroy()
         {
             ClearStartingTileEmphasis();
+            DestroyStartingSporeReticleAssets();
             UnsubscribeFromBoardEvents();
             cellStateAnimationController?.Dispose();
             presentationEffects?.DestroyLingeringToasts();
@@ -2324,13 +2330,14 @@ namespace FungusToast.Unity.Grid
         {
             var active = ActiveBoard;
             var emphasisTilemap = HoverOverlayTileMap != null ? HoverOverlayTileMap : PingOverlayTileMap;
-            if (active == null || emphasisTilemap == null || solidHighlightTile == null)
+            Tile reticleTile = EnsureStartingSporeReticleTile();
+            if (active == null || emphasisTilemap == null || reticleTile == null)
             {
                 ClearStartingTileEmphasis();
                 return;
             }
 
-            HashSet<Vector3Int> nextPositions = new();
+            Dictionary<Vector3Int, Color> nextPositions = new();
             for (int i = 0; i < active.Players.Count; i++)
             {
                 int? startingTileId = active.Players[i].StartingTileId;
@@ -2339,7 +2346,9 @@ namespace FungusToast.Unity.Grid
                     continue;
                 }
 
-                nextPositions.Add(GetPositionForTileId(startingTileId.Value));
+                Vector3Int position = GetPositionForTileId(startingTileId.Value);
+                Color accent = GetMoldAccentColorForPlayer(active.Players[i].PlayerId);
+                nextPositions[position] = accent;
             }
 
             if (nextPositions.Count == 0)
@@ -2348,21 +2357,25 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
+            // Subtle radius "breathe" so the reticle reads as alive without the distracting fill pulse.
             float duration = Mathf.Max(0.01f, UIEffectConstants.StartingTileEmphasisPulseDurationSeconds);
             float cycleT = Mathf.Repeat(Time.time, duration) / duration;
             float eased = Mathf.Sin(cycleT * Mathf.PI);
             eased *= eased;
             float scale = Mathf.Lerp(UIEffectConstants.StartingTileEmphasisMinScale, UIEffectConstants.StartingTileEmphasisMaxScale, eased);
             float alpha = Mathf.Lerp(UIEffectConstants.StartingTileEmphasisMinAlpha, UIEffectConstants.StartingTileEmphasisMaxAlpha, eased);
-            Matrix4x4 transform = Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
-            Color haloColor = UIEffectConstants.StartingTileEmphasisColor;
-            haloColor.a = alpha;
+
+            // Slow continuous rotation gives the hard-edged frame obvious, readable motion.
+            float rotationPeriod = Mathf.Max(0.01f, UIEffectConstants.StartingTileEmphasisRotationPeriodSeconds);
+            float angleDegrees = (Time.time / rotationPeriod) * 360f;
+            Quaternion rotation = Quaternion.Euler(0f, 0f, angleDegrees);
+            Matrix4x4 transform = Matrix4x4.TRS(Vector3.zero, rotation, new Vector3(scale, scale, 1f));
 
             if (startingTileEmphasisPositions.Count > 0)
             {
                 foreach (Vector3Int position in startingTileEmphasisPositions)
                 {
-                    if (!nextPositions.Contains(position))
+                    if (!nextPositions.ContainsKey(position))
                     {
                         emphasisTilemap.SetTile(position, null);
                         emphasisTilemap.SetColor(position, Color.white);
@@ -2371,18 +2384,190 @@ namespace FungusToast.Unity.Grid
                 }
             }
 
-            foreach (Vector3Int position in nextPositions)
+            foreach (KeyValuePair<Vector3Int, Color> entry in nextPositions)
             {
-                emphasisTilemap.SetTile(position, solidHighlightTile);
-                emphasisTilemap.SetTileFlags(position, TileFlags.None);
-                emphasisTilemap.SetColor(position, haloColor);
-                emphasisTilemap.SetTransformMatrix(position, transform);
+                Color reticleColor = entry.Value;
+                reticleColor.a = alpha;
+
+                emphasisTilemap.SetTile(entry.Key, reticleTile);
+                emphasisTilemap.SetTileFlags(entry.Key, TileFlags.None);
+                emphasisTilemap.SetColor(entry.Key, reticleColor);
+                emphasisTilemap.SetTransformMatrix(entry.Key, transform);
             }
 
             startingTileEmphasisPositions.Clear();
-            foreach (Vector3Int position in nextPositions)
+            foreach (Vector3Int position in nextPositions.Keys)
             {
                 startingTileEmphasisPositions.Add(position);
+            }
+        }
+
+        /// <summary>
+        /// Vivid accent color for a player's persistent starting-spore reticle, derived from that
+        /// player's mold tile name so the marker stays tied to their identity without recoloring the spore.
+        /// </summary>
+        private Color GetMoldAccentColorForPlayer(int playerId)
+        {
+            if (playerMoldTiles == null || playerMoldTiles.Length == 0)
+            {
+                return UIEffectConstants.StartingTileEmphasisColor;
+            }
+
+            Tile moldTile = GetTileForPlayer(playerId);
+            return UIEffectConstants.ResolveMoldAccentColor(moldTile != null ? moldTile.name : null);
+        }
+
+        /// <summary>
+        /// Lazily builds the procedurally generated targeting-reticle sprite (transparent center,
+        /// hard-edged corner brackets + cardinal ticks with a baked dark outline). White fill is tinted
+        /// by the per-player accent color; the baked black outline stays black so it pops on any board.
+        /// </summary>
+        private Tile EnsureStartingSporeReticleTile()
+        {
+            if (startingSporeReticleTile != null && startingSporeReticleSprite != null && startingSporeReticleTexture != null)
+            {
+                return startingSporeReticleTile;
+            }
+
+            const int textureSize = 64;
+            startingSporeReticleTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
+
+            var pixels = new Color32[textureSize * textureSize];
+            for (int py = 0; py < textureSize; py++)
+            {
+                for (int px = 0; px < textureSize; px++)
+                {
+                    pixels[(py * textureSize) + px] = EvaluateStartingSporeReticlePixel(textureSize, px, py);
+                }
+            }
+
+            startingSporeReticleTexture.SetPixels32(pixels);
+            startingSporeReticleTexture.Apply(false, false);
+            startingSporeReticleSprite = Sprite.Create(
+                startingSporeReticleTexture,
+                new Rect(0f, 0f, textureSize, textureSize),
+                new Vector2(0.5f, 0.5f),
+                textureSize,
+                0,
+                SpriteMeshType.FullRect);
+
+            startingSporeReticleTile = ScriptableObject.CreateInstance<Tile>();
+            startingSporeReticleTile.sprite = startingSporeReticleSprite;
+            startingSporeReticleTile.color = Color.white;
+            startingSporeReticleTile.colliderType = Tile.ColliderType.None;
+            return startingSporeReticleTile;
+        }
+
+        private static Color32 EvaluateStartingSporeReticlePixel(int textureSize, int px, int py)
+        {
+            // 3x3 supersample so the rotating hard edges do not visibly stair-step in-game.
+            const int subSamples = 3;
+            float coreCoverage = 0f;
+            float outlineCoverage = 0f;
+            for (int sy = 0; sy < subSamples; sy++)
+            {
+                for (int sx = 0; sx < subSamples; sx++)
+                {
+                    float u = (px + ((sx + 0.5f) / subSamples)) / textureSize;
+                    float v = (py + ((sy + 0.5f) / subSamples)) / textureSize;
+                    float x = (u * 2f) - 1f;
+                    float y = (v * 2f) - 1f;
+                    SampleStartingSporeReticle(x, y, out bool onCore, out bool onOutline);
+                    if (onCore) coreCoverage += 1f;
+                    if (onOutline) outlineCoverage += 1f;
+                }
+            }
+
+            float total = subSamples * subSamples;
+            coreCoverage /= total;
+            outlineCoverage = Mathf.Max(outlineCoverage / total, coreCoverage);
+            if (outlineCoverage <= 0.001f)
+            {
+                return new Color32(0, 0, 0, 0);
+            }
+
+            // White where the mark is (tinted later by the accent color), black on the surrounding rim.
+            byte channel = (byte)Mathf.RoundToInt(Mathf.Clamp01(coreCoverage) * 255f);
+            byte alpha = (byte)Mathf.RoundToInt(Mathf.Clamp01(outlineCoverage) * 255f);
+            return new Color32(channel, channel, channel, alpha);
+        }
+
+        private static void SampleStartingSporeReticle(float x, float y, out bool onCore, out bool onOutline)
+        {
+            float ax = Mathf.Abs(x);
+            float ay = Mathf.Abs(y);
+
+            // Corner brackets: an L on each corner, sitting just outside the tile footprint.
+            const float outer = 0.94f;
+            const float bracketThickness = 0.16f;
+            const float armLength = 0.46f;
+            float inner = outer - bracketThickness;
+
+            bool horizontalArm = ax >= outer - armLength && ax <= outer && ay >= inner && ay <= outer;
+            bool verticalArm = ay >= outer - armLength && ay <= outer && ax >= inner && ax <= outer;
+            bool brackets = horizontalArm || verticalArm;
+
+            // Cardinal ticks: short inward-pointing wedges at N/E/S/W.
+            bool ticks =
+                TriangleMask(x, y, new Vector2(-0.10f, 0.86f), new Vector2(0.10f, 0.86f), new Vector2(0f, 0.60f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(-0.10f, -0.86f), new Vector2(0.10f, -0.86f), new Vector2(0f, -0.60f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(0.86f, -0.10f), new Vector2(0.86f, 0.10f), new Vector2(0.60f, 0f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(-0.86f, -0.10f), new Vector2(-0.86f, 0.10f), new Vector2(-0.60f, 0f)) > 0.5f;
+
+            onCore = brackets || ticks;
+
+            // Dilated silhouette for a ~2px dark outline around every mark.
+            const float pad = 0.055f;
+            bool outlineBrackets =
+                (ax >= outer - armLength - pad && ax <= outer + pad && ay >= inner - pad && ay <= outer + pad) ||
+                (ay >= outer - armLength - pad && ay <= outer + pad && ax >= inner - pad && ax <= outer + pad);
+            bool outlineTicks =
+                TriangleMask(x, y, new Vector2(-0.15f, 0.90f), new Vector2(0.15f, 0.90f), new Vector2(0f, 0.55f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(-0.15f, -0.90f), new Vector2(0.15f, -0.90f), new Vector2(0f, -0.55f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(0.90f, -0.15f), new Vector2(0.90f, 0.15f), new Vector2(0.55f, 0f)) > 0.5f ||
+                TriangleMask(x, y, new Vector2(-0.90f, -0.15f), new Vector2(-0.90f, 0.15f), new Vector2(-0.55f, 0f)) > 0.5f;
+
+            onOutline = onCore || outlineBrackets || outlineTicks;
+        }
+
+        private static float TriangleMask(float x, float y, Vector2 a, Vector2 b, Vector2 c)
+        {
+            Vector2 p = new(x, y);
+            float d1 = ReticleEdgeSign(p, a, b);
+            float d2 = ReticleEdgeSign(p, b, c);
+            float d3 = ReticleEdgeSign(p, c, a);
+            bool hasNeg = d1 < 0f || d2 < 0f || d3 < 0f;
+            bool hasPos = d1 > 0f || d2 > 0f || d3 > 0f;
+            return hasNeg && hasPos ? 0f : 1f;
+        }
+
+        private static float ReticleEdgeSign(Vector2 p1, Vector2 p2, Vector2 p3)
+        {
+            return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+        }
+
+        private void DestroyStartingSporeReticleAssets()
+        {
+            if (startingSporeReticleTile != null)
+            {
+                UnityEngine.Object.Destroy(startingSporeReticleTile);
+                startingSporeReticleTile = null;
+            }
+
+            if (startingSporeReticleSprite != null)
+            {
+                UnityEngine.Object.Destroy(startingSporeReticleSprite);
+                startingSporeReticleSprite = null;
+            }
+
+            if (startingSporeReticleTexture != null)
+            {
+                UnityEngine.Object.Destroy(startingSporeReticleTexture);
+                startingSporeReticleTexture = null;
             }
         }
 

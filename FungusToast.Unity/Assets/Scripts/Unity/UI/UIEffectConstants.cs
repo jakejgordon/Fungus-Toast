@@ -921,34 +921,68 @@ namespace FungusToast.Unity.UI
         public static readonly Color StartingTilePingSecondaryBandColor = new Color(0f, 0f, 0f, 0.62f);
 
         /// <summary>
-        /// Duration of one full always-on starting-spore emphasis pulse cycle.
+        /// Duration of one full always-on starting-spore emphasis breathe cycle (subtle radius pulse).
         /// </summary>
         public const float StartingTileEmphasisPulseDurationSeconds = 1.9f;
 
         /// <summary>
-        /// Minimum scale for the always-on starting-spore emphasis halo.
+        /// Seconds for the persistent starting-spore reticle to complete one full rotation.
         /// </summary>
-        public const float StartingTileEmphasisMinScale = 1.08f;
+        public const float StartingTileEmphasisRotationPeriodSeconds = 12f;
 
         /// <summary>
-        /// Maximum scale for the always-on starting-spore emphasis halo.
+        /// Minimum scale for the always-on starting-spore emphasis reticle frame.
         /// </summary>
-        public const float StartingTileEmphasisMaxScale = 1.34f;
+        public const float StartingTileEmphasisMinScale = 1.18f;
 
         /// <summary>
-        /// Minimum alpha for the always-on starting-spore emphasis halo.
+        /// Maximum scale for the always-on starting-spore emphasis reticle frame.
         /// </summary>
-        public const float StartingTileEmphasisMinAlpha = 0.14f;
+        public const float StartingTileEmphasisMaxScale = 1.32f;
 
         /// <summary>
-        /// Maximum alpha for the always-on starting-spore emphasis halo.
+        /// Minimum alpha for the always-on starting-spore emphasis reticle (kept high so it is always locatable).
         /// </summary>
-        public const float StartingTileEmphasisMaxAlpha = 0.3f;
+        public const float StartingTileEmphasisMinAlpha = 0.82f;
 
         /// <summary>
-        /// Warm halo color used for persistent starting-spore emphasis.
+        /// Maximum alpha for the always-on starting-spore emphasis reticle.
         /// </summary>
-        public static readonly Color StartingTileEmphasisColor = new Color(1f, 0.94f, 0.7f, 1f);
+        public const float StartingTileEmphasisMaxAlpha = 1f;
+
+        /// <summary>
+        /// Fallback reticle color used when a player's mold tile name cannot be mapped to an accent hue.
+        /// </summary>
+        public static readonly Color StartingTileEmphasisColor = new Color(1f, 0.25f, 0.72f, 1f);
+
+        /// <summary>
+        /// Resolves a vivid, high-contrast reticle accent color from a player's mold tile name
+        /// (e.g. "pink_mold_64x64_0"). Keeps the starting-spore marker tied to that player's identity
+        /// without recoloring the spore art itself. Falls back to <see cref="StartingTileEmphasisColor"/>.
+        /// </summary>
+        public static Color ResolveMoldAccentColor(string moldTileName)
+        {
+            if (string.IsNullOrEmpty(moldTileName))
+            {
+                return StartingTileEmphasisColor;
+            }
+
+            string name = moldTileName.ToLowerInvariant();
+
+            // Order matters: check the more specific prefixes before their substrings.
+            if (name.Contains("dark_blue")) return new Color(0.16f, 0.30f, 0.92f, 1f);
+            if (name.Contains("orange_red")) return new Color(1f, 0.36f, 0.06f, 1f);
+            if (name.Contains("aqua")) return new Color(0f, 0.82f, 0.70f, 1f);
+            if (name.Contains("cyan")) return new Color(0f, 0.76f, 0.95f, 1f);
+            if (name.Contains("blue")) return new Color(0.20f, 0.50f, 1f, 1f);
+            if (name.Contains("purple")) return new Color(0.70f, 0.20f, 1f, 1f);
+            if (name.Contains("pink")) return new Color(1f, 0.14f, 0.62f, 1f);
+            if (name.Contains("green")) return new Color(0.16f, 0.82f, 0.18f, 1f);
+            if (name.Contains("yellow")) return new Color(1f, 0.74f, 0.05f, 1f);
+            if (name.Contains("red")) return new Color(1f, 0.13f, 0.13f, 1f);
+
+            return StartingTileEmphasisColor;
+        }
 
         // ==================== MYCELIAL BASTION PULSE ====================
         /// <summary>
