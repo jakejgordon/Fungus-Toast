@@ -128,6 +128,7 @@ Conventions for any new one:
 - **Non-blocking**, re-triggerable (a repeat click replays it), and self-restoring: capture base scale/color, and reset both plus re-run the authoritative refresh (`UpdateDisplay()`) on completion and in `OnDisable` so a killed coroutine can't freeze an element mid-pulse.
 - **Emphasize the specific blocker, and emphasize it in both places it lives**: the element under the cursor (the clicked lock / the cost badge) *and* the thing that resolves it (the unmet prerequisite node). Leave states the player cannot act on here alone (maxed, pending-next-round, active surge, no-target).
 - Durations and peak scales are constants in `UIEffectConstants` (`MutationNodeBlockedInvestmentPulse*`, `GrowthCycleProgressPulse*`).
+- **Click detection gotcha:** `MutationNodeUI` is on the card root, which has no `Graphic`. The child upgrade `Button` is a `Selectable` (an `IPointerDownHandler`), so `ExecuteHierarchy` stops there and the root's `OnPointerDown` never fires for a normal click. Clicks that must be seen even when the Button is non-interactable (the blocked-investment feedback) are relayed by `BlockedInvestmentClickForwarder`, a runtime component added to the Button GameObject; a real upgrade click is filtered out with a `Time.frameCount` marker set in `OnUpgradeClicked`.
 
 ---
 

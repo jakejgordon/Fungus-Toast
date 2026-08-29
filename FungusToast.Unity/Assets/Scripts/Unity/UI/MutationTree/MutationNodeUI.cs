@@ -93,6 +93,8 @@ namespace FungusToast.Unity.UI.MutationTree
         // Animation state
         private Coroutine upgradeEffectCoroutine;
         private Coroutine blockedInvestmentPulseCoroutine;
+        private int lastUpgradeAttemptFrame = -1;
+        private BlockedInvestmentClickForwarder blockedInvestmentClickForwarder;
         private float targetProgressFill;
         private float currentProgressFill;
         private static readonly float ProgressLerpSpeed = 6f;
@@ -176,10 +178,18 @@ namespace FungusToast.Unity.UI.MutationTree
             upgradeButton.onClick.RemoveAllListeners();
             upgradeButton.onClick.AddListener(OnUpgradeClicked);
 
+            // MutationNodeUI lives on the card root, which has no Graphic, so the
+            // child upgrade Button (a Selectable, and therefore an IPointerDownHandler)
+            // swallows the pointer press before it can bubble to this component's
+            // OnPointerDown. Route click feedback through a forwarder that sits on the
+            // Button itself so blocked-investment clicks are actually seen.
+            EnsureBlockedInvestmentClickForwarder();
         }
-  
+
         private void OnUpgradeClicked()
         {
+            lastUpgradeAttemptFrame = Time.frameCount;
+
             var board = GameManager.Instance.Board;
             int currentRound = board.CurrentRound;
             if (!player.CanUpgrade(mutation, currentRound, board, uiManager.GetMutationAvailabilityBoardSummaries()))
@@ -519,8 +529,22 @@ namespace FungusToast.Unity.UI.MutationTree
             if (eventData.button == PointerEventData.InputButton.Left)
             {
                 uiManager.HandleMutationNodeSelected(mutation, player);
-                PlayBlockedInvestmentFeedbackIfNeeded();
             }
+        }
+
+        /// <summary>
+        /// Invoked by <see cref="BlockedInvestmentClickForwarder"/> for every left click on
+        /// the node's Button, including clicks the Button ignores because it is not
+        /// interactable (locked / unaffordable) — those never reach this component's
+        /// OnPointerDown. A click the Button handled as a real upgrade this frame is
+        /// skipped via <see cref="lastUpgradeAttemptFrame"/>.
+        /// </summary>
+        private void HandleForwardedClick()
+        {
+            if (lastUpgradeAttemptFrame == Time.frameCount)
+                return;
+
+            PlayBlockedInvestmentFeedbackIfNeeded();
         }
 
         /// <summary>
@@ -2018,6 +2042,45 @@ namespace FungusToast.Unity.UI.MutationTree
             for (int i = 0; i < graphics.Length; i++)
             {
                 graphics[i].raycastTarget = false;
+            }
+        }
+
+        private void EnsureBlockedInvestmentClickForwarder()
+        {
+            if (upgradeButton == null)
+                return;
+
+            if (blockedInvestmentClickForwarder == null)
+            {
+                GameObject buttonObject = upgradeButton.gameObject;
+                blockedInvestmentClickForwarder = buttonObject.GetComponent<BlockedInvestmentClickForwarder>()
+                    ?? buttonObject.AddComponent<BlockedInvestmentClickForwarder>();
+            }
+
+            blockedInvestmentClickForwarder.Bind(HandleForwardedClick);
+        }
+
+        /// <summary>
+        /// Sits on the upgrade Button GameObject and relays left clicks up to
+        /// <see cref="MutationNodeUI"/>. The Button (a Selectable) consumes the pointer
+        /// press before it can reach the card-root component, so clicks on a
+        /// non-interactable node would otherwise be invisible to the node script.
+        /// </summary>
+        private sealed class BlockedInvestmentClickForwarder : MonoBehaviour, IPointerClickHandler
+        {
+            private System.Action onLeftClick;
+
+            public void Bind(System.Action handler)
+            {
+                onLeftClick = handler;
+            }
+
+            public void OnPointerClick(PointerEventData eventData)
+            {
+                if (eventData.button == PointerEventData.InputButton.Left)
+                {
+                    onLeftClick?.Invoke();
+                }
             }
         }
 
