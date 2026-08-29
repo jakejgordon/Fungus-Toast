@@ -2322,8 +2322,49 @@ namespace FungusToast.Unity.Grid
         {
             var active = ActiveBoard;
             if (active != null && playerId >= 0 && playerId < active.Players.Count)
-                return active.Players[playerId].StartingTileId;
+                return ResolveStartingSporeTileId(active, active.Players[playerId]);
             return null;
+        }
+
+        /// <summary>
+        /// Resolves the tile that currently holds a player's starting spore. Prefers
+        /// <see cref="FungusToast.Core.Players.Player.StartingTileId"/> when it still points at that player's
+        /// living cell; otherwise falls back to scanning for their resistant initial-spore cell (which can end
+        /// up elsewhere after a relocation such as Conidial Relay). Returns null when no starting spore is on
+        /// the board, so callers never mark an empty tile.
+        /// </summary>
+        private static int? ResolveStartingSporeTileId(GameBoard board, FungusToast.Core.Players.Player player)
+        {
+            if (board == null || player == null)
+            {
+                return null;
+            }
+
+            int? startingTileId = player.StartingTileId;
+            if (startingTileId.HasValue && TileHoldsPlayerStartingCell(board, startingTileId.Value, player.PlayerId))
+            {
+                return startingTileId;
+            }
+
+            foreach (var tile in board.AllTiles())
+            {
+                var cell = tile.FungalCell;
+                if (cell != null
+                    && cell.IsAlive
+                    && cell.SourceOfGrowth == FungusToast.Core.Growth.GrowthSource.InitialSpore
+                    && cell.OwnerPlayerId == player.PlayerId)
+                {
+                    return tile.TileId;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool TileHoldsPlayerStartingCell(GameBoard board, int tileId, int playerId)
+        {
+            var cell = board.GetTileById(tileId)?.FungalCell;
+            return cell != null && cell.IsAlive && cell.OwnerPlayerId == playerId;
         }
 
         private void UpdateStartingTileEmphasis()
@@ -2340,7 +2381,7 @@ namespace FungusToast.Unity.Grid
             Dictionary<Vector3Int, Color> nextPositions = new();
             for (int i = 0; i < active.Players.Count; i++)
             {
-                int? startingTileId = active.Players[i].StartingTileId;
+                int? startingTileId = ResolveStartingSporeTileId(active, active.Players[i]);
                 if (!startingTileId.HasValue)
                 {
                     continue;
