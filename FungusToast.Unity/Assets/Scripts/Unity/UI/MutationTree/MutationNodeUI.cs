@@ -328,6 +328,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 levelText.rectTransform.localScale = Vector3.one;
             if (upgradeCostGroup != null)
                 upgradeCostGroup.transform.localScale = Vector3.one;
+            if (lockOverlay != null)
+                lockOverlay.transform.localScale = Vector3.one;
             transform.localScale = Vector3.one;
         }
 
@@ -525,7 +527,7 @@ namespace FungusToast.Unity.UI.MutationTree
         /// When the player clicks a mutation they cannot invest in, play a single
         /// attention pulse over the specific blocker so the reason is obvious:
         ///  • unlocked but unaffordable → pulse the "NEED POINTS" line and the cost badge
-        ///  • locked → pulse the unmet prerequisite node(s) on its path
+        ///  • locked → pulse this node's lock indicator and the unmet prerequisite node(s) on its path
         /// Maxed / pending-next-round / active-surge / no-target states are left alone;
         /// they already read clearly and are not something the player can act on here.
         /// </summary>
@@ -557,6 +559,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (isLocked)
             {
+                // Feedback at the point of interaction (the clicked lock) plus the
+                // resolution target (what unlocks it).
+                PlayLockedAttentionPulse();
                 uiManager.PulseUnmetPrerequisitesFor(mutation, player);
                 return;
             }
@@ -670,6 +675,30 @@ namespace FungusToast.Unity.UI.MutationTree
                 Graphic costGraphic = upgradeCostText != null ? upgradeCostText : null;
                 targets.Add(new PulseTarget(groupRect, costGraphic, danger));
             }
+
+            StartBlockedInvestmentPulse(targets);
+        }
+
+        /// <summary>
+        /// Pulses this node's lock indicator and "LOCKED" line when the player clicks a
+        /// mutation whose prerequisites are not met, so the click registers at the point
+        /// of interaction as well as on the prerequisites that resolve it.
+        /// </summary>
+        public void PlayLockedAttentionPulse()
+        {
+            RestoreBlockedInvestmentPulseTargets();
+
+            var targets = new List<PulseTarget>(2);
+            Color warning = UIStyleTokens.State.Warning;
+
+            if (lockOverlay != null && lockOverlay.activeInHierarchy && lockOverlay.transform is RectTransform lockRect)
+            {
+                // Scale-only for the lock glyph; the "LOCKED" line below carries the colour cue.
+                targets.Add(new PulseTarget(lockRect, graphic: null, warning));
+            }
+
+            if (levelText != null)
+                targets.Add(new PulseTarget(levelText.rectTransform, levelText, warning));
 
             StartBlockedInvestmentPulse(targets);
         }
