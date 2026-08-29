@@ -651,6 +651,26 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float GrowthCycleProgressPulsePeakScaleMultiplier = 1.85f;
 
+        /// <summary>
+        /// Duration (in seconds) of the one-shot attention pulse played on a mutation node
+        /// when the player clicks a mutation they cannot invest in. A single rise-and-fall
+        /// pulse (never looping) that emphasises the specific blocker: the "NEED POINTS"
+        /// line and cost badge when unlocked-but-unaffordable, or the unmet prerequisite
+        /// node(s) when locked.
+        /// </summary>
+        public const float MutationNodeBlockedInvestmentPulseDurationSeconds = 0.5f;
+
+        /// <summary>
+        /// Peak scale multiplier applied to the emphasised element(s) at the midpoint of the
+        /// blocked-investment attention pulse.
+        /// </summary>
+        public const float MutationNodeBlockedInvestmentPulsePeakScaleMultiplier = 1.18f;
+
+        /// <summary>
+        /// Shortened blocked-investment pulse duration used while fast round presentation is active.
+        /// </summary>
+        public const float MutationNodeBlockedInvestmentPulseFastDurationSeconds = 0.14f;
+
         // ==================== NEW GROWTH VISUAL TWEAKS ====================
 
         /// <summary>

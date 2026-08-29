@@ -1407,7 +1407,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             int cost = inspectedPlayer.GetMutationPointCost(inspectedMutation);
-            ShowProjectedCost(cost);
+            ShowProjectedCost(cost, inspectedPlayer.MutationPoints >= cost);
         }
 
         private void OnStoreMutationPointsClicked()
@@ -1963,6 +1963,25 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
+        /// <summary>
+        /// Plays a one-shot attention pulse on every unmet prerequisite node on the
+        /// path to <paramref name="mutation"/>. Called when the player clicks a locked
+        /// mutation so the specific blockers are obvious.
+        /// </summary>
+        public void PulseUnmetPrerequisitesFor(Mutation mutation, Player player)
+        {
+            if (mutation == null || player == null) return;
+
+            foreach (int prerequisiteId in GetPrerequisitePathIds(mutation))
+            {
+                if (!IsUnmetPrerequisiteOnPath(mutation, prerequisiteId, player, new HashSet<int>()))
+                    continue;
+
+                var node = mutationButtons.FirstOrDefault(n => n.MutationId == prerequisiteId);
+                node?.PlayUnmetPrerequisiteAttentionPulse();
+            }
+        }
+
         private bool IsUnmetPurchasablePrerequisite(Mutation inspectedMutation, int prerequisiteId, Player player)
         {
             if (!mutationsById.TryGetValue(prerequisiteId, out Mutation prerequisiteMutation)
@@ -2197,15 +2216,26 @@ namespace FungusToast.Unity.UI.MutationTree
         private string? basePointsText;
 
         /// <summary>
-        /// Shows a projected "→ N" next to the mutation points counter when hovering a node.
+        /// Shows the projected cost next to the mutation points counter when hovering a node.
+        /// When the player cannot afford the upgrade the cost segment turns danger-red and
+        /// spells out the shortfall, so the blocker reads at a glance.
         /// </summary>
-        public void ShowProjectedCost(int cost)
+        public void ShowProjectedCost(int cost, bool canAfford = true)
         {
             if (mutationPointsCounterText == null || humanPlayer == null) return;
             int current = humanPlayer.MutationPoints;
-            int projected = Mathf.Max(0, current - cost);
             basePointsText ??= mutationPointsCounterText.text;
-            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.Text.Secondary)}>Cost: {cost} · After purchase: {projected}</color>";
+
+            if (canAfford)
+            {
+                int projected = Mathf.Max(0, current - cost);
+                mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.Text.Secondary)}>Cost: {cost} · After purchase: {projected}</color>";
+                return;
+            }
+
+            int shortfall = Mathf.Max(1, cost - current);
+            string pointWord = shortfall == 1 ? "point" : "points";
+            mutationPointsCounterText.text = $"Mutation Points: {current}  <color=#{UIStyleTokens.ToHtmlRgb(UIStyleTokens.State.Danger)}>Cost: {cost} · Need {shortfall} more {pointWord}</color>";
         }
 
         /// <summary>Restores normal points counter text.</summary>

@@ -5,6 +5,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using UnityEngine.EventSystems;
 using System.Collections;
+using System.Collections.Generic;
 using FungusToast.Unity;
 using FungusToast.Core.Config;
 
@@ -91,6 +92,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         // Animation state
         private Coroutine upgradeEffectCoroutine;
+        private Coroutine blockedInvestmentPulseCoroutine;
         private float targetProgressFill;
         private float currentProgressFill;
         private static readonly float ProgressLerpSpeed = 6f;
@@ -312,6 +314,23 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplySearchVisual();
         }
 
+        private void OnDisable()
+        {
+            // A coroutine killed by the disable would otherwise leave an element
+            // frozen mid-pulse; snap everything the pulse touches back to rest.
+            if (blockedInvestmentPulseCoroutine != null)
+            {
+                StopCoroutine(blockedInvestmentPulseCoroutine);
+                blockedInvestmentPulseCoroutine = null;
+            }
+
+            if (levelText != null)
+                levelText.rectTransform.localScale = Vector3.one;
+            if (upgradeCostGroup != null)
+                upgradeCostGroup.transform.localScale = Vector3.one;
+            transform.localScale = Vector3.one;
+        }
+
         private void Update()
         {
             // Smoothly animate level-text progress fill via anchor-based width
@@ -498,7 +517,58 @@ namespace FungusToast.Unity.UI.MutationTree
             if (eventData.button == PointerEventData.InputButton.Left)
             {
                 uiManager.HandleMutationNodeSelected(mutation, player);
+                PlayBlockedInvestmentFeedbackIfNeeded();
             }
+        }
+
+        /// <summary>
+        /// When the player clicks a mutation they cannot invest in, play a single
+        /// attention pulse over the specific blocker so the reason is obvious:
+        ///  • unlocked but unaffordable → pulse the "NEED POINTS" line and the cost badge
+        ///  • locked → pulse the unmet prerequisite node(s) on its path
+        /// Maxed / pending-next-round / active-surge / no-target states are left alone;
+        /// they already read clearly and are not something the player can act on here.
+        /// </summary>
+        private void PlayBlockedInvestmentFeedbackIfNeeded()
+        {
+            if (mutation == null || player == null || uiManager == null)
+                return;
+
+            // Anything the player can actually buy right now needs no nudge.
+            if (upgradeButton != null && upgradeButton.interactable)
+                return;
+
+            int currentLevel = player.GetMutationLevel(mutation.Id);
+            if (currentLevel >= mutation.MaxLevel)
+                return;
+
+            bool isSurgeActive = mutation.IsSurge && player.IsSurgeActive(mutation.Id);
+            if (isSurgeActive)
+                return;
+
+            bool isLocked = !MutationPrerequisiteEvaluator.AreAllMet(mutation, player);
+
+            bool showPendingUnlock = MutationPrerequisiteEvaluator.HasRequirements(mutation)
+                && player.PlayerMutations.TryGetValue(mutation.Id, out var pm)
+                && pm.PrereqMetRound.HasValue
+                && pm.PrereqMetRound.Value == GameManager.Instance.Board.CurrentRound;
+            if (showPendingUnlock)
+                return;
+
+            if (isLocked)
+            {
+                uiManager.PulseUnmetPrerequisitesFor(mutation, player);
+                return;
+            }
+
+            if (ShouldShowNoEffectDisabledState(isLocked, isSurgeActive, showPendingUnlock, isMaxed: false))
+                return;
+
+            int upgradeCost = player.GetMutationPointCost(mutation);
+            if (player.MutationPoints >= upgradeCost)
+                return;
+
+            PlayInsufficientPointsAttentionPulse();
         }
 
         // ── Upgrade feedback animation ───────────────────────────────────
@@ -555,6 +625,128 @@ namespace FungusToast.Unity.UI.MutationTree
             // Restore proper background tint
             UpdateDisplay();
             upgradeEffectCoroutine = null;
+        }
+
+        // ── Blocked-investment attention pulse ───────────────────────────
+        // A single rise-and-fall pulse (never looping) that points at the reason
+        // a click did nothing. Follows the project's established attention-pulse
+        // idiom: unscaled time, one Mathf.Sin(progress * PI) sweep, non-blocking.
+
+        private readonly struct PulseTarget
+        {
+            public PulseTarget(RectTransform rectTransform, Graphic graphic, Color flashColor)
+            {
+                RectTransform = rectTransform;
+                BaseScale = rectTransform != null ? rectTransform.localScale : Vector3.one;
+                Graphic = graphic;
+                BaseColor = graphic != null ? graphic.color : Color.white;
+                FlashColor = flashColor;
+            }
+
+            public RectTransform RectTransform { get; }
+            public Vector3 BaseScale { get; }
+            public Graphic Graphic { get; }
+            public Color BaseColor { get; }
+            public Color FlashColor { get; }
+        }
+
+        /// <summary>
+        /// Pulses the "NEED POINTS" line and the DNA cost badge to make clear the
+        /// only thing standing between the player and this upgrade is mutation points.
+        /// </summary>
+        public void PlayInsufficientPointsAttentionPulse()
+        {
+            RestoreBlockedInvestmentPulseTargets();
+
+            var targets = new List<PulseTarget>(3);
+            Color danger = UIStyleTokens.State.Danger;
+
+            if (levelText != null)
+                targets.Add(new PulseTarget(levelText.rectTransform, levelText, danger));
+
+            if (upgradeCostGroup != null && upgradeCostGroup.activeInHierarchy)
+            {
+                var groupRect = upgradeCostGroup.transform as RectTransform;
+                Graphic costGraphic = upgradeCostText != null ? upgradeCostText : null;
+                targets.Add(new PulseTarget(groupRect, costGraphic, danger));
+            }
+
+            StartBlockedInvestmentPulse(targets);
+        }
+
+        /// <summary>
+        /// Pulses this node as an unmet prerequisite blocking a mutation the player
+        /// just tried to buy. Emphasises the whole card so the blocked path is legible.
+        /// </summary>
+        public void PlayUnmetPrerequisiteAttentionPulse()
+        {
+            RestoreBlockedInvestmentPulseTargets();
+
+            var targets = new List<PulseTarget>(1);
+            // Scaling the card root is safe here: an unmet prerequisite is never
+            // mid upgrade-success animation.
+            RectTransform cardRect = upgradeEffectCoroutine == null ? transform as RectTransform : null;
+            targets.Add(new PulseTarget(cardRect, nodeBackground, UIStyleTokens.State.Warning));
+
+            StartBlockedInvestmentPulse(targets);
+        }
+
+        private void StartBlockedInvestmentPulse(List<PulseTarget> targets)
+        {
+            if (targets == null || targets.Count == 0 || !isActiveAndEnabled)
+                return;
+
+            blockedInvestmentPulseCoroutine = StartCoroutine(BlockedInvestmentPulseCoroutine(targets));
+        }
+
+        private void RestoreBlockedInvestmentPulseTargets()
+        {
+            if (blockedInvestmentPulseCoroutine == null)
+                return;
+
+            StopCoroutine(blockedInvestmentPulseCoroutine);
+            blockedInvestmentPulseCoroutine = null;
+            UpdateDisplay();
+        }
+
+        private IEnumerator BlockedInvestmentPulseCoroutine(List<PulseTarget> targets)
+        {
+            float duration = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode
+                ? UIEffectConstants.MutationNodeBlockedInvestmentPulseFastDurationSeconds
+                : UIEffectConstants.MutationNodeBlockedInvestmentPulseDurationSeconds;
+            float peakScale = UIEffectConstants.MutationNodeBlockedInvestmentPulsePeakScaleMultiplier;
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float strength = Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI); // 0 → 1 → 0
+
+                for (int i = 0; i < targets.Count; i++)
+                {
+                    PulseTarget target = targets[i];
+                    if (target.RectTransform != null)
+                        target.RectTransform.localScale = target.BaseScale * Mathf.Lerp(1f, peakScale, strength);
+                    if (target.Graphic != null)
+                        target.Graphic.color = Color.Lerp(target.BaseColor, target.FlashColor, strength);
+                }
+
+                yield return null;
+            }
+
+            for (int i = 0; i < targets.Count; i++)
+            {
+                PulseTarget target = targets[i];
+                if (target.RectTransform != null)
+                    target.RectTransform.localScale = target.BaseScale;
+                if (target.Graphic != null)
+                    target.Graphic.color = target.BaseColor;
+            }
+
+            blockedInvestmentPulseCoroutine = null;
+
+            // Re-sync to authoritative state (restores exact tint/contrast).
+            UpdateDisplay();
         }
 
         // ── Shimmer (called by UI_MutationManager on panel open) ─────────
