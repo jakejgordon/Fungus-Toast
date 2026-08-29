@@ -241,8 +241,7 @@ namespace FungusToast.Unity.Grid.Animation
                 yield break;
             }
 
-            var moldTile = viz.GetTileForPlayer(playerId);
-            var moldSprite = moldTile != null ? moldTile.sprite : null;
+            var moldSprite = ResolveMoldSprite(playerId);
             var projectileOverlaySprite = overlaySprite ?? (allowOverlayFallback && viz.goldShieldOverlayTile != null ? viz.goldShieldOverlayTile.sprite : null);
             if (moldSprite == null)
             {
@@ -361,8 +360,7 @@ namespace FungusToast.Unity.Grid.Animation
                 yield break;
             }
 
-            var moldTile = viz.GetTileForPlayer(playerId);
-            var moldSprite = moldTile != null ? moldTile.sprite : null;
+            var moldSprite = ResolveMoldSprite(playerId);
             var referenceTilemap = viz.overlayTilemap != null ? viz.overlayTilemap : viz.moldTilemap;
             if (moldSprite == null || referenceTilemap == null)
             {
@@ -619,6 +617,15 @@ namespace FungusToast.Unity.Grid.Animation
             }
 
             return root;
+        }
+
+        private Sprite ResolveMoldSprite(int playerId)
+        {
+            // Most board cells use the alive-variant tile set. Several legacy base mold tiles
+            // no longer have an imported sprite, so using only the base tile makes launch arcs
+            // silently complete without ever reaching BeginAnimation().
+            return viz.GetTileForPlayer(playerId)?.sprite
+                ?? viz.GetMoldIconTileForPlayer(playerId)?.sprite;
         }
 
         private TileVisibilityState CaptureTileVisibility(Vector3Int cell)
