@@ -62,6 +62,11 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             ISimulationObserver observer)
         {
+            // Resistant cells are fixed anchors (starting spores, Mycelial Bastion cells). Letting one
+            // "creep" would silently strip its resistance and, for a starting spore, desync
+            // Player.StartingTileId from the tile that actually holds the spore.
+            if (sourceCell == null || sourceCell.IsResistant) return false;
+
             bool hasMaxCreepingMold = player.PlayerMutations.TryGetValue(MutationIds.CreepingMold, out var cm) &&
                                       cm.CurrentLevel == GameBalance.CreepingMoldMaxLevel;
             bool targetIsToxin = targetTile.FungalCell != null && targetTile.FungalCell.IsToxin;

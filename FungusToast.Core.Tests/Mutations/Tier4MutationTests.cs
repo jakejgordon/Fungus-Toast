@@ -223,6 +223,34 @@ public class Tier4MutationTests
     }
 
     [Fact]
+    public void TryCreepingMoldMove_does_not_relocate_a_resistant_cell()
+    {
+        var board = new GameBoard(width: 4, height: 4, playerCount: 1);
+        var player = CreatePlayer(0);
+        board.Players.Add(player);
+        player.SetMutationLevel(MutationIds.CreepingMold, newLevel: 1, currentRound: 1);
+
+        var sourceCell = PlaceLivingCell(board, player, tileId: board.GetTile(0, 1)!.TileId);
+        sourceCell.MakeResistant();
+        var sourceTile = board.GetTileById(sourceCell.TileId)!;
+        var targetTile = board.GetTile(1, 1)!;
+
+        var moved = GrowthMutationProcessor.TryCreepingMoldMove(
+            player,
+            sourceCell,
+            sourceTile,
+            targetTile,
+            new AlwaysZeroRandom(),
+            board,
+            new CountingObserver());
+
+        Assert.False(moved);
+        Assert.Same(sourceCell, board.GetCell(sourceTile.TileId));
+        Assert.True(board.GetCell(sourceTile.TileId)!.IsResistant);
+        Assert.Null(board.GetCell(targetTile.TileId));
+    }
+
+    [Fact]
     public void TryCreepingMoldMove_at_max_level_can_jump_over_adjacent_toxin_into_open_tile_beyond()
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 2);
