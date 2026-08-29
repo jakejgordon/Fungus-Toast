@@ -29,6 +29,7 @@ Any new gameplay animation entry point should be added to this file when introdu
 - The passive alive-mold drift only applies to eligible living mold tiles with no overlay present, and it suspends while higher-priority board animations or player-hover emphasis are active.
 - Source-aware directional normal growth currently applies only to standard orthogonal `HyphalOutgrowth` placements. Any newly grown tile without a buffered source/destination pair falls back to the existing fade-in behavior.
 - When adding a new reusable animation or board-FX entry point, register it here with its trigger, main method, and governing constants.
+- Click-driven UI micro-interactions (mutation-node attention pulses, panel-open shimmer, etc.) are not part of round-flow sequencing and live in [../UI_ARCHITECTURE_HELPER.md](../UI_ARCHITECTURE_HELPER.md) under **Attention Pulses**, not in the tables above.
 
 ## Minimal Mycovariant (Active Ability) Animations
 Use the same GridVisualizer entry points; only the triggering context differs.

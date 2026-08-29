@@ -116,6 +116,21 @@ The full-screen mutation workspace uses a persistent right-side inspector for de
 
 ---
 
+## Attention Pulses
+
+Short, one-shot emphasis animations that answer "why did nothing happen?" or "look here". Used by the panel-open affordable shimmer, the blocked-investment pulse (`MutationNodeUI.PlayInsufficientPointsAttentionPulse` / `PlayLockedAttentionPulse`, driven from `PlayBlockedInvestmentFeedbackIfNeeded`; `UI_MutationManager.PulseUnmetPrerequisitesFor`), and the growth-cycle progress pulse (`UI_PhaseProgressTracker`).
+
+Conventions for any new one:
+
+- **One rise-and-fall sweep, never a loop.** Drive it from a single `Mathf.Sin(Mathf.Clamp01(elapsed / duration) * Mathf.PI)` strength (0 → 1 → 0). A persistent loop is reserved for genuine ongoing state (e.g. the purchasable-prerequisite outline) and causes attention fatigue everywhere else.
+- **Unscaled time** (`Time.unscaledDeltaTime` / `Time.unscaledTime`) so it plays during pauses and time-lapse; **shorten** it (not skip) when `GameManager.IsFastRoundPresentationMode`.
+- **Pair motion with a semantic color**, never color alone — scale punch + a brief `UIStyleTokens.State.*` tint that settles back. The literal label ("NEED POINTS", "LOCKED") is a third, redundant cue.
+- **Non-blocking**, re-triggerable (a repeat click replays it), and self-restoring: capture base scale/color, and reset both plus re-run the authoritative refresh (`UpdateDisplay()`) on completion and in `OnDisable` so a killed coroutine can't freeze an element mid-pulse.
+- **Emphasize the specific blocker, and emphasize it in both places it lives**: the element under the cursor (the clicked lock / the cost badge) *and* the thing that resolves it (the unmet prerequisite node). Leave states the player cannot act on here alone (maxed, pending-next-round, active surge, no-target).
+- Durations and peak scales are constants in `UIEffectConstants` (`MutationNodeBlockedInvestmentPulse*`, `GrowthCycleProgressPulse*`).
+
+---
+
 ## Object Pooling
 
 Use `UnityEngine.Pool.ObjectPool<T>` for UI elements that are frequently created and destroyed (log entries, list rows, etc.). This avoids GC pressure and frame hitches.
@@ -342,5 +357,6 @@ The Unity Player window is configured as resizable (`resizableWindow: 1` in `Pro
 | GameManager method cluster is growing | Extract into `Services/` class with `Func<>` dependencies |
 | UI panel needs GameManager data | Add property to `GameUIManager`, use `SetDependencies()` |
 | New sidebar or resizable panel | Use `SidebarResizer` component with `targetWidthFraction` |
+| One-shot "look here" / "why did nothing happen?" emphasis | Follow the **Attention Pulses** conventions above |
 
 _End of UI Architecture Helper._
