@@ -156,7 +156,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.SporalSnareId,
                 Name = "Sporal Snare",
-                Description = $"The leading AI player always prefers drafting this Mycovariant, causing a line of living cells from the Human player to shoot toward the AI player's starting spore, reclaiming dead cells, infesting non-resistant living cells, and overgrowing toxins. If drafted by the Human player, grants {MycovariantGameBalance.SporalSnareMutationPointAward} mutation points.",
+                Description = $"The leading AI player always prefers drafting this Mycovariant, causing up to {MycovariantGameBalance.SporalSnareMaximumAffectedCells} cells along the line from the Human player's starting spore to the AI player's starting spore to become Human-owned living cells by colonizing empty tiles, reclaiming dead cells, infesting non-resistant living cells, and overgrowing toxins. If drafted by the Human player, grants {MycovariantGameBalance.SporalSnareMutationPointAward} mutation points.",
                 FlavorText = "A baited pore-mouth yawns open, inviting rival growth to thread a breach straight back through the taker's own lane.",
             IconId = "myco_sporal_snare",
                 Type = MycovariantType.Economy,

@@ -1884,6 +1884,27 @@ public static class MycovariantEffectProcessor
             return new List<int>();
         }
 
+        int candidateTileCount = fullLine.Count - 1;
+        int baseSampleCount = ((candidateTileCount - 1) / lineStride) + 1;
+        if (((candidateTileCount - 1) % lineStride) != 0)
+        {
+            baseSampleCount++;
+        }
+
+        if (baseSampleCount > MycovariantGameBalance.SporalSnareMaximumAffectedCells)
+        {
+            int sampleCount = MycovariantGameBalance.SporalSnareMaximumAffectedCells;
+            lineStride = (int)Math.Ceiling(candidateTileCount / (double)sampleCount);
+            var cappedSample = new List<int>(sampleCount);
+            for (int sampleNumber = 1; sampleNumber <= sampleCount; sampleNumber++)
+            {
+                int index = (int)Math.Ceiling(sampleNumber * candidateTileCount / (double)sampleCount);
+                cappedSample.Add(fullLine[index]);
+            }
+
+            return cappedSample;
+        }
+
         var sampled = new List<int>();
         for (int index = 1; index < fullLine.Count; index++)
         {

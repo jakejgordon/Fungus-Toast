@@ -47,6 +47,7 @@ namespace FungusToast.Core.Config
         public const int SporalSnareDenseLineStride = 1;
         public const int SporalSnareMediumLineStride = 2;
         public const int SporalSnareSparseLineStride = 3;
+        public const int SporalSnareMaximumAffectedCells = 8;
 
         public const float NeutralizingMantleNeutralizeChance = 0.20f;
 

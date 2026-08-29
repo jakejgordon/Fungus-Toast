@@ -44,6 +44,7 @@ public class AscusBaitMycovariantTests
         Assert.True(mycovariant.IsLocked);
         Assert.Equal(6, mycovariant.RequiredMoldinessUnlockLevel);
         Assert.False(mycovariant.AutoMarkTriggered);
+        Assert.Contains("up to 8 cells", mycovariant.Description);
         Assert.Contains("grants 10 mutation points", mycovariant.Description);
         Assert.NotNull(mycovariant.ApplyEffect);
     }
@@ -308,6 +309,34 @@ public class AscusBaitMycovariantTests
     }
 
     [Fact]
+    public void ResolveSporalSnare_caps_affected_cells_on_160_tile_line()
+    {
+        var board = new GameBoard(width: 160, height: 1, playerCount: 2);
+        var human = new Player(0, "Human", PlayerTypeEnum.Human);
+        var ai = new Player(1, "AI", PlayerTypeEnum.AI);
+        board.Players.Add(human);
+        board.Players.Add(ai);
+        board.PlaceInitialSpore(human.PlayerId, 0, 0);
+        board.PlaceInitialSpore(ai.PlayerId, 159, 0);
+        board.GetCell(ai.StartingTileId!.Value)!.RemoveResistance();
+
+        var mycovariant = MycovariantRepository.GetById(MycovariantIds.SporalSnareId);
+        var playerMyco = new PlayerMycovariant(ai.PlayerId, mycovariant.Id, mycovariant);
+
+        var result = MycovariantEffectProcessor.ResolveSporalSnare(
+            playerMyco,
+            board,
+            new Random(7),
+            new TestSimulationObserver());
+
+        Assert.NotNull(result);
+        Assert.Equal(MycovariantGameBalance.SporalSnareMaximumAffectedCells, result!.SampledPathTileIds.Count);
+        Assert.Equal(
+            MycovariantGameBalance.SporalSnareMaximumAffectedCells,
+            result.Colonized + result.Infested + result.Reclaimed + result.Overgrown);
+    }
+
+    [Fact]
     public void ResolveAscusBait_kills_random_non_resistant_ai_cells_with_ascus_bait_reason()
     {
         var board = new GameBoard(width: 6, height: 6, playerCount: 1);
@@ -463,10 +492,12 @@ public class AscusBaitMycovariantTests
         var smallBoard = new GameBoard(width: 12, height: 12, playerCount: 1);
         var mediumBoard = new GameBoard(width: 24, height: 24, playerCount: 1);
         var largeBoard = new GameBoard(width: 60, height: 60, playerCount: 1);
+        var maximumBoard = new GameBoard(width: 160, height: 160, playerCount: 1);
 
         IReadOnlyList<int> smallPath = MycovariantEffectProcessor.BuildSporalSnarePath(smallBoard, 0, 0, 5, 0, out var smallStride);
         IReadOnlyList<int> mediumPath = MycovariantEffectProcessor.BuildSporalSnarePath(mediumBoard, 0, 0, 6, 0, out var mediumStride);
         IReadOnlyList<int> largePath = MycovariantEffectProcessor.BuildSporalSnarePath(largeBoard, 0, 0, 8, 0, out var largeStride);
+        IReadOnlyList<int> maximumPath = MycovariantEffectProcessor.BuildSporalSnarePath(maximumBoard, 0, 0, 159, 0, out var maximumStride);
 
         Assert.Equal(1, smallStride);
         Assert.Equal(new[] { 1, 2, 3, 4, 5 }, smallPath);
@@ -474,6 +505,9 @@ public class AscusBaitMycovariantTests
         Assert.Equal(new[] { 1, 3, 5, 6 }, mediumPath);
         Assert.Equal(3, largeStride);
         Assert.Equal(new[] { 1, 4, 7, 8 }, largePath);
+        Assert.Equal(20, maximumStride);
+        Assert.Equal(new[] { 20, 40, 60, 80, 100, 120, 140, 159 }, maximumPath);
+        Assert.Equal(MycovariantGameBalance.SporalSnareMaximumAffectedCells, maximumPath.Count);
     }
 
     [Fact]
