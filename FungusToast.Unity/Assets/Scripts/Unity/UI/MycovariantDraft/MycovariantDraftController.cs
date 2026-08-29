@@ -1151,6 +1151,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             mycovariantDraftCoachmarkCanvasGroup.alpha = 1f;
             mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = true;
             mycovariantDraftCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(mycovariantDraftCoachmarkRoot);
         }
 
         private void EnsureMycovariantDraftCoachmarkUi()

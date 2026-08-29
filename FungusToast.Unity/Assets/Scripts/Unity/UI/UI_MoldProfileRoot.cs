@@ -488,6 +488,7 @@ namespace FungusToast.Unity.UI
             adaptationCoachmarkCanvasGroup.alpha = 1f;
             adaptationCoachmarkCanvasGroup.blocksRaycasts = true;
             adaptationCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(adaptationCoachmarkRoot);
         }
 
         private void ConfigureCenterPlayerIcon(Player player)

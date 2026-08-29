@@ -652,6 +652,36 @@ namespace FungusToast.Unity.UI
         public const float GrowthCycleProgressPulsePeakScaleMultiplier = 1.85f;
 
         /// <summary>
+        /// Duration of the coachmark fade-and-scale entrance before its border pulses.
+        /// </summary>
+        public const float CoachmarkEntranceDurationSeconds = 0.2f;
+
+        /// <summary>
+        /// Duration of each finite coachmark border pulse.
+        /// </summary>
+        public const float CoachmarkBorderPulseDurationSeconds = 0.65f;
+
+        /// <summary>
+        /// Number of border pulses played when a coachmark appears.
+        /// </summary>
+        public const int CoachmarkBorderPulseCount = 2;
+
+        /// <summary>
+        /// Initial coachmark scale used for its brief entrance animation.
+        /// </summary>
+        public const float CoachmarkEntranceStartScale = 0.97f;
+
+        /// <summary>
+        /// Maximum outline offset used at the peak of a coachmark border pulse.
+        /// </summary>
+        public const float CoachmarkBorderPulsePeakDistance = 3f;
+
+        /// <summary>
+        /// Opacity of the non-blocking backdrop placed behind a visible coachmark.
+        /// </summary>
+        public const float CoachmarkBackdropAlpha = 0.18f;
+
+        /// <summary>
         /// Duration (in seconds) of the one-shot attention pulse played on a mutation node
         /// when the player clicks a mutation they cannot invest in. A single rise-and-fall
         /// pulse (never looping) that emphasises the specific blocker: the "NEED POINTS"

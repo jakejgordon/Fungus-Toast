@@ -229,6 +229,7 @@ namespace FungusToast.Unity.Cameras
             cameraPanCoachmarkCanvasGroup.alpha = 1f;
             cameraPanCoachmarkCanvasGroup.blocksRaycasts = true;
             cameraPanCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(cameraPanCoachmarkRoot);
         }
 
         private void ResolveCameraPanOnboarding(GameManager gameManager)

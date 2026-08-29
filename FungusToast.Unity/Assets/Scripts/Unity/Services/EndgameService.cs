@@ -779,6 +779,7 @@ namespace FungusToast.Unity
             autoPlacementCoachmarkCanvasGroup.alpha = 1f;
             autoPlacementCoachmarkCanvasGroup.blocksRaycasts = true;
             autoPlacementCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(autoPlacementCoachmarkRoot);
             NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AutoPlacementIntro);
         }
 

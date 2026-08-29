@@ -486,6 +486,7 @@ namespace FungusToast.Unity.UI
             endgameCountdownCoachmarkCanvasGroup.alpha = 1f;
             endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = true;
             endgameCountdownCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(endgameCountdownCoachmarkRoot);
         }
 
         public void TryShowScoreboardWinConditionCoachmark(int currentRound)
@@ -517,6 +518,7 @@ namespace FungusToast.Unity.UI
             scoreboardCoachmarkCanvasGroup.alpha = 1f;
             scoreboardCoachmarkCanvasGroup.blocksRaycasts = true;
             scoreboardCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(scoreboardCoachmarkRoot);
         }
 
         private void EnsureScoreboardCoachmarkUi()

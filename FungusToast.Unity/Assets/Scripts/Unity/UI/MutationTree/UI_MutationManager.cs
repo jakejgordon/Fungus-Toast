@@ -2783,6 +2783,7 @@ namespace FungusToast.Unity.UI.MutationTree
             timeLapseCoachmarkCanvasGroup.alpha = 1f;
             timeLapseCoachmarkCanvasGroup.blocksRaycasts = true;
             timeLapseCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(timeLapseCoachmarkRoot);
         }
 
         private void TryShowStorePointsCoachmark()
@@ -2831,6 +2832,7 @@ namespace FungusToast.Unity.UI.MutationTree
             storePointsCoachmarkCanvasGroup.alpha = 1f;
             storePointsCoachmarkCanvasGroup.blocksRaycasts = true;
             storePointsCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(storePointsCoachmarkRoot);
         }
 
         private void EnsureTimeLapseCoachmarkUi()
