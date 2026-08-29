@@ -256,10 +256,20 @@ namespace FungusToast.Unity.UI.MutationTree
 
                 BuildRoutePoints(edge.PrerequisiteRect, edge.DependentRect, out Vector2 start, out Vector2 second, out Vector2 third, out Vector2 end);
 
-                if (edge.Relationship != EdgeRelationship.None)
+                bool prerequisiteMet = inspectionPlayer != null
+                    && inspectionPlayer.GetMutationLevel(edge.PrerequisiteId) >= edge.RequiredLevel;
+
+                // Only surface prerequisite routes that still matter. Once a
+                // prerequisite is satisfied its connector carries no actionable
+                // information, so upstream edges to met prerequisites are dropped
+                // entirely rather than drawn as solid clutter. Downstream edges
+                // ("what this unlocks") and the transient growth/emphasis pulses
+                // are still allowed through.
+                bool drawRelationshipRoute = edge.Relationship != EdgeRelationship.None
+                    && !(edge.Relationship == EdgeRelationship.Upstream && prerequisiteMet);
+
+                if (drawRelationshipRoute)
                 {
-                    bool prerequisiteMet = inspectionPlayer != null
-                        && inspectionPlayer.GetMutationLevel(edge.PrerequisiteId) >= edge.RequiredLevel;
                     float depthFade = edge.Relationship == EdgeRelationship.Downstream
                         ? 1f
                         : Mathf.Pow(0.72f, edge.Depth);
