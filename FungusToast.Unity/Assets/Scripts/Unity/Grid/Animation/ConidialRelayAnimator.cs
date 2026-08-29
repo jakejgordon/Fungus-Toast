@@ -136,7 +136,8 @@ namespace FungusToast.Unity.Grid.Animation
             float overlayScale = UI.UIEffectConstants.ConidialRelayShieldScale,
             bool restoreBoardStateOnFinish = false,
             float durationScale = 1f,
-            bool allowOverlayFallback = true)
+            bool allowOverlayFallback = true,
+            bool hideSourceCells = false)
         {
             if (moves == null || moves.Count == 0)
             {
@@ -150,6 +151,17 @@ namespace FungusToast.Unity.Grid.Animation
             if (orderedMoves.Count == 0)
             {
                 yield break;
+            }
+
+            // Hyphal Draw removes its sources in Core before this presenter runs. Hide their
+            // still-rendered pre-resolution visuals as well, so the projectile unmistakably
+            // reads as a relocation rather than an invisible board-state swap.
+            if (hideSourceCells)
+            {
+                foreach (int sourceTileId in orderedMoves.Select(move => move.sourceTileId).Distinct())
+                {
+                    HideTile(CaptureTileVisibility(ToCell(viz.ActiveBoard, sourceTileId)));
+                }
             }
 
             int remaining = orderedMoves.Count;
@@ -627,6 +639,7 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 var color = viz.moldTilemap.GetColor(state.Cell);
                 color.a = 0f;
+                viz.moldTilemap.SetTileFlags(state.Cell, TileFlags.None);
                 viz.moldTilemap.SetColor(state.Cell, color);
             }
 
@@ -634,6 +647,7 @@ namespace FungusToast.Unity.Grid.Animation
             {
                 var color = viz.overlayTilemap.GetColor(state.Cell);
                 color.a = 0f;
+                viz.overlayTilemap.SetTileFlags(state.Cell, TileFlags.None);
                 viz.overlayTilemap.SetColor(state.Cell, color);
             }
         }
@@ -648,11 +662,13 @@ namespace FungusToast.Unity.Grid.Animation
 
             if (state.HasMoldTile && viz.moldTilemap != null)
             {
+                viz.moldTilemap.SetTileFlags(state.Cell, TileFlags.None);
                 viz.moldTilemap.SetColor(state.Cell, state.MoldColor);
             }
 
             if (state.HasOverlayTile && viz.overlayTilemap != null)
             {
+                viz.overlayTilemap.SetTileFlags(state.Cell, TileFlags.None);
                 viz.overlayTilemap.SetColor(state.Cell, state.OverlayColor);
             }
         }
