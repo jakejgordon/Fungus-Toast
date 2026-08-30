@@ -235,6 +235,14 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Generic `maxTier: Tier3` category-priority strategies (`Growth/Resilience`, `AI6`) now pick up Regenerative Hyphae instead of Necrosporulation; several explicit Regenerative-Hyphae-goal strategies (`CMP_Growth_Pressure_Medium`, `CMP_Defense_ResilientShell_Easy`) stop force-buying Necrosporulation as a prereq. The Substrate Ecology "bare Necrosporulation" diagnostic probes (`TST_NecroRush_Bare`, `TST_EcologyReclaimer_*`) now drag in Regenerative Hyphae 5 and no longer isolate Necrosporulation cleanly — revisit if that harness is used again.
 - Follow-up: artifact-backed simulation to confirm the later Necrosporulation timing does not over-gate the reclamation capstones, and to check whether Necrosporulation's per-level chance / max level should drop now that the point gate is much steeper.
 
+**Necrosporulation / Necrohyphal / Putrefactive Cascade prerequisite rework (2026-08-30):**
+
+- Necrosporulation (Tier 4): prereq changed from Regenerative Hyphae 5 to Regenerative Hyphae 2 + Mycotoxin Tracer 7. Adds a Fungicide toxin-spore bridge and lowers the Cellular Resilience investment.
+- Necrohyphal Infiltration (Tier 5): prereq changed from Necrosporulation 5 + Mycotoxin Potentiation 5 to Necrosporulation 1 + Detrital Enzymes 1 + Mycotoxin Potentiation 1. Three low-level edges across Cellular Resilience, Substrate Ecology, and Fungicide — a large gate reduction, though Detrital Enzymes 1 still carries the Aerated Frontier 10 -> Crustward/Compaction chain.
+- Putrefactive Cascade (Tier 6): prereq changed from Putrefactive Mycotoxin 5 + Chemotactic Beacon 1 to Necrotoxic Conversion 1 + Chemotactic Beacon 1 + Regenerative Hyphae 1. Necrotoxic Conversion still guarantees Putrefactive Mycotoxin 5 transitively; the explicit Regenerative Hyphae 1 edge is redundant (Necrotoxic Conversion already requires it) and kept only for tree readability.
+- Files: `CellularResilienceMutationFactory`, `FungicideMutationFactory`, `Tier4MutationTests` / `Tier5MutationTests` / `Tier6MutationTests`, `MUTATION_PREREQUISITE_GUIDELINES.md` hotspots. Core + Simulation build clean; full Core suite 597/597; 3-game smoke sim zero parity mismatches with AI acquiring Necrosporulation, Necrohyphal, and Detrital Enzymes on the new graph.
+- Not touched, flag for follow-up: `CMP_Reclaim_InfiltrationSurge_Easy` (targets Necrohyphal Infiltration max with no maxTier) now sinks ~12+ points into the Substrate Ecology growth chain it never used before; the campaign Necrohyphal-goal strategies may want their goal lists revisited.
+
 ## Planned Slices
 
 Treat each numbered item as its own implementation, validation, commit, fetch/pull, and push slice. Update this section with the exact result and remaining Unity checks after every slice.

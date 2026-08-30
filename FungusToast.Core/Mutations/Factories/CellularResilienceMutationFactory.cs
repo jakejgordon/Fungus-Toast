@@ -72,7 +72,8 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.RegenerativeHyphae, 5));
+                new MutationPrerequisite(MutationIds.RegenerativeHyphae, 2),
+                new MutationPrerequisite(MutationIds.MycotoxinTracer, 7));
 
             // Tier-5
             helper.MakeChild(new Mutation(
@@ -89,8 +90,9 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier5
             ),
-            new MutationPrerequisite(MutationIds.Necrosporulation, 5),
-            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 5));
+            new MutationPrerequisite(MutationIds.Necrosporulation, 1),
+            new MutationPrerequisite(MutationIds.DetritalEnzymes, 1),
+            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
 
             // Tier-6
             helper.MakeChild(new Mutation(

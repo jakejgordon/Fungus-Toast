@@ -14,18 +14,19 @@ namespace FungusToast.Core.Tests.Mutations;
 public class Tier4MutationTests
 {
     [Fact]
-    public void Necrosporulation_is_tier4_cellular_resilience_and_requires_regenerative_hyphae_five()
+    public void Necrosporulation_is_tier4_cellular_resilience_and_requires_regenerative_hyphae_two_and_mycotoxin_tracer_seven()
     {
         var mutation = RequireMutation(MutationIds.Necrosporulation);
 
         Assert.Equal(MutationCategory.CellularResilience, mutation.Category);
         Assert.Equal(MutationTier.Tier4, mutation.Tier);
         Assert.Equal(MutationType.Necrosporulation, mutation.Type);
-        var prerequisite = Assert.Single(mutation.Prerequisites);
-        Assert.Equal(MutationIds.RegenerativeHyphae, prerequisite.MutationId);
-        Assert.Equal(5, prerequisite.RequiredLevel);
+        Assert.Equal(2, mutation.Prerequisites.Count);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 2);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinTracer && p.RequiredLevel == 7);
         Assert.Contains("colonize an empty tile somewhere else on the toast", mutation.Description);
         Assert.Contains(mutation, RequireMutation(MutationIds.RegenerativeHyphae).Children);
+        Assert.Contains(mutation, RequireMutation(MutationIds.MycotoxinTracer).Children);
     }
 
     [Fact]

@@ -193,8 +193,10 @@ When adding or revising a mutation definition:
 ## Current Review Hotspots
 
 1. Ontogenic Regression now uses Hyperadaptive Drift 2 plus the explicit 10 Tier-1 levels in each of three categories foundation gate; acquisition timing still needs simulation evidence.
-2. Cellular Resilience now chains Homeostatic Harmony -> Chronoresilient Cytoplasm -> Regenerative Hyphae (Tier 3) -> Necrosporulation (Tier 4). This shortens the Hypersystemic Regeneration path to three edges but pushes Necrohyphal Infiltration and Catabolic Rebirth to a four-edge upstream depth (they require Necrosporulation 5, which now sits behind Regenerative Hyphae 5). Both are Tier 5/6 reclamation capstones, so the extra depth is treated as an accepted exception; watch their acquisition timing in simulation.
-3. Mycotropic Induction's four Tendril prerequisites remain an explicit set-completion exception and need grouped UI treatment.
+2. Cellular Resilience now chains Homeostatic Harmony -> Chronoresilient Cytoplasm -> Regenerative Hyphae (Tier 3). Necrosporulation (Tier 4) sits behind Regenerative Hyphae 2 plus a Mycotoxin Tracer 7 fungicide bridge (spore-on-death rewards the toxin-spore lane). Catabolic Rebirth still requires Necrosporulation 5, giving it a four-edge upstream depth; it is a Tier 6 reclamation capstone, so the extra depth is an accepted exception. Hypersystemic Regeneration is now a three-edge path.
+3. Necrohyphal Infiltration (Tier 5) deliberately spreads a low gate across three lanes: Necrosporulation 1, Detrital Enzymes 1 (Substrate Ecology), and Mycotoxin Potentiation 1 (Fungicide). Three direct prerequisites exceeds the normal Tier 4+ budget; it is treated as a set-style "reclaim from any decay context" gate. Detrital Enzymes 1 still pulls in the Aerated Frontier 10 -> Crustward/Compaction chain, so total investment stays meaningful. Watch acquisition timing in simulation.
+4. Putrefactive Cascade (Tier 6) requires Necrotoxic Conversion 1, Chemotactic Beacon 1, and Regenerative Hyphae 1. The Regenerative Hyphae 1 edge is redundant (Necrotoxic Conversion already requires it) and is kept only for tree readability; remove it if redundant-edge hygiene is prioritized. Necrotoxic Conversion still guarantees Putrefactive Mycotoxin 5 transitively.
+5. Mycotropic Induction's four Tendril prerequisites remain an explicit set-completion exception and need grouped UI treatment.
 
 ## Implementation References
 

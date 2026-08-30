@@ -35,9 +35,10 @@ public class Tier6MutationTests
         Assert.Equal(MutationCategory.Fungicide, mutation.Category);
         Assert.Equal(MutationTier.Tier6, mutation.Tier);
         Assert.Equal(MutationType.PutrefactiveCascade, mutation.Type);
-        Assert.Equal(2, mutation.Prerequisites.Count);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.PutrefactiveMycotoxin && p.RequiredLevel == 5);
+        Assert.Equal(3, mutation.Prerequisites.Count);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.NecrotoxicConversion && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.ChemotacticBeacon && p.RequiredLevel == 1);
+        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.RegenerativeHyphae && p.RequiredLevel == 1);
         Assert.Contains("Cascaded kills poison their targets instead of leaving dead cells", mutation.Description);
     }
 

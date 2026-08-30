@@ -130,8 +130,9 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.Fungicide,
                 tier: MutationTier.Tier6
             ),
-            new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
-            new MutationPrerequisite(MutationIds.ChemotacticBeacon, 1));
+            new MutationPrerequisite(MutationIds.NecrotoxicConversion, 1),
+            new MutationPrerequisite(MutationIds.ChemotacticBeacon, 1),
+            new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1));
         }
     }
 }
