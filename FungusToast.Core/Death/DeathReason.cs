@@ -22,6 +22,7 @@ namespace FungusToast.Core.Death
         AscusBait,
         DistalSpore,
         ConidiaAscent,
-        TropicLysis
+        TropicLysis,
+        FilamentOverdrive
     }
 }

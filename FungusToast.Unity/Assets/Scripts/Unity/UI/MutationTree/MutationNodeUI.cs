@@ -879,6 +879,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.MycotropicInduction => BuildMycotropicInductionSummary(level),
                 MutationIds.RegenerativeHyphae => BuildRegenerativeHyphaeSummary(level),
                 MutationIds.CreepingMold => BuildCreepingMoldSummary(level),
+                MutationIds.FilamentOverdrive => BuildFilamentOverdriveSummary(level),
                 MutationIds.MycotoxinTracer => BuildMycotoxinTracerSummary(level),
                 MutationIds.MycotoxinPotentiation => BuildMycotoxinPotentiationSummary(level),
                 MutationIds.PutrefactiveMycotoxin => BuildPutrefactiveMycotoxinSummary(level),
@@ -1164,6 +1165,20 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             return $"{moveChancePercent:0.00}% move chance after a failed growth if the target is open enough";
+        }
+
+        private string BuildFilamentOverdriveSummary(int level)
+        {
+            if (level <= 0)
+            {
+                return "No Tendril runner trigger chance yet.";
+            }
+
+            float triggerChancePercent = level * GameBalance.FilamentOverdriveTriggerChancePerLevel * 100f;
+            int bonusCellLimit = level >= GameBalance.FilamentOverdriveMaxLevel
+                ? GameBalance.FilamentOverdriveMaxLevelBonusCells
+                : GameBalance.FilamentOverdriveBonusCells;
+            return $"{triggerChancePercent:0}% per successful Tendril growth; up to {bonusCellLimit} bonus cells; source cell dies on trigger";
         }
 
         private string BuildMycotoxinTracerSummary(int level)

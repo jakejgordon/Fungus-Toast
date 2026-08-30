@@ -1,6 +1,7 @@
 using System;
 using FungusToast.Core;
 using FungusToast.Core.Board;
+using FungusToast.Core.Death;
 using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
 using FungusToast.Unity.Grid.Helpers;
@@ -132,6 +133,7 @@ namespace FungusToast.Unity.Grid
         private readonly HashSet<int> preAnimationHiddenPreviewTileIds = new();
         private readonly List<CreepingMoldVisualMove> _pendingCreepingMoldMoves = new();
         private readonly List<HyphalGrowthVisualMove> _pendingHyphalGrowthMoves = new();
+        private readonly List<FilamentOverdriveVisual> _pendingFilamentOverdrives = new();
         private readonly HashSet<int> moldIdleAnimatedTileIds = new();
         private readonly HashSet<int> moldIdleEligibleTileIds = new();
         private readonly List<int> moldIdleResetTileIds = new();
@@ -168,6 +170,20 @@ namespace FungusToast.Unity.Grid
             public int PlayerId { get; }
             public int SourceTileId { get; }
             public int DestinationTileId { get; }
+        }
+
+        private readonly struct FilamentOverdriveVisual
+        {
+            public FilamentOverdriveVisual(int playerId, int sourceTileId, IReadOnlyList<int> runnerTileIds)
+            {
+                PlayerId = playerId;
+                SourceTileId = sourceTileId;
+                RunnerTileIds = runnerTileIds?.ToArray() ?? Array.Empty<int>();
+            }
+
+            public int PlayerId { get; }
+            public int SourceTileId { get; }
+            public IReadOnlyList<int> RunnerTileIds { get; }
         }
 
         private static List<int>[] CreateMoldIdleCohorts()
@@ -358,6 +374,7 @@ namespace FungusToast.Unity.Grid
                 this.board.CellOvergrown += HandleCellOvergrown;
                 this.board.CreepingMoldMove += HandleCreepingMoldMove;
                 this.board.HyphalGrowthVisualized += HandleHyphalGrowthVisualized;
+                this.board.FilamentOverdriveTriggered += HandleFilamentOverdriveTriggered;
                 this.board.ToxinExpired += HandleToxinExpired;
                 this.board.ChemobeaconPlaced += HandleChemobeaconPlaced;
                 this.board.ChemobeaconExpired += HandleChemobeaconExpired;
@@ -381,6 +398,7 @@ namespace FungusToast.Unity.Grid
             preAnimationHiddenPreviewTileIds.Clear();
             _pendingCreepingMoldMoves.Clear();
             _pendingHyphalGrowthMoves.Clear();
+            _pendingFilamentOverdrives.Clear();
             ClearMoldIdleCache();
             overlayRenderer?.ResetRuntimeState();
 
@@ -958,6 +976,7 @@ namespace FungusToast.Unity.Grid
                 board.CellOvergrown -= HandleCellOvergrown;
                 board.CreepingMoldMove -= HandleCreepingMoldMove;
                 board.HyphalGrowthVisualized -= HandleHyphalGrowthVisualized;
+                board.FilamentOverdriveTriggered -= HandleFilamentOverdriveTriggered;
                 board.ToxinExpired -= HandleToxinExpired;
                 board.ChemobeaconPlaced -= HandleChemobeaconPlaced;
                 board.ChemobeaconExpired -= HandleChemobeaconExpired;
@@ -965,6 +984,7 @@ namespace FungusToast.Unity.Grid
 
             _pendingCreepingMoldMoves.Clear();
             _pendingHyphalGrowthMoves.Clear();
+            _pendingFilamentOverdrives.Clear();
         }
 
         private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
@@ -1038,6 +1058,21 @@ namespace FungusToast.Unity.Grid
             }
 
             _pendingHyphalGrowthMoves.Add(new HyphalGrowthVisualMove(e.PlayerId, e.SourceTileId, e.DestinationTileId));
+        }
+
+        private void HandleFilamentOverdriveTriggered(GameBoard.FilamentOverdriveEventArgs e)
+        {
+            if (ShouldSuppressBoardEventPresentation()
+                || board == null
+                || e == null
+                || e.SourceTileId < 0
+                || e.RunnerTileIds == null
+                || e.RunnerTileIds.Count == 0)
+            {
+                return;
+            }
+
+            _pendingFilamentOverdrives.Add(new FilamentOverdriveVisual(e.PlayerId, e.SourceTileId, e.RunnerTileIds));
         }
 
         private void HandleChemobeaconPlaced(int playerId, int tileId)
@@ -1753,6 +1788,9 @@ namespace FungusToast.Unity.Grid
         #region Public Interaction / Rendering API (restored)
         public void RenderBoard(GameBoard board, bool suppressAnimations)
         {
+            var filamentOverdrives = suppressAnimations
+                ? Array.Empty<FilamentOverdriveVisual>()
+                : ConsumePendingFilamentOverdrives(board);
             var creepingMoldMoves = suppressAnimations
                 ? Array.Empty<CreepingMoldVisualMove>()
                 : ConsumePendingCreepingMoldMoves(board);
@@ -1764,6 +1802,17 @@ namespace FungusToast.Unity.Grid
             {
                 _pendingCreepingMoldMoves.Clear();
                 _pendingHyphalGrowthMoves.Clear();
+                _pendingFilamentOverdrives.Clear();
+            }
+
+            if (filamentOverdrives.Length > 0)
+            {
+                var hiddenTileIds = filamentOverdrives
+                    .SelectMany(overdrive => overdrive.RunnerTileIds)
+                    .Distinct()
+                    .ToList();
+                RegisterPreAnimationHiddenPreviewTiles(hiddenTileIds);
+                cellStateAnimationController?.SuppressNextFadeInAnimations(hiddenTileIds);
             }
 
             if (creepingMoldMoves.Length > 0)
@@ -1840,6 +1889,11 @@ namespace FungusToast.Unity.Grid
                         .ToList();
                     cellStateAnimationController?.StartDirectionalGrowthAnimations(directionalMoves);
                 }
+
+                for (int i = 0; i < filamentOverdrives.Length; i++)
+                {
+                    StartCoroutine(PlayFilamentOverdriveAnimation(filamentOverdrives[i]));
+                }
             }
 
         }
@@ -1872,6 +1926,101 @@ namespace FungusToast.Unity.Grid
 
             _pendingCreepingMoldMoves.Clear();
             return sanitizedMoves;
+        }
+
+        private FilamentOverdriveVisual[] ConsumePendingFilamentOverdrives(GameBoard renderBoard)
+        {
+            if (_pendingFilamentOverdrives.Count == 0 || renderBoard == null)
+            {
+                _pendingFilamentOverdrives.Clear();
+                return Array.Empty<FilamentOverdriveVisual>();
+            }
+
+            var sanitized = _pendingFilamentOverdrives
+                .Where(overdrive =>
+                {
+                    var sourceCell = renderBoard.GetTileById(overdrive.SourceTileId)?.FungalCell;
+                    return sourceCell?.IsDead == true
+                        && sourceCell.CauseOfDeath == DeathReason.FilamentOverdrive
+                        && overdrive.RunnerTileIds.Count > 0
+                        && overdrive.RunnerTileIds.All(tileId =>
+                        {
+                            var cell = renderBoard.GetTileById(tileId)?.FungalCell;
+                            return cell?.IsAlive == true && cell.OwnerPlayerId == overdrive.PlayerId;
+                        });
+                })
+                .ToArray();
+
+            _pendingFilamentOverdrives.Clear();
+            return sanitized;
+        }
+
+        private IEnumerator PlayFilamentOverdriveAnimation(FilamentOverdriveVisual overdrive)
+        {
+            if (moldTilemap == null || overdrive.RunnerTileIds == null || overdrive.RunnerTileIds.Count == 0)
+            {
+                yield break;
+            }
+
+            BeginAnimation();
+            try
+            {
+                if (UIEffectConstants.FilamentOverdriveSourceBurnoutLeadSeconds > 0f)
+                {
+                    yield return new WaitForSeconds(UIEffectConstants.FilamentOverdriveSourceBurnoutLeadSeconds);
+                }
+
+                foreach (int tileId in overdrive.RunnerTileIds)
+                {
+                    RevealPreAnimationPreviewTile(tileId);
+                    RenderTileFromBoard(tileId);
+
+                    Vector3Int position = GetPositionForTileId(tileId);
+                    Color finalMoldColor = moldTilemap.HasTile(position) ? moldTilemap.GetColor(position) : Color.white;
+                    Color finalOverlayColor = overlayTilemap != null && overlayTilemap.HasTile(position)
+                        ? overlayTilemap.GetColor(position)
+                        : Color.white;
+                    SetAlpha(moldTilemap, position, finalMoldColor, 0f);
+                    SetAlpha(overlayTilemap, position, finalOverlayColor, 0f);
+
+                    float elapsed = 0f;
+                    float duration = UIEffectConstants.FilamentOverdriveCellRevealSeconds;
+                    while (elapsed < duration)
+                    {
+                        elapsed += Time.deltaTime;
+                        float progress = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                        float eased = 1f - Mathf.Pow(1f - progress, 3f);
+                        SetAlpha(moldTilemap, position, finalMoldColor, eased);
+                        SetAlpha(overlayTilemap, position, finalOverlayColor, eased);
+                        yield return null;
+                    }
+
+                    SetAlpha(moldTilemap, position, finalMoldColor, 1f);
+                    SetAlpha(overlayTilemap, position, finalOverlayColor, 1f);
+                    cellStateAnimationController?.CompleteGrowthAnimation(tileId);
+                }
+            }
+            finally
+            {
+                foreach (int tileId in overdrive.RunnerTileIds)
+                {
+                    RevealPreAnimationPreviewTile(tileId);
+                    cellStateAnimationController?.CompleteGrowthAnimation(tileId);
+                    RenderTileFromBoard(tileId);
+                }
+                EndAnimation();
+            }
+        }
+
+        private static void SetAlpha(Tilemap tilemap, Vector3Int position, Color baseColor, float alpha)
+        {
+            if (tilemap == null || !tilemap.HasTile(position))
+            {
+                return;
+            }
+
+            baseColor.a = Mathf.Clamp01(alpha);
+            tilemap.SetColor(position, baseColor);
         }
 
         private (HyphalGrowthVisualMove[] hyphalMoves, HyphalGrowthVisualMove[] diagonalMoves) ConsumePendingDirectionalGrowthMoves(GameBoard renderBoard)

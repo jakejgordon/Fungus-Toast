@@ -92,6 +92,8 @@ namespace FungusToast.Simulation.Models
                     RegenerativeHyphaeReclaims = tracking.GetRegenerativeHyphaeReclaims(player.PlayerId),
                     CreepingMoldMoves = tracking.GetCreepingMoldMoves(player.PlayerId),
                     CreepingMoldToxinJumps = tracking.GetCreepingMoldToxinJumps(player.PlayerId),
+                    FilamentOverdriveTriggers = tracking.GetFilamentOverdriveTriggers(player.PlayerId),
+                    FilamentOverdriveBonusCells = tracking.GetFilamentOverdriveBonusCells(player.PlayerId),
                     NecrosporulationSpores = tracking.GetNecrosporeDropCount(player.PlayerId),
                     SporocidalSpores = tracking.GetSporocidalSporeDropCount(player.PlayerId),
                     SporocidalKills = tracking.GetCellDeathCount(player.PlayerId, DeathReason.SporicidalBloom),

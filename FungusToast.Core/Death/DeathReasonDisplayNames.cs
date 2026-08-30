@@ -19,6 +19,7 @@ namespace FungusToast.Core.Death
             DeathReason.PutrefactiveCascade => "Putrefactive Cascade",
             DeathReason.PutrefactiveCascadePoison => "Putrefactive Cascade Poison",
             DeathReason.CytolyticBurst => "Cytolytic Burst",
+            DeathReason.FilamentOverdrive => "Filament Overdrive",
             DeathReason.Unknown => "Unknown",
             _ => DisplayNameHumanizer.HumanizeIdentifier(reason.ToString())
         };

@@ -55,6 +55,8 @@ namespace FungusToast.Simulation.Models
         // Core mutation event metrics
         public int RegenerativeHyphaeReclaims { get; set; }    // NEW: Regenerative Hyphae event-based
         public int CreepingMoldMoves { get; set; }
+        public int FilamentOverdriveTriggers { get; set; }
+        public int FilamentOverdriveBonusCells { get; set; }
         public int NecrosporulationSpores { get; set; }
         public int SporocidalSpores { get; set; }
         public int SporocidalKills { get; set; }

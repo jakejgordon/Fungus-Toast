@@ -1,5 +1,6 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
@@ -40,6 +41,104 @@ namespace FungusToast.Core.Phases
                 + player.GetMutationLevel(MutationIds.TendrilNortheast)
                 + player.GetMutationLevel(MutationIds.TendrilSoutheast)
                 + player.GetMutationLevel(MutationIds.TendrilSouthwest);
+        }
+
+        internal static int TryTriggerFilamentOverdrive(
+            GameBoard board,
+            Player player,
+            int sourceTileId,
+            int tendrilLandingTileId,
+            DiagonalDirection direction,
+            ISet<int> triggeredSourceTileIds,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            int level = player.GetMutationLevel(MutationIds.FilamentOverdrive);
+            if (level <= 0 || triggeredSourceTileIds.Contains(sourceTileId))
+            {
+                return 0;
+            }
+
+            BoardTile? sourceTile = board.GetTileById(sourceTileId);
+            FungalCell? sourceCell = sourceTile?.FungalCell;
+            if (sourceCell is not { IsAlive: true }
+                || sourceCell.OwnerPlayerId != player.PlayerId
+                || sourceCell.IsResistant)
+            {
+                return 0;
+            }
+
+            BoardTile? landingTile = board.GetTileById(tendrilLandingTileId);
+            if (landingTile?.FungalCell is not { IsAlive: true } landingCell
+                || landingCell.OwnerPlayerId != player.PlayerId)
+            {
+                return 0;
+            }
+
+            (int dx, int dy) = direction switch
+            {
+                DiagonalDirection.Northwest => (-1, 1),
+                DiagonalDirection.Northeast => (1, 1),
+                DiagonalDirection.Southeast => (1, -1),
+                DiagonalDirection.Southwest => (-1, -1),
+                _ => (0, 0)
+            };
+
+            BoardTile? firstBonusTile = board.GetTile(landingTile.X + dx, landingTile.Y + dy);
+            if (!CanColonizeFilamentOverdriveTile(board, firstBonusTile))
+            {
+                return 0;
+            }
+
+            float triggerChance = level * GameBalance.FilamentOverdriveTriggerChancePerLevel;
+            if (rng.NextDouble() >= triggerChance)
+            {
+                return 0;
+            }
+
+            int bonusCellLimit = level >= GameBalance.FilamentOverdriveMaxLevel
+                ? GameBalance.FilamentOverdriveMaxLevelBonusCells
+                : GameBalance.FilamentOverdriveBonusCells;
+            var runnerTileIds = new List<int>(bonusCellLimit + 1) { tendrilLandingTileId };
+
+            for (int distance = 1; distance <= bonusCellLimit; distance++)
+            {
+                BoardTile? targetTile = board.GetTile(
+                    landingTile.X + (dx * distance),
+                    landingTile.Y + (dy * distance));
+                if (!CanColonizeFilamentOverdriveTile(board, targetTile))
+                {
+                    break;
+                }
+
+                var newCell = new FungalCell(
+                    player.PlayerId,
+                    targetTile!.TileId,
+                    GrowthSource.FilamentOverdrive,
+                    lastOwnerPlayerId: null);
+                board.PlaceFungalCell(newCell);
+                runnerTileIds.Add(targetTile.TileId);
+            }
+
+            int bonusCellsCreated = runnerTileIds.Count - 1;
+            if (bonusCellsCreated <= 0)
+            {
+                return 0;
+            }
+
+            triggeredSourceTileIds.Add(sourceTileId);
+            board.KillFungalCell(sourceCell, DeathReason.FilamentOverdrive);
+            board.TryTriggerSporeOnDeath(player, rng, observer);
+            board.OnFilamentOverdriveTriggered(player.PlayerId, sourceTileId, runnerTileIds);
+            observer.RecordFilamentOverdrive(player.PlayerId, bonusCellsCreated);
+            return bonusCellsCreated;
+        }
+
+        private static bool CanColonizeFilamentOverdriveTile(GameBoard board, BoardTile? tile)
+        {
+            return tile != null
+                && !tile.IsOccupied
+                && !board.IsTileBlockedForOccupation(tile.TileId);
         }
 
         /// <summary>

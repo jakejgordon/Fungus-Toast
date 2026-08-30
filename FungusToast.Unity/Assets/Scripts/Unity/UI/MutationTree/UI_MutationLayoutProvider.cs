@@ -21,6 +21,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.TendrilSouthwest,      new MutationLayoutMetadata(0, 4, MutationCategory.Growth) },
                 { MutationIds.MycotropicInduction,   new MutationLayoutMetadata(0, 5, MutationCategory.Growth) },
                 { MutationIds.CreepingMold,          new MutationLayoutMetadata(0, 6, MutationCategory.Growth) },
+                { MutationIds.FilamentOverdrive,     new MutationLayoutMetadata(0, 7, MutationCategory.Growth) },
 
                 /* ------------ Cellular Resilience (col 1) ----------- */
                 { MutationIds.HomeostaticHarmony,       new MutationLayoutMetadata(1, 0, MutationCategory.CellularResilience) },

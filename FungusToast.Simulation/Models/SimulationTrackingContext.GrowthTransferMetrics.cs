@@ -21,6 +21,21 @@ namespace FungusToast.Simulation.Models
         public int GetAeratedFrontierBonusGrowths(int playerId)
             => aeratedFrontierBonusGrowths.TryGetValue(playerId, out int value) ? value : 0;
 
+        private readonly Dictionary<int, int> filamentOverdriveTriggers = new();
+        private readonly Dictionary<int, int> filamentOverdriveBonusCells = new();
+
+        public void RecordFilamentOverdrive(int playerId, int bonusCellsCreated)
+        {
+            filamentOverdriveTriggers[playerId] = GetFilamentOverdriveTriggers(playerId) + 1;
+            filamentOverdriveBonusCells[playerId] = GetFilamentOverdriveBonusCells(playerId) + bonusCellsCreated;
+        }
+
+        public int GetFilamentOverdriveTriggers(int playerId)
+            => filamentOverdriveTriggers.TryGetValue(playerId, out int value) ? value : 0;
+
+        public int GetFilamentOverdriveBonusCells(int playerId)
+            => filamentOverdriveBonusCells.TryGetValue(playerId, out int value) ? value : 0;
+
         private readonly Dictionary<int, int> crustwardTropismAttempts = new();
         private readonly Dictionary<int, int> crustwardTropismBonusGrowths = new();
         private readonly Dictionary<int, int> crustwardTropismAutomaticGrowths = new();

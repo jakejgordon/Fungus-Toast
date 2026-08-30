@@ -94,6 +94,20 @@ namespace FungusToast.Core.Board
             public int DestinationTileId { get; }
         }
 
+        public sealed class FilamentOverdriveEventArgs
+        {
+            public FilamentOverdriveEventArgs(int playerId, int sourceTileId, IReadOnlyList<int> runnerTileIds)
+            {
+                PlayerId = playerId;
+                SourceTileId = sourceTileId;
+                RunnerTileIds = runnerTileIds?.ToArray() ?? Array.Empty<int>();
+            }
+
+            public int PlayerId { get; }
+            public int SourceTileId { get; }
+            public IReadOnlyList<int> RunnerTileIds { get; }
+        }
+
         public int Width { get; }
         public int Height { get; }
         public BoardTile[,] Grid { get; }
@@ -151,6 +165,7 @@ namespace FungusToast.Core.Board
         public delegate void DirectedVectorSurgeEventHandler(DirectedVectorSurgeEventArgs e);
         public delegate void ConduitProjectionEventHandler(ConduitProjectionEventArgs e);
         public delegate void HyphalGrowthVisualEventHandler(HyphalGrowthVisualEventArgs e);
+        public delegate void FilamentOverdriveEventHandler(FilamentOverdriveEventArgs e);
         public delegate void RegenerativeHyphaeReclaimedEventHandler(int playerId, int tileId);
         public delegate void PostDecayPhaseEventHandler(); // NEW
         public delegate void ChemobeaconMarkerEventHandler(int playerId, int tileId);
@@ -188,6 +203,7 @@ namespace FungusToast.Core.Board
         public event DirectedVectorSurgeEventHandler? DirectedVectorSurge;
         public event ConduitProjectionEventHandler? ConduitProjection;
         public event HyphalGrowthVisualEventHandler? HyphalGrowthVisualized;
+        public event FilamentOverdriveEventHandler? FilamentOverdriveTriggered;
         public event RegenerativeHyphaeReclaimedEventHandler? RegenerativeHyphaeReclaimed;
         public event PostDecayPhaseEventHandler? PostDecayPhase; // NEW
         public event ChemobeaconMarkerEventHandler? ChemobeaconPlaced;
@@ -240,6 +256,8 @@ namespace FungusToast.Core.Board
             => ConduitProjection?.Invoke(new ConduitProjectionEventArgs(playerId, source, originTileId, pathTileIds, affectedTileIds, finalLandingTileId));
         public virtual void OnHyphalGrowthVisualized(int playerId, int sourceTileId, int destinationTileId)
             => HyphalGrowthVisualized?.Invoke(new HyphalGrowthVisualEventArgs(playerId, sourceTileId, destinationTileId));
+        public virtual void OnFilamentOverdriveTriggered(int playerId, int sourceTileId, IReadOnlyList<int> runnerTileIds)
+            => FilamentOverdriveTriggered?.Invoke(new FilamentOverdriveEventArgs(playerId, sourceTileId, runnerTileIds));
         protected virtual void OnChemobeaconPlaced(int playerId, int tileId) => ChemobeaconPlaced?.Invoke(playerId, tileId);
         protected virtual void OnChemobeaconExpired(int playerId, int tileId) => ChemobeaconExpired?.Invoke(playerId, tileId);
         #endregion

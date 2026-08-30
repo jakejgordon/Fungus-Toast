@@ -24,6 +24,7 @@ namespace FungusToast.Core.Growth
 
             var failedGrowthsByPlayerId = players.ToDictionary(p => p.PlayerId, _ => 0);
             var crustwardAutomaticGrowthUsedPlayerIds = new HashSet<int>();
+            var filamentOverdriveTriggeredSourceTileIds = new HashSet<int>();
 
             // PRIORITY 2 (Option B): Use ControlledTileIds instead of rescanning board per player
             int CountAlive(Player p)
@@ -63,7 +64,8 @@ namespace FungusToast.Core.Growth
                         player,
                         rng,
                         observer,
-                        crustwardAutomaticGrowthUsedPlayerIds);
+                        crustwardAutomaticGrowthUsedPlayerIds,
+                        filamentOverdriveTriggeredSourceTileIds);
                     if (!grewOrMoved)
                         failedGrowthsByPlayerId[player.PlayerId]++;
                 }
@@ -110,7 +112,8 @@ namespace FungusToast.Core.Growth
             Player owner,
             Random rng,
             ISimulationObserver observer,
-            ISet<int> crustwardAutomaticGrowthUsedPlayerIds)
+            ISet<int> crustwardAutomaticGrowthUsedPlayerIds,
+            ISet<int> filamentOverdriveTriggeredSourceTileIds)
         {
             var sourceCell = sourceTile.FungalCell;
             if (sourceCell == null)
@@ -128,7 +131,8 @@ namespace FungusToast.Core.Growth
                     target,
                     rng,
                     observer,
-                    crustwardAutomaticGrowthUsedPlayerIds))
+                    crustwardAutomaticGrowthUsedPlayerIds,
+                    filamentOverdriveTriggeredSourceTileIds))
                     return true;
                 if (target == allTargets[0] && AttemptCreepingMold(board, owner, sourceCell, sourceTile, target.Tile, rng, observer))
                     return true;
@@ -241,7 +245,8 @@ namespace FungusToast.Core.Growth
             GrowthTarget target,
             Random rng,
             ISimulationObserver observer,
-            ISet<int> crustwardAutomaticGrowthUsedPlayerIds)
+            ISet<int> crustwardAutomaticGrowthUsedPlayerIds,
+            ISet<int> filamentOverdriveTriggeredSourceTileIds)
         {
             if (target.Tile.IsOccupied || board.IsTileBlockedForOccupation(target.Tile.TileId)) return false;
             if (target.AeratedFrontierBonus > 0f)
@@ -276,7 +281,18 @@ namespace FungusToast.Core.Growth
                     observer.RecordCrustwardTropismAutomaticGrowth(owner.PlayerId);
                     ResolveToxinborneSeedingAfterGrowth(board, owner, target, rng, observer);
                     if (target.DiagonalDirection.HasValue)
+                    {
                         observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                        GrowthMutationProcessor.TryTriggerFilamentOverdrive(
+                            board,
+                            owner,
+                            sourceTileId,
+                            target.Tile.TileId,
+                            target.DiagonalDirection.Value,
+                            filamentOverdriveTriggeredSourceTileIds,
+                            rng,
+                            observer);
+                    }
                     else
                         observer.RecordStandardGrowth(owner.PlayerId);
                     return true;
@@ -323,7 +339,18 @@ namespace FungusToast.Core.Growth
                         MaybeRecordToxinborneSeedingGrowth(observer, owner.PlayerId, roll, target);
                         ResolveToxinborneSeedingAfterGrowth(board, owner, target, rng, observer);
                         if (target.DiagonalDirection.HasValue)
+                        {
                             observer.RecordTendrilGrowth(owner.PlayerId, target.DiagonalDirection.Value);
+                            GrowthMutationProcessor.TryTriggerFilamentOverdrive(
+                                board,
+                                owner,
+                                sourceTileId,
+                                target.Tile.TileId,
+                                target.DiagonalDirection.Value,
+                                filamentOverdriveTriggeredSourceTileIds,
+                                rng,
+                                observer);
+                        }
                         return true;
                     }
                 }

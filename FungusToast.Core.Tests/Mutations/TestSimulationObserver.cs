@@ -40,6 +40,7 @@ internal class TestSimulationObserver : ISimulationObserver
     public void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount) { }
     public void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount) { }
     public virtual void RecordTendrilGrowth(int playerId, DiagonalDirection value) { }
+    public virtual void RecordFilamentOverdrive(int playerId, int bonusCellsCreated) { }
     public void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints) { }
     public void RecordNutrientPatchesPlaced(int count) { }
     public void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount) { }

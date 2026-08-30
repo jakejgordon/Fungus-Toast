@@ -46,6 +46,7 @@ namespace FungusToast.Core.Growth
             GrowthSource.PerisporeCrown => "Perispore Crown",
             GrowthSource.SporemealPatch => "Sporemeal Patch",
             GrowthSource.ConidiaAscent => "Conidia Ascent",
+            GrowthSource.FilamentOverdrive => "Filament Overdrive",
             _ => DisplayNameHumanizer.HumanizeIdentifier(source.ToString())
         };
     }

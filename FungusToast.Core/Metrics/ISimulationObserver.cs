@@ -21,6 +21,7 @@ namespace FungusToast.Core.Metrics
         void RecordNecrohyphalInfiltration(int playerId, int necrohyphalInfiltrationCount);
         void RecordNecrohyphalInfiltrationCascade(int playerId, int cascadeCount);
         void RecordTendrilGrowth(int playerId, DiagonalDirection value);
+        void RecordFilamentOverdrive(int playerId, int bonusCellsCreated) { }
         void RecordToxinCatabolism(int playerId, int toxinsCatabolized, int catabolizedMutationPoints);
         void RecordNutrientPatchesPlaced(int count);
         void RecordNutrientPatchConsumed(int playerId, int nutrientTileId, NutrientPatchType patchType, NutrientRewardType rewardType, int rewardAmount);

@@ -135,6 +135,12 @@ namespace FungusToast.Simulation.Analysis
                     if (player.CreepingMoldToxinJumps > 0)
                         effects["Toxin Jumps"] = player.CreepingMoldToxinJumps;
                     break;
+                case MutationIds.FilamentOverdrive:
+                    if (player.FilamentOverdriveTriggers > 0)
+                        effects["Triggered Runners"] = player.FilamentOverdriveTriggers;
+                    if (player.FilamentOverdriveBonusCells > 0)
+                        effects["Bonus Cells"] = player.FilamentOverdriveBonusCells;
+                    break;
 
                 case MutationIds.Necrosporulation:
                     if (player.NecrosporulationSpores > 0)

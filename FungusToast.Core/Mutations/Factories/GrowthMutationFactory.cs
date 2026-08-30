@@ -69,6 +69,25 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier4
             ),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 3));
+
+            // Tier-5
+            helper.MakeChild(new Mutation(
+                id: MutationIds.FilamentOverdrive,
+                name: "Filament Overdrive",
+                description: "Successful Tendril growth can consume its source cell to drive a longer diagonal runner.\n\n" +
+                             $"<b>Technical:</b> Each successful Tendril growth whose source is living, non-resistant, has not already triggered this Growth Cycle, and has an open next tile rolls {helper.FormatPercent(GameBalance.FilamentOverdriveTriggerChancePerLevel)} per level. On success, colonize up to {GameBalance.FilamentOverdriveBonusCells} additional contiguous empty tiles in the same diagonal direction, stopping before the first occupied, blocked, or off-board tile, then kill the source cell.\n" +
+                             $"<b>Max Level Bonus:</b> Can colonize up to {GameBalance.FilamentOverdriveMaxLevelBonusCells} additional tiles instead.",
+                flavorText: "The launching filament liquefies its own mature anchor, forcing a final pulse of cytoplasm through the advancing tip.",
+                type: MutationType.FilamentOverdrive,
+                effectPerLevel: GameBalance.FilamentOverdriveTriggerChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
+                maxLevel: GameBalance.FilamentOverdriveMaxLevel,
+                category: MutationCategory.Growth,
+                tier: MutationTier.Tier5
+            ),
+                new MutationPrerequisite(MutationIds.CreepingMold, 3),
+                new MutationPrerequisite(MutationIds.HyphalSurge, 1),
+                new MutationPrerequisite(MutationIds.AeratedFrontier, 5));
         }
 
         private static void CreateTendril(int id, string direction, MutationType type, MutationBuilderHelper helper)

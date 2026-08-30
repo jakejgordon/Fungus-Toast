@@ -217,6 +217,11 @@ namespace FungusToast.Core.Growth
         /// <summary>
         /// Cell reclaimed and made resistant by the Thanatrophic Rebound starting adaptation.
         /// </summary>
-        ThanatrophicRebound
+        ThanatrophicRebound,
+
+        /// <summary>
+        /// Bonus diagonal growth created by Filament Overdrive.
+        /// </summary>
+        FilamentOverdrive
     }
 }

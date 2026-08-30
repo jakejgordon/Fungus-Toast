@@ -167,6 +167,7 @@ public class Tier6MutationTests
             player.GetMutationLevel(MutationIds.NecrotoxicConversion) > 0 ||
             player.GetMutationLevel(MutationIds.PutrefactiveRejuvenation) > 0 ||
             player.GetMutationLevel(MutationIds.HyperadaptiveDrift) > 0 ||
+            player.GetMutationLevel(MutationIds.FilamentOverdrive) > 0 ||
             player.GetMutationLevel(MutationIds.CatabolicRebirth) > 0 ||
             player.GetMutationLevel(MutationIds.PutrefactiveCascade) > 0,
             "Expected Ontogenic Regression to upgrade a tier 5 or tier 6 mutation.");

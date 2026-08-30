@@ -34,6 +34,16 @@ namespace FungusToast.Unity.UI
         public const float CellGrowthFadeInDurationSeconds = 0.5f;
 
         /// <summary>
+        /// Brief hold that lets the consumed source register before a Filament Overdrive runner appears.
+        /// </summary>
+        public const float FilamentOverdriveSourceBurnoutLeadSeconds = 0.12f;
+
+        /// <summary>
+        /// Fade duration for each sequential cell in a Filament Overdrive runner.
+        /// </summary>
+        public const float FilamentOverdriveCellRevealSeconds = 0.16f;
+
+        /// <summary>
         /// Starting alpha used when a newly grown cell first appears before fading to full opacity.
         /// </summary>
         public const float CellGrowthFadeInStartAlpha = 0f;

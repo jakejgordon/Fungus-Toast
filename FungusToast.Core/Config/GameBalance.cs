@@ -224,6 +224,12 @@ namespace FungusToast.Core.Config
         public const float CreepingMoldMoveChancePerLevel = .035f;
         public const int CreepingMoldMaxLevel = 4;
 
+        // Filament Overdrive (Tier 5 Growth)
+        public const float FilamentOverdriveTriggerChancePerLevel = 0.10f;
+        public const int FilamentOverdriveBonusCells = 2;
+        public const int FilamentOverdriveMaxLevelBonusCells = 3;
+        public const int FilamentOverdriveMaxLevel = 5;
+
         // Sporocidal Bloom (Tier 4 Fungicide)
         public const float SporicialBloomEffectPerLevel = .09f;
         public const int SporocidalToxinTileDuration = 13;
