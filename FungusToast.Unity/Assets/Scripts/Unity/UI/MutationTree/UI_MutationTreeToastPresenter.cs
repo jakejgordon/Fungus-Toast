@@ -28,6 +28,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI modalMessageText;
         private Button modalCloseButton;
         private Action modalDismissedCallback;
+        private Coroutine modalEntranceRoutine;
 
         public void Initialize(UI_MutationManager manager)
         {
@@ -96,11 +97,17 @@ namespace FungusToast.Unity.UI.MutationTree
                     : title;
             }
             modalMessageText.text = message;
-            modalCanvasGroup.alpha = 1f;
+            if (modalEntranceRoutine != null)
+            {
+                StopCoroutine(modalEntranceRoutine);
+            }
+
+            modalCanvasGroup.alpha = 0f;
             modalCanvasGroup.blocksRaycasts = true;
             modalCanvasGroup.interactable = true;
             modalRoot.gameObject.SetActive(true);
             modalRoot.SetAsLastSibling();
+            modalEntranceRoutine = StartCoroutine(FadeModalIn());
         }
 
         public void ShowModalIfTreeOpen(string message, Action onDismissed = null)
@@ -295,6 +302,12 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void HideModalImmediate(bool invokeCallback = true)
         {
+            if (modalEntranceRoutine != null)
+            {
+                StopCoroutine(modalEntranceRoutine);
+                modalEntranceRoutine = null;
+            }
+
             if (modalCanvasGroup != null)
             {
                 modalCanvasGroup.alpha = 0f;
@@ -323,6 +336,23 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 dismissedCallback?.Invoke();
             }
+        }
+
+        private IEnumerator FadeModalIn()
+        {
+            float duration = Mathf.Max(0.01f, UIEffectConstants.CoachmarkEntranceDurationSeconds);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                float progress = Mathf.Clamp01(elapsed / duration);
+                modalCanvasGroup.alpha = Mathf.SmoothStep(0f, 1f, progress);
+                yield return null;
+                elapsed += Time.unscaledDeltaTime;
+            }
+
+            modalCanvasGroup.alpha = 1f;
+            modalEntranceRoutine = null;
         }
 
         private IEnumerator PlayQueue()
