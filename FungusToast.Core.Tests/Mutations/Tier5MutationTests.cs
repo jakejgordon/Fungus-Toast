@@ -20,10 +20,9 @@ public class Tier5MutationTests
         Assert.Equal(MutationCategory.CellularResilience, mutation.Category);
         Assert.Equal(MutationTier.Tier5, mutation.Tier);
         Assert.Equal(MutationType.NecrohyphalInfiltration, mutation.Type);
-        Assert.Equal(3, mutation.Prerequisites.Count);
+        Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.DetritalEnzymes && p.RequiredLevel == 1);
-        Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.MycotoxinPotentiation && p.RequiredLevel == 1);
         Assert.Contains("fails to expand normally", mutation.Description);
         Assert.Contains("reclaim another adjacent dead enemy cell", mutation.Description);
     }

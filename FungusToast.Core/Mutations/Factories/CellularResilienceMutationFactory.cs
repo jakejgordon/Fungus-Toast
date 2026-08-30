@@ -91,8 +91,7 @@ namespace FungusToast.Core.Mutations.Factories
                 tier: MutationTier.Tier5
             ),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1),
-            new MutationPrerequisite(MutationIds.DetritalEnzymes, 1),
-            new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
+            new MutationPrerequisite(MutationIds.DetritalEnzymes, 1));
 
             // Tier-6
             helper.MakeChild(new Mutation(

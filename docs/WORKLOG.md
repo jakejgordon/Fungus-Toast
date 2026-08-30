@@ -238,10 +238,20 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 **Necrosporulation / Necrohyphal / Putrefactive Cascade prerequisite rework (2026-08-30):**
 
 - Necrosporulation (Tier 4): prereq changed from Regenerative Hyphae 5 to Regenerative Hyphae 2 + Mycotoxin Tracer 7. Adds a Fungicide toxin-spore bridge and lowers the Cellular Resilience investment.
-- Necrohyphal Infiltration (Tier 5): prereq changed from Necrosporulation 5 + Mycotoxin Potentiation 5 to Necrosporulation 1 + Detrital Enzymes 1 + Mycotoxin Potentiation 1. Three low-level edges across Cellular Resilience, Substrate Ecology, and Fungicide — a large gate reduction, though Detrital Enzymes 1 still carries the Aerated Frontier 10 -> Crustward/Compaction chain.
-- Putrefactive Cascade (Tier 6): prereq changed from Putrefactive Mycotoxin 5 + Chemotactic Beacon 1 to Necrotoxic Conversion 1 + Chemotactic Beacon 1 + Regenerative Hyphae 1. Necrotoxic Conversion still guarantees Putrefactive Mycotoxin 5 transitively; the explicit Regenerative Hyphae 1 edge is redundant (Necrotoxic Conversion already requires it) and kept only for tree readability.
-- Files: `CellularResilienceMutationFactory`, `FungicideMutationFactory`, `Tier4MutationTests` / `Tier5MutationTests` / `Tier6MutationTests`, `MUTATION_PREREQUISITE_GUIDELINES.md` hotspots. Core + Simulation build clean; full Core suite 597/597; 3-game smoke sim zero parity mismatches with AI acquiring Necrosporulation, Necrohyphal, and Detrital Enzymes on the new graph.
-- Not touched, flag for follow-up: `CMP_Reclaim_InfiltrationSurge_Easy` (targets Necrohyphal Infiltration max with no maxTier) now sinks ~12+ points into the Substrate Ecology growth chain it never used before; the campaign Necrohyphal-goal strategies may want their goal lists revisited.
+- Necrohyphal Infiltration (Tier 5): prereq changed from Necrosporulation 5 + Mycotoxin Potentiation 5 to Necrosporulation 1 + Detrital Enzymes 1 (Substrate Ecology bridge). Large direct-level gate reduction, though Detrital Enzymes 1 still carries the Aerated Frontier 10 -> Crustward/Compaction chain. Effect per level raised 0.5% -> 0.7% (`NecrohyphalInfiltrationChancePerLevel`).
+- Putrefactive Cascade (Tier 6): prereq changed from Putrefactive Mycotoxin 5 + Chemotactic Beacon 1 to Necrotoxic Conversion 1 + Chemotactic Beacon 1. Necrotoxic Conversion still guarantees Putrefactive Mycotoxin 5 (and Regenerative Hyphae 1) transitively.
+- Files: `CellularResilienceMutationFactory`, `FungicideMutationFactory`, `GameBalance`, `Tier4MutationTests` / `Tier5MutationTests` / `Tier6MutationTests`, `MUTATION_PREREQUISITE_GUIDELINES.md` hotspots. Core + Simulation build clean; full Core suite 597/597; 3-game smoke sim zero parity mismatches with AI acquiring Necrosporulation, Necrohyphal, and Detrital Enzymes on the new graph.
+
+**TODO — full AI strategy + balance review after the prerequisite reworks (opened 2026-08-30):**
+
+- The Regenerative Hyphae / Necrosporulation tier swap plus the Necrosporulation / Necrohyphal Infiltration / Putrefactive Cascade prerequisite changes have shifted what many AI strategies auto-acquire and in what order. Do a full pass over every strategy in `AIRoster.cs` (Proven, Testing, and Campaign `CMP_*` rosters): re-check target goal lists, `maxTier` caps, `excludedMutationIds`, and prerequisite fallout.
+- Known specific items to resolve in this pass:
+  - `CMP_Reclaim_InfiltrationSurge_Easy` targets Necrohyphal Infiltration at max with no `maxTier`; it now pulls the Aerated Frontier 10 -> Crustward/Compaction -> Detrital Enzymes chain it never used before.
+  - Generic `maxTier: Tier3` category-priority strategies (`Growth/Resilience`, `AI6`) now pick up Regenerative Hyphae instead of Necrosporulation.
+  - Substrate Ecology "bare Necrosporulation" diagnostic probes (`TST_NecroRush_Bare`, `TST_EcologyReclaimer_*`) no longer isolate Necrosporulation cleanly.
+  - Strategies that targeted Necrohyphal Infiltration / Catabolic Rebirth expecting a full Necrosporulation 5 investment now only get Necrosporulation 1 via prerequisites.
+- Run numerous artifact-backed simulations across board sizes and player counts (Proven and Testing rosters, slot rotation, nutrients/mycovariants both on and off) to surface balance regressions — especially over- or under-tuned acquisition timing for Necrosporulation, Necrohyphal Infiltration, Catabolic Rebirth, and Putrefactive Cascade, and whether Necrosporulation's per-level chance / max level should change now that its point gate moved.
+- Use the `author-ai-strategy` and `diagnose-dominance` / `validate-campaign-balance` skills as appropriate. Tune in isolated follow-up commits backed by exported Parquet artifacts.
 
 ## Planned Slices
 
