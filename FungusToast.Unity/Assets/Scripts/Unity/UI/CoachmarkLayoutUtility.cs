@@ -268,13 +268,13 @@ namespace FungusToast.Unity.UI
 
             while (entranceElapsed < entranceDuration)
             {
-                entranceElapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(entranceElapsed / entranceDuration);
                 float eased = Mathf.SmoothStep(0f, 1f, progress);
                 canvasGroup.alpha = eased;
                 coachmarkRect.localScale = Vector3.LerpUnclamped(entranceScale, restingScale, eased);
                 SetBackdropAlpha(Mathf.Lerp(backdropStartAlpha, UIEffectConstants.CoachmarkBackdropAlpha, eased));
                 yield return null;
+                entranceElapsed += Time.unscaledDeltaTime;
             }
 
             canvasGroup.alpha = 1f;
