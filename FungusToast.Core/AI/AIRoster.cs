@@ -185,7 +185,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MinorEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae),
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
@@ -293,6 +294,7 @@ namespace FungusToast.Core.AI
                 {
                     new TargetMutationGoal(MutationIds.AnabolicInversion, 1),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
@@ -307,6 +309,7 @@ namespace FungusToast.Core.AI
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
@@ -536,6 +539,7 @@ namespace FungusToast.Core.AI
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
@@ -866,7 +870,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.MinorEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae),
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
@@ -997,7 +1002,8 @@ namespace FungusToast.Core.AI
                 economyBias: EconomyBias.ModerateEconomy,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
-                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.OntogenicRegression),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade)

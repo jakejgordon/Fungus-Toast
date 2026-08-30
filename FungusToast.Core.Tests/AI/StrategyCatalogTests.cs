@@ -11,6 +11,34 @@ namespace FungusToast.Core.Tests.AI;
 
 public class StrategyCatalogTests
 {
+    [Fact]
+    public void Creeping_mold_focused_strategies_max_filament_overdrive_next()
+    {
+        var focusedStrategies = new[]
+        {
+            AIRoster.ProvenStrategiesByName["Creeping>Necrosporulation"],
+            AIRoster.ProvenStrategiesByName["TST_AnabolicCreepingNecroRegressionCascade"],
+            AIRoster.ProvenStrategiesByName["TST_CreepingNecroRegressionCascade"],
+            AIRoster.CampaignStrategiesByName["TST_AI10_CreepingRegression"],
+            AIRoster.CampaignStrategiesByName["CMP_Bloom_CreepingNecro_Medium"],
+            AIRoster.CampaignStrategiesByName["CMP_Bloom_CreepingRegression_Elite"]
+        };
+
+        foreach (var candidate in focusedStrategies)
+        {
+            var strategy = Assert.IsType<ParameterizedSpendingStrategy>(candidate);
+            int creepingIndex = strategy.TargetMutationGoals
+                .Select((goal, index) => (goal, index))
+                .Single(pair => pair.goal.MutationId == MutationIds.CreepingMold)
+                .index;
+
+            Assert.Equal(GameBalance.CreepingMoldMaxLevel, strategy.TargetMutationGoals[creepingIndex].TargetLevel);
+            Assert.True(creepingIndex + 1 < strategy.TargetMutationGoals.Count);
+            Assert.Equal(MutationIds.FilamentOverdrive, strategy.TargetMutationGoals[creepingIndex + 1].MutationId);
+            Assert.Equal(GameBalance.FilamentOverdriveMaxLevel, strategy.TargetMutationGoals[creepingIndex + 1].TargetLevel);
+        }
+    }
+
     [Theory]
     [InlineData("TST_HyperEconomyRamp", "TST_HyperEconomyRamp_NoOntogenic")]
     [InlineData("TST_Arch04_DriftGrowth", "TST_Arch04_DriftGrowth_NoOntogenic")]
