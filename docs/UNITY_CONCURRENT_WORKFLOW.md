@@ -86,6 +86,26 @@ Safe whenever the diff is only:
 The pre-commit guard already refuses to commit a scene whose *entire* diff is one
 of the above, so in practice you rarely need to do this by hand.
 
+## For coding agents (no Unity installed)
+
+An agent *may* edit `SampleScene.unity` when a task genuinely needs it — adding a
+component, a GameObject, or a GUID reference is safe to do in YAML without Unity.
+The pre-commit guard only reverts a scene whose **entire** diff is cosmetic drift,
+so real edits pass straight through.
+
+Rules:
+
+- Never `git add -A` / `git add .`. Stage files by path.
+- Don't touch `*.unity` / `*.prefab` unless the task is about that scene/prefab.
+  Prefer self-wiring code (`GetComponent`, `FindObjectByType`, ScriptableObjects,
+  UI built in code) over "add a serialized field, assign it in the Inspector".
+- Keep any scene diff to exactly the lines the task requires.
+- After committing a scene change, run `git show --stat HEAD`. If the scene is
+  missing, the guard classified the diff as cosmetic — re-stage and
+  `git commit --no-verify` (or set `SCENE_CHURN_GUARD=0`).
+- On a merge conflict in a `.unity` / `.prefab` the branch didn't deliberately
+  change: `git checkout --theirs -- <file> && git add <file>`.
+
 ## What was done to shrink the problem
 
 - `GridFiller` no longer bakes its 100×100 editor preview into the scene

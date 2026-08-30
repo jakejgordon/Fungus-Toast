@@ -26,22 +26,34 @@ GUARDED = {
     "FungusToast.Unity/Assets/Scenes/SampleScene.unity",
 }
 
+# A "drift" number is what Unity's layout solver / prefab-override serializer emits:
+# many fractional digits, or scientific notation. Deliberate edits use round-ish
+# values (`900`, `-120.5`), so requiring this shape keeps intentional layout changes
+# from being mistaken for churn.
+_DRIFT = r"-?\d+\.\d{3,}(?:e-?\d+)?|-?\d+(?:\.\d+)?e-?\d+"
+_LAYOUT_KEYS = (
+    r"m_AnchoredPosition|m_SizeDelta|m_LocalPosition|m_LocalScale|m_Pivot|"
+    r"m_LocalEulerAnglesHint|m_LocalRotation"
+)
+
 # A changed (+/-) diff line is "cosmetic" if, once the leading +/- is stripped, it
 # matches one of these. Everything else counts as a real change.
 COSMETIC_LINE = re.compile(
-    r"""^\s*(
-        m_EditorClassIdentifier:\s* |
-        (m_AnchoredPosition|m_SizeDelta|m_LocalPosition|m_LocalScale|m_Pivot|
-         m_LocalEulerAnglesHint|m_LocalRotation|m_SizeDelta\.[xyz]|m_AnchoredPosition\.[xyz]):\s*\{.*\}\s* |
-        m_Value:\s*-?\d+(\.\d+)?(e-?\d+)?\s* |
-        m_Size:\s*-?\d+(\.\d+)?\s* |
-        value:\s*-?\d+(\.\d+)?(e-?\d+)?\s* |
-        propertyPath:\s*m_(AnchoredPosition|SizeDelta|LocalPosition|LocalScale|
-         LocalEulerAnglesHint|LocalRotation)(\.[xyzw])?\s* |
-        x:\s*-?\d+(\.\d+)?(e-?\d+)?,\s*y:\s*-?\d+(\.\d+)?(e-?\d+)?(,\s*z:\s*-?\d+(\.\d+)?(e-?\d+)?)?\s*
+    rf"""^\s*(
+        m_EditorClassIdentifier:\s* |                                  # trailing-whitespace flip
+        m_Value:\s*-?\d+(?:\.\d+)?(?:e-?\d+)?\s* |                      # persisted scrollbar/slider state
+        ({_LAYOUT_KEYS})(?:\.[xyzw])?:\s*
+            (?:\{{[^}}]*(?:{_DRIFT})[^}}]*\}}|{_DRIFT})\s* |            # layout-solver drift only
+        value:\s*(?:{_DRIFT})\s* |                                     # prefab-override float drift
+        m_Size:\s*(?:{_DRIFT})\s*
     )$""",
     re.VERBOSE,
 )
+
+# Inline-serialized vector line (e.g. "  x: 1.23456, y: -7.89012, z: 0"); cosmetic
+# only when at least one component carries the drift signature.
+_VECTOR_LINE = re.compile(r"^\s*x:\s*-?\d.*,\s*y:\s*-?\d")
+_HAS_DRIFT = re.compile(r"\d\.\d{3,}|\de-?\d")
 
 # `foo: {fileID: 0}` — a nulled object reference. Cosmetic only when the opposite
 # side of the diff sets the *same key* to a real reference (transient import miss).
@@ -90,6 +102,8 @@ def change_is_cosmetic_only(path: str) -> bool:
 
     def line_ok(line: str) -> bool:
         if COSMETIC_LINE.match(line):
+            return True
+        if _VECTOR_LINE.match(line) and _HAS_DRIFT.search(line):
             return True
         m = NULL_REF.match(line) or REAL_REF.match(line)
         return bool(m and m.group(1) in flip_keys)
