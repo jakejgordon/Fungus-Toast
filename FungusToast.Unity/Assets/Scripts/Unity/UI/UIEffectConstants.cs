@@ -679,7 +679,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Maximum outline offset used at the peak of a coachmark border pulse.
         /// </summary>
-        public const float CoachmarkBorderPulsePeakDistance = 6f;
+        public const float CoachmarkBorderPulsePeakDistance = 12f;
 
         /// <summary>
         /// Opacity of the non-blocking backdrop placed behind a visible coachmark.

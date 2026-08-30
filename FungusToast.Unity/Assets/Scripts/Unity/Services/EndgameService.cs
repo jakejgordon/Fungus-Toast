@@ -774,9 +774,9 @@ namespace FungusToast.Unity
             autoPlacementCoachmarkTitleText.text = definition.Title;
             autoPlacementCoachmarkBodyText.text = definition.Body;
             PositionAutoPlacementCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(autoPlacementCoachmarkRoot);
             autoPlacementCoachmarkRoot.gameObject.SetActive(true);
             autoPlacementCoachmarkRoot.SetAsLastSibling();
-            autoPlacementCoachmarkCanvasGroup.alpha = 1f;
             autoPlacementCoachmarkCanvasGroup.blocksRaycasts = true;
             autoPlacementCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(autoPlacementCoachmarkRoot);

@@ -1146,9 +1146,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             mycovariantDraftCoachmarkTitleTextLabel.text = definition.Title;
             mycovariantDraftCoachmarkBodyTextLabel.text = definition.Body;
             PositionMycovariantDraftCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(mycovariantDraftCoachmarkRoot);
             mycovariantDraftCoachmarkRoot.gameObject.SetActive(true);
             mycovariantDraftCoachmarkRoot.SetAsLastSibling();
-            mycovariantDraftCoachmarkCanvasGroup.alpha = 1f;
             mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = true;
             mycovariantDraftCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(mycovariantDraftCoachmarkRoot);

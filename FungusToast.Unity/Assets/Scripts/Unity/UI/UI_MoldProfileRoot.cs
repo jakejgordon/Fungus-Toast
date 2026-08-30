@@ -483,9 +483,9 @@ namespace FungusToast.Unity.UI
             adaptationCoachmarkTitleTextLabel.text = definition.Title;
             adaptationCoachmarkBodyTextLabel.text = definition.Body;
             PositionAdaptationCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(adaptationCoachmarkRoot);
             adaptationCoachmarkRoot.gameObject.SetActive(true);
             adaptationCoachmarkRoot.SetAsLastSibling();
-            adaptationCoachmarkCanvasGroup.alpha = 1f;
             adaptationCoachmarkCanvasGroup.blocksRaycasts = true;
             adaptationCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(adaptationCoachmarkRoot);

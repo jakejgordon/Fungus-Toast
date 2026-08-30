@@ -24,6 +24,22 @@ namespace FungusToast.Unity.UI
             effect.Play();
         }
 
+        internal static void PrepareAttentionEntrance(RectTransform coachmarkRect)
+        {
+            if (coachmarkRect == null)
+            {
+                return;
+            }
+
+            var effect = coachmarkRect.GetComponent<CoachmarkAttentionEffect>();
+            if (effect == null)
+            {
+                effect = coachmarkRect.gameObject.AddComponent<CoachmarkAttentionEffect>();
+            }
+
+            effect.PrepareEntrance();
+        }
+
         internal static bool TryPlaceAtWorldPoint(
             RectTransform coachmarkRect,
             RectTransform boundsRect,
@@ -138,6 +154,7 @@ namespace FungusToast.Unity.UI
         private Vector2 restingOutlineDistance;
         private float backdropStartAlpha;
         private bool hasCapturedRestingVisuals;
+        private bool isEntrancePrepared;
 
         internal void Play()
         {
@@ -152,9 +169,28 @@ namespace FungusToast.Unity.UI
                 StopCoroutine(animationCoroutine);
             }
 
-            RestoreCoachmarkVisuals();
+            if (!isEntrancePrepared)
+            {
+                PrepareEntrance();
+            }
+
             EnsureBackdrop();
             animationCoroutine = StartCoroutine(PlayAttentionAnimation());
+            isEntrancePrepared = false;
+        }
+
+        internal void PrepareEntrance()
+        {
+            ResolveComponents();
+            if (coachmarkRect == null || canvasGroup == null || outline == null)
+            {
+                return;
+            }
+
+            RestoreCoachmarkVisuals();
+            canvasGroup.alpha = 0f;
+            coachmarkRect.localScale = restingScale * UIEffectConstants.CoachmarkEntranceStartScale;
+            isEntrancePrepared = true;
         }
 
         private void ResolveComponents()
@@ -234,7 +270,7 @@ namespace FungusToast.Unity.UI
             {
                 entranceElapsed += Time.unscaledDeltaTime;
                 float progress = Mathf.Clamp01(entranceElapsed / entranceDuration);
-                float eased = 1f - Mathf.Pow(1f - progress, 3f);
+                float eased = Mathf.SmoothStep(0f, 1f, progress);
                 canvasGroup.alpha = eased;
                 coachmarkRect.localScale = Vector3.LerpUnclamped(entranceScale, restingScale, eased);
                 SetBackdropAlpha(Mathf.Lerp(backdropStartAlpha, UIEffectConstants.CoachmarkBackdropAlpha, eased));
@@ -317,6 +353,7 @@ namespace FungusToast.Unity.UI
             }
 
             RestoreCoachmarkVisuals();
+            isEntrancePrepared = false;
             if (backdropRect != null && !HasOtherVisibleCoachmark())
             {
                 backdropRect.gameObject.SetActive(false);

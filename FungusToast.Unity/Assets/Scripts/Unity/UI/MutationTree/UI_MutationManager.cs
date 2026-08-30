@@ -2778,9 +2778,9 @@ namespace FungusToast.Unity.UI.MutationTree
             timeLapseCoachmarkTitleTextLabel.text = definition.Title;
             timeLapseCoachmarkBodyTextLabel.text = definition.Body;
             PositionTimeLapseCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(timeLapseCoachmarkRoot);
             timeLapseCoachmarkRoot.gameObject.SetActive(true);
             timeLapseCoachmarkRoot.SetAsLastSibling();
-            timeLapseCoachmarkCanvasGroup.alpha = 1f;
             timeLapseCoachmarkCanvasGroup.blocksRaycasts = true;
             timeLapseCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(timeLapseCoachmarkRoot);
@@ -2827,9 +2827,9 @@ namespace FungusToast.Unity.UI.MutationTree
             storePointsCoachmarkTitleTextLabel.text = definition.Title;
             storePointsCoachmarkBodyTextLabel.text = definition.Body;
             PositionStorePointsCoachmark(anchorButton);
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(storePointsCoachmarkRoot);
             storePointsCoachmarkRoot.gameObject.SetActive(true);
             storePointsCoachmarkRoot.SetAsLastSibling();
-            storePointsCoachmarkCanvasGroup.alpha = 1f;
             storePointsCoachmarkCanvasGroup.blocksRaycasts = true;
             storePointsCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(storePointsCoachmarkRoot);

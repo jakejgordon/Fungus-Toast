@@ -224,9 +224,9 @@ namespace FungusToast.Unity.Cameras
             cameraPanCoachmarkTitleTextLabel.text = definition.Title;
             cameraPanCoachmarkBodyTextLabel.text = definition.Body;
             RefreshCameraPanCoachmarkLayout();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(cameraPanCoachmarkRoot);
             cameraPanCoachmarkRoot.gameObject.SetActive(true);
             cameraPanCoachmarkRoot.SetAsLastSibling();
-            cameraPanCoachmarkCanvasGroup.alpha = 1f;
             cameraPanCoachmarkCanvasGroup.blocksRaycasts = true;
             cameraPanCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(cameraPanCoachmarkRoot);

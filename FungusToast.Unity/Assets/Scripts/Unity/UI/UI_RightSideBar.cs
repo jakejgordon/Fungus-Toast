@@ -481,9 +481,9 @@ namespace FungusToast.Unity.UI
             endgameCountdownCoachmarkTitleTextLabel.text = definition.Title;
             endgameCountdownCoachmarkBodyTextLabel.text = definition.Body;
             PositionEndgameCountdownCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(endgameCountdownCoachmarkRoot);
             endgameCountdownCoachmarkRoot.gameObject.SetActive(true);
             endgameCountdownCoachmarkRoot.SetAsLastSibling();
-            endgameCountdownCoachmarkCanvasGroup.alpha = 1f;
             endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = true;
             endgameCountdownCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(endgameCountdownCoachmarkRoot);
@@ -513,9 +513,9 @@ namespace FungusToast.Unity.UI
             scoreboardCoachmarkTitleTextLabel.text = definition.Title;
             scoreboardCoachmarkBodyTextLabel.text = definition.Body;
             PositionScoreboardCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(scoreboardCoachmarkRoot);
             scoreboardCoachmarkRoot.gameObject.SetActive(true);
             scoreboardCoachmarkRoot.SetAsLastSibling();
-            scoreboardCoachmarkCanvasGroup.alpha = 1f;
             scoreboardCoachmarkCanvasGroup.blocksRaycasts = true;
             scoreboardCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(scoreboardCoachmarkRoot);
