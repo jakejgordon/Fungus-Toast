@@ -1065,10 +1065,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             ReapplyInspectedMutationState();
-
-            // Also refresh category investment summaries
-            if (mutationTreeBuilder != null && humanPlayer != null)
-                mutationTreeBuilder.UpdateCategoryInvestmentSummaries(mutationButtons, humanPlayer);
         }
 
         public bool IsMutationDisabledBecauseNoEffect(Mutation mutation, Player player)

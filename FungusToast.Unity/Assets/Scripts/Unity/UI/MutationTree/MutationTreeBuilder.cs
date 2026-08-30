@@ -12,10 +12,6 @@ namespace FungusToast.Unity.UI.MutationTree
     public class MutationTreeBuilder : MonoBehaviour
     {
         private const float HeaderTitleHeight = 40f;
-        private const float HeaderInvestmentSummaryFontSize = 14f;
-        private const float HeaderInvestmentSummaryMinFontSize = 11f;
-        private const float HeaderInvestmentSummaryHeight = 20f;
-        private const float HeaderTotalHeight = HeaderTitleHeight + HeaderInvestmentSummaryHeight;
         private const float MutationNodeWidth = 132f;
         private const float MutationNodeHeight = 120f;
 
@@ -23,7 +19,7 @@ namespace FungusToast.Unity.UI.MutationTree
         // dependency connector (and especially its arrowhead) drawn behind the
         // cards has visible room between a prerequisite and the node directly
         // below it. See MutationDependencyGraphGraphic.
-        private const float LaneCardSpacing = 24f;
+        private const float LaneCardSpacing = 18f;
         private const float PlannedLaneCardHeight = 100f;
         private const float DirectionalTendrilsCardHeight = 292f;
         private const float DirectionalTendrilsHorizontalPadding = 6f;
@@ -48,8 +44,6 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private RectTransform mycelialSurgesColumn;
         private RectTransform plannedSubstrateEcologyColumn;
 
-        // Cached header summary text references for investment display
-        private readonly Dictionary<MutationCategory, TextMeshProUGUI> headerSummaryTexts = new();
 
         public List<MutationNodeUI> BuildTree(
             IEnumerable<Mutation> mutations,
@@ -83,7 +77,6 @@ namespace FungusToast.Unity.UI.MutationTree
             ClearColumn(driftColumn);
             ClearColumn(mycelialSurgesColumn);
             ClearColumn(plannedSubstrateEcologyColumn);
-            headerSummaryTexts.Clear();
 
             // Instantiate headers at index 0 in each column
             foreach (MutationCategoryPresentation presentation in MutationCategoryPresentationCatalog.Ordered)
@@ -177,45 +170,18 @@ namespace FungusToast.Unity.UI.MutationTree
                 headerLayout.preferredWidth = columnWidth;
                 headerLayout.minWidth = columnWidth;
                 headerLayout.flexibleWidth = 0f;
-                headerLayout.minHeight = HeaderTotalHeight;
-                headerLayout.preferredHeight = HeaderTotalHeight;
+                headerLayout.minHeight = HeaderTitleHeight;
+                headerLayout.preferredHeight = HeaderTitleHeight;
                 headerLayout.flexibleHeight = 0f;
 
                 var headerRect = headerGO.GetComponent<RectTransform>();
                 if (headerRect != null)
                 {
                     headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, columnWidth);
-                    headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderTotalHeight);
+                    headerRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, HeaderTitleHeight);
                 }
 
                 AttachHeaderTooltip(headerGO, presentation.TooltipText);
-
-                // ── Investment summary label (child text, created dynamically) ──
-                var summaryGO = new GameObject("InvestmentSummary");
-                summaryGO.transform.SetParent(headerGO.transform, false);
-                var summaryText = summaryGO.AddComponent<TextMeshProUGUI>();
-                summaryText.fontSize = HeaderInvestmentSummaryFontSize;
-                summaryText.fontSizeMax = HeaderInvestmentSummaryFontSize;
-                summaryText.fontSizeMin = HeaderInvestmentSummaryMinFontSize;
-                summaryText.alignment = TextAlignmentOptions.Center;
-                summaryText.color = MutationTreeColors.UniformSubheaderText;
-                summaryText.enableAutoSizing = true;
-                summaryText.textWrappingMode = TextWrappingModes.NoWrap;
-                summaryText.overflowMode = TextOverflowModes.Truncate;
-                var summaryRect = summaryGO.GetComponent<RectTransform>();
-                summaryRect.anchorMin = new Vector2(0, 1);
-                summaryRect.anchorMax = new Vector2(1, 1);
-                summaryRect.pivot = new Vector2(0.5f, 1f);
-                summaryRect.anchoredPosition = new Vector2(0, -HeaderTitleHeight);
-                summaryRect.sizeDelta = new Vector2(0, HeaderInvestmentSummaryHeight);
-                if (presentation.CoreCategory.HasValue)
-                {
-                    headerSummaryTexts[presentation.CoreCategory.Value] = summaryText;
-                }
-                else
-                {
-                    summaryText.text = "Planned • roster in design";
-                }
 
                 headerGO.transform.SetSiblingIndex(0); // Ensure header is always first
 
@@ -261,9 +227,6 @@ namespace FungusToast.Unity.UI.MutationTree
                     createdNodes.Add(CreateMutationNode(mutation, parentColumn, meta.Row + 1, player, uiManager));
                 }
             }
-
-            // Update investment summaries now that all nodes exist
-            UpdateCategoryInvestmentSummaries(createdNodes, player);
 
             return createdNodes;
         }
@@ -406,42 +369,6 @@ namespace FungusToast.Unity.UI.MutationTree
             rectTransform.pivot = new Vector2(0.5f, 1f);
             rectTransform.anchoredPosition = Vector2.zero;
             rectTransform.sizeDelta = new Vector2(0f, HeaderTitleHeight);
-        }
-
-        /// <summary>
-        /// Recalculates "X / Y invested" text for each category header.
-        /// Call after mutations are built or after any upgrade.
-        /// </summary>
-        public void UpdateCategoryInvestmentSummaries(List<MutationNodeUI> nodes, Player player)
-        {
-            if (nodes == null || player == null) return;
-
-            // Aggregate levels per category
-            var categoryTotals = new Dictionary<MutationCategory, (int current, int max)>();
-
-            foreach (var node in nodes)
-            {
-                var mutation = node.GetMutation();
-                if (mutation == null) continue;
-
-                var cat = mutation.Category;
-                int level = player.GetMutationLevel(mutation.Id);
-                int maxLevel = mutation.MaxLevel;
-
-                if (!categoryTotals.ContainsKey(cat))
-                    categoryTotals[cat] = (0, 0);
-
-                var (c, m) = categoryTotals[cat];
-                categoryTotals[cat] = (c + level, m + maxLevel);
-            }
-
-            foreach (var kvp in headerSummaryTexts)
-            {
-                if (categoryTotals.TryGetValue(kvp.Key, out var totals))
-                    kvp.Value.text = $"{totals.current} / {totals.max} invested";
-                else
-                    kvp.Value.text = "";
-            }
         }
 
         private static void AttachHeaderTooltip(GameObject headerGO, string tooltipText)
