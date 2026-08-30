@@ -104,6 +104,10 @@ run_logs/
 # === PLASTIC SCM / UNITY COLLAB ===
 
 .plastic/
+
+# Unity crash-recovery scene dumps — never commit these.
+FungusToast.Unity/Assets/_Recovery/
+**/__Backupscenes/
 FungusToast.Simulation/simulation_output.txt
 FungusToast.Simulation/SimulationOutput/
 # Generated Unity bridge artifacts from Core post-build copy/touch step
