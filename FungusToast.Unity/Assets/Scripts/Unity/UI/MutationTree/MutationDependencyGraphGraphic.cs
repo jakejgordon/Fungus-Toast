@@ -18,8 +18,16 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float MinimumThickness = 1.45f;
         private const float DashLength = 9f;
         private const float DashGap = 6f;
-        private const float ArrowLength = 15f;
-        private const float ArrowHalfWidth = 8f;
+        private const float ArrowLength = 18f;
+        private const float ArrowHalfWidth = 9.5f;
+
+        // When a prerequisite sits directly above its dependent the connector has
+        // almost no room, so a standard reserved-tail arrowhead can't be drawn at
+        // all. In that case draw an oversized head that spans the gap and bites
+        // into both cards so the direction still reads clearly.
+        private const float AdjacentArrowLength = 22f;
+        private const float AdjacentArrowHalfWidth = 12f;
+        private const float AdjacentCardOverlap = 8f;
         private const float CrossCategoryKnotSize = 3.5f;
         private const float UnlockGrowthDuration = 0.22f;
         private const float RouteEmphasisDuration = 0.7f;
@@ -341,33 +349,61 @@ namespace FungusToast.Unity.UI.MutationTree
             DrawSegment(helper, first, second, thickness, color, dashed);
             DrawSegment(helper, second, third, thickness, color, dashed);
 
-            Vector2 arrowBase = fourth;
-            bool canDrawArrowhead = false;
-            if (drawArrowhead)
+            if (!drawArrowhead)
             {
-                float finalSegmentLength = Vector2.Distance(third, fourth);
-                if (finalSegmentLength > ArrowLength + 0.01f)
-                {
-                    arrowBase = Vector2.MoveTowards(fourth, third, ArrowLength);
-                    canDrawArrowhead = true;
-                }
+                DrawSegment(helper, third, fourth, thickness, color, dashed);
+                DrawCrossCategoryKnots(helper, second, third, thickness, color, crossCategory);
+                return;
             }
 
-            // Reserve the final segment for the arrowhead. Its base must remain
-            // outside the destination card; otherwise the arrow visibly finishes
-            // in the card body even though its tip is technically on the border.
-            DrawSegment(helper, third, arrowBase, thickness, color, dashed);
+            Vector2 arrowDirection = (fourth - third).sqrMagnitude > 0.0001f
+                ? (fourth - third).normalized
+                : (fourth - first).normalized;
+            float finalSegmentLength = Vector2.Distance(third, fourth);
 
-            if (crossCategory)
+            Vector2 arrowTip;
+            Vector2 arrowBase;
+            float arrowHalfWidth;
+            if (finalSegmentLength > ArrowLength + 0.01f)
             {
-                AddDiamond(helper, second, CrossCategoryKnotSize + (thickness * 0.25f), color);
-                AddDiamond(helper, third, CrossCategoryKnotSize + (thickness * 0.25f), color);
+                // Roomy route: reserve the tail of the final segment for a
+                // standard arrowhead and draw the connector up to its base.
+                arrowTip = fourth;
+                arrowBase = fourth - (arrowDirection * ArrowLength);
+                arrowHalfWidth = ArrowHalfWidth;
+                DrawSegment(helper, third, arrowBase, thickness, color, dashed);
+            }
+            else
+            {
+                // Cramped vertical adjacency: no room for a tail segment, so the
+                // oversized head fills the gap and overlaps both cards instead.
+                float arrowLength = Mathf.Max(
+                    AdjacentArrowLength,
+                    finalSegmentLength + (AdjacentCardOverlap * 2f));
+                arrowTip = fourth + (arrowDirection * AdjacentCardOverlap);
+                arrowBase = arrowTip - (arrowDirection * arrowLength);
+                arrowHalfWidth = AdjacentArrowHalfWidth;
             }
 
-            if (canDrawArrowhead)
+            DrawCrossCategoryKnots(helper, second, third, thickness, color, crossCategory);
+            AddArrowHead(helper, arrowBase, arrowTip, color, arrowHalfWidth);
+        }
+
+        private static void DrawCrossCategoryKnots(
+            VertexHelper helper,
+            Vector2 second,
+            Vector2 third,
+            float thickness,
+            Color color,
+            bool crossCategory)
+        {
+            if (!crossCategory)
             {
-                AddArrowHead(helper, arrowBase, fourth, color);
+                return;
             }
+
+            AddDiamond(helper, second, CrossCategoryKnotSize + (thickness * 0.25f), color);
+            AddDiamond(helper, third, CrossCategoryKnotSize + (thickness * 0.25f), color);
         }
 
         private static void DrawGrowingPath(
@@ -490,20 +526,21 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private static void AddArrowHead(VertexHelper helper, Vector2 approach, Vector2 tip, Color color)
+        private static void AddArrowHead(VertexHelper helper, Vector2 baseCenter, Vector2 tip, Color color, float halfWidth)
         {
-            Vector2 direction = (tip - approach).normalized;
-            if (direction.sqrMagnitude < 0.01f)
+            Vector2 direction = tip - baseCenter;
+            float length = direction.magnitude;
+            if (length < 0.01f)
             {
                 return;
             }
 
+            direction /= length;
             Vector2 normal = new(-direction.y, direction.x);
-            Vector2 baseCenter = tip - (direction * ArrowLength);
             int index = helper.currentVertCount;
             helper.AddVert(tip, color, Vector2.zero);
-            helper.AddVert(baseCenter + (normal * ArrowHalfWidth), color, Vector2.zero);
-            helper.AddVert(baseCenter - (normal * ArrowHalfWidth), color, Vector2.zero);
+            helper.AddVert(baseCenter + (normal * halfWidth), color, Vector2.zero);
+            helper.AddVert(baseCenter - (normal * halfWidth), color, Vector2.zero);
             helper.AddTriangle(index, index + 1, index + 2);
         }
 

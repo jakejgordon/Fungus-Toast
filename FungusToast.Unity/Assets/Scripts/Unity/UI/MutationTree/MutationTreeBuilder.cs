@@ -18,6 +18,12 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HeaderTotalHeight = HeaderTitleHeight + HeaderInvestmentSummaryHeight;
         private const float MutationNodeWidth = 132f;
         private const float MutationNodeHeight = 120f;
+
+        // Vertical gap between stacked cards in a lane. Kept generous so the
+        // dependency connector (and especially its arrowhead) drawn behind the
+        // cards has visible room between a prerequisite and the node directly
+        // below it. See MutationDependencyGraphGraphic.
+        private const float LaneCardSpacing = 24f;
         private const float PlannedLaneCardHeight = 100f;
         private const float DirectionalTendrilsCardHeight = 292f;
         private const float DirectionalTendrilsHorizontalPadding = 6f;
@@ -63,6 +69,13 @@ namespace FungusToast.Unity.UI.MutationTree
                 Debug.LogError("❌ MutationTreeBuilder: Could not create the planned Substrate Ecology column.");
                 return new List<MutationNodeUI>();
             }
+
+            ApplyLaneCardSpacing(growthColumn);
+            ApplyLaneCardSpacing(resilienceColumn);
+            ApplyLaneCardSpacing(fungicideColumn);
+            ApplyLaneCardSpacing(driftColumn);
+            ApplyLaneCardSpacing(mycelialSurgesColumn);
+            ApplyLaneCardSpacing(plannedSubstrateEcologyColumn);
 
             ClearColumn(growthColumn);
             ClearColumn(resilienceColumn);
@@ -467,6 +480,20 @@ namespace FungusToast.Unity.UI.MutationTree
             column.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
         }
 
+        private static void ApplyLaneCardSpacing(RectTransform column)
+        {
+            if (column == null)
+            {
+                return;
+            }
+
+            var group = column.GetComponent<VerticalLayoutGroup>();
+            if (group != null)
+            {
+                group.spacing = LaneCardSpacing;
+            }
+        }
+
         private RectTransform GetColumnForCategory(MutationCategory category)
         {
             return category switch
@@ -526,7 +553,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var group = columnObject.GetComponent<VerticalLayoutGroup>();
             group.padding = new RectOffset(0, 0, 0, 0);
-            group.spacing = 10f;
+            group.spacing = LaneCardSpacing;
             group.childAlignment = TextAnchor.UpperCenter;
             group.childControlWidth = true;
             group.childControlHeight = false;
