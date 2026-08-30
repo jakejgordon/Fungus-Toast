@@ -266,6 +266,8 @@ namespace FungusToast.Unity.UI
             canvasGroup.alpha = 0f;
             coachmarkRect.localScale = entranceScale;
 
+            yield return new WaitForSecondsRealtime(UIEffectConstants.CoachmarkEntranceDelaySeconds);
+
             while (entranceElapsed < entranceDuration)
             {
                 float progress = Mathf.Clamp01(entranceElapsed / entranceDuration);

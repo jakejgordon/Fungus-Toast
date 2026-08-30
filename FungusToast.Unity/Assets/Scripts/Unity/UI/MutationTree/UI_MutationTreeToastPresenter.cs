@@ -343,6 +343,8 @@ namespace FungusToast.Unity.UI.MutationTree
             float duration = Mathf.Max(0.01f, UIEffectConstants.CoachmarkEntranceDurationSeconds);
             float elapsed = 0f;
 
+            yield return new WaitForSecondsRealtime(UIEffectConstants.CoachmarkEntranceDelaySeconds);
+
             while (elapsed < duration)
             {
                 float progress = Mathf.Clamp01(elapsed / duration);

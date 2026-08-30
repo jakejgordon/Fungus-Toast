@@ -652,6 +652,11 @@ namespace FungusToast.Unity.UI
         public const float GrowthCycleProgressPulsePeakScaleMultiplier = 1.85f;
 
         /// <summary>
+        /// Delay before a coachmark begins its fade-and-scale entrance.
+        /// </summary>
+        public const float CoachmarkEntranceDelaySeconds = 0.2f;
+
+        /// <summary>
         /// Duration of the coachmark fade-and-scale entrance before its border pulses.
         /// </summary>
         public const float CoachmarkEntranceDurationSeconds = 0.6f;
