@@ -18,12 +18,13 @@ public class NecrophyticBloomTests
 
         Assert.Equal(MutationCategory.SubstrateEcology, mutation.Category);
         Assert.Equal(MutationTier.Tier4, mutation.Tier);
-        Assert.Contains(mutation.Prerequisites, prerequisite =>
-            prerequisite.MutationId == MutationIds.HyphalSurge && prerequisite.RequiredLevel == 2);
+        Assert.Equal(2, mutation.Prerequisites.Count);
         Assert.Contains(mutation.Prerequisites, prerequisite =>
             prerequisite.MutationId == MutationIds.DetritalEnzymes && prerequisite.RequiredLevel == 3);
         Assert.Contains(mutation.Prerequisites, prerequisite =>
             prerequisite.MutationId == MutationIds.AdaptiveExpression && prerequisite.RequiredLevel == 3);
+        Assert.DoesNotContain(mutation.Prerequisites, prerequisite =>
+            prerequisite.MutationId == MutationIds.HyphalSurge);
     }
 
     [Fact]

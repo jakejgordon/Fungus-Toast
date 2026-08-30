@@ -23,7 +23,7 @@ The lane is complete with six new mutations plus the Necrophytic Bloom move. Aer
 | 2 | Compaction Pressure | Crowded-substrate branch (implemented) | Aerated Frontier 10 | +2 points/level, 5 levels |
 | 3 | Detrital Enzymes | Dead-matter branch (implemented) | Crustward Tropism 1 **or** Compaction Pressure 1 | +1 point/level, 5 levels; +1 point at max beside dense dead matter |
 | 3 | Toxin Margin | Enemy-toxin response branch (implemented) | Aerated Frontier 5, Homeostatic Harmony 5 | +1.5 points/level, 5 levels |
-| 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Autolytic Surge 2, Detrital Enzymes 3, Adaptive Expression 3 | Existing values |
+| 4 | Necrophytic Bloom | Existing compost mechanic (implemented) | Detrital Enzymes 3, Adaptive Expression 3 (Autolytic Surge 2 removed 2026-08-30 — gate was too expensive) | Existing values |
 | 5 | Toxinborne Seeding | Friendly-toxin foothold capstone (implemented) | Toxin Margin 5, Mycotoxin Potentiation 5, Putrefactive Mycotoxin 2 | +10 percentage points/level next to friendly toxins; toxin carries one new cell to enemy territory |
 
 ### 1. Aerated Frontier (Implemented)

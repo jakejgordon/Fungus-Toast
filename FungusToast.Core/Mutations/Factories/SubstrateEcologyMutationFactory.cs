@@ -106,7 +106,6 @@ namespace FungusToast.Core.Mutations.Factories
                 category: MutationCategory.SubstrateEcology,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.HyphalSurge, 2),
                 new MutationPrerequisite(MutationIds.DetritalEnzymes, 3),
                 new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
 

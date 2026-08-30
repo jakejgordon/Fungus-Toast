@@ -242,6 +242,11 @@ This is the canonical in-repo task list and handoff for active Fungus-Toast work
 - Putrefactive Cascade (Tier 6): prereq changed from Putrefactive Mycotoxin 5 + Chemotactic Beacon 1 to Necrotoxic Conversion 1 + Chemotactic Beacon 1. Necrotoxic Conversion still guarantees Putrefactive Mycotoxin 5 (and Regenerative Hyphae 1) transitively.
 - Files: `CellularResilienceMutationFactory`, `FungicideMutationFactory`, `GameBalance`, `Tier4MutationTests` / `Tier5MutationTests` / `Tier6MutationTests`, `MUTATION_PREREQUISITE_GUIDELINES.md` hotspots. Core + Simulation build clean; full Core suite 597/597; 3-game smoke sim zero parity mismatches with AI acquiring Necrosporulation, Necrohyphal, and Detrital Enzymes on the new graph.
 
+**Necrophytic Bloom prerequisite reduction (2026-08-30):**
+
+- Removed the Autolytic Surge (`HyphalSurge`) 2 prerequisite entirely; the gate was too expensive. Necrophytic Bloom (Tier 4 Substrate Ecology) now requires only Detrital Enzymes 3 + Adaptive Expression 3. Effect values, cost, ID, timing, and save representation unchanged.
+- Files: `SubstrateEcologyMutationFactory`, `NecrophyticBloomTests`, `SUBSTRATE_ECOLOGY_ROSTER.md` Final Tree table.
+
 **TODO — full AI strategy + balance review after the prerequisite reworks (opened 2026-08-30):**
 
 - The Regenerative Hyphae / Necrosporulation tier swap plus the Necrosporulation / Necrohyphal Infiltration / Putrefactive Cascade prerequisite changes have shifted what many AI strategies auto-acquire and in what order. Do a full pass over every strategy in `AIRoster.cs` (Proven, Testing, and Campaign `CMP_*` rosters): re-check target goal lists, `maxTier` caps, `excludedMutationIds`, and prerequisite fallout.
