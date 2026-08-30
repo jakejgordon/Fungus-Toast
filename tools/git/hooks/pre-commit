@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fungus Toast pre-commit hook. Installed by tools/git/setup.(ps1|sh) via core.hooksPath.
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+
+# Keep cosmetic Unity scene churn out of commits (see tools/git/scene_churn_guard.py).
+if command -v python >/dev/null 2>&1; then
+    python "$repo_root/tools/git/scene_churn_guard.py" || true
+elif command -v python3 >/dev/null 2>&1; then
+    python3 "$repo_root/tools/git/scene_churn_guard.py" || true
+fi
+
+exit 0

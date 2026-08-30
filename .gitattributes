@@ -6,14 +6,16 @@
 # Meta files (LF avoids Unity warnings)
 *.meta          text eol=lf
 
-# Unity YAML-based assets (force LF for clean diffs)
-*.unity         text eol=lf
-*.prefab        text eol=lf
-*.asset         text eol=lf
-*.mat           text eol=lf
-*.anim          text eol=lf
-*.controller    text eol=lf
-*.overrideController text eol=lf
+# Unity YAML-based assets (force LF for clean diffs).
+# merge=unityyamlmerge => semantic 3-way merge via Unity's SmartMerge tool.
+# Activate the driver locally once with: pwsh tools/git/setup.ps1  (or bash tools/git/setup.sh)
+*.unity         text eol=lf merge=unityyamlmerge
+*.prefab        text eol=lf merge=unityyamlmerge
+*.asset         text eol=lf merge=unityyamlmerge
+*.mat           text eol=lf merge=unityyamlmerge
+*.anim          text eol=lf merge=unityyamlmerge
+*.controller    text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
 *.shader        text eol=lf
 *.cginc         text eol=lf
 *.hlsl          text eol=lf
