@@ -3464,8 +3464,8 @@ namespace FungusToast.Unity.UI
         {
             var mutations = player.PlayerMutations.Values
                 .Where(pm => pm != null && pm.CurrentLevel > 0 && pm.Mutation != null)
-                .OrderBy(pm => pm.FirstUpgradeRound ?? int.MaxValue)
-                .ThenBy(pm => pm.Mutation.TierNumber)
+                .OrderBy(pm => pm.Mutation.TierNumber)
+                .ThenBy(pm => pm.Mutation.Category)
                 .ThenBy(pm => pm.Mutation.Name, StringComparer.CurrentCultureIgnoreCase)
                 .ToList();
 
