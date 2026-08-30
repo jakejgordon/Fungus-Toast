@@ -642,7 +642,8 @@ namespace FungusToast.Core.AI
                 strategyName: "CMP_Reclaim_Scavenger_Easy",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MinorEconomy,
-                maxTier: MutationTier.Tier3,
+                // Necrosporulation moved to Tier 4 (was Tier 3); keep it reachable for this reclaim strategy.
+                maxTier: MutationTier.Tier4,
                 targetMutationGoals: new List<TargetMutationGoal>
                 {
                     new TargetMutationGoal(MutationIds.MycelialBloom, 5),

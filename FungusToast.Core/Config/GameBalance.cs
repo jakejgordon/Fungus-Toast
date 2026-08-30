@@ -176,7 +176,7 @@ namespace FungusToast.Core.Config
         public const int ChitinFortificationSurgeDuration = 3;
         public const int ChitinFortificationPointIncreasePerLevel = 1;
 
-        // Necrosporulation (Tier 3 CellularResilience)
+        // Necrosporulation (Tier 4 CellularResilience)
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int NecrosporulationMaxLevel = 5;
 
@@ -216,7 +216,7 @@ namespace FungusToast.Core.Config
         public const float CompetitiveAntagonismSporicidalBloomSmallerColonyReduction = 0.75f; // 75% smaller colony tile reduction
         public const float CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction = 0.75f; // 75% smaller colony dead cell reduction
 
-        // Regenerative Hyphae (Tier 4 Growth)
+        // Regenerative Hyphae (Tier 3 CellularResilience)
         public const float RegenerativeHyphaeReclaimChance = 0.03f;
         public const int RegenerativeHyphaeMaxLevel = 5;
 

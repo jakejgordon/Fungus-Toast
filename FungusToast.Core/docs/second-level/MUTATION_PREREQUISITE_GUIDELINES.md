@@ -23,7 +23,7 @@ The mutation tree is organized into six categories, each supporting a different 
 - Focus: survival, death resistance, and recovery
 - Common mechanics: death-probability reduction, lifespan extension, spore-on-death, reclamation, dead-cell interaction
 - Strategic role: defensive stability and long-game persistence
-- Representative mutations: Homeostatic Harmony, Chronoresilient Cytoplasm, Necrosporulation, Regenerative Hyphae
+- Representative mutations: Homeostatic Harmony, Chronoresilient Cytoplasm, Regenerative Hyphae, Necrosporulation
 
 ### Fungicide
 
@@ -193,7 +193,7 @@ When adding or revising a mutation definition:
 ## Current Review Hotspots
 
 1. Ontogenic Regression now uses Hyperadaptive Drift 2 plus the explicit 10 Tier-1 levels in each of three categories foundation gate; acquisition timing still needs simulation evidence.
-2. Hypersystemic Regeneration remains a rare four-edge upstream capstone path; the other live category paths now stay within the target three-edge depth.
+2. Cellular Resilience now chains Homeostatic Harmony -> Chronoresilient Cytoplasm -> Regenerative Hyphae (Tier 3) -> Necrosporulation (Tier 4). This shortens the Hypersystemic Regeneration path to three edges but pushes Necrohyphal Infiltration and Catabolic Rebirth to a four-edge upstream depth (they require Necrosporulation 5, which now sits behind Regenerative Hyphae 5). Both are Tier 5/6 reclamation capstones, so the extra depth is treated as an accepted exception; watch their acquisition timing in simulation.
 3. Mycotropic Induction's four Tendril prerequisites remain an explicit set-completion exception and need grouped UI treatment.
 
 ## Implementation References

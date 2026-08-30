@@ -45,21 +45,6 @@ namespace FungusToast.Core.Mutations.Factories
 
             // Tier-3
             helper.MakeChild(new Mutation(
-                id: MutationIds.Necrosporulation,
-                name: "Necrosporulation",
-                description: $"A dying cell can colonize an empty tile somewhere else on the toast.\n\n" +
-                             $"<b>Technical:</b> When one of your fungal cells dies, each level gives a {helper.FormatPercent(GameBalance.NecrosporulationEffectPerLevel)} chance to colonize a random empty tile.",
-                flavorText: "Cytoplasmic apoptosis releases sporogenic factors for opportunistic rebirth.",
-                type: MutationType.Necrosporulation,
-                effectPerLevel: GameBalance.NecrosporulationEffectPerLevel,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
-                maxLevel: GameBalance.NecrosporulationMaxLevel,
-                category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier3
-            ), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
-
-            // Tier-4
-            helper.MakeChild(new Mutation(
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
                 description: $"Reclaims your own dead cells near your living colony.\n\n" +
@@ -67,12 +52,27 @@ namespace FungusToast.Core.Mutations.Factories
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,
                 effectPerLevel: GameBalance.RegenerativeHyphaeReclaimChance,
-                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.RegenerativeHyphaeMaxLevel,
+                category: MutationCategory.CellularResilience,
+                tier: MutationTier.Tier3
+            ), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
+
+            // Tier-4
+            helper.MakeChild(new Mutation(
+                id: MutationIds.Necrosporulation,
+                name: "Necrosporulation",
+                description: $"A dying cell can colonize an empty tile somewhere else on the toast.\n\n" +
+                             $"<b>Technical:</b> When one of your fungal cells dies, each level gives a {helper.FormatPercent(GameBalance.NecrosporulationEffectPerLevel)} chance to colonize a random empty tile.",
+                flavorText: "Cytoplasmic apoptosis releases sporogenic factors for opportunistic rebirth.",
+                type: MutationType.Necrosporulation,
+                effectPerLevel: GameBalance.NecrosporulationEffectPerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
+                maxLevel: GameBalance.NecrosporulationMaxLevel,
                 category: MutationCategory.CellularResilience,
                 tier: MutationTier.Tier4
             ),
-                new MutationPrerequisite(MutationIds.Necrosporulation, 5));
+                new MutationPrerequisite(MutationIds.RegenerativeHyphae, 5));
 
             // Tier-5
             helper.MakeChild(new Mutation(

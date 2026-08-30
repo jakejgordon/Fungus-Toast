@@ -25,8 +25,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 /* ------------ Cellular Resilience (col 1) ----------- */
                 { MutationIds.HomeostaticHarmony,       new MutationLayoutMetadata(1, 0, MutationCategory.CellularResilience) },
                 { MutationIds.ChronoresilientCytoplasm, new MutationLayoutMetadata(1, 1, MutationCategory.CellularResilience) },
-                { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
-                { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
+                { MutationIds.RegenerativeHyphae,       new MutationLayoutMetadata(1, 2, MutationCategory.CellularResilience) },
+                { MutationIds.Necrosporulation,         new MutationLayoutMetadata(1, 3, MutationCategory.CellularResilience) },
                 { MutationIds.NecrohyphalInfiltration,  new MutationLayoutMetadata(1, 4, MutationCategory.CellularResilience) },
                 { MutationIds.CatabolicRebirth,         new MutationLayoutMetadata(1, 5, MutationCategory.CellularResilience) },
                 { MutationIds.HypersystemicRegeneration, new MutationLayoutMetadata(1, 6, MutationCategory.CellularResilience) },

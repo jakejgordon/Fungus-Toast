@@ -14,21 +14,18 @@ namespace FungusToast.Core.Tests.Mutations;
 public class Tier4MutationTests
 {
     [Fact]
-    public void RegenerativeHyphae_is_tier4_cellular_resilience_and_requires_necrosporulation_five()
+    public void Necrosporulation_is_tier4_cellular_resilience_and_requires_regenerative_hyphae_five()
     {
-        var mutation = RequireMutation(MutationIds.RegenerativeHyphae);
+        var mutation = RequireMutation(MutationIds.Necrosporulation);
 
         Assert.Equal(MutationCategory.CellularResilience, mutation.Category);
         Assert.Equal(MutationTier.Tier4, mutation.Tier);
-        Assert.Equal(MutationType.ReclaimOwnDeadCells, mutation.Type);
+        Assert.Equal(MutationType.Necrosporulation, mutation.Type);
         var prerequisite = Assert.Single(mutation.Prerequisites);
-        Assert.Equal(MutationIds.Necrosporulation, prerequisite.MutationId);
+        Assert.Equal(MutationIds.RegenerativeHyphae, prerequisite.MutationId);
         Assert.Equal(5, prerequisite.RequiredLevel);
-        Assert.Contains("Reclaims your own dead cells near your living colony", mutation.Description);
-        Assert.Contains("After the Growth Phase and before the Decay Phase", mutation.Description);
-        Assert.Contains("checked at most once per round", mutation.Description);
-        Assert.Contains(mutation, RequireMutation(MutationIds.Necrosporulation).Children);
-        Assert.DoesNotContain(mutation, RequireMutation(MutationIds.MycotropicInduction).Children);
+        Assert.Contains("colonize an empty tile somewhere else on the toast", mutation.Description);
+        Assert.Contains(mutation, RequireMutation(MutationIds.RegenerativeHyphae).Children);
     }
 
     [Fact]

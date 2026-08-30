@@ -11,16 +11,17 @@ namespace FungusToast.Core.Tests.Mutations;
 public class Tier3MutationTests
 {
     [Fact]
-    public void Necrosporulation_is_tier3_cellular_resilience_and_requires_chronoresilient_cytoplasm_level_five()
+    public void RegenerativeHyphae_is_tier3_cellular_resilience_and_requires_chronoresilient_cytoplasm_level_five()
     {
-        var mutation = RequireMutation(MutationIds.Necrosporulation);
+        var mutation = RequireMutation(MutationIds.RegenerativeHyphae);
 
         Assert.Equal(MutationCategory.CellularResilience, mutation.Category);
         Assert.Equal(MutationTier.Tier3, mutation.Tier);
-        Assert.Equal(MutationType.Necrosporulation, mutation.Type);
+        Assert.Equal(MutationType.ReclaimOwnDeadCells, mutation.Type);
         var prereq = Assert.Single(mutation.Prerequisites);
         Assert.Equal(MutationIds.ChronoresilientCytoplasm, prereq.MutationId);
         Assert.Equal(5, prereq.RequiredLevel);
+        Assert.Contains(mutation, RequireMutation(MutationIds.ChronoresilientCytoplasm).Children);
     }
 
     [Fact]

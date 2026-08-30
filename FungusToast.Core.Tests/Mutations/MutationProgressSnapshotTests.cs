@@ -29,16 +29,17 @@ public class MutationProgressSnapshotTests
     {
         var player = CreatePlayer(mutationPoints: 10);
         var mutation = MutationRegistry.GetById(MutationIds.RegenerativeHyphae)!;
-        player.SetMutationLevel(MutationIds.Necrosporulation, newLevel: 4, currentRound: 1);
+        player.SetMutationLevel(MutationIds.ChronoresilientCytoplasm, newLevel: 4, currentRound: 1);
 
         var snapshot = MutationProgressSnapshot.Create(mutation, player);
 
         var requirement = Assert.Single(snapshot.Requirements);
-        Assert.Equal(MutationIds.Necrosporulation, requirement.MutationId);
+        Assert.Equal(MutationIds.ChronoresilientCytoplasm, requirement.MutationId);
         Assert.Equal(4, requirement.CurrentLevel);
         Assert.Equal(5, requirement.RequiredLevel);
         Assert.False(requirement.IsMet);
         Assert.True(snapshot.HasUnmetPrerequisites);
+        Assert.Contains(snapshot.DirectDependents, dependent => dependent.Id == MutationIds.Necrosporulation);
         Assert.Contains(snapshot.DirectDependents, dependent => dependent.Id == MutationIds.HypersystemicRegeneration);
     }
 
