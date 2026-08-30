@@ -47,7 +47,7 @@ namespace FungusToast.Unity.Grid
         private static void ToggleEditorPreview()
         {
             EditorPreviewEnabled = !EditorPreviewEnabled;
-            foreach (GridFiller filler in FindObjectsByType<GridFiller>(FindObjectsSortMode.None))
+            foreach (GridFiller filler in FindObjectsByType<GridFiller>())
             {
                 filler.QueueEditorPreview();
             }
