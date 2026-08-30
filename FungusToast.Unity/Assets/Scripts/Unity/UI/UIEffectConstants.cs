@@ -654,7 +654,7 @@ namespace FungusToast.Unity.UI
         /// <summary>
         /// Duration of the coachmark fade-and-scale entrance before its border pulses.
         /// </summary>
-        public const float CoachmarkEntranceDurationSeconds = 0.3f;
+        public const float CoachmarkEntranceDurationSeconds = 0.6f;
 
         /// <summary>
         /// Duration of each finite coachmark border pulse.
