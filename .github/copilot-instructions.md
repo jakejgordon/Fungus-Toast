@@ -32,6 +32,7 @@ If a task is unclear, use this routing order before making changes:
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
 - **Git worktree / branch workflow for isolated task checkouts:** `docs/GIT_WORKTREE_WORKFLOW.md`
+- **Unity scene/prefab staging, churn guard, and conflict workflow:** `docs/UNITY_CONCURRENT_WORKFLOW.md`
 - **Unity UI style rules:** `FungusToast.Core/docs/UI_STYLE_GUIDE.md`
 - **Technical architecture context:** `FungusToast.Core/docs/ARCHITECTURE_OVERVIEW.md`
 - **Canonical gameplay terminology and state verbs:** `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
@@ -62,6 +63,7 @@ Main projects:
 - When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
 - Never commit scratch/debug output (bakeoff results, diagnostic dumps, one-off patch files, temp asset exports, etc.) at the repo root or anywhere else tracked. Put it in the repo-root `TEMP/` folder instead — it is gitignored (matches the existing `[Tt]emp/` rule) and safe to leave untracked.
+- Never use `git add -A` or `git add .`; stage files by explicit path. For any Unity scene or prefab change, follow `docs/UNITY_CONCURRENT_WORKFLOW.md`, including its rules for unintended diffs, minimal YAML edits, churn-guard verification, and merge conflicts.
 
 ## Build and Validation Expectations
 
