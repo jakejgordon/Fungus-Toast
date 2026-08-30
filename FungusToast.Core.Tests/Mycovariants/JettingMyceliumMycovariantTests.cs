@@ -197,6 +197,40 @@ public class JettingMyceliumMycovariantTests
         Assert.True(bestPlacement.Value.score > 0f);
     }
 
+    [Fact]
+    public void EvaluatePlacement_weights_damage_to_the_higher_ranked_player_more_heavily()
+    {
+        var board = new GameBoard(width: 20, height: 11, playerCount: 3);
+        var owner = new Player(0, "P0", PlayerTypeEnum.AI);
+        var leader = new Player(1, "P1", PlayerTypeEnum.AI);
+        var trailing = new Player(2, "P2", PlayerTypeEnum.AI);
+        board.Players.Add(owner);
+        board.Players.Add(leader);
+        board.Players.Add(trailing);
+
+        board.PlaceInitialSpore(playerId: owner.PlayerId, x: 10, y: 5);
+        board.PlaceInitialSpore(playerId: leader.PlayerId, x: 19, y: 10);
+        board.PlaceInitialSpore(playerId: trailing.PlayerId, x: 0, y: 0);
+
+        // Single infest target on each side, equidistant from the source cell.
+        PlaceOwnedLivingCell(board, leader, GetTileId(board, x: 11, y: 5));
+        PlaceOwnedLivingCell(board, trailing, GetTileId(board, x: 9, y: 5));
+
+        // Make the leader clearly out in front on living cell count.
+        for (int x = 12; x <= 19; x++)
+        {
+            PlaceOwnedLivingCell(board, leader, GetTileId(board, x: x, y: 0));
+        }
+
+        var sourceCell = board.GetCell(owner.StartingTileId!.Value)!;
+
+        float towardLeader = JettingMyceliumHelper.EvaluatePlacement(sourceCell, CardinalDirection.East, board, owner);
+        float towardTrailing = JettingMyceliumHelper.EvaluatePlacement(sourceCell, CardinalDirection.West, board, owner);
+
+        Assert.True(towardLeader > towardTrailing,
+            $"Expected hitting the leader (score {towardLeader}) to outscore hitting the trailing player (score {towardTrailing}).");
+    }
+
     private static void PlaceResistantLivingCell(GameBoard board, Player owner, int tileId)
     {
         var cell = new FungalCell(ownerPlayerId: owner.PlayerId, tileId: tileId, source: GrowthSource.InitialSpore, lastOwnerPlayerId: null);

@@ -18,6 +18,15 @@ namespace FungusToast.Core.Config
         public static readonly int[] JettingMyceliumIIToxinRowWidths = new[] { 3, 3, 5, 7, 9 };
         public static readonly int[] JettingMyceliumIIIToxinRowWidths = new[] { 3, 3, 5, 7, 9, 11 };
 
+        /// <summary>
+        /// AI / auto-placement bias for Jetting Mycelium. Each infested or poisoned enemy cell's
+        /// base placement score is multiplied by a factor that scales with the target owner's
+        /// current standing (ranked by living cell count): the trailing player contributes 1.0x,
+        /// the leader contributes (1.0 + this bonus). A value of 1.0 makes the leader's cells worth
+        /// double a last-place player's; 0 disables rank weighting entirely.
+        /// </summary>
+        public const float JettingMyceliumTargetRankScoreBonus = 1.0f;
+
         public const int PlasmidBountyMutationPointAward = 7;
         public const int PlasmidBountyIIMutationPointAward = 11;
         public const int PlasmidBountyIIIMutationPointAward = 15;
