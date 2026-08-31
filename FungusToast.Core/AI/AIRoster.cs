@@ -193,6 +193,29 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "Filament Regrowth",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                    new TargetMutationGoal(MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Growth,
+                    MycovariantCategory.Resistance,
+                    MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "Power Mutations Max Econ",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.MaxEconomy,
@@ -2365,6 +2388,7 @@ namespace FungusToast.Core.AI
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
+                ["Filament Regrowth"] = StrategyTheme.Defense,
                 ["SurgeFreq_10_Hyphal"] = StrategyTheme.SurgeTempo,
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyTheme.SurgeTempo,
                 ["Power Mutations Max Econ"] = StrategyTheme.LateGameSpike,
@@ -2418,6 +2442,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
+                ["Filament Regrowth"] = StrategyPowerTier.Strong,
                 ["TST_FortressResilience"] = StrategyPowerTier.Weak,
                 ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
                 ["TST_RebirthAttrition"] = StrategyPowerTier.Weak,
@@ -2501,6 +2526,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI7_Hyphal"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyRole.Experimental,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyRole.Experimental,
+                ["Filament Regrowth"] = StrategyRole.Spice,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Boss,
@@ -2569,6 +2595,7 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+                ["Filament Regrowth"] = StrategyLifecycle.Active,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_CreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
@@ -2646,6 +2673,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["Filament Regrowth"] = new[] { DifficultyBand.Hard },
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["CMP_TierCap_GrowthResilience_Easy"] = new[] { DifficultyBand.Easy },

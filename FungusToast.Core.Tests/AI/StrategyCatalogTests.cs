@@ -12,6 +12,32 @@ namespace FungusToast.Core.Tests.AI;
 public class StrategyCatalogTests
 {
     [Fact]
+    public void Filament_regrowth_is_a_strong_single_player_growth_regeneration_strategy()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.ProvenStrategiesByName["Filament Regrowth"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                (MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
+                (MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
+                (MutationIds.FilamentOverdrive, GameBalance.FilamentOverdriveMaxLevel),
+                (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                (MutationIds.HypersystemicRegeneration, GameBalance.HypersystemicRegenerationMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+
+        var catalogEntry = AIRoster.GetStrategyCatalogEntry(StrategySetEnum.Proven, strategy.StrategyName);
+        Assert.NotNull(catalogEntry);
+        Assert.Equal(StrategyPowerTier.Strong, catalogEntry.PowerTier);
+        Assert.Equal(StrategyRole.Spice, catalogEntry.Role);
+        Assert.Equal(StrategyLifecycle.Active, catalogEntry.Lifecycle);
+        Assert.Equal(StrategyArchetype.Defense, catalogEntry.Archetype);
+        Assert.True(catalogEntry.Pools.HasFlag(StrategyPool.SimulationBaseline));
+    }
+
+    [Fact]
     public void Filament_overdrive_is_sequenced_after_the_strategy_engine()
     {
         var expectedPredecessors = new Dictionary<string, int>
