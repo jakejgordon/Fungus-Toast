@@ -12,31 +12,41 @@ namespace FungusToast.Core.Tests.AI;
 public class StrategyCatalogTests
 {
     [Fact]
-    public void Creeping_mold_focused_strategies_max_filament_overdrive_next()
+    public void Filament_overdrive_is_sequenced_after_the_strategy_engine()
     {
-        var focusedStrategies = new[]
+        var expectedPredecessors = new Dictionary<string, int>
         {
-            AIRoster.ProvenStrategiesByName["Creeping>Necrosporulation"],
-            AIRoster.ProvenStrategiesByName["TST_AnabolicCreepingNecroRegressionCascade"],
-            AIRoster.ProvenStrategiesByName["TST_CreepingNecroRegressionCascade"],
-            AIRoster.CampaignStrategiesByName["TST_AI10_CreepingRegression"],
-            AIRoster.CampaignStrategiesByName["CMP_Bloom_CreepingNecro_Medium"],
-            AIRoster.CampaignStrategiesByName["CMP_Bloom_CreepingRegression_Elite"]
+            ["Creeping>Necrosporulation"] = MutationIds.Necrosporulation,
+            ["TST_AnabolicCreepingNecroRegressionCascade"] = MutationIds.NecrophyticBloom,
+            ["TST_CreepingNecroRegressionCascade"] = MutationIds.NecrophyticBloom,
+            ["TST_AI10_CreepingRegression"] = MutationIds.NecrophyticBloom,
+            ["CMP_Bloom_CreepingRegression_Elite"] = MutationIds.OntogenicRegression
         };
 
-        foreach (var candidate in focusedStrategies)
+        foreach (var (strategyName, predecessorId) in expectedPredecessors)
         {
-            var strategy = Assert.IsType<ParameterizedSpendingStrategy>(candidate);
-            int creepingIndex = strategy.TargetMutationGoals
-                .Select((goal, index) => (goal, index))
-                .Single(pair => pair.goal.MutationId == MutationIds.CreepingMold)
-                .index;
+            var strategy = Assert.IsType<ParameterizedSpendingStrategy>(
+                AIRoster.ProvenStrategiesByName.TryGetValue(strategyName, out var proven)
+                    ? proven
+                    : AIRoster.CampaignStrategiesByName[strategyName]);
+            var goalIds = strategy.TargetMutationGoals.Select(goal => goal.MutationId).ToArray();
+            var filamentIndex = Array.IndexOf(goalIds, MutationIds.FilamentOverdrive);
 
-            Assert.Equal(GameBalance.CreepingMoldMaxLevel, strategy.TargetMutationGoals[creepingIndex].TargetLevel);
-            Assert.True(creepingIndex + 1 < strategy.TargetMutationGoals.Count);
-            Assert.Equal(MutationIds.FilamentOverdrive, strategy.TargetMutationGoals[creepingIndex + 1].MutationId);
-            Assert.Equal(GameBalance.FilamentOverdriveMaxLevel, strategy.TargetMutationGoals[creepingIndex + 1].TargetLevel);
+            Assert.True(filamentIndex > 0, $"{strategyName} must target Filament Overdrive after its engine.");
+            Assert.Equal(predecessorId, goalIds[filamentIndex - 1]);
+            Assert.Equal(GameBalance.FilamentOverdriveMaxLevel, strategy.TargetMutationGoals[filamentIndex].TargetLevel);
         }
+    }
+
+    [Theory]
+    [InlineData("CMP_Growth_PutridTendrils_Medium")]
+    [InlineData("CMP_Growth_WildfireBloom_Medium")]
+    [InlineData("CMP_Bloom_CreepingNecro_Medium")]
+    public void Campaign_strategies_do_not_take_an_unprofitable_filament_detour(string strategyName)
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName[strategyName]);
+
+        Assert.DoesNotContain(strategy.TargetMutationGoals, goal => goal.MutationId == MutationIds.FilamentOverdrive);
     }
 
     [Theory]

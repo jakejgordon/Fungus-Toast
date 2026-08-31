@@ -185,6 +185,10 @@ namespace FungusToast.Simulation.Export
                         BankedPoints = player.BankedPoints,
                         EffectiveGrowthChance = player.EffectiveGrowthChance,
                         EffectiveSelfDeathChance = player.EffectiveSelfDeathChance,
+                        FilamentOverdriveTriggers = player.FilamentOverdriveTriggers,
+                        FilamentOverdriveBonusCells = player.FilamentOverdriveBonusCells,
+                        FilamentOverdriveSourceDeaths = player.FilamentOverdriveTriggers,
+                        FilamentOverdriveNetImmediateCells = player.FilamentOverdriveBonusCells - player.FilamentOverdriveTriggers,
                         AvgAIScoreAtDraft = player.AvgAIScoreAtDraft
                     });
                 }

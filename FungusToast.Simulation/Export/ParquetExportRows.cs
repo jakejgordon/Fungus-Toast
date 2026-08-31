@@ -61,6 +61,10 @@ namespace FungusToast.Simulation.Export
         public int BankedPoints { get; set; }
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
+        public int FilamentOverdriveTriggers { get; set; }
+        public int FilamentOverdriveBonusCells { get; set; }
+        public int FilamentOverdriveSourceDeaths { get; set; }
+        public int FilamentOverdriveNetImmediateCells { get; set; }
         public float? AvgAIScoreAtDraft { get; set; }
     }
 
