@@ -18,6 +18,7 @@ If a task is unclear, use this routing order before making changes:
 - **Simulation workflows, reproducibility, fairness testing, and balance runs:** `FungusToast.Core/docs/SIMULATION_HELPER.md` (final balance/campaign calls must be artifact-backed, not console-only)
 - **Board background authoring and irregular silhouette baking:** `FungusToast.Core/docs/NEW_BACKGROUND_HELPER.md`
 - **AI strategy authoring and roster metadata:** `FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md`
+- **AI Architecture and Balance Overhaul initiative:** `FungusToast.Core/docs/AI_ARCHITECTURE_BALANCE_OVERHAUL.md`
 - **Mutation authoring:** `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
 - **Mycovariant authoring:** `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
 - **Adaptation authoring:** `FungusToast.Core/docs/ADAPTATION_HELPER.md`
