@@ -12,10 +12,12 @@ The completed Phase 0–1 evidence inventory is in
 
 ## 1. Initiative Status
 
-- **State:** Phase 2 experiment infrastructure in progress; P2-A complete
+- **State:** Phase 2 experiment infrastructure complete; determinism hardening
+  is in progress before Phase 3.
 - **Implementation started:** Yes
-- **Current gate:** Implement P2.6 checked-in contract fixtures for replay and
-  selective resume; P2.1–P2.5 are complete.
+- **Current gate:** Resolve the audited unseeded-random and Unity double-spending
+  seams, then treat the completed P2.1–P2.6 experiment contract as the reliable
+  foundation for Phase 3 measurement work.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -335,8 +337,11 @@ gate remains open.
   interrupted, and missing conditions rerun, while mismatched complete output
   is rejected. The offline analyzer regenerated twice with byte-identical
   outputs and no simulation rerun.
-- **P2.6:** Create small contract fixtures proving replay equality and selective
-  resume behavior.
+- **P2.6 — complete:** The checked-in
+  `FungusToast.Simulation/Examples/verify-experiment-contract.sh` fixture builds
+  the solution, proves selective resume across an expanded board-size matrix,
+  replays a completed condition in a separate process, verifies canonical
+  outcome equality, and validates the resolved-manifest checksum.
 - **Gate:** Replaying a resolved manifest produces the same lineup, conditions,
   seed schedule, and deterministic outcomes; artifacts explain every input.
 

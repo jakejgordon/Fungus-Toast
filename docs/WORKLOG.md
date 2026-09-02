@@ -105,10 +105,14 @@ measurement model, phase gates, and open product decisions are in
    missing/failed/interrupted conditions, and refuses a completed artifact with
    a different execution fingerprint. The resume skip and mismatch refusal
    passed end to end. Offline analysis regeneration was byte-identical across
-   repeated runs. Next, check in the P2.6 replay/resume contract fixture.
-7. Characterize and later resolve the critical Unity double-spending and
+   repeated runs.
+7. P2.6 is complete. The checked-in experiment-contract fixture proves a
+   two-condition run can be selectively resumed after adding a third condition,
+   then replays one completed condition in a separate process with an identical
+   canonical outcome and a valid resolved-manifest checksum.
+8. Next, characterize and resolve the critical Unity double-spending and
    unseeded-random seams before treating Simulation as a faithful player-facing
-   AI oracle or starting architecture migration.
+   AI oracle or starting Phase 3 measurement work.
 
 ### Completion Criteria
 

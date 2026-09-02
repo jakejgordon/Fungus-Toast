@@ -80,6 +80,19 @@ idempotent: rerun `FungusToast.Analytics/analyze_balance.py` against the existin
 run folder. Repeated regeneration was verified to produce byte-identical
 analysis outputs.
 
+Run the checked-in replay/resume contract fixture from the repository root:
+
+```bash
+bash FungusToast.Simulation/Examples/verify-experiment-contract.sh
+```
+
+The fixture builds the solution, runs two board-size conditions, resumes after
+adding a third condition and requires exactly two skips plus one new run, then
+replays the first condition in a separate process and verifies both canonical
+outcome equality and the resolved-manifest checksum. Its generated simulation
+artifacts remain under the normal ignored output directory; diagnostic logs are
+written under `/tmp`.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.
