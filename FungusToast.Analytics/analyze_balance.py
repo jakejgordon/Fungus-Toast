@@ -115,6 +115,10 @@ def _empty_player_summary() -> pd.DataFrame:
         "wins",
         "win_pct",
         "avg_living_cells",
+        "avg_normalized_board_share",
+        "win_rate_surplus",
+        "avg_final_rank",
+        "avg_normalized_rank",
         "avg_dead_cells",
         "avg_toxins",
     ]
@@ -145,10 +149,28 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     if players.empty or not required_columns.issubset(players.columns):
         return _empty_player_summary()
 
-    grouped = players.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
+    outcome_group_columns = ["game_index"]
+    if "condition_id" in players.columns:
+        outcome_group_columns.insert(0, "condition_id")
+    metrics = players.copy()
+    if "total_living_cells" not in metrics.columns:
+        metrics["total_living_cells"] = metrics.groupby(outcome_group_columns)["living_cells"].transform("sum")
+    if "player_count" not in metrics.columns:
+        metrics["player_count"] = metrics.groupby(outcome_group_columns)["player_id"].transform("size")
+    if "final_rank" not in metrics.columns:
+        metrics["final_rank"] = metrics.groupby(outcome_group_columns)["living_cells"].rank(method="min", ascending=False)
+    metrics["normalized_board_share"] = np.where(metrics["total_living_cells"] > 0, metrics["living_cells"] * metrics["player_count"] / metrics["total_living_cells"], 0.0)
+    metrics["win_rate_surplus"] = metrics["is_winner"].astype(float) - 1.0 / metrics["player_count"].clip(lower=1)
+    metrics["normalized_rank"] = np.where(metrics["player_count"] > 1, (metrics["player_count"] - metrics["final_rank"]) / (metrics["player_count"] - 1), 1.0)
+
+    grouped = metrics.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
         games=("game_index", "count"),
         wins=("is_winner", "sum"),
         avg_living_cells=("living_cells", "mean"),
+        avg_normalized_board_share=("normalized_board_share", "mean"),
+        win_rate_surplus=("win_rate_surplus", "mean"),
+        avg_final_rank=("final_rank", "mean"),
+        avg_normalized_rank=("normalized_rank", "mean"),
         avg_dead_cells=("dead_cells", "mean"),
         avg_toxins=("end_game_toxin_cells", "mean"),
     )
@@ -163,6 +185,10 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
             "wins",
             "win_pct",
             "avg_living_cells",
+            "avg_normalized_board_share",
+            "win_rate_surplus",
+            "avg_final_rank",
+            "avg_normalized_rank",
             "avg_dead_cells",
             "avg_toxins",
         ]
@@ -699,7 +725,7 @@ def write_markdown_report(
         f"- Report filtering: confidence >= {min_confidence:.2f}, picks >= {min_picks}, eligible_samples >= {min_eligible_samples}.",
         "",
         "## Post-Simulation Player Summary",
-        _table(full_player_summary.round(2), ["player", "win_pct", "avg_living_cells", "avg_dead_cells", "avg_toxins"]),
+        _table(full_player_summary.round(3), ["player", "win_pct", "avg_living_cells", "avg_normalized_board_share", "win_rate_surplus", "avg_final_rank", "avg_normalized_rank", "avg_dead_cells", "avg_toxins"]),
         "## Growth Source Composition",
         _table(full_growth_source_summary.round(2), ["player", "total_living", "growth_source", "count", "pct_from_growth_source"]),
         "## Mutations - OP Candidates",

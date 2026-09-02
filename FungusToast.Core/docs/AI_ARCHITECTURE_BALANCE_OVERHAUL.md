@@ -13,7 +13,8 @@ The completed Phase 0–1 evidence inventory is in
 ## 1. Initiative Status
 
 - **State:** Phase 2 experiment infrastructure and source-level determinism
-  hardening complete; Unity integration validation is pending before Phase 3.
+  hardening complete; manual Unity integration validation passed on 2026-09-02;
+  Phase 3 measurement work is in progress.
 - **Implementation started:** Yes
 - **Current gate:** Compile and exercise the updated normal Unity mutation phase,
   confirming AI strategies spend once after human turns. Then treat the

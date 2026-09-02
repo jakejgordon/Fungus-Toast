@@ -116,17 +116,17 @@ measurement model, phase gates, and open product decisions are in
    result.
 9. The resistant-cell Hyphal Resistance Transfer hook now requires an injected
    RNG, and its Unity caller uses `GameManager`'s gameplay stream. A focused test
-   proves the supplied source controls the transfer rolls. Unity Editor compile
-   validation remains pending for the updated call site.
+   proves the supplied source controls the transfer rolls. Jake confirmed the
+   Unity compile and affected flow work normally on 2026-09-02.
 10. The Unity double-spending path is fixed at the source boundary. Core now
     exposes point-income-only mutation-phase setup for interactive front ends;
     normal Unity uses it and defers AI strategy execution until humans finish.
     Simulation and fast-forward retain the one-step income-plus-spend contract.
     Focused Core tests cover both paths, and the replay/resume fixture still
     passes.
-11. Next, manually compile Unity and play one normal mutation phase to confirm
-    each AI strategy spends once after the human turn, then begin Phase 3
-    measurement and classification work.
+11. Jake confirmed the Unity integration gate on 2026-09-02: Unity compiled
+    cleanly, AI mutation purchases occurred once after human mutation turns,
+    and Mycelial Bastion plus Hyphal Resistance Transfer worked normally.
 12. P3.1 is complete. `players.parquet` records each game's total living-cell
     denominator, tie-aware competition rank, tie-group size, starting
     slot/coordinates, Adaptations, and raw condition ID. It also records

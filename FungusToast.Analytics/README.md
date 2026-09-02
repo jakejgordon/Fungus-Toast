@@ -27,7 +27,7 @@ Default export root is:
 
 The standard post-simulation outputs are:
 
-- `post_simulation_player_summary.csv`: one row per player/strategy with `Win %`, `Avg Living Cells`, `Avg Dead Cells`, and `Avg Toxins`
+- `post_simulation_player_summary.csv`: one row per player/strategy with `Win %`, `Avg Living Cells`, parity-normalized board share, win-rate surplus, tie-aware average/normalized rank, `Avg Dead Cells`, and `Avg Toxins`
 - `growth_source_summary.csv`: one row per `(player, growth source)` with `Total Living`, `Count`, and `% From Growth Source`, sorted by highest `Total Living` player first and then by `Count` descending
 
 For routine simulation summaries, prefer reading `post_simulation_player_summary.csv` directly after running `analyze_balance.py` rather than re-deriving the per-player table by hand from raw parquet files.
