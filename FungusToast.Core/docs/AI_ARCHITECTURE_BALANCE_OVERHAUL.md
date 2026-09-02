@@ -11,8 +11,8 @@ commands and artifact rules. The active session queue remains in
 
 - **State:** Planning and baseline audit
 - **Implementation started:** No
-- **Current gate:** Resolve the product questions in section 12, then execute
-  Phase 0 and Phase 1 without changing player-facing AI behavior.
+- **Current gate:** Resolve the three remaining product questions in section 12,
+  then execute Phase 0 and Phase 1 without changing player-facing AI behavior.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -38,9 +38,9 @@ game content changes.
   explicitly identified and tested as a behavior change.
 - Do not optimize only for win rate. Strength, identity, robustness,
   comprehensibility, and campaign fit are separate promotion dimensions.
-- Do not let candidate generation directly modify player-facing pools. It may
-  produce ranked candidate artifacts automatically; promotion remains a
-  deliberate evidence gate.
+- Candidate generation may automatically add passing candidates to a generated,
+  non-player-facing testing catalog. Promotion into campaign or single-player
+  pools remains a deliberate evidence gate.
 - Do not assume one global difficulty label is sufficient. Map size, geometry,
   player count, lineup, slot, enabled systems, and starting loadout remain
   visible dimensions.
@@ -87,15 +87,16 @@ The working hypothesis is a composed AI controller rather than a larger
 parameter bag or one universal utility function. The exact names are deferred
 until the architecture spike, but the intended responsibilities are:
 
-- **AI strategy definition:** immutable identity, behavior-module selection,
-  tunable parameters, authored archetype intent, lifecycle, and compatibility
-  aliases in one registrable definition.
+- **AI strategy definition:** immutable standardized identity, behavior-module
+  selection, tunable parameters, authored archetype intent, lifecycle,
+  complementary Adaptation configuration, and human-readable summary in one
+  registrable definition.
 - **AI controller:** the single Core entry point used by Simulation and Unity.
   It routes each decision request to a typed policy.
 - **Typed decision policies:** mutation acquisition, surge activation/banking,
-  mycovariant drafting, adaptation/loadout choice where applicable, and any
-  genuine starting-position or reactive-board choice. A strategy may reuse a
-  standard policy or provide a specialized implementation.
+  mycovariant drafting, and reactive-board choices. Adaptations are resolved as
+  complementary starting loadout, not drafted by AI. Starting position remains
+  scenario configuration rather than strategy intelligence.
 - **Read-only decision context:** explicit player, board, round, available
   actions, scenario settings, and deterministic random source. Policies should
   not discover hidden global context.
@@ -103,8 +104,10 @@ until the architecture spike, but the intended responsibilities are:
   reason; the owning rules service validates and applies it.
 - **Decision trace:** structured records of request, legal candidates, selected
   action, reason code, relevant scores, and outcome for debugging and analysis.
-- **Compatibility adapter:** wraps the current mutation-spending strategy while
-  strategies migrate, preserving names and player-facing behavior.
+- **Migration adapter:** wraps the current mutation-spending strategy while
+  behavior is characterized and definitions migrate. Existing names may be
+  reset; compatibility lasts only as long as needed to migrate every reference
+  safely.
 
 The spike must compare this composition model against a minimally cleaned-up
 `ParameterizedSpendingStrategy`. Replacement is justified only if composition
@@ -119,12 +122,62 @@ material regression in determinism or runtime cost.
 | Mutation acquisition | build priorities, prerequisites, fallback, banking | mutation availability and balance |
 | Surge use | activation conditions, targets, timing | enabled content and starting loadout |
 | Mycovariant draft | choice scoring and synergy intent | draft on/off, pool, offers, order |
-| Adaptations | AI draft/loadout policy if such a choice exists | forced starting IDs and campaign grants |
-| Starting position | preference only if AI genuinely chooses | fixed slot, rotation, coordinates, geometry |
+| Adaptations | complementary loadout metadata; no in-game AI drafting | granted count, forced IDs, and campaign overrides |
+| Starting position | none | validated random pool; campaign pool/coordinate override; geometry |
 | Reactive play | board-state response rules | opponent lineup and game systems |
 
 The Phase 1 audit must prevent environmental advantages from being mislabeled
 as AI intelligence.
+
+### Standard identity and summary model
+
+The overhaul may reset all current strategy names. The proposed replacement
+separates immutable machine identity from human presentation and measured
+classification:
+
+- **Strategy ID:** `ai.<primary-archetype>.<identity>.v<major>`, lowercase and
+  stable, for example `ai.growth.frontier-rush.v1`. Do not encode difficulty,
+  lifecycle, roster membership, or current performance in the ID because those
+  can change after recalibration.
+- **Display name:** short human-facing name, unique within active rosters.
+- **Intent summary:** one or two plain-language sentences describing the opening
+  priority, strategic transition, win condition, and any deliberate weakness.
+- **Archetype tags:** structured primary and secondary identities, distinct from
+  measured difficulty.
+- **Teaching mistake:** optional explicit field used for Training opponents,
+  such as over-investing in Growth without Resilience or buying too much
+  Fungicide before establishing Growth. It must never be an undocumented
+  parameter accident.
+- **Definition version/fingerprint:** distinguishes behavior revisions without
+  overloading the display name.
+
+Candidate IDs use a generated namespace and fingerprint. Promotion assigns a
+stable `ai.*` ID. The audit will verify every serialized, CLI, campaign, and UI
+reference that must migrate when current names are reset.
+
+Intent-summary style:
+
+> Pushes for maximum Growth to claim board share quickly, then shifts toward
+> Reclamation in the late game to recover dead cells. Its limited early
+> Resilience makes the opening powerful but fragile.
+
+Summaries describe observable intent rather than implementation parameters, so
+they remain useful to humans, tools, campaign authors, and future candidate
+generation.
+
+### Starting-position model
+
+- For each supported board geometry and player count, testing establishes a
+  validated candidate-position pool and any fairness/difficulty annotations.
+- Normal play assigns AI strategies randomly among the eligible positions; a
+  strategy does not choose its own favorable slot.
+- Campaign scenarios may override the normal pool with a curated pool or exact
+  coordinates. Moving an AI toward the middle may intentionally raise
+  difficulty; moving it toward the playable crust may lower difficulty.
+- Irregular boards use a versioned geometry/mask fingerprint. A campaign level
+  may lock its board mask and exact or curated starting configuration, including
+  future disconnected or holed shapes such as torn bread or a bagel.
+- Placement effects are measured and reported separately from strategy strength.
 
 ## 6. Machine-Readable Experiment Contract
 
@@ -162,6 +215,8 @@ Contract requirements:
 - Resume only missing/failed conditions without silently rerunning successful
   samples.
 - Preserve raw per-game artifacts; derived summaries are regenerable.
+- Reject any individual simulation batch above 100 games. Autonomous searches
+  must use staged batches and prune weak candidates before expensive gates.
 
 ## 7. Measurement and Classification Model
 
@@ -215,11 +270,12 @@ gate remains open.
 
 ### Phase 0 — Freeze scope and baseline vocabulary
 
-- **P0.1:** Resolve section 12 product decisions and record answers here.
+- **P0.1:** Resolve the remaining section 12 product decisions and record answers
+  here.
 - **P0.2:** Define `strategy`, `controller`, `policy`, `candidate`, `condition`,
   `calibration`, `holdout`, `promotion`, and `performance band` precisely.
-- **P0.3:** Inventory player-facing campaign and single-player pools, legacy
-  aliases, preset references, and compatibility obligations.
+- **P0.3:** Inventory player-facing campaign and single-player pools, serialized
+  and CLI references, and the exact migration work required to reset names.
 - **P0.4:** Select a small frozen reference lineup and representative conditions
   for architecture parity tests; do not claim balance from this smoke corpus.
 - **Gate:** Scope, compatibility posture, terminology, and baseline corpus are
@@ -292,8 +348,9 @@ gate remains open.
 
 ### Phase 5 — Implement the AI foundation incrementally
 
-- **P5.1:** Add the unified strategy definition/registry and compatibility alias
-  model; co-locate behavior configuration and authored metadata.
+- **P5.1:** Add the unified strategy definition/registry and standardized identity
+  model; co-locate behavior configuration, complementary Adaptation metadata,
+  authored intent summary, archetypes, and lifecycle metadata.
 - **P5.2:** Add the single AI controller entry point, typed contexts/actions,
   legality boundary, and structured decision trace.
 - **P5.3:** Route mutation acquisition through the controller using a legacy
@@ -302,12 +359,14 @@ gate remains open.
   policy while preserving current behavior.
 - **P5.5:** Route mycovariant drafting through a typed policy instead of a
   concrete strategy downcast; preserve campaign-specific rules explicitly.
-- **P5.6:** Model adaptation/loadout and starting-position behavior according to
-  the Phase 0 product decisions, separating choices from scenario controls.
+- **P5.6:** Resolve complementary starting Adaptations without an AI draft, and
+  implement board/player-count position pools plus curated campaign
+  pool/coordinate/geometry overrides as scenario controls.
 - **P5.7:** Add reactive board-state policy primitives only for demonstrated
   decisions; avoid a catch-all scoring framework.
 - **P5.8:** Migrate a small reference set, then each roster family in isolated
-  slices. Preserve aliases until all presets and saves are verified.
+  slices. Reset names using the standardized IDs and migrate all verified
+  serialized, campaign, CLI, test, and UI references in a controlled cutover.
 - **Gate:** All player-facing strategies use one deterministic boundary, traces
   cover every decision, and legacy behavior or intentional deltas are proven.
 
@@ -320,13 +379,14 @@ gate remains open.
 - **P6.3:** Implement staged evaluation: static validation, unit/characterization
   checks, tiny smoke, calibration comparison, then unseen holdout conditions.
 - **P6.4:** Add dominated-candidate pruning, resource/time budgets, retry caps,
-  and resumable queues.
+  resumable queues, and an enforced maximum of 100 games in any one batch.
 - **P6.5:** Rank strength and robustness separately from archetype fidelity and
   behavioral diversity.
 - **P6.6:** Produce a promotion packet containing definition diff, lineage,
   manifests, metrics, intervals, context bands, traces, failures, and holdouts.
-- **Gate:** A clean run can generate, evaluate, reject, and recommend candidates
-  without manual file edits, while no candidate enters a player-facing pool.
+- **Gate:** A clean run can generate, evaluate, reject, and add passing candidates
+  to the generated testing catalog without manual file edits, while no candidate
+  enters a player-facing pool without review.
 
 ### Phase 7 — Calibrate contextual performance bands
 
@@ -351,8 +411,8 @@ gate remains open.
 - **P8.2:** Define target counts by difficulty, archetype, role, and contextual
   niche, with a maximum roster size justified by player value and maintenance
   cost.
-- **P8.3:** Retire or alias redundant/opaque strategies; preserve campaign
-  compatibility and record replacements.
+- **P8.3:** Retire redundant/opaque strategies, complete the standardized-name
+  cutover, migrate campaign references, and record replacements.
 - **P8.4:** Search for candidates in each gap, with archetype constraints and
   diversity penalties in addition to performance targets.
 - **P8.5:** Review promotion packets and promote only candidates that pass
@@ -441,43 +501,51 @@ changes.
 This order deliberately makes later architecture bakeoffs and balance results
 trustworthy before they become expensive.
 
-## 12. Open Product Decisions
+## 12. Product Decisions
 
-These questions require Jake's answer before their dependent phase. Defaults
-are recommendations, not assumed approvals.
+Approved on 2026-09-01:
 
-1. **Difficulty philosophy (blocks Phase 7):** Should Easy/Training opponents
-   be naturally weaker coherent strategies, deliberate mistake/handicap modes,
-   or both? Recommended: coherent weaker strategies by default, with explicit
-   teaching mistakes only for Training and never hidden inside strength labels.
-2. **Promotion authority (blocks Phase 6):** May automation only recommend
-   candidates, or may it also edit non-player-facing testing rosters after all
-   gates pass? Recommended: it may populate a generated testing-candidate
-   catalog, but player-facing promotion always requires review.
-3. **Adaptation scope (blocks P5.6):** Does “adaptations” mean evaluating/choosing
-   AI starting loadouts, or should AI also gain an adaptation-draft decision
-   surface comparable to campaign player rewards? The current game flow appears
-   to make these different product features.
-4. **Starting-position scope (blocks P5.6):** Should a strategy ever choose or
-   prefer its starting position in normal play, or should position remain only
-   an experimental/campaign environment dimension? Recommended: environment
-   dimension unless the player-facing rules expose a real choice.
-5. **Compatibility horizon (blocks Phase 5):** Should legacy `AI1`, `AI2`, and
-   similar names remain permanent aliases, or may they be removed after all
-   presets are migrated? Recommended: retain aliases through the overhaul and
-   decide retirement only after final campaign validation.
-6. **Compute envelope (blocks final Phase 6 budgets):** What unattended wall
-   time, CPU usage, disk budget, and maximum games per candidate are acceptable?
-   Recommended: make all budgets manifest fields and begin with short resumable
-   runs until throughput is measured.
-7. **Human-model target (blocks Phase 9):** Is the existing campaign safe proxy
-   sufficient for roster placement, or should this initiative define multiple
-   human proxy profiles? Recommended: retain it as the safety anchor but add at
-   least one less-optimized behavior model before final campaign assignments.
-8. **Roster identity priority (blocks Phase 8):** When strength targets conflict
-   with a distinctive but volatile archetype, should contextual specialists be
-   retained as `Spice` opponents? Recommended: yes, when the weakness is
-   measured, surfaced, and excluded from contexts where it becomes misleading.
+1. **Difficulty philosophy:** Use coherent strategies across difficulty levels.
+   Training opponents may have explicit, legible teaching mistakes such as too
+   much Growth without Resilience or too much Fungicide without enough Growth.
+2. **Promotion authority:** Automation should have maximum safe autonomy and may
+   add passing candidates directly to a generated testing catalog. Player-facing
+   campaign and single-player promotion retains an evidence/review gate.
+3. **Adaptations:** Assign complementary Adaptations up front. AI does not draft
+   Adaptations during play.
+4. **Starting positions:** Test and validate candidate pools by board and player
+   count, then assign normal AI positions randomly. Campaign levels may curate
+   easier crustward or harder centerward offsets and may lock special board
+   geometry and positions.
+5. **Naming and summaries:** Resetting all current AI names is acceptable. The
+   overhaul will introduce standardized stable IDs plus human-friendly display
+   names and intent summaries using the model in section 5.
+6. **Compute envelope:** No individual simulation batch may exceed 100 games.
+   Candidate evaluation should use staged, prunable batches rather than
+   thousand-game runs.
+7. **Human models:** Retain the current safe proxy as the campaign safety anchor
+   and add at least one less-optimized human model before final assignments.
+8. **Contextual specialists:** Distinctive volatile strategies may remain as
+   `Spice` opponents when their weaknesses are measured, surfaced, and excluded
+   from misleading contexts.
+
+### Remaining questions
+
+1. **Adaptation quantity and resolution (blocks P5.6):** Should each AI definition
+   own one fixed default Adaptation set, or a ranked set of complementary options
+   from which the scenario supplies a count? Recommended: ranked compatible
+   options on the strategy, while single-player/campaign scenario rules decide
+   how many are granted and may still force exact IDs.
+2. **Summary visibility (blocks final UI scope, not the audit):** Are display
+   names and intent summaries internal authoring/catalog metadata only, or should
+   players see them in campaign/single-player opponent tooltips? Recommended:
+   author them as player-safe text from the start, then expose them wherever an
+   opponent preview already exists without adding a new UI surface prematurely.
+3. **Search breadth (blocks final Phase 6 budget):** Is an initial cap of 20 new
+   candidates per autonomous sweep acceptable, with staged batches of roughly
+   3–5 smoke games, 20 screening games, 50 comparison games, and at most 100
+   holdout games per condition? Simulation games run locally and do not
+   themselves consume ChatGPT credits; agent reasoning and analysis do.
 
 ## 13. Initiative Completion Criteria
 

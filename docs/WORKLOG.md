@@ -76,14 +76,17 @@ measurement model, phase gates, and open product decisions are in
 
 ### Current Queue
 
-1. Resolve the eight product questions in the canonical initiative plan,
-   especially difficulty philosophy, automation authority, Adaptation scope,
-   starting-position scope, and compute envelope.
-2. Execute Phase 0 without behavior changes: lock terminology, compatibility
-   obligations, and the small architecture-parity reference corpus.
-3. Execute Phase 1 in two audit slices: strategy/roster representation first,
+1. Resolve the three remaining questions in the canonical initiative plan:
+   Adaptation quantity/resolution, summary visibility, and autonomous-search
+   breadth.
+2. Execute Phase 0 without behavior changes: lock terminology, name/reference
+   migration obligations, and the small architecture-parity reference corpus.
+3. Include standardized machine IDs, human display names, intent summaries,
+   explicit Training mistakes, complementary starting Adaptations, and
+   board/player-count position pools in the Phase 0 contracts.
+4. Execute Phase 1 in two audit slices: strategy/roster representation first,
    then invocation ownership and experiment/analytics gaps.
-4. Do not begin architecture migration or balance tuning until the audit and
+5. Do not begin architecture migration or balance tuning until the audit and
    reproducible experiment-contract foundation are complete.
 
 ### Completion Criteria
