@@ -18,6 +18,23 @@ namespace FungusToast.Simulation
 
         static void Main(string[] args)
         {
+            var replayManifestPath = GetOptionValue(args, "--replay-manifest");
+            if (replayManifestPath != null)
+            {
+                try
+                {
+                    ResolvedExperimentReplayRunner.Run(
+                        replayManifestPath,
+                        GetOptionValue(args, "--replay-experiment-id"));
+                }
+                catch (Exception exception)
+                {
+                    Console.Error.WriteLine($"Replay failed: {exception.Message}");
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
+
             // Parse command-line arguments
             var config = ParseCommandLineArguments(args);
             if (config == null) return; // Help was displayed, exit early
@@ -55,6 +72,16 @@ namespace FungusToast.Simulation
                 outputManager?.Dispose();
             }
             Environment.Exit(0);
+        }
+
+        private static string? GetOptionValue(string[] args, string option)
+        {
+            for (var index = 0; index < args.Length; index++)
+            {
+                if (string.Equals(args[index], option, StringComparison.OrdinalIgnoreCase) && index + 1 < args.Length)
+                    return args[index + 1];
+            }
+            return null;
         }
 
         private static void RunSingleSimulation(SimulationConfig config, ExperimentManifest inputManifest)
@@ -884,6 +911,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
             Console.WriteLine("  --purpose <text>         Human-readable reason for the experiment");
+            Console.WriteLine("  --replay-manifest <path> Replay and verify a resolved-manifest.json artifact");
+            Console.WriteLine("  --replay-experiment-id   Optional artifact ID for a replay (default: timestamped)");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");

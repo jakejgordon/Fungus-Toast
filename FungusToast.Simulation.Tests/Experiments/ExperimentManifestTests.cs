@@ -125,6 +125,35 @@ public sealed class ExperimentManifestTests
             gameSeedSchedule: new[] { 123 }));
     }
 
+    [Fact]
+    public void OutcomeFingerprint_IsStableAndSensitiveToResults()
+    {
+        var first = new SimulationBatchResult
+        {
+            GameResults = new List<GameResult>
+            {
+                new() { GameIndex = 1, GameSeed = 123, WinnerId = 0, TurnsPlayed = 10 }
+            }
+        };
+        var equivalent = new SimulationBatchResult
+        {
+            GameResults = new List<GameResult>
+            {
+                new() { GameIndex = 1, GameSeed = 123, WinnerId = 0, TurnsPlayed = 10 }
+            }
+        };
+        var changed = new SimulationBatchResult
+        {
+            GameResults = new List<GameResult>
+            {
+                new() { GameIndex = 1, GameSeed = 123, WinnerId = 1, TurnsPlayed = 10 }
+            }
+        };
+
+        Assert.Equal(ExperimentFingerprint.ForOutcomes(first), ExperimentFingerprint.ForOutcomes(equivalent));
+        Assert.NotEqual(ExperimentFingerprint.ForOutcomes(first), ExperimentFingerprint.ForOutcomes(changed));
+    }
+
     private static ExperimentManifest CreateValidManifest(int gamesPerCondition = 100, ExperimentCondition? condition = null) => new()
     {
         SchemaVersion = ExperimentManifest.CurrentSchemaVersion,

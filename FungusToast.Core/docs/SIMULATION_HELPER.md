@@ -13,17 +13,31 @@ position modes, unsupported player counts, and any condition above 100 games
 are rejected. A canonical example is checked in at
 `FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
 
-The JSON file is a contract fixture in P2-A; direct execution and replay from a
-manifest are part of P2-B and are not available yet.
+The input JSON file is a contract fixture in P2-A; direct execution of input
+manifests is not available yet. Resolved artifacts are replayable.
 
 Parquet runs also write `resolved-manifest.json` using
 `fungus-toast.experiment-result.v1` plus `resolved-manifest.sha256`. The resolved
 artifact records the code and binary identities, condition and board
 fingerprints, selected lineup and strategy fingerprints, exact game seeds,
 actual per-game slot assignments, starting coordinates and Adaptations,
-completion status, row counts, and hashes for every emitted dataset. Verify the
-sidecar from inside the artifact directory with `sha256sum -c
-resolved-manifest.sha256`. Replay is the remaining P2-B step.
+completion status, canonical outcome fingerprint, row counts, and hashes for
+every emitted dataset. Verify the sidecar from inside the artifact directory
+with `sha256sum -c resolved-manifest.sha256`.
+
+Replay and verify a completed artifact in one command:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --replay-manifest /path/to/resolved-manifest.json
+```
+
+Replay is strict: the current Core and Simulation binaries and each selected
+strategy fingerprint must match the artifact. It uses the recorded lineup and
+exact game-seed schedule, writes to a timestamped replay artifact by default,
+and exits unsuccessfully if the canonical outcome fingerprint differs. Use
+`--replay-experiment-id <id>` only when a stable non-colliding artifact ID is
+needed.
 
 ## Quick Commands
 

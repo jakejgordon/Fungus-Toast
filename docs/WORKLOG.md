@@ -83,11 +83,13 @@ measurement model, phase gates, and open product decisions are in
    strict structural and semantic validation, CLI-to-manifest translation, an
    enforced 100-game condition ceiling, an example JSON fixture, and a focused
    Simulation test project. Core AI behavior is unchanged.
-3. P2-B resolved evidence is implemented: each Parquet export now includes a
+3. P2.2 is complete: each Parquet export now includes a
    checksummed `resolved-manifest.json` with complete condition controls, exact
    selected and assigned lineups, actual starts/loadouts, code/config/geometry/
-   strategy fingerprints, artifact hashes, and the seed schedule used by the
-   runner. Next, add one-command replay from that artifact and prove equality.
+   strategy/outcome fingerprints, artifact hashes, and the seed schedule used
+   by the runner. `--replay-manifest` performs strict code/strategy checks and
+   fails unless the canonical outcome fingerprint matches; the separate-process
+   replay smoke passed. Next, implement P2.3 Parquet row metadata completeness.
 4. Characterize and later resolve the critical Unity double-spending and
    unseeded-random seams before treating Simulation as a faithful player-facing
    AI oracle or starting architecture migration.

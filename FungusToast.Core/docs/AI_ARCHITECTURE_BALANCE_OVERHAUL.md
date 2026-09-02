@@ -14,9 +14,8 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure in progress; P2-A complete
 - **Implementation started:** Yes
-- **Current gate:** Complete P2-B replay from resolved manifests. Resolved
-  evidence, fingerprints, checksums, actual starting loadouts/positions, and
-  exact execution-owned seed schedules are implemented.
+- **Current gate:** Implement P2.3 by carrying resolved condition controls into
+  the Parquet row schemas; P2.2 resolved evidence and replay are complete.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -310,11 +309,14 @@ gate remains open.
   translation, strict JSON unknown/missing-field handling, semantic validation,
   and the hard 100-game per-condition ceiling. The checked-in example is
   `FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
-- **P2.2 — in progress:** Added `fungus-toast.experiment-result.v1` output with
+- **P2.2 — complete:** Added `fungus-toast.experiment-result.v1` output with
   code, condition, board, balance-binary, execution, and strategy-definition
   fingerprints; exact seed schedules; selected/assigned lineups; actual
   per-game starting coordinates and Adaptations; artifact hashes; completion
-  status; and a manifest checksum sidecar. Replay from this artifact remains.
+  status; a canonical outcome fingerprint; and a manifest checksum sidecar.
+  `--replay-manifest` strictly checks the recorded code and strategy identities,
+  executes the exact lineup/seed schedule, and fails on outcome-fingerprint
+  inequality. A separate-process smoke replay passed on 2026-09-01.
 - **P2.3:** Record all existing controls in metadata and per-game outputs,
   including enabled systems, starting loadouts, geometry identity, and slot.
 - **P2.4:** Add treatment/control manifest diffing and a contamination check that

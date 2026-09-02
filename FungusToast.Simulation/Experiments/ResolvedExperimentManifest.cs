@@ -33,6 +33,7 @@ public sealed class ResolvedCodeIdentity
 public sealed class ResolvedFingerprints
 {
     public required string ExecutionSha256 { get; init; }
+    public required string OutcomeSha256 { get; init; }
     public required string ConditionSha256 { get; init; }
     public required string BoardGeometrySha256 { get; init; }
     public required string BalanceConfigSha256 { get; init; }

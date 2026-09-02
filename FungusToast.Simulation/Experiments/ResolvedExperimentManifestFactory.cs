@@ -33,6 +33,7 @@ public static class ResolvedExperimentManifestFactory
             Fingerprints = new ResolvedFingerprints
             {
                 ExecutionSha256 = executionFingerprint,
+                OutcomeSha256 = ExperimentFingerprint.ForOutcomes(batchResult),
                 ConditionSha256 = conditionFingerprint,
                 BoardGeometrySha256 = ExperimentFingerprint.ForBoard(metadata.Condition.Board),
                 BalanceConfigSha256 = code.CoreAssemblySha256

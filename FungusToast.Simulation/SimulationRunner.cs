@@ -9,7 +9,7 @@ namespace FungusToast.Simulation
 {
     public static class SimulationRunner
     {
-        public static void RunStandardSimulation(
+        public static SimulationBatchResult RunStandardSimulation(
             int numberOfPlayers,
             int numberOfGames,
             List<IMutationSpendingStrategy>? strategies = null,
@@ -95,6 +95,7 @@ namespace FungusToast.Simulation
             }
 
             Console.WriteLine("\nSimulation complete.");
+            return results;
         }
 
         private static void PrintParityInvariantSummary(List<GameResult> gameResults)
