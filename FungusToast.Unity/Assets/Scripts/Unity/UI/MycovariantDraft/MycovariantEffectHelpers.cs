@@ -3,6 +3,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
+using FungusToast.Unity;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using System;
@@ -652,6 +653,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                                 board,
                                 player.PlayerId,
                                 cell.TileId,
+                                gameManager.GetRng(),
                                 gameLogRouter
                             );
                             playerMyco?.IncrementEffectCount(MycovariantEffectType.Bastioned, 1);

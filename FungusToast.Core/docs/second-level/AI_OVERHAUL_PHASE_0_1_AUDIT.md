@@ -281,9 +281,10 @@ trace before ownership is changed; the audit itself does not alter behavior.
   was removed from `MutationSpendingStrategyBase`. A regression test proves
   matching seeds produce matching portfolios and a different seed changes the
   result.
-- `MycovariantEffectProcessor.OnResistantCellPlaced` constructs `new Random()`
-  for Hyphal Resistance Transfer, preventing replay equality when that effect is
-  active.
+- Resolved during Phase 2 hardening:
+  `MycovariantEffectProcessor.OnResistantCellPlaced` now requires the explicit
+  gameplay RNG, and its Unity caller supplies `GameManager`'s shared stream. A
+  focused test proves the injected source controls every transfer roll.
 - Some roster sampling falls back to `Random.Shared` or `new Random()` when no
   seed is supplied. Resolved manifests must always supply explicit streams.
 

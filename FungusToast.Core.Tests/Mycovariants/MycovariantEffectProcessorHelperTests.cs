@@ -115,6 +115,31 @@ public class MycovariantEffectProcessorHelperTests
     }
 
     [Fact]
+    public void OnResistantCellPlaced_uses_the_supplied_random_source()
+    {
+        var alwaysTransfers = CreateResistanceTransferBoard();
+        var neverTransfers = CreateResistanceTransferBoard();
+
+        MycovariantEffectProcessor.OnResistantCellPlaced(
+            alwaysTransfers.Board,
+            alwaysTransfers.Owner.PlayerId,
+            alwaysTransfers.ResistantTileId,
+            new FixedDoubleRandom(0d),
+            new FungusToast.Core.Tests.Mutations.TestSimulationObserver());
+        MycovariantEffectProcessor.OnResistantCellPlaced(
+            neverTransfers.Board,
+            neverTransfers.Owner.PlayerId,
+            neverTransfers.ResistantTileId,
+            new FixedDoubleRandom(1d),
+            new FungusToast.Core.Tests.Mutations.TestSimulationObserver());
+
+        Assert.All(alwaysTransfers.AdjacentTileIds, tileId =>
+            Assert.True(alwaysTransfers.Board.GetTileById(tileId)!.FungalCell!.IsResistant));
+        Assert.All(neverTransfers.AdjacentTileIds, tileId =>
+            Assert.False(neverTransfers.Board.GetTileById(tileId)!.FungalCell!.IsResistant));
+    }
+
+    [Fact]
     public void SelectBallistosporeDischargeTargetTileIds_prefers_enemy_adjacent_tiles_and_honors_exclusions()
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 3);
@@ -157,6 +182,29 @@ public class MycovariantEffectProcessorHelperTests
         board.PlaceFungalCell(cell);
         owner.AddControlledTile(tileId);
         return cell;
+    }
+
+    private static (GameBoard Board, Player Owner, int ResistantTileId, int[] AdjacentTileIds) CreateResistanceTransferBoard()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var owner = new Player(0, "P0", PlayerTypeEnum.Human);
+        board.Players.Add(owner);
+        owner.AddMycovariant(MycovariantRepository.GetById(MycovariantIds.HyphalResistanceTransferId));
+
+        const int resistantTileId = 12;
+        var resistantCell = PlaceOwnedLivingCell(board, owner, resistantTileId);
+        resistantCell.MakeResistant();
+
+        int[] adjacentTileIds = { 6, 7, 8, 11, 13, 16, 17, 18 };
+        foreach (int tileId in adjacentTileIds)
+            PlaceOwnedLivingCell(board, owner, tileId);
+
+        return (board, owner, resistantTileId, adjacentTileIds);
+    }
+
+    private sealed class FixedDoubleRandom(double value) : Random
+    {
+        public override double NextDouble() => value;
     }
 
     private static List<int> SelectExpectedTileIds(List<int> tileIds, int selectionCount, int seed)

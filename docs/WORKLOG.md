@@ -114,9 +114,13 @@ measurement model, phase gates, and open product decisions are in
    the unused base-strategy static RNG was removed. A regression test proves
    equal seeds produce equal portfolios and a different seed changes the
    result.
-9. Next, resolve the resistant-cell mycovariant RNG seam and characterize/fix
-   the critical Unity double-spending path before treating Simulation as a
-   faithful player-facing AI oracle or starting Phase 3 measurement work.
+9. The resistant-cell Hyphal Resistance Transfer hook now requires an injected
+   RNG, and its Unity caller uses `GameManager`'s gameplay stream. A focused test
+   proves the supplied source controls the transfer rolls. Unity Editor compile
+   validation remains pending for the updated call site.
+10. Next, characterize and fix the critical Unity double-spending path before
+    treating Simulation as a faithful player-facing AI oracle or starting Phase
+    3 measurement work.
 
 ### Completion Criteria
 
