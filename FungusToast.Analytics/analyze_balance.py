@@ -35,6 +35,16 @@ def _rate_ci_width(p: pd.Series, n: pd.Series) -> pd.Series:
     return 1.96 * np.sqrt((p * (1.0 - p)) / n_safe)
 
 
+def _wilson_interval(successes: pd.Series, samples: pd.Series) -> tuple[pd.Series, pd.Series]:
+    n = samples.clip(lower=1).astype(float)
+    p = successes / n
+    z = 1.96
+    denominator = 1.0 + z * z / n
+    center = (p + z * z / (2.0 * n)) / denominator
+    margin = z * np.sqrt((p * (1.0 - p) + z * z / (4.0 * n)) / n) / denominator
+    return center - margin, center + margin
+
+
 def _parse_tier_num(tier_value: str) -> int:
     match = re.search(r"(\d+)$", str(tier_value))
     return int(match.group(1)) if match else 0
@@ -119,6 +129,11 @@ def _empty_player_summary() -> pd.DataFrame:
         "win_rate_surplus",
         "avg_final_rank",
         "avg_normalized_rank",
+        "normalized_board_share_ci95_low", "normalized_board_share_ci95_high",
+        "win_rate_surplus_ci95_low", "win_rate_surplus_ci95_high",
+        "normalized_rank_ci95_low", "normalized_rank_ci95_high",
+        "board_share_effect_size", "rank_effect_size",
+        "context_count", "worst_context_normalized_board_share", "board_share_context_range",
         "avg_dead_cells",
         "avg_toxins",
     ]
@@ -176,6 +191,23 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     )
     grouped["player"] = grouped["strategy_name"]
     grouped["win_pct"] = grouped["wins"] / grouped["games"].clip(lower=1) * 100.0
+    grouped["normalized_board_share_ci95_low"] = grouped["avg_normalized_board_share"] - 1.96 * metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
+    grouped["normalized_board_share_ci95_high"] = grouped["avg_normalized_board_share"] + 1.96 * metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
+    win_low, win_high = _wilson_interval(grouped["wins"], grouped["games"])
+    equal_expectation = metrics.groupby(["strategy_name", "strategy_theme"])["player_count"].apply(lambda counts: (1.0 / counts).mean()).to_numpy()
+    grouped["win_rate_surplus_ci95_low"] = win_low - equal_expectation
+    grouped["win_rate_surplus_ci95_high"] = win_high - equal_expectation
+    rank_std = metrics.groupby(["strategy_name", "strategy_theme"])["normalized_rank"].std().fillna(0).to_numpy()
+    grouped["normalized_rank_ci95_low"] = grouped["avg_normalized_rank"] - 1.96 * rank_std / np.sqrt(grouped["games"])
+    grouped["normalized_rank_ci95_high"] = grouped["avg_normalized_rank"] + 1.96 * rank_std / np.sqrt(grouped["games"])
+    share_std = metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy()
+    grouped["board_share_effect_size"] = np.where(share_std > 0, (grouped["avg_normalized_board_share"] - 1.0) / share_std, 0.0)
+    grouped["rank_effect_size"] = np.where(rank_std > 0, (grouped["avg_normalized_rank"] - 0.5) / rank_std, 0.0)
+    context_key = "condition_id" if "condition_id" in metrics.columns else "game_index"
+    context = metrics.groupby(["strategy_name", "strategy_theme", context_key], as_index=False).agg(context_share=("normalized_board_share", "mean"))
+    robustness = context.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(context_count=(context_key, "count"), worst_context_normalized_board_share=("context_share", "min"), best_context_normalized_board_share=("context_share", "max"))
+    robustness["board_share_context_range"] = robustness["best_context_normalized_board_share"] - robustness["worst_context_normalized_board_share"]
+    grouped = grouped.merge(robustness.drop(columns=["best_context_normalized_board_share"]), on=["strategy_name", "strategy_theme"], how="left")
 
     ordered = grouped[
         [
@@ -189,6 +221,11 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
             "win_rate_surplus",
             "avg_final_rank",
             "avg_normalized_rank",
+            "normalized_board_share_ci95_low", "normalized_board_share_ci95_high",
+            "win_rate_surplus_ci95_low", "win_rate_surplus_ci95_high",
+            "normalized_rank_ci95_low", "normalized_rank_ci95_high",
+            "board_share_effect_size", "rank_effect_size",
+            "context_count", "worst_context_normalized_board_share", "board_share_context_range",
             "avg_dead_cells",
             "avg_toxins",
         ]
