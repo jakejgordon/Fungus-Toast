@@ -47,6 +47,20 @@ Adaptations. `players.parquet` includes the condition identity, board context,
 toggles, and each player's realized starting coordinate and Adaptation IDs.
 Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
 
+Compare a treatment against its control before interpreting results:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --compare-manifests /path/control/resolved-manifest.json \
+  /path/treatment/resolved-manifest.json \
+  --allow-differences condition.systems.nutrientPatchesEnabled
+```
+
+Allowed paths use the camel-case causal snapshot rooted at `code`, `condition`,
+`selectedLineup`, `randomness`, and `gamesRequested`. A path authorizes its
+entire subtree. The command exits unsuccessfully when it finds an undeclared
+difference or when a declared treatment path did not actually change.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

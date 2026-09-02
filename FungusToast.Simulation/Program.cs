@@ -18,6 +18,44 @@ namespace FungusToast.Simulation
 
         static void Main(string[] args)
         {
+            var compareIndex = Array.FindIndex(args, argument =>
+                string.Equals(argument, "--compare-manifests", StringComparison.OrdinalIgnoreCase));
+            if (compareIndex >= 0)
+            {
+                if (compareIndex + 2 >= args.Length)
+                {
+                    Console.Error.WriteLine("--compare-manifests requires control and treatment resolved-manifest paths.");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
+                try
+                {
+                    var allowedPaths = (GetOptionValue(args, "--allow-differences") ?? string.Empty)
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                    var comparison = ResolvedExperimentComparator.CompareFiles(
+                        args[compareIndex + 1],
+                        args[compareIndex + 2],
+                        allowedPaths);
+                    foreach (var difference in comparison.Differences)
+                    {
+                        Console.WriteLine($"[{(difference.IsAllowed ? "ALLOWED" : "UNEXPECTED")}] {difference.Path}: {difference.ControlValue} -> {difference.TreatmentValue}");
+                    }
+                    foreach (var unusedPath in comparison.UnusedAllowedPaths)
+                        Console.WriteLine($"[UNUSED ALLOWANCE] {unusedPath}");
+                    Console.WriteLine(comparison.IsClean
+                        ? "Manifest comparison passed: only declared treatment differences are present."
+                        : "Manifest comparison failed: contamination or unused treatment allowances detected.");
+                    Environment.ExitCode = comparison.IsClean ? 0 : 1;
+                }
+                catch (Exception exception)
+                {
+                    Console.Error.WriteLine($"Manifest comparison failed: {exception.Message}");
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
+
             var replayManifestPath = GetOptionValue(args, "--replay-manifest");
             if (replayManifestPath != null)
             {
@@ -913,6 +951,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --purpose <text>         Human-readable reason for the experiment");
             Console.WriteLine("  --replay-manifest <path> Replay and verify a resolved-manifest.json artifact");
             Console.WriteLine("  --replay-experiment-id   Optional artifact ID for a replay (default: timestamped)");
+            Console.WriteLine("  --compare-manifests <control> <treatment>  Diff causal inputs in two resolved manifests");
+            Console.WriteLine("  --allow-differences <csv> Declared treatment paths for manifest comparison");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");

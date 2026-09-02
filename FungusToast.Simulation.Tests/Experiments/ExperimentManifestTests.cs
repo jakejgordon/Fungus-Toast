@@ -154,6 +154,35 @@ public sealed class ExperimentManifestTests
         Assert.NotEqual(ExperimentFingerprint.ForOutcomes(first), ExperimentFingerprint.ForOutcomes(changed));
     }
 
+    [Fact]
+    public void ManifestDiff_AllowsOnlyDeclaredTreatmentPaths()
+    {
+        var control = new { Systems = new { Nutrients = true, Draft = true }, Players = 4 };
+        var treatment = new { Systems = new { Nutrients = false, Draft = true }, Players = 4 };
+
+        var comparison = ManifestDiff.Compare(control, treatment, new[] { "systems.nutrients" });
+
+        Assert.True(comparison.IsClean);
+        Assert.Single(comparison.Differences);
+        Assert.True(comparison.Differences[0].IsAllowed);
+    }
+
+    [Fact]
+    public void ManifestDiff_RejectsContaminationAndUnusedAllowances()
+    {
+        var control = new { Systems = new { Nutrients = true }, Players = 4 };
+        var treatment = new { Systems = new { Nutrients = false }, Players = 5 };
+
+        var comparison = ManifestDiff.Compare(
+            control,
+            treatment,
+            new[] { "systems.nutrients", "systems.draft" });
+
+        Assert.False(comparison.IsClean);
+        Assert.Contains(comparison.UnexpectedDifferences, difference => difference.Path == "players");
+        Assert.Contains("systems.draft", comparison.UnusedAllowedPaths);
+    }
+
     private static ExperimentManifest CreateValidManifest(int gamesPerCondition = 100, ExperimentCondition? condition = null) => new()
     {
         SchemaVersion = ExperimentManifest.CurrentSchemaVersion,

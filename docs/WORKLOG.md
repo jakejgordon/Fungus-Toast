@@ -94,9 +94,13 @@ measurement model, phase gates, and open product decisions are in
    controls and actual per-game assignments/starts/loadouts; `players.parquet`
    carries the player-specific realized context. A fixture with exact positions
    and two different Adaptations was read back successfully, and the existing
-   offline analytics workflow completed against the expanded schema. Next,
-   implement P2.4 manifest diffing and contamination rejection.
-5. Characterize and later resolve the critical Unity double-spending and
+   offline analytics workflow completed against the expanded schema.
+5. P2.4 is complete. `--compare-manifests <control> <treatment>` diffs causal
+   replay inputs, while `--allow-differences` acts as the treatment hypothesis.
+   Undeclared differences and declared paths that did not change both fail. A
+   nutrient-toggle pair passed with the exact allowed path and failed without
+   it. Next, implement P2.5 resume/completion/failure state.
+6. Characterize and later resolve the critical Unity double-spending and
    unseeded-random seams before treating Simulation as a faithful player-facing
    AI oracle or starting architecture migration.
 

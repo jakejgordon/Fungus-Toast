@@ -14,8 +14,8 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure in progress; P2-A complete
 - **Implementation started:** Yes
-- **Current gate:** Implement P2.4 manifest diffing and treatment/control
-  contamination checks; P2.1–P2.3 are complete.
+- **Current gate:** Implement P2.5 resumable condition execution, completion
+  markers, and failure records; P2.1–P2.4 are complete.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -323,8 +323,11 @@ gate remains open.
   `players.parquet` records condition identity, board context, toggles, and each
   player's actual starting coordinate and Adaptations. The existing analytics
   workflow was smoke-tested successfully against the expanded schema.
-- **P2.4:** Add treatment/control manifest diffing and a contamination check that
-  rejects unintended differences.
+- **P2.4 — complete:** `--compare-manifests` compares only causal replay inputs.
+  `--allow-differences` declares the intended treatment paths; comparison fails
+  for every undeclared difference and for every declared path that did not
+  actually differ. Unit tests and a real nutrient-toggle control/treatment pair
+  proved both the passing and contamination-rejection paths.
 - **P2.5:** Add resumable condition execution, completion markers, failure
   records, and idempotent analysis regeneration.
 - **P2.6:** Create small contract fixtures proving replay equality and selective
