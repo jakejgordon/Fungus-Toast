@@ -11,8 +11,8 @@ commands and artifact rules. The active session queue remains in
 
 - **State:** Planning and baseline audit
 - **Implementation started:** No
-- **Current gate:** Resolve the three remaining product questions in section 12,
-  then execute Phase 0 and Phase 1 without changing player-facing AI behavior.
+- **Current gate:** Execute Phase 0 and Phase 1 without changing player-facing AI
+  behavior, then begin the reproducible experiment-contract foundation.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -529,23 +529,16 @@ Approved on 2026-09-01:
    `Spice` opponents when their weaknesses are measured, surfaced, and excluded
    from misleading contexts.
 
-### Remaining questions
-
-1. **Adaptation quantity and resolution (blocks P5.6):** Should each AI definition
-   own one fixed default Adaptation set, or a ranked set of complementary options
-   from which the scenario supplies a count? Recommended: ranked compatible
-   options on the strategy, while single-player/campaign scenario rules decide
-   how many are granted and may still force exact IDs.
-2. **Summary visibility (blocks final UI scope, not the audit):** Are display
-   names and intent summaries internal authoring/catalog metadata only, or should
-   players see them in campaign/single-player opponent tooltips? Recommended:
-   author them as player-safe text from the start, then expose them wherever an
-   opponent preview already exists without adding a new UI surface prematurely.
-3. **Search breadth (blocks final Phase 6 budget):** Is an initial cap of 20 new
-   candidates per autonomous sweep acceptable, with staged batches of roughly
-   3–5 smoke games, 20 screening games, 50 comparison games, and at most 100
-   holdout games per condition? Simulation games run locally and do not
-   themselves consume ChatGPT credits; agent reasoning and analysis do.
+9. **Adaptation quantity and resolution:** Each strategy owns ranked compatible
+   Adaptation options. Single-player and campaign scenario rules decide how many
+   to grant and may force exact IDs when required by an authored scenario.
+10. **Summary visibility:** Author display names and intent summaries as
+    player-safe text from the start. Expose them through existing campaign and
+    single-player opponent-preview surfaces when the new catalog is integrated;
+    do not create an otherwise unnecessary parallel UI.
+11. **Search breadth:** Begin with at most 20 new candidates per autonomous
+    sweep. Use approximately 3–5 smoke games, 20 screening games, 50 comparison
+    games, and at most 100 holdout games per condition, pruning at every gate.
 
 ## 13. Initiative Completion Criteria
 
