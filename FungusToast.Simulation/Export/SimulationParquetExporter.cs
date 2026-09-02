@@ -105,9 +105,14 @@ namespace FungusToast.Simulation.Export
                 });
             string resolvedManifestPath = Path.Combine(runFolder, "resolved-manifest.json");
             File.WriteAllText(resolvedManifestPath, ResolvedExperimentManifestJson.Serialize(resolvedManifest));
+            var resolvedManifestSha256 = ExperimentFingerprint.ForFile(resolvedManifestPath);
             File.WriteAllText(
                 Path.Combine(runFolder, "resolved-manifest.sha256"),
-                $"{ExperimentFingerprint.ForFile(resolvedManifestPath)}  {Path.GetFileName(resolvedManifestPath)}{Environment.NewLine}");
+                $"{resolvedManifestSha256}  {Path.GetFileName(resolvedManifestPath)}{Environment.NewLine}");
+            ExperimentRunStateStore.MarkFinished(
+                metadata,
+                resolvedManifest.Sampling.CompletionStatus,
+                resolvedManifestSha256);
 
             return runFolder;
         }

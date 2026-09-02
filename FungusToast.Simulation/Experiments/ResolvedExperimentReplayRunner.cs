@@ -57,28 +57,43 @@ public static class ResolvedExperimentReplayRunner
                 .FirstOrDefault(loadout => loadout.PlayerSlot == slot)?.AdaptationIds ?? Array.Empty<string>()))
             .ToList();
 
-        var replayResult = SimulationRunner.RunStandardSimulation(
-            source.Condition.PlayerCount,
-            source.Sampling.GamesRequested,
-            strategies,
-            source.Condition.Board.Width,
-            source.Condition.Board.Height,
-            enableKeyboardInterrupt: false,
-            baseSeed: source.Randomness.StrategySelectionSeed,
-            strategySet: source.Condition.Strategies.StrategySet,
-            slotAssignmentPolicy: source.Condition.SlotAssignmentPolicy,
-            runMetadata: metadata,
-            exportParquet: true,
-            enableNutrientPatches: source.Condition.Systems.NutrientPatchesEnabled,
-            enableMycovariantDraft: source.Condition.Systems.MycovariantDraftEnabled,
-            permanentlyBlockedTileIds: source.Condition.Board.BlockedTileIds,
-            startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,
-            startingAdaptationIds: startingAdaptations,
-            preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null);
+        SimulationBatchResult replayResult;
+        ExperimentRunStateStore.MarkRunning(metadata);
+        try
+        {
+            replayResult = SimulationRunner.RunStandardSimulation(
+                source.Condition.PlayerCount,
+                source.Sampling.GamesRequested,
+                strategies,
+                source.Condition.Board.Width,
+                source.Condition.Board.Height,
+                enableKeyboardInterrupt: false,
+                baseSeed: source.Randomness.StrategySelectionSeed,
+                strategySet: source.Condition.Strategies.StrategySet,
+                slotAssignmentPolicy: source.Condition.SlotAssignmentPolicy,
+                runMetadata: metadata,
+                exportParquet: true,
+                enableNutrientPatches: source.Condition.Systems.NutrientPatchesEnabled,
+                enableMycovariantDraft: source.Condition.Systems.MycovariantDraftEnabled,
+                permanentlyBlockedTileIds: source.Condition.Board.BlockedTileIds,
+                startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,
+                startingAdaptationIds: startingAdaptations,
+                preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null);
+        }
+        catch (Exception exception)
+        {
+            ExperimentRunStateStore.MarkFailed(metadata, exception);
+            throw;
+        }
 
         var replayOutcomeFingerprint = ExperimentFingerprint.ForOutcomes(replayResult);
         if (!string.Equals(replayOutcomeFingerprint, source.Fingerprints.OutcomeSha256, StringComparison.Ordinal))
-            throw new InvalidOperationException($"Replay outcome mismatch. Expected {source.Fingerprints.OutcomeSha256}, actual {replayOutcomeFingerprint}.");
+        {
+            var exception = new InvalidOperationException(
+                $"Replay outcome mismatch. Expected {source.Fingerprints.OutcomeSha256}, actual {replayOutcomeFingerprint}.");
+            ExperimentRunStateStore.MarkFailed(metadata, exception);
+            throw exception;
+        }
 
         Console.WriteLine($"Replay outcome verified: {replayOutcomeFingerprint}");
     }

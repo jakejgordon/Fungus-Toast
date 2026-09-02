@@ -61,6 +61,25 @@ Allowed paths use the camel-case causal snapshot rooted at `code`, `condition`,
 entire subtree. The command exits unsuccessfully when it finds an undeclared
 difference or when a declared treatment path did not actually change.
 
+Resume an experiment matrix without rerunning matching completed conditions:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  <the original options> --resume
+```
+
+Every Parquet condition writes `run-state.json` with an execution fingerprint
+and `running`, `complete`, `interrupted`, or `failed` status. Resume rechecks the
+resolved-manifest checksum before skipping a complete condition. Missing,
+failed, and interrupted conditions run again. A complete artifact whose causal
+inputs or current binaries differ is rejected instead of silently reused.
+`--resume` cannot be combined with `--no-parquet`.
+
+Analysis regeneration remains separate from simulation resume and is
+idempotent: rerun `FungusToast.Analytics/analyze_balance.py` against the existing
+run folder. Repeated regeneration was verified to produce byte-identical
+analysis outputs.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

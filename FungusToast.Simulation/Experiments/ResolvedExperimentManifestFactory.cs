@@ -13,14 +13,7 @@ public static class ResolvedExperimentManifestFactory
     {
         var code = CodeIdentityResolver.Resolve();
         var conditionFingerprint = ExperimentFingerprint.ForCondition(metadata.Condition);
-        var executionFingerprint = ExperimentFingerprint.ForText(string.Join("\n", new[]
-        {
-            conditionFingerprint,
-            code.CoreAssemblySha256,
-            code.SimulationAssemblySha256,
-            string.Join("|", metadata.SelectedStrategies.OrderBy(strategy => strategy.LineupOrder).Select(strategy => strategy.StrategyName)),
-            string.Join(",", metadata.GameSeedSchedule)
-        }));
+        var executionFingerprint = ExperimentFingerprint.ForExecution(metadata, code);
         return new ResolvedExperimentManifest
         {
             SchemaVersion = ResolvedExperimentManifest.CurrentSchemaVersion,

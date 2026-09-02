@@ -56,6 +56,19 @@ public static class ExperimentFingerprint
         return ForText(builder.ToString());
     }
 
+    public static string ForExecution(SimulationRunMetadata metadata, ResolvedCodeIdentity code)
+    {
+        var conditionFingerprint = ForCondition(metadata.Condition);
+        return ForText(string.Join("\n", new[]
+        {
+            conditionFingerprint,
+            code.CoreAssemblySha256,
+            code.SimulationAssemblySha256,
+            string.Join("|", metadata.SelectedStrategies.OrderBy(strategy => strategy.LineupOrder).Select(strategy => strategy.StrategyName)),
+            string.Join(",", metadata.GameSeedSchedule)
+        }));
+    }
+
     private static void AppendCanonicalValue(StringBuilder builder, object? value, int depth)
     {
         if (depth > 20) throw new InvalidOperationException("Outcome fingerprint object graph exceeded maximum depth.");

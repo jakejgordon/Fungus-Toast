@@ -14,8 +14,8 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure in progress; P2-A complete
 - **Implementation started:** Yes
-- **Current gate:** Implement P2.5 resumable condition execution, completion
-  markers, and failure records; P2.1–P2.4 are complete.
+- **Current gate:** Implement P2.6 checked-in contract fixtures for replay and
+  selective resume; P2.1–P2.5 are complete.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -328,8 +328,13 @@ gate remains open.
   for every undeclared difference and for every declared path that did not
   actually differ. Unit tests and a real nutrient-toggle control/treatment pair
   proved both the passing and contamination-rejection paths.
-- **P2.5:** Add resumable condition execution, completion markers, failure
-  records, and idempotent analysis regeneration.
+- **P2.5 — complete:** Parquet runs maintain a checksummed, execution-
+  fingerprinted `run-state.json` with `running`, `complete`, `interrupted`, or
+  `failed` status and failure details. `--resume` skips only a matching complete
+  condition after rechecking the resolved-manifest checksum; failed,
+  interrupted, and missing conditions rerun, while mismatched complete output
+  is rejected. The offline analyzer regenerated twice with byte-identical
+  outputs and no simulation rerun.
 - **P2.6:** Create small contract fixtures proving replay equality and selective
   resume behavior.
 - **Gate:** Replaying a resolved manifest produces the same lineup, conditions,

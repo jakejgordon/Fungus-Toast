@@ -105,6 +105,12 @@ namespace FungusToast.Simulation
                     RunSingleSimulation(config, inputManifest);
                 }
             }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Simulation failed: {exception.Message}");
+                Environment.ExitCode = 1;
+                return;
+            }
             finally
             {
                 outputManager?.Dispose();
@@ -147,24 +153,25 @@ namespace FungusToast.Simulation
                 config.StrategySet,
                 config.BaseSeed ?? 0);
 
-            SimulationRunner.RunStandardSimulation(
-                strategies.Count,
-                config.NumberOfGames,
-                strategies,
-                config.BoardWidth,
-                config.BoardHeight,
-                enableKeyboardInterrupt: !config.DisableKeyboardInterrupt,
-                baseSeed: config.BaseSeed,
-                strategySet: config.StrategySet,
-                slotAssignmentPolicy: config.SlotAssignmentPolicy,
-                runMetadata: runMetadata,
-                exportParquet: config.ExportParquet,
-                enableNutrientPatches: config.EnableNutrientPatches,
-                enableMycovariantDraft: config.EnableMycovariantDraft,
-                permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
-                startingPositionOverride: config.StartingPositionOverride,
-                startingAdaptationIds: config.StartingAdaptationIds,
-                preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
+            ExecuteWithRunState(config, runMetadata, () =>
+                SimulationRunner.RunStandardSimulation(
+                    strategies.Count,
+                    config.NumberOfGames,
+                    strategies,
+                    config.BoardWidth,
+                    config.BoardHeight,
+                    enableKeyboardInterrupt: !config.DisableKeyboardInterrupt,
+                    baseSeed: config.BaseSeed,
+                    strategySet: config.StrategySet,
+                    slotAssignmentPolicy: config.SlotAssignmentPolicy,
+                    runMetadata: runMetadata,
+                    exportParquet: config.ExportParquet,
+                    enableNutrientPatches: config.EnableNutrientPatches,
+                    enableMycovariantDraft: config.EnableMycovariantDraft,
+                    permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
+                    startingPositionOverride: config.StartingPositionOverride,
+                    startingAdaptationIds: config.StartingAdaptationIds,
+                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId));
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
@@ -182,6 +189,7 @@ namespace FungusToast.Simulation
 
             int totalStrata = playerCounts.Count * boardSizes.Count * strategySets.Count;
             int stratumIndex = 0;
+            int failedStrata = 0;
 
             Console.WriteLine($"Starting stratified batch '{experimentId}' with {totalStrata} strata.");
             Console.WriteLine($"Per-stratum games: {config.NumberOfGames}");
@@ -229,30 +237,70 @@ namespace FungusToast.Simulation
                         Console.WriteLine($"=== Stratum {stratumIndex}/{totalStrata} ===");
                         Console.WriteLine($"Players={players}, Board={board.Width}x{board.Height}, StrategySet={strategySet}, Seed={stratumSeed}");
 
-                        SimulationRunner.RunStandardSimulation(
-                            players,
-                            config.NumberOfGames,
-                            strategies,
-                            board.Width,
-                            board.Height,
-                            enableKeyboardInterrupt: enableKeyboardInterrupt,
-                            baseSeed: stratumSeed,
-                            strategySet: strategySet,
-                            slotAssignmentPolicy: config.SlotAssignmentPolicy,
-                            runMetadata: runMetadata,
-                            exportParquet: config.ExportParquet,
-                            enableNutrientPatches: config.EnableNutrientPatches,
-                            enableMycovariantDraft: config.EnableMycovariantDraft,
-                            permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
-                            startingPositionOverride: config.StartingPositionOverride,
-                            startingAdaptationIds: config.StartingAdaptationIds,
-                            preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
+                        try
+                        {
+                            ExecuteWithRunState(config, runMetadata, () =>
+                                SimulationRunner.RunStandardSimulation(
+                                    players,
+                                    config.NumberOfGames,
+                                    strategies,
+                                    board.Width,
+                                    board.Height,
+                                    enableKeyboardInterrupt: enableKeyboardInterrupt,
+                                    baseSeed: stratumSeed,
+                                    strategySet: strategySet,
+                                    slotAssignmentPolicy: config.SlotAssignmentPolicy,
+                                    runMetadata: runMetadata,
+                                    exportParquet: config.ExportParquet,
+                                    enableNutrientPatches: config.EnableNutrientPatches,
+                                    enableMycovariantDraft: config.EnableMycovariantDraft,
+                                    permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
+                                    startingPositionOverride: config.StartingPositionOverride,
+                                    startingAdaptationIds: config.StartingAdaptationIds,
+                                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId));
+                        }
+                        catch (Exception exception)
+                        {
+                            failedStrata++;
+                            Console.Error.WriteLine($"Stratum failed and was recorded for retry: {exception.Message}");
+                        }
                     }
                 }
             }
 
             Console.WriteLine();
             Console.WriteLine($"Batch complete. Export root hint: SimulationParquet/{experimentId}__*");
+            if (failedStrata > 0)
+                throw new InvalidOperationException($"{failedStrata} batch strata failed; rerun with --resume after resolving the cause.");
+        }
+
+        private static void ExecuteWithRunState(
+            SimulationConfig config,
+            SimulationRunMetadata metadata,
+            Action execute)
+        {
+            if (!config.ExportParquet)
+            {
+                execute();
+                return;
+            }
+
+            if (config.Resume && ExperimentRunStateStore.ShouldSkipCompleted(metadata))
+            {
+                Console.WriteLine($"Skipping completed matching condition: {metadata.ExperimentId}");
+                return;
+            }
+
+            ExperimentRunStateStore.MarkRunning(metadata);
+            try
+            {
+                execute();
+            }
+            catch (Exception exception)
+            {
+                ExperimentRunStateStore.MarkFailed(metadata, exception);
+                throw;
+            }
         }
 
         private static List<IMutationSpendingStrategy> SelectStrategies(
@@ -479,6 +527,7 @@ namespace FungusToast.Simulation
                 SlotAssignmentPolicy = SlotAssignmentPolicy.Fixed,
                 StrategySelectionPolicy = StrategySelectionPolicy.CoverageBalanced,
                 ExportParquet = true,
+                Resume = false,
                 EnableNutrientPatches = true,
                 EnableMycovariantDraft = true,
                 StartingPositionOverride = null,
@@ -758,6 +807,9 @@ namespace FungusToast.Simulation
                     case "--no-parquet":
                         config.ExportParquet = false;
                         break;
+                    case "--resume":
+                        config.Resume = true;
+                        break;
                     case "--no-nutrient-patches":
                     case "--disable-nutrient-patches":
                         config.EnableNutrientPatches = false;
@@ -920,6 +972,12 @@ namespace FungusToast.Simulation
                 }
             }
 
+            if (config.Resume && !config.ExportParquet)
+            {
+                Console.WriteLine("--resume requires Parquet artifact export; remove --no-parquet.");
+                return null;
+            }
+
             return config;
         }
 
@@ -958,6 +1016,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
             Console.WriteLine("  --parquet                Export canonical Parquet datasets (default: enabled)");
             Console.WriteLine("  --no-parquet             Disable Parquet export");
+            Console.WriteLine("  --resume                 Skip matching complete conditions; retry missing/failed/interrupted ones");
             Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
             Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
@@ -1006,6 +1065,7 @@ namespace FungusToast.Simulation
             public SlotAssignmentPolicy SlotAssignmentPolicy { get; set; }
             public StrategySelectionPolicy StrategySelectionPolicy { get; set; }
             public bool ExportParquet { get; set; }
+            public bool Resume { get; set; }
             public bool EnableNutrientPatches { get; set; }
             public bool EnableMycovariantDraft { get; set; }
             public List<(int x, int y)>? StartingPositionOverride { get; set; }

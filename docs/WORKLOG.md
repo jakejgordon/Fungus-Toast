@@ -99,8 +99,14 @@ measurement model, phase gates, and open product decisions are in
    replay inputs, while `--allow-differences` acts as the treatment hypothesis.
    Undeclared differences and declared paths that did not change both fail. A
    nutrient-toggle pair passed with the exact allowed path and failed without
-   it. Next, implement P2.5 resume/completion/failure state.
-6. Characterize and later resolve the critical Unity double-spending and
+   it.
+6. P2.5 is complete. Each condition writes fingerprinted durable run state;
+   `--resume` revalidates and skips a matching complete artifact, retries
+   missing/failed/interrupted conditions, and refuses a completed artifact with
+   a different execution fingerprint. The resume skip and mismatch refusal
+   passed end to end. Offline analysis regeneration was byte-identical across
+   repeated runs. Next, check in the P2.6 replay/resume contract fixture.
+7. Characterize and later resolve the critical Unity double-spending and
    unseeded-random seams before treating Simulation as a faithful player-facing
    AI oracle or starting architecture migration.
 
