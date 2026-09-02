@@ -11,9 +11,13 @@ namespace FungusToast.Core.AI
 {
     public static class MutationSpendingHelper
     {
-        private static readonly Random rng = new();
-
-        public static bool TrySpendRandomly(Player player, List<Mutation> allMutations, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
+        public static bool TrySpendRandomly(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            Random rng,
+            ISimulationObserver simulationObserver,
+            int currentRound)
         {
             var eligible = allMutations
                 .Where(m => player.CanUpgrade(m, currentRound, board))

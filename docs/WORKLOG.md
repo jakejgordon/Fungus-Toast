@@ -110,9 +110,13 @@ measurement model, phase gates, and open product decisions are in
    two-condition run can be selectively resumed after adding a third condition,
    then replays one completed condition in a separate process with an identical
    canonical outcome and a valid resolved-manifest checksum.
-8. Next, characterize and resolve the critical Unity double-spending and
-   unseeded-random seams before treating Simulation as a faithful player-facing
-   AI oracle or starting Phase 3 measurement work.
+8. The legacy random mutation spender now uses its caller-provided seeded RNG;
+   the unused base-strategy static RNG was removed. A regression test proves
+   equal seeds produce equal portfolios and a different seed changes the
+   result.
+9. Next, resolve the resistant-cell mycovariant RNG seam and characterize/fix
+   the critical Unity double-spending path before treating Simulation as a
+   faithful player-facing AI oracle or starting Phase 3 measurement work.
 
 ### Completion Criteria
 

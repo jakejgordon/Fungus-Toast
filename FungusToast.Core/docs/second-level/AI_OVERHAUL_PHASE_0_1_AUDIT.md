@@ -275,10 +275,12 @@ trace before ownership is changed; the audit itself does not alter behavior.
 
 ### Additional nondeterministic seams
 
-- `RandomMutationSpendingStrategy` ignores its passed RNG because
-  `MutationSpendingHelper.TrySpendRandomly` uses a static unseeded `Random`.
-- `MutationSpendingStrategyBase` declares an unseeded static RNG; current
-  parameterized logic primarily uses the passed RNG, but the field is a hazard.
+- Resolved during Phase 2 hardening:
+  `RandomMutationSpendingStrategy` now routes its passed RNG through
+  `MutationSpendingHelper.TrySpendRandomly`, and the unused unseeded static RNG
+  was removed from `MutationSpendingStrategyBase`. A regression test proves
+  matching seeds produce matching portfolios and a different seed changes the
+  result.
 - `MycovariantEffectProcessor.OnResistantCellPlaced` constructs `new Random()`
   for Hyphal Resistance Transfer, preventing replay equality when that effect is
   active.
