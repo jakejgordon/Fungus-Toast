@@ -15,6 +15,7 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `SIMULATION_HELPER.md` — simulation workflows, reproducibility, fairness testing, and output conventions
 - `NEW_BACKGROUND_HELPER.md` — board background authoring, contour-to-square baking, and irregular silhouette workflow
 - `AI_STRATEGY_AUTHORING.md` — AI roster organization, metadata, and strategy authoring patterns
+- `AI_ARCHITECTURE_BALANCE_OVERHAUL.md` — active multi-phase AI architecture, experiment, measurement, and roster-overhaul plan
 - `NEW_MUTATION_HELPER.md` — mutation authoring workflow
 - `MYCOVARIANT_HELPER.md` — entry point for all Mycovariant work
 - `ADAPTATION_HELPER.md` — entry point for all Adaptation work
@@ -45,6 +46,9 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` — mutation-category philosophy and prerequisite design rules
 - `second-level/SUBSTRATE_ECOLOGY_ROSTER.md` — proposed sixth-category roster, existing-mutation move audit, and whole-tree expansion candidates
 - `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
+
+### AI
+- `second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md` — completed AI-overhaul vocabulary, roster/name migration inventory, decision-surface audit, reproducibility gaps, risks, and Phase 2 slice order
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

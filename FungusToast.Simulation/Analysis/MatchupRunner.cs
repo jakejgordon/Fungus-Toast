@@ -80,8 +80,12 @@ namespace FungusToast.Simulation.Analysis
             IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
-            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
+            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
+            IReadOnlyList<int>? gameSeedSchedule = null)
         {
+            if (gameSeedSchedule != null && gameSeedSchedule.Count != gamesToPlay)
+                throw new ArgumentException("Game seed schedule count must match gamesToPlay.", nameof(gameSeedSchedule));
+
             var results = new List<GameResult>();
             var startTime = DateTime.UtcNow;
             var cumulativeDeathReasons = new Dictionary<DeathReason, int>();
@@ -107,7 +111,7 @@ namespace FungusToast.Simulation.Analysis
                 var assigned = BuildAssignedStrategies(strategies, i, slotAssignmentPolicy);
 
                 var context = new SimulationTrackingContext();
-                int gameSeed = unchecked(baseSeed + i);
+                int gameSeed = gameSeedSchedule?[i] ?? unchecked(baseSeed + i);
                 var preferredPositionsByPlayerId = SelectPreferredStartingPositions(preferredStartingPositionPoolsByPlayerId, gameSeed);
 
                 var result = GameSimulator.RunSimulation(

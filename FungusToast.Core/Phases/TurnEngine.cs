@@ -22,13 +22,32 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver simulationObserver)
         {
+            AssignMutationPointIncome(board, players, allMutations, rng, simulationObserver);
+
+            foreach (var player in players)
+            {
+                player.MutationStrategy?.SpendMutationPoints(player, allMutations, board, rng, simulationObserver);
+            }
+        }
+
+        /// <summary>
+        /// Starts the mutation phase and assigns point income without invoking
+        /// strategies. Interactive front ends can defer AI spending until all
+        /// human mutation turns are complete.
+        /// </summary>
+        public static void AssignMutationPointIncome(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random rng,
+            ISimulationObserver simulationObserver)
+        {
             // Fire MutationPhaseStart event for Mutator Phenotype and other mutation phase effects
             board.OnMutationPhaseStart();
 
             foreach (var player in players)
             {
                 player.AssignMutationPoints(players, rng, board, simulationObserver, allMutations);
-                player.MutationStrategy?.SpendMutationPoints(player, allMutations, board, rng, simulationObserver);
             }
         }
 

@@ -1166,6 +1166,7 @@ public static class MycovariantEffectProcessor
         GameBoard board,
         int playerId,
         int tileId,
+        Random rng,
         ISimulationObserver observer)
     {
         var player = board.Players.FirstOrDefault(p => p.PlayerId == playerId);
@@ -1175,7 +1176,6 @@ public static class MycovariantEffectProcessor
         var playerMyco = player.GetMycovariant(MycovariantIds.HyphalResistanceTransferId);
         if (playerMyco == null) return;
 
-        var rng = new Random(); // Create a new RNG instance for this effect
         var adjacentTiles = board.GetAdjacentTiles(tileId);
         int transferredCount = 0;
 

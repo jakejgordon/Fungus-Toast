@@ -9,8 +9,6 @@ namespace FungusToast.Core.AI
 {
     public abstract class MutationSpendingStrategyBase : IMutationSpendingStrategy
     {
-        protected static readonly Random rng = new();
-
         public abstract string StrategyName { get; }
         public virtual MutationTier? MaxTier { get; }
         public virtual bool? PrioritizeHighTier { get; }

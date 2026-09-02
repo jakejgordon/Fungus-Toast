@@ -4,6 +4,95 @@
 
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 
+## Experiment input contract
+
+Simulation CLI options are validated through the versioned
+`fungus-toast.experiment-input.v1` contract before a run starts. Unknown JSON
+fields, invalid strategy or Adaptation references, illegal positions, ambiguous
+position modes, unsupported player counts, and any condition above 100 games
+are rejected. A canonical example is checked in at
+`FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
+
+The input JSON file is a contract fixture in P2-A; direct execution of input
+manifests is not available yet. Resolved artifacts are replayable.
+
+Parquet runs also write `resolved-manifest.json` using
+`fungus-toast.experiment-result.v1` plus `resolved-manifest.sha256`. The resolved
+artifact records the code and binary identities, condition and board
+fingerprints, selected lineup and strategy fingerprints, exact game seeds,
+actual per-game slot assignments, starting coordinates and Adaptations,
+completion status, canonical outcome fingerprint, row counts, and hashes for
+every emitted dataset. Verify the sidecar from inside the artifact directory
+with `sha256sum -c resolved-manifest.sha256`.
+
+Replay and verify a completed artifact in one command:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --replay-manifest /path/to/resolved-manifest.json
+```
+
+Replay is strict: the current Core and Simulation binaries and each selected
+strategy fingerprint must match the artifact. It uses the recorded lineup and
+exact game-seed schedule, writes to a timestamped replay artifact by default,
+and exits unsuccessfully if the canonical outcome fingerprint differs. Use
+`--replay-experiment-id <id>` only when a stable non-colliding artifact ID is
+needed.
+
+The Parquet datasets duplicate the fields most often needed for causal
+analysis. `games.parquet` includes condition and board fingerprints, the
+selected and actually assigned lineups, geometry/mask identity, enabled-system
+toggles, configured position/loadout controls, and actual per-game starts and
+Adaptations. `players.parquet` includes the condition identity, board context,
+toggles, and each player's realized starting coordinate and Adaptation IDs.
+Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
+
+Compare a treatment against its control before interpreting results:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --compare-manifests /path/control/resolved-manifest.json \
+  /path/treatment/resolved-manifest.json \
+  --allow-differences condition.systems.nutrientPatchesEnabled
+```
+
+Allowed paths use the camel-case causal snapshot rooted at `code`, `condition`,
+`selectedLineup`, `randomness`, and `gamesRequested`. A path authorizes its
+entire subtree. The command exits unsuccessfully when it finds an undeclared
+difference or when a declared treatment path did not actually change.
+
+Resume an experiment matrix without rerunning matching completed conditions:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  <the original options> --resume
+```
+
+Every Parquet condition writes `run-state.json` with an execution fingerprint
+and `running`, `complete`, `interrupted`, or `failed` status. Resume rechecks the
+resolved-manifest checksum before skipping a complete condition. Missing,
+failed, and interrupted conditions run again. A complete artifact whose causal
+inputs or current binaries differ is rejected instead of silently reused.
+`--resume` cannot be combined with `--no-parquet`.
+
+Analysis regeneration remains separate from simulation resume and is
+idempotent: rerun `FungusToast.Analytics/analyze_balance.py` against the existing
+run folder. Repeated regeneration was verified to produce byte-identical
+analysis outputs.
+
+Run the checked-in replay/resume contract fixture from the repository root:
+
+```bash
+bash FungusToast.Simulation/Examples/verify-experiment-contract.sh
+```
+
+The fixture builds the solution, runs two board-size conditions, resumes after
+adding a third condition and requires exactly two skips plus one new run, then
+replays the first condition in a separate process and verifies both canonical
+outcome equality and the resolved-manifest checksum. Its generated simulation
+artifacts remain under the normal ignored output directory; diagnostic logs are
+written under `/tmp`.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

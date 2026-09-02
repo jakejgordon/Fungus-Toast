@@ -86,7 +86,9 @@ scripts/itch-release.local.json
 *.slnx
 
 !FungusToast.Core/FungusToast.Core.csproj
+!FungusToast.Core.Tests/FungusToast.Core.Tests.csproj
 !FungusToast.Simulation/FungusToast.Simulation.csproj
+!FungusToast.Simulation.Tests/FungusToast.Simulation.Tests.csproj
 !FungusToast.sln
 
 # Keep Visual Studio configuration for required workloads

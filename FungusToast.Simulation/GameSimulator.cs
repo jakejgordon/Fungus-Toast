@@ -4,6 +4,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Events;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
@@ -49,6 +50,20 @@ namespace FungusToast.Simulation.GameSimulation
                 startingPositionOverride,
                 startingAdaptationIds,
                 preferredPositionsByPlayerId);
+            var resolvedStartingPositions = players.ToDictionary(
+                player => player.PlayerId,
+                player =>
+                {
+                    var initialSpore = board.GetAllCellsOwnedBy(player.PlayerId)
+                        .First(cell => (cell.SourceOfGrowth ?? GrowthSource.Unknown) == GrowthSource.InitialSpore);
+                    return board.GetXYFromTileId(initialSpore.TileId);
+                });
+            var resolvedStartingAdaptations = players.ToDictionary(
+                player => player.PlayerId,
+                player => (IReadOnlyList<string>)player.PlayerAdaptations
+                    .Select(adaptation => adaptation.Adaptation.Id)
+                    .OrderBy(id => id, StringComparer.Ordinal)
+                    .ToList());
             var allMutations = MutationRegistry.GetAll().ToList();
             var allMycovariants = MycovariantRepository.All;
             var mycovariantPoolManager = new MycovariantPoolManager();
@@ -147,6 +162,8 @@ namespace FungusToast.Simulation.GameSimulation
             result.GameSeed = seed;
             result.BoardWidth = boardWidth;
             result.BoardHeight = boardHeight;
+            result.StartingPositionsByPlayerId = resolvedStartingPositions;
+            result.StartingAdaptationIdsByPlayerId = resolvedStartingAdaptations;
             result.ParityInvariantReport = BuildParityInvariantReport(
                 board,
                 mutationPhaseStartCount,
