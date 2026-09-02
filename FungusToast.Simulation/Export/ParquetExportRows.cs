@@ -77,6 +77,9 @@ namespace FungusToast.Simulation.Export
         public int UniqueOpponentThemes { get; set; }
         public bool IsWinner { get; set; }
         public int LivingCells { get; set; }
+        public int TotalLivingCells { get; set; }
+        public int FinalRank { get; set; }
+        public int PlayersTiedAtFinalRank { get; set; }
         public int DeadCells { get; set; }
         public int EndGameToxinCells { get; set; }
         public int NutrientClaims { get; set; }

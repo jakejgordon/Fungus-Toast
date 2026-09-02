@@ -349,7 +349,11 @@ gate remains open.
 ### Phase 3 — Add outcome metrics and statistical gates
 
 - **P3.1:** Export total living share inputs, tie-aware rank, starting slot and
-  coordinates, adaptations, and structured condition identifiers.
+  coordinates, adaptations, and structured condition identifiers. The first
+  independent slice exports the per-game total living-cell denominator,
+  competition-style rank, and tie-group size in `players.parquet`; existing
+  starts, Adaptations, and raw condition IDs remain exported. Structured
+  condition dimensions follow as a separate schema-only slice.
 - **P3.2:** Implement normalized board share, win surplus, normalized rank,
   intervals, effect sizes, and robustness summaries in offline analytics.
 - **P3.3:** Define smoke, calibration, comparison, and holdout sample gates with

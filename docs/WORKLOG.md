@@ -127,6 +127,12 @@ measurement model, phase gates, and open product decisions are in
 11. Next, manually compile Unity and play one normal mutation phase to confirm
     each AI strategy spends once after the human turn, then begin Phase 3
     measurement and classification work.
+12. P3.1 has begun with an independent Simulation-export slice: `players.parquet`
+    now records each game's total living-cell denominator, tie-aware
+    competition rank, and tie-group size. Starting slot/coordinates,
+    Adaptations, and raw condition IDs were already exported. The remaining
+    P3.1 slice is structured condition dimensions; it does not require the
+    pending Unity validation.
 
 ### Completion Criteria
 

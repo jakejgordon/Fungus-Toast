@@ -198,6 +198,7 @@ namespace FungusToast.Simulation.Export
 
             foreach (var game in batchResult.GameResults)
             {
+                int totalLivingCells = game.PlayerResults.Sum(player => player.LivingCells);
                 var playerThemeById = game.PlayerResults
                     .ToDictionary(
                         p => p.PlayerId,
@@ -252,6 +253,9 @@ namespace FungusToast.Simulation.Export
                         UniqueOpponentThemes = opponentThemes.Distinct(StringComparer.Ordinal).Count(),
                         IsWinner = player.PlayerId == game.WinnerId,
                         LivingCells = player.LivingCells,
+                        TotalLivingCells = totalLivingCells,
+                        FinalRank = FinalPlacementCalculator.GetCompetitionRank(game.PlayerResults, player.PlayerId),
+                        PlayersTiedAtFinalRank = FinalPlacementCalculator.GetTieCount(game.PlayerResults, player.PlayerId),
                         DeadCells = player.DeadCells,
                         EndGameToxinCells = player.EndGameToxinCells,
                         NutrientClaims = player.NutrientPatchesConsumed,

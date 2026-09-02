@@ -44,7 +44,10 @@ analysis. `games.parquet` includes condition and board fingerprints, the
 selected and actually assigned lineups, geometry/mask identity, enabled-system
 toggles, configured position/loadout controls, and actual per-game starts and
 Adaptations. `players.parquet` includes the condition identity, board context,
-toggles, and each player's realized starting coordinate and Adaptation IDs.
+toggles, each player's realized starting coordinate and Adaptation IDs, plus the
+per-game total living-cell denominator and competition-style tie-aware final
+rank. A first-place tie is exported as ranks `1, 1, 3` with a tie-group size of
+`2`, so offline analysis can distinguish it from an outright win.
 Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
 
 Compare a treatment against its control before interpreting results:

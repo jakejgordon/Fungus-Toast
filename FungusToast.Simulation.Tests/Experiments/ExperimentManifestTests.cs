@@ -155,6 +155,26 @@ public sealed class ExperimentManifestTests
     }
 
     [Fact]
+    public void FinalPlacement_UsesCompetitionRanksForTiedLivingCellCounts()
+    {
+        var strategy = AIRoster.TestingStrategies[0];
+        var players = new List<PlayerResult>
+        {
+            new() { PlayerId = 0, LivingCells = 10, Strategy = strategy },
+            new() { PlayerId = 1, LivingCells = 10, Strategy = strategy },
+            new() { PlayerId = 2, LivingCells = 7, Strategy = strategy },
+            new() { PlayerId = 3, LivingCells = 2, Strategy = strategy }
+        };
+
+        Assert.Equal(1, FinalPlacementCalculator.GetCompetitionRank(players, 0));
+        Assert.Equal(1, FinalPlacementCalculator.GetCompetitionRank(players, 1));
+        Assert.Equal(3, FinalPlacementCalculator.GetCompetitionRank(players, 2));
+        Assert.Equal(4, FinalPlacementCalculator.GetCompetitionRank(players, 3));
+        Assert.Equal(2, FinalPlacementCalculator.GetTieCount(players, 0));
+        Assert.Equal(1, FinalPlacementCalculator.GetTieCount(players, 2));
+    }
+
+    [Fact]
     public void ManifestDiff_AllowsOnlyDeclaredTreatmentPaths()
     {
         var control = new { Systems = new { Nutrients = true, Draft = true }, Players = 4 };
