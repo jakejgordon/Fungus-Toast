@@ -195,6 +195,7 @@ namespace FungusToast.Simulation.Export
         {
             var rows = new List<PlayerExportRow>();
             var conditionFingerprint = ExperimentFingerprint.ForCondition(metadata.Condition);
+            var boardFingerprint = ExperimentFingerprint.ForBoard(metadata.Condition.Board);
 
             foreach (var game in batchResult.GameResults)
             {
@@ -230,6 +231,11 @@ namespace FungusToast.Simulation.Export
                         ExperimentId = metadata.ExperimentId,
                         ConditionId = metadata.Condition.ConditionId,
                         ConditionFingerprint = conditionFingerprint,
+                        InputSchemaVersion = metadata.InputSchemaVersion,
+                        StrategySet = metadata.Condition.Strategies.StrategySet.ToString(),
+                        StrategySelectionPolicy = metadata.Condition.Strategies.SelectionPolicy.ToString(),
+                        SlotAssignmentPolicy = metadata.Condition.SlotAssignmentPolicy.ToString(),
+                        StartingPositionMode = GetStartingPositionMode(metadata.Condition.Positioning),
                         GameIndex = game.GameIndex,
                         GameSeed = game.GameSeed,
                         PlayerId = player.PlayerId,
@@ -246,6 +252,9 @@ namespace FungusToast.Simulation.Export
                         BoardWidth = metadata.BoardWidth,
                         BoardHeight = metadata.BoardHeight,
                         BoardGeometryId = metadata.Condition.Board.GeometryId,
+                        BoardGeometryFingerprint = boardFingerprint,
+                        BlockedTileCount = metadata.Condition.Board.BlockedTileIds.Count,
+                        PlayerCount = metadata.Condition.PlayerCount,
                         NutrientPatchesEnabled = metadata.Condition.Systems.NutrientPatchesEnabled,
                         MycovariantDraftEnabled = metadata.Condition.Systems.MycovariantDraftEnabled,
                         DominantOpponentTheme = dominantOpponentTheme,

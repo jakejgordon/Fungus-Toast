@@ -48,6 +48,10 @@ toggles, each player's realized starting coordinate and Adaptation IDs, plus the
 per-game total living-cell denominator and competition-style tie-aware final
 rank. A first-place tie is exported as ranks `1, 1, 3` with a tie-group size of
 `2`, so offline analysis can distinguish it from an outright win.
+The player rows also carry the structured condition dimensions needed for
+grouping without parsing an opaque ID: input schema, strategy set and selection
+policy, slot-assignment policy, start-position mode, player count, and board
+geometry/mask fingerprint.
 Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
 
 Compare a treatment against its control before interpreting results:
