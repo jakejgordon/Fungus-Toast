@@ -76,15 +76,17 @@ measurement model, phase gates, and open product decisions are in
 
 ### Current Queue
 
-1. Execute Phase 0 without behavior changes: lock terminology, name/reference
-   migration obligations, and the small architecture-parity reference corpus.
-2. Include standardized machine IDs, human display names, intent summaries,
-   explicit Training mistakes, complementary starting Adaptations, and
-   board/player-count position pools in the Phase 0 contracts.
-3. Execute Phase 1 in two audit slices: strategy/roster representation first,
-   then invocation ownership and experiment/analytics gaps.
-4. Do not begin architecture migration or balance tuning until the audit and
-   reproducible experiment-contract foundation are complete.
+1. Phase 0 and both Phase 1 audit slices are complete. The evidence inventory,
+   parity corpus, risk matrix, and Phase 2 ordering are in
+   `FungusToast.Core/docs/second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md`.
+2. Implement P2-A: a versioned Simulation experiment-manifest domain model,
+   strict validation, enforced 100-game batch ceiling, and JSON fixtures. Keep
+   current CLI behavior and Core AI behavior unchanged.
+3. Then implement P2-B: complete resolved evidence for toggles, loadouts,
+   positions, geometry, lineup, fingerprints, and exact seed schedules.
+4. Characterize and later resolve the critical Unity double-spending and
+   unseeded-random seams before treating Simulation as a faithful player-facing
+   AI oracle or starting architecture migration.
 
 ### Completion Criteria
 

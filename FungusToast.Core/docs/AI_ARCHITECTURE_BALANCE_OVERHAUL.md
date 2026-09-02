@@ -7,12 +7,15 @@ it, and [SIMULATION_HELPER.md](SIMULATION_HELPER.md) for the current simulation
 commands and artifact rules. The active session queue remains in
 [`docs/WORKLOG.md`](../../docs/WORKLOG.md).
 
+The completed Phase 0–1 evidence inventory is in
+[AI_OVERHAUL_PHASE_0_1_AUDIT.md](second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md).
+
 ## 1. Initiative Status
 
-- **State:** Planning and baseline audit
+- **State:** Phase 0–1 audit complete; Phase 2 manifest foundation next
 - **Implementation started:** No
-- **Current gate:** Execute Phase 0 and Phase 1 without changing player-facing AI
-  behavior, then begin the reproducible experiment-contract foundation.
+- **Current gate:** Implement P2-A, the versioned manifest domain model and strict
+  validator, without changing player-facing AI behavior.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.

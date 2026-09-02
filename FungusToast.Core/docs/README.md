@@ -47,6 +47,9 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/SUBSTRATE_ECOLOGY_ROSTER.md` — proposed sixth-category roster, existing-mutation move audit, and whole-tree expansion candidates
 - `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
 
+### AI
+- `second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md` — completed AI-overhaul vocabulary, roster/name migration inventory, decision-surface audit, reproducibility gaps, risks, and Phase 2 slice order
+
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems
 - `second-level/UNIT_ASSET_NAMING_CONVENTIONS.md` — naming rules for new Unity source assets such as sprites, icons, and audio files
