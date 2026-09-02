@@ -14,8 +14,8 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure in progress; P2-A complete
 - **Implementation started:** Yes
-- **Current gate:** Implement P2.3 by carrying resolved condition controls into
-  the Parquet row schemas; P2.2 resolved evidence and replay are complete.
+- **Current gate:** Implement P2.4 manifest diffing and treatment/control
+  contamination checks; P2.1–P2.3 are complete.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -317,8 +317,12 @@ gate remains open.
   `--replay-manifest` strictly checks the recorded code and strategy identities,
   executes the exact lineup/seed schedule, and fails on outcome-fingerprint
   inequality. A separate-process smoke replay passed on 2026-09-01.
-- **P2.3:** Record all existing controls in metadata and per-game outputs,
-  including enabled systems, starting loadouts, geometry identity, and slot.
+- **P2.3 — complete:** `games.parquet` records condition/board fingerprints,
+  selected and assigned lineups, full board-mask identity, all enabled-system
+  toggles, configured and actual position/loadout values, and nutrient results.
+  `players.parquet` records condition identity, board context, toggles, and each
+  player's actual starting coordinate and Adaptations. The existing analytics
+  workflow was smoke-tested successfully against the expanded schema.
 - **P2.4:** Add treatment/control manifest diffing and a contamination check that
   rejects unintended differences.
 - **P2.5:** Add resumable condition execution, completion markers, failure

@@ -18,6 +18,8 @@ namespace FungusToast.Simulation.Export
     public sealed class GameExportRow
     {
         public string ExperimentId { get; set; } = string.Empty;
+        public string ConditionId { get; set; } = string.Empty;
+        public string ConditionFingerprint { get; set; } = string.Empty;
         public DateTime RunTimestampUtc { get; set; }
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
@@ -25,19 +27,35 @@ namespace FungusToast.Simulation.Export
         public string StrategySelectionPolicy { get; set; } = string.Empty;
         public string StrategySelectionSource { get; set; } = string.Empty;
         public string SelectedStrategyLineup { get; set; } = string.Empty;
+        public string AssignedStrategyLineup { get; set; } = string.Empty;
         public string SlotAssignmentPolicy { get; set; } = string.Empty;
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
+        public string BoardGeometryId { get; set; } = string.Empty;
+        public string BoardGeometryFingerprint { get; set; } = string.Empty;
+        public int BlockedTileCount { get; set; }
+        public string BlockedTileIds { get; set; } = string.Empty;
         public int PlayerCount { get; set; }
+        public bool NutrientPatchesEnabled { get; set; }
+        public bool MycovariantDraftEnabled { get; set; }
+        public string StartingPositionMode { get; set; } = string.Empty;
+        public string ConfiguredStartingPositions { get; set; } = string.Empty;
+        public string ConfiguredPreferredPositionPools { get; set; } = string.Empty;
+        public string ConfiguredStartingAdaptations { get; set; } = string.Empty;
+        public string ActualStartingPositions { get; set; } = string.Empty;
+        public string ActualStartingAdaptations { get; set; } = string.Empty;
         public int TurnsPlayed { get; set; }
         public int WinnerPlayerId { get; set; }
         public int ToxicTileCount { get; set; }
+        public int NutrientPatchCount { get; set; }
         public bool ParityAllPassed { get; set; }
     }
 
     public sealed class PlayerExportRow
     {
         public string ExperimentId { get; set; } = string.Empty;
+        public string ConditionId { get; set; } = string.Empty;
+        public string ConditionFingerprint { get; set; } = string.Empty;
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
@@ -46,6 +64,14 @@ namespace FungusToast.Simulation.Export
         public string StrategyName { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public string StrategyStatus { get; set; } = string.Empty;
+        public int StartingX { get; set; }
+        public int StartingY { get; set; }
+        public string StartingAdaptationIds { get; set; } = string.Empty;
+        public int BoardWidth { get; set; }
+        public int BoardHeight { get; set; }
+        public string BoardGeometryId { get; set; } = string.Empty;
+        public bool NutrientPatchesEnabled { get; set; }
+        public bool MycovariantDraftEnabled { get; set; }
         public string DominantOpponentTheme { get; set; } = string.Empty;
         public string OpponentThemeSet { get; set; } = string.Empty;
         public int UniqueOpponentThemes { get; set; }

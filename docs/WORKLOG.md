@@ -89,8 +89,14 @@ measurement model, phase gates, and open product decisions are in
    strategy/outcome fingerprints, artifact hashes, and the seed schedule used
    by the runner. `--replay-manifest` performs strict code/strategy checks and
    fails unless the canonical outcome fingerprint matches; the separate-process
-   replay smoke passed. Next, implement P2.3 Parquet row metadata completeness.
-4. Characterize and later resolve the critical Unity double-spending and
+   replay smoke passed.
+4. P2.3 is complete. `games.parquet` now carries the complete resolved causal
+   controls and actual per-game assignments/starts/loadouts; `players.parquet`
+   carries the player-specific realized context. A fixture with exact positions
+   and two different Adaptations was read back successfully, and the existing
+   offline analytics workflow completed against the expanded schema. Next,
+   implement P2.4 manifest diffing and contamination rejection.
+5. Characterize and later resolve the critical Unity double-spending and
    unseeded-random seams before treating Simulation as a faithful player-facing
    AI oracle or starting architecture migration.
 

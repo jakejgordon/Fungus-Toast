@@ -141,12 +141,16 @@ namespace FungusToast.Simulation.Export
         private static List<GameExportRow> BuildGameRows(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
         {
             var rows = new List<GameExportRow>(batchResult.GameResults.Count);
+            var conditionFingerprint = ExperimentFingerprint.ForCondition(metadata.Condition);
+            var boardFingerprint = ExperimentFingerprint.ForBoard(metadata.Condition.Board);
 
             foreach (var game in batchResult.GameResults)
             {
                 rows.Add(new GameExportRow
                 {
                     ExperimentId = metadata.ExperimentId,
+                    ConditionId = metadata.Condition.ConditionId,
+                    ConditionFingerprint = conditionFingerprint,
                     RunTimestampUtc = metadata.RunTimestampUtc,
                     GameIndex = game.GameIndex,
                     GameSeed = game.GameSeed,
@@ -154,13 +158,27 @@ namespace FungusToast.Simulation.Export
                     StrategySelectionPolicy = metadata.StrategySelectionPolicy.ToString(),
                     StrategySelectionSource = metadata.StrategySelectionSource.ToString(),
                     SelectedStrategyLineup = string.Join("|", metadata.SelectedStrategies.OrderBy(s => s.LineupOrder).Select(s => s.StrategyName)),
+                    AssignedStrategyLineup = string.Join("|", game.PlayerResults.OrderBy(player => player.PlayerId).Select(player => player.StrategyName)),
                     SlotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                     BoardWidth = metadata.BoardWidth,
                     BoardHeight = metadata.BoardHeight,
+                    BoardGeometryId = metadata.Condition.Board.GeometryId,
+                    BoardGeometryFingerprint = boardFingerprint,
+                    BlockedTileCount = metadata.Condition.Board.BlockedTileIds.Count,
+                    BlockedTileIds = string.Join(",", metadata.Condition.Board.BlockedTileIds.OrderBy(id => id)),
                     PlayerCount = game.PlayerResults.Count,
+                    NutrientPatchesEnabled = metadata.Condition.Systems.NutrientPatchesEnabled,
+                    MycovariantDraftEnabled = metadata.Condition.Systems.MycovariantDraftEnabled,
+                    StartingPositionMode = GetStartingPositionMode(metadata.Condition.Positioning),
+                    ConfiguredStartingPositions = FormatCoordinates(metadata.Condition.Positioning.ExactStartingPositions),
+                    ConfiguredPreferredPositionPools = FormatPositionPools(metadata.Condition.Positioning.PreferredPositionPools),
+                    ConfiguredStartingAdaptations = FormatConfiguredAdaptations(metadata.Condition.Systems.StartingAdaptations),
+                    ActualStartingPositions = FormatActualStartingPositions(game),
+                    ActualStartingAdaptations = FormatActualStartingAdaptations(game),
                     TurnsPlayed = game.TurnsPlayed,
                     WinnerPlayerId = game.WinnerId,
                     ToxicTileCount = game.ToxicTileCount,
+                    NutrientPatchCount = game.NutrientPatchCount,
                     ParityAllPassed = game.ParityInvariantReport?.AllPassed ?? true
                 });
             }
@@ -171,6 +189,7 @@ namespace FungusToast.Simulation.Export
         private static List<PlayerExportRow> BuildPlayerRows(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
         {
             var rows = new List<PlayerExportRow>();
+            var conditionFingerprint = ExperimentFingerprint.ForCondition(metadata.Condition);
 
             foreach (var game in batchResult.GameResults)
             {
@@ -203,6 +222,8 @@ namespace FungusToast.Simulation.Export
                     rows.Add(new PlayerExportRow
                     {
                         ExperimentId = metadata.ExperimentId,
+                        ConditionId = metadata.Condition.ConditionId,
+                        ConditionFingerprint = conditionFingerprint,
                         GameIndex = game.GameIndex,
                         GameSeed = game.GameSeed,
                         PlayerId = player.PlayerId,
@@ -211,6 +232,16 @@ namespace FungusToast.Simulation.Export
                         StrategyName = player.StrategyName,
                         StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                         StrategyStatus = lineupEntry?.StrategyStatus ?? AIRoster.GetStatusForStrategy(player.Strategy, metadata.StrategySet).ToString(),
+                        StartingX = game.StartingPositionsByPlayerId[player.PlayerId].x,
+                        StartingY = game.StartingPositionsByPlayerId[player.PlayerId].y,
+                        StartingAdaptationIds = game.StartingAdaptationIdsByPlayerId.TryGetValue(player.PlayerId, out var adaptationIds)
+                            ? string.Join("|", adaptationIds.OrderBy(id => id, StringComparer.Ordinal))
+                            : string.Empty,
+                        BoardWidth = metadata.BoardWidth,
+                        BoardHeight = metadata.BoardHeight,
+                        BoardGeometryId = metadata.Condition.Board.GeometryId,
+                        NutrientPatchesEnabled = metadata.Condition.Systems.NutrientPatchesEnabled,
+                        MycovariantDraftEnabled = metadata.Condition.Systems.MycovariantDraftEnabled,
                         DominantOpponentTheme = dominantOpponentTheme,
                         OpponentThemeSet = opponentThemeSet,
                         UniqueOpponentThemes = opponentThemes.Distinct(StringComparer.Ordinal).Count(),
@@ -431,5 +462,31 @@ namespace FungusToast.Simulation.Export
 
             return AIRoster.GetThemeForStrategy(player.Strategy).ToString();
         }
+
+        private static string GetStartingPositionMode(ExperimentPositioning positioning)
+        {
+            if (positioning.ExactStartingPositions.Count > 0) return "exact";
+            if (positioning.PreferredPositionPools.Count > 0) return "preferred-pools";
+            return "generated";
+        }
+
+        private static string FormatCoordinates(IEnumerable<BoardCoordinate> coordinates) =>
+            string.Join("|", coordinates.Select(coordinate => $"{coordinate.X}:{coordinate.Y}"));
+
+        private static string FormatPositionPools(IEnumerable<PlayerStartingPositionPool> pools) =>
+            string.Join("|", pools.OrderBy(pool => pool.PlayerSlot).Select(pool =>
+                $"{pool.PlayerSlot}={string.Join(";", pool.Positions.Select(position => $"{position.X}:{position.Y}"))}"));
+
+        private static string FormatConfiguredAdaptations(IEnumerable<PlayerStartingAdaptations> loadouts) =>
+            string.Join("|", loadouts.OrderBy(loadout => loadout.PlayerSlot).Select(loadout =>
+                $"{loadout.PlayerSlot}={string.Join(",", loadout.AdaptationIds.OrderBy(id => id, StringComparer.Ordinal))}"));
+
+        private static string FormatActualStartingPositions(GameResult game) =>
+            string.Join("|", game.StartingPositionsByPlayerId.OrderBy(entry => entry.Key).Select(entry =>
+                $"{entry.Key}={entry.Value.x}:{entry.Value.y}"));
+
+        private static string FormatActualStartingAdaptations(GameResult game) =>
+            string.Join("|", game.StartingAdaptationIdsByPlayerId.OrderBy(entry => entry.Key).Select(entry =>
+                $"{entry.Key}={string.Join(",", entry.Value.OrderBy(id => id, StringComparer.Ordinal))}"));
     }
 }

@@ -39,6 +39,14 @@ and exits unsuccessfully if the canonical outcome fingerprint differs. Use
 `--replay-experiment-id <id>` only when a stable non-colliding artifact ID is
 needed.
 
+The Parquet datasets duplicate the fields most often needed for causal
+analysis. `games.parquet` includes condition and board fingerprints, the
+selected and actually assigned lineups, geometry/mask identity, enabled-system
+toggles, configured position/loadout controls, and actual per-game starts and
+Adaptations. `players.parquet` includes the condition identity, board context,
+toggles, and each player's realized starting coordinate and Adaptation IDs.
+Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.
