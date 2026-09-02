@@ -257,21 +257,17 @@ This supports the composed-controller hypothesis, subject to the Phase 4 bakeoff
 
 ### Unity
 
-- `GameManager.StartNextRound` calls `MutationPointService.AssignMutationPoints`.
-- That service calls `TurnEngine.AssignMutationPoints`, which assigns points and
-  immediately invokes every player's strategy.
-- After humans finish, `GameManager` calls
-  `MutationPointService.SpendAllMutationPointsForAIPlayers`, which invokes AI
-  strategies again in the same mutation phase.
-- The first Unity call constructs `new System.Random()` instead of using the
-  `GameManager` random source; the second uses `GameManager.GetRng()`.
+- Resolved during Phase 2 hardening: `GameManager.StartNextRound` now calls the
+  Core-owned `TurnEngine.AssignMutationPointIncome`, which starts the mutation
+  phase and grants income without invoking strategies. It uses the shared
+  `GameManager` RNG instead of constructing an unseeded local source.
+- After humans finish, `MutationPointService.SpendAllMutationPointsForAIPlayers`
+  invokes eligible strategies exactly once and starts growth.
 - Fast-forward uses `TurnEngine.AssignMutationPoints` with the GameManager RNG
-  and therefore follows the Simulation one-call shape.
-
-This is a **critical characterization item**. It may allow a Unity AI to revisit
-banking or spending twice per round and makes normal Unity behavior differ from
-Simulation/fast-forward. It must be proven with focused tests or a Unity-side
-trace before ownership is changed; the audit itself does not alter behavior.
+  and therefore retains the Simulation one-call income-plus-spend shape.
+- Focused Core tests lock both the deferred-income and one-step contracts.
+  Unity Editor compile and interactive mutation-phase validation remain the
+  integration gate for the updated Unity caller.
 
 ### Additional nondeterministic seams
 
@@ -371,10 +367,10 @@ dimensions, filenames, and row counts.
 
 | Priority | Risk/gap | Why it blocks later work | Owning phase |
 |---|---|---|---|
-| Critical | Unity normal mode may spend AI points twice | Simulation cannot represent player-facing behavior reliably | Characterize in Phase 1 follow-up; resolve before Phase 4 migration |
-| Critical | Unseeded random sources in Core/Unity AI-relevant paths | Exact replay and treatment/control comparisons can diverge | Phase 2 deterministic foundation |
-| Critical | Manifest omits active scenario controls | Results can be irreproducible or falsely attributed to strategy | Phase 2 |
-| Critical | No strict resolved manifest/replay contract | Autonomous evaluation has no trustworthy unit of work | Phase 2 |
+| Resolved | Unity normal mode spent AI points twice | Simulation could not represent player-facing behavior reliably | Phase 2 hardening; manual Unity integration check pending |
+| Resolved | Unseeded random sources in audited Core/Unity AI-relevant paths | Exact replay and treatment/control comparisons could diverge | Phase 2 deterministic foundation |
+| Resolved | Manifest omitted active scenario controls | Results could be irreproducible or falsely attributed to strategy | Phase 2 experiment contract |
+| Resolved | No strict resolved manifest/replay contract | Autonomous evaluation had no trustworthy unit of work | Phase 2 experiment contract |
 | High | Name-keyed behavior/metadata/loadout references are distributed | Reset can silently break presets, summaries, or Adaptations | Phase 5 registry/migration |
 | High | Strategy abstraction leaks mycovariant and position concerns | Independent policy testing and candidate genes are unsafe | Phase 4–5 |
 | High | No normalized strength/uncertainty/robustness outputs | Difficulty bands cannot be empirical | Phase 3 |
@@ -407,9 +403,9 @@ Phase 2 should proceed in these independent commits:
    and prove identical per-game results and artifacts, excluding timestamps and
    paths by design.
 
-Characterize the Unity double-invocation issue before architecture migration.
-It need not block building the Simulation manifest model, but it blocks claiming
-that Simulation is a faithful player-facing AI oracle.
+The Unity double-invocation and audited RNG seams were resolved during Phase 2
+hardening. Manual Unity integration validation remains required before claiming
+that Simulation is a fully validated player-facing AI oracle.
 
 ## 12. Phase Exit Assessment
 

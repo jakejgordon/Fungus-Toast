@@ -12,12 +12,13 @@ The completed Phase 0–1 evidence inventory is in
 
 ## 1. Initiative Status
 
-- **State:** Phase 2 experiment infrastructure complete; determinism hardening
-  is in progress before Phase 3.
+- **State:** Phase 2 experiment infrastructure and source-level determinism
+  hardening complete; Unity integration validation is pending before Phase 3.
 - **Implementation started:** Yes
-- **Current gate:** Resolve the audited unseeded-random and Unity double-spending
-  seams, then treat the completed P2.1–P2.6 experiment contract as the reliable
-  foundation for Phase 3 measurement work.
+- **Current gate:** Compile and exercise the updated normal Unity mutation phase,
+  confirming AI strategies spend once after human turns. Then treat the
+  completed P2.1–P2.6 contract and determinism fixes as the foundation for Phase
+  3 measurement work.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.

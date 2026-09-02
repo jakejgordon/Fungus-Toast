@@ -53,9 +53,8 @@ namespace FungusToast.Unity
         {
             var board = getBoard();
             var all = getMutationManager().AllMutations.Values.ToList();
-            var localRng = new System.Random();
 
-            TurnEngine.AssignMutationPoints(board, board.Players, all, localRng, ui.GameLogRouter);
+            TurnEngine.AssignMutationPointIncome(board, board.Players, all, getRng(), ui.GameLogRouter);
             ui.MutationUIManager?.RefreshAllMutationButtons();
             ui.MoldProfileRoot?.Refresh();
         }

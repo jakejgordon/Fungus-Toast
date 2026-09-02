@@ -118,9 +118,15 @@ measurement model, phase gates, and open product decisions are in
    RNG, and its Unity caller uses `GameManager`'s gameplay stream. A focused test
    proves the supplied source controls the transfer rolls. Unity Editor compile
    validation remains pending for the updated call site.
-10. Next, characterize and fix the critical Unity double-spending path before
-    treating Simulation as a faithful player-facing AI oracle or starting Phase
-    3 measurement work.
+10. The Unity double-spending path is fixed at the source boundary. Core now
+    exposes point-income-only mutation-phase setup for interactive front ends;
+    normal Unity uses it and defers AI strategy execution until humans finish.
+    Simulation and fast-forward retain the one-step income-plus-spend contract.
+    Focused Core tests cover both paths, and the replay/resume fixture still
+    passes.
+11. Next, manually compile Unity and play one normal mutation phase to confirm
+    each AI strategy spends once after the human turn, then begin Phase 3
+    measurement and classification work.
 
 ### Completion Criteria
 
