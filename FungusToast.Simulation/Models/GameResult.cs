@@ -26,6 +26,8 @@ namespace FungusToast.Simulation.Models
         public int NutrientPatchCount { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;
         public ParityInvariantReport? ParityInvariantReport { get; set; }
+        public Dictionary<int, (int x, int y)> StartingPositionsByPlayerId { get; set; } = new();
+        public Dictionary<int, IReadOnlyList<string>> StartingAdaptationIdsByPlayerId { get; set; } = new();
 
         // ──────────────
         // PLAYER RESULTS

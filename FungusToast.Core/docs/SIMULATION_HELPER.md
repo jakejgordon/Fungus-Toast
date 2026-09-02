@@ -16,6 +16,15 @@ are rejected. A canonical example is checked in at
 The JSON file is a contract fixture in P2-A; direct execution and replay from a
 manifest are part of P2-B and are not available yet.
 
+Parquet runs also write `resolved-manifest.json` using
+`fungus-toast.experiment-result.v1` plus `resolved-manifest.sha256`. The resolved
+artifact records the code and binary identities, condition and board
+fingerprints, selected lineup and strategy fingerprints, exact game seeds,
+actual per-game slot assignments, starting coordinates and Adaptations,
+completion status, row counts, and hashes for every emitted dataset. Verify the
+sidecar from inside the artifact directory with `sha256sum -c
+resolved-manifest.sha256`. Replay is the remaining P2-B step.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

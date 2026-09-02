@@ -50,7 +50,8 @@ namespace FungusToast.Simulation
                 permanentlyBlockedTileIds: permanentlyBlockedTileIds,
                 startingPositionOverride: startingPositionOverride,
                 startingAdaptationIds: startingAdaptationIds,
-                preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId);
+                preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId,
+                gameSeedSchedule: runMetadata?.GameSeedSchedule);
 
             PrintParityInvariantSummary(results.GameResults);
 

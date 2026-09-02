@@ -1,6 +1,7 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
+using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
 using Parquet.Serialization;
 using System.Text.Json;
@@ -80,7 +81,49 @@ namespace FungusToast.Simulation.Export
                 WriteIndented = true
             }));
 
+            var resolvedFiles = new Dictionary<string, ResolvedOutputFile>(StringComparer.Ordinal);
+            AddResolvedOutputFile(resolvedFiles, "games", gamesPath, wroteGames);
+            AddResolvedOutputFile(resolvedFiles, "players", playersPath, wrotePlayers);
+            AddResolvedOutputFile(resolvedFiles, "livingCellSources", livingCellSourcesPath, wroteLivingCellSources);
+            AddResolvedOutputFile(resolvedFiles, "mutations", mutationsPath, wroteMutations);
+            AddResolvedOutputFile(resolvedFiles, "mycovariants", mycovariantsPath, wroteMycovariants);
+            AddResolvedOutputFile(resolvedFiles, "upgradeEvents", upgradeEventsPath, wroteUpgradeEvents);
+            AddResolvedOutputFile(resolvedFiles, "legacyManifest", manifestPath, wrote: true);
+
+            var resolvedManifest = ResolvedExperimentManifestFactory.Create(
+                batchResult,
+                metadata,
+                resolvedFiles,
+                new Dictionary<string, int>(StringComparer.Ordinal)
+                {
+                    ["games"] = gameRows.Count,
+                    ["players"] = playerRows.Count,
+                    ["livingCellSources"] = livingCellSourceRows.Count,
+                    ["mutations"] = mutationRows.Count,
+                    ["mycovariants"] = mycovariantRows.Count,
+                    ["upgradeEvents"] = upgradeEventRows.Count
+                });
+            string resolvedManifestPath = Path.Combine(runFolder, "resolved-manifest.json");
+            File.WriteAllText(resolvedManifestPath, ResolvedExperimentManifestJson.Serialize(resolvedManifest));
+            File.WriteAllText(
+                Path.Combine(runFolder, "resolved-manifest.sha256"),
+                $"{ExperimentFingerprint.ForFile(resolvedManifestPath)}  {Path.GetFileName(resolvedManifestPath)}{Environment.NewLine}");
+
             return runFolder;
+        }
+
+        private static void AddResolvedOutputFile(
+            IDictionary<string, ResolvedOutputFile> files,
+            string key,
+            string path,
+            bool wrote)
+        {
+            if (!wrote) return;
+            files[key] = new ResolvedOutputFile
+            {
+                FileName = Path.GetFileName(path),
+                Sha256 = ExperimentFingerprint.ForFile(path)
+            };
         }
 
         private static bool WriteParquet<T>(string filePath, List<T> rows)

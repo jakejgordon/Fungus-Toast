@@ -6,7 +6,7 @@
   "baseSeed": 12345,
   "conditions": [
     {
-      "conditionId": "p4.w120.h120.testing",
+      "conditionId": "p4.w120.h120.s.testing",
       "playerCount": 4,
       "board": {
         "width": 120,

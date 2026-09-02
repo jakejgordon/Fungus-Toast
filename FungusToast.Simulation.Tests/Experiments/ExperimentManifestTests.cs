@@ -2,6 +2,7 @@ using System.Text.Json;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
+using FungusToast.Simulation.Analysis;
 using Xunit;
 
 namespace FungusToast.Simulation.Tests.Experiments;
@@ -91,6 +92,37 @@ public sealed class ExperimentManifestTests
         };
         var errors = ExperimentManifestValidator.Validate(CreateValidManifest(condition: condition));
         Assert.Contains(errors, error => error.Contains("unknown IDs: adaptation_missing", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Fingerprints_AreStableAndBoardMaskOrderIndependent()
+    {
+        var first = new ExperimentBoard
+        {
+            Width = 20,
+            Height = 10,
+            GeometryId = "custom",
+            BlockedTileIds = new[] { 7, 2, 5 }
+        };
+        var second = new ExperimentBoard
+        {
+            Width = 20,
+            Height = 10,
+            GeometryId = "custom",
+            BlockedTileIds = new[] { 2, 5, 7 }
+        };
+
+        Assert.Equal(ExperimentFingerprint.ForBoard(first), ExperimentFingerprint.ForBoard(second));
+        Assert.Equal(64, ExperimentFingerprint.ForBoard(first).Length);
+    }
+
+    [Fact]
+    public void MatchupRunner_RejectsSeedScheduleWithWrongLength()
+    {
+        Assert.Throws<ArgumentException>(() => MatchupRunner.RunMatchups(
+            new List<IMutationSpendingStrategy>(),
+            gamesToPlay: 2,
+            gameSeedSchedule: new[] { 123 }));
     }
 
     private static ExperimentManifest CreateValidManifest(int gamesPerCondition = 100, ExperimentCondition? condition = null) => new()

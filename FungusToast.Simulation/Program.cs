@@ -43,11 +43,11 @@ namespace FungusToast.Simulation
             {
                 if (config.IsBatchMode)
                 {
-                    RunStratifiedBatch(config, experimentId);
+                    RunStratifiedBatch(config, inputManifest);
                 }
                 else
                 {
-                    RunSingleSimulation(config, experimentId);
+                    RunSingleSimulation(config, inputManifest);
                 }
             }
             finally
@@ -57,8 +57,9 @@ namespace FungusToast.Simulation
             Environment.Exit(0);
         }
 
-        private static void RunSingleSimulation(SimulationConfig config, string experimentId)
+        private static void RunSingleSimulation(SimulationConfig config, ExperimentManifest inputManifest)
         {
+            var condition = inputManifest.Conditions.Single();
             var strategyRng = config.BaseSeed.HasValue ? new Random(config.BaseSeed.Value) : null;
             var filteredStrategyPool = AIRoster.GetStrategiesByFilter(config.StrategySet, config.StrategyFilter);
             var strategies = config.ExplicitStrategyNames is { Count: > 0 }
@@ -73,7 +74,8 @@ namespace FungusToast.Simulation
                     prefilteredStrategies: filteredStrategyPool);
             var runMetadata = BuildRunMetadata(
                 config,
-                experimentId,
+                inputManifest,
+                condition,
                 strategies,
                 config.BoardWidth,
                 config.BoardHeight,
@@ -100,8 +102,9 @@ namespace FungusToast.Simulation
                 preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
         }
 
-        private static void RunStratifiedBatch(SimulationConfig config, string experimentId)
+        private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
         {
+            string experimentId = inputManifest.ExperimentId;
             var playerCounts = config.PlayerCounts?.Count > 0
                 ? config.PlayerCounts
                 : new List<int> { config.NumberOfPlayers };
@@ -132,7 +135,11 @@ namespace FungusToast.Simulation
                     {
                         stratumIndex++;
                         int stratumSeed = DeriveStratumSeed(config.BaseSeed ?? 0, players, board.Width, board.Height, strategySet);
-                        string stratumExperimentId = $"{experimentId}__p{players}_w{board.Width}_h{board.Height}_s{strategySet}";
+                        var condition = inputManifest.Conditions.Single(candidate =>
+                            candidate.PlayerCount == players &&
+                            candidate.Board.Width == board.Width &&
+                            candidate.Board.Height == board.Height &&
+                            candidate.Strategies.StrategySet == strategySet);
                         var strategyRng = new Random(stratumSeed);
                         var filteredStrategyPool = AIRoster.GetStrategiesByFilter(strategySet, config.StrategyFilter);
                         var strategies = SelectStrategies(
@@ -145,7 +152,8 @@ namespace FungusToast.Simulation
                             prefilteredStrategies: filteredStrategyPool);
                         var runMetadata = BuildRunMetadata(
                             config,
-                            stratumExperimentId,
+                            inputManifest,
+                            condition,
                             strategies,
                             board.Width,
                             board.Height,
@@ -218,7 +226,8 @@ namespace FungusToast.Simulation
 
         private static SimulationRunMetadata BuildRunMetadata(
             SimulationConfig config,
-            string experimentId,
+            ExperimentManifest inputManifest,
+            ExperimentCondition condition,
             IReadOnlyList<IMutationSpendingStrategy> selectedStrategies,
             int boardWidth,
             int boardHeight,
@@ -227,7 +236,9 @@ namespace FungusToast.Simulation
         {
             return new SimulationRunMetadata
             {
-                ExperimentId = experimentId,
+                ExperimentId = config.IsBatchMode
+                    ? $"{inputManifest.ExperimentId}__p{condition.PlayerCount}_w{condition.Board.Width}_h{condition.Board.Height}_s{strategySet}"
+                    : inputManifest.ExperimentId,
                 RunTimestampUtc = DateTime.UtcNow,
                 StrategySet = strategySet,
                 BaseSeed = baseSeed,
@@ -240,6 +251,12 @@ namespace FungusToast.Simulation
                 NumberOfGamesRequested = config.NumberOfGames,
                 BoardWidth = boardWidth,
                 BoardHeight = boardHeight,
+                InputSchemaVersion = inputManifest.SchemaVersion,
+                Purpose = inputManifest.Purpose,
+                Condition = condition,
+                GameSeedSchedule = Enumerable.Range(0, config.NumberOfGames)
+                    .Select(index => unchecked(baseSeed + index))
+                    .ToList(),
                 SelectedStrategies = selectedStrategies
                     .Select((strategy, index) =>
                     {
@@ -311,7 +328,7 @@ namespace FungusToast.Simulation
             {
                 conditions.Add(new ExperimentCondition
                 {
-                    ConditionId = $"p{players}.w{board.Width}.h{board.Height}.s{strategySet.ToString().ToLowerInvariant()}",
+                    ConditionId = $"p{players}.w{board.Width}.h{board.Height}.s.{strategySet.ToString().ToLowerInvariant()}",
                     PlayerCount = players,
                     Board = new ExperimentBoard
                     {
@@ -374,6 +391,7 @@ namespace FungusToast.Simulation
             {
                 SchemaVersion = ExperimentManifest.CurrentSchemaVersion,
                 ExperimentId = experimentId,
+                Purpose = config.ExperimentPurpose,
                 GamesPerCondition = config.NumberOfGames,
                 BaseSeed = config.BaseSeed ?? 0,
                 Conditions = conditions
@@ -400,6 +418,7 @@ namespace FungusToast.Simulation
                 EnableMycovariantDraft = true,
                 StartingPositionOverride = null,
                 ExperimentId = "",
+                ExperimentPurpose = "CLI simulation run",
                 PlayerCounts = null,
                 BoardSizes = null,
                 StrategySets = null,
@@ -657,6 +676,13 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--purpose":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.ExperimentPurpose = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
                     case "--no-keyboard":
                     case "--non-interactive":
                         config.DisableKeyboardInterrupt = true;
@@ -857,6 +883,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --seed <number>          Base seed for deterministic strategy/order/game seeds (default: 0)");
             Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
+            Console.WriteLine("  --purpose <text>         Human-readable reason for the experiment");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
@@ -914,6 +941,7 @@ namespace FungusToast.Simulation
             public bool EnableMycovariantDraft { get; set; }
             public List<(int x, int y)>? StartingPositionOverride { get; set; }
             public string ExperimentId { get; set; } = "";
+            public string ExperimentPurpose { get; set; } = "";
             public List<int>? PlayerCounts { get; set; }
             public List<BoardSize>? BoardSizes { get; set; }
             public List<StrategySetEnum>? StrategySets { get; set; }

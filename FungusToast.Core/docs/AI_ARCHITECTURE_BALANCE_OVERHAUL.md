@@ -14,9 +14,9 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure in progress; P2-A complete
 - **Implementation started:** Yes
-- **Current gate:** Implement P2-B: resolved manifests, fingerprints, exact seed
-  schedules, and replay from a manifest, without changing player-facing AI
-  behavior.
+- **Current gate:** Complete P2-B replay from resolved manifests. Resolved
+  evidence, fingerprints, checksums, actual starting loadouts/positions, and
+  exact execution-owned seed schedules are implemented.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -310,8 +310,11 @@ gate remains open.
   translation, strict JSON unknown/missing-field handling, semantic validation,
   and the hard 100-game per-condition ceiling. The checked-in example is
   `FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
-- **P2.2:** Add resolved-manifest output, strategy/config fingerprints, explicit
-  game-seed schedules, and replay from manifest.
+- **P2.2 — in progress:** Added `fungus-toast.experiment-result.v1` output with
+  code, condition, board, balance-binary, execution, and strategy-definition
+  fingerprints; exact seed schedules; selected/assigned lineups; actual
+  per-game starting coordinates and Adaptations; artifact hashes; completion
+  status; and a manifest checksum sidecar. Replay from this artifact remains.
 - **P2.3:** Record all existing controls in metadata and per-game outputs,
   including enabled systems, starting loadouts, geometry identity, and slot.
 - **P2.4:** Add treatment/control manifest diffing and a contamination check that

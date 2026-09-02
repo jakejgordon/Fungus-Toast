@@ -17,6 +17,8 @@ public static partial class ExperimentManifestValidator
             errors.Add($"schemaVersion must be '{ExperimentManifest.CurrentSchemaVersion}'.");
         if (string.IsNullOrWhiteSpace(manifest.ExperimentId) || manifest.ExperimentId.Length > 128 || !ExperimentIdPattern().IsMatch(manifest.ExperimentId))
             errors.Add("experimentId must be 1-128 characters using only letters, numbers, '.', '_' or '-'.");
+        if (string.IsNullOrWhiteSpace(manifest.Purpose))
+            errors.Add("purpose is required.");
         if (manifest.GamesPerCondition < 1 || manifest.GamesPerCondition > ExperimentManifest.MaximumGamesPerCondition)
             errors.Add($"gamesPerCondition must be between 1 and {ExperimentManifest.MaximumGamesPerCondition}.");
         if (manifest.Conditions == null || manifest.Conditions.Count == 0)

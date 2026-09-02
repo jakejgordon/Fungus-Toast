@@ -14,7 +14,7 @@ public sealed class ExperimentManifest
 
     public required string SchemaVersion { get; init; }
     public required string ExperimentId { get; init; }
-    public string Purpose { get; init; } = string.Empty;
+    public required string Purpose { get; init; }
     public required int GamesPerCondition { get; init; }
     public required int BaseSeed { get; init; }
     public required IReadOnlyList<ExperimentCondition> Conditions { get; init; }

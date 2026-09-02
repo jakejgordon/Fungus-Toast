@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Simulation.Experiments;
 
 namespace FungusToast.Simulation.Models
 {
@@ -39,5 +40,9 @@ namespace FungusToast.Simulation.Models
         public required int BoardWidth { get; init; }
         public required int BoardHeight { get; init; }
         public required IReadOnlyList<SelectedStrategyMetadata> SelectedStrategies { get; init; }
+        public required string InputSchemaVersion { get; init; }
+        public required string Purpose { get; init; }
+        public required ExperimentCondition Condition { get; init; }
+        public required IReadOnlyList<int> GameSeedSchedule { get; init; }
     }
 }
