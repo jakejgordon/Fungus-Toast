@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "fungus-toast.experiment-input.v1",
+  "experimentId": "example_rectangular_control",
+  "purpose": "Demonstrate the strict P2-A input contract.",
+  "gamesPerCondition": 20,
+  "baseSeed": 12345,
+  "conditions": [
+    {
+      "conditionId": "p4.w120.h120.testing",
+      "playerCount": 4,
+      "board": {
+        "width": 120,
+        "height": 120,
+        "geometryId": "rectangle",
+        "blockedTileIds": []
+      },
+      "strategies": {
+        "strategySet": "testing",
+        "selectionPolicy": "coverageBalanced",
+        "explicitStrategyNames": [],
+        "filter": {
+          "archetypes": [],
+          "powerTiers": [],
+          "roles": [],
+          "lifecycles": [],
+          "difficultyBands": [],
+          "campaignDifficulties": [],
+          "pools": []
+        }
+      },
+      "systems": {
+        "nutrientPatchesEnabled": false,
+        "mycovariantDraftEnabled": false,
+        "startingAdaptations": []
+      },
+      "positioning": {
+        "exactStartingPositions": [],
+        "preferredPositionPools": []
+      },
+      "slotAssignmentPolicy": "rotateByGame"
+    }
+  ]
+}

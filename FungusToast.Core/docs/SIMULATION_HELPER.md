@@ -4,6 +4,18 @@
 
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 
+## Experiment input contract
+
+Simulation CLI options are validated through the versioned
+`fungus-toast.experiment-input.v1` contract before a run starts. Unknown JSON
+fields, invalid strategy or Adaptation references, illegal positions, ambiguous
+position modes, unsupported player counts, and any condition above 100 games
+are rejected. A canonical example is checked in at
+`FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
+
+The JSON file is a contract fixture in P2-A; direct execution and replay from a
+manifest are part of P2-B and are not available yet.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

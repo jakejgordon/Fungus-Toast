@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
 using System.Text;
 
@@ -24,6 +25,15 @@ namespace FungusToast.Simulation
             string experimentId = string.IsNullOrWhiteSpace(config.ExperimentId)
                 ? $"exp_{DateTime.UtcNow:yyyyMMddTHHmmss}"
                 : config.ExperimentId.Trim();
+
+            var inputManifest = BuildInputExperimentManifest(config, experimentId);
+            var manifestErrors = ExperimentManifestValidator.Validate(inputManifest);
+            if (manifestErrors.Count > 0)
+            {
+                Console.WriteLine("Invalid experiment configuration:");
+                foreach (var error in manifestErrors) Console.WriteLine($"  - {error}");
+                return;
+            }
 
             // Always set up output redirection - if no filename specified, OutputManager will generate one
             OutputManager? outputManager = null;
@@ -161,7 +171,9 @@ namespace FungusToast.Simulation
                             enableNutrientPatches: config.EnableNutrientPatches,
                             enableMycovariantDraft: config.EnableMycovariantDraft,
                             permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
-                            startingPositionOverride: config.StartingPositionOverride);
+                            startingPositionOverride: config.StartingPositionOverride,
+                            startingAdaptationIds: config.StartingAdaptationIds,
+                            preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId);
                     }
                 }
             }
@@ -278,6 +290,94 @@ namespace FungusToast.Simulation
                 seed = (seed * 397) ^ (int)strategySet;
                 return seed;
             }
+        }
+
+        private static ExperimentManifest BuildInputExperimentManifest(SimulationConfig config, string experimentId)
+        {
+            var playerCounts = config.PlayerCounts?.Count > 0
+                ? config.PlayerCounts
+                : new List<int> { config.NumberOfPlayers };
+            var boardSizes = config.BoardSizes?.Count > 0
+                ? config.BoardSizes
+                : new List<BoardSize> { new(config.BoardWidth, config.BoardHeight) };
+            var strategySets = config.StrategySets?.Count > 0
+                ? config.StrategySets
+                : new List<StrategySetEnum> { config.StrategySet };
+            var conditions = new List<ExperimentCondition>();
+
+            foreach (var players in playerCounts)
+            foreach (var board in boardSizes)
+            foreach (var strategySet in strategySets)
+            {
+                conditions.Add(new ExperimentCondition
+                {
+                    ConditionId = $"p{players}.w{board.Width}.h{board.Height}.s{strategySet.ToString().ToLowerInvariant()}",
+                    PlayerCount = players,
+                    Board = new ExperimentBoard
+                    {
+                        Width = board.Width,
+                        Height = board.Height,
+                        GeometryId = config.PermanentlyBlockedTileIds is { Count: > 0 } ? "custom-mask" : "rectangle",
+                        BlockedTileIds = config.PermanentlyBlockedTileIds?.OrderBy(id => id).ToList() ?? new List<int>()
+                    },
+                    Strategies = new ExperimentStrategySelection
+                    {
+                        StrategySet = strategySet,
+                        SelectionPolicy = config.StrategySelectionPolicy,
+                        ExplicitStrategyNames = config.ExplicitStrategyNames ?? new List<string>(),
+                        Filter = new ExperimentStrategyFilter
+                        {
+                            Archetypes = config.StrategyFilter.Archetypes.ToList(),
+                            PowerTiers = config.StrategyFilter.PowerTiers.ToList(),
+                            Roles = config.StrategyFilter.Roles.ToList(),
+                            Lifecycles = config.StrategyFilter.Lifecycles.ToList(),
+                            DifficultyBands = config.StrategyFilter.DifficultyBands.ToList(),
+                            CampaignDifficulties = config.StrategyFilter.CampaignDifficulties.ToList(),
+                            Pools = config.StrategyFilter.Pools.ToList()
+                        }
+                    },
+                    Systems = new ExperimentSystems
+                    {
+                        NutrientPatchesEnabled = config.EnableNutrientPatches,
+                        MycovariantDraftEnabled = config.EnableMycovariantDraft,
+                        StartingAdaptations = config.StartingAdaptationIds?
+                            .Select((ids, slot) => new PlayerStartingAdaptations
+                            {
+                                PlayerSlot = slot,
+                                AdaptationIds = ids
+                            })
+                            .ToList()
+                            ?? new List<PlayerStartingAdaptations>()
+                    },
+                    Positioning = new ExperimentPositioning
+                    {
+                        ExactStartingPositions = config.StartingPositionOverride?
+                            .Select(position => new BoardCoordinate { X = position.x, Y = position.y })
+                            .ToList()
+                            ?? new List<BoardCoordinate>(),
+                        PreferredPositionPools = config.PreferredStartingPositionPoolsByPlayerId?
+                            .OrderBy(entry => entry.Key)
+                            .Select(entry => new PlayerStartingPositionPool
+                            {
+                                PlayerSlot = entry.Key,
+                                Positions = entry.Value
+                                    .Select(position => new BoardCoordinate { X = position.x, Y = position.y })
+                                    .ToList()
+                            })
+                            .ToList() ?? new List<PlayerStartingPositionPool>()
+                    },
+                    SlotAssignmentPolicy = config.SlotAssignmentPolicy
+                });
+            }
+
+            return new ExperimentManifest
+            {
+                SchemaVersion = ExperimentManifest.CurrentSchemaVersion,
+                ExperimentId = experimentId,
+                GamesPerCondition = config.NumberOfGames,
+                BaseSeed = config.BaseSeed ?? 0,
+                Conditions = conditions
+            };
         }
 
         private static SimulationConfig? ParseCommandLineArguments(string[] args)
@@ -647,19 +747,18 @@ namespace FungusToast.Simulation
 
             if (config.NumberOfPlayers > MaxSupportedPlayers)
             {
-                Console.WriteLine($"Requested players ({config.NumberOfPlayers}) exceeds supported maximum ({MaxSupportedPlayers}). Capping to {MaxSupportedPlayers}.");
-                config.NumberOfPlayers = MaxSupportedPlayers;
+                Console.WriteLine($"Requested players ({config.NumberOfPlayers}) exceeds supported maximum ({MaxSupportedPlayers}).");
+                return null;
             }
 
             if (config.PlayerCounts != null && config.PlayerCounts.Count > 0)
             {
-                var capped = config.PlayerCounts.Select(v => Math.Min(v, MaxSupportedPlayers)).Distinct().ToList();
-                if (capped.Count != config.PlayerCounts.Count || capped.Any(v => !config.PlayerCounts.Contains(v)))
+                var unsupported = config.PlayerCounts.Where(v => v > MaxSupportedPlayers).ToList();
+                if (unsupported.Count > 0)
                 {
-                    Console.WriteLine($"Some --player-counts entries exceeded {MaxSupportedPlayers} and were capped.");
+                    Console.WriteLine($"--player-counts entries exceed supported maximum ({MaxSupportedPlayers}): {string.Join(", ", unsupported)}.");
+                    return null;
                 }
-
-                config.PlayerCounts = capped;
             }
 
             if (config.ExplicitStrategyNames is { Count: > 0 })
@@ -740,7 +839,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("Usage: dotnet run [options]");
             Console.WriteLine();
             Console.WriteLine("Options:");
-            Console.WriteLine($"  -g, --games <number>     Number of games to play per matchup (default: {DefaultNumberOfSimulationGames})");
+            Console.WriteLine($"  -g, --games <number>     Games per condition (default: {DefaultNumberOfSimulationGames}, max: {ExperimentManifest.MaximumGamesPerCondition})");
             Console.WriteLine($"  -p, --players <number>   Number of players/strategies to use (default: {DefaultNumberOfPlayers}, max: {MaxSupportedPlayers})");
             Console.WriteLine($"  -w, --width <number>     Board width (default: {GameBalance.BoardWidth})");
             Console.WriteLine($"  --height <number>        Board height (default: {GameBalance.BoardHeight})");
@@ -783,7 +882,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --strategy-set Proven    # Use proven strategy roster");
             Console.WriteLine("  dotnet run --player-counts 2,4,8 --board-sizes 80x80,160x160 --strategy-sets Testing,Proven --games 50 --no-keyboard");
             Console.WriteLine("  dotnet run --seed 12345             # Run with deterministic seed 12345");
-            Console.WriteLine("  dotnet run --selection-policy StratifiedCycle --games 200 --no-keyboard");
+            Console.WriteLine("  dotnet run --selection-policy StratifiedCycle --games 100 --no-keyboard");
             Console.WriteLine("  dotnet run --strategy-set Testing --strategy-names TST_BalancedGeneralistControl,TST_BalancedControl_MaxEconomy --games 20 --no-keyboard");
             Console.WriteLine("  dotnet run --strategy-set Testing --roles Experimental --power-tiers Strong,Spike --games 50 --no-keyboard");
             Console.WriteLine("  dotnet run --experiment-id testA    # Tag outputs under experiment ID testA");

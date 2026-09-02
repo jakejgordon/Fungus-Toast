@@ -12,10 +12,11 @@ The completed Phase 0–1 evidence inventory is in
 
 ## 1. Initiative Status
 
-- **State:** Phase 0–1 audit complete; Phase 2 manifest foundation next
-- **Implementation started:** No
-- **Current gate:** Implement P2-A, the versioned manifest domain model and strict
-  validator, without changing player-facing AI behavior.
+- **State:** Phase 2 experiment infrastructure in progress; P2-A complete
+- **Implementation started:** Yes
+- **Current gate:** Implement P2-B: resolved manifests, fingerprints, exact seed
+  schedules, and replay from a manifest, without changing player-facing AI
+  behavior.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -304,7 +305,11 @@ gate remains open.
 
 ### Phase 2 — Establish reproducible experiment infrastructure
 
-- **P2.1:** Define and test the versioned manifest model and strict validator.
+- **P2.1 — complete:** Defined and tested
+  `fungus-toast.experiment-input.v1`, including the existing CLI-to-condition
+  translation, strict JSON unknown/missing-field handling, semantic validation,
+  and the hard 100-game per-condition ceiling. The checked-in example is
+  `FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
 - **P2.2:** Add resolved-manifest output, strategy/config fingerprints, explicit
   game-seed schedules, and replay from manifest.
 - **P2.3:** Record all existing controls in metadata and per-game outputs,

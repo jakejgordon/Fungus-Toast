@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FungusToast.Simulation", "F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FungusToast.Core.Tests", "FungusToast.Core.Tests\FungusToast.Core.Tests.csproj", "{781361AA-16F1-43E8-9A94-997321C0AA5A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4-00C04F79EFBC}") = "FungusToast.Simulation.Tests", "FungusToast.Simulation.Tests\FungusToast.Simulation.Tests.csproj", "{A98CD438-E683-4A31-8DB6-DBFAAF9F4140}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{781361AA-16F1-43E8-9A94-997321C0AA5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{781361AA-16F1-43E8-9A94-997321C0AA5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{781361AA-16F1-43E8-9A94-997321C0AA5A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A98CD438-E683-4A31-8DB6-DBFAAF9F4140}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A98CD438-E683-4A31-8DB6-DBFAAF9F4140}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A98CD438-E683-4A31-8DB6-DBFAAF9F4140}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A98CD438-E683-4A31-8DB6-DBFAAF9F4140}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
