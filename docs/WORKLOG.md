@@ -139,6 +139,10 @@ measurement model, phase gates, and open product decisions are in
     (3–5), calibration (20), comparison (50), and holdout (100) gates prevent
     early promotion and retain the 100-game per-condition limit. Next: P3.4
     contextual map/player-count taxonomy.
+14. P3.4 is complete. The manifest-derived taxonomy covers duel/small-table/
+    crowded/swarm player counts; small/medium/large board area; square/wide/tall
+    aspect; rectangle versus mask-fingerprint geometry; and generated/exact/
+    preferred-pool starts. Next: P3.5 frozen baseline reference corpus.
 
 ### Completion Criteria
 

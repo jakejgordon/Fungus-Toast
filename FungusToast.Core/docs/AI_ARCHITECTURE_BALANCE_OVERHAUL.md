@@ -361,7 +361,7 @@ gate remains open.
   intervals, effect sizes, and robustness summaries in offline analytics.
 - **P3.3 — complete:** Define smoke, calibration, comparison, and holdout sample gates with
   early rejection for invalid/parity-failing candidates—not early promotion.
-- **P3.4:** Define contextual map/player-count taxonomy from actual supported
+- **P3.4 — complete:** Define contextual map/player-count taxonomy from actual supported
   boards and measured sensitivity.
 - **P3.5:** Generate a baseline report for the frozen reference corpus and lock
   the first analysis version.
@@ -386,6 +386,29 @@ that candidate rather than consuming a larger batch.
 Numerical margins and materiality thresholds are frozen with the P3.5 reference
 corpus, not retrofitted after observing a treatment. Inconclusive intervals are
 not evidence of parity or improvement.
+
+#### P3.4 contextual taxonomy
+
+The simulation accepts any positive width/height and the supported 2–8-player
+range, so taxonomy derives from resolved manifest fields rather than a fragile
+list of presets. Every report retains exact dimensions, geometry fingerprint,
+and player count; the following classes provide comparable rollups.
+
+| Dimension | Classes | Derivation |
+|---|---|---|
+| Player count | duel (2), small-table (3–4), crowded (5–6), swarm (7–8) | resolved `playerCount` |
+| Board scale | small (area ≤ 6,400), medium (6,401–25,600), large (> 25,600) | `width × height`; 80×80 and 160×160 anchor the first two classes |
+| Aspect | square (0.9–1.1 width/height), wide (> 1.1), tall (< 0.9) | resolved width/height ratio |
+| Geometry | rectangle, masked | `geometryId` and mask fingerprint; masked results never pool across different fingerprints by default |
+| Start regime | generated, exact, preferred-pool | resolved start-position mode and slot policy |
+
+P3.5 must report an overall estimate plus a class estimate whenever a class has
+enough evidence for its stage. A contextual split is flagged for later banding
+when the class estimate differs materially from the overall estimate, its
+interval supports the difference, and the effect recurs across at least two
+independent context axes. The P3.5 frozen corpus supplies the final numerical
+sample and materiality cutoffs; until then the flag is diagnostic, never a
+player-facing label.
 
 ### Phase 4 — Architecture spike and decision
 
