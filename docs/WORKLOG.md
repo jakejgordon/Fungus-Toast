@@ -142,7 +142,13 @@ measurement model, phase gates, and open product decisions are in
 14. P3.4 is complete. The manifest-derived taxonomy covers duel/small-table/
     crowded/swarm player counts; small/medium/large board area; square/wide/tall
     aspect; rectangle versus mask-fingerprint geometry; and generated/exact/
-    preferred-pool starts. Next: P3.5 frozen baseline reference corpus.
+    preferred-pool starts.
+15. P3.5 is complete. The locked artifact-backed reference baseline is in
+    `FungusToast.Core/docs/second-level/AI_P3_5_REFERENCE_BASELINE_V1.md`.
+    It verifies two complete 50-game, 4-player reference artifacts and locks
+    `p3.5.reference-baseline.v1`; it explicitly withholds player-facing
+    classification and causal balance claims. Next: P4.1 characterization
+    tests for the current AI decision surfaces.
 
 ### Completion Criteria
 

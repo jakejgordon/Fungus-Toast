@@ -49,6 +49,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 ### AI
 - `second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md` — completed AI-overhaul vocabulary, roster/name migration inventory, decision-surface audit, reproducibility gaps, risks, and Phase 2 slice order
+- `second-level/AI_P3_5_REFERENCE_BASELINE_V1.md` — locked, artifact-backed first AI reference corpus and analysis-version report
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

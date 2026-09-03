@@ -14,7 +14,8 @@ The completed Phase 0–1 evidence inventory is in
 
 - **State:** Phase 2 experiment infrastructure and source-level determinism
   hardening complete; manual Unity integration validation passed on 2026-09-02;
-  Phase 3 measurement work is in progress.
+  Phase 3 measurement work and its first frozen reference baseline are
+  complete. Phase 4 characterization is next.
 - **Implementation started:** Yes
 - **Current gate:** Compile and exercise the updated normal Unity mutation phase,
   confirming AI strategies spend once after human turns. Then treat the
@@ -363,8 +364,9 @@ gate remains open.
   early rejection for invalid/parity-failing candidates—not early promotion.
 - **P3.4 — complete:** Define contextual map/player-count taxonomy from actual supported
   boards and measured sensitivity.
-- **P3.5:** Generate a baseline report for the frozen reference corpus and lock
-  the first analysis version.
+- **P3.5 — complete:** Generate a baseline report for the frozen reference
+  corpus and lock the first analysis version. The artifact-backed report is
+  [AI_P3_5_REFERENCE_BASELINE_V1.md](second-level/AI_P3_5_REFERENCE_BASELINE_V1.md).
 - **Gate:** The same artifacts always yield the same classification report, and
   weak evidence cannot pass a promotion gate.
 
