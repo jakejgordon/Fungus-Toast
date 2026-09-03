@@ -132,8 +132,13 @@ measurement model, phase gates, and open product decisions are in
     slot/coordinates, Adaptations, and raw condition ID. It also records
     structured condition dimensions for grouping without parsing the ID:
     input schema, strategy/selection and slot policies, start-position mode,
-    player count, and board geometry fingerprint. Next: P3.2 offline analytic
-    metrics. This Simulation-only work does not require the pending Unity gate.
+    player count, and board geometry fingerprint.
+13. P3.2 is complete: offline analytics now computes normalized board share,
+    win-rate surplus, tie-aware normalized rank, intervals, effect sizes, and
+    context robustness summaries. P3.3 is complete: staged static, smoke
+    (3–5), calibration (20), comparison (50), and holdout (100) gates prevent
+    early promotion and retain the 100-game per-condition limit. Next: P3.4
+    contextual map/player-count taxonomy.
 
 ### Completion Criteria
 

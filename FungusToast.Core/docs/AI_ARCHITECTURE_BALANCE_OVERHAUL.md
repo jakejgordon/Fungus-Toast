@@ -357,9 +357,9 @@ gate remains open.
   independent slice adds the explicit condition dimensions required for
   grouping without parsing the raw ID: schema, strategy/selection and slot
   policies, start-position mode, player count, and board geometry fingerprint.
-- **P3.2:** Implement normalized board share, win surplus, normalized rank,
+- **P3.2 — complete:** Implement normalized board share, win surplus, normalized rank,
   intervals, effect sizes, and robustness summaries in offline analytics.
-- **P3.3:** Define smoke, calibration, comparison, and holdout sample gates with
+- **P3.3 — complete:** Define smoke, calibration, comparison, and holdout sample gates with
   early rejection for invalid/parity-failing candidates—not early promotion.
 - **P3.4:** Define contextual map/player-count taxonomy from actual supported
   boards and measured sensitivity.
@@ -367,6 +367,25 @@ gate remains open.
   the first analysis version.
 - **Gate:** The same artifacts always yield the same classification report, and
   weak evidence cannot pass a promotion gate.
+
+#### P3.3 staged evidence gates
+
+Every stage uses a versioned manifest, resolved artifact, exact seed schedule,
+and at most 100 games in any condition. A candidate or balance treatment may
+advance only when its current stage is complete and reproducible; failure stops
+that candidate rather than consuming a larger batch.
+
+| Stage | Per-condition games | Required evidence | Advancement rule |
+|---|---:|---|---|
+| Static | 0 | schema/semantic validation, legal lineup and positions, declared treatment paths | Reject invalid or confounded input. |
+| Smoke | 3–5 | complete Parquet/manifest/checksum, parity invariants, no deterministic/replay failure | Reject on any integrity failure; never promote on smoke. |
+| Calibration | 20 | normalized outcomes and intervals against the named control under matched seeds/slots | Reject clear regression outside the predeclared non-inferiority margin; retain inconclusive results only for comparison. |
+| Comparison | 50 | manifest diff, effect sizes, intervals, and context summary across the declared representative conditions | Reject if the treatment fails its predeclared hypothesis or shows a material common-context weakness. |
+| Holdout | 100 | the same measures on conditions, seeds, or lineups not used to select the candidate | A passing holdout can enter the generated testing catalog only; player-facing promotion still requires later review. |
+
+Numerical margins and materiality thresholds are frozen with the P3.5 reference
+corpus, not retrofitted after observing a treatment. Inconclusive intervals are
+not evidence of parity or improvement.
 
 ### Phase 4 — Architecture spike and decision
 
