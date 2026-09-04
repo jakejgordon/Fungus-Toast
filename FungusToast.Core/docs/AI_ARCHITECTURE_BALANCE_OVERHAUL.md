@@ -481,10 +481,17 @@ reproved after the corrected RNG and result contracts land.
    P3.5 v2 under the corrected schema, RNG, and analyzer. Keep v1 unchanged and
    clearly superseded. Budget another versioned reference corpus after any
    Phase 5 behavior-changing migration.
+   Complete: the two historical 50-game conditions were rerun as the immutable
+   [P3.5 corrected reference baseline v2](second-level/AI_P3_5_REFERENCE_BASELINE_V2.md).
+   Both artifacts passed manifest checks, corpus A passed a separate-process
+   outcome replay, and the contract fixture reproved resume/replay behavior.
 
 **Correction gate:** focused and canonical tests pass; replay/resume is reproven;
 P3.5 v2 identifies its RNG, analysis, balance, and AI-corpus versions; no
 decision-bearing report can be produced from undeclared or underpowered evidence.
+
+**Correction gate passed (2026-09-04).** Phase 4 characterization may proceed;
+the v2 reference remains descriptive and carries no balance verdict.
 
 ### Phase 4 — Architecture spike and decision
 

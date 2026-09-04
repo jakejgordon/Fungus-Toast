@@ -223,6 +223,15 @@ measurement model, phase gates, and open product decisions are in
     620 Core, 18 Simulation, and 8 analytics tests pass; a three-game Parquet
     readback and the replay/resume contract passed. Next: P3.R7 corrected
     reference baseline.
+25. P3.R7 is complete. Result schema v7 stamps the AI corpus in the
+    replay-authoritative resolved manifest and rejects stale corpus replays.
+    The two historical 50-game P3.5 conditions were rerun under isolated RNG,
+    tie-aware outcomes, stable strategy identity, analysis v2, and corrected
+    robustness fields. Both v2 artifacts passed manifest checks; corpus A
+    reproduced its canonical outcome in a separate process; and the canonical
+    resume/replay fixture passed. The immutable corrected record is
+    `FungusToast.Core/docs/second-level/AI_P3_5_REFERENCE_BASELINE_V2.md`.
+    Phase 4 characterization is now unblocked; no balance verdict was issued.
 
 ### Completion Criteria
 

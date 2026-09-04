@@ -121,7 +121,7 @@ contract version and corrected reference baseline.
 ### Paired control/treatment analysis
 
 Give independently run control and treatment artifacts the same seed, lineup,
-slot policy, and `--pairing-group-id`. Result schema v6 and Parquet manifest v9
+slot policy, and `--pairing-group-id`. Current result schema v7 and Parquet manifest v9
 emit a `pair_id` for every game and player row. Analyze the control folder with
 the treatment folder attached:
 
