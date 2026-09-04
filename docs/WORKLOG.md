@@ -143,12 +143,17 @@ measurement model, phase gates, and open product decisions are in
     crowded/swarm player counts; small/medium/large board area; square/wide/tall
     aspect; rectangle versus mask-fingerprint geometry; and generated/exact/
     preferred-pool starts.
-15. P3.5 is complete. The locked artifact-backed reference baseline is in
+15. P3.5 v1 is preserved as a historical artifact-backed reference baseline in
     `FungusToast.Core/docs/second-level/AI_P3_5_REFERENCE_BASELINE_V1.md`.
-    It verifies two complete 50-game, 4-player reference artifacts and locks
-    `p3.5.reference-baseline.v1`; it explicitly withholds player-facing
-    classification and causal balance claims. Next: P4.1 characterization
-    tests for the current AI decision surfaces.
+    It verifies two complete 50-game, 4-player artifacts and explicitly
+    withholds player-facing classification and causal balance claims.
+16. An adversarial review accepted on 2026-09-03 reopened P3.2, P3.3, and P3.5
+    before Phase 4. The approved correction program is documented in the
+    canonical initiative plan as P3.R1–P3.R7.
+17. Current queue: implement P3.R1 cheap correctness, P3.R2 analytical identity,
+    P3.R3 hierarchical RNG, P3.R4 paired inference, P3.R5 enforceable gates,
+    P3.R6 derived context/version/runtime evidence, and P3.R7 corrected baseline.
+    Phase 4 characterization remains blocked until that correction gate passes.
 
 ### Completion Criteria
 

@@ -12,15 +12,16 @@ The completed Phase 0–1 evidence inventory is in
 
 ## 1. Initiative Status
 
-- **State:** Phase 2 experiment infrastructure and source-level determinism
-  hardening complete; manual Unity integration validation passed on 2026-09-02;
-  Phase 3 measurement work and its first frozen reference baseline are
-  complete. Phase 4 characterization is next.
+- **State:** Phase 2 experiment infrastructure is complete. An adversarial
+  review accepted on 2026-09-03 reopened the inferential portions of Phase 3
+  before Phase 4: RNG ownership, tie handling, analytical identity, causal
+  scoring, paired inference, and gate enforcement require correction. The
+  original P3.5 reference remains immutable historical evidence and will be
+  superseded by a versioned corrected baseline.
 - **Implementation started:** Yes
-- **Current gate:** Compile and exercise the updated normal Unity mutation phase,
-  confirming AI strategies spend once after human turns. Then treat the
-  completed P2.1–P2.6 contract and determinism fixes as the foundation for Phase
-  3 measurement work.
+- **Current gate:** Complete the adversarial-review correction program in
+  section 8, reproduce the experiment contract under the new RNG/schema
+  versions, and publish P3.5 v2 before beginning Phase 4 characterization.
 - **Migration posture:** Incremental and compatibility-first. Existing campaign
   strategy names and board-preset references remain valid until an explicit,
   tested migration retires them.
@@ -118,10 +119,9 @@ until the architecture spike, but the intended responsibilities are:
   safely.
 
 The spike must compare this composition model against a minimally cleaned-up
-`ParameterizedSpendingStrategy`. Replacement is justified only if composition
-improves at least two of: independent control, authoring cost, testability,
-decision capability, traceability, or automated searchability without a
-material regression in determinism or runtime cost.
+`ParameterizedSpendingStrategy` using the pre-registered backlog behaviors and
+measures in P4.2–P4.4. Replacement is justified only by a material measured win
+without a regression in determinism or runtime cost.
 
 ### Decision-surface ownership target
 
@@ -225,6 +225,14 @@ Contract requirements:
 - Preserve raw per-game artifacts; derived summaries are regenerable.
 - Reject any individual simulation batch above 100 games. Autonomous searches
   must use staged batches and prune weak candidates before expensive gates.
+- Reject an experiment whose requested player count exceeds the selected roster;
+  analytical runs must never synthesize anonymous or numbered fallback
+  strategies.
+- Every decision-bearing experiment predeclares one primary hypothesis, metric,
+  estimand, direction, context, and materiality margin. Undeclared secondary
+  analyses are exploratory and cannot advance a candidate.
+- Bound both games per condition and total games/runtime per decision. The
+  per-condition ceiling is a local safety guard, not the compute budget.
 
 ## 7. Measurement and Classification Model
 
@@ -233,10 +241,10 @@ Contract requirements:
 - **Parity-normalized final board share:** player living-cell share divided by
   equal expected share (`player_count * player_living / total_living`). `1.0`
   is parity for the active player count.
-- **Win-rate surplus:** observed win rate minus the equal-win expectation,
-  including an explicit tie policy.
+- **Win-rate surplus:** tie-fractional win credit minus the equal-win
+  expectation. It is a reported tertiary metric, not a promotion metric.
 - **Average rank:** tie-aware final placement, normalized when comparisons span
-  different player counts.
+  different player counts. It is the secondary promotion metric.
 - **Uncertainty:** confidence/credible interval for primary measures and the
   sample count contributing to each condition.
 - **Robustness:** distribution across seeds, slots, opponent compositions,
@@ -267,8 +275,10 @@ Contract requirements:
 - Version every classification with the reference corpus, balance fingerprint,
   analysis version, and date.
 
-Exact thresholds, interval method, tie policy, minimum samples, and materiality
-cutoffs are Phase 3 decisions informed by baseline data.
+The decisive primary metric is parity-normalized final board share. Exact
+thresholds, interval method, tie policy, minimum samples, and materiality
+cutoffs are versioned Phase 3 decisions informed by baseline data and declared
+before treatment outcomes are analyzed.
 
 ## 8. Step-by-Step Execution Plan
 
@@ -283,7 +293,8 @@ gate remains open.
 - **P0.2:** Define `strategy`, `controller`, `policy`, `candidate`, `condition`,
   `calibration`, `holdout`, `promotion`, and `performance band` precisely.
 - **P0.3:** Inventory player-facing campaign and single-player pools, serialized
-  and CLI references, and the exact migration work required to reset names.
+  and CLI references, and the compatibility aliases required when stable IDs
+  become machine references.
 - **P0.4:** Select a small frozen reference lineup and representative conditions
   for architecture parity tests; do not claim balance from this smoke corpus.
 - **Gate:** Scope, compatibility posture, terminology, and baseline corpus are
@@ -364,8 +375,10 @@ gate remains open.
   early rejection for invalid/parity-failing candidates—not early promotion.
 - **P3.4 — complete:** Define contextual map/player-count taxonomy from actual supported
   boards and measured sensitivity.
-- **P3.5 — complete:** Generate a baseline report for the frozen reference
-  corpus and lock the first analysis version. The artifact-backed report is
+- **P3.5 v1 — historical:** Generated a descriptive baseline report for the
+  frozen reference corpus. Its inferential role was reopened by the accepted
+  adversarial review; P3.R7 will publish the corrected successor. The original
+  artifact-backed report remains
   [AI_P3_5_REFERENCE_BASELINE_V1.md](second-level/AI_P3_5_REFERENCE_BASELINE_V1.md).
 - **Gate:** The same artifacts always yield the same classification report, and
   weak evidence cannot pass a promotion gate.
@@ -404,37 +417,83 @@ and player count; the following classes provide comparable rollups.
 | Geometry | rectangle, masked | `geometryId` and mask fingerprint; masked results never pool across different fingerprints by default |
 | Start regime | generated, exact, preferred-pool | resolved start-position mode and slot policy |
 
-P3.5 must report an overall estimate plus a class estimate whenever a class has
-enough evidence for its stage. A contextual split is flagged for later banding
-when the class estimate differs materially from the overall estimate, its
-interval supports the difference, and the effect recurs across at least two
-independent context axes. The P3.5 frozen corpus supplies the final numerical
-sample and materiality cutoffs; until then the flag is diagnostic, never a
-player-facing label.
+Reports must name one primary context for any decision-bearing hypothesis.
+Other class estimates are exploratory and use a declared multiplicity policy
+(FDR control or a suitable hierarchical model) before they can motivate a new
+confirmatory experiment. Context axes are not called independent unless the
+sampled design establishes that property. The taxonomy is not a required full
+Cartesian matrix: begin with player count and board scale, then add aspect,
+geometry, or start-regime coverage when evidence justifies it.
+
+#### P3 correction program accepted after adversarial review
+
+These slices reopen P3.2, P3.3, and P3.5. P2 provenance artifacts remain valid
+records of the binaries that produced them, but the current pipeline must be
+reproved after the corrected RNG and result contracts land.
+
+1. **P3.R1 — cheap correctness:** make final outcomes tie-aware with fractional
+   win credit and explicit outcome status; correct picked/not-picked
+   denominators; remove authored appetite from mutation-power scores; mark all
+   observational mutation, mycovariant, synergy, and interaction outputs as
+   exploratory; reject missing condition identity and insufficient rosters.
+2. **P3.R2 — analytical identity:** add stable strategy IDs and behavior-specific
+   definition fingerprints to resolved manifests and row exports. Group and
+   join on ID plus fingerprint; names and themes are labels only.
+3. **P3.R3 — RNG contract:** replace the shared stream with a versioned,
+   hierarchical deterministic stream contract. AI decisions and gameplay use
+   separate domains; repeated decisions include occurrence identity. Record
+   stream-contract identity in artifacts and prove that an internal AI draw-
+   count change cannot perturb gameplay randomness when chosen actions match.
+4. **P3.R4 — paired inference:** add explicit pair IDs, paired estimators, and
+   game/seed-aware uncertainty. Measure treatment correlation and variance
+   reduction empirically; do not promise a universal common-random-number gain.
+5. **P3.R5 — enforceable gates:** extend the input manifest with a declared
+   hypothesis, primary metric/context, estimand, direction, margin, analysis
+   version, and total game/runtime budget. An analyzer may issue a verdict only
+   for that declaration; all other results are exploratory and multiplicity-
+   controlled where applicable.
+6. **P3.R6 — geometry and robustness:** derive opponent-lineup and shape-aware
+   starting-position covariates from the preserved mask and actual starts. Add
+   termination reason, elimination timing, corpus/analysis versions, and runtime
+   evidence. Replace raw min-of-K robustness with a shrunken lower-tail measure
+   once the corpus supports it.
+7. **P3.R7 — corrected reference:** rerun contract/replay validation and publish
+   P3.5 v2 under the corrected schema, RNG, and analyzer. Keep v1 unchanged and
+   clearly superseded. Budget another versioned reference corpus after any
+   Phase 5 behavior-changing migration.
+
+**Correction gate:** focused and canonical tests pass; replay/resume is reproven;
+P3.5 v2 identifies its RNG, analysis, balance, and AI-corpus versions; no
+decision-bearing report can be produced from undeclared or underpowered evidence.
 
 ### Phase 4 — Architecture spike and decision
 
 - **P4.1:** Write characterization tests around current mutation spending,
   mycovariant choice, surge timing/banking, exclusions, tendril direction, and
   starting-offset behavior.
-- **P4.2:** Prototype the composed controller/policy boundary for two contrasting
-  strategies without migrating the roster.
-- **P4.3:** Prototype the smallest viable cleanup of the existing parameterized
-  design as the comparison.
-- **P4.4:** Compare behavior parity, code/config size, independent overrides,
-  trace quality, authoring steps, test complexity, and search-space encoding.
+- **P4.2:** Pre-register 3–5 concrete missing behaviors from the actual backlog,
+  including at least one reactive rule, surge-timing condition, and draft
+  heuristic that needs board state.
+- **P4.3:** Implement those behaviors in throwaway prototypes of both the
+  composed controller and the smallest viable parameterized cleanup without
+  migrating the roster.
+- **P4.4:** Compare files and lines changed per behavior, expressibility,
+  parameter leakage, behavior changes in existing strategies under matched
+  runs, test burden, and runtime delta. Trace quality and search-space encoding
+  remain descriptive secondary evidence.
 - **P4.5:** Record an architecture decision: adopt composition, retain a revised
   parameterized design, or use a justified hybrid. Include rejected options.
-- **Gate:** Evidence supports the chosen boundary, and an incremental migration
-  with preserved names and deterministic behavior is demonstrated.
+- **Gate:** One design wins materially on the pre-registered backlog work, and
+  an incremental migration with stable IDs, preserved reference aliases, and
+  deterministic behavior is demonstrated. Otherwise retain the smaller change.
 
 ### Phase 5 — Implement the AI foundation incrementally
 
 - **P5.1:** Add the unified strategy definition/registry and standardized identity
   model; co-locate behavior configuration, complementary Adaptation metadata,
   authored intent summary, archetypes, and lifecycle metadata.
-- **P5.2:** Add the single AI controller entry point, typed contexts/actions,
-  legality boundary, and structured decision trace.
+- **P5.2:** Add only the controller/context/action boundaries justified by the
+  Phase 4 result. Decision traces are opt-in and sampled by default.
 - **P5.3:** Route mutation acquisition through the controller using a legacy
   adapter; prove Core/Simulation/Unity parity before changing policy behavior.
 - **P5.4:** Extract surge activation and banking as an independently replaceable
@@ -447,12 +506,17 @@ player-facing label.
 - **P5.7:** Add reactive board-state policy primitives only for demonstrated
   decisions; avoid a catch-all scoring framework.
 - **P5.8:** Migrate a small reference set, then each roster family in isolated
-  slices. Reset names using the standardized IDs and migrate all verified
-  serialized, campaign, CLI, test, and UI references in a controlled cutover.
+  slices. Stable IDs become machine references; retain existing names as
+  compatibility aliases. Player-facing display names may change independently
+  without a breaking reference cutover.
 - **Gate:** All player-facing strategies use one deterministic boundary, traces
   cover every decision, and legacy behavior or intentional deltas are proven.
 
-### Phase 6 — Build autonomous candidate evaluation
+### Phase 6 — Prove, then build autonomous candidate evaluation
+
+Begin with a bounded deterministic parameter sweep over existing safe tunables
+that writes a results table. Add the framework below only after that simple
+sweep produces at least one candidate worth promoting.
 
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
