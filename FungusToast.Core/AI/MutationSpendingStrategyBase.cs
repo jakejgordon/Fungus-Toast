@@ -18,6 +18,7 @@ namespace FungusToast.Core.AI
         public virtual bool? UsesFungicide { get; }
         public virtual bool? UsesGeneticDrift { get; }
         public virtual bool? UsesSubstrateEcology { get; }
+        public virtual IReadOnlyCollection<int> ExcludedMutationIds => Array.Empty<int>();
 
         public abstract Mycovariant SelectMycovariantFromChoices(
             Player player,

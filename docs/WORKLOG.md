@@ -276,6 +276,14 @@ measurement model, phase gates, and open product decisions are in
     offsets. Existing target/prerequisite tests cover sequential mutation
     spending. The focused slice passes 16/16 and the full Core suite passes
     632/632; no production AI behavior changed.
+31. The remaining concrete-type dependency in mutation acquisition is removed.
+    Mutator Phenotype free upgrades now consume `ExcludedMutationIds` through
+    `IMutationSpendingStrategy`; the strategy base supplies the empty default
+    and parameterized strategies override it. This also fixes a default-interface
+    dispatch trap that initially bypassed parameterized exclusions. Both the
+    existing parameterized case and a new non-parameterized implementation are
+    regression-tested. Core passes 633/633 and Simulation passes 18/18; the
+    checked-in Unity Core DLL/PDB were refreshed.
 
 ### Completion Criteria
 

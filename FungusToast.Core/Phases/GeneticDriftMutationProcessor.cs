@@ -1,5 +1,4 @@
 using FungusToast.Core.Board;
-using FungusToast.Core.AI;
 using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
@@ -117,10 +116,9 @@ namespace FungusToast.Core.Phases
         private static UpgradablePools BuildUpgradablePools(Player player, IEnumerable<Mutation> mutations)
         {
             var pools = new UpgradablePools();
-            // Experimental ParameterizedSpendingStrategy exclusions must apply to free
-            // Mutator Phenotype upgrades as well as paid fallback spending.  The strategy
-            // interface's default member intentionally reports no exclusions for other AI types.
-            var excludedMutationIds = (player.MutationStrategy as ParameterizedSpendingStrategy)?.ExcludedMutationIds;
+            // Strategy exclusions apply to free Mutator Phenotype upgrades as well as
+            // paid spending. The interface default intentionally reports no exclusions.
+            var excludedMutationIds = player.MutationStrategy?.ExcludedMutationIds;
             foreach (var m in mutations)
             {
                 if (excludedMutationIds?.Contains(m.Id) == true) continue;

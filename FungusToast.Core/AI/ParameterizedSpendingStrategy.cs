@@ -77,7 +77,7 @@ namespace FungusToast.Core.AI
         public EconomyBias EconomyProfile => economyBias;
         public int SurgeAttemptTurnFrequency => surgeAttemptTurnFrequency;
         public int StartingSporeEdgeOffset => startingSporeEdgeOffset;
-        public IReadOnlyCollection<int> ExcludedMutationIds => excludedMutationIds;
+        public override IReadOnlyCollection<int> ExcludedMutationIds => excludedMutationIds;
 
         // ==== NEW: Dynamic Timing Awareness ====
         private enum GamePhase

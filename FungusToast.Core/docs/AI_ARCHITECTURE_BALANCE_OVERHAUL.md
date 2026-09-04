@@ -562,8 +562,13 @@ design and add narrow typed seams only for demonstrated needs. See
 - **P5.2:** Do not add the proposed general controller/context/action graph.
   Add immutable focused inputs or pure helpers only where production behavior
   requires them. Decision traces are opt-in and sampled by default.
-- **P5.3:** Route mutation acquisition through the controller using a legacy
-  adapter; prove Core/Simulation/Unity parity before changing policy behavior.
+- **P5.3:** Retain `IMutationSpendingStrategy` as the deterministic mutation-
+  acquisition boundary; the rejected general controller needs no legacy
+  adapter. Keep shared behavior contracts (including exclusions) on the
+  interface and prove Core/Simulation/Unity parity before policy changes.
+  The shared exclusion contract is now implemented by the strategy base and
+  consumed through the interface by Mutator Phenotype auto-upgrades; a non-
+  parameterized regression prevents concrete-type fallback.
 - **P5.4:** Keep surge activation/banking in the revised parameterized design;
   extract a pure focused helper only when an approved surge behavior needs it,
   while preserving current behavior by default.
@@ -572,8 +577,8 @@ design and add narrow typed seams only for demonstrated needs. See
   The pre-spike correctness slice is complete: draft selection now dispatches
   through `IMutationSpendingStrategy`, every implementation must declare its
   draft behavior, and the manager fails loudly when an AI has no strategy.
-  Whether this method becomes a separate composed policy remains a Phase 4
-  architecture decision.
+  The Phase 4 result keeps this as a focused required interface method rather
+  than introducing a separate composed policy.
 - **P5.6:** Resolve complementary starting Adaptations without an AI draft, and
   implement board/player-count position pools plus curated campaign
   pool/coordinate/geometry overrides as scenario controls.

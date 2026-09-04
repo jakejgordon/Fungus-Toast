@@ -1,8 +1,10 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Tests.Mutations;
 
@@ -142,6 +144,35 @@ public class ParameterizedSpendingStrategyCharacterizationTests
     }
 
     [Fact]
+    public void Interface_exclusions_also_block_free_mutator_phenotype_upgrades()
+    {
+        var player = new Player(0, "Interface AI", PlayerTypeEnum.AI);
+        player.SetMutationStrategy(new InterfaceExclusionStrategy(MutationIds.AeratedFrontier));
+        var mutations = MutationRegistry.GetAll().ToList();
+
+        foreach (var mutation in mutations.Where(mutation =>
+                     mutation.Tier == MutationTier.Tier1
+                     && mutation.Id != MutationIds.AeratedFrontier))
+        {
+            player.SetMutationLevel(mutation.Id, mutation.MaxLevel, currentRound: 1);
+        }
+
+        player.SetMutationLevel(
+            MutationIds.MutatorPhenotype,
+            GameBalance.MutatorPhenotypeMaxLevel,
+            currentRound: 1);
+
+        GeneticDriftMutationProcessor.TryApplyMutatorPhenotype(
+            player,
+            mutations,
+            new Random(1),
+            currentRound: 2,
+            new TestSimulationObserver());
+
+        Assert.Equal(0, player.GetMutationLevel(MutationIds.AeratedFrontier));
+    }
+
+    [Fact]
     public void Tendril_choice_prefers_the_direction_with_the_most_open_growth_targets()
     {
         var strategy = CreateStrategy(
@@ -233,5 +264,37 @@ public class ParameterizedSpendingStrategyCharacterizationTests
             Name = $"Mycovariant {id}",
             AIScore = (_, _) => score
         };
+    }
+
+    private sealed class InterfaceExclusionStrategy : IMutationSpendingStrategy
+    {
+        public InterfaceExclusionStrategy(params int[] excludedMutationIds)
+        {
+            ExcludedMutationIds = excludedMutationIds;
+        }
+
+        public string StrategyName => "Interface exclusion";
+        public MutationTier? MaxTier => MutationTier.Tier10;
+        public bool? PrioritizeHighTier => false;
+        public bool? UsesGrowth => null;
+        public bool? UsesCellularResilience => null;
+        public bool? UsesFungicide => null;
+        public bool? UsesGeneticDrift => true;
+        public IReadOnlyCollection<int> ExcludedMutationIds { get; }
+
+        public Mycovariant SelectMycovariantFromChoices(
+            Player player,
+            List<Mycovariant> choices,
+            GameBoard board,
+            Random rnd) => choices[0];
+
+        public void SpendMutationPoints(
+            Player player,
+            List<Mutation> allMutations,
+            GameBoard board,
+            Random rnd,
+            ISimulationObserver simulationObserver)
+        {
+        }
     }
 }
