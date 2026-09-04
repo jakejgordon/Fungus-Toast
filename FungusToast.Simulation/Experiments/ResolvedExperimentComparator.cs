@@ -26,6 +26,7 @@ public static class ResolvedExperimentComparator
     private static object CreateCausalSnapshot(ResolvedExperimentManifest manifest) => new
     {
         manifest.InputSchemaVersion,
+        manifest.AiCorpusVersion,
         Code = new
         {
             manifest.Code.CoreAssemblySha256,

@@ -22,6 +22,7 @@ public static class ResolvedExperimentManifestFactory
             ExperimentId = metadata.ExperimentId,
             ConditionId = metadata.Condition.ConditionId,
             Purpose = metadata.Purpose,
+            AiCorpusVersion = StrategyIdentity.CorpusVersion,
             TotalGameBudget = metadata.TotalGameBudget,
             RuntimeBudgetSeconds = metadata.RuntimeBudgetSeconds,
             Analysis = metadata.Analysis,

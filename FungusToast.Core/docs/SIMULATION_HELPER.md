@@ -17,7 +17,7 @@ The input JSON file is a contract fixture in P2-A; direct execution of input
 manifests is not available yet. Resolved artifacts are replayable.
 
 Parquet runs also write `resolved-manifest.json` using
-`fungus-toast.experiment-result.v6` plus `resolved-manifest.sha256`. The resolved
+`fungus-toast.experiment-result.v7` plus `resolved-manifest.sha256`. The resolved
 artifact records the code and binary identities, condition and board
 fingerprints, selected lineup and strategy fingerprints, exact game seeds,
 actual per-game slot assignments, starting coordinates and Adaptations,
@@ -109,7 +109,8 @@ written under `/tmp`.
 
 ### Random-stream contract
 
-Resolved result schema v6 records `fungus-toast.random-streams.v1`. Gameplay
+Resolved result schema v7 records `fungus-toast.random-streams.v1` and the
+versioned AI corpus identity. Gameplay
 continues to use the historical game-seed stream, while mutation-spending and
 mycovariant-draft choices receive deterministic streams derived from game seed,
 player, round, decision kind, and occurrence. Consequently, changing how many

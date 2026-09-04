@@ -109,6 +109,8 @@ public static class ResolvedExperimentReplayRunner
             throw new InvalidOperationException($"Unsupported resolved manifest schema '{source.SchemaVersion}'.");
         if (!string.Equals(source.Randomness.StreamContractVersion, RandomStreamContract.Version, StringComparison.Ordinal))
             throw new InvalidOperationException($"Unsupported random-stream contract '{source.Randomness.StreamContractVersion}'.");
+        if (!string.Equals(source.AiCorpusVersion, StrategyIdentity.CorpusVersion, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Unsupported AI corpus version '{source.AiCorpusVersion}'.");
         if (source.Sampling.GamesRequested < 1 || source.Sampling.GamesRequested > ExperimentManifest.MaximumGamesPerCondition)
             throw new InvalidOperationException($"Replay game count must be between 1 and {ExperimentManifest.MaximumGamesPerCondition}.");
         if (source.Randomness.GameSeedSchedule.Count != source.Sampling.GamesRequested)
