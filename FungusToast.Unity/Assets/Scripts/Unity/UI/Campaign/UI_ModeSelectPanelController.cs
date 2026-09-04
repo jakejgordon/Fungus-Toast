@@ -51,7 +51,7 @@ namespace FungusToast.Unity.UI.Campaign
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
-        private const string AlphaHeadingText = "ALPHA BUILD";
+        private const string BuildStageHeadingText = "BETA BUILD";
         private const string FeedbackButtonLabel = "Send Feedback";
         private const string FeedbackFormUrl = "https://forms.gle/m76wicURaKdMUeXn8";
         private const string CustomGameDescription = "Play solo against AI or share this device.";
@@ -474,7 +474,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (titleText != null)
             {
-                titleText.text = AlphaHeadingText;
+                titleText.text = BuildStageHeadingText;
                 titleText.enableAutoSizing = true;
                 titleText.fontSizeMin = 14f;
                 titleText.fontSizeMax = 16f;
