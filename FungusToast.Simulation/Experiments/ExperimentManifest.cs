@@ -10,7 +10,7 @@ namespace FungusToast.Simulation.Experiments;
 /// </summary>
 public sealed class ExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v1";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v2";
     public const int MaximumGamesPerCondition = 100;
 
     public required string SchemaVersion { get; init; }
@@ -24,6 +24,7 @@ public sealed class ExperimentManifest
 public sealed record ExperimentCondition
 {
     public required string ConditionId { get; init; }
+    public string PairingGroupId { get; init; } = string.Empty;
     public required int PlayerCount { get; init; }
     public required ExperimentBoard Board { get; init; }
     public required ExperimentStrategySelection Strategies { get; init; }

@@ -42,7 +42,7 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v6",
+                schemaVersion = "v7",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -157,6 +157,8 @@ namespace FungusToast.Simulation.Export
                 {
                     ExperimentId = metadata.ExperimentId,
                     ConditionId = metadata.Condition.ConditionId,
+                    PairingGroupId = metadata.Condition.PairingGroupId,
+                    PairId = BuildPairId(metadata.Condition.PairingGroupId, game.GameIndex, game.GameSeed),
                     ConditionFingerprint = conditionFingerprint,
                     RunTimestampUtc = metadata.RunTimestampUtc,
                     GameIndex = game.GameIndex,
@@ -237,6 +239,8 @@ namespace FungusToast.Simulation.Export
                     {
                         ExperimentId = metadata.ExperimentId,
                         ConditionId = metadata.Condition.ConditionId,
+                        PairingGroupId = metadata.Condition.PairingGroupId,
+                        PairId = BuildPairId(metadata.Condition.PairingGroupId, game.GameIndex, game.GameSeed),
                         ConditionFingerprint = conditionFingerprint,
                         InputSchemaVersion = metadata.InputSchemaVersion,
                         StrategySet = metadata.Condition.Strategies.StrategySet.ToString(),
@@ -301,6 +305,13 @@ namespace FungusToast.Simulation.Export
             }
 
             return rows;
+        }
+
+        private static string BuildPairId(string pairingGroupId, int gameIndex, int gameSeed)
+        {
+            return string.IsNullOrWhiteSpace(pairingGroupId)
+                ? string.Empty
+                : $"{pairingGroupId}:{gameIndex}:{gameSeed}";
         }
 
         private static List<LivingCellSourceExportRow> BuildLivingCellSourceRows(SimulationBatchResult batchResult, SimulationRunMetadata metadata)

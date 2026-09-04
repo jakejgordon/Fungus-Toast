@@ -459,6 +459,7 @@ namespace FungusToast.Simulation
                 conditions.Add(new ExperimentCondition
                 {
                     ConditionId = $"p{players}.w{board.Width}.h{board.Height}.s.{strategySet.ToString().ToLowerInvariant()}",
+                    PairingGroupId = config.PairingGroupId,
                     PlayerCount = players,
                     Board = new ExperimentBoard
                     {
@@ -550,6 +551,7 @@ namespace FungusToast.Simulation
                 StartingPositionOverride = null,
                 ExperimentId = "",
                 ExperimentPurpose = "CLI simulation run",
+                PairingGroupId = "",
                 PlayerCounts = null,
                 BoardSizes = null,
                 StrategySets = null,
@@ -814,6 +816,13 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--pairing-group-id":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.PairingGroupId = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
                     case "--no-keyboard":
                     case "--non-interactive":
                         config.DisableKeyboardInterrupt = true;
@@ -1024,6 +1033,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
             Console.WriteLine("  --purpose <text>         Human-readable reason for the experiment");
+            Console.WriteLine("  --pairing-group-id <id> Shared ID for control/treatment runs using the same game/seat schedule");
             Console.WriteLine("  --replay-manifest <path> Replay and verify a resolved-manifest.json artifact");
             Console.WriteLine("  --replay-experiment-id   Optional artifact ID for a replay (default: timestamped)");
             Console.WriteLine("  --compare-manifests <control> <treatment>  Diff causal inputs in two resolved manifests");
@@ -1088,6 +1098,7 @@ namespace FungusToast.Simulation
             public List<(int x, int y)>? StartingPositionOverride { get; set; }
             public string ExperimentId { get; set; } = "";
             public string ExperimentPurpose { get; set; } = "";
+            public string PairingGroupId { get; set; } = "";
             public List<int>? PlayerCounts { get; set; }
             public List<BoardSize>? BoardSizes { get; set; }
             public List<StrategySetEnum>? StrategySets { get; set; }

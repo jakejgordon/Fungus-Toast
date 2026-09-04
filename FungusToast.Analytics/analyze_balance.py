@@ -182,6 +182,109 @@ def _empty_growth_source_summary() -> pd.DataFrame:
     return pd.DataFrame(columns=cols)
 
 
+def _prepare_outcome_metrics(players: pd.DataFrame) -> pd.DataFrame:
+    players = _ensure_win_credit(_ensure_strategy_identity(players)).copy()
+    outcome_group_columns = ["condition_id", "game_index"]
+    if "total_living_cells" not in players.columns:
+        players["total_living_cells"] = players.groupby(outcome_group_columns)["living_cells"].transform("sum")
+    if "player_count" not in players.columns:
+        players["player_count"] = players.groupby(outcome_group_columns)["player_id"].transform("size")
+    if "final_rank" not in players.columns:
+        players["final_rank"] = players.groupby(outcome_group_columns)["living_cells"].rank(method="min", ascending=False)
+    players["normalized_board_share"] = np.where(
+        players["total_living_cells"] > 0,
+        players["living_cells"] * players["player_count"] / players["total_living_cells"],
+        0.0,
+    )
+    players["normalized_rank"] = np.where(
+        players["player_count"] > 1,
+        (players["player_count"] - players["final_rank"]) / (players["player_count"] - 1),
+        1.0,
+    )
+    return players
+
+
+def build_paired_comparison(control: pd.DataFrame, treatment: pd.DataFrame) -> pd.DataFrame:
+    required = {
+        "pairing_group_id", "pair_id", "condition_id", "game_index", "game_seed",
+        "assigned_slot", "player_id", "player_count", "strategy_name", "strategy_id",
+        "strategy_definition_fingerprint", "living_cells", "win_credit",
+    }
+    for label, frame in (("control", control), ("treatment", treatment)):
+        missing = sorted(required.difference(frame.columns))
+        if missing:
+            raise ValueError(f"{label} players.parquet is missing paired-analysis columns: {', '.join(missing)}")
+        if frame.empty:
+            raise ValueError(f"{label} players.parquet is empty")
+        if frame["pair_id"].isna().any() or (frame["pair_id"].astype(str).str.strip() == "").any():
+            raise ValueError(f"{label} players.parquet contains blank pair_id values")
+        if frame.duplicated(["pair_id", "assigned_slot"]).any():
+            raise ValueError(f"{label} players.parquet contains duplicate pair_id/assigned_slot rows")
+
+    control_groups = set(control["pairing_group_id"].astype(str))
+    treatment_groups = set(treatment["pairing_group_id"].astype(str))
+    if len(control_groups) != 1 or control_groups != treatment_groups or "" in control_groups:
+        raise ValueError("control and treatment must share one non-blank pairing_group_id")
+
+    control_metrics = _prepare_outcome_metrics(control)
+    treatment_metrics = _prepare_outcome_metrics(treatment)
+    keys = ["pair_id", "assigned_slot"]
+    merged = control_metrics.merge(
+        treatment_metrics,
+        on=keys,
+        how="outer",
+        suffixes=("_control", "_treatment"),
+        indicator=True,
+        validate="one_to_one",
+    )
+    if not (merged["_merge"] == "both").all():
+        missing_count = int((merged["_merge"] != "both").sum())
+        raise ValueError(f"paired analysis requires complete pairs; {missing_count} slot-pairs are unmatched")
+
+    invariant_columns = ["game_seed", "player_count", "starting_x", "starting_y", "board_geometry_fingerprint", "random_stream_contract_version"]
+    for column in invariant_columns:
+        left = f"{column}_control"
+        right = f"{column}_treatment"
+        if left in merged.columns and right in merged.columns and not merged[left].equals(merged[right]):
+            raise ValueError(f"paired control/treatment mismatch in {column}")
+
+    identity_columns = [
+        "strategy_id_control", "strategy_definition_fingerprint_control", "strategy_name_control",
+        "strategy_id_treatment", "strategy_definition_fingerprint_treatment", "strategy_name_treatment",
+    ]
+    rows = []
+    for identity, group in merged.groupby(identity_columns, dropna=False, sort=True):
+        row = dict(zip(identity_columns, identity))
+        row["pairing_group_id"] = next(iter(control_groups))
+        row["pairs"] = len(group)
+        for metric in ("normalized_board_share", "normalized_rank", "win_credit"):
+            control_values = group[f"{metric}_control"].astype(float)
+            treatment_values = group[f"{metric}_treatment"].astype(float)
+            differences = treatment_values - control_values
+            samples = len(differences)
+            difference_std = float(differences.std(ddof=1)) if samples > 1 else 0.0
+            margin = 1.96 * difference_std / np.sqrt(samples) if samples > 0 else np.nan
+            can_correlate = samples > 1 and float(control_values.std(ddof=1)) > 0 and float(treatment_values.std(ddof=1)) > 0
+            correlation = float(control_values.corr(treatment_values)) if can_correlate else np.nan
+            unpaired_variance = float(control_values.var(ddof=1) + treatment_values.var(ddof=1)) if samples > 1 else np.nan
+            paired_variance = float(differences.var(ddof=1)) if samples > 1 else np.nan
+            if samples <= 1 or np.isnan(paired_variance):
+                variance_ratio = np.nan
+            elif paired_variance <= np.finfo(float).eps:
+                variance_ratio = np.inf
+            else:
+                variance_ratio = unpaired_variance / paired_variance
+            row[f"control_mean_{metric}"] = float(control_values.mean())
+            row[f"treatment_mean_{metric}"] = float(treatment_values.mean())
+            row[f"paired_difference_{metric}"] = float(differences.mean())
+            row[f"paired_difference_{metric}_ci95_low"] = float(differences.mean() - margin)
+            row[f"paired_difference_{metric}_ci95_high"] = float(differences.mean() + margin)
+            row[f"observed_correlation_{metric}"] = correlation
+            row[f"paired_vs_unpaired_variance_ratio_{metric}"] = variance_ratio
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
 def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     players = _ensure_strategy_identity(players)
     players = _ensure_strategy_identity(players)
@@ -204,16 +307,8 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
         raise ValueError(f"players.parquet is missing required player-summary columns: {', '.join(missing_columns)}")
 
     outcome_group_columns = ["condition_id", "game_index"]
-    metrics = players.copy()
-    if "total_living_cells" not in metrics.columns:
-        metrics["total_living_cells"] = metrics.groupby(outcome_group_columns)["living_cells"].transform("sum")
-    if "player_count" not in metrics.columns:
-        metrics["player_count"] = metrics.groupby(outcome_group_columns)["player_id"].transform("size")
-    if "final_rank" not in metrics.columns:
-        metrics["final_rank"] = metrics.groupby(outcome_group_columns)["living_cells"].rank(method="min", ascending=False)
-    metrics["normalized_board_share"] = np.where(metrics["total_living_cells"] > 0, metrics["living_cells"] * metrics["player_count"] / metrics["total_living_cells"], 0.0)
+    metrics = _prepare_outcome_metrics(players)
     metrics["win_rate_surplus"] = metrics["win_credit"].astype(float) - 1.0 / metrics["player_count"].clip(lower=1)
-    metrics["normalized_rank"] = np.where(metrics["player_count"] > 1, (metrics["player_count"] - metrics["final_rank"]) / (metrics["player_count"] - 1), 1.0)
 
     identity_keys = ["strategy_id", "strategy_definition_fingerprint"]
     grouped = metrics.groupby(identity_keys, as_index=False).agg(
@@ -806,6 +901,7 @@ def write_markdown_report(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze FungusToast simulation Parquet exports for descriptive and exploratory diagnostics.")
     parser.add_argument("--run-folder", required=True, help="Path to one simulation export folder containing parquet files.")
+    parser.add_argument("--paired-treatment-folder", required=False, help="Optional treatment run folder sharing pair IDs with --run-folder (the control).")
     parser.add_argument("--output-dir", required=False, help="Output directory for analysis artifacts. Defaults to run folder.")
     parser.add_argument("--min-confidence", type=float, default=0.4, help="Minimum confidence required for markdown recommendations.")
     parser.add_argument("--min-picks", type=int, default=15, help="Minimum picks required for markdown recommendations.")
@@ -831,6 +927,14 @@ def main() -> None:
 
     players = _ensure_strategy_identity(_normalize_columns(players))
     players = _ensure_win_credit(players)
+    paired_comparison = None
+    if args.paired_treatment_folder:
+        treatment_folder = Path(args.paired_treatment_folder)
+        if not treatment_folder.exists():
+            raise FileNotFoundError(f"Paired treatment folder not found: {treatment_folder}")
+        treatment_players = pd.read_parquet(treatment_folder / "players.parquet")
+        treatment_players = _ensure_win_credit(_ensure_strategy_identity(_normalize_columns(treatment_players)))
+        paired_comparison = build_paired_comparison(players, treatment_players)
     mutations = _ensure_strategy_identity(_normalize_columns(mutations))
     mycovariants = _ensure_strategy_identity(_normalize_columns(mycovariants))
     if not living_cell_sources.empty:
@@ -858,6 +962,8 @@ def main() -> None:
     mutation_synergies.to_csv(output_dir / "mutation_synergies.csv", index=False)
     myco_mutation_interactions.to_csv(output_dir / "mycovariant_mutation_interactions.csv", index=False)
     nutrient_summary.to_csv(output_dir / "nutrient_economy_summary.csv", index=False)
+    if paired_comparison is not None:
+        paired_comparison.to_csv(output_dir / "paired_comparison.csv", index=False)
     write_markdown_report(
         player_summary,
         growth_source_summary,

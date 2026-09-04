@@ -7,17 +7,17 @@ This document contains the most effective commands for running different simulat
 ## Experiment input contract
 
 Simulation CLI options are validated through the versioned
-`fungus-toast.experiment-input.v1` contract before a run starts. Unknown JSON
+`fungus-toast.experiment-input.v2` contract before a run starts. Unknown JSON
 fields, invalid strategy or Adaptation references, illegal positions, ambiguous
 position modes, unsupported player counts, and any condition above 100 games
 are rejected. A canonical example is checked in at
-`FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
+`FungusToast.Simulation/Examples/experiment-input.v2.example.json`.
 
 The input JSON file is a contract fixture in P2-A; direct execution of input
 manifests is not available yet. Resolved artifacts are replayable.
 
 Parquet runs also write `resolved-manifest.json` using
-`fungus-toast.experiment-result.v1` plus `resolved-manifest.sha256`. The resolved
+`fungus-toast.experiment-result.v4` plus `resolved-manifest.sha256`. The resolved
 artifact records the code and binary identities, condition and board
 fingerprints, selected lineup and strategy fingerprints, exact game seeds,
 actual per-game slot assignments, starting coordinates and Adaptations,
@@ -116,6 +116,27 @@ player, round, decision kind, and occurrence. Consequently, changing how many
 random values an AI implementation consumes cannot shift later gameplay draws
 when the selected action remains the same. Changing the contract requires a new
 contract version and corrected reference baseline.
+
+### Paired control/treatment analysis
+
+Give independently run control and treatment artifacts the same seed, lineup,
+slot policy, and `--pairing-group-id`. Result schema v4 and Parquet manifest v7
+emit a `pair_id` for every game and player row. Analyze the control folder with
+the treatment folder attached:
+
+```bash
+./FungusToast.Analytics/.venv/bin/python FungusToast.Analytics/analyze_balance.py \
+  --run-folder /path/to/control \
+  --paired-treatment-folder /path/to/treatment \
+  --output-dir /path/to/comparison
+```
+
+`paired_comparison.csv` reports treatment-minus-control estimates and 95%
+intervals for normalized board share, normalized rank, and fractional win
+credit. It also reports observed within-pair correlation and the measured
+paired-versus-unpaired variance ratio. Analysis fails on incomplete pairs or
+mismatched seed, player count, start position, board fingerprint, or stream
+contract; no variance gain is assumed in advance.
 
 ## Quick Commands
 

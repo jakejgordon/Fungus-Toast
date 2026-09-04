@@ -12,7 +12,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void CheckedInExample_DeserializesAndValidates()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v1.example.json");
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v2.example.json");
         var manifest = ExperimentManifestJson.Deserialize(File.ReadAllText(path));
         Assert.Empty(ExperimentManifestValidator.Validate(manifest));
     }
@@ -37,7 +37,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void Deserialize_RejectsMissingRequiredFields()
     {
-        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v1\" }";
+        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v2\" }";
         Assert.Throws<JsonException>(() => ExperimentManifestJson.Deserialize(json));
     }
 
@@ -46,6 +46,16 @@ public sealed class ExperimentManifestTests
     {
         var errors = ExperimentManifestValidator.Validate(CreateValidManifest(gamesPerCondition: 101));
         Assert.Contains(errors, error => error.Contains("gamesPerCondition", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validate_RejectsInvalidPairingGroupId()
+    {
+        var condition = CreateValidCondition() with { PairingGroupId = "invalid pair" };
+
+        var errors = ExperimentManifestValidator.Validate(CreateValidManifest(condition: condition));
+
+        Assert.Contains(errors, error => error.Contains("pairingGroupId", StringComparison.Ordinal));
     }
 
     [Fact]

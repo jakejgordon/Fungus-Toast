@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "fungus-toast.experiment-input.v1",
+  "schemaVersion": "fungus-toast.experiment-input.v2",
   "experimentId": "example_rectangular_control",
   "purpose": "Demonstrate the strict P2-A input contract.",
   "gamesPerCondition": 20,

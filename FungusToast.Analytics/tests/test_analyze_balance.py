@@ -68,6 +68,25 @@ class AnalyzeBalanceTests(unittest.TestCase):
         self.assertEqual(4, len(summary))
         self.assertTrue((summary["games"] == 2).all())
 
+    def test_paired_comparison_uses_slot_pairs_and_reports_observed_gain(self):
+        control = self._paired_players([6, 7, 8], [4, 3, 2], treatment=False)
+        treatment = self._paired_players([7, 8, 9], [3, 2, 1], treatment=True)
+
+        summary = ANALYZE_BALANCE.build_paired_comparison(control, treatment)
+        player_zero = summary[summary["strategy_id_control"] == "strategy-0"].iloc[0]
+
+        self.assertEqual(3, player_zero["pairs"])
+        self.assertAlmostEqual(0.2, player_zero["paired_difference_normalized_board_share"])
+        self.assertGreater(player_zero["paired_vs_unpaired_variance_ratio_normalized_board_share"], 1.0)
+
+    def test_paired_comparison_rejects_seed_mismatch(self):
+        control = self._paired_players([6, 7], [4, 3], treatment=False)
+        treatment = self._paired_players([7, 8], [3, 2], treatment=True)
+        treatment.loc[treatment["game_index"] == 2, "game_seed"] = 999
+
+        with self.assertRaisesRegex(ValueError, "game_seed"):
+            ANALYZE_BALANCE.build_paired_comparison(control, treatment)
+
     @staticmethod
     def _players():
         return pd.DataFrame(
@@ -87,6 +106,39 @@ class AnalyzeBalanceTests(unittest.TestCase):
                 for player_id in range(4)
             ]
         )
+
+    @staticmethod
+    def _paired_players(player_zero_living, player_one_living, treatment):
+        rows = []
+        for game_index, (zero, one) in enumerate(zip(player_zero_living, player_one_living), start=1):
+            for player_id, living in enumerate((zero, one)):
+                rows.append(
+                    {
+                        "pairing_group_id": "paired-test",
+                        "pair_id": f"paired-test:{game_index}:{100 + game_index}",
+                        "condition_id": "treatment" if treatment else "control",
+                        "game_index": game_index,
+                        "game_seed": 100 + game_index,
+                        "assigned_slot": player_id,
+                        "player_id": player_id,
+                        "player_count": 2,
+                        "strategy_name": f"strategy-{player_id}",
+                        "strategy_id": f"strategy-{player_id}",
+                        "strategy_definition_fingerprint": "treatment" if treatment else "control",
+                        "strategy_theme": "test",
+                        "living_cells": living,
+                        "total_living_cells": zero + one,
+                        "final_rank": 1 if living == max(zero, one) else 2,
+                        "win_credit": 1.0 if living == max(zero, one) else 0.0,
+                        "dead_cells": 0,
+                        "end_game_toxin_cells": 0,
+                        "starting_x": player_id,
+                        "starting_y": player_id,
+                        "board_geometry_fingerprint": "same-board",
+                        "random_stream_contract_version": "same-rng",
+                    }
+                )
+        return pd.DataFrame(rows)
 
 
 if __name__ == "__main__":

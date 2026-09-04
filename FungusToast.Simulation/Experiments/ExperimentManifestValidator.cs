@@ -45,6 +45,9 @@ public static partial class ExperimentManifestValidator
         if (condition == null) { errors.Add($"{path} must not be null."); return; }
         if (string.IsNullOrWhiteSpace(condition.ConditionId)) errors.Add($"{path}.conditionId is required.");
         else if (!conditionIds.Add(condition.ConditionId)) errors.Add($"{path}.conditionId '{condition.ConditionId}' is duplicated.");
+        if (!string.IsNullOrEmpty(condition.PairingGroupId)
+            && (condition.PairingGroupId.Length > 128 || !ExperimentIdPattern().IsMatch(condition.PairingGroupId)))
+            errors.Add($"{path}.pairingGroupId must use only letters, numbers, '.', '_' or '-' and be at most 128 characters.");
         if (condition.PlayerCount < 1 || condition.PlayerCount > MaximumSupportedPlayers)
             errors.Add($"{path}.playerCount must be between 1 and {MaximumSupportedPlayers}.");
         if (condition.Board == null) { errors.Add($"{path}.board is required."); return; }

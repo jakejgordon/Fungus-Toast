@@ -22,6 +22,8 @@ namespace FungusToast.Simulation.Export
     {
         public string ExperimentId { get; set; } = string.Empty;
         public string ConditionId { get; set; } = string.Empty;
+        public string PairingGroupId { get; set; } = string.Empty;
+        public string PairId { get; set; } = string.Empty;
         public string ConditionFingerprint { get; set; } = string.Empty;
         public DateTime RunTimestampUtc { get; set; }
         public int GameIndex { get; set; }
@@ -62,6 +64,8 @@ namespace FungusToast.Simulation.Export
     {
         public string ExperimentId { get; set; } = string.Empty;
         public string ConditionId { get; set; } = string.Empty;
+        public string PairingGroupId { get; set; } = string.Empty;
+        public string PairId { get; set; } = string.Empty;
         public string ConditionFingerprint { get; set; } = string.Empty;
         public string InputSchemaVersion { get; set; } = string.Empty;
         public string StrategySet { get; set; } = string.Empty;

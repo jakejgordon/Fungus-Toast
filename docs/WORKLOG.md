@@ -189,6 +189,16 @@ measurement model, phase gates, and open product decisions are in
     replay/resume contract pass. Unity Editor compile and normal/fast-forward AI
     spending plus draft validation remain part of the manual integration gate.
     Next: P3.R4 paired inference.
+22. P3.R4 is complete. Input schema v2 accepts a validated shared pairing-group
+    ID; result schema v4 and Parquet manifest v7 emit pair IDs per game and
+    assigned slot. The offline analyzer accepts a treatment artifact, refuses
+    incomplete pairs and mismatched seeds/starts/board/RNG controls, and writes
+    paired differences with 95% intervals, observed correlation, and measured
+    paired-versus-unpaired variance ratios for normalized board share, rank,
+    and fractional win credit. Six analytics tests, 16 Simulation tests, and a
+    real three-game control/treatment Parquet round trip passed. The smoke
+    variance ratio was reported empirically rather than assumed. Next: P3.R5
+    enforceable preregistered gates.
 
 ### Completion Criteria
 

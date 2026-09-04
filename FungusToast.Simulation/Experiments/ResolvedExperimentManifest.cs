@@ -4,7 +4,7 @@ namespace FungusToast.Simulation.Experiments;
 
 public sealed class ResolvedExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v3";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v4";
 
     public required string SchemaVersion { get; init; }
     public required string InputSchemaVersion { get; init; }

@@ -29,10 +29,12 @@ The standard post-simulation outputs are:
 
 - `post_simulation_player_summary.csv`: one row per player/strategy with `Win %`, `Avg Living Cells`, parity-normalized board share, win-rate surplus, tie-aware average/normalized rank, `Avg Dead Cells`, and `Avg Toxins`
 - `growth_source_summary.csv`: one row per `(player, growth source)` with `Total Living`, `Count`, and `% From Growth Source`, sorted by highest `Total Living` player first and then by `Count` descending
+- `paired_comparison.csv` (when `--paired-treatment-folder` is supplied): matched treatment-minus-control estimates, intervals, observed correlation, and measured variance ratio
 
 For routine simulation summaries, prefer reading `post_simulation_player_summary.csv` directly after running `analyze_balance.py` rather than re-deriving the per-player table by hand from raw parquet files.
 
-The markdown report includes those standard tables plus ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, mycovariant-mutation interaction candidates, and nutrient economy summaries showing which strategies are benefiting most from clustered nutrients.
+The markdown report includes those standard tables plus explicitly
+non-evidential observational screens and nutrient-economy diagnostics.
 ## Usage
 
 Preferred default in this repo: run the script with the checked-in analytics virtual environment instead of assuming a global Python has the required packages. This should be the default artifact-processing path so the parquet workflow does not need to be rediscovered each session.
@@ -55,6 +57,13 @@ Optional output directory:
 .\.venv\Scripts\python.exe analyze_balance.py --run-folder "<path>" --output-dir "<path>"
 ```
 
+Paired control/treatment analysis requires both simulations to use the same
+`--pairing-group-id`, seed, lineup, slot policy, and starting controls:
+
+```bash
+./.venv/bin/python analyze_balance.py --run-folder "<control>" --paired-treatment-folder "<treatment>" --output-dir "<comparison>"
+```
+
 Optional confidence and interaction thresholds:
 
 ```powershell
@@ -71,7 +80,8 @@ Optional confidence and interaction thresholds:
 - `nutrient_economy_summary.csv`
 - `balance_recommendations.md`
 
-The markdown report includes ranked OP/UP candidates, matchup-theme sensitivity, mutation synergy candidates, mycovariant-mutation interaction candidates, and nutrient economy summaries showing which strategies are benefiting most from clustered nutrients.
+The markdown report does not issue causal OP/UP verdicts from observational
+pick data.
 
 ## Upgrade Event Logging
 
@@ -87,76 +97,12 @@ Useful fields include:
 
 This enables build-order and timing analyses beyond end-state mutation levels.
 
-## Reliable Mutation Tuning Pattern
+## Causal Mutation Tuning Pattern
 
-Use this same pattern each balance pass so results are comparable over time.
-
-### 1) Run a stable baseline simulation
-
-- Use explicit strategy names so lineup composition is fixed across iterations.
-- Keep all explicit names inside one roster set for the run; named experiments cannot mix `Proven`/`Testing`/`Campaign`/`Mycovariants` in a single lineup.
-- Use enough games to reduce variance (`>= 300`, preferred `500+`).
-- Keep seed, slot policy, and selection/provenance metadata fixed while comparing revisions.
-- Save the emitted `manifest.json` alongside any downstream analysis exports; it is the canonical record of the exact lineup used.
-
-Example:
-
-```powershell
-dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- `
-	--games 500 `
-	--strategy-set Proven `
-	--strategy-names "<comma-separated strategy names>" `
-	--seed 20260307 --rotate-slots --no-keyboard `
-	--experiment-id run500_balance_pass
-```
-
-### 2) Generate filtered recommendations
-
-Use stricter thresholds for decision-grade calls:
-
-```powershell
-.\.venv\Scripts\python.exe analyze_balance.py `
-	--run-folder "<parquet run folder>" `
-	--min-confidence 0.6 `
-	--min-picks 150 `
-	--min-eligible-samples 600 `
-	--min-pair-samples 120 `
-	--min-combo-samples 120
-```
-
-### 3) Gate what is eligible for tuning
-
-- Ignore universal/always-picked foundation mutations as direct nerf targets unless independently validated by dedicated A/B tests.
-- Prefer candidates with both:
-	- recommendation label (`OP candidate` or `UP candidate`), and
-	- strong magnitude (`|balance_score| >= 0.8` or persistent rank across runs).
-- Cross-check with `mutation_by_opponent_theme.csv` to avoid overreacting to one matchup pocket.
-
-### 4) Apply small, targeted changes
-
-- Prefer one small nudge per mutation per pass.
-- Typical changes:
-	- `effect per level` by 5-10%
-	- activation/cascade chance by 2-4 percentage points
-	- surge utility knobs (duration, tiles, activation cost) by 1 step
-- Avoid multi-knob rewrites in the same pass unless a mechanic is clearly broken.
-
-### 5) Re-run and compare deltas
-
-- Re-run the same lineup and seed settings.
-- Compare:
-	- win rate distribution,
-	- average living cells by strategy,
-	- candidate mutation rank shifts.
-- Accept only if dominance narrows without creating a new runaway strategy.
-
-### 6) Record the pass
-
-For each pass, log:
-
-- experiment ID,
-- changed constants,
-- before/after top OP/UP candidates,
-- go/no-go decision.
-
-This makes future balancing incremental instead of ad hoc.
+Use observational outputs only to nominate a mutation for study. For a balance
+decision, change one mutation treatment (disable it, alter one magnitude/cost,
+or use an equal-cost forced-pick substitute), then run matched control and
+treatment artifacts with the same pairing group, seeds, lineup, slots, board,
+and starts. Base the decision on the preregistered paired primary outcome;
+record correlation and variance gain from the resulting data rather than
+assuming them.

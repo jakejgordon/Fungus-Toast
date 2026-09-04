@@ -320,11 +320,12 @@ gate remains open.
 
 ### Phase 2 — Establish reproducible experiment infrastructure
 
-- **P2.1 — complete:** Defined and tested
-  `fungus-toast.experiment-input.v1`, including the existing CLI-to-condition
-  translation, strict JSON unknown/missing-field handling, semantic validation,
-  and the hard 100-game per-condition ceiling. The checked-in example is
-  `FungusToast.Simulation/Examples/experiment-input.v1.example.json`.
+- **P2.1 — complete:** Defined and tested the original
+  `fungus-toast.experiment-input.v1` contract (superseded by v2 for paired
+  experiments), including CLI-to-condition translation, strict JSON
+  unknown/missing-field handling, semantic validation, and the hard 100-game
+  per-condition ceiling. The current checked-in example is
+  `FungusToast.Simulation/Examples/experiment-input.v2.example.json`.
 - **P2.2 — complete:** Added `fungus-toast.experiment-result.v1` output with
   code, condition, board, balance-binary, execution, and strategy-definition
   fingerprints; exact seed schedules; selected/assigned lineups; actual
@@ -448,10 +449,14 @@ reproved after the corrected RNG and result contracts land.
    sequence and derives AI streams from SHA-256 identities containing base seed,
    player, round, decision kind, and occurrence. Mutation spending, interactive
    and fast-forward drafting, and roster selection use scoped streams. Resolved
-   result schema v3 and Parquet manifest v6 stamp the contract version.
+   result schema v4 and Parquet manifest v7 stamp the contract version.
 4. **P3.R4 — paired inference:** add explicit pair IDs, paired estimators, and
    game/seed-aware uncertainty. Measure treatment correlation and variance
    reduction empirically; do not promise a universal common-random-number gain.
+   Implemented input schema v2 adds an optional validated pairing-group ID;
+   emitted pair IDs join each game and assigned slot across artifacts. The
+   paired analyzer fails on missing pairs or mismatched controls and reports
+   observed correlation and paired-versus-unpaired variance for each outcome.
 5. **P3.R5 — enforceable gates:** extend the input manifest with a declared
    hypothesis, primary metric/context, estimand, direction, margin, analysis
    version, and total game/runtime budget. An analyzer may issue a verdict only
