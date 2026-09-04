@@ -527,6 +527,11 @@ the v2 reference remains descriptive and carries no balance verdict.
   policy while preserving current behavior.
 - **P5.5:** Route mycovariant drafting through a typed policy instead of a
   concrete strategy downcast; preserve campaign-specific rules explicitly.
+  The pre-spike correctness slice is complete: draft selection now dispatches
+  through `IMutationSpendingStrategy`, every implementation must declare its
+  draft behavior, and the manager fails loudly when an AI has no strategy.
+  Whether this method becomes a separate composed policy remains a Phase 4
+  architecture decision.
 - **P5.6:** Resolve complementary starting Adaptations without an AI draft, and
   implement board/player-count position pools plus curated campaign
   pool/coordinate/geometry overrides as scenario controls.

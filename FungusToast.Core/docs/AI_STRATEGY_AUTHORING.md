@@ -98,6 +98,13 @@ Use these via explicit `--strategy-names` when you want a stable 8-player compar
 
 ## ParameterizedSpendingStrategy Precedence
 
+Every `IMutationSpendingStrategy` implementation must explicitly implement
+`SelectMycovariantFromChoices`. `MycovariantDraftManager` dispatches through
+that interface and does not infer behavior from the concrete strategy type.
+`RandomMutationSpendingStrategy` intentionally drafts randomly; parameterized
+strategies apply their authored preferences and scoring. New implementations
+must make this choice deliberately.
+
 For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand if you think in four layers:
 
 1. **Build order**

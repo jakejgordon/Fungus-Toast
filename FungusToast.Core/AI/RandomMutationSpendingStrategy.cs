@@ -2,6 +2,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.AI
 {
@@ -28,6 +29,15 @@ namespace FungusToast.Core.AI
         public RandomMutationSpendingStrategy(string? strategyName = null)
         {
             StrategyName = strategyName ?? "LegacyRandom";
+        }
+
+        public Mycovariant SelectMycovariantFromChoices(
+            Player player,
+            List<Mycovariant> choices,
+            GameBoard board,
+            Random rnd)
+        {
+            return choices[rnd.Next(choices.Count)];
         }
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,

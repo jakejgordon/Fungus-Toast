@@ -165,12 +165,9 @@ namespace FungusToast.Core.Mycovariants
                 return randomPool[rng.Next(randomPool.Count)];
             }
 
-            if (player.MutationStrategy is ParameterizedSpendingStrategy paramStrategy)
-            {
-                return paramStrategy.SelectMycovariantFromChoices(player, choices, board);
-            }
-
-            return choices[rng.Next(choices.Count)];
+            var strategy = player.MutationStrategy
+                ?? throw new InvalidOperationException($"AI player {player.PlayerId} has no mutation strategy for mycovariant drafting.");
+            return strategy.SelectMycovariantFromChoices(player, choices, board, rng);
         }
 
         public static float GetRecordedAIDraftScore(

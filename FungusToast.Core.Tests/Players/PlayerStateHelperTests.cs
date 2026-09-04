@@ -92,6 +92,8 @@ public class PlayerStateHelperTests
         public bool? UsesFungicide => null;
         public bool? UsesGeneticDrift => null;
 
+        public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board, Random rnd) => choices[0];
+
         public StubMutationSpendingStrategy(string strategyName)
         {
             StrategyName = strategyName;

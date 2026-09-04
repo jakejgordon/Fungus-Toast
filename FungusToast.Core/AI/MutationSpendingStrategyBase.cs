@@ -4,6 +4,7 @@ using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Board;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Mycovariants;
 
 namespace FungusToast.Core.AI
 {
@@ -17,6 +18,12 @@ namespace FungusToast.Core.AI
         public virtual bool? UsesFungicide { get; }
         public virtual bool? UsesGeneticDrift { get; }
         public virtual bool? UsesSubstrateEcology { get; }
+
+        public abstract Mycovariant SelectMycovariantFromChoices(
+            Player player,
+            List<Mycovariant> choices,
+            GameBoard board,
+            Random rnd);
 
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver simulationObserver)

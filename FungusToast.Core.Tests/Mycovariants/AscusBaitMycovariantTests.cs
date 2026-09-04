@@ -409,7 +409,11 @@ public class AscusBaitMycovariantTests
         var ascusBait = MycovariantRepository.GetById(MycovariantIds.AscusBaitId);
         var plasmidBounty = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
 
-        var picked = strategy.SelectMycovariantFromChoices(player, new List<Mycovariant> { plasmidBounty, ascusBait }, board);
+        var picked = strategy.SelectMycovariantFromChoices(
+            player,
+            new List<Mycovariant> { plasmidBounty, ascusBait },
+            board,
+            new Random(1));
 
         Assert.Equal(MycovariantIds.AscusBaitId, picked.Id);
     }
@@ -743,6 +747,28 @@ public class AscusBaitMycovariantTests
         Assert.Equal(highScoreChoice.GetAIScore(ai, board), MycovariantDraftManager.GetRecordedAIDraftScore(ai, picked, board, CampaignDifficulty.Medium));
     }
 
+    [Fact]
+    public void SelectAIDraftPick_dispatches_through_strategy_interface()
+    {
+        var board = new GameBoard(width: 6, height: 6, playerCount: 1);
+        var ai = new Player(0, "P0", PlayerTypeEnum.AI);
+        var selected = MycovariantRepository.GetById(MycovariantIds.SeptalSealId);
+        var strategy = new InterfaceDraftStrategy(selected.Id);
+        ai.SetMutationStrategy(strategy);
+        board.Players.Add(ai);
+        var other = MycovariantRepository.GetById(MycovariantIds.PlasmidBountyId);
+
+        var picked = MycovariantDraftManager.SelectAIDraftPick(
+            ai,
+            new List<Mycovariant> { other, selected },
+            board,
+            new FixedRandom(0),
+            CampaignDifficulty.Medium);
+
+        Assert.True(strategy.WasCalled);
+        Assert.Equal(selected.Id, picked.Id);
+    }
+
     private static List<int> SelectExpectedTileIds(List<int> tileIds, int selectionCount, int seed)
     {
         var rng = new Random(seed);
@@ -790,6 +816,40 @@ public class AscusBaitMycovariantTests
         public override int Next(int maxValue)
         {
             return Math.Clamp(value, 0, Math.Max(0, maxValue - 1));
+        }
+    }
+
+    private sealed class InterfaceDraftStrategy : IMutationSpendingStrategy
+    {
+        private readonly int selectedMycovariantId;
+
+        public InterfaceDraftStrategy(int selectedMycovariantId)
+        {
+            this.selectedMycovariantId = selectedMycovariantId;
+        }
+
+        public bool WasCalled { get; private set; }
+        public string StrategyName => "Interface Draft Test";
+        public FungusToast.Core.Mutations.MutationTier? MaxTier => null;
+        public bool? PrioritizeHighTier => null;
+        public bool? UsesGrowth => null;
+        public bool? UsesCellularResilience => null;
+        public bool? UsesFungicide => null;
+        public bool? UsesGeneticDrift => null;
+
+        public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board, Random rnd)
+        {
+            WasCalled = true;
+            return choices.Single(choice => choice.Id == selectedMycovariantId);
+        }
+
+        public void SpendMutationPoints(
+            Player player,
+            List<FungusToast.Core.Mutations.Mutation> allMutations,
+            GameBoard board,
+            Random rnd,
+            FungusToast.Core.Metrics.ISimulationObserver simulationObserver)
+        {
         }
     }
 }

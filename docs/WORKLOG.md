@@ -232,6 +232,14 @@ measurement model, phase gates, and open product decisions are in
     resume/replay fixture passed. The immutable corrected record is
     `FungusToast.Core/docs/second-level/AI_P3_5_REFERENCE_BASELINE_V2.md`.
     Phase 4 characterization is now unblocked; no balance verdict was issued.
+26. The pre-architecture mycovariant correctness fix is complete.
+    `IMutationSpendingStrategy` now requires explicit draft selection;
+    parameterized and intentionally random implementations each own their
+    behavior; and `MycovariantDraftManager` no longer downcasts or silently
+    substitutes random selection. A non-parameterized dispatch regression,
+    621 Core tests, and 18 Simulation tests pass. The checked-in Unity Core
+    DLL/PDB were refreshed; Unity Editor compile and normal/fast-forward draft
+    validation remain manual integration checks.
 
 ### Completion Criteria
 

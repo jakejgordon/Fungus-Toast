@@ -2,6 +2,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Tests.Mutations;
@@ -63,6 +64,8 @@ public class TurnEngineMutationPhaseTests
         public bool? UsesFungicide => null;
         public bool? UsesGeneticDrift => null;
         public bool? UsesSubstrateEcology => null;
+
+        public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board, Random rnd) => choices[0];
 
         public void SpendMutationPoints(
             Player player,

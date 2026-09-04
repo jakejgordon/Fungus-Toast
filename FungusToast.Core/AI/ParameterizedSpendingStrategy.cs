@@ -320,7 +320,11 @@ namespace FungusToast.Core.AI
         /// Selects the best mycovariant from the given choices, preferring mycovariants in the preferred list first.
         /// If no preferred mycovariants are available, falls back to normal AI scoring.
         /// </summary>
-        public Mycovariant SelectMycovariantFromChoices(Player player, List<Mycovariant> choices, GameBoard board)
+        public override Mycovariant SelectMycovariantFromChoices(
+            Player player,
+            List<Mycovariant> choices,
+            GameBoard board,
+            Random rnd)
         {
             var scoredChoices = choices
                 .Select(m => new { Mycovariant = m, Score = m.GetBaseAIScore(player, board) })

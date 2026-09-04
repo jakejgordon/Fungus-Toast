@@ -208,6 +208,8 @@ public class RoundStartRuntimeSnapshotFactoryTests
         public bool? UsesFungicide => null;
         public bool? UsesGeneticDrift => null;
 
+        public Mycovariant SelectMycovariantFromChoices(Player player, System.Collections.Generic.List<Mycovariant> choices, GameBoard board, Random rnd) => choices[0];
+
         public void SpendMutationPoints(Player player, System.Collections.Generic.List<Mutation> allMutations, GameBoard board, Random rnd, Metrics.ISimulationObserver simulationObserver)
         {
         }
