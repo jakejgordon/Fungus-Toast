@@ -52,6 +52,8 @@ namespace FungusToast.Unity.UI.Campaign
         private const int MainMenuVerticalPadding = 32;
         private const float MainMenuElementSpacing = 16f;
         private const string AlphaHeadingText = "ALPHA BUILD";
+        private const string FeedbackButtonLabel = "Send Feedback";
+        private const string FeedbackFormUrl = "https://forms.gle/m76wicURaKdMUeXn8";
         private const string CustomGameDescription = "Play solo against AI or share this device.";
         private const string CampaignDescription = "Play a persistent run with unlocks and escalating challenges.";
         private const string CreditsHeadingText = "Credits";
@@ -93,6 +95,7 @@ namespace FungusToast.Unity.UI.Campaign
         private GameObject settingsPanel;
         private Button creditsButton;
         private Button settingsButton;
+        private Button feedbackButton;
         private Button creditsBackButton;
         private Button settingsBackButton;
         private Slider settingsSoundEffectsSlider;
@@ -249,6 +252,7 @@ namespace FungusToast.Unity.UI.Campaign
             UIStyleTokens.Button.ApplyNeutralMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
+            UIStyleTokens.Button.ApplySecondaryMenuAction(feedbackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsTutorialReplayButton);
@@ -258,6 +262,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             ApplyModeSelectCompactButtonStyle(creditsButton);
             ApplyModeSelectCompactButtonStyle(settingsButton);
+            ApplyModeSelectCompactButtonStyle(feedbackButton);
             ApplyModeSelectCompactButtonStyle(creditsBackButton);
             ApplyModeSelectCompactButtonStyle(settingsBackButton);
             ApplyModeSelectCompactButtonStyle(quitButton);
@@ -334,6 +339,11 @@ namespace FungusToast.Unity.UI.Campaign
 #else
             Application.Quit();
 #endif
+        }
+
+        private void OnFeedbackClicked()
+        {
+            Application.OpenURL(FeedbackFormUrl);
         }
 
         private void OnCreditsClicked()
@@ -515,6 +525,12 @@ namespace FungusToast.Unity.UI.Campaign
                 settingsButton.onClick.AddListener(OnSettingsClicked);
             }
 
+            if (feedbackButton == null)
+            {
+                feedbackButton = CreateButton("UI_ModeSelectFeedbackButton", FeedbackButtonLabel);
+                feedbackButton.onClick.AddListener(OnFeedbackClicked);
+            }
+
             if (quitButton == null && ShouldShowQuitButton())
             {
                 quitButton = CreateButton("UI_ModeSelectQuitButton", "Quit to Desktop");
@@ -548,6 +564,11 @@ namespace FungusToast.Unity.UI.Campaign
             if (creditsButton != null)
             {
                 creditsButton.transform.SetAsLastSibling();
+            }
+
+            if (feedbackButton != null)
+            {
+                feedbackButton.transform.SetAsLastSibling();
             }
 
             if (quitButton != null)
@@ -1304,6 +1325,7 @@ namespace FungusToast.Unity.UI.Campaign
             EnsureTooltip(campaignButton, GetCampaignTooltipText);
             EnsureTooltip(creditsButton, "Open the credits panel.");
             EnsureTooltip(settingsButton, "Open audio, tutorial, and campaign reset settings.");
+            EnsureTooltip(feedbackButton, "Open the Fungus Toast feedback form in your web browser.");
             EnsureTooltip(quitButton, "Close Fungus Toast and return to desktop.");
             EnsureTooltip(creditsBackButton, "Return to the main menu.");
             EnsureTooltip(settingsBackButton, "Return to the main menu.");
