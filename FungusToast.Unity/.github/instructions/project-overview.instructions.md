@@ -37,3 +37,12 @@ FungusToast.Unity/
 ## Coding Standards
 
 - Follow clean code standards and avoid files with > 300 lines of code
+- Write new code code-first: construct and wire UI / components in C#, with no
+  serialized cross-references between scene objects. Prefer `GetComponent` /
+  runtime `AddComponent` / service lookups over `[SerializeField]` slots that need
+  Inspector assignment. Serialized fields are for asset references and pure visual
+  layout only.
+- When a task makes you edit an Inspector-wired area, migrate that area's wiring
+  to code as part of the change — bounded by the scope in
+  `../../FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`. Do not expand to
+  untouched files.

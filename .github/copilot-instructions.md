@@ -31,6 +31,7 @@ If a task is unclear, use this routing order before making changes:
 - **Sound design, storage, and trigger guidance:** `FungusToast.Core/docs/SOUNDS.md`
 - **Mold icon art generation and board-visual iteration workflow:** `FungusToast.Core/docs/MOLD_ICON_HELPER.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
+- **Unity code-first migration (Inspector wiring → code) and its opportunistic-refactor policy:** `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`
 - **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
 - **Git worktree / branch workflow for isolated task checkouts:** `docs/GIT_WORKTREE_WORKFLOW.md`
 - **Unity scene/prefab staging, churn guard, and conflict workflow:** `docs/UNITY_CONCURRENT_WORKFLOW.md`
@@ -59,7 +60,7 @@ Main projects:
   - `Assembly-CSharp-Editor.csproj`
   - `FungusToast.Unity.csproj`
 - No magic constants for tunable gameplay/UI values. Use the appropriate constants file.
-- Prefer minimal, scoped changes over opportunistic refactors.
+- Prefer minimal, scoped changes over opportunistic refactors. **One sanctioned exception:** when touching a `FungusToast.Unity` area, migrate the Inspector-authored wiring you are already editing there to code, per `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`. Stay inside that doc's scope and do not expand the blast radius to untouched files.
 - When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
@@ -116,6 +117,7 @@ Choose the smallest checklist that matches the change:
 - Only use `FungusToast.Unity` for view/controllers, interaction flow, and presentation concerns.
 - Prefer the existing architecture patterns documented in `ARCHITECTURE_OVERVIEW.md` and `UI_ARCHITECTURE_HELPER.md` rather than inventing new ones.
 - Reuse the documentation hierarchy instead of inventing fresh patterns when a helper already exists.
+- Write new `FungusToast.Unity` code as code-first (built and wired in C#, no serialized cross-references), and opportunistically migrate the Inspector wiring in any Unity area you touch, following `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`.
 
 ## Documentation Ownership
 
@@ -142,6 +144,7 @@ Documentation strategy:
 - Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, `SAVE_COMPATIBILITY.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
 - UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md`, `NEW_BACKGROUND_HELPER.md` for board-background silhouette work, `docs/ui/TOOLTIP_GUIDE.md`, and `UI_STYLE_GUIDE.md`
+- Unity Inspector wiring, serialized-field cleanup, scene/prefab-to-code work → `UNITY_CODE_FIRST_MIGRATION.md`
 - Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`
 - Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
 - Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`

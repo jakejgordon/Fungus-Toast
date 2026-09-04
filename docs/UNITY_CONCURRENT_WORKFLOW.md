@@ -100,7 +100,10 @@ Rules:
   task genuinely requires a new component, GameObject, or GUID reference; these
   changes can be made directly in YAML without Unity. Prefer self-wiring code
   (`GetComponent`, `FindObjectByType`, ScriptableObjects, UI built in code) over
-  adding serialized fields that require Inspector assignment.
+  adding serialized fields that require Inspector assignment. This is the churn-safe
+  minimum; the deliberate direction and the opportunistic-migration policy are in
+  [`FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`](../FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md).
+  A wiring migration should shrink the scene/prefab diff over time, not add to it.
 - Never stage `*.unity` / `*.prefab` for a task that is not about that
   scene/prefab. If one is modified and the task did not intend it, run
   `git checkout -- <file>` before committing.

@@ -26,6 +26,7 @@ These are the main task-entry documents and are also referenced from `.github/co
 - `SOUNDS.md` — sound trigger planning, storage conventions, and audio implementation guidance
 - `MOLD_ICON_HELPER.md` — board mold icon generation, naming, review, and iteration workflow
 - `UI_ARCHITECTURE_HELPER.md` — Unity UI architecture, service extraction, tooltips, and pooling
+- `UNITY_CODE_FIRST_MIGRATION.md` — policy for migrating Unity Inspector wiring to code, its scope, and the opportunistic-refactor rule
 - `UI_STYLE_GUIDE.md` — UI semantic styling rules
 - `ARCHITECTURE_OVERVIEW.md` — technical architecture, layer ownership, and runtime patterns
 - `GAMEPLAY_TERMINOLOGY.md` — canonical gameplay verbs and domain terminology

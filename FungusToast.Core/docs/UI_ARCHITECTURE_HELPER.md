@@ -1,10 +1,39 @@
 # Unity UI Architecture Helper
 
-> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For visual tokens, component recipes, and screen-level styling rules, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For tooltip taxonomy and when to use onboarding vs hover vs board-inspection tooltips, see [../../docs/ui/TOOLTIP_GUIDE.md](../../docs/ui/TOOLTIP_GUIDE.md). For naming new Unity sprites, icons, and other source assets, see [second-level/UNIT_ASSET_NAMING_CONVENTIONS.md](second-level/UNIT_ASSET_NAMING_CONVENTIONS.md). For board-background silhouette authoring and contour-to-square baking, see [NEW_BACKGROUND_HELPER.md](NEW_BACKGROUND_HELPER.md). For the full documentation hierarchy, see [README.md](README.md).
+> **📚 Related Documentation**: For animation timing, see [second-level/ANIMATION_HELPER.md](second-level/ANIMATION_HELPER.md). For game flow and runtime architecture, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For the policy on migrating Inspector wiring to code, see [UNITY_CODE_FIRST_MIGRATION.md](UNITY_CODE_FIRST_MIGRATION.md). For visual tokens, component recipes, and screen-level styling rules, see [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md). For tooltip taxonomy and when to use onboarding vs hover vs board-inspection tooltips, see [../../docs/ui/TOOLTIP_GUIDE.md](../../docs/ui/TOOLTIP_GUIDE.md). For naming new Unity sprites, icons, and other source assets, see [second-level/UNIT_ASSET_NAMING_CONVENTIONS.md](second-level/UNIT_ASSET_NAMING_CONVENTIONS.md). For board-background silhouette authoring and contour-to-square baking, see [NEW_BACKGROUND_HELPER.md](NEW_BACKGROUND_HELPER.md). For the full documentation hierarchy, see [README.md](README.md).
 
 This document describes the established UI patterns in FungusToast.Unity. Follow these conventions when adding or modifying UI components.
 
 When adding new imported UI art such as button icons or sprite assets, follow [second-level/UNIT_ASSET_NAMING_CONVENTIONS.md](second-level/UNIT_ASSET_NAMING_CONVENTIONS.md). Keep script and prefab naming on the existing project conventions.
+
+---
+
+## Code-First Construction
+
+This layer is migrating from Inspector-authored wiring to code-authored
+construction. [UNITY_CODE_FIRST_MIGRATION.md](UNITY_CODE_FIRST_MIGRATION.md) is
+the canonical policy (scope, rationale, guardrails, how to do a slice); the
+patterns below are the recipes it points at.
+
+- **Build panels in code.** New UI is constructed and laid out in C#, the way
+  `MutationInspectorPanel` and `MutationDependencyGraphGraphic` already are
+  (built once at runtime by `UI_MutationManager`, no new scene/prefab reference).
+  Prefabs may stay as dumb visual templates that code instantiates and populates
+  via `Configure(...)` / `SetDependencies(...)`.
+- **No serialized cross-references.** A component gets its collaborators through
+  the Service Extraction, `GameUIManager` Façade, and `SetDependencies` patterns
+  below — not through drag-and-drop `[SerializeField]` slots pointing at other
+  scene objects.
+- **Self-wire local pieces.** Prefer `GetComponent` / `GetComponentInChildren` /
+  runtime `AddComponent` over serialized fields that need Inspector assignment
+  (same rule as [../../docs/UNITY_CONCURRENT_WORKFLOW.md](../../docs/UNITY_CONCURRENT_WORKFLOW.md)).
+- **Serialized fields that stay** are asset references (sprites, materials,
+  prefabs-as-templates) and pure per-component visual layout. Cross-references
+  and logic tuning move to code / constants.
+- **When you touch an area, migrate its wiring** as part of the change, within
+  the scope defined in the policy doc. Don't expand to untouched files.
+- **Add a smoke assertion** for wiring you move, since you lose the Inspector's
+  visual "is that slot filled?" check.
 
 ---
 
@@ -359,5 +388,6 @@ The Unity Player window is configured as resizable (`resizableWindow: 1` in `Pro
 | UI panel needs GameManager data | Add property to `GameUIManager`, use `SetDependencies()` |
 | New sidebar or resizable panel | Use `SidebarResizer` component with `targetWidthFraction` |
 | One-shot "look here" / "why did nothing happen?" emphasis | Follow the **Attention Pulses** conventions above |
+| New panel/component, or you're editing an Inspector-wired one | Build and wire it in code per **Code-First Construction** above and `UNITY_CODE_FIRST_MIGRATION.md` |
 
 _End of UI Architecture Helper._

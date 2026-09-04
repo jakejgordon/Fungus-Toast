@@ -1,6 +1,6 @@
 # Fungus Toast - Architecture Overview
 
-> **Related Documentation**: For canonical gameplay verbs and state-transition terminology, see [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md). For simulation commands and automation workflows, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md). For Unity UI service and presentation patterns, see [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md). For the full documentation hierarchy, see [README.md](README.md).
+> **Related Documentation**: For canonical gameplay verbs and state-transition terminology, see [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md). For simulation commands and automation workflows, see [SIMULATION_HELPER.md](SIMULATION_HELPER.md). For Unity UI service and presentation patterns, see [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md). For the Unity code-first migration policy, see [UNITY_CODE_FIRST_MIGRATION.md](UNITY_CODE_FIRST_MIGRATION.md). For the full documentation hierarchy, see [README.md](README.md).
 
 ## Purpose
 
@@ -125,6 +125,19 @@ Unity should consume Core state through stable facades and focused services rath
 - Use `GameUIManager` as the main UI-facing facade instead of widespread direct `GameManager.Instance` access.
 - When `GameManager` grows, extract cohesive logic into lightweight services with explicit dependencies.
 - Reuse the shared tooltip system and pooled UI-element patterns documented in [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md).
+
+### Code-first construction
+
+The Unity layer is moving from Inspector-authored wiring toward code-authored
+construction and configuration, so it more closely resembles the code-first,
+testable shape of Core. New Unity code is built and wired in C# with no serialized
+cross-references, and Inspector wiring is migrated to code opportunistically
+whenever an area is touched. This is a deliberate standing exception to the
+repo-wide "minimal scoped changes" rule, bounded by its own scope.
+
+[UNITY_CODE_FIRST_MIGRATION.md](UNITY_CODE_FIRST_MIGRATION.md) is the canonical
+policy: rationale, what migrates versus what stays, target patterns, guardrails,
+and how to do a slice.
 
 ### Scope boundary
 
