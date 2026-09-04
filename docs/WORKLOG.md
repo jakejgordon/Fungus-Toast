@@ -284,6 +284,16 @@ measurement model, phase gates, and open product decisions are in
     existing parameterized case and a new non-parameterized implementation are
     regression-tested. Core passes 633/633 and Simulation passes 18/18; the
     checked-in Unity Core DLL/PDB were refreshed.
+32. Phase 5 registry metadata validation now includes suggested Adaptation-set
+    keys, so an Adaptation override for an unregistered strategy fails during
+    roster initialization like every other metadata override. The atomic
+    registry invariant also validates non-empty sets, duplicate IDs, and every
+    referenced Adaptation ID, and now initializes `AIRoster` explicitly instead
+    of depending on test order. The canonical plan was reconciled with the
+    Phase 4 verdict: no legacy controller adapter or universal trace graph, no
+    name reset, and automatic Adaptation resolution requires an explicit
+    scenario grant count. Core passes 633/633 and Simulation passes 18/18; the
+    checked-in Unity Core DLL/PDB were refreshed.
 
 ### Completion Criteria
 

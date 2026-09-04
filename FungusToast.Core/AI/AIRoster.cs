@@ -2831,6 +2831,7 @@ namespace FungusToast.Core.AI
                 .Concat(_explicitCampaignDifficultyByName.Keys)
                 .Concat(_explicitFavoredAgainstByName.Keys)
                 .Concat(_explicitWeakAgainstByName.Keys)
+                .Concat(_suggestedAdaptationSetsByStrategyName.Keys)
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
             var orphanedOverrides = overrideNames

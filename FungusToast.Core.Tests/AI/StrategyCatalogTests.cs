@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
@@ -14,6 +15,8 @@ public class StrategyCatalogTests
     [Fact]
     public void Registry_definitions_atomically_bind_behavior_identity_and_metadata()
     {
+        _ = AIRoster.ProvenStrategies.Count;
+
         foreach (var strategySet in Enum.GetValues<StrategySetEnum>())
         {
             var definitions = StrategyRegistry.GetDefinitions(strategySet);
@@ -29,6 +32,20 @@ public class StrategyCatalogTests
                 Assert.Same(
                     definition,
                     StrategyRegistry.GetDefinition(strategySet, definition.Strategy.StrategyName));
+
+                foreach (var adaptationSet in definition.Metadata.SuggestedAdaptationSets)
+                {
+                    Assert.False(string.IsNullOrWhiteSpace(adaptationSet.SetName));
+                    Assert.NotEmpty(adaptationSet.AdaptationIds);
+                    Assert.Equal(
+                        adaptationSet.AdaptationIds.Count,
+                        adaptationSet.AdaptationIds.Distinct(StringComparer.Ordinal).Count());
+                    Assert.All(
+                        adaptationSet.AdaptationIds,
+                        adaptationId => Assert.True(
+                            AdaptationRepository.TryGetById(adaptationId, out _),
+                            $"Unknown adaptation '{adaptationId}' in {definition.StrategyId}/{adaptationSet.SetName}."));
+                }
             }
         }
     }

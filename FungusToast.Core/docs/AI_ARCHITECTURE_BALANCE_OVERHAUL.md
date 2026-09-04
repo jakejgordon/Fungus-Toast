@@ -580,16 +580,23 @@ design and add narrow typed seams only for demonstrated needs. See
   The Phase 4 result keeps this as a focused required interface method rather
   than introducing a separate composed policy.
 - **P5.6:** Resolve complementary starting Adaptations without an AI draft, and
-  implement board/player-count position pools plus curated campaign
-  pool/coordinate/geometry overrides as scenario controls.
+  keep grant count and forced IDs under explicit scenario control. Exact
+  Adaptation loadouts, board/player-count position pools, and curated campaign
+  pool/coordinate/geometry overrides already exist as scenario controls. Add a
+  ranked automatic resolver only when a scenario supplies its grant count; do
+  not introduce an implicit gameplay default.
 - **P5.7:** Add reactive board-state policy primitives only for demonstrated
   decisions; avoid a catch-all scoring framework.
 - **P5.8:** Migrate a small reference set, then each roster family in isolated
   slices. Stable IDs become machine references; retain existing names as
   compatibility aliases. Player-facing display names may change independently
   without a breaking reference cutover.
-- **Gate:** All player-facing strategies use one deterministic boundary, traces
-  cover every decision, and legacy behavior or intentional deltas are proven.
+  Complete for the registry migration: every current roster family is registered
+  under a stable ID and fingerprint while all existing names remain aliases.
+- **Gate:** All player-facing strategies use explicit deterministic Core
+  boundaries, registry metadata cannot drift silently, and current behavior or
+  intentional deltas are covered by focused evidence. Traces remain opt-in and
+  are required only for decisions under active diagnosis or experimentation.
 
 ### Phase 6 — Prove, then build autonomous candidate evaluation
 
@@ -742,9 +749,9 @@ Approved on 2026-09-01:
    count, then assign normal AI positions randomly. Campaign levels may curate
    easier crustward or harder centerward offsets and may lock special board
    geometry and positions.
-5. **Naming and summaries:** Resetting all current AI names is acceptable. The
-   overhaul will introduce standardized stable IDs plus human-friendly display
-   names and intent summaries using the model in section 5.
+5. **Naming and summaries (revised after adversarial review):** Add standardized
+   stable IDs and fingerprints without resetting existing machine-facing names.
+   Human-friendly display names and intent summaries evolve independently.
 6. **Compute envelope:** No individual simulation batch may exceed 100 games.
    Candidate evaluation should use staged, prunable batches rather than
    thousand-game runs.
@@ -767,7 +774,7 @@ Approved on 2026-09-01:
 
 ## 13. Initiative Completion Criteria
 
-- One deterministic AI boundary covers every agreed decision surface in Core.
+- Explicit deterministic Core boundaries cover every agreed AI decision surface.
 - Strategy definitions are substantially simpler to author and cannot silently
   drift from their catalog metadata.
 - Every experimental variable is explicit, validated, fingerprinted, replayable,
