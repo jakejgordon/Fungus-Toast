@@ -114,9 +114,9 @@ until the architecture spike, but the intended responsibilities are:
 - **Decision trace:** structured records of request, legal candidates, selected
   action, reason code, relevant scores, and outcome for debugging and analysis.
 - **Migration adapter:** wraps the current mutation-spending strategy while
-  behavior is characterized and definitions migrate. Existing names may be
-  reset; compatibility lasts only as long as needed to migrate every reference
-  safely.
+  behavior is characterized and definitions migrate. Stable IDs remain the
+  machine identity and existing names remain compatibility aliases; display
+  names may evolve independently without a breaking reference cutover.
 
 The spike must compare this composition model against a minimally cleaned-up
 `ParameterizedSpendingStrategy` using the pre-registered backlog behaviors and
@@ -519,6 +519,12 @@ the v2 reference remains descriptive and carries no balance verdict.
 - **P5.1:** Add the unified strategy definition/registry and standardized identity
   model; co-locate behavior configuration, complementary Adaptation metadata,
   authored intent summary, archetypes, and lifecycle metadata.
+  The additive registry foundation is complete: each roster entry is captured
+  in one immutable `StrategyDefinition` containing its implementation, stable
+  ID, behavior fingerprint, and full `StrategyCatalogEntry`. Manifest export,
+  replay, profiles, and live metadata reads consume that record. Bootstrap
+  override maps reject duplicate keys and orphaned names instead of silently
+  drifting; no strategy names were reset.
 - **P5.2:** Add only the controller/context/action boundaries justified by the
   Phase 4 result. Decision traces are opt-in and sampled by default.
 - **P5.3:** Route mutation acquisition through the controller using a legacy

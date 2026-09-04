@@ -240,6 +240,19 @@ measurement model, phase gates, and open product decisions are in
     621 Core tests, and 18 Simulation tests pass. The checked-in Unity Core
     DLL/PDB were refreshed; Unity Editor compile and normal/fast-forward draft
     validation remain manual integration checks.
+27. The additive strategy-definition registry foundation is complete. Each
+    registered strategy now has one immutable record binding behavior, stable
+    ID, definition fingerprint, and catalog metadata. Simulation manifests,
+    replay validation, profiles, and live metadata exports consume that record.
+    Duplicate bootstrap metadata keys and orphaned override names now fail
+    loudly. The audit exposed and removed three orphan overrides and fixed a
+    duplicate `AI13` role assignment that had silently overwritten `Boss` with
+    `Training`; its strong hard/elite boss metadata is now regression-tested.
+    All names remain unchanged, and roster selection now rejects any request
+    that would require a fabricated numbered `LegacyRandom` seat. 624 Core
+    tests, 18 Simulation tests, and a
+    three-game checksum-valid export smoke pass; Unity plugin binaries were
+    refreshed.
 
 ### Completion Criteria
 

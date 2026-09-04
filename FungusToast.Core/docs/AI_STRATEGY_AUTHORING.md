@@ -105,6 +105,19 @@ that interface and does not infer behavior from the concrete strategy type.
 strategies apply their authored preferences and scoring. New implementations
 must make this choice deliberately.
 
+`StrategyRegistry` stores every roster member as one immutable
+`StrategyDefinition`: strategy implementation, stable ID, definition
+fingerprint, and catalog metadata travel together. Runtime consumers and
+simulation artifacts read that record rather than joining name-keyed metadata
+maps. The remaining bootstrap override declarations are guarded: duplicate
+keys and names that do not resolve to any registered strategy stop roster
+initialization. Keep existing strategy names as compatibility aliases; do not
+rename them to create machine identity.
+
+Roster selection also requires enough registered definitions for every
+requested seat. It never synthesizes numbered `LegacyRandom` strategies; add
+an intentional registered definition or reduce the player count instead.
+
 For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand if you think in four layers:
 
 1. **Build order**

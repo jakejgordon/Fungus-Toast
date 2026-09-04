@@ -138,15 +138,13 @@ public static class ResolvedExperimentReplayRunner
 
         foreach (var strategy in source.SelectedLineup)
         {
-            var currentStrategy = AIRoster.GetStrategiesByName(
+            var currentDefinition = StrategyRegistry.GetDefinition(
                 source.Condition.Strategies.StrategySet,
-                new[] { strategy.StrategyName },
-                out _).Single();
-            var currentStrategyId = StrategyIdentity.GetStableId(source.Condition.Strategies.StrategySet, currentStrategy);
-            if (!string.Equals(currentStrategyId, strategy.StrategyId, StringComparison.Ordinal))
+                strategy.StrategyName)
+                ?? throw new InvalidOperationException($"Replay strategy '{strategy.StrategyName}' is not registered.");
+            if (!string.Equals(currentDefinition.StrategyId, strategy.StrategyId, StringComparison.Ordinal))
                 throw new InvalidOperationException($"Strategy ID mismatch for '{strategy.StrategyName}'.");
-            var currentFingerprint = StrategyIdentity.GetDefinitionFingerprint(currentStrategy);
-            if (!string.Equals(currentFingerprint, strategy.DefinitionSha256, StringComparison.Ordinal))
+            if (!string.Equals(currentDefinition.DefinitionFingerprint, strategy.DefinitionSha256, StringComparison.Ordinal))
                 throw new InvalidOperationException($"Strategy fingerprint mismatch for '{strategy.StrategyName}'.");
         }
     }

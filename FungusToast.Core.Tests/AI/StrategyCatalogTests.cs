@@ -12,6 +12,55 @@ namespace FungusToast.Core.Tests.AI;
 public class StrategyCatalogTests
 {
     [Fact]
+    public void Registry_definitions_atomically_bind_behavior_identity_and_metadata()
+    {
+        foreach (var strategySet in Enum.GetValues<StrategySetEnum>())
+        {
+            var definitions = StrategyRegistry.GetDefinitions(strategySet);
+            Assert.NotEmpty(definitions);
+            Assert.Equal(definitions.Count, definitions.Select(definition => definition.StrategyId).Distinct().Count());
+
+            foreach (var definition in definitions)
+            {
+                Assert.Equal(definition.Strategy.StrategyName, definition.Metadata.StrategyName);
+                Assert.Equal(strategySet, definition.Metadata.StrategySet);
+                Assert.Equal(StrategyIdentity.GetStableId(strategySet, definition.Strategy), definition.StrategyId);
+                Assert.Equal(StrategyIdentity.GetDefinitionFingerprint(definition.Strategy), definition.DefinitionFingerprint);
+                Assert.Same(
+                    definition,
+                    StrategyRegistry.GetDefinition(strategySet, definition.Strategy.StrategyName));
+            }
+        }
+    }
+
+    [Fact]
+    public void Campaign_ai13_keeps_its_hard_boss_metadata()
+    {
+        var definition = Assert.IsType<StrategyDefinition>(
+            StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, "AI13"));
+
+        Assert.Equal(StrategyPowerTier.Strong, definition.Metadata.PowerTier);
+        Assert.Equal(StrategyRole.Boss, definition.Metadata.Role);
+        Assert.Contains(DifficultyBand.Hard, definition.Metadata.DifficultyBands);
+        Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
+        Assert.Equal(CampaignDifficulty.Hard, definition.Metadata.CampaignDifficulty);
+    }
+
+    [Fact]
+    public void Roster_selection_rejects_unregistered_fill_seats()
+    {
+        var available = StrategyRegistry.GetDefinitions(StrategySetEnum.Testing).Count;
+
+        var exception = Assert.Throws<InvalidOperationException>(() => AIRoster.GetStrategies(
+            available + 1,
+            StrategySetEnum.Testing,
+            new Random(1)));
+
+        Assert.Contains("registered strategies", exception.Message);
+        Assert.DoesNotContain("LegacyRandom", exception.Message);
+    }
+
+    [Fact]
     public void Filament_regrowth_is_a_strong_single_player_growth_regeneration_strategy()
     {
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.ProvenStrategiesByName["Filament Regrowth"]);

@@ -401,24 +401,27 @@ namespace FungusToast.Simulation
                 SelectedStrategies = selectedStrategies
                     .Select((strategy, index) =>
                     {
-                        var profile = AIRoster.GetStrategyProfile(strategySet, strategy.StrategyName);
+                        var definition = StrategyRegistry.GetDefinition(strategySet, strategy.StrategyName)
+                            ?? throw new InvalidOperationException(
+                                $"Strategy '{strategy.StrategyName}' is not registered in {strategySet}.");
+                        var metadata = definition.Metadata;
                         return new SelectedStrategyMetadata
                         {
                             LineupOrder = index + 1,
                             StrategyName = strategy.StrategyName,
-                            StrategyId = StrategyIdentity.GetStableId(strategySet, strategy),
-                            DefinitionFingerprint = StrategyIdentity.GetDefinitionFingerprint(strategy),
-                            StrategyTheme = AIRoster.GetThemeForStrategy(strategy).ToString(),
-                            StrategyStatus = AIRoster.GetStatusForStrategy(strategy, strategySet).ToString(),
-                            StrategyPowerTier = profile?.PowerTier.ToString() ?? string.Empty,
-                            StrategyRole = profile?.Role.ToString() ?? string.Empty,
-                            StrategyLifecycle = profile?.Lifecycle.ToString() ?? string.Empty,
-                            DifficultyBands = profile?.DifficultyBands.Select(x => x.ToString()).ToList() ?? new List<string>(),
-                            StrategyPools = profile?.Pools.ToString() ?? string.Empty,
-                            FavoredAgainst = profile?.FavoredAgainst.Select(FormatCounterTag).ToList() ?? new List<string>(),
-                            WeakAgainst = profile?.WeakAgainst.Select(FormatCounterTag).ToList() ?? new List<string>(),
-                            Notes = profile?.Notes ?? string.Empty,
-                            Intent = profile?.Intent ?? string.Empty
+                            StrategyId = definition.StrategyId,
+                            DefinitionFingerprint = definition.DefinitionFingerprint,
+                            StrategyTheme = metadata.Archetype.ToString(),
+                            StrategyStatus = metadata.Status.ToString(),
+                            StrategyPowerTier = metadata.PowerTier.ToString(),
+                            StrategyRole = metadata.Role.ToString(),
+                            StrategyLifecycle = metadata.Lifecycle.ToString(),
+                            DifficultyBands = metadata.DifficultyBands.Select(x => x.ToString()).ToList(),
+                            StrategyPools = metadata.Pools.ToString(),
+                            FavoredAgainst = metadata.FavoredAgainst.Select(FormatCounterTag).ToList(),
+                            WeakAgainst = metadata.WeakAgainst.Select(FormatCounterTag).ToList(),
+                            Notes = metadata.Notes,
+                            Intent = metadata.Intent
                         };
                     })
                     .ToList()
