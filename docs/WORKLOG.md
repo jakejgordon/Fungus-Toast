@@ -154,6 +154,13 @@ measurement model, phase gates, and open product decisions are in
     P3.R3 hierarchical RNG, P3.R4 paired inference, P3.R5 enforceable gates,
     P3.R6 derived context/version/runtime evidence, and P3.R7 corrected baseline.
     Phase 4 characterization remains blocked until that correction gate passes.
+18. P3.R1a is complete: Simulation manifest execution rejects insufficient
+    registered rosters instead of synthesizing numbered `LegacyRandom` seats;
+    player-summary analysis requires `condition_id`; mutation and mycovariant
+    picked/not-picked denominators are corrected; the endogenous reconstructed
+    mutation-eligibility gate is removed; and observational association,
+    synergy, and interaction outputs are explicitly non-evidential. Focused
+    Simulation and Python analytics tests pass. Next: P3.R1b tie-aware outcomes.
 
 ### Completion Criteria
 

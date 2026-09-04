@@ -155,18 +155,20 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     required_columns = {
         "strategy_name",
         "strategy_theme",
+        "condition_id",
         "game_index",
         "is_winner",
         "living_cells",
         "dead_cells",
         "end_game_toxin_cells",
     }
-    if players.empty or not required_columns.issubset(players.columns):
+    if players.empty:
         return _empty_player_summary()
+    missing_columns = sorted(required_columns.difference(players.columns))
+    if missing_columns:
+        raise ValueError(f"players.parquet is missing required player-summary columns: {', '.join(missing_columns)}")
 
-    outcome_group_columns = ["game_index"]
-    if "condition_id" in players.columns:
-        outcome_group_columns.insert(0, "condition_id")
+    outcome_group_columns = ["condition_id", "game_index"]
     metrics = players.copy()
     if "total_living_cells" not in metrics.columns:
         metrics["total_living_cells"] = metrics.groupby(outcome_group_columns)["living_cells"].transform("sum")
@@ -203,7 +205,7 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     share_std = metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy()
     grouped["board_share_effect_size"] = np.where(share_std > 0, (grouped["avg_normalized_board_share"] - 1.0) / share_std, 0.0)
     grouped["rank_effect_size"] = np.where(rank_std > 0, (grouped["avg_normalized_rank"] - 0.5) / rank_std, 0.0)
-    context_key = "condition_id" if "condition_id" in metrics.columns else "game_index"
+    context_key = "condition_id"
     context = metrics.groupby(["strategy_name", "strategy_theme", context_key], as_index=False).agg(context_share=("normalized_board_share", "mean"))
     robustness = context.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(context_count=(context_key, "count"), worst_context_normalized_board_share=("context_share", "min"), best_context_normalized_board_share=("context_share", "max"))
     robustness["board_share_context_range"] = robustness["best_context_normalized_board_share"] - robustness["worst_context_normalized_board_share"]
@@ -495,20 +497,8 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
         .copy()
     )
 
-    player_max_tier = (
-        mutations.assign(tier_num=mutations["mutation_tier"].map(_parse_tier_num))
-        .groupby(key_cols, as_index=False)
-        .agg(player_max_tier=("tier_num", "max"))
-    )
-
     players_base = players[["game_index", "player_id", "is_winner"]].drop_duplicates().copy()
-    players_base = players_base.merge(player_max_tier, on=key_cols, how="left")
-    players_base["player_max_tier"] = players_base["player_max_tier"].fillna(0).astype(int)
-
     panel = players_base.assign(_k=1).merge(mutation_defs.assign(_k=1), on="_k", how="outer").drop(columns=["_k"])
-    panel["eligible"] = (panel["tier_num"] == 1) | (panel["player_max_tier"] >= panel["tier_num"])
-    panel = panel[panel["eligible"]].copy()
-
     panel = panel.merge(picks, on=["game_index", "player_id", "mutation_id"], how="left")
     panel["picked"] = panel["mutation_level"].notna()
     panel["mutation_level"] = panel["mutation_level"].fillna(0)
@@ -520,7 +510,10 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
     grouped = panel.groupby(["mutation_id", "mutation_name", "mutation_tier", "mutation_category", "tier_num"], as_index=False).agg(
         eligible_samples=("picked", "size"),
         picks=("picked", "sum"),
-        win_rate_when_not_picked=("is_winner", lambda s: float(s.mean())),
+    )
+
+    not_picked_stats = panel[~panel["picked"]].groupby("mutation_id", as_index=False).agg(
+        win_rate_when_not_picked=("is_winner", "mean"),
     )
 
     picked_stats = picked_only.groupby("mutation_id", as_index=False).agg(
@@ -534,7 +527,7 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
     )
 
     grouped = grouped.merge(picked_stats, on="mutation_id", how="left")
-    grouped["win_rate_when_picked"] = grouped["win_rate_when_picked"].fillna(grouped["win_rate_when_not_picked"])
+    grouped = grouped.merge(not_picked_stats, on="mutation_id", how="left")
     grouped["avg_level"] = grouped["avg_level"].fillna(0.0)
     grouped["avg_first_upgrade_round"] = grouped["avg_first_upgrade_round"].fillna(np.nan)
     grouped["early_level_intensity"] = grouped["early_level_intensity"].fillna(0.0)
@@ -551,22 +544,10 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
     grouped["confidence"] = _confidence_weight(grouped["picks"])
     grouped["ci_width"] = _rate_ci_width(grouped["win_rate_when_picked"], grouped["picks"].clip(lower=1))
 
-    score_raw = (
-        0.40 * _zscore(grouped["win_lift_shrunk"])
-        + 0.20 * _zscore(grouped["pick_rate_eligible"])
-        + 0.20 * _zscore(grouped["early_level_intensity"])
-        + 0.15 * _zscore(grouped["reached_l3_rate"])
-        + 0.05 * _zscore(grouped["reached_l5_rate"])
-    )
+    grouped["balance_score"] = np.nan
+    grouped["recommendation"] = "Non-evidential observational screen"
 
-    grouped["balance_score"] = score_raw * grouped["confidence"] - grouped["ci_width"]
-    grouped["recommendation"] = np.where(
-        grouped["balance_score"] >= 0.50,
-        "OP candidate",
-        np.where(grouped["balance_score"] <= -0.50, "UP candidate", "Neutral"),
-    )
-
-    return grouped.sort_values("balance_score", ascending=False)
+    return grouped.sort_values("win_lift_shrunk", ascending=False, na_position="last")
 
 
 def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) -> pd.DataFrame:
@@ -602,7 +583,10 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     grouped = panel.groupby(["mycovariant_id", "mycovariant_name", "mycovariant_type", "is_universal"], as_index=False).agg(
         eligible_samples=("picked", "size"),
         picks=("picked", "sum"),
-        win_rate_when_not_picked=("is_winner", lambda s: float(s.mean())),
+    )
+
+    not_picked_stats = panel[~panel["picked"]].groupby("mycovariant_id", as_index=False).agg(
+        win_rate_when_not_picked=("is_winner", "mean"),
     )
 
     picked_stats = panel[panel["picked"]].groupby("mycovariant_id", as_index=False).agg(
@@ -612,7 +596,7 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     )
 
     grouped = grouped.merge(picked_stats, on="mycovariant_id", how="left")
-    grouped["win_rate_when_picked"] = grouped["win_rate_when_picked"].fillna(grouped["win_rate_when_not_picked"])
+    grouped = grouped.merge(not_picked_stats, on="mycovariant_id", how="left")
     grouped["avg_total_effect"] = grouped["avg_total_effect"].fillna(0.0)
     grouped["trigger_rate"] = grouped["trigger_rate"].fillna(0.0)
 
@@ -625,28 +609,11 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     grouped["confidence"] = _confidence_weight(grouped["picks"])
     grouped["ci_width"] = _rate_ci_width(grouped["win_rate_when_picked"], grouped["picks"].clip(lower=1))
 
-    score_raw = (
-        0.45 * _zscore(grouped["win_lift_shrunk"])
-        + 0.25 * _zscore(grouped["pick_rate_eligible"])
-        + 0.20 * _zscore(grouped["avg_total_effect"])
-        + 0.10 * _zscore(grouped["trigger_rate"])
-    )
+    grouped["power_score"] = np.nan
+    grouped["balance_score"] = np.nan
+    grouped["recommendation"] = "Non-evidential observational screen"
 
-    power_score_raw = (
-        0.55 * _zscore(grouped["win_lift_shrunk"])
-        + 0.30 * _zscore(grouped["avg_total_effect"])
-        + 0.15 * _zscore(grouped["trigger_rate"])
-    )
-
-    grouped["power_score"] = power_score_raw * grouped["confidence"] - grouped["ci_width"]
-    grouped["balance_score"] = score_raw * grouped["confidence"] - grouped["ci_width"]
-    grouped["recommendation"] = np.where(
-        grouped["balance_score"] >= 0.50,
-        "OP candidate",
-        np.where(grouped["balance_score"] <= -0.50, "UP candidate", "Neutral"),
-    )
-
-    return grouped.sort_values("balance_score", ascending=False)
+    return grouped.sort_values("win_lift_shrunk", ascending=False, na_position="last")
 
 
 def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
@@ -736,10 +703,10 @@ def write_markdown_report(
         min_eligible_samples=min_eligible_samples,
     )
 
-    top_mut_op = report_mutations.head(10)
-    top_mut_up = report_mutations.tail(10).sort_values("balance_score")
-    top_myco_op = report_mycovariants.head(10)
-    top_myco_up = report_mycovariants.tail(10).sort_values("balance_score")
+    top_mut_observed = report_mutations.sort_values("win_lift_shrunk", ascending=False).head(10)
+    bottom_mut_observed = report_mutations.sort_values("win_lift_shrunk", ascending=True).head(10)
+    top_myco_observed = report_mycovariants.sort_values("win_lift_shrunk", ascending=False).head(10)
+    bottom_myco_observed = report_mycovariants.sort_values("win_lift_shrunk", ascending=True).head(10)
     top_theme_sensitive = mutation_by_opponent_theme.sort_values("win_lift", ascending=False).head(12)
     top_synergies = mutation_synergies.head(12)
     top_interactions = myco_mutation_interactions.head(12)
@@ -753,31 +720,32 @@ def write_markdown_report(
         return df[cols].to_markdown(index=False) + "\n"
 
     lines = [
-        "# Balance Recommendations",
+        "# Exploratory Balance Diagnostics",
         "",
         "Scoring notes:",
-        "- Uses eligibility-aware denominators instead of all player-games.",
+        "- Mutation presence contrasts are observational screens over all player-games; they do not reconstruct legal offers.",
         "- Uses shrinkage on win-lift for sparse/high-tier picks.",
-        "- For mutations, includes low-tier timing/intensity metrics via first-upgrade timing and level milestones.",
+        "- Pick rate, timing, level intensity, and effect totals describe AI appetite; they are not mutation-power evidence.",
+        "- Mutation, mycovariant, synergy, and interaction tables cannot support balance changes without controlled intervention.",
         f"- Report filtering: confidence >= {min_confidence:.2f}, picks >= {min_picks}, eligible_samples >= {min_eligible_samples}.",
         "",
         "## Post-Simulation Player Summary",
         _table(full_player_summary.round(3), ["player", "win_pct", "avg_living_cells", "avg_normalized_board_share", "win_rate_surplus", "avg_final_rank", "avg_normalized_rank", "avg_dead_cells", "avg_toxins"]),
         "## Growth Source Composition",
         _table(full_growth_source_summary.round(2), ["player", "total_living", "growth_source", "count", "pct_from_growth_source"]),
-        "## Mutations - OP Candidates",
-        _table(top_mut_op, ["mutation_name", "mutation_tier", "mutation_category", "eligible_samples", "picks", "pick_rate_eligible", "win_lift_shrunk", "avg_level", "avg_first_upgrade_round", "early_level_intensity", "reached_l3_rate", "balance_score", "recommendation"]),
-        "## Mutations - UP Candidates",
-        _table(top_mut_up, ["mutation_name", "mutation_tier", "mutation_category", "eligible_samples", "picks", "pick_rate_eligible", "win_lift_shrunk", "avg_level", "avg_first_upgrade_round", "early_level_intensity", "reached_l3_rate", "balance_score", "recommendation"]),
-        "## Mycovariants - OP Candidates",
-        _table(top_myco_op, ["mycovariant_name", "mycovariant_type", "is_universal", "eligible_samples", "picks", "pick_rate_eligible", "win_lift_shrunk", "avg_total_effect", "trigger_rate", "power_score", "balance_score", "recommendation"]),
-        "## Mycovariants - UP Candidates",
-        _table(top_myco_up, ["mycovariant_name", "mycovariant_type", "is_universal", "eligible_samples", "picks", "pick_rate_eligible", "win_lift_shrunk", "avg_total_effect", "trigger_rate", "power_score", "balance_score", "recommendation"]),
+        "## Mutations - Highest Observed Association (Non-Evidential)",
+        _table(top_mut_observed, ["mutation_name", "mutation_tier", "mutation_category", "eligible_samples", "picks", "pick_rate_eligible", "win_rate_when_picked", "win_rate_when_not_picked", "win_lift_shrunk", "avg_level", "avg_first_upgrade_round", "recommendation"]),
+        "## Mutations - Lowest Observed Association (Non-Evidential)",
+        _table(bottom_mut_observed, ["mutation_name", "mutation_tier", "mutation_category", "eligible_samples", "picks", "pick_rate_eligible", "win_rate_when_picked", "win_rate_when_not_picked", "win_lift_shrunk", "avg_level", "avg_first_upgrade_round", "recommendation"]),
+        "## Mycovariants - Highest Observed Association (Non-Evidential)",
+        _table(top_myco_observed, ["mycovariant_name", "mycovariant_type", "is_universal", "eligible_samples", "picks", "pick_rate_eligible", "win_rate_when_picked", "win_rate_when_not_picked", "win_lift_shrunk", "avg_total_effect", "trigger_rate", "recommendation"]),
+        "## Mycovariants - Lowest Observed Association (Non-Evidential)",
+        _table(bottom_myco_observed, ["mycovariant_name", "mycovariant_type", "is_universal", "eligible_samples", "picks", "pick_rate_eligible", "win_rate_when_picked", "win_rate_when_not_picked", "win_lift_shrunk", "avg_total_effect", "trigger_rate", "recommendation"]),
         "## Mutations by Opponent Theme (Highest Lift)",
         _table(top_theme_sensitive, ["dominant_opponent_theme", "mutation_name", "eligible_samples", "picks", "pick_rate", "win_rate_when_picked", "win_rate_when_not_picked", "win_lift"]),
-        "## Mutation Synergy Candidates",
+        "## Mutation Co-Occurrence Associations (Non-Evidential)",
         _table(top_synergies, ["mutation_a_name", "mutation_b_name", "pair_samples", "pair_win_rate", "win_lift_vs_global", "synergy_score"]),
-        "## Mycovariant-Mutation Interaction Candidates",
+        "## Mycovariant-Mutation Co-Occurrence Associations (Non-Evidential)",
         _table(top_interactions, ["mycovariant_name", "mutation_name", "combo_samples", "combo_win_rate", "combo_lift_vs_global", "interaction_score"]),
         "## Nutrient Economy by Strategy",
         _table(top_nutrient_strategies, ["strategy_name", "strategy_theme", "samples", "win_rate", "avg_nutrient_claims", "avg_nutrient_mutation_points", "avg_claimed_cluster_size", "avg_nutrient_mp_share_of_income", "players_with_nutrient_claims_rate"]),
@@ -787,7 +755,7 @@ def write_markdown_report(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Analyze FungusToast simulation Parquet exports for OP/UP recommendations.")
+    parser = argparse.ArgumentParser(description="Analyze FungusToast simulation Parquet exports for descriptive and exploratory diagnostics.")
     parser.add_argument("--run-folder", required=True, help="Path to one simulation export folder containing parquet files.")
     parser.add_argument("--output-dir", required=False, help="Output directory for analysis artifacts. Defaults to run folder.")
     parser.add_argument("--min-confidence", type=float, default=0.4, help="Minimum confidence required for markdown recommendations.")

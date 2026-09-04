@@ -314,7 +314,22 @@ namespace FungusToast.Simulation
         {
             if (filter == null || filter.IsEmpty)
             {
-                return AIRoster.GetStrategies(count, strategySet, rng, selectionPolicy, cycleIndex);
+                var availableStrategies = prefilteredStrategies?.ToList()
+                    ?? AIRoster.GetStrategiesByFilter(strategySet, new StrategyCatalogFilter());
+                if (count > availableStrategies.Count)
+                {
+                    throw new InvalidOperationException(
+                        $"Requested {count} strategies, but {strategySet} contains only {availableStrategies.Count}; " +
+                        "simulation experiments do not synthesize fallback strategies.");
+                }
+
+                return selectionPolicy switch
+                {
+                    StrategySelectionPolicy.RandomUnique => availableStrategies.OrderBy(_ => rng?.Next() ?? Random.Shared.Next()).Take(count).ToList(),
+                    StrategySelectionPolicy.CoverageBalanced => availableStrategies.OrderBy(_ => rng?.Next() ?? Random.Shared.Next()).Take(count).ToList(),
+                    StrategySelectionPolicy.StratifiedCycle => availableStrategies.Skip(cycleIndex % availableStrategies.Count).Concat(availableStrategies.Take(cycleIndex % availableStrategies.Count)).Take(count).ToList(),
+                    _ => availableStrategies.Take(count).ToList()
+                };
             }
 
             var sourceStrategies = prefilteredStrategies?.ToList() ?? AIRoster.GetStrategiesByFilter(strategySet, filter);

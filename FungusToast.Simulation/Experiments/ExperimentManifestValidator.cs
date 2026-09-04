@@ -85,6 +85,21 @@ public static partial class ExperimentManifestValidator
             return;
         }
 
+        if (filter.IsEmpty)
+        {
+            var unfilteredStrategies = AIRoster.GetStrategiesByFilter(
+                condition.Strategies.StrategySet,
+                new StrategyCatalogFilter());
+            if (unfilteredStrategies.Count < condition.PlayerCount)
+            {
+                errors.Add(
+                    $"{path}.strategies provides {unfilteredStrategies.Count} registered strategies for " +
+                    $"{condition.PlayerCount} players; analytical experiments cannot synthesize fallback strategies.");
+            }
+
+            return;
+        }
+
         var matchingStrategies = AIRoster.GetStrategiesByFilter(condition.Strategies.StrategySet, new StrategyCatalogFilter
         {
             Archetypes = filter.Archetypes ?? Array.Empty<StrategyArchetype>(),

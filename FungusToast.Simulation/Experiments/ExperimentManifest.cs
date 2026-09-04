@@ -1,5 +1,6 @@
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Models;
+using System.Text.Json.Serialization;
 
 namespace FungusToast.Simulation.Experiments;
 
@@ -56,6 +57,15 @@ public sealed class ExperimentStrategyFilter
     public IReadOnlyList<DifficultyBand> DifficultyBands { get; init; } = Array.Empty<DifficultyBand>();
     public IReadOnlyList<CampaignDifficulty> CampaignDifficulties { get; init; } = Array.Empty<CampaignDifficulty>();
     public IReadOnlyList<StrategyPool> Pools { get; init; } = Array.Empty<StrategyPool>();
+
+    [JsonIgnore]
+    public bool IsEmpty => Archetypes.Count == 0
+        && PowerTiers.Count == 0
+        && Roles.Count == 0
+        && Lifecycles.Count == 0
+        && DifficultyBands.Count == 0
+        && CampaignDifficulties.Count == 0
+        && Pools.Count == 0;
 }
 
 public sealed class ExperimentSystems
