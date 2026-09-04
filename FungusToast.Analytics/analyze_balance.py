@@ -166,7 +166,7 @@ def _empty_player_summary() -> pd.DataFrame:
         "win_rate_surplus_ci95_low", "win_rate_surplus_ci95_high",
         "normalized_rank_ci95_low", "normalized_rank_ci95_high",
         "board_share_effect_size", "rank_effect_size",
-        "context_count", "worst_context_normalized_board_share", "board_share_context_range",
+        "context_count", "shrunken_p10_context_normalized_board_share", "shrunken_board_share_context_range",
         "avg_dead_cells",
         "avg_toxins",
     ]
@@ -245,7 +245,12 @@ def build_paired_comparison(control: pd.DataFrame, treatment: pd.DataFrame) -> p
         missing_count = int((merged["_merge"] != "both").sum())
         raise ValueError(f"paired analysis requires complete pairs; {missing_count} slot-pairs are unmatched")
 
-    invariant_columns = ["game_seed", "player_count", "starting_x", "starting_y", "board_geometry_fingerprint", "random_stream_contract_version"]
+    invariant_columns = [
+        "game_seed", "player_count", "starting_x", "starting_y",
+        "start_distance_to_nearest_opponent", "start_distance_to_playable_edge",
+        "start_distance_to_playable_centroid", "board_geometry_fingerprint",
+        "random_stream_contract_version", "analysis_version", "ai_corpus_version",
+    ]
     for column in invariant_columns:
         left = f"{column}_control"
         right = f"{column}_treatment"
@@ -300,6 +305,16 @@ def build_preregistered_verdict(
         raise ValueError("control and treatment must declare the same total game budget")
     if control_manifest.get("runtimeBudgetSeconds") != treatment_manifest.get("runtimeBudgetSeconds"):
         raise ValueError("control and treatment must declare the same runtime budget")
+    runtime_budget_seconds = control_manifest.get("runtimeBudgetSeconds")
+    combined_runtime_seconds = sum(
+        float(game.get("runtimeMilliseconds", 0.0))
+        for manifest in (control_manifest, treatment_manifest)
+        for game in manifest.get("games", [])
+    ) / 1000.0
+    if not isinstance(runtime_budget_seconds, (int, float)) or combined_runtime_seconds > float(runtime_budget_seconds):
+        raise ValueError(
+            f"combined control/treatment runtime ({combined_runtime_seconds:.3f}s) exceeds the declared runtime budget ({runtime_budget_seconds}s)"
+        )
     control_sampling = control_manifest.get("sampling", {})
     treatment_sampling = treatment_manifest.get("sampling", {})
     if control_sampling.get("completionStatus") != "complete" or treatment_sampling.get("completionStatus") != "complete":
@@ -379,6 +394,8 @@ def build_preregistered_verdict(
         "margin": margin,
         "total_game_budget": control_budget,
         "combined_games_completed": completed_games,
+        "runtime_budget_seconds": float(runtime_budget_seconds),
+        "combined_runtime_seconds": combined_runtime_seconds,
         "pairs": int(row["pairs"]),
         "estimate": estimate,
         "ci95_low": ci_low,
@@ -388,7 +405,6 @@ def build_preregistered_verdict(
 
 
 def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
-    players = _ensure_strategy_identity(players)
     players = _ensure_strategy_identity(players)
     required_columns = {
         "strategy_name",
@@ -441,10 +457,34 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     grouped["board_share_effect_size"] = np.where(share_std > 0, (grouped["avg_normalized_board_share"] - 1.0) / share_std, 0.0)
     grouped["rank_effect_size"] = np.where(rank_std > 0, (grouped["avg_normalized_rank"] - 0.5) / rank_std, 0.0)
     context_key = "condition_id"
-    context = metrics.groupby(identity_keys + [context_key], as_index=False).agg(context_share=("normalized_board_share", "mean"))
-    robustness = context.groupby(identity_keys, as_index=False).agg(context_count=(context_key, "count"), worst_context_normalized_board_share=("context_share", "min"), best_context_normalized_board_share=("context_share", "max"))
-    robustness["board_share_context_range"] = robustness["best_context_normalized_board_share"] - robustness["worst_context_normalized_board_share"]
-    grouped = grouped.merge(robustness.drop(columns=["best_context_normalized_board_share"]), on=identity_keys, how="left")
+    context = metrics.groupby(identity_keys + [context_key], as_index=False).agg(
+        context_share=("normalized_board_share", "mean"),
+        context_samples=("game_index", "count"),
+    )
+    context = context.merge(
+        grouped[identity_keys + ["avg_normalized_board_share"]],
+        on=identity_keys,
+        how="left",
+    )
+    prior_games = 20.0
+    context["shrunken_context_share"] = (
+        context["context_samples"] * context["context_share"]
+        + prior_games * context["avg_normalized_board_share"]
+    ) / (context["context_samples"] + prior_games)
+    robustness = context.groupby(identity_keys, as_index=False).agg(
+        context_count=(context_key, "count"),
+        shrunken_p10_context_normalized_board_share=("shrunken_context_share", lambda values: float(values.quantile(0.10))),
+        shrunken_min_context_share=("shrunken_context_share", "min"),
+        shrunken_max_context_share=("shrunken_context_share", "max"),
+    )
+    robustness["shrunken_board_share_context_range"] = (
+        robustness["shrunken_max_context_share"] - robustness["shrunken_min_context_share"]
+    )
+    grouped = grouped.merge(
+        robustness.drop(columns=["shrunken_min_context_share", "shrunken_max_context_share"]),
+        on=identity_keys,
+        how="left",
+    )
 
     ordered = grouped[
         [
@@ -464,7 +504,7 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
             "win_rate_surplus_ci95_low", "win_rate_surplus_ci95_high",
             "normalized_rank_ci95_low", "normalized_rank_ci95_high",
             "board_share_effect_size", "rank_effect_size",
-            "context_count", "worst_context_normalized_board_share", "board_share_context_range",
+            "context_count", "shrunken_p10_context_normalized_board_share", "shrunken_board_share_context_range",
             "avg_dead_cells",
             "avg_toxins",
         ]

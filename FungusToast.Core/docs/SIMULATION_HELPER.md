@@ -17,7 +17,7 @@ The input JSON file is a contract fixture in P2-A; direct execution of input
 manifests is not available yet. Resolved artifacts are replayable.
 
 Parquet runs also write `resolved-manifest.json` using
-`fungus-toast.experiment-result.v5` plus `resolved-manifest.sha256`. The resolved
+`fungus-toast.experiment-result.v6` plus `resolved-manifest.sha256`. The resolved
 artifact records the code and binary identities, condition and board
 fingerprints, selected lineup and strategy fingerprints, exact game seeds,
 actual per-game slot assignments, starting coordinates and Adaptations,
@@ -109,7 +109,7 @@ written under `/tmp`.
 
 ### Random-stream contract
 
-Resolved result schema v5 records `fungus-toast.random-streams.v1`. Gameplay
+Resolved result schema v6 records `fungus-toast.random-streams.v1`. Gameplay
 continues to use the historical game-seed stream, while mutation-spending and
 mycovariant-draft choices receive deterministic streams derived from game seed,
 player, round, decision kind, and occurrence. Consequently, changing how many
@@ -120,7 +120,7 @@ contract version and corrected reference baseline.
 ### Paired control/treatment analysis
 
 Give independently run control and treatment artifacts the same seed, lineup,
-slot policy, and `--pairing-group-id`. Result schema v5 and Parquet manifest v8
+slot policy, and `--pairing-group-id`. Result schema v6 and Parquet manifest v9
 emit a `pair_id` for every game and player row. Analyze the control folder with
 the treatment folder attached:
 
@@ -168,6 +168,21 @@ dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
 target/context does not resolve uniquely, the analysis version is unsupported,
 or the stage's required complete pairs are absent. Other tables remain
 exploratory.
+
+### Context and runtime evidence
+
+Parquet manifest v9 stamps `analysis_version` and `ai_corpus_version`. Game rows
+record termination reason and measured runtime. Player rows record elimination
+round, an opponent-lineup fingerprint, and starting-position covariates derived
+from the actual starts plus full playable mask: eight-neighbor geodesic distance
+to the nearest opponent and playable edge, plus Euclidean distance to the
+playable-mask centroid. `-1` means the relevant target was unreachable or the
+player was never eliminated.
+
+Runtime is diagnostic evidence and a hard decision budget: preregistered
+verdicts sum recorded control/treatment game runtime and refuse results above
+the shared budget. Runtime is intentionally excluded from deterministic outcome
+fingerprints; termination and elimination outcomes remain included.
 
 ## Quick Commands
 

@@ -211,6 +211,18 @@ measurement model, phase gates, and open product decisions are in
     declared board-share verdict; exploratory v4 artifacts were correctly
     refused. Next: P3.R6 geometry, robustness, version, termination, and runtime
     evidence.
+24. P3.R6 is complete. Result schema v6 and Parquet manifest v9 stamp analysis
+    v2 and the pre-Phase-5 AI corpus; game evidence records measured runtime and
+    round-cap versus occupancy-countdown termination; player evidence records
+    first elimination round and opponent-lineup fingerprint. Starting-position
+    controls are derived from actual starts and the full playable mask as
+    eight-neighbor geodesic distance to nearest opponent/edge and distance to
+    playable centroid. Robustness now uses a 20-game-prior shrunken 10th
+    percentile/range instead of raw min-of-K. Runtime is excluded from replay's
+    deterministic outcome hash but is summed against the shared verdict budget.
+    620 Core, 18 Simulation, and 8 analytics tests pass; a three-game Parquet
+    readback and the replay/resume contract passed. Next: P3.R7 corrected
+    reference baseline.
 
 ### Completion Criteria
 

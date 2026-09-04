@@ -31,6 +31,10 @@ The standard post-simulation outputs are:
 - `growth_source_summary.csv`: one row per `(player, growth source)` with `Total Living`, `Count`, and `% From Growth Source`, sorted by highest `Total Living` player first and then by `Count` descending
 - `paired_comparison.csv` (when `--paired-treatment-folder` is supplied): matched treatment-minus-control estimates, intervals, observed correlation, and measured variance ratio
 
+Player robustness is summarized with a 20-game-prior shrunken 10th-percentile
+context share and shrunken context range. The raw minimum is not used because
+its expected value worsens automatically as more noisy contexts are added.
+
 For routine simulation summaries, prefer reading `post_simulation_player_summary.csv` directly after running `analyze_balance.py` rather than re-deriving the per-player table by hand from raw parquet files.
 
 The markdown report includes those standard tables plus explicitly

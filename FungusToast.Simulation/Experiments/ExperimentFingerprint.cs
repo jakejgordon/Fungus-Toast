@@ -120,7 +120,7 @@ public static class ExperimentFingerprint
         builder.Append(value.GetType().FullName).Append('{');
         foreach (var property in value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
                      .Where(property => property.CanRead && property.GetIndexParameters().Length == 0)
-                     .Where(property => property.Name is not "Strategy" and not "TrackingContext")
+                     .Where(property => property.Name is not "Strategy" and not "TrackingContext" and not "RuntimeMilliseconds")
                      .OrderBy(property => property.Name, StringComparer.Ordinal))
         {
             builder.Append(property.Name).Append('=');

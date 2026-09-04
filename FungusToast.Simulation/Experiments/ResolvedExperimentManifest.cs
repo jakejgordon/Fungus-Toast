@@ -4,7 +4,7 @@ namespace FungusToast.Simulation.Experiments;
 
 public sealed class ResolvedExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v5";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v6";
 
     public required string SchemaVersion { get; init; }
     public required string InputSchemaVersion { get; init; }
@@ -69,6 +69,8 @@ public sealed class ResolvedGameEvidence
 {
     public required int GameIndex { get; init; }
     public required int GameSeed { get; init; }
+    public required string TerminationReason { get; init; }
+    public required double RuntimeMilliseconds { get; init; }
     public required IReadOnlyList<string> AssignedStrategyLineup { get; init; }
     public required IReadOnlyList<ResolvedPlayerStart> PlayerStarts { get; init; }
 }
@@ -79,6 +81,7 @@ public sealed class ResolvedPlayerStart
     public required int X { get; init; }
     public required int Y { get; init; }
     public required IReadOnlyList<string> AdaptationIds { get; init; }
+    public required int EliminationRound { get; init; }
 }
 
 public sealed class ResolvedOutputs

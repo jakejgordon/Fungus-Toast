@@ -449,7 +449,7 @@ reproved after the corrected RNG and result contracts land.
    sequence and derives AI streams from SHA-256 identities containing base seed,
    player, round, decision kind, and occurrence. Mutation spending, interactive
    and fast-forward drafting, and roster selection use scoped streams. Resolved
-   result schema v5 and Parquet manifest v8 stamp the contract version.
+   result schema v6 and Parquet manifest v9 stamp the contract version.
 4. **P3.R4 — paired inference:** add explicit pair IDs, paired estimators, and
    game/seed-aware uncertainty. Measure treatment correlation and variance
    reduction empirically; do not promise a universal common-random-number gain.
@@ -472,6 +472,11 @@ reproved after the corrected RNG and result contracts land.
    termination reason, elimination timing, corpus/analysis versions, and runtime
    evidence. Replace raw min-of-K robustness with a shrunken lower-tail measure
    once the corpus supports it.
+   Implemented exports stamp analysis and pre-Phase-5 corpus versions; record
+   runtime, termination, elimination, and opponent-lineup identity; and derive
+   nearest-opponent/edge geodesics plus playable-centroid distance from the full
+   mask. Robustness uses a 20-game-prior shrunken 10th percentile and shrunken
+   range instead of the sample-count-biased raw minimum.
 7. **P3.R7 — corrected reference:** rerun contract/replay validation and publish
    P3.5 v2 under the corrected schema, RNG, and analyzer. Keep v1 unchanged and
    clearly superseded. Budget another versioned reference corpus after any

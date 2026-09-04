@@ -6,6 +6,8 @@ namespace FungusToast.Simulation.Export
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
         public string RandomStreamContractVersion { get; set; } = string.Empty;
+        public string AnalysisVersion { get; set; } = string.Empty;
+        public string AiCorpusVersion { get; set; } = string.Empty;
         public int PlayerId { get; set; }
         public int AssignedSlot { get; set; }
         public int SelectedLineupOrder { get; set; }
@@ -29,6 +31,8 @@ namespace FungusToast.Simulation.Export
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
         public string RandomStreamContractVersion { get; set; } = string.Empty;
+        public string AnalysisVersion { get; set; } = string.Empty;
+        public string AiCorpusVersion { get; set; } = string.Empty;
         public string StrategySet { get; set; } = string.Empty;
         public string StrategySelectionPolicy { get; set; } = string.Empty;
         public string StrategySelectionSource { get; set; } = string.Empty;
@@ -53,6 +57,8 @@ namespace FungusToast.Simulation.Export
         public string ActualStartingPositions { get; set; } = string.Empty;
         public string ActualStartingAdaptations { get; set; } = string.Empty;
         public int TurnsPlayed { get; set; }
+        public string TerminationReason { get; set; } = string.Empty;
+        public double RuntimeMilliseconds { get; set; }
         public int WinnerPlayerId { get; set; }
         public string WinnerPlayerIds { get; set; } = string.Empty;
         public int ToxicTileCount { get; set; }
@@ -75,6 +81,8 @@ namespace FungusToast.Simulation.Export
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
         public string RandomStreamContractVersion { get; set; } = string.Empty;
+        public string AnalysisVersion { get; set; } = string.Empty;
+        public string AiCorpusVersion { get; set; } = string.Empty;
         public int PlayerId { get; set; }
         public int AssignedSlot { get; set; }
         public int SelectedLineupOrder { get; set; }
@@ -86,6 +94,11 @@ namespace FungusToast.Simulation.Export
         public int StartingX { get; set; }
         public int StartingY { get; set; }
         public string StartingAdaptationIds { get; set; } = string.Empty;
+        public int EliminationRound { get; set; }
+        public string OpponentLineupFingerprint { get; set; } = string.Empty;
+        public double StartDistanceToNearestOpponent { get; set; }
+        public double StartDistanceToPlayableEdge { get; set; }
+        public double StartDistanceToPlayableCentroid { get; set; }
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
         public string BoardGeometryId { get; set; } = string.Empty;

@@ -159,6 +159,7 @@ class AnalyzeBalanceTests(unittest.TestCase):
             "totalGameBudget": games * 2,
             "runtimeBudgetSeconds": 600,
             "sampling": {"completionStatus": "complete", "gamesCompleted": games},
+            "games": [{"runtimeMilliseconds": 1.0} for _ in range(games)],
         }
 
     @staticmethod

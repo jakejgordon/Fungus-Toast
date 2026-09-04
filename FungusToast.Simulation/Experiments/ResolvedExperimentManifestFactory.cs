@@ -60,6 +60,8 @@ public static class ResolvedExperimentManifestFactory
             {
                 GameIndex = game.GameIndex,
                 GameSeed = game.GameSeed,
+                TerminationReason = game.TerminationReason,
+                RuntimeMilliseconds = game.RuntimeMilliseconds,
                 AssignedStrategyLineup = game.PlayerResults
                     .OrderBy(player => player.PlayerId)
                     .Select(player => player.StrategyName)
@@ -73,7 +75,10 @@ public static class ResolvedExperimentManifestFactory
                         Y = entry.Value.y,
                         AdaptationIds = game.StartingAdaptationIdsByPlayerId.TryGetValue(entry.Key, out var adaptationIds)
                             ? adaptationIds
-                            : Array.Empty<string>()
+                            : Array.Empty<string>(),
+                        EliminationRound = game.EliminationRoundByPlayerId.TryGetValue(entry.Key, out var eliminationRound)
+                            ? eliminationRound
+                            : -1
                     })
                     .ToList()
             }).ToList(),

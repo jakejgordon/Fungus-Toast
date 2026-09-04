@@ -42,7 +42,7 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v8",
+                schemaVersion = "v9",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -53,6 +53,7 @@ namespace FungusToast.Simulation.Export
                 metadata.TotalGameBudget,
                 metadata.RuntimeBudgetSeconds,
                 analysis = metadata.Analysis,
+                aiCorpusVersion = StrategyIdentity.CorpusVersion,
                 randomStreamContractVersion = RandomStreamContract.Version,
                 slotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                 metadata.NumberOfPlayers,
@@ -167,6 +168,8 @@ namespace FungusToast.Simulation.Export
                     GameIndex = game.GameIndex,
                     GameSeed = game.GameSeed,
                     RandomStreamContractVersion = RandomStreamContract.Version,
+                    AnalysisVersion = metadata.Analysis.AnalysisVersion,
+                    AiCorpusVersion = StrategyIdentity.CorpusVersion,
                     StrategySet = metadata.StrategySet.ToString(),
                     StrategySelectionPolicy = metadata.StrategySelectionPolicy.ToString(),
                     StrategySelectionSource = metadata.StrategySelectionSource.ToString(),
@@ -192,6 +195,8 @@ namespace FungusToast.Simulation.Export
                     ActualStartingPositions = FormatActualStartingPositions(game),
                     ActualStartingAdaptations = FormatActualStartingAdaptations(game),
                     TurnsPlayed = game.TurnsPlayed,
+                    TerminationReason = game.TerminationReason,
+                    RuntimeMilliseconds = game.RuntimeMilliseconds,
                     WinnerPlayerId = game.WinnerId,
                     WinnerPlayerIds = string.Join("|", game.WinnerIds.OrderBy(id => id)),
                     ToxicTileCount = game.ToxicTileCount,
@@ -253,6 +258,8 @@ namespace FungusToast.Simulation.Export
                         GameIndex = game.GameIndex,
                         GameSeed = game.GameSeed,
                         RandomStreamContractVersion = RandomStreamContract.Version,
+                        AnalysisVersion = metadata.Analysis.AnalysisVersion,
+                        AiCorpusVersion = StrategyIdentity.CorpusVersion,
                         PlayerId = player.PlayerId,
                         AssignedSlot = player.PlayerId,
                         SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
@@ -266,6 +273,13 @@ namespace FungusToast.Simulation.Export
                         StartingAdaptationIds = game.StartingAdaptationIdsByPlayerId.TryGetValue(player.PlayerId, out var adaptationIds)
                             ? string.Join("|", adaptationIds.OrderBy(id => id, StringComparer.Ordinal))
                             : string.Empty,
+                        EliminationRound = game.EliminationRoundByPlayerId.TryGetValue(player.PlayerId, out var eliminationRound)
+                            ? eliminationRound
+                            : -1,
+                        OpponentLineupFingerprint = BuildOpponentLineupFingerprint(game, metadata, player.PlayerId),
+                        StartDistanceToNearestOpponent = GetStartDistanceToNearestOpponent(game, metadata.Condition.Board, player.PlayerId),
+                        StartDistanceToPlayableEdge = GetStartDistanceToPlayableEdge(game, metadata.Condition.Board, player.PlayerId),
+                        StartDistanceToPlayableCentroid = GetStartDistanceToPlayableCentroid(game, metadata.Condition.Board, player.PlayerId),
                         BoardWidth = metadata.BoardWidth,
                         BoardHeight = metadata.BoardHeight,
                         BoardGeometryId = metadata.Condition.Board.GeometryId,
@@ -317,6 +331,125 @@ namespace FungusToast.Simulation.Export
                 : $"{pairingGroupId}:{gameIndex}:{gameSeed}";
         }
 
+        private static string BuildOpponentLineupFingerprint(
+            GameResult game,
+            SimulationRunMetadata metadata,
+            int playerId)
+        {
+            var opponentIdentity = game.PlayerResults
+                .Where(player => player.PlayerId != playerId)
+                .OrderBy(player => player.PlayerId)
+                .Select(player =>
+                {
+                    var definition = metadata.SelectedStrategies.First(strategy =>
+                        string.Equals(strategy.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase));
+                    return $"{player.PlayerId}:{definition.StrategyId}:{definition.DefinitionFingerprint}";
+                });
+            return ExperimentFingerprint.ForText(string.Join("|", opponentIdentity));
+        }
+
+        private static double GetStartDistanceToNearestOpponent(
+            GameResult game,
+            ExperimentBoard board,
+            int playerId)
+        {
+            var targets = game.StartingPositionsByPlayerId
+                .Where(entry => entry.Key != playerId)
+                .Select(entry => entry.Value)
+                .ToHashSet();
+            return GetShortestPlayableDistance(
+                game.StartingPositionsByPlayerId[playerId],
+                board,
+                coordinate => targets.Contains(coordinate));
+        }
+
+        private static double GetStartDistanceToPlayableEdge(
+            GameResult game,
+            ExperimentBoard board,
+            int playerId)
+        {
+            var blocked = board.BlockedTileIds.ToHashSet();
+            return GetShortestPlayableDistance(
+                game.StartingPositionsByPlayerId[playerId],
+                board,
+                coordinate => IsPlayableEdge(coordinate, board, blocked));
+        }
+
+        private static double GetStartDistanceToPlayableCentroid(
+            GameResult game,
+            ExperimentBoard board,
+            int playerId)
+        {
+            var blocked = board.BlockedTileIds.ToHashSet();
+            double xTotal = 0;
+            double yTotal = 0;
+            int count = 0;
+            for (int y = 0; y < board.Height; y++)
+            for (int x = 0; x < board.Width; x++)
+            {
+                if (blocked.Contains(y * board.Width + x)) continue;
+                xTotal += x;
+                yTotal += y;
+                count++;
+            }
+            if (count == 0) return -1;
+            var start = game.StartingPositionsByPlayerId[playerId];
+            double dx = start.x - xTotal / count;
+            double dy = start.y - yTotal / count;
+            return Math.Sqrt(dx * dx + dy * dy);
+        }
+
+        private static int GetShortestPlayableDistance(
+            (int x, int y) start,
+            ExperimentBoard board,
+            Func<(int x, int y), bool> isTarget)
+        {
+            var blocked = board.BlockedTileIds.ToHashSet();
+            var visited = new HashSet<(int x, int y)> { start };
+            var queue = new Queue<((int x, int y) coordinate, int distance)>();
+            queue.Enqueue((start, 0));
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                if (isTarget(current.coordinate)) return current.distance;
+                for (int yOffset = -1; yOffset <= 1; yOffset++)
+                for (int xOffset = -1; xOffset <= 1; xOffset++)
+                {
+                    if (xOffset == 0 && yOffset == 0) continue;
+                    var next = (x: current.coordinate.x + xOffset, y: current.coordinate.y + yOffset);
+                    if (!IsPlayable(next, board, blocked) || !visited.Add(next)) continue;
+                    queue.Enqueue((next, current.distance + 1));
+                }
+            }
+            return -1;
+        }
+
+        private static bool IsPlayableEdge(
+            (int x, int y) coordinate,
+            ExperimentBoard board,
+            IReadOnlySet<int> blocked)
+        {
+            for (int yOffset = -1; yOffset <= 1; yOffset++)
+            for (int xOffset = -1; xOffset <= 1; xOffset++)
+            {
+                if (xOffset == 0 && yOffset == 0) continue;
+                if (!IsPlayable((coordinate.x + xOffset, coordinate.y + yOffset), board, blocked)) return true;
+            }
+            return false;
+        }
+
+        private static bool IsPlayable(
+            (int x, int y) coordinate,
+            ExperimentBoard board,
+            IReadOnlySet<int> blocked)
+        {
+            return coordinate.x >= 0
+                && coordinate.x < board.Width
+                && coordinate.y >= 0
+                && coordinate.y < board.Height
+                && !blocked.Contains(coordinate.y * board.Width + coordinate.x);
+        }
+
         private static List<LivingCellSourceExportRow> BuildLivingCellSourceRows(SimulationBatchResult batchResult, SimulationRunMetadata metadata)
         {
             var rows = new List<LivingCellSourceExportRow>();
@@ -336,6 +469,8 @@ namespace FungusToast.Simulation.Export
                             GameIndex = game.GameIndex,
                             GameSeed = game.GameSeed,
                             RandomStreamContractVersion = RandomStreamContract.Version,
+                            AnalysisVersion = metadata.Analysis.AnalysisVersion,
+                            AiCorpusVersion = StrategyIdentity.CorpusVersion,
                             PlayerId = player.PlayerId,
                             AssignedSlot = player.PlayerId,
                             SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,

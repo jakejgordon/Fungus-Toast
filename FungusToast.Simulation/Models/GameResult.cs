@@ -21,6 +21,8 @@ namespace FungusToast.Simulation.Models
         public int TurnsPlayed { get; set; }
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
+        public string TerminationReason { get; set; } = string.Empty;
+        public double RuntimeMilliseconds { get; set; }
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
         public int ToxicTileCount { get; set; }
@@ -29,6 +31,7 @@ namespace FungusToast.Simulation.Models
         public ParityInvariantReport? ParityInvariantReport { get; set; }
         public Dictionary<int, (int x, int y)> StartingPositionsByPlayerId { get; set; } = new();
         public Dictionary<int, IReadOnlyList<string>> StartingAdaptationIdsByPlayerId { get; set; } = new();
+        public Dictionary<int, int> EliminationRoundByPlayerId { get; set; } = new();
 
         // ──────────────
         // PLAYER RESULTS

@@ -14,6 +14,7 @@ using FungusToast.Core.Players;
 using FungusToast.Simulation.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace FungusToast.Simulation.GameSimulation
@@ -38,6 +39,7 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null
         )
         {
+            var gameStopwatch = Stopwatch.StartNew();
             var randomStreams = new RandomStreamContract(seed);
             var rng = randomStreams.Gameplay;
             var (players, board) = InitializeGame(
@@ -90,6 +92,8 @@ namespace FungusToast.Simulation.GameSimulation
             board.PostDecayPhase += () => postDecayPhaseCount++;
 
             bool gameEnded = false;
+            string terminationReason = "round-cap";
+            var eliminationRoundByPlayerId = new Dictionary<int, int>();
             bool isCountdownActive = false;
             int roundsRemainingUntilGameEnd = 0;
 
@@ -146,6 +150,7 @@ namespace FungusToast.Simulation.GameSimulation
                     if (roundsRemainingUntilGameEnd <= 0)
                     {
                         gameEnded = true;
+                        terminationReason = "board-occupancy-countdown";
                         break;
                     }
                 }
@@ -163,6 +168,15 @@ namespace FungusToast.Simulation.GameSimulation
                     simTracking);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, rng, simTracking);
+
+                foreach (var player in players)
+                {
+                    if (!eliminationRoundByPlayerId.ContainsKey(player.PlayerId)
+                        && board.GetAllCellsOwnedBy(player.PlayerId).All(cell => !cell.IsAlive))
+                    {
+                        eliminationRoundByPlayerId[player.PlayerId] = board.CurrentRound;
+                    }
+                }
 
                 // TICK DOWN ALL ACTIVE SURGES FOR ALL PLAYERS
                 foreach (var player in players)
@@ -186,6 +200,10 @@ namespace FungusToast.Simulation.GameSimulation
             var result = GameResult.From(board, players, board.CurrentRound, simTracking);
             result.GameIndex = gameIndex > 0 ? gameIndex : 0;
             result.GameSeed = seed;
+            gameStopwatch.Stop();
+            result.RuntimeMilliseconds = gameStopwatch.Elapsed.TotalMilliseconds;
+            result.TerminationReason = terminationReason;
+            result.EliminationRoundByPlayerId = eliminationRoundByPlayerId;
             result.BoardWidth = boardWidth;
             result.BoardHeight = boardHeight;
             result.StartingPositionsByPlayerId = resolvedStartingPositions;
