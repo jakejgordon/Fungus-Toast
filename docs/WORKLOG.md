@@ -294,6 +294,12 @@ measurement model, phase gates, and open product decisions are in
     name reset, and automatic Adaptation resolution requires an explicit
     scenario grant count. Core passes 633/633 and Simulation passes 18/18; the
     checked-in Unity Core DLL/PDB were refreshed.
+33. Final post-Phase-4 experiment-contract validation passes on the integrated
+    code state. `verify-experiment-contract.sh` produced a checksum-valid source
+    artifact and exact replay for experiment
+    `contract_20260904T222728_526758`. Remaining Phase 5/6 work changes product
+    behavior and needs an explicit scenario Adaptation grant-count rule or a
+    pre-registered AI treatment hypothesis before implementation.
 
 ### Completion Criteria
 
