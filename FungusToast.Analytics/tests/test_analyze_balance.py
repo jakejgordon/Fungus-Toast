@@ -45,6 +45,19 @@ class AnalyzeBalanceTests(unittest.TestCase):
         self.assertTrue(np.isnan(row["balance_score"]))
         self.assertEqual("Non-evidential observational screen", row["recommendation"])
 
+    def test_legacy_rows_derive_fractional_credit_for_tied_first_place(self):
+        players = pd.DataFrame(
+            {
+                "final_rank": [1, 1, 3, 4],
+                "players_tied_at_final_rank": [2, 2, 1, 1],
+            }
+        )
+
+        credited = ANALYZE_BALANCE._ensure_win_credit(players)
+
+        self.assertEqual([0.5, 0.5, 0.0, 0.0], credited["win_credit"].tolist())
+        self.assertEqual(1.0, credited["win_credit"].sum())
+
     @staticmethod
     def _players():
         return pd.DataFrame(
@@ -56,6 +69,7 @@ class AnalyzeBalanceTests(unittest.TestCase):
                     "game_index": 1,
                     "player_id": player_id,
                     "is_winner": player_id == 0,
+                    "win_credit": 1.0 if player_id == 0 else 0.0,
                     "living_cells": 10 - player_id,
                     "dead_cells": player_id,
                     "end_game_toxin_cells": 0,

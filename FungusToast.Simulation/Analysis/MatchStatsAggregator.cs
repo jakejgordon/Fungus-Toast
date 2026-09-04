@@ -86,7 +86,7 @@ namespace FungusToast.Simulation.Analysis
 
             var playerStats = new Dictionary<int, (
                 IMutationSpendingStrategy strategyObj,
-                int wins,
+                double wins,
                 int appearances,
                 int totalLiving,
                 int totalDead,
@@ -102,7 +102,7 @@ namespace FungusToast.Simulation.Analysis
                 foreach (var pr in result.PlayerResults)
                 {
                     int id = pr.PlayerId;
-                    bool isWinner = id == result.WinnerId;
+                    double winCredit = result.GetWinCredit(id);
 
                     if (!playerStats.ContainsKey(id))
                     {
@@ -121,7 +121,7 @@ namespace FungusToast.Simulation.Analysis
 
                     var entry = playerStats[id];
                     entry.appearances++;
-                    if (isWinner) entry.wins++;
+                    entry.wins += winCredit;
 
                     entry.totalLiving += pr.LivingCells;
                     entry.totalDead += pr.DeadCells;
@@ -188,7 +188,7 @@ namespace FungusToast.Simulation.Analysis
 
         private static void PrintPlayerSummaryTable(
             Dictionary<int, (
-                IMutationSpendingStrategy strategyObj, int wins, int appearances,
+                IMutationSpendingStrategy strategyObj, double wins, int appearances,
                 int living, int dead, int endGameToxins, int mpSpent,
                 float growthChance, float selfDeathChance)> playerStats,
             List<GameResult> gameResults
@@ -341,12 +341,12 @@ namespace FungusToast.Simulation.Analysis
                     pr.PlayerId,
                     StrategyName = pr.StrategyName ?? "None",
                     pr.LivingCells,
-                    WinnerId = r.WinnerId
+                    WinCredit = r.GetWinCredit(pr.PlayerId)
                 }))
                 .GroupBy(x => (x.PlayerId, x.StrategyName))
                 .Select(g =>
                 {
-                    int wins = g.Count(x => x.PlayerId == x.WinnerId);
+                    double wins = g.Sum(x => x.WinCredit);
                     double avgAlive = g.Average(x => x.LivingCells);
                     return new
                     {

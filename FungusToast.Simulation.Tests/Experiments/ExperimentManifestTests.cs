@@ -172,6 +172,24 @@ public sealed class ExperimentManifestTests
         Assert.Equal(4, FinalPlacementCalculator.GetCompetitionRank(players, 3));
         Assert.Equal(2, FinalPlacementCalculator.GetTieCount(players, 0));
         Assert.Equal(1, FinalPlacementCalculator.GetTieCount(players, 2));
+        Assert.Equal(new[] { 0, 1 }, FinalPlacementCalculator.GetWinnerIds(players));
+    }
+
+    [Fact]
+    public void GameResult_AssignsFractionalCreditToEveryCoWinner()
+    {
+        var result = new GameResult
+        {
+            WinnerId = -1,
+            WinnerIds = new[] { 0, 2 }
+        };
+
+        Assert.True(result.IsWinningPlayer(0));
+        Assert.True(result.IsWinningPlayer(2));
+        Assert.False(result.IsWinningPlayer(1));
+        Assert.Equal(0.5, result.GetWinCredit(0));
+        Assert.Equal(0.5, result.GetWinCredit(2));
+        Assert.Equal(0.0, result.GetWinCredit(1));
     }
 
     [Fact]

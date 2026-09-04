@@ -47,7 +47,10 @@ Adaptations. `players.parquet` includes the condition identity, board context,
 toggles, each player's realized starting coordinate and Adaptation IDs, plus the
 per-game total living-cell denominator and competition-style tie-aware final
 rank. A first-place tie is exported as ranks `1, 1, 3` with a tie-group size of
-`2`, so offline analysis can distinguish it from an outright win.
+`2`. `IsWinner` is true for every co-winner, `WinCredit` divides one total win
+equally among them, and `OutcomeStatus` is `winner`, `co_winner`, or `loser`.
+`games.parquet` retains `WinnerPlayerId` for single-winner compatibility (`-1`
+for a tie) and records the complete `WinnerPlayerIds` set.
 The player rows also carry the structured condition dimensions needed for
 grouping without parsing an opaque ID: input schema, strategy set and selection
 policy, slot-assignment policy, start-position mode, player count, and board

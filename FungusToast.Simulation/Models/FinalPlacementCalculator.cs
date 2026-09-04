@@ -7,6 +7,17 @@ namespace FungusToast.Simulation.Models;
 /// </summary>
 public static class FinalPlacementCalculator
 {
+    public static IReadOnlyList<int> GetWinnerIds(IReadOnlyCollection<PlayerResult> players)
+    {
+        if (players.Count == 0) return Array.Empty<int>();
+        var maximumLivingCells = players.Max(result => result.LivingCells);
+        return players
+            .Where(result => result.LivingCells == maximumLivingCells)
+            .Select(result => result.PlayerId)
+            .OrderBy(playerId => playerId)
+            .ToList();
+    }
+
     public static int GetCompetitionRank(IReadOnlyCollection<PlayerResult> players, int playerId)
     {
         var player = GetPlayer(players, playerId);

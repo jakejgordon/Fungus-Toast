@@ -19,6 +19,19 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=renamed)
 
 
+def _ensure_win_credit(players: pd.DataFrame) -> pd.DataFrame:
+    if "win_credit" in players.columns:
+        return players
+    required = {"final_rank", "players_tied_at_final_rank"}
+    missing = sorted(required.difference(players.columns))
+    if missing:
+        raise ValueError(f"players.parquet cannot derive tie-aware win credit; missing: {', '.join(missing)}")
+    players = players.copy()
+    tie_count = players["players_tied_at_final_rank"].clip(lower=1)
+    players["win_credit"] = np.where(players["final_rank"] == 1, 1.0 / tie_count, 0.0)
+    return players
+
+
 def _zscore(series: pd.Series) -> pd.Series:
     std = float(series.std(ddof=0))
     if std == 0 or np.isnan(std):
@@ -157,7 +170,7 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
         "strategy_theme",
         "condition_id",
         "game_index",
-        "is_winner",
+        "win_credit",
         "living_cells",
         "dead_cells",
         "end_game_toxin_cells",
@@ -177,12 +190,12 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     if "final_rank" not in metrics.columns:
         metrics["final_rank"] = metrics.groupby(outcome_group_columns)["living_cells"].rank(method="min", ascending=False)
     metrics["normalized_board_share"] = np.where(metrics["total_living_cells"] > 0, metrics["living_cells"] * metrics["player_count"] / metrics["total_living_cells"], 0.0)
-    metrics["win_rate_surplus"] = metrics["is_winner"].astype(float) - 1.0 / metrics["player_count"].clip(lower=1)
+    metrics["win_rate_surplus"] = metrics["win_credit"].astype(float) - 1.0 / metrics["player_count"].clip(lower=1)
     metrics["normalized_rank"] = np.where(metrics["player_count"] > 1, (metrics["player_count"] - metrics["final_rank"]) / (metrics["player_count"] - 1), 1.0)
 
     grouped = metrics.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
         games=("game_index", "count"),
-        wins=("is_winner", "sum"),
+        wins=("win_credit", "sum"),
         avg_living_cells=("living_cells", "mean"),
         avg_normalized_board_share=("normalized_board_share", "mean"),
         win_rate_surplus=("win_rate_surplus", "mean"),
@@ -284,13 +297,13 @@ def build_mutation_by_opponent_theme(players: pd.DataFrame, mutations: pd.DataFr
             ]
         )
 
-    players_base = players[["game_index", "player_id", "is_winner", "dominant_opponent_theme"]].drop_duplicates().copy()
+    players_base = players[["game_index", "player_id", "win_credit", "dominant_opponent_theme"]].drop_duplicates().copy()
     players_base["dominant_opponent_theme"] = players_base["dominant_opponent_theme"].fillna("Unknown")
     mutation_defs = mutations[["mutation_id", "mutation_name"]].drop_duplicates().copy()
 
     player_totals = players_base.groupby("dominant_opponent_theme", as_index=False).agg(
         eligible_samples=("player_id", "size"),
-        wins_total=("is_winner", "sum"),
+        wins_total=("win_credit", "sum"),
     )
 
     picked = (
@@ -301,7 +314,7 @@ def build_mutation_by_opponent_theme(players: pd.DataFrame, mutations: pd.DataFr
 
     picked_stats = picked.groupby(["dominant_opponent_theme", "mutation_id", "mutation_name"], as_index=False).agg(
         picks=("player_id", "size"),
-        wins_picked=("is_winner", "sum"),
+        wins_picked=("win_credit", "sum"),
     )
     picked_stats["win_rate_when_picked"] = picked_stats["wins_picked"] / picked_stats["picks"].clip(lower=1)
 
@@ -346,13 +359,13 @@ def build_mutation_synergies(players: pd.DataFrame, mutations: pd.DataFrame, min
             ]
         )
 
-    players_base = players[["game_index", "player_id", "is_winner"]].drop_duplicates().copy()
+    players_base = players[["game_index", "player_id", "win_credit"]].drop_duplicates().copy()
     key_to_win = {
-        (int(row.game_index), int(row.player_id)): bool(row.is_winner)
+        (int(row.game_index), int(row.player_id)): float(row.win_credit)
         for row in players_base.itertuples(index=False)
     }
     total_player_games = len(players_base)
-    global_win_rate = float(players_base["is_winner"].mean()) if total_player_games > 0 else 0.0
+    global_win_rate = float(players_base["win_credit"].mean()) if total_player_games > 0 else 0.0
 
     picked = mutations[["game_index", "player_id", "mutation_id", "mutation_name"]].drop_duplicates(
         subset=["game_index", "player_id", "mutation_id"]
@@ -370,12 +383,11 @@ def build_mutation_synergies(players: pd.DataFrame, mutations: pd.DataFrame, min
         if len(unique_ids) < 2:
             continue
 
-        is_winner = key_to_win.get((int(game_index), int(player_id)), False)
+        win_credit = key_to_win.get((int(game_index), int(player_id)), 0.0)
         for a, b in combinations(unique_ids, 2):
             key = (a, b)
             pair_counts[key] = pair_counts.get(key, 0) + 1
-            if is_winner:
-                pair_wins[key] = pair_wins.get(key, 0) + 1
+            pair_wins[key] = pair_wins.get(key, 0.0) + win_credit
 
     rows = []
     for (a, b), samples in pair_counts.items():
@@ -438,8 +450,8 @@ def build_mycovariant_mutation_interactions(
             ]
         )
 
-    players_base = players[["game_index", "player_id", "is_winner"]].drop_duplicates().copy()
-    global_win_rate = float(players_base["is_winner"].mean()) if len(players_base) > 0 else 0.0
+    players_base = players[["game_index", "player_id", "win_credit"]].drop_duplicates().copy()
+    global_win_rate = float(players_base["win_credit"].mean()) if len(players_base) > 0 else 0.0
 
     mutation_presence = mutations[["game_index", "player_id", "mutation_id", "mutation_name"]].drop_duplicates(
         subset=["game_index", "player_id", "mutation_id"]
@@ -467,7 +479,7 @@ def build_mycovariant_mutation_interactions(
 
     grouped = combos.groupby(["mycovariant_id", "mycovariant_name", "mutation_id", "mutation_name"], as_index=False).agg(
         combo_samples=("player_id", "size"),
-        combo_win_rate=("is_winner", "mean"),
+        combo_win_rate=("win_credit", "mean"),
     )
     grouped = grouped[grouped["combo_samples"] >= min_combo_samples].copy()
 
@@ -497,7 +509,7 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
         .copy()
     )
 
-    players_base = players[["game_index", "player_id", "is_winner"]].drop_duplicates().copy()
+    players_base = players[["game_index", "player_id", "win_credit"]].drop_duplicates().copy()
     panel = players_base.assign(_k=1).merge(mutation_defs.assign(_k=1), on="_k", how="outer").drop(columns=["_k"])
     panel = panel.merge(picks, on=["game_index", "player_id", "mutation_id"], how="left")
     panel["picked"] = panel["mutation_level"].notna()
@@ -513,11 +525,11 @@ def build_mutation_scores(players: pd.DataFrame, mutations: pd.DataFrame) -> pd.
     )
 
     not_picked_stats = panel[~panel["picked"]].groupby("mutation_id", as_index=False).agg(
-        win_rate_when_not_picked=("is_winner", "mean"),
+        win_rate_when_not_picked=("win_credit", "mean"),
     )
 
     picked_stats = picked_only.groupby("mutation_id", as_index=False).agg(
-        win_rate_when_picked=("is_winner", "mean"),
+        win_rate_when_picked=("win_credit", "mean"),
         avg_level=("mutation_level", "mean"),
         avg_first_upgrade_round=("first_upgrade_round", "mean"),
         early_level_intensity=("early_level_intensity", "mean"),
@@ -566,7 +578,7 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     )
 
     myco_eligible_players = mycovariants[key_cols].drop_duplicates().copy()
-    players_base = players[key_cols + ["is_winner"]].drop_duplicates().copy()
+    players_base = players[key_cols + ["win_credit"]].drop_duplicates().copy()
     players_base = players_base.merge(
         myco_eligible_players.assign(has_myco_phase=True),
         on=key_cols,
@@ -586,11 +598,11 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
     )
 
     not_picked_stats = panel[~panel["picked"]].groupby("mycovariant_id", as_index=False).agg(
-        win_rate_when_not_picked=("is_winner", "mean"),
+        win_rate_when_not_picked=("win_credit", "mean"),
     )
 
     picked_stats = panel[panel["picked"]].groupby("mycovariant_id", as_index=False).agg(
-        win_rate_when_picked=("is_winner", "mean"),
+        win_rate_when_picked=("win_credit", "mean"),
         avg_total_effect=("total_effect", "mean"),
         trigger_rate=("triggered", "mean"),
     )
@@ -620,7 +632,7 @@ def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
     required_columns = {
         "strategy_name",
         "strategy_theme",
-        "is_winner",
+        "win_credit",
         "nutrient_claims",
         "nutrient_mutation_points_earned",
         "mutation_point_income",
@@ -646,7 +658,7 @@ def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
 
     grouped = nutrient_df.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
         samples=("player_id", "size"),
-        win_rate=("is_winner", "mean"),
+        win_rate=("win_credit", "mean"),
         avg_nutrient_claims=("nutrient_claims", "mean"),
         avg_nutrient_mutation_points=("nutrient_mutation_points_earned", "mean"),
         avg_claimed_cluster_size=("claimed_cluster_size", "mean"),
@@ -781,6 +793,7 @@ def main() -> None:
     living_cell_sources = pd.read_parquet(living_cell_sources_path) if living_cell_sources_path.exists() else pd.DataFrame()
 
     players = _normalize_columns(players)
+    players = _ensure_win_credit(players)
     mutations = _normalize_columns(mutations)
     mycovariants = _normalize_columns(mycovariants)
     if not living_cell_sources.empty:

@@ -180,17 +180,13 @@ namespace FungusToast.Simulation.GameSimulation
                 string elapsed = startTime.HasValue
                     ? (DateTime.UtcNow - startTime.Value).ToString(@"hh\:mm\:ss")
                     : "??";
-                var winner = result.PlayerResults.FirstOrDefault(p => p.PlayerId == result.WinnerId);
-                string winnerInfo = winner != null
-                    ? $"Winner: Player {winner.PlayerId} ({winner.StrategyName})"
-                    : "Winner: ?";
+                string winnerInfo = FormatWinnerInfo(result);
                 Console.WriteLine($"Game {gameIndex}/{totalGames} - Turn {result.TurnsPlayed} - {percent:0.00}% (Elapsed: {elapsed}) - {winnerInfo}");
 
             }
             else
             {
-                var winner = result.PlayerResults.First(p => p.PlayerId == result.WinnerId);
-                Console.WriteLine($"Game complete (Turn {result.TurnsPlayed}) — Winner: Player {winner.PlayerId} ({winner.StrategyName})");
+                Console.WriteLine($"Game complete (Turn {result.TurnsPlayed}) — {FormatWinnerInfo(result)}");
 
                 foreach (var pr in result.PlayerResults.OrderBy(p => p.PlayerId))
                 {
@@ -199,6 +195,17 @@ namespace FungusToast.Simulation.GameSimulation
             }
 
             return result;
+        }
+
+        private static string FormatWinnerInfo(GameResult result)
+        {
+            var winners = result.PlayerResults
+                .Where(player => result.IsWinningPlayer(player.PlayerId))
+                .OrderBy(player => player.PlayerId)
+                .ToList();
+            if (winners.Count == 0) return "Winner: ?";
+            if (winners.Count == 1) return $"Winner: Player {winners[0].PlayerId} ({winners[0].StrategyName})";
+            return $"Co-winners: {string.Join(", ", winners.Select(player => $"Player {player.PlayerId} ({player.StrategyName})"))}";
         }
 
         private static ParityInvariantReport BuildParityInvariantReport(

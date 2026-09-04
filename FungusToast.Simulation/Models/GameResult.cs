@@ -17,6 +17,7 @@ namespace FungusToast.Simulation.Models
         // GAME SUMMARY
         // ──────────────
         public int WinnerId { get; set; }
+        public IReadOnlyList<int> WinnerIds { get; set; } = Array.Empty<int>();
         public int TurnsPlayed { get; set; }
         public int GameIndex { get; set; }
         public int GameSeed { get; set; }
@@ -33,6 +34,15 @@ namespace FungusToast.Simulation.Models
         // PLAYER RESULTS
         // ──────────────
         public List<PlayerResult> PlayerResults { get; set; } = new();
+
+        public bool IsWinningPlayer(int playerId) =>
+            WinnerIds.Count > 0 ? WinnerIds.Contains(playerId) : WinnerId >= 0 && WinnerId == playerId;
+
+        public double GetWinCredit(int playerId)
+        {
+            if (!IsWinningPlayer(playerId)) return 0.0;
+            return WinnerIds.Count > 0 ? 1.0 / WinnerIds.Count : 1.0;
+        }
 
         // ──────────────
         // GLOBAL MUTATION EFFECT COUNTS (AGGREGATES BY PLAYER)
@@ -195,11 +205,15 @@ namespace FungusToast.Simulation.Models
                 }
             }
 
+            var playerResults = playerResultMap.Values.OrderBy(result => result.PlayerId).ToList();
+            var winnerIds = FinalPlacementCalculator.GetWinnerIds(playerResults);
+
             return new GameResult
             {
-                WinnerId = playerResultMap.Values.OrderByDescending(r => r.LivingCells).First().PlayerId,
+                WinnerId = winnerIds.Count == 1 ? winnerIds[0] : -1,
+                WinnerIds = winnerIds,
                 TurnsPlayed = turns,
-                PlayerResults = playerResultMap.Values.ToList(),
+                PlayerResults = playerResults,
                 SporesFromSporocidalBloom = tracking.GetSporocidalSporeDropCounts(),
                 SporesFromNecrosporulation = tracking.GetNecrosporulationSporeDropCounts(),
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinSporeDropCounts(),

@@ -182,6 +182,7 @@ namespace FungusToast.Simulation.Export
                     ActualStartingAdaptations = FormatActualStartingAdaptations(game),
                     TurnsPlayed = game.TurnsPlayed,
                     WinnerPlayerId = game.WinnerId,
+                    WinnerPlayerIds = string.Join("|", game.WinnerIds.OrderBy(id => id)),
                     ToxicTileCount = game.ToxicTileCount,
                     NutrientPatchCount = game.NutrientPatchCount,
                     ParityAllPassed = game.ParityInvariantReport?.AllPassed ?? true
@@ -260,7 +261,11 @@ namespace FungusToast.Simulation.Export
                         DominantOpponentTheme = dominantOpponentTheme,
                         OpponentThemeSet = opponentThemeSet,
                         UniqueOpponentThemes = opponentThemes.Distinct(StringComparer.Ordinal).Count(),
-                        IsWinner = player.PlayerId == game.WinnerId,
+                        IsWinner = game.IsWinningPlayer(player.PlayerId),
+                        WinCredit = game.GetWinCredit(player.PlayerId),
+                        OutcomeStatus = game.IsWinningPlayer(player.PlayerId)
+                            ? game.WinnerIds.Count > 1 ? "co_winner" : "winner"
+                            : "loser",
                         LivingCells = player.LivingCells,
                         TotalLivingCells = totalLivingCells,
                         FinalRank = FinalPlacementCalculator.GetCompetitionRank(game.PlayerResults, player.PlayerId),

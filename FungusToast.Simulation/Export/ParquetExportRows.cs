@@ -46,6 +46,7 @@ namespace FungusToast.Simulation.Export
         public string ActualStartingAdaptations { get; set; } = string.Empty;
         public int TurnsPlayed { get; set; }
         public int WinnerPlayerId { get; set; }
+        public string WinnerPlayerIds { get; set; } = string.Empty;
         public int ToxicTileCount { get; set; }
         public int NutrientPatchCount { get; set; }
         public bool ParityAllPassed { get; set; }
@@ -84,6 +85,8 @@ namespace FungusToast.Simulation.Export
         public string OpponentThemeSet { get; set; } = string.Empty;
         public int UniqueOpponentThemes { get; set; }
         public bool IsWinner { get; set; }
+        public double WinCredit { get; set; }
+        public string OutcomeStatus { get; set; } = string.Empty;
         public int LivingCells { get; set; }
         public int TotalLivingCells { get; set; }
         public int FinalRank { get; set; }

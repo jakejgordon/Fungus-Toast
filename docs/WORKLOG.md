@@ -161,6 +161,14 @@ measurement model, phase gates, and open product decisions are in
     mutation-eligibility gate is removed; and observational association,
     synergy, and interaction outputs are explicitly non-evidential. Focused
     Simulation and Python analytics tests pass. Next: P3.R1b tie-aware outcomes.
+19. P3.R1b is complete: final ties no longer select the earliest player as the
+    sole winner. Results retain all winner IDs, assign fractional win credit,
+    export explicit winner/co-winner/loser status, and use credit in downstream
+    Simulation and offline analytical scores. Legacy P3 artifacts derive the
+    same credit from their already-exported tie-aware rank fields. Fifteen
+    Simulation tests, three Python analytics tests, a one-game Parquet smoke,
+    and the separate-process replay/resume contract fixture passed. Next: P3.R2
+    stable analytical identity.
 
 ### Completion Criteria
 

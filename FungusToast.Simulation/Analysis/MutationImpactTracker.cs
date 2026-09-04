@@ -14,7 +14,7 @@ namespace FungusToast.Simulation.Analysis
         {
             foreach (var player in result.PlayerResults)
             {
-                bool isWinner = player.PlayerId == result.WinnerId;
+                double winCredit = result.GetWinCredit(player.PlayerId);
 
                 foreach (var kv in player.MutationLevels)
                 {
@@ -34,10 +34,10 @@ namespace FungusToast.Simulation.Analysis
                     }
 
                     stats.TotalAppearances++;
-                    if (isWinner)
+                    if (winCredit > 0)
                     {
-                        stats.WinsWith++;
-                        stats.TotalLevelsInWins += level;
+                        stats.WinCreditsWith += winCredit;
+                        stats.CreditWeightedLevelsInWins += level * winCredit;
                     }
                 }
             }
@@ -64,12 +64,12 @@ namespace FungusToast.Simulation.Analysis
         {
             public int MutationId;
             public string MutationName = "";
-            public int WinsWith = 0;
+            public double WinCreditsWith = 0;
             public int TotalAppearances = 0;
-            public int TotalLevelsInWins = 0;
+            public double CreditWeightedLevelsInWins = 0;
 
-            public float WinRateWhenPresent => TotalAppearances == 0 ? 0f : (float)WinsWith / TotalAppearances * 100f;
-            public float AvgLevelInWins => WinsWith == 0 ? 0f : (float)TotalLevelsInWins / WinsWith;
+            public float WinRateWhenPresent => TotalAppearances == 0 ? 0f : (float)(WinCreditsWith / TotalAppearances * 100.0);
+            public float AvgLevelInWins => WinCreditsWith == 0 ? 0f : (float)(CreditWeightedLevelsInWins / WinCreditsWith);
         }
     }
 }
