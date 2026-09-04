@@ -260,6 +260,15 @@ measurement model, phase gates, and open product decisions are in
     1,000 disabled-behavior legacy fixtures, stay within a 5% runtime envelope,
     and meet a symmetric 20% authoring-cost or unrelated-path isolation rule
     for a decisive verdict. Throwaway spike code belongs under ignored `TEMP/`.
+29. The Phase 4 bake-off is complete and the full composed controller is
+    invalidated for the current backlog. Both throwaway designs passed all
+    three behavior fixtures and 1,000 disabled-feature parity cases. The
+    revised parameterized design used 56.3%/44.4% fewer logical lines for B1/B2
+    and was 21–25% faster across five fresh-process, one-million-decision runs;
+    composition's better path isolation did not overcome the frozen 5% runtime
+    gate. Retain `ParameterizedSpendingStrategy`, add only focused pure helpers
+    or demonstrated typed seams, and keep traces opt-in. Decision record:
+    `FungusToast.Core/docs/second-level/AI_PHASE4_ARCHITECTURE_DECISION.md`.
 
 ### Completion Criteria
 

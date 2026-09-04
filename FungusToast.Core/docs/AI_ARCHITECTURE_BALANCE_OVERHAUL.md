@@ -534,6 +534,14 @@ the v2 reference remains descriptive and carries no balance verdict.
   an incremental migration with stable IDs, preserved reference aliases, and
   deterministic behavior is demonstrated. Otherwise retain the smaller change.
 
+**Phase 4 bake-off complete:** both prototypes passed B1–B3 and 1,000 disabled-
+behavior parity fixtures. The parameterized prototype used 56.3% and 44.4%
+fewer behavior lines for B1 and B2. Composition isolated decision paths better
+but was 21–25% slower across five one-million-decision runs, failing the 5%
+runtime envelope. The recorded decision is to retain the revised parameterized
+design and add narrow typed seams only for demonstrated needs. See
+[AI_PHASE4_ARCHITECTURE_DECISION.md](second-level/AI_PHASE4_ARCHITECTURE_DECISION.md).
+
 ### Phase 5 — Implement the AI foundation incrementally
 
 - **P5.1:** Add the unified strategy definition/registry and standardized identity
@@ -545,12 +553,14 @@ the v2 reference remains descriptive and carries no balance verdict.
   replay, profiles, and live metadata reads consume that record. Bootstrap
   override maps reject duplicate keys and orphaned names instead of silently
   drifting; no strategy names were reset.
-- **P5.2:** Add only the controller/context/action boundaries justified by the
-  Phase 4 result. Decision traces are opt-in and sampled by default.
+- **P5.2:** Do not add the proposed general controller/context/action graph.
+  Add immutable focused inputs or pure helpers only where production behavior
+  requires them. Decision traces are opt-in and sampled by default.
 - **P5.3:** Route mutation acquisition through the controller using a legacy
   adapter; prove Core/Simulation/Unity parity before changing policy behavior.
-- **P5.4:** Extract surge activation and banking as an independently replaceable
-  policy while preserving current behavior.
+- **P5.4:** Keep surge activation/banking in the revised parameterized design;
+  extract a pure focused helper only when an approved surge behavior needs it,
+  while preserving current behavior by default.
 - **P5.5:** Route mycovariant drafting through a typed policy instead of a
   concrete strategy downcast; preserve campaign-specific rules explicitly.
   The pre-spike correctness slice is complete: draft selection now dispatches

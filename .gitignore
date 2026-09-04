@@ -1,7 +1,7 @@
 # === UNITY PROJECT STRUCTURE (portable) ===
 
 [Ll]ibrary/
-[Tt]emp/
+[Tt][Ee][Mm][Pp]/
 # Also doubles as the repo-wide scratch/debug-output convention: put
 # throwaway files (bakeoff results, diagnostic dumps, one-off patches) in
 # the repo-root TEMP/ folder instead of committing them anywhere else.
