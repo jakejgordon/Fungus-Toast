@@ -269,6 +269,13 @@ measurement model, phase gates, and open product decisions are in
     gate. Retain `ParameterizedSpendingStrategy`, add only focused pure helpers
     or demonstrated typed seams, and keep traces opt-in. Decision record:
     `FungusToast.Core/docs/second-level/AI_PHASE4_ARCHITECTURE_DECISION.md`.
+30. P4.1 current-behavior characterization is complete. New public-path tests
+    pin authored mycovariant preferences and the absolute always-pick override,
+    scheduled-versus-last-resort surge ordering, pre-window surge banking,
+    exclusion filtering, board-aware Tendril choice, and outward/inward start
+    offsets. Existing target/prerequisite tests cover sequential mutation
+    spending. The focused slice passes 16/16 and the full Core suite passes
+    632/632; no production AI behavior changed.
 
 ### Completion Criteria
 

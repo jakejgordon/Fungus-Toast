@@ -109,6 +109,20 @@ public class StartingSporePlacementTests
     }
 
     [Fact]
+    public void GetStartingPositions_applies_positive_offsets_outward_and_negative_offsets_inward()
+    {
+        var positions = StartingSporeUtility.GetStartingPositions(
+            boardWidth: 20,
+            boardHeight: 20,
+            playerCount: 2,
+            overridePositions: new[] { (2, 10), (17, 10) },
+            edgeOffsets: new[] { 2, -3 });
+
+        Assert.Equal((0, 10), positions[0]);
+        Assert.Equal((14, 10), positions[1]);
+    }
+
+    [Fact]
     public void PlaceStartingSpores_with_preferred_player_positions_reserves_that_slot_for_the_requested_player()
     {
         var board = CreateBoard(width: 20, height: 20, playerCount: 4);

@@ -14,6 +14,7 @@ internal class TestSimulationObserver : ISimulationObserver
     public int? LastPrimePulseMutationPointsAwarded { get; private set; }
     public int? LastApicalYieldBonus { get; private set; }
     public int? LastPerisporeCrownHumanDraftBonus { get; private set; }
+    public int? LastBankedPoints { get; private set; }
     public string? LastUpgradeSource { get; private set; }
     public int UpgradeEventCount { get; private set; }
     public int NecrophyticBloomReportCount { get; private set; }
@@ -65,7 +66,7 @@ internal class TestSimulationObserver : ISimulationObserver
         LastPrimePulseTriggerRound = triggerRound;
         LastPrimePulseMutationPointsAwarded = mutationPointsAwarded;
     }
-    public void RecordBankedPoints(int playerId, int pointsBanked) { }
+    public virtual void RecordBankedPoints(int playerId, int pointsBanked) => LastBankedPoints = pointsBanked;
     public void RecordHyphalSurgeGrowth(int playerId) { }
     public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }
     public void ReportJettingMyceliumInfested(int playerId, int infested) { }

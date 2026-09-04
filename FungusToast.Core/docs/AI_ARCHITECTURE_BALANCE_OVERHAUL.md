@@ -498,6 +498,11 @@ the v2 reference remains descriptive and carries no balance verdict.
 - **P4.1:** Write characterization tests around current mutation spending,
   mycovariant choice, surge timing/banking, exclusions, tendril direction, and
   starting-offset behavior.
+  Complete: focused public-path tests now pin authored mycovariant preference
+  versus the always-pick threshold, scheduled and last-resort surge ordering,
+  two-round surge-window banking, runtime exclusion filtering, board-aware
+  tendril direction, and positive/outward versus negative/inward start offsets.
+  Existing goal/prerequisite tests continue to pin sequential mutation spending.
 - **P4.2:** Pre-register 3–5 concrete missing behaviors from the actual backlog,
   including at least one reactive rule, surge-timing condition, and draft
   heuristic that needs board state.
@@ -534,7 +539,8 @@ the v2 reference remains descriptive and carries no balance verdict.
   an incremental migration with stable IDs, preserved reference aliases, and
   deterministic behavior is demonstrated. Otherwise retain the smaller change.
 
-**Phase 4 bake-off complete:** both prototypes passed B1–B3 and 1,000 disabled-
+**Phase 4 complete:** P4.1 characterization passes with the full Core suite.
+Both prototypes passed B1–B3 and 1,000 disabled-
 behavior parity fixtures. The parameterized prototype used 56.3% and 44.4%
 fewer behavior lines for B1 and B2. Composition isolated decision paths better
 but was 21–25% slower across five one-million-decision runs, failing the 5%
