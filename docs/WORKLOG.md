@@ -253,6 +253,13 @@ measurement model, phase gates, and open product decisions are in
     tests, 18 Simulation tests, and a
     three-game checksum-valid export smoke pass; Unity plugin binaries were
     refreshed.
+28. Phase 4's architecture spike is pre-registered before either prototype.
+    Its fixed backlog fixtures are trailing-state defensive fallback, a
+    board-aware preferred-surge window, and owned-mutation-category-aware
+    mycovariant drafting. Both designs must pass identical cases, preserve
+    1,000 disabled-behavior legacy fixtures, stay within a 5% runtime envelope,
+    and meet a symmetric 20% authoring-cost or unrelated-path isolation rule
+    for a decisive verdict. Throwaway spike code belongs under ignored `TEMP/`.
 
 ### Completion Criteria
 

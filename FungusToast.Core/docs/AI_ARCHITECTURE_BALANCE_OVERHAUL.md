@@ -501,6 +501,26 @@ the v2 reference remains descriptive and carries no balance verdict.
 - **P4.2:** Pre-register 3–5 concrete missing behaviors from the actual backlog,
   including at least one reactive rule, surge-timing condition, and draft
   heuristic that needs board state.
+  The Phase 4 bake-off uses exactly these three behavior fixtures:
+
+  | ID | Missing behavior | Acceptance fixture |
+  |---|---|---|
+  | B1 trailing defense | After round 10, when a player's normalized living-cell share is below 0.75, rank a legal Cellular Resilience fallback ahead of otherwise preferred fallback categories for that decision only. | Chooses the defensive option at 0.70 share and the authored normal option at 0.80; no persistent strategy state changes. |
+  | B2 surge window | A scheduled preferred surge may fire only while the player is below equal living-cell share or global playable occupancy is at least 65%; catch-up-tag surge behavior remains separately expressible. | Defers at 1.10 share/50% occupancy, fires at 0.90/50%, and fires at 1.10/70%. |
+  | B3 draft synergy | Add a deterministic bonus to a mycovariant whose category matches either of the player's two strongest owned mutation categories, after base score and before stable ID tie-breaking. | A one-point base-score deficit is overcome by category synergy; a larger deficit is not; equal final scores choose lower mycovariant ID. |
+
+  Freeze the following comparison before implementation. Both throwaway designs
+  receive identical immutable fixture inputs and must pass all B1–B3 cases.
+  Disabled behaviors must preserve 1,000 generated legacy-decision fixtures
+  exactly. Record behavior-only logical lines changed and files touched, whether
+  each behavior is expressible without adding a parameter consumed by unrelated
+  paths, and elapsed time for at least 1,000,000 mixed decisions after warm-up.
+  Runtime must remain within 5% of the faster design. Composition wins only if
+  it passes correctness/parity/runtime and reduces behavior-only logical lines
+  by at least 20% for at least two behaviors, or avoids modifying at least one
+  unrelated existing decision path for at least two behaviors. The revised
+  parameterized design wins under the symmetric rule. Otherwise record a
+  partial/hybrid verdict and retain the smaller production change.
 - **P4.3:** Implement those behaviors in throwaway prototypes of both the
   composed controller and the smallest viable parameterized cleanup without
   migrating the roster.
