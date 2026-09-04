@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Core.Common;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Experiments;
@@ -41,7 +42,7 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v5",
+                schemaVersion = "v6",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -49,6 +50,7 @@ namespace FungusToast.Simulation.Export
                 strategySelectionSource = metadata.StrategySelectionSource.ToString(),
                 selectedStrategyLineup = metadata.SelectedStrategies,
                 metadata.BaseSeed,
+                randomStreamContractVersion = RandomStreamContract.Version,
                 slotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                 metadata.NumberOfPlayers,
                 metadata.NumberOfGamesRequested,
@@ -159,6 +161,7 @@ namespace FungusToast.Simulation.Export
                     RunTimestampUtc = metadata.RunTimestampUtc,
                     GameIndex = game.GameIndex,
                     GameSeed = game.GameSeed,
+                    RandomStreamContractVersion = RandomStreamContract.Version,
                     StrategySet = metadata.StrategySet.ToString(),
                     StrategySelectionPolicy = metadata.StrategySelectionPolicy.ToString(),
                     StrategySelectionSource = metadata.StrategySelectionSource.ToString(),
@@ -242,6 +245,7 @@ namespace FungusToast.Simulation.Export
                         StartingPositionMode = GetStartingPositionMode(metadata.Condition.Positioning),
                         GameIndex = game.GameIndex,
                         GameSeed = game.GameSeed,
+                        RandomStreamContractVersion = RandomStreamContract.Version,
                         PlayerId = player.PlayerId,
                         AssignedSlot = player.PlayerId,
                         SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
@@ -317,6 +321,7 @@ namespace FungusToast.Simulation.Export
                             ExperimentId = metadata.ExperimentId,
                             GameIndex = game.GameIndex,
                             GameSeed = game.GameSeed,
+                            RandomStreamContractVersion = RandomStreamContract.Version,
                             PlayerId = player.PlayerId,
                             AssignedSlot = player.PlayerId,
                             SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,

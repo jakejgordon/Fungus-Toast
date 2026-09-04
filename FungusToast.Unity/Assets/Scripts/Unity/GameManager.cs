@@ -706,7 +706,8 @@ namespace FungusToast.Unity
                 () => campaignController?.CurrentBoardPreset,
                 () => campaignController?.CurrentResolvedAiStrategyNames,
                 () => configuredHumanMoldIndices,
-                () => testingForcedStartingAdaptationIds);
+                () => testingForcedStartingAdaptationIds,
+                () => currentLevelGameplaySeed);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,
@@ -747,6 +748,7 @@ namespace FungusToast.Unity
                 () => Board,
                 () => mutationManager,
                 () => rng,
+                () => currentLevelGameplaySeed,
                 () => isFastForwarding,
                 () => testingModeEnabled,
                 () => fastForwardRounds,
@@ -2211,6 +2213,7 @@ namespace FungusToast.Unity
         internal MutationManager GetPrivateMutationManager() => mutationManager;
         internal Player GetPrimaryHumanInternal() => humanPlayer;
         internal System.Random GetRngInternal() => rng;
+        internal int GetGameplaySeedInternal() => currentLevelGameplaySeed;
         internal MycovariantPoolManager GetPersistentPoolInternal() => persistentPoolManager;
 
         private bool PrepareGameplayInitialization(int numberOfPlayers, string loadingMessage)

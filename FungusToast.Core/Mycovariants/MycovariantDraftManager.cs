@@ -35,12 +35,43 @@ namespace FungusToast.Core.Mycovariants
            Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
            CampaignDifficulty? campaignStartDifficulty = null)
         {
+            RunDraft(
+                players,
+                poolManager,
+                board,
+                rng,
+                _ => rng,
+                observer,
+                choicesCount,
+                humanSelectionCallback,
+                campaignStartDifficulty);
+        }
+
+        /// <summary>
+        /// Runs a draft with gameplay/pool draws isolated from AI selection draws.
+        /// </summary>
+        public static void RunDraft(
+           List<Player> players,
+           MycovariantPoolManager poolManager,
+           GameBoard board,
+           Random gameplayRng,
+           Func<Player, Random> aiDecisionRandomFactory,
+           ISimulationObserver observer,
+           int choicesCount = 3,
+           Func<Player, List<Mycovariant>, Mycovariant>? humanSelectionCallback = null,
+           CampaignDifficulty? campaignStartDifficulty = null)
+        {
+            if (aiDecisionRandomFactory == null)
+            {
+                throw new ArgumentNullException(nameof(aiDecisionRandomFactory));
+            }
+
             var draftOrder = BuildDraftOrder(players, board);
             MarkLastAiDrafterForCurrentDraft(players, draftOrder);
 
             foreach (var player in draftOrder)
             {
-                var choices = GetDraftChoices(player, poolManager, choicesCount, rng);
+                var choices = GetDraftChoices(player, poolManager, choicesCount, gameplayRng);
                 if (choices.Count == 0)
                     continue;
 
@@ -51,7 +82,12 @@ namespace FungusToast.Core.Mycovariants
                 }
                 else
                 {
-                    picked = SelectAIDraftPick(player, choices, board, rng, campaignStartDifficulty);
+                    picked = SelectAIDraftPick(
+                        player,
+                        choices,
+                        board,
+                        aiDecisionRandomFactory(player),
+                        campaignStartDifficulty);
                 }
 
                 if (picked == null)
@@ -80,7 +116,7 @@ namespace FungusToast.Core.Mycovariants
                 var playerMyco = player.PlayerMycovariants.LastOrDefault(pm => pm.MycovariantId == picked.Id);
                 if (playerMyco != null && picked.ApplyEffect != null)
                 {
-                    picked.ApplyEffect.Invoke(playerMyco, board, rng, observer);
+                    picked.ApplyEffect.Invoke(playerMyco, board, gameplayRng, observer);
                     playerMyco.MarkTriggered();
                 }
                 else if (playerMyco != null)
@@ -90,7 +126,7 @@ namespace FungusToast.Core.Mycovariants
 
             // Return undrafted unique mycovariants to the pool for future drafts
             var allMycovariants = MycovariantRepository.All;
-            poolManager.ReturnUndraftedToPool(allMycovariants, rng);
+            poolManager.ReturnUndraftedToPool(allMycovariants, gameplayRng);
 
             ClearLastAiDrafterForCurrentDraft(players);
         }

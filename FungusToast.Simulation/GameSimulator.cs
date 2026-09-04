@@ -3,6 +3,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
+using FungusToast.Core.Common;
 using FungusToast.Core.Events;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
@@ -37,7 +38,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null
         )
         {
-            var rng = new Random(seed);
+            var randomStreams = new RandomStreamContract(seed);
+            var rng = randomStreams.Gameplay;
             var (players, board) = InitializeGame(
                 strategies,
                 rng,
@@ -109,13 +111,28 @@ namespace FungusToast.Simulation.GameSimulation
                             mycovariantPoolManager,
                             board,
                             rng,
+                            player => randomStreams.CreateAiDecisionRandom(
+                                player.PlayerId,
+                                board.CurrentRound,
+                                "mycovariant-draft",
+                                player.PlayerMycovariants.Count),
                             simTracking);
                     }
                 }
 
                 if (enableMycovariantDraft && MycovariantGameBalance.MycovariantSelectionTriggerRounds.Contains(board.CurrentRound))
                 {
-                    MycovariantDraftManager.RunDraft(players, mycovariantPoolManager, board, rng, simTracking);
+                    MycovariantDraftManager.RunDraft(
+                        players,
+                        mycovariantPoolManager,
+                        board,
+                        rng,
+                        player => randomStreams.CreateAiDecisionRandom(
+                            player.PlayerId,
+                            board.CurrentRound,
+                            "mycovariant-draft",
+                            player.PlayerMycovariants.Count),
+                        simTracking);
                 }
 
                 if (!isCountdownActive && board.ShouldTriggerEndgame())
@@ -134,7 +151,16 @@ namespace FungusToast.Simulation.GameSimulation
                 }
 
                 RoundContext roundContext = new RoundContext();
-                TurnEngine.AssignMutationPoints(board, players, allMutations, rng, simTracking);
+                TurnEngine.AssignMutationPoints(
+                    board,
+                    players,
+                    allMutations,
+                    rng,
+                    player => randomStreams.CreateAiDecisionRandom(
+                        player.PlayerId,
+                        board.CurrentRound,
+                        "mutation-spending"),
+                    simTracking);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, rng, simTracking);
 

@@ -4,7 +4,7 @@ namespace FungusToast.Simulation.Experiments;
 
 public sealed class ResolvedExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v2";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v3";
 
     public required string SchemaVersion { get; init; }
     public required string InputSchemaVersion { get; init; }
@@ -50,6 +50,7 @@ public sealed class ResolvedStrategyDefinition
 
 public sealed class ResolvedRandomness
 {
+    public required string StreamContractVersion { get; init; }
     public required int StrategySelectionSeed { get; init; }
     public required IReadOnlyList<int> GameSeedSchedule { get; init; }
 }

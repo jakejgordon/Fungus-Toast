@@ -4,6 +4,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Common;
 using FungusToast.Core.Players;
 using FungusToast.Unity.Effects;
 using FungusToast.Unity.Grid;
@@ -861,7 +862,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                     currentPlayer,
                     eligibleChoices,
                     GameManager.Instance.Board,
-                    rng,
+                    new RandomStreamContract(GameManager.Instance.GetGameplaySeed())
+                        .CreateAiDecisionRandom(
+                            currentPlayer.PlayerId,
+                            GameManager.Instance.Board.CurrentRound,
+                            "mycovariant-draft",
+                            currentPlayer.PlayerMycovariants.Count),
                     GetCurrentCampaignStartDifficulty());
             }
             OnChoicePicked(pick);

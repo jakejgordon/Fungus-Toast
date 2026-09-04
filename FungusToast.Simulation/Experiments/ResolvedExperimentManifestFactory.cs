@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Core.Common;
 using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Experiments;
@@ -42,6 +43,7 @@ public static class ResolvedExperimentManifestFactory
             }).ToList(),
             Randomness = new ResolvedRandomness
             {
+                StreamContractVersion = RandomStreamContract.Version,
                 StrategySelectionSeed = metadata.BaseSeed,
                 GameSeedSchedule = metadata.GameSeedSchedule
             },

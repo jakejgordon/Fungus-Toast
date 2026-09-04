@@ -15,6 +15,7 @@ using FungusToast.Core.Metrics;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using FungusToast.Core.Phases;
+using FungusToast.Core.Common;
 
 #nullable enable
 
@@ -25,6 +26,7 @@ namespace FungusToast.Unity
         public static MutationManager GetMutationManager(this GameManager gm) => gm.GetPrivateMutationManager();
         public static Player GetPrimaryHuman(this GameManager gm) => gm.GetPrimaryHumanInternal();
         public static System.Random GetRng(this GameManager gm) => gm.GetRngInternal();
+        public static int GetGameplaySeed(this GameManager gm) => gm.GetGameplaySeedInternal();
         public static MycovariantPoolManager GetPersistentPool(this GameManager gm) => gm.GetPersistentPoolInternal();
         public static void TriggerEndGameFromFastForward(this GameManager gm) => gm.TriggerEndGameInternal();
         public static void ArmImmediateFinalRoundAfterFastForward(this GameManager gm) => gm.ArmImmediateFinalRoundAfterFastForwardIfNeeded();
@@ -59,7 +61,12 @@ namespace FungusToast.Unity
             var humanPlayers = board.Players.Where(p => p.PlayerType == PlayerTypeEnum.Human).ToList();
             var originalStates = new List<(Player player, PlayerTypeEnum type, IMutationSpendingStrategy? strategy)>();
             // A single fallback strategy is sufficient; assign to any human lacking a strategy
-            var fallbackStrategy = AIRoster.GetStrategies(1, StrategySetEnum.Proven).FirstOrDefault();
+            var fallbackStrategy = AIRoster.GetStrategies(
+                1,
+                StrategySetEnum.Proven,
+                new RandomStreamContract(gameManager.GetGameplaySeed())
+                    .CreateAiDecisionRandom(-1, board.CurrentRound, "fast-forward-fallback-strategy"))
+                .FirstOrDefault();
             foreach (var hp in humanPlayers)
             {
                 originalStates.Add((hp, hp.PlayerType, hp.MutationStrategy));
@@ -128,11 +135,25 @@ namespace FungusToast.Unity
         private void RunSilentDraft(GameBoard board, GameUIManager ui, IReadOnlyList<Player> draftPlayers, int? testingMycoId, bool countsTowardRoundCompletion)
         {
             Func<Player, List<Mycovariant>, Mycovariant>? custom = null; var pool = gameManager.GetPersistentPool(); var rng = gameManager.GetRng();
-            if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) { pool.TemporarilyRemoveFromPool(testingMycoId.Value); custom = (player, choices) => choices.Where(c => c.Id != testingMycoId.Value).OrderByDescending(m => m.GetBaseAIScore(player, board)).ThenBy(_ => rng.Next()).FirstOrDefault() ?? choices.First(); } }
+            var randomStreams = new RandomStreamContract(gameManager.GetGameplaySeed());
+            if (testingMycoId.HasValue) { var testingMyco = MycovariantRepository.All.FirstOrDefault(m => m.Id == testingMycoId.Value); if (testingMyco != null && !testingMyco.IsUniversal) { pool.TemporarilyRemoveFromPool(testingMycoId.Value); custom = (player, choices) => { var decisionRng = randomStreams.CreateAiDecisionRandom(player.PlayerId, board.CurrentRound, "testing-mycovariant-draft", player.PlayerMycovariants.Count); return choices.Where(c => c.Id != testingMycoId.Value).OrderByDescending(m => m.GetBaseAIScore(player, board)).ThenBy(_ => decisionRng.Next()).FirstOrDefault() ?? choices.First(); }; } }
             var campaignStartDifficulty = gameManager.CurrentGameMode == FungusToast.Unity.Campaign.GameMode.Campaign
                 ? gameManager.CampaignController?.CurrentStartDifficulty
                 : null;
-            MycovariantDraftManager.RunDraft(draftPlayers.ToList(), pool, board, rng, ui.GameLogRouter, MycovariantGameBalance.MycovariantSelectionDraftSize, custom, campaignStartDifficulty);
+            MycovariantDraftManager.RunDraft(
+                draftPlayers.ToList(),
+                pool,
+                board,
+                rng,
+                player => randomStreams.CreateAiDecisionRandom(
+                    player.PlayerId,
+                    board.CurrentRound,
+                    "mycovariant-draft",
+                    player.PlayerMycovariants.Count),
+                ui.GameLogRouter,
+                MycovariantGameBalance.MycovariantSelectionDraftSize,
+                custom,
+                campaignStartDifficulty);
             if (countsTowardRoundCompletion)
             {
                 gameManager.MarkMycovariantDraftCompleteForRound(board.CurrentRound);
@@ -143,7 +164,14 @@ namespace FungusToast.Unity
         private IEnumerator RunSilentMutationPhase(GameBoard board, MutationManager mm, GameUIManager ui)
         {
             var all = mm.AllMutations.Values.ToList();
-            TurnEngine.AssignMutationPoints(board, board.Players, all, gameManager.GetRng(), ui.GameLogRouter);
+            var randomStreams = new RandomStreamContract(gameManager.GetGameplaySeed());
+            TurnEngine.AssignMutationPoints(
+                board,
+                board.Players,
+                all,
+                gameManager.GetRng(),
+                player => randomStreams.CreateAiDecisionRandom(player.PlayerId, board.CurrentRound, "mutation-spending"),
+                ui.GameLogRouter);
             yield return null;
         }
         private IEnumerator RunSilentGrowthPhase(GameBoard board)

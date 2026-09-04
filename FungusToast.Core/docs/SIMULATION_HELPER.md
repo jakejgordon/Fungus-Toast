@@ -107,6 +107,16 @@ outcome equality and the resolved-manifest checksum. Its generated simulation
 artifacts remain under the normal ignored output directory; diagnostic logs are
 written under `/tmp`.
 
+### Random-stream contract
+
+Resolved result schema v3 records `fungus-toast.random-streams.v1`. Gameplay
+continues to use the historical game-seed stream, while mutation-spending and
+mycovariant-draft choices receive deterministic streams derived from game seed,
+player, round, decision kind, and occurrence. Consequently, changing how many
+random values an AI implementation consumes cannot shift later gameplay draws
+when the selected action remains the same. Changing the contract requires a new
+contract version and corrected reference baseline.
+
 ## Quick Commands
 
 > **IMPORTANT:** The `run_simulation.ps1` script is located in the `FungusToast.Simulation` directory.

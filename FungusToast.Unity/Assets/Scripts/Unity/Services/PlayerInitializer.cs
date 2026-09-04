@@ -7,6 +7,7 @@ using FungusToast.Core.Config;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Common;
 using FungusToast.Unity.Grid;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.Campaign;
@@ -23,6 +24,7 @@ namespace FungusToast.Unity
         private readonly Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames;
         private readonly Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices;
         private readonly Func<IReadOnlyList<string>> getTestingForcedAdaptationIds;
+        private readonly Func<int> getGameplaySeed;
 
         public PlayerInitializer(
             GridVisualizer gridVisualizer,
@@ -32,7 +34,8 @@ namespace FungusToast.Unity
             Func<BoardPreset> getCampaignBoardPreset,
             Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames,
             Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices,
-            Func<IReadOnlyList<string>> getTestingForcedAdaptationIds)
+            Func<IReadOnlyList<string>> getTestingForcedAdaptationIds,
+            Func<int> getGameplaySeed)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
@@ -42,6 +45,7 @@ namespace FungusToast.Unity
             this.getResolvedCampaignAiStrategyNames = getResolvedCampaignAiStrategyNames;
             this.getConfiguredHumanMoldIndices = getConfiguredHumanMoldIndices;
             this.getTestingForcedAdaptationIds = getTestingForcedAdaptationIds;
+            this.getGameplaySeed = getGameplaySeed;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -280,16 +284,16 @@ namespace FungusToast.Unity
                     }
 
                     Debug.LogWarning($"[PlayerInitializer] Campaign preset '{preset.presetId}' resolved {resolved.Count}/{remaining} AI strategies; filling with random campaign strategies.");
-                    var fallbackCampaign = AIRoster.GetStrategies(remaining, StrategySetEnum.Campaign)
-                        .OrderBy(_ => UnityEngine.Random.value)
-                        .ToList();
+                    var selectionRng = new RandomStreamContract(getGameplaySeed())
+                        .CreateAiDecisionRandom(-1, 0, "strategy-selection-campaign-fallback");
+                    var fallbackCampaign = AIRoster.GetStrategies(remaining, StrategySetEnum.Campaign, selectionRng);
                     return fallbackCampaign;
                 }
             }
 
-            return AIRoster.GetStrategies(remaining, StrategySetEnum.Proven)
-                .OrderBy(_ => UnityEngine.Random.value)
-                .ToList();
+            var provenSelectionRng = new RandomStreamContract(getGameplaySeed())
+                .CreateAiDecisionRandom(-1, 0, "strategy-selection-proven");
+            return AIRoster.GetStrategies(remaining, StrategySetEnum.Proven, provenSelectionRng);
         }
     }
 }

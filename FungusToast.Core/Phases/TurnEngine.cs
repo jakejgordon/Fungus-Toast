@@ -22,11 +22,36 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver simulationObserver)
         {
-            AssignMutationPointIncome(board, players, allMutations, rng, simulationObserver);
+            AssignMutationPoints(board, players, allMutations, rng, _ => rng, simulationObserver);
+        }
+
+        /// <summary>
+        /// Assigns mutation income with the gameplay stream, then gives each
+        /// strategy a purpose-scoped decision stream.
+        /// </summary>
+        public static void AssignMutationPoints(
+            GameBoard board,
+            List<Player> players,
+            List<Mutation> allMutations,
+            Random gameplayRng,
+            Func<Player, Random> aiDecisionRandomFactory,
+            ISimulationObserver simulationObserver)
+        {
+            if (aiDecisionRandomFactory == null)
+            {
+                throw new ArgumentNullException(nameof(aiDecisionRandomFactory));
+            }
+
+            AssignMutationPointIncome(board, players, allMutations, gameplayRng, simulationObserver);
 
             foreach (var player in players)
             {
-                player.MutationStrategy?.SpendMutationPoints(player, allMutations, board, rng, simulationObserver);
+                player.MutationStrategy?.SpendMutationPoints(
+                    player,
+                    allMutations,
+                    board,
+                    aiDecisionRandomFactory(player),
+                    simulationObserver);
             }
         }
 

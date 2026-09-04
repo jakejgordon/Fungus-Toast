@@ -178,6 +178,17 @@ measurement model, phase gates, and open product decisions are in
     must be bumped for behavior changes not represented by fingerprinted fields.
     Full Core, Simulation, Python analytics, Parquet identity smoke, and replay
     contract validation passed. Next: P3.R3 hierarchical RNG streams.
+21. P3.R3 is implemented as `fungus-toast.random-streams.v1`. The historical
+    seeded gameplay sequence remains intact, while roster selection, mutation
+    spending, and interactive/simulated/fast-forward mycovariant decisions use
+    deterministic SHA-256-derived streams keyed by seed, player, round,
+    decision kind, and occurrence. `AIRoster.GetStrategies` now requires an
+    explicit RNG. Result schema v3 and Parquet manifest v6 stamp the contract.
+    A regression test proves 1,000 extra AI draws cannot perturb the gameplay
+    stream; 620 Core tests, 15 Simulation tests, and the separate-process
+    replay/resume contract pass. Unity Editor compile and normal/fast-forward AI
+    spending plus draft validation remain part of the manual integration gate.
+    Next: P3.R4 paired inference.
 
 ### Completion Criteria
 

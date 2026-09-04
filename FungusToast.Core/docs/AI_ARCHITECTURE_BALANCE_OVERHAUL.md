@@ -444,6 +444,11 @@ reproved after the corrected RNG and result contracts land.
    separate domains; repeated decisions include occurrence identity. Record
    stream-contract identity in artifacts and prove that an internal AI draw-
    count change cannot perturb gameplay randomness when chosen actions match.
+   Implemented contract v1 keeps the historical `Random(baseSeed)` gameplay
+   sequence and derives AI streams from SHA-256 identities containing base seed,
+   player, round, decision kind, and occurrence. Mutation spending, interactive
+   and fast-forward drafting, and roster selection use scoped streams. Resolved
+   result schema v3 and Parquet manifest v6 stamp the contract version.
 4. **P3.R4 — paired inference:** add explicit pair IDs, paired estimators, and
    game/seed-aware uncertainty. Measure treatment correlation and variance
    reduction empirically; do not promise a universal common-random-number gain.

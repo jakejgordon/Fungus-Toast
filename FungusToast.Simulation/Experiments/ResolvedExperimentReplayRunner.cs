@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Core.Common;
 using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Experiments;
@@ -102,6 +103,8 @@ public static class ResolvedExperimentReplayRunner
     {
         if (!string.Equals(source.SchemaVersion, ResolvedExperimentManifest.CurrentSchemaVersion, StringComparison.Ordinal))
             throw new InvalidOperationException($"Unsupported resolved manifest schema '{source.SchemaVersion}'.");
+        if (!string.Equals(source.Randomness.StreamContractVersion, RandomStreamContract.Version, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Unsupported random-stream contract '{source.Randomness.StreamContractVersion}'.");
         if (source.Sampling.GamesRequested < 1 || source.Sampling.GamesRequested > ExperimentManifest.MaximumGamesPerCondition)
             throw new InvalidOperationException($"Replay game count must be between 1 and {ExperimentManifest.MaximumGamesPerCondition}.");
         if (source.Randomness.GameSeedSchedule.Count != source.Sampling.GamesRequested)

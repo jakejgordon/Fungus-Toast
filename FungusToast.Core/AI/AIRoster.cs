@@ -2910,7 +2910,7 @@ namespace FungusToast.Core.AI
         public static List<IMutationSpendingStrategy> GetStrategies(
             int numberOfPlayers,
             StrategySetEnum strategySet,
-            Random? rng = null,
+            Random rng,
             StrategySelectionPolicy selectionPolicy = StrategySelectionPolicy.RandomUnique,
             int cycleIndex = 0)
         {
@@ -2920,7 +2920,11 @@ namespace FungusToast.Core.AI
                 return result;
             }
 
-            rng ??= new Random();
+            if (rng == null)
+            {
+                throw new ArgumentNullException(nameof(rng));
+            }
+
             var sourceStrategies = GetSourceStrategies(strategySet);
             var selected = SelectStrategiesByPolicy(sourceStrategies, numberOfPlayers, selectionPolicy, cycleIndex, rng);
             result.AddRange(selected);

@@ -6,6 +6,7 @@ using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Metrics;
+using FungusToast.Core.Common;
 using FungusToast.Unity.UI;
 
 namespace FungusToast.Unity
@@ -20,6 +21,7 @@ namespace FungusToast.Unity
         private readonly Func<GameBoard> getBoard;
         private readonly Func<MutationManager> getMutationManager;
         private readonly Func<System.Random> getRng;
+        private readonly Func<int> getGameplaySeed;
         private readonly Func<bool> isFastForwarding;
         private readonly Func<bool> isTesting;
         private readonly Func<int> getFastForwardRounds;
@@ -30,6 +32,7 @@ namespace FungusToast.Unity
             Func<GameBoard> getBoard,
             Func<MutationManager> getMutationManager,
             Func<System.Random> getRng,
+            Func<int> getGameplaySeed,
             Func<bool> isFastForwarding,
             Func<bool> isTesting,
             Func<int> getFastForwardRounds,
@@ -39,6 +42,7 @@ namespace FungusToast.Unity
             this.getBoard = getBoard;
             this.getMutationManager = getMutationManager;
             this.getRng = getRng;
+            this.getGameplaySeed = getGameplaySeed;
             this.isFastForwarding = isFastForwarding;
             this.isTesting = isTesting;
             this.getFastForwardRounds = getFastForwardRounds;
@@ -66,7 +70,7 @@ namespace FungusToast.Unity
         public void SpendAllMutationPointsForAIPlayers()
         {
             var board = getBoard();
-            var rng = getRng();
+            var randomStreams = new RandomStreamContract(getGameplaySeed());
             var all = getMutationManager().GetAllMutations().ToList();
 
             bool includeHumans = isFastForwarding() || (isTesting() && getFastForwardRounds() > 0);
@@ -76,7 +80,12 @@ namespace FungusToast.Unity
                 if (p.PlayerType == PlayerTypeEnum.AI
                     || (includeHumans && p.PlayerType == PlayerTypeEnum.Human))
                 {
-                    p.MutationStrategy?.SpendMutationPoints(p, all, board, rng, ui.GameLogRouter);
+                    p.MutationStrategy?.SpendMutationPoints(
+                        p,
+                        all,
+                        board,
+                        randomStreams.CreateAiDecisionRandom(p.PlayerId, board.CurrentRound, "mutation-spending"),
+                        ui.GameLogRouter);
                 }
             }
 
