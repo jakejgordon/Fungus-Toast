@@ -169,6 +169,15 @@ measurement model, phase gates, and open product decisions are in
     Simulation tests, three Python analytics tests, a one-game Parquet smoke,
     and the separate-process replay/resume contract fixture passed. Next: P3.R2
     stable analytical identity.
+20. P3.R2 is complete: every registered strategy receives an additive stable
+    `legacy.<set>.<slug>.v1` ID and a deterministic behavior-configuration
+    fingerprint. Result schema v2 records both in resolved lineups and every
+    strategy-bearing Parquet dataset; analytics groups on ID plus fingerprint
+    and treats name/theme as labels. Legacy artifacts receive explicitly marked
+    fallback identities during regeneration. Core's definition-schema version
+    must be bumped for behavior changes not represented by fingerprinted fields.
+    Full Core, Simulation, Python analytics, Parquet identity smoke, and replay
+    contract validation passed. Next: P3.R3 hierarchical RNG streams.
 
 ### Completion Criteria
 

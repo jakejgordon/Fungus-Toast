@@ -32,6 +32,18 @@ def _ensure_win_credit(players: pd.DataFrame) -> pd.DataFrame:
     return players
 
 
+def _ensure_strategy_identity(df: pd.DataFrame) -> pd.DataFrame:
+    if df.empty or "strategy_name" not in df.columns:
+        return df
+    df = df.copy()
+    if "strategy_id" not in df.columns:
+        slug = df["strategy_name"].astype(str).str.lower().str.replace(r"[^a-z0-9]+", "-", regex=True).str.strip("-")
+        df["strategy_id"] = "legacy.unversioned." + slug + ".v1"
+    if "strategy_definition_fingerprint" not in df.columns:
+        df["strategy_definition_fingerprint"] = "legacy-artifact-unavailable"
+    return df
+
+
 def _zscore(series: pd.Series) -> pd.Series:
     std = float(series.std(ddof=0))
     if std == 0 or np.isnan(std):
@@ -118,6 +130,8 @@ def _empty_mycovariant_scores() -> pd.DataFrame:
 def _empty_nutrient_summary() -> pd.DataFrame:
     cols = [
         "strategy_name",
+        "strategy_id",
+        "strategy_definition_fingerprint",
         "strategy_theme",
         "samples",
         "win_rate",
@@ -133,6 +147,8 @@ def _empty_nutrient_summary() -> pd.DataFrame:
 def _empty_player_summary() -> pd.DataFrame:
     cols = [
         "player",
+        "strategy_id",
+        "strategy_definition_fingerprint",
         "strategy_theme",
         "games",
         "wins",
@@ -155,6 +171,8 @@ def _empty_player_summary() -> pd.DataFrame:
 
 def _empty_growth_source_summary() -> pd.DataFrame:
     cols = [
+        "strategy_id",
+        "strategy_definition_fingerprint",
         "player",
         "total_living",
         "growth_source",
@@ -165,8 +183,12 @@ def _empty_growth_source_summary() -> pd.DataFrame:
 
 
 def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
+    players = _ensure_strategy_identity(players)
+    players = _ensure_strategy_identity(players)
     required_columns = {
         "strategy_name",
+        "strategy_id",
+        "strategy_definition_fingerprint",
         "strategy_theme",
         "condition_id",
         "game_index",
@@ -193,7 +215,10 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     metrics["win_rate_surplus"] = metrics["win_credit"].astype(float) - 1.0 / metrics["player_count"].clip(lower=1)
     metrics["normalized_rank"] = np.where(metrics["player_count"] > 1, (metrics["player_count"] - metrics["final_rank"]) / (metrics["player_count"] - 1), 1.0)
 
-    grouped = metrics.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
+    identity_keys = ["strategy_id", "strategy_definition_fingerprint"]
+    grouped = metrics.groupby(identity_keys, as_index=False).agg(
+        strategy_name=("strategy_name", "first"),
+        strategy_theme=("strategy_theme", "first"),
         games=("game_index", "count"),
         wins=("win_credit", "sum"),
         avg_living_cells=("living_cells", "mean"),
@@ -206,27 +231,29 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
     )
     grouped["player"] = grouped["strategy_name"]
     grouped["win_pct"] = grouped["wins"] / grouped["games"].clip(lower=1) * 100.0
-    grouped["normalized_board_share_ci95_low"] = grouped["avg_normalized_board_share"] - 1.96 * metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
-    grouped["normalized_board_share_ci95_high"] = grouped["avg_normalized_board_share"] + 1.96 * metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
+    grouped["normalized_board_share_ci95_low"] = grouped["avg_normalized_board_share"] - 1.96 * metrics.groupby(identity_keys)["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
+    grouped["normalized_board_share_ci95_high"] = grouped["avg_normalized_board_share"] + 1.96 * metrics.groupby(identity_keys)["normalized_board_share"].std().fillna(0).to_numpy() / np.sqrt(grouped["games"])
     win_low, win_high = _wilson_interval(grouped["wins"], grouped["games"])
-    equal_expectation = metrics.groupby(["strategy_name", "strategy_theme"])["player_count"].apply(lambda counts: (1.0 / counts).mean()).to_numpy()
+    equal_expectation = metrics.groupby(identity_keys)["player_count"].apply(lambda counts: (1.0 / counts).mean()).to_numpy()
     grouped["win_rate_surplus_ci95_low"] = win_low - equal_expectation
     grouped["win_rate_surplus_ci95_high"] = win_high - equal_expectation
-    rank_std = metrics.groupby(["strategy_name", "strategy_theme"])["normalized_rank"].std().fillna(0).to_numpy()
+    rank_std = metrics.groupby(identity_keys)["normalized_rank"].std().fillna(0).to_numpy()
     grouped["normalized_rank_ci95_low"] = grouped["avg_normalized_rank"] - 1.96 * rank_std / np.sqrt(grouped["games"])
     grouped["normalized_rank_ci95_high"] = grouped["avg_normalized_rank"] + 1.96 * rank_std / np.sqrt(grouped["games"])
-    share_std = metrics.groupby(["strategy_name", "strategy_theme"])["normalized_board_share"].std().fillna(0).to_numpy()
+    share_std = metrics.groupby(identity_keys)["normalized_board_share"].std().fillna(0).to_numpy()
     grouped["board_share_effect_size"] = np.where(share_std > 0, (grouped["avg_normalized_board_share"] - 1.0) / share_std, 0.0)
     grouped["rank_effect_size"] = np.where(rank_std > 0, (grouped["avg_normalized_rank"] - 0.5) / rank_std, 0.0)
     context_key = "condition_id"
-    context = metrics.groupby(["strategy_name", "strategy_theme", context_key], as_index=False).agg(context_share=("normalized_board_share", "mean"))
-    robustness = context.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(context_count=(context_key, "count"), worst_context_normalized_board_share=("context_share", "min"), best_context_normalized_board_share=("context_share", "max"))
+    context = metrics.groupby(identity_keys + [context_key], as_index=False).agg(context_share=("normalized_board_share", "mean"))
+    robustness = context.groupby(identity_keys, as_index=False).agg(context_count=(context_key, "count"), worst_context_normalized_board_share=("context_share", "min"), best_context_normalized_board_share=("context_share", "max"))
     robustness["board_share_context_range"] = robustness["best_context_normalized_board_share"] - robustness["worst_context_normalized_board_share"]
-    grouped = grouped.merge(robustness.drop(columns=["best_context_normalized_board_share"]), on=["strategy_name", "strategy_theme"], how="left")
+    grouped = grouped.merge(robustness.drop(columns=["best_context_normalized_board_share"]), on=identity_keys, how="left")
 
     ordered = grouped[
         [
             "player",
+            "strategy_id",
+            "strategy_definition_fingerprint",
             "strategy_theme",
             "games",
             "wins",
@@ -250,8 +277,12 @@ def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_growth_source_summary(players: pd.DataFrame, living_cell_sources: pd.DataFrame) -> pd.DataFrame:
-    required_player_columns = {"strategy_name", "living_cells"}
-    required_source_columns = {"strategy_name", "growth_source_display_name", "living_cell_count"}
+    players = _ensure_strategy_identity(players)
+    living_cell_sources = _ensure_strategy_identity(living_cell_sources)
+    players = _ensure_strategy_identity(players)
+    living_cell_sources = _ensure_strategy_identity(living_cell_sources)
+    required_player_columns = {"strategy_id", "strategy_definition_fingerprint", "strategy_name", "living_cells"}
+    required_source_columns = {"strategy_id", "strategy_definition_fingerprint", "strategy_name", "growth_source_display_name", "living_cell_count"}
     if (
         players.empty
         or living_cell_sources.empty
@@ -260,11 +291,12 @@ def build_growth_source_summary(players: pd.DataFrame, living_cell_sources: pd.D
     ):
         return _empty_growth_source_summary()
 
-    total_living = players.groupby("strategy_name", as_index=False).agg(total_living=("living_cells", "sum"))
-    grouped = living_cell_sources.groupby(["strategy_name", "growth_source_display_name"], as_index=False).agg(
-        count=("living_cell_count", "sum")
+    identity_keys = ["strategy_id", "strategy_definition_fingerprint"]
+    total_living = players.groupby(identity_keys, as_index=False).agg(total_living=("living_cells", "sum"))
+    grouped = living_cell_sources.groupby(identity_keys + ["growth_source_display_name"], as_index=False).agg(
+        strategy_name=("strategy_name", "first"), count=("living_cell_count", "sum")
     )
-    grouped = grouped.merge(total_living, on="strategy_name", how="left")
+    grouped = grouped.merge(total_living, on=identity_keys, how="left")
     grouped["total_living"] = grouped["total_living"].fillna(0)
     grouped["pct_from_growth_source"] = np.where(
         grouped["total_living"] > 0,
@@ -275,7 +307,7 @@ def build_growth_source_summary(players: pd.DataFrame, living_cell_sources: pd.D
     grouped["growth_source"] = grouped["growth_source_display_name"]
 
     ordered = grouped[
-        ["player", "total_living", "growth_source", "count", "pct_from_growth_source"]
+        ["strategy_id", "strategy_definition_fingerprint", "player", "total_living", "growth_source", "count", "pct_from_growth_source"]
     ].sort_values(["total_living", "count", "player", "growth_source"], ascending=[False, False, True, True])
 
     return ordered.reset_index(drop=True)
@@ -629,8 +661,11 @@ def build_mycovariant_scores(players: pd.DataFrame, mycovariants: pd.DataFrame) 
 
 
 def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
+    players = _ensure_strategy_identity(players)
     required_columns = {
         "strategy_name",
+        "strategy_id",
+        "strategy_definition_fingerprint",
         "strategy_theme",
         "win_credit",
         "nutrient_claims",
@@ -656,7 +691,9 @@ def build_nutrient_summary(players: pd.DataFrame) -> pd.DataFrame:
     )
     nutrient_df["has_nutrient_claim"] = nutrient_df["nutrient_claims"] > 0
 
-    grouped = nutrient_df.groupby(["strategy_name", "strategy_theme"], as_index=False).agg(
+    grouped = nutrient_df.groupby(["strategy_id", "strategy_definition_fingerprint"], as_index=False).agg(
+        strategy_name=("strategy_name", "first"),
+        strategy_theme=("strategy_theme", "first"),
         samples=("player_id", "size"),
         win_rate=("win_credit", "mean"),
         avg_nutrient_claims=("nutrient_claims", "mean"),
@@ -792,12 +829,12 @@ def main() -> None:
     living_cell_sources_path = run_folder / "living_cell_sources.parquet"
     living_cell_sources = pd.read_parquet(living_cell_sources_path) if living_cell_sources_path.exists() else pd.DataFrame()
 
-    players = _normalize_columns(players)
+    players = _ensure_strategy_identity(_normalize_columns(players))
     players = _ensure_win_credit(players)
-    mutations = _normalize_columns(mutations)
-    mycovariants = _normalize_columns(mycovariants)
+    mutations = _ensure_strategy_identity(_normalize_columns(mutations))
+    mycovariants = _ensure_strategy_identity(_normalize_columns(mycovariants))
     if not living_cell_sources.empty:
-        living_cell_sources = _normalize_columns(living_cell_sources)
+        living_cell_sources = _ensure_strategy_identity(_normalize_columns(living_cell_sources))
 
     player_summary = build_player_summary(players)
     growth_source_summary = build_growth_source_summary(players, living_cell_sources)

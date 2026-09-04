@@ -13,6 +13,8 @@ namespace FungusToast.Simulation.Models
     {
         public required int LineupOrder { get; init; }
         public required string StrategyName { get; init; }
+        public required string StrategyId { get; init; }
+        public required string DefinitionFingerprint { get; init; }
         public required string StrategyTheme { get; init; }
         public required string StrategyStatus { get; init; }
         public required string StrategyPowerTier { get; init; }

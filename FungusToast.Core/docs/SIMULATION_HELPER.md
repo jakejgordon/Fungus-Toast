@@ -55,6 +55,10 @@ The player rows also carry the structured condition dimensions needed for
 grouping without parsing an opaque ID: input schema, strategy set and selection
 policy, slot-assignment policy, start-position mode, player count, and board
 geometry/mask fingerprint.
+All strategy-bearing Parquet rows also include `StrategyId` and
+`StrategyDefinitionFingerprint`; `games.parquet` records selected and assigned
+ID lineups. Result schema v2 uses these fields as analytical identity while
+retaining strategy names as compatibility/display labels.
 Detailed provenance and artifact hashes remain in `resolved-manifest.json`.
 
 Compare a treatment against its control before interpreting results:

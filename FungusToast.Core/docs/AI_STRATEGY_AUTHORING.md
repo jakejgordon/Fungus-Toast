@@ -13,6 +13,23 @@ Strategies are currently grouped into the following sets in `FungusToast.Core/AI
 - `Campaign`: simple named variants (`AI1`, `AI2`, etc.) for campaign integration.
 - `Mycovariants`: focused permutations for mycovariant studies.
 
+## Stable analytical identity
+
+Every registered strategy now has an additive machine ID and a deterministic
+definition fingerprint. Existing `StrategyName` values remain compatibility
+aliases and player-facing names remain separate catalog metadata.
+
+- Existing roster IDs use `legacy.<set>.<strategy-name-slug>.v1` and remain
+  stable while the compatibility name is retained.
+- The definition fingerprint covers the behavior-bearing parameterized
+  configuration: ordered goals/categories/surges, surge timing, economy policy,
+  mycovariant preferences, exclusions, tier policy, and starting offset.
+- `StrategyIdentity.DefinitionSchemaVersion` is the implementation contract. It
+  must be incremented whenever strategy behavior changes in a way not represented
+  by those fields.
+- Analytics joins on strategy ID plus definition fingerprint. Names, themes,
+  lifecycle, and display metadata are labels and never analytical keys.
+
 ## Strategy Status
 
 Each strategy profile now carries a status tag in `AIRoster`:

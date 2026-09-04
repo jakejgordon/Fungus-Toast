@@ -58,6 +58,16 @@ class AnalyzeBalanceTests(unittest.TestCase):
         self.assertEqual([0.5, 0.5, 0.0, 0.0], credited["win_credit"].tolist())
         self.assertEqual(1.0, credited["win_credit"].sum())
 
+    def test_player_summary_groups_by_identity_not_mutable_theme(self):
+        players = pd.concat([self._players(), self._players().assign(strategy_theme="drifted")], ignore_index=True)
+        players["strategy_id"] = players["strategy_name"].map(lambda name: f"id.{name}")
+        players["strategy_definition_fingerprint"] = "same-definition"
+
+        summary = ANALYZE_BALANCE.build_player_summary(players)
+
+        self.assertEqual(4, len(summary))
+        self.assertTrue((summary["games"] == 2).all())
+
     @staticmethod
     def _players():
         return pd.DataFrame(

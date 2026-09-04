@@ -64,7 +64,8 @@ public static class ExperimentFingerprint
             conditionFingerprint,
             code.CoreAssemblySha256,
             code.SimulationAssemblySha256,
-            string.Join("|", metadata.SelectedStrategies.OrderBy(strategy => strategy.LineupOrder).Select(strategy => strategy.StrategyName)),
+            string.Join("|", metadata.SelectedStrategies.OrderBy(strategy => strategy.LineupOrder).Select(strategy =>
+                $"{strategy.StrategyId}:{strategy.DefinitionFingerprint}")),
             string.Join(",", metadata.GameSeedSchedule)
         }));
     }

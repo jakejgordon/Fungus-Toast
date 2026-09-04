@@ -75,6 +75,7 @@ namespace FungusToast.Core.AI
         public IReadOnlyList<int> SurgePriorityIds => surgePriorityIds;
         public IReadOnlyList<MutationCategory>? PriorityMutationCategories => priorityMutationCategories;
         public EconomyBias EconomyProfile => economyBias;
+        public int SurgeAttemptTurnFrequency => surgeAttemptTurnFrequency;
         public int StartingSporeEdgeOffset => startingSporeEdgeOffset;
         public IReadOnlyCollection<int> ExcludedMutationIds => excludedMutationIds;
 

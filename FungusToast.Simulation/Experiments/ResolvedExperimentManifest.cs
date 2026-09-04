@@ -4,7 +4,7 @@ namespace FungusToast.Simulation.Experiments;
 
 public sealed class ResolvedExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v1";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v2";
 
     public required string SchemaVersion { get; init; }
     public required string InputSchemaVersion { get; init; }
@@ -43,6 +43,7 @@ public sealed class ResolvedStrategyDefinition
 {
     public required int LineupOrder { get; init; }
     public required string StrategyName { get; init; }
+    public required string StrategyId { get; init; }
     public required string DefinitionSha256 { get; init; }
     public required SelectedStrategyMetadata Metadata { get; init; }
 }

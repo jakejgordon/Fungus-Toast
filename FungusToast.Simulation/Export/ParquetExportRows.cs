@@ -9,6 +9,8 @@ namespace FungusToast.Simulation.Export
         public int AssignedSlot { get; set; }
         public int SelectedLineupOrder { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyId { get; set; } = string.Empty;
+        public string StrategyDefinitionFingerprint { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public string GrowthSource { get; set; } = string.Empty;
         public string GrowthSourceDisplayName { get; set; } = string.Empty;
@@ -28,6 +30,8 @@ namespace FungusToast.Simulation.Export
         public string StrategySelectionSource { get; set; } = string.Empty;
         public string SelectedStrategyLineup { get; set; } = string.Empty;
         public string AssignedStrategyLineup { get; set; } = string.Empty;
+        public string SelectedStrategyIds { get; set; } = string.Empty;
+        public string AssignedStrategyIds { get; set; } = string.Empty;
         public string SlotAssignmentPolicy { get; set; } = string.Empty;
         public int BoardWidth { get; set; }
         public int BoardHeight { get; set; }
@@ -68,6 +72,8 @@ namespace FungusToast.Simulation.Export
         public int AssignedSlot { get; set; }
         public int SelectedLineupOrder { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyId { get; set; } = string.Empty;
+        public string StrategyDefinitionFingerprint { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public string StrategyStatus { get; set; } = string.Empty;
         public int StartingX { get; set; }
@@ -115,6 +121,8 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyId { get; set; } = string.Empty;
+        public string StrategyDefinitionFingerprint { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public int MutationId { get; set; }
         public string MutationName { get; set; } = string.Empty;
@@ -131,6 +139,8 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyId { get; set; } = string.Empty;
+        public string StrategyDefinitionFingerprint { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public int MycovariantId { get; set; }
         public string MycovariantName { get; set; } = string.Empty;
@@ -149,6 +159,8 @@ namespace FungusToast.Simulation.Export
         public int GameSeed { get; set; }
         public int PlayerId { get; set; }
         public string StrategyName { get; set; } = string.Empty;
+        public string StrategyId { get; set; } = string.Empty;
+        public string StrategyDefinitionFingerprint { get; set; } = string.Empty;
         public string StrategyTheme { get; set; } = string.Empty;
         public int Round { get; set; }
         public int MutationId { get; set; }

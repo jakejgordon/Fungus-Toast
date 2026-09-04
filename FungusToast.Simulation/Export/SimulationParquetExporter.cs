@@ -164,6 +164,9 @@ namespace FungusToast.Simulation.Export
                     StrategySelectionSource = metadata.StrategySelectionSource.ToString(),
                     SelectedStrategyLineup = string.Join("|", metadata.SelectedStrategies.OrderBy(s => s.LineupOrder).Select(s => s.StrategyName)),
                     AssignedStrategyLineup = string.Join("|", game.PlayerResults.OrderBy(player => player.PlayerId).Select(player => player.StrategyName)),
+                    SelectedStrategyIds = string.Join("|", metadata.SelectedStrategies.OrderBy(s => s.LineupOrder).Select(s => s.StrategyId)),
+                    AssignedStrategyIds = string.Join("|", game.PlayerResults.OrderBy(player => player.PlayerId).Select(player =>
+                        metadata.SelectedStrategies.First(s => string.Equals(s.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase)).StrategyId)),
                     SlotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                     BoardWidth = metadata.BoardWidth,
                     BoardHeight = metadata.BoardHeight,
@@ -243,6 +246,8 @@ namespace FungusToast.Simulation.Export
                         AssignedSlot = player.PlayerId,
                         SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
                         StrategyName = player.StrategyName,
+                        StrategyId = lineupEntry?.StrategyId ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'."),
+                        StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                         StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                         StrategyStatus = lineupEntry?.StrategyStatus ?? AIRoster.GetStatusForStrategy(player.Strategy, metadata.StrategySet).ToString(),
                         StartingX = game.StartingPositionsByPlayerId[player.PlayerId].x,
@@ -316,6 +321,8 @@ namespace FungusToast.Simulation.Export
                             AssignedSlot = player.PlayerId,
                             SelectedLineupOrder = lineupEntry?.LineupOrder ?? 0,
                             StrategyName = player.StrategyName,
+                            StrategyId = lineupEntry?.StrategyId ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'."),
+                            StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                             StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                             GrowthSource = livingSource.Key.ToString(),
                             GrowthSourceDisplayName = GrowthSourceDisplayNames.GetDisplayName(livingSource.Key),
@@ -336,6 +343,9 @@ namespace FungusToast.Simulation.Export
             {
                 foreach (var player in game.PlayerResults)
                 {
+                    var lineupEntry = metadata.SelectedStrategies
+                        .FirstOrDefault(s => string.Equals(s.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'.");
                     foreach (var mutationLevel in player.MutationLevels)
                     {
                         int mutationId = mutationLevel.Key;
@@ -363,6 +373,8 @@ namespace FungusToast.Simulation.Export
                             GameSeed = game.GameSeed,
                             PlayerId = player.PlayerId,
                             StrategyName = player.StrategyName,
+                            StrategyId = lineupEntry.StrategyId,
+                            StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                             StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                             MutationId = mutationId,
                             MutationName = mutation.Name,
@@ -386,6 +398,9 @@ namespace FungusToast.Simulation.Export
             {
                 foreach (var player in game.PlayerResults)
                 {
+                    var lineupEntry = metadata.SelectedStrategies
+                        .FirstOrDefault(s => string.Equals(s.StrategyName, player.StrategyName, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'.");
                     foreach (var myco in player.Mycovariants)
                     {
                         if (myco.EffectCounts.Count == 0)
@@ -397,6 +412,8 @@ namespace FungusToast.Simulation.Export
                                 GameSeed = game.GameSeed,
                                 PlayerId = player.PlayerId,
                                 StrategyName = player.StrategyName,
+                                StrategyId = lineupEntry.StrategyId,
+                                StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                                 StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
@@ -420,6 +437,8 @@ namespace FungusToast.Simulation.Export
                                 GameSeed = game.GameSeed,
                                 PlayerId = player.PlayerId,
                                 StrategyName = player.StrategyName,
+                                StrategyId = lineupEntry.StrategyId,
+                                StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                                 StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
@@ -449,6 +468,9 @@ namespace FungusToast.Simulation.Export
                     var strategyName = game.PlayerResults
                         .FirstOrDefault(pr => pr.PlayerId == upgradeEvent.PlayerId)
                         ?.StrategyName ?? "Unknown";
+                    var lineupEntry = metadata.SelectedStrategies
+                        .FirstOrDefault(strategy => string.Equals(strategy.StrategyName, strategyName, StringComparison.OrdinalIgnoreCase))
+                        ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{strategyName}'.");
 
                     rows.Add(new MutationUpgradeEventExportRow
                     {
@@ -457,6 +479,8 @@ namespace FungusToast.Simulation.Export
                         GameSeed = game.GameSeed,
                         PlayerId = upgradeEvent.PlayerId,
                         StrategyName = strategyName,
+                        StrategyId = lineupEntry.StrategyId,
+                        StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
                         StrategyTheme = TryGetStrategyTheme(game, upgradeEvent.PlayerId),
                         Round = upgradeEvent.Round,
                         MutationId = upgradeEvent.MutationId,

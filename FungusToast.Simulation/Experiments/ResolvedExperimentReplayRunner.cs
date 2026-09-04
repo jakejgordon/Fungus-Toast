@@ -126,10 +126,14 @@ public static class ResolvedExperimentReplayRunner
 
         foreach (var strategy in source.SelectedLineup)
         {
-            var currentFingerprint = ExperimentFingerprint.ForStrategy(
-                currentCode.CoreAssemblySha256,
+            var currentStrategy = AIRoster.GetStrategiesByName(
                 source.Condition.Strategies.StrategySet,
-                strategy.StrategyName);
+                new[] { strategy.StrategyName },
+                out _).Single();
+            var currentStrategyId = StrategyIdentity.GetStableId(source.Condition.Strategies.StrategySet, currentStrategy);
+            if (!string.Equals(currentStrategyId, strategy.StrategyId, StringComparison.Ordinal))
+                throw new InvalidOperationException($"Strategy ID mismatch for '{strategy.StrategyName}'.");
+            var currentFingerprint = StrategyIdentity.GetDefinitionFingerprint(currentStrategy);
             if (!string.Equals(currentFingerprint, strategy.DefinitionSha256, StringComparison.Ordinal))
                 throw new InvalidOperationException($"Strategy fingerprint mismatch for '{strategy.StrategyName}'.");
         }

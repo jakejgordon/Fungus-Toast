@@ -393,6 +393,8 @@ namespace FungusToast.Simulation
                         {
                             LineupOrder = index + 1,
                             StrategyName = strategy.StrategyName,
+                            StrategyId = StrategyIdentity.GetStableId(strategySet, strategy),
+                            DefinitionFingerprint = StrategyIdentity.GetDefinitionFingerprint(strategy),
                             StrategyTheme = AIRoster.GetThemeForStrategy(strategy).ToString(),
                             StrategyStatus = AIRoster.GetStatusForStrategy(strategy, strategySet).ToString(),
                             StrategyPowerTier = profile?.PowerTier.ToString() ?? string.Empty,

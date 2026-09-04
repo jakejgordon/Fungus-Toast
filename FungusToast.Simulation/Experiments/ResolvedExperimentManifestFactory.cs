@@ -36,7 +36,8 @@ public static class ResolvedExperimentManifestFactory
             {
                 LineupOrder = strategy.LineupOrder,
                 StrategyName = strategy.StrategyName,
-                DefinitionSha256 = ExperimentFingerprint.ForStrategy(code.CoreAssemblySha256, metadata.StrategySet, strategy.StrategyName),
+                StrategyId = strategy.StrategyId,
+                DefinitionSha256 = strategy.DefinitionFingerprint,
                 Metadata = strategy
             }).ToList(),
             Randomness = new ResolvedRandomness
