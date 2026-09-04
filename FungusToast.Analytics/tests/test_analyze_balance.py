@@ -87,6 +87,51 @@ class AnalyzeBalanceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "game_seed"):
             ANALYZE_BALANCE.build_paired_comparison(control, treatment)
 
+    def test_preregistered_verdict_uses_only_declared_target_metric(self):
+        control_zero = [6 + (i % 3) for i in range(50)]
+        control_one = [10 - value for value in control_zero]
+        treatment_zero = [value + 1 for value in control_zero]
+        treatment_one = [value - 1 for value in control_one]
+        control = self._paired_players(control_zero, control_one, treatment=False)
+        treatment = self._paired_players(treatment_zero, treatment_one, treatment=True)
+        paired = ANALYZE_BALANCE.build_paired_comparison(control, treatment)
+        analysis = {
+            "analysisVersion": ANALYZE_BALANCE.ANALYSIS_VERSION,
+            "evidenceStage": "comparison",
+            "hypothesis": {
+                "hypothesisId": "share-increase",
+                "primaryContextId": "paired-test",
+                "targetStrategyId": "strategy-0",
+                "primaryMetric": "normalizedBoardShare",
+                "estimand": "pairedMeanDifference",
+                "direction": "increase",
+                "margin": 0.1,
+            },
+        }
+
+        verdict = ANALYZE_BALANCE.build_preregistered_verdict(
+            paired,
+            self._resolved_manifest(analysis, games=50),
+            self._resolved_manifest(analysis, games=50),
+        )
+
+        self.assertEqual("supported", verdict["verdict"])
+        self.assertEqual("normalizedBoardShare", verdict["primary_metric"])
+
+    def test_preregistered_verdict_refuses_missing_hypothesis(self):
+        paired = ANALYZE_BALANCE.build_paired_comparison(
+            self._paired_players([6, 7], [4, 3], treatment=False),
+            self._paired_players([7, 8], [3, 2], treatment=True),
+        )
+        analysis = {"analysisVersion": ANALYZE_BALANCE.ANALYSIS_VERSION, "evidenceStage": "comparison", "hypothesis": None}
+
+        with self.assertRaisesRegex(ValueError, "no preregistered hypothesis"):
+            ANALYZE_BALANCE.build_preregistered_verdict(
+                paired,
+                self._resolved_manifest(analysis, games=50),
+                self._resolved_manifest(analysis, games=50),
+            )
+
     @staticmethod
     def _players():
         return pd.DataFrame(
@@ -106,6 +151,15 @@ class AnalyzeBalanceTests(unittest.TestCase):
                 for player_id in range(4)
             ]
         )
+
+    @staticmethod
+    def _resolved_manifest(analysis, games):
+        return {
+            "analysis": analysis,
+            "totalGameBudget": games * 2,
+            "runtimeBudgetSeconds": 600,
+            "sampling": {"completionStatus": "complete", "gamesCompleted": games},
+        }
 
     @staticmethod
     def _paired_players(player_zero_living, player_one_living, treatment):

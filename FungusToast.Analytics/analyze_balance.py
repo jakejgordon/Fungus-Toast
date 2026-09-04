@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 from itertools import combinations
 from pathlib import Path
 import numpy as np
 import pandas as pd
 import re
+
+
+ANALYSIS_VERSION = "fungus-toast.analysis.v2"
 
 
 def _to_snake(name: str) -> str:
@@ -283,6 +287,104 @@ def build_paired_comparison(control: pd.DataFrame, treatment: pd.DataFrame) -> p
             row[f"paired_vs_unpaired_variance_ratio_{metric}"] = variance_ratio
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def build_preregistered_verdict(
+    paired_summary: pd.DataFrame,
+    control_manifest: dict,
+    treatment_manifest: dict,
+) -> dict:
+    control_budget = control_manifest.get("totalGameBudget")
+    treatment_budget = treatment_manifest.get("totalGameBudget")
+    if not isinstance(control_budget, int) or control_budget != treatment_budget:
+        raise ValueError("control and treatment must declare the same total game budget")
+    if control_manifest.get("runtimeBudgetSeconds") != treatment_manifest.get("runtimeBudgetSeconds"):
+        raise ValueError("control and treatment must declare the same runtime budget")
+    control_sampling = control_manifest.get("sampling", {})
+    treatment_sampling = treatment_manifest.get("sampling", {})
+    if control_sampling.get("completionStatus") != "complete" or treatment_sampling.get("completionStatus") != "complete":
+        raise ValueError("a verdict requires complete control and treatment artifacts")
+    completed_games = int(control_sampling.get("gamesCompleted", 0)) + int(treatment_sampling.get("gamesCompleted", 0))
+    if completed_games > control_budget:
+        raise ValueError(
+            f"combined control/treatment games ({completed_games}) exceed the declared total game budget ({control_budget})"
+        )
+    control_analysis = control_manifest.get("analysis")
+    treatment_analysis = treatment_manifest.get("analysis")
+    if not control_analysis or not treatment_analysis:
+        raise ValueError("both resolved manifests must contain an analysis plan before a verdict can be issued")
+    if control_analysis != treatment_analysis:
+        raise ValueError("control and treatment analysis plans do not match")
+    if control_analysis.get("analysisVersion") != ANALYSIS_VERSION:
+        raise ValueError(f"unsupported preregistered analysis version: {control_analysis.get('analysisVersion')}")
+    evidence_stage = control_analysis.get("evidenceStage")
+    minimum_pairs_by_stage = {"comparison": 50, "holdout": 100}
+    if evidence_stage not in minimum_pairs_by_stage:
+        raise ValueError("a verdict requires preregistered comparison or holdout evidence")
+    hypothesis = control_analysis.get("hypothesis")
+    if not hypothesis:
+        raise ValueError("no preregistered hypothesis exists; refusing to issue a verdict")
+    if hypothesis.get("estimand") != "pairedMeanDifference":
+        raise ValueError("only pairedMeanDifference hypotheses are supported")
+
+    context_id = hypothesis.get("primaryContextId")
+    if set(paired_summary["pairing_group_id"].astype(str)) != {context_id}:
+        raise ValueError("paired results do not match the preregistered primary context")
+    target_id = hypothesis.get("targetStrategyId")
+    target_rows = paired_summary[
+        (paired_summary["strategy_id_control"] == target_id)
+        & (paired_summary["strategy_id_treatment"] == target_id)
+    ]
+    if len(target_rows) != 1:
+        raise ValueError(f"preregistered target strategy '{target_id}' did not resolve to exactly one paired row")
+
+    metric_names = {
+        "normalizedBoardShare": "normalized_board_share",
+        "normalizedRank": "normalized_rank",
+        "winCredit": "win_credit",
+    }
+    declared_metric = hypothesis.get("primaryMetric")
+    if declared_metric not in metric_names:
+        raise ValueError(f"unsupported preregistered primary metric: {declared_metric}")
+    metric = metric_names[declared_metric]
+    row = target_rows.iloc[0]
+    minimum_pairs = minimum_pairs_by_stage[evidence_stage]
+    if int(row["pairs"]) < minimum_pairs:
+        raise ValueError(
+            f"preregistered {evidence_stage} verdict requires {minimum_pairs} complete pairs; found {int(row['pairs'])}"
+        )
+    estimate = float(row[f"paired_difference_{metric}"])
+    ci_low = float(row[f"paired_difference_{metric}_ci95_low"])
+    ci_high = float(row[f"paired_difference_{metric}_ci95_high"])
+    margin = float(hypothesis.get("margin"))
+    direction = hypothesis.get("direction")
+    if direction == "increase":
+        supported = ci_low > margin
+    elif direction == "decrease":
+        supported = ci_high < -margin
+    elif direction == "nonInferiority":
+        supported = ci_low > -margin
+    else:
+        raise ValueError(f"unsupported preregistered direction: {direction}")
+
+    return {
+        "analysis_version": ANALYSIS_VERSION,
+        "hypothesis_id": hypothesis.get("hypothesisId"),
+        "primary_context_id": context_id,
+        "target_strategy_id": target_id,
+        "primary_metric": declared_metric,
+        "estimand": hypothesis.get("estimand"),
+        "direction": direction,
+        "evidence_stage": evidence_stage,
+        "margin": margin,
+        "total_game_budget": control_budget,
+        "combined_games_completed": completed_games,
+        "pairs": int(row["pairs"]),
+        "estimate": estimate,
+        "ci95_low": ci_low,
+        "ci95_high": ci_high,
+        "verdict": "supported" if supported else "not_supported",
+    }
 
 
 def build_player_summary(players: pd.DataFrame) -> pd.DataFrame:
@@ -902,6 +1004,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze FungusToast simulation Parquet exports for descriptive and exploratory diagnostics.")
     parser.add_argument("--run-folder", required=True, help="Path to one simulation export folder containing parquet files.")
     parser.add_argument("--paired-treatment-folder", required=False, help="Optional treatment run folder sharing pair IDs with --run-folder (the control).")
+    parser.add_argument("--emit-verdict", action="store_true", help="Issue only the preregistered primary verdict; requires a paired treatment and matching resolved analysis plans.")
     parser.add_argument("--output-dir", required=False, help="Output directory for analysis artifacts. Defaults to run folder.")
     parser.add_argument("--min-confidence", type=float, default=0.4, help="Minimum confidence required for markdown recommendations.")
     parser.add_argument("--min-picks", type=int, default=15, help="Minimum picks required for markdown recommendations.")
@@ -935,6 +1038,8 @@ def main() -> None:
         treatment_players = pd.read_parquet(treatment_folder / "players.parquet")
         treatment_players = _ensure_win_credit(_ensure_strategy_identity(_normalize_columns(treatment_players)))
         paired_comparison = build_paired_comparison(players, treatment_players)
+    if args.emit_verdict and paired_comparison is None:
+        raise ValueError("--emit-verdict requires --paired-treatment-folder")
     mutations = _ensure_strategy_identity(_normalize_columns(mutations))
     mycovariants = _ensure_strategy_identity(_normalize_columns(mycovariants))
     if not living_cell_sources.empty:
@@ -964,6 +1069,20 @@ def main() -> None:
     nutrient_summary.to_csv(output_dir / "nutrient_economy_summary.csv", index=False)
     if paired_comparison is not None:
         paired_comparison.to_csv(output_dir / "paired_comparison.csv", index=False)
+    if args.emit_verdict:
+        control_manifest_path = run_folder / "resolved-manifest.json"
+        treatment_manifest_path = Path(args.paired_treatment_folder) / "resolved-manifest.json"
+        if not control_manifest_path.exists() or not treatment_manifest_path.exists():
+            raise FileNotFoundError("--emit-verdict requires resolved-manifest.json in both run folders")
+        verdict = build_preregistered_verdict(
+            paired_comparison,
+            json.loads(control_manifest_path.read_text(encoding="utf-8")),
+            json.loads(treatment_manifest_path.read_text(encoding="utf-8")),
+        )
+        (output_dir / "preregistered_verdict.json").write_text(
+            json.dumps(verdict, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     write_markdown_report(
         player_summary,
         growth_source_summary,

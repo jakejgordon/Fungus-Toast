@@ -26,7 +26,8 @@ namespace FungusToast.Simulation
             IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
-            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null)
+            IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
+            double? runtimeBudgetSeconds = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -51,7 +52,8 @@ namespace FungusToast.Simulation
                 startingPositionOverride: startingPositionOverride,
                 startingAdaptationIds: startingAdaptationIds,
                 preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId,
-                gameSeedSchedule: runMetadata?.GameSeedSchedule);
+                gameSeedSchedule: runMetadata?.GameSeedSchedule,
+                runtimeBudgetSeconds: runtimeBudgetSeconds ?? runMetadata?.RuntimeBudgetSeconds);
 
             PrintParityInvariantSummary(results.GameResults);
 

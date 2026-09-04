@@ -64,6 +64,10 @@ Paired control/treatment analysis requires both simulations to use the same
 ./.venv/bin/python analyze_balance.py --run-folder "<control>" --paired-treatment-folder "<treatment>" --output-dir "<comparison>"
 ```
 
+Add `--emit-verdict` only for comparison/holdout artifacts whose resolved
+manifests contain the same preregistered hypothesis. The command fails rather
+than creating a verdict for exploratory, mismatched, or incomplete evidence.
+
 Optional confidence and interaction thresholds:
 
 ```powershell
@@ -79,6 +83,7 @@ Optional confidence and interaction thresholds:
 - `mycovariant_mutation_interactions.csv`
 - `nutrient_economy_summary.csv`
 - `balance_recommendations.md`
+- `preregistered_verdict.json` (only when an eligible verdict is explicitly requested)
 
 The markdown report does not issue causal OP/UP verdicts from observational
 pick data.

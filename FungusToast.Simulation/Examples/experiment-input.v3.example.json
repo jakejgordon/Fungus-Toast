@@ -1,9 +1,16 @@
 {
-  "schemaVersion": "fungus-toast.experiment-input.v2",
+  "schemaVersion": "fungus-toast.experiment-input.v3",
   "experimentId": "example_rectangular_control",
   "purpose": "Demonstrate the strict P2-A input contract.",
   "gamesPerCondition": 20,
   "baseSeed": 12345,
+  "totalGameBudget": 20,
+  "runtimeBudgetSeconds": 600,
+  "analysis": {
+    "analysisVersion": "fungus-toast.analysis.v2",
+    "evidenceStage": "calibration",
+    "hypothesis": null
+  },
   "conditions": [
     {
       "conditionId": "p4.w120.h120.s.testing",

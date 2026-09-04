@@ -42,7 +42,7 @@ namespace FungusToast.Simulation.Export
 
             var manifest = new
             {
-                schemaVersion = "v7",
+                schemaVersion = "v8",
                 metadata.ExperimentId,
                 metadata.RunTimestampUtc,
                 strategySet = metadata.StrategySet.ToString(),
@@ -50,6 +50,9 @@ namespace FungusToast.Simulation.Export
                 strategySelectionSource = metadata.StrategySelectionSource.ToString(),
                 selectedStrategyLineup = metadata.SelectedStrategies,
                 metadata.BaseSeed,
+                metadata.TotalGameBudget,
+                metadata.RuntimeBudgetSeconds,
+                analysis = metadata.Analysis,
                 randomStreamContractVersion = RandomStreamContract.Version,
                 slotAssignmentPolicy = metadata.SlotAssignmentPolicy.ToString(),
                 metadata.NumberOfPlayers,

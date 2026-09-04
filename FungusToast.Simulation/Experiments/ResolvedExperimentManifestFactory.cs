@@ -22,6 +22,9 @@ public static class ResolvedExperimentManifestFactory
             ExperimentId = metadata.ExperimentId,
             ConditionId = metadata.Condition.ConditionId,
             Purpose = metadata.Purpose,
+            TotalGameBudget = metadata.TotalGameBudget,
+            RuntimeBudgetSeconds = metadata.RuntimeBudgetSeconds,
+            Analysis = metadata.Analysis,
             CreatedUtc = metadata.RunTimestampUtc,
             Code = code,
             Fingerprints = new ResolvedFingerprints

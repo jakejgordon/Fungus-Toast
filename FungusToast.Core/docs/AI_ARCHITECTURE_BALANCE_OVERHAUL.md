@@ -325,7 +325,7 @@ gate remains open.
   experiments), including CLI-to-condition translation, strict JSON
   unknown/missing-field handling, semantic validation, and the hard 100-game
   per-condition ceiling. The current checked-in example is
-  `FungusToast.Simulation/Examples/experiment-input.v2.example.json`.
+  `FungusToast.Simulation/Examples/experiment-input.v3.example.json`.
 - **P2.2 — complete:** Added `fungus-toast.experiment-result.v1` output with
   code, condition, board, balance-binary, execution, and strategy-definition
   fingerprints; exact seed schedules; selected/assigned lineups; actual
@@ -449,7 +449,7 @@ reproved after the corrected RNG and result contracts land.
    sequence and derives AI streams from SHA-256 identities containing base seed,
    player, round, decision kind, and occurrence. Mutation spending, interactive
    and fast-forward drafting, and roster selection use scoped streams. Resolved
-   result schema v4 and Parquet manifest v7 stamp the contract version.
+   result schema v5 and Parquet manifest v8 stamp the contract version.
 4. **P3.R4 — paired inference:** add explicit pair IDs, paired estimators, and
    game/seed-aware uncertainty. Measure treatment correlation and variance
    reduction empirically; do not promise a universal common-random-number gain.
@@ -462,6 +462,11 @@ reproved after the corrected RNG and result contracts land.
    version, and total game/runtime budget. An analyzer may issue a verdict only
    for that declaration; all other results are exploratory and multiplicity-
    controlled where applicable.
+   Implemented input schema v3 requires total game/runtime budgets, analysis
+   version, and an evidence stage whose game count matches the approved ladder.
+   Comparison/holdout hypotheses preregister one paired target/context/metric,
+   estimand, direction, and margin. `--emit-verdict` refuses absent, mismatched,
+   unsupported, incomplete, or under-stage declarations.
 6. **P3.R6 — geometry and robustness:** derive opponent-lineup and shape-aware
    starting-position covariates from the preserved mask and actual starts. Add
    termination reason, elimination timing, corpus/analysis versions, and runtime

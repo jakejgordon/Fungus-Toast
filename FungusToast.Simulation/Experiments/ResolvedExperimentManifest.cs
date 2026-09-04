@@ -4,13 +4,16 @@ namespace FungusToast.Simulation.Experiments;
 
 public sealed class ResolvedExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v4";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-result.v5";
 
     public required string SchemaVersion { get; init; }
     public required string InputSchemaVersion { get; init; }
     public required string ExperimentId { get; init; }
     public required string ConditionId { get; init; }
     public required string Purpose { get; init; }
+    public required int TotalGameBudget { get; init; }
+    public required double RuntimeBudgetSeconds { get; init; }
+    public required ExperimentAnalysisPlan Analysis { get; init; }
     public required DateTime CreatedUtc { get; init; }
     public required ResolvedCodeIdentity Code { get; init; }
     public required ResolvedFingerprints Fingerprints { get; init; }

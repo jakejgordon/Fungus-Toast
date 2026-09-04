@@ -12,7 +12,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void CheckedInExample_DeserializesAndValidates()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v2.example.json");
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v3.example.json");
         var manifest = ExperimentManifestJson.Deserialize(File.ReadAllText(path));
         Assert.Empty(ExperimentManifestValidator.Validate(manifest));
     }
@@ -37,7 +37,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void Deserialize_RejectsMissingRequiredFields()
     {
-        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v2\" }";
+        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v3\" }";
         Assert.Throws<JsonException>(() => ExperimentManifestJson.Deserialize(json));
     }
 
@@ -46,6 +46,27 @@ public sealed class ExperimentManifestTests
     {
         var errors = ExperimentManifestValidator.Validate(CreateValidManifest(gamesPerCondition: 101));
         Assert.Contains(errors, error => error.Contains("gamesPerCondition", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Validate_RejectsRequestedGamesAboveTotalBudget()
+    {
+        var manifest = CreateValidManifest(gamesPerCondition: 20, totalGameBudget: 19);
+
+        var errors = ExperimentManifestValidator.Validate(manifest);
+
+        Assert.Contains(errors, error => error.Contains("totalGameBudget", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void MatchupRunner_StopsBeforeStartingGameWhenRuntimeBudgetIsExhausted()
+    {
+        var result = MatchupRunner.RunMatchups(
+            new List<IMutationSpendingStrategy>(),
+            gamesToPlay: 1,
+            runtimeBudgetSeconds: 0);
+
+        Assert.Empty(result.GameResults);
     }
 
     [Fact]
@@ -231,13 +252,16 @@ public sealed class ExperimentManifestTests
         Assert.Contains("systems.draft", comparison.UnusedAllowedPaths);
     }
 
-    private static ExperimentManifest CreateValidManifest(int gamesPerCondition = 100, ExperimentCondition? condition = null) => new()
+    private static ExperimentManifest CreateValidManifest(int gamesPerCondition = 100, ExperimentCondition? condition = null, int? totalGameBudget = null) => new()
     {
         SchemaVersion = ExperimentManifest.CurrentSchemaVersion,
         ExperimentId = "manifest_contract_test",
         Purpose = "contract test",
         GamesPerCondition = gamesPerCondition,
         BaseSeed = 12345,
+        TotalGameBudget = totalGameBudget ?? gamesPerCondition,
+        RuntimeBudgetSeconds = 600,
+        Analysis = new ExperimentAnalysisPlan { AnalysisVersion = "fungus-toast.analysis.v2", EvidenceStage = ExperimentEvidenceStage.Exploratory },
         Conditions = new[] { condition ?? CreateValidCondition() }
     };
 

@@ -42,6 +42,9 @@ public static class ResolvedExperimentReplayRunner
             SelectedStrategies = source.SelectedLineup.OrderBy(strategy => strategy.LineupOrder).Select(strategy => strategy.Metadata).ToList(),
             InputSchemaVersion = source.InputSchemaVersion,
             Purpose = $"Replay of {source.ExperimentId}: {source.Purpose}",
+            TotalGameBudget = source.TotalGameBudget,
+            RuntimeBudgetSeconds = source.RuntimeBudgetSeconds,
+            Analysis = source.Analysis,
             Condition = source.Condition,
             GameSeedSchedule = source.Randomness.GameSeedSchedule
         };
@@ -79,7 +82,8 @@ public static class ResolvedExperimentReplayRunner
                 permanentlyBlockedTileIds: source.Condition.Board.BlockedTileIds,
                 startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,
                 startingAdaptationIds: startingAdaptations,
-                preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null);
+                preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null,
+                runtimeBudgetSeconds: source.RuntimeBudgetSeconds);
         }
         catch (Exception exception)
         {
@@ -119,6 +123,9 @@ public static class ResolvedExperimentReplayRunner
             Purpose = source.Purpose,
             GamesPerCondition = source.Sampling.GamesRequested,
             BaseSeed = source.Randomness.StrategySelectionSeed,
+            TotalGameBudget = source.TotalGameBudget,
+            RuntimeBudgetSeconds = source.RuntimeBudgetSeconds,
+            Analysis = source.Analysis,
             Conditions = new[] { source.Condition }
         });
 

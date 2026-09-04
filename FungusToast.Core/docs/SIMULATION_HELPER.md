@@ -7,17 +7,17 @@ This document contains the most effective commands for running different simulat
 ## Experiment input contract
 
 Simulation CLI options are validated through the versioned
-`fungus-toast.experiment-input.v2` contract before a run starts. Unknown JSON
+`fungus-toast.experiment-input.v3` contract before a run starts. Unknown JSON
 fields, invalid strategy or Adaptation references, illegal positions, ambiguous
 position modes, unsupported player counts, and any condition above 100 games
 are rejected. A canonical example is checked in at
-`FungusToast.Simulation/Examples/experiment-input.v2.example.json`.
+`FungusToast.Simulation/Examples/experiment-input.v3.example.json`.
 
 The input JSON file is a contract fixture in P2-A; direct execution of input
 manifests is not available yet. Resolved artifacts are replayable.
 
 Parquet runs also write `resolved-manifest.json` using
-`fungus-toast.experiment-result.v4` plus `resolved-manifest.sha256`. The resolved
+`fungus-toast.experiment-result.v5` plus `resolved-manifest.sha256`. The resolved
 artifact records the code and binary identities, condition and board
 fingerprints, selected lineup and strategy fingerprints, exact game seeds,
 actual per-game slot assignments, starting coordinates and Adaptations,
@@ -109,7 +109,7 @@ written under `/tmp`.
 
 ### Random-stream contract
 
-Resolved result schema v3 records `fungus-toast.random-streams.v1`. Gameplay
+Resolved result schema v5 records `fungus-toast.random-streams.v1`. Gameplay
 continues to use the historical game-seed stream, while mutation-spending and
 mycovariant-draft choices receive deterministic streams derived from game seed,
 player, round, decision kind, and occurrence. Consequently, changing how many
@@ -120,7 +120,7 @@ contract version and corrected reference baseline.
 ### Paired control/treatment analysis
 
 Give independently run control and treatment artifacts the same seed, lineup,
-slot policy, and `--pairing-group-id`. Result schema v4 and Parquet manifest v7
+slot policy, and `--pairing-group-id`. Result schema v5 and Parquet manifest v8
 emit a `pair_id` for every game and player row. Analyze the control folder with
 the treatment folder attached:
 
@@ -137,6 +137,37 @@ credit. It also reports observed within-pair correlation and the measured
 paired-versus-unpaired variance ratio. Analysis fails on incomplete pairs or
 mismatched seed, player count, start position, board fingerprint, or stream
 contract; no variance gain is assumed in advance.
+
+### Preregistered verdicts and budgets
+
+Input schema v3 requires a total-game budget, runtime budget, analysis version,
+and evidence stage. Stage sizes are enforced: smoke is 3–5 games, calibration
+is 20, comparison is 50, and holdout is 100. A decision-bearing hypothesis is
+legal only at comparison or holdout and must declare one pairing context,
+target strategy ID, primary metric, paired-mean-difference estimand, direction,
+and margin. Requested conditions must fit the total-game budget; the runner
+stops between games when the runtime budget expires and exports partial evidence.
+
+Supply every hypothesis option to both matched runs, then explicitly request
+the verdict during paired analysis:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --games 50 --evidence-stage Comparison \
+  --pairing-group-id mutation-x-test --hypothesis-id mutation-x-share \
+  --target-strategy-id legacy.testing.example.v1 \
+  --primary-metric NormalizedBoardShare --direction NonInferiority --margin 0.05 \
+  --runtime-budget-seconds 600 --no-keyboard
+
+./FungusToast.Analytics/.venv/bin/python FungusToast.Analytics/analyze_balance.py \
+  --run-folder /path/to/control --paired-treatment-folder /path/to/treatment \
+  --output-dir /path/to/comparison --emit-verdict
+```
+
+`--emit-verdict` fails if either manifest lacks the same preregistered plan, the
+target/context does not resolve uniquely, the analysis version is unsupported,
+or the stage's required complete pairs are absent. Other tables remain
+exploratory.
 
 ## Quick Commands
 

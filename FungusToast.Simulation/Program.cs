@@ -171,7 +171,8 @@ namespace FungusToast.Simulation
                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                     startingPositionOverride: config.StartingPositionOverride,
                     startingAdaptationIds: config.StartingAdaptationIds,
-                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId));
+                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
+                    runtimeBudgetSeconds: config.RuntimeBudgetSeconds));
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
@@ -190,6 +191,7 @@ namespace FungusToast.Simulation
             int totalStrata = playerCounts.Count * boardSizes.Count * strategySets.Count;
             int stratumIndex = 0;
             int failedStrata = 0;
+            var experimentStart = DateTime.UtcNow;
 
             Console.WriteLine($"Starting stratified batch '{experimentId}' with {totalStrata} strata.");
             Console.WriteLine($"Per-stratum games: {config.NumberOfGames}");
@@ -237,6 +239,13 @@ namespace FungusToast.Simulation
                         Console.WriteLine($"=== Stratum {stratumIndex}/{totalStrata} ===");
                         Console.WriteLine($"Players={players}, Board={board.Width}x{board.Height}, StrategySet={strategySet}, Seed={stratumSeed}");
 
+                        double remainingRuntimeSeconds = config.RuntimeBudgetSeconds - (DateTime.UtcNow - experimentStart).TotalSeconds;
+                        if (remainingRuntimeSeconds <= 0)
+                        {
+                            Console.WriteLine("Total experiment runtime budget reached; remaining strata were not started.");
+                            return;
+                        }
+
                         try
                         {
                             ExecuteWithRunState(config, runMetadata, () =>
@@ -257,7 +266,8 @@ namespace FungusToast.Simulation
                                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                                     startingPositionOverride: config.StartingPositionOverride,
                                     startingAdaptationIds: config.StartingAdaptationIds,
-                                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId));
+                                    preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
+                                    runtimeBudgetSeconds: remainingRuntimeSeconds));
                         }
                         catch (Exception exception)
                         {
@@ -362,7 +372,7 @@ namespace FungusToast.Simulation
             StrategySetEnum strategySet,
             int baseSeed)
         {
-            return new SimulationRunMetadata
+            var metadata = new SimulationRunMetadata
             {
                 ExperimentId = config.IsBatchMode
                     ? $"{inputManifest.ExperimentId}__p{condition.PlayerCount}_w{condition.Board.Width}_h{condition.Board.Height}_s{strategySet}"
@@ -381,6 +391,9 @@ namespace FungusToast.Simulation
                 BoardHeight = boardHeight,
                 InputSchemaVersion = inputManifest.SchemaVersion,
                 Purpose = inputManifest.Purpose,
+                TotalGameBudget = inputManifest.TotalGameBudget,
+                RuntimeBudgetSeconds = inputManifest.RuntimeBudgetSeconds,
+                Analysis = inputManifest.Analysis,
                 Condition = condition,
                 GameSeedSchedule = Enumerable.Range(0, config.NumberOfGames)
                     .Select(index => unchecked(baseSeed + index))
@@ -410,6 +423,14 @@ namespace FungusToast.Simulation
                     })
                     .ToList()
             };
+            var targetStrategyId = inputManifest.Analysis.Hypothesis?.TargetStrategyId;
+            if (!string.IsNullOrWhiteSpace(targetStrategyId)
+                && metadata.SelectedStrategies.All(strategy => !string.Equals(strategy.StrategyId, targetStrategyId, StringComparison.Ordinal)))
+            {
+                throw new InvalidOperationException(
+                    $"Preregistered target strategy '{targetStrategyId}' is not present in the resolved lineup.");
+            }
+            return metadata;
         }
 
         private static string FormatCounterTag(CounterTag counterTag)
@@ -525,7 +546,52 @@ namespace FungusToast.Simulation
                 Purpose = config.ExperimentPurpose,
                 GamesPerCondition = config.NumberOfGames,
                 BaseSeed = config.BaseSeed ?? 0,
+                TotalGameBudget = config.TotalGameBudget > 0
+                    ? config.TotalGameBudget
+                    : checked(config.NumberOfGames * conditions.Count),
+                RuntimeBudgetSeconds = config.RuntimeBudgetSeconds,
+                Analysis = BuildAnalysisPlan(config),
                 Conditions = conditions
+            };
+        }
+
+        private static ExperimentAnalysisPlan BuildAnalysisPlan(SimulationConfig config)
+        {
+            ExperimentHypothesis? hypothesis = null;
+            bool anyHypothesisField = !string.IsNullOrWhiteSpace(config.HypothesisId)
+                || !string.IsNullOrWhiteSpace(config.TargetStrategyId)
+                || config.PrimaryMetric.HasValue
+                || config.HypothesisDirection.HasValue
+                || config.HypothesisMargin.HasValue;
+            bool allHypothesisFields = !string.IsNullOrWhiteSpace(config.HypothesisId)
+                && !string.IsNullOrWhiteSpace(config.PairingGroupId)
+                && !string.IsNullOrWhiteSpace(config.TargetStrategyId)
+                && config.PrimaryMetric.HasValue
+                && config.HypothesisDirection.HasValue
+                && config.HypothesisMargin.HasValue;
+            if (anyHypothesisField && !allHypothesisFields)
+            {
+                throw new InvalidOperationException(
+                    "A preregistered hypothesis requires --hypothesis-id, --pairing-group-id, --target-strategy-id, --primary-metric, --direction, and --margin.");
+            }
+            if (allHypothesisFields)
+            {
+                hypothesis = new ExperimentHypothesis
+                {
+                    HypothesisId = config.HypothesisId,
+                    PrimaryContextId = config.PairingGroupId,
+                    TargetStrategyId = config.TargetStrategyId,
+                    PrimaryMetric = config.PrimaryMetric!.Value,
+                    Estimand = ExperimentEstimand.PairedMeanDifference,
+                    Direction = config.HypothesisDirection!.Value,
+                    Margin = config.HypothesisMargin!.Value
+                };
+            }
+            return new ExperimentAnalysisPlan
+            {
+                AnalysisVersion = config.AnalysisVersion,
+                EvidenceStage = config.EvidenceStage,
+                Hypothesis = hypothesis
             };
         }
 
@@ -552,6 +618,10 @@ namespace FungusToast.Simulation
                 ExperimentId = "",
                 ExperimentPurpose = "CLI simulation run",
                 PairingGroupId = "",
+                TotalGameBudget = 0,
+                RuntimeBudgetSeconds = 600,
+                AnalysisVersion = "fungus-toast.analysis.v2",
+                EvidenceStage = ExperimentEvidenceStage.Exploratory,
                 PlayerCounts = null,
                 BoardSizes = null,
                 StrategySets = null,
@@ -823,6 +893,69 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--total-game-budget":
+                        if (i + 1 < args.Length && int.TryParse(args[i + 1], out int totalGameBudget))
+                        {
+                            config.TotalGameBudget = totalGameBudget;
+                            i++;
+                        }
+                        break;
+                    case "--runtime-budget-seconds":
+                        if (i + 1 < args.Length && double.TryParse(args[i + 1], out double runtimeBudgetSeconds))
+                        {
+                            config.RuntimeBudgetSeconds = runtimeBudgetSeconds;
+                            i++;
+                        }
+                        break;
+                    case "--analysis-version":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.AnalysisVersion = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
+                    case "--evidence-stage":
+                        if (i + 1 < args.Length && Enum.TryParse<ExperimentEvidenceStage>(args[i + 1], true, out var evidenceStage))
+                        {
+                            config.EvidenceStage = evidenceStage;
+                            i++;
+                        }
+                        break;
+                    case "--hypothesis-id":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.HypothesisId = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
+                    case "--target-strategy-id":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.TargetStrategyId = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
+                    case "--primary-metric":
+                        if (i + 1 < args.Length && Enum.TryParse<ExperimentPrimaryMetric>(args[i + 1], true, out var primaryMetric))
+                        {
+                            config.PrimaryMetric = primaryMetric;
+                            i++;
+                        }
+                        break;
+                    case "--direction":
+                        if (i + 1 < args.Length && Enum.TryParse<ExperimentDirection>(args[i + 1], true, out var direction))
+                        {
+                            config.HypothesisDirection = direction;
+                            i++;
+                        }
+                        break;
+                    case "--margin":
+                        if (i + 1 < args.Length && double.TryParse(args[i + 1], out double margin))
+                        {
+                            config.HypothesisMargin = margin;
+                            i++;
+                        }
+                        break;
                     case "--no-keyboard":
                     case "--non-interactive":
                         config.DisableKeyboardInterrupt = true;
@@ -1034,6 +1167,15 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --experiment-id <id>     Identifier for this run's analytics artifacts");
             Console.WriteLine("  --purpose <text>         Human-readable reason for the experiment");
             Console.WriteLine("  --pairing-group-id <id> Shared ID for control/treatment runs using the same game/seat schedule");
+            Console.WriteLine("  --total-game-budget <n> Maximum games across all generated conditions (default: exact requested total)");
+            Console.WriteLine("  --runtime-budget-seconds <n> Runtime budget recorded for the experiment (default: 600)");
+            Console.WriteLine("  --analysis-version <id> Analysis implementation contract (default: fungus-toast.analysis.v2)");
+            Console.WriteLine("  --evidence-stage <s>    Exploratory, Smoke, Calibration, Comparison, or Holdout");
+            Console.WriteLine("  --hypothesis-id <id>    Preregistered hypothesis ID (requires all hypothesis options)");
+            Console.WriteLine("  --target-strategy-id <id> Stable strategy ID for the primary estimand");
+            Console.WriteLine("  --primary-metric <m>    NormalizedBoardShare, NormalizedRank, or WinCredit");
+            Console.WriteLine("  --direction <d>         Increase, Decrease, or NonInferiority");
+            Console.WriteLine("  --margin <n>            Non-negative preregistered difference margin");
             Console.WriteLine("  --replay-manifest <path> Replay and verify a resolved-manifest.json artifact");
             Console.WriteLine("  --replay-experiment-id   Optional artifact ID for a replay (default: timestamped)");
             Console.WriteLine("  --compare-manifests <control> <treatment>  Diff causal inputs in two resolved manifests");
@@ -1099,6 +1241,15 @@ namespace FungusToast.Simulation
             public string ExperimentId { get; set; } = "";
             public string ExperimentPurpose { get; set; } = "";
             public string PairingGroupId { get; set; } = "";
+            public int TotalGameBudget { get; set; }
+            public double RuntimeBudgetSeconds { get; set; }
+            public string AnalysisVersion { get; set; } = "";
+            public ExperimentEvidenceStage EvidenceStage { get; set; }
+            public string HypothesisId { get; set; } = "";
+            public string TargetStrategyId { get; set; } = "";
+            public ExperimentPrimaryMetric? PrimaryMetric { get; set; }
+            public ExperimentDirection? HypothesisDirection { get; set; }
+            public double? HypothesisMargin { get; set; }
             public List<int>? PlayerCounts { get; set; }
             public List<BoardSize>? BoardSizes { get; set; }
             public List<StrategySetEnum>? StrategySets { get; set; }

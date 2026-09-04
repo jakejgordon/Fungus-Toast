@@ -44,6 +44,9 @@ namespace FungusToast.Simulation.Models
         public required IReadOnlyList<SelectedStrategyMetadata> SelectedStrategies { get; init; }
         public required string InputSchemaVersion { get; init; }
         public required string Purpose { get; init; }
+        public required int TotalGameBudget { get; init; }
+        public required double RuntimeBudgetSeconds { get; init; }
+        public required ExperimentAnalysisPlan Analysis { get; init; }
         public required ExperimentCondition Condition { get; init; }
         public required IReadOnlyList<int> GameSeedSchedule { get; init; }
     }

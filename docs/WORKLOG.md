@@ -199,6 +199,18 @@ measurement model, phase gates, and open product decisions are in
     real three-game control/treatment Parquet round trip passed. The smoke
     variance ratio was reported empirically rather than assumed. Next: P3.R5
     enforceable preregistered gates.
+23. P3.R5 is complete. Input schema v3 requires analysis version, evidence
+    stage, total-game budget, and runtime budget; requested conditions cannot
+    exceed the game budget, and execution stops between games when runtime is
+    exhausted. Smoke/calibration/comparison/holdout counts are enforced as
+    3–5/20/50/100. Decision-bearing plans are limited to comparison/holdout and
+    preregister one pairing context, stable target strategy, metric, paired
+    estimand, direction, and margin. The analyzer emits a verdict only with
+    explicit `--emit-verdict` and matching complete plans. Eight analytics and
+    18 Simulation tests pass. A real 50-pair non-inferiority run emitted the one
+    declared board-share verdict; exploratory v4 artifacts were correctly
+    refused. Next: P3.R6 geometry, robustness, version, termination, and runtime
+    evidence.
 
 ### Completion Criteria
 

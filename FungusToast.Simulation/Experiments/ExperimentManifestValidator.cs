@@ -21,16 +21,61 @@ public static partial class ExperimentManifestValidator
             errors.Add("purpose is required.");
         if (manifest.GamesPerCondition < 1 || manifest.GamesPerCondition > ExperimentManifest.MaximumGamesPerCondition)
             errors.Add($"gamesPerCondition must be between 1 and {ExperimentManifest.MaximumGamesPerCondition}.");
+        if (manifest.TotalGameBudget < 1)
+            errors.Add("totalGameBudget must be positive.");
+        if (!double.IsFinite(manifest.RuntimeBudgetSeconds) || manifest.RuntimeBudgetSeconds <= 0)
+            errors.Add("runtimeBudgetSeconds must be finite and positive.");
+        ValidateAnalysis(manifest.Analysis, manifest.GamesPerCondition, errors);
         if (manifest.Conditions == null || manifest.Conditions.Count == 0)
         {
             errors.Add("conditions must contain at least one condition.");
             return errors;
         }
 
+        long requestedGames = (long)manifest.GamesPerCondition * manifest.Conditions.Count;
+        if (requestedGames > manifest.TotalGameBudget)
+            errors.Add($"requested condition games ({requestedGames}) exceed totalGameBudget ({manifest.TotalGameBudget}).");
+
         var conditionIds = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < manifest.Conditions.Count; index++)
             ValidateCondition(manifest.Conditions[index], index, conditionIds, errors);
         return errors;
+    }
+
+    private static void ValidateAnalysis(ExperimentAnalysisPlan? analysis, int gamesPerCondition, ICollection<string> errors)
+    {
+        if (analysis == null)
+        {
+            errors.Add("analysis is required.");
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(analysis.AnalysisVersion))
+            errors.Add("analysis.analysisVersion is required.");
+        switch (analysis.EvidenceStage)
+        {
+            case ExperimentEvidenceStage.Smoke when gamesPerCondition is < 3 or > 5:
+                errors.Add("smoke evidence requires 3-5 games per condition.");
+                break;
+            case ExperimentEvidenceStage.Calibration when gamesPerCondition != 20:
+                errors.Add("calibration evidence requires exactly 20 games per condition.");
+                break;
+            case ExperimentEvidenceStage.Comparison when gamesPerCondition != 50:
+                errors.Add("comparison evidence requires exactly 50 games per condition.");
+                break;
+            case ExperimentEvidenceStage.Holdout when gamesPerCondition != 100:
+                errors.Add("holdout evidence requires exactly 100 games per condition.");
+                break;
+        }
+        var hypothesis = analysis.Hypothesis;
+        if (hypothesis == null) return;
+        if (analysis.EvidenceStage is not ExperimentEvidenceStage.Comparison and not ExperimentEvidenceStage.Holdout)
+            errors.Add("a decision-bearing hypothesis requires comparison or holdout evidence stage.");
+        if (string.IsNullOrWhiteSpace(hypothesis.HypothesisId)) errors.Add("analysis.hypothesis.hypothesisId is required.");
+        if (string.IsNullOrWhiteSpace(hypothesis.PrimaryContextId)) errors.Add("analysis.hypothesis.primaryContextId is required.");
+        if (string.IsNullOrWhiteSpace(hypothesis.TargetStrategyId)) errors.Add("analysis.hypothesis.targetStrategyId is required.");
+        if (!double.IsFinite(hypothesis.Margin) || hypothesis.Margin < 0) errors.Add("analysis.hypothesis.margin must be finite and non-negative.");
+        if (hypothesis.Estimand != ExperimentEstimand.PairedMeanDifference)
+            errors.Add("analysis.hypothesis.estimand must be pairedMeanDifference.");
     }
 
     public static void ValidateAndThrow(ExperimentManifest manifest)

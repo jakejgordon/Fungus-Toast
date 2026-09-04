@@ -10,7 +10,7 @@ namespace FungusToast.Simulation.Experiments;
 /// </summary>
 public sealed class ExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v2";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v3";
     public const int MaximumGamesPerCondition = 100;
 
     public required string SchemaVersion { get; init; }
@@ -18,7 +18,56 @@ public sealed class ExperimentManifest
     public required string Purpose { get; init; }
     public required int GamesPerCondition { get; init; }
     public required int BaseSeed { get; init; }
+    public required int TotalGameBudget { get; init; }
+    public required double RuntimeBudgetSeconds { get; init; }
+    public required ExperimentAnalysisPlan Analysis { get; init; }
     public required IReadOnlyList<ExperimentCondition> Conditions { get; init; }
+}
+
+public sealed class ExperimentAnalysisPlan
+{
+    public required string AnalysisVersion { get; init; }
+    public required ExperimentEvidenceStage EvidenceStage { get; init; }
+    public ExperimentHypothesis? Hypothesis { get; init; }
+}
+
+public enum ExperimentEvidenceStage
+{
+    Exploratory,
+    Smoke,
+    Calibration,
+    Comparison,
+    Holdout
+}
+
+public sealed class ExperimentHypothesis
+{
+    public required string HypothesisId { get; init; }
+    public required string PrimaryContextId { get; init; }
+    public required string TargetStrategyId { get; init; }
+    public required ExperimentPrimaryMetric PrimaryMetric { get; init; }
+    public required ExperimentEstimand Estimand { get; init; }
+    public required ExperimentDirection Direction { get; init; }
+    public required double Margin { get; init; }
+}
+
+public enum ExperimentPrimaryMetric
+{
+    NormalizedBoardShare,
+    NormalizedRank,
+    WinCredit
+}
+
+public enum ExperimentEstimand
+{
+    PairedMeanDifference
+}
+
+public enum ExperimentDirection
+{
+    Increase,
+    Decrease,
+    NonInferiority
 }
 
 public sealed record ExperimentCondition

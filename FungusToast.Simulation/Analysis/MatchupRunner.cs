@@ -81,7 +81,8 @@ namespace FungusToast.Simulation.Analysis
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
-            IReadOnlyList<int>? gameSeedSchedule = null)
+            IReadOnlyList<int>? gameSeedSchedule = null,
+            double? runtimeBudgetSeconds = null)
         {
             if (gameSeedSchedule != null && gameSeedSchedule.Count != gamesToPlay)
                 throw new ArgumentException("Game seed schedule count must match gamesToPlay.", nameof(gameSeedSchedule));
@@ -97,6 +98,13 @@ namespace FungusToast.Simulation.Analysis
 
             for (int i = 0; i < gamesToPlay; i++)
             {
+                if (runtimeBudgetSeconds.HasValue
+                    && (DateTime.UtcNow - startTime).TotalSeconds >= runtimeBudgetSeconds.Value)
+                {
+                    Console.WriteLine($"\nRuntime budget of {runtimeBudgetSeconds.Value:0.###} seconds reached after {results.Count} games; exporting partial evidence.");
+                    break;
+                }
+
                 // Check for user interrupt every loop when keyboard interruption is enabled
                 if (enableKeyboardInterrupt && Console.KeyAvailable)
                 {
