@@ -173,7 +173,8 @@ namespace FungusToast.Simulation
                     startingAdaptationIds: config.StartingAdaptationIds,
                     preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
                     runtimeBudgetSeconds: config.RuntimeBudgetSeconds,
-                    enableStartingAdaptations: config.EnableStartingAdaptations));
+                    enableStartingAdaptations: config.EnableStartingAdaptations,
+                    strategyStartingSporeEdgeOffsetOverrides: config.StrategyStartingSporeEdgeOffsetOverrides));
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
@@ -269,7 +270,8 @@ namespace FungusToast.Simulation
                                     startingAdaptationIds: config.StartingAdaptationIds,
                                     preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
                                     runtimeBudgetSeconds: remainingRuntimeSeconds,
-                                    enableStartingAdaptations: config.EnableStartingAdaptations));
+                                    enableStartingAdaptations: config.EnableStartingAdaptations,
+                                    strategyStartingSporeEdgeOffsetOverrides: config.StrategyStartingSporeEdgeOffsetOverrides));
                         }
                         catch (Exception exception)
                         {
@@ -539,7 +541,15 @@ namespace FungusToast.Simulation
                                     .Select(position => new BoardCoordinate { X = position.x, Y = position.y })
                                     .ToList()
                             })
-                            .ToList() ?? new List<PlayerStartingPositionPool>()
+                            .ToList() ?? new List<PlayerStartingPositionPool>(),
+                        StrategyEdgeOffsetOverrides = config.StrategyStartingSporeEdgeOffsetOverrides?
+                            .OrderBy(entry => entry.Key, StringComparer.Ordinal)
+                            .Select(entry => new StrategyStartingSporeEdgeOffsetOverride
+                            {
+                                StrategyName = entry.Key,
+                                EdgeOffset = entry.Value
+                            })
+                            .ToList() ?? new List<StrategyStartingSporeEdgeOffsetOverride>()
                     },
                     SlotAssignmentPolicy = config.SlotAssignmentPolicy
                 });
@@ -635,6 +645,7 @@ namespace FungusToast.Simulation
                 StrategyFilter = new StrategyCatalogFilter(),
                 StartingAdaptationIds = null,
                 PreferredStartingPositionPoolsByPlayerId = null,
+                StrategyStartingSporeEdgeOffsetOverrides = null,
                 PermanentlyBlockedTileIds = null
             };
 
@@ -1040,6 +1051,21 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--strategy-start-offset-overrides":
+                        if (i + 1 < args.Length)
+                        {
+                            var parsed = ParseStrategyStartingSporeEdgeOffsetOverrides(args[i + 1]);
+                            if (parsed == null)
+                            {
+                                Console.WriteLine($"Invalid --strategy-start-offset-overrides value: {args[i + 1]}");
+                                Console.WriteLine("Expected format: StrategyName=offset,OtherStrategy=offset");
+                                return null;
+                            }
+
+                            config.StrategyStartingSporeEdgeOffsetOverrides = parsed;
+                            i++;
+                        }
+                        break;
                     case "--blocked-tiles-file":
                         if (i + 1 < args.Length)
                         {
@@ -1202,6 +1228,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --no-starting-adaptations Disable all baseline and explicit starting Adaptations");
             Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
             Console.WriteLine("  --starting-adaptations   Per-slot adaptation IDs; pipe-delimited slots, comma-delimited IDs (e.g. \"|adaptation_3,adaptation_4||adaptation_1\")");
+            Console.WriteLine("  --strategy-start-offset-overrides Override strategy-owned starting-spore edge offsets (e.g. \"StrategyA=0,StrategyB=-3\")");
             Console.WriteLine("  --blocked-tiles-file     Text file with permanently blocked tile ids for shaped boards");
             Console.WriteLine("  --rotate-slots           Rotate strategy-to-player slot assignment each game");
             Console.WriteLine("  --fixed-slots            Keep strategy-to-player slot assignment fixed (default)");
@@ -1270,6 +1297,7 @@ namespace FungusToast.Simulation
             public StrategyCatalogFilter StrategyFilter { get; set; } = new();
             public List<List<string>>? StartingAdaptationIds { get; set; } // per-slot; outer index = player slot 0..N-1
             public Dictionary<int, IReadOnlyList<(int x, int y)>>? PreferredStartingPositionPoolsByPlayerId { get; set; }
+            public Dictionary<string, int>? StrategyStartingSporeEdgeOffsetOverrides { get; set; }
             public IReadOnlyCollection<int>? PermanentlyBlockedTileIds { get; set; }
 
             public bool IsBatchMode =>
@@ -1350,6 +1378,29 @@ namespace FungusToast.Simulation
                 }
 
                 result[playerId] = positions;
+            }
+
+            return result;
+        }
+
+        private static Dictionary<string, int>? ParseStrategyStartingSporeEdgeOffsetOverrides(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var token in value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var parts = token.Split('=', 2, StringSplitOptions.TrimEntries);
+                if (parts.Length != 2
+                    || string.IsNullOrWhiteSpace(parts[0])
+                    || !int.TryParse(parts[1], out int edgeOffset)
+                    || !result.TryAdd(parts[0], edgeOffset))
+                {
+                    return null;
+                }
             }
 
             return result;

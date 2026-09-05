@@ -83,7 +83,8 @@ namespace FungusToast.Simulation.Analysis
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
             IReadOnlyList<int>? gameSeedSchedule = null,
             double? runtimeBudgetSeconds = null,
-            bool enableStartingAdaptations = true)
+            bool enableStartingAdaptations = true,
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
         {
             if (gameSeedSchedule != null && gameSeedSchedule.Count != gamesToPlay)
                 throw new ArgumentException("Game seed schedule count must match gamesToPlay.", nameof(gameSeedSchedule));
@@ -139,7 +140,8 @@ namespace FungusToast.Simulation.Analysis
                     startingPositionOverride: startingPositionOverride,
                     startingAdaptationIds: startingAdaptationIds,
                     preferredPositionsByPlayerId: preferredPositionsByPlayerId,
-                    enableStartingAdaptations: enableStartingAdaptations
+                    enableStartingAdaptations: enableStartingAdaptations,
+                    strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides
                 );
 
                 results.Add(result);

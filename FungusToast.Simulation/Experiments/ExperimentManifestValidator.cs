@@ -185,6 +185,7 @@ public static partial class ExperimentManifestValidator
         if (condition.Positioning == null) { errors.Add($"{path}.positioning is required."); return; }
         var exact = condition.Positioning.ExactStartingPositions ?? Array.Empty<BoardCoordinate>();
         var pools = condition.Positioning.PreferredPositionPools ?? Array.Empty<PlayerStartingPositionPool>();
+        var edgeOffsetOverrides = condition.Positioning.StrategyEdgeOffsetOverrides ?? Array.Empty<StrategyStartingSporeEdgeOffsetOverride>();
         if (exact.Count > 0 && pools.Count > 0) errors.Add($"{path}.positioning cannot specify both exactStartingPositions and preferredPositionPools.");
         if (exact.Count > 0 && exact.Count != condition.PlayerCount) errors.Add($"{path}.positioning.exactStartingPositions count must match playerCount.");
         ValidateCoordinates(exact, condition.Board, blocked, $"{path}.positioning.exactStartingPositions", errors);
@@ -200,6 +201,29 @@ public static partial class ExperimentManifestValidator
             if (positions.Count == 0) errors.Add($"{path}.positioning.preferredPositionPools[{pool.PlayerSlot}] must contain at least one position.");
             ValidateCoordinates(positions, condition.Board, blocked, $"{path}.positioning.preferredPositionPools[{pool.PlayerSlot}]", errors);
             ValidateUniqueCoordinates(positions, $"{path}.positioning.preferredPositionPools[{pool.PlayerSlot}]", errors);
+        }
+
+        var seenStrategyNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var edgeOffsetOverride in edgeOffsetOverrides)
+        {
+            if (edgeOffsetOverride == null)
+            {
+                errors.Add($"{path}.positioning.strategyEdgeOffsetOverrides must not contain null entries.");
+                continue;
+            }
+
+            if (string.IsNullOrWhiteSpace(edgeOffsetOverride.StrategyName))
+            {
+                errors.Add($"{path}.positioning.strategyEdgeOffsetOverrides must contain non-blank strategy names.");
+            }
+            else if (!seenStrategyNames.Add(edgeOffsetOverride.StrategyName))
+            {
+                errors.Add($"{path}.positioning.strategyEdgeOffsetOverrides repeats strategy '{edgeOffsetOverride.StrategyName}'.");
+            }
+            else if (StrategyRegistry.GetDefinition(condition.Strategies.StrategySet, edgeOffsetOverride.StrategyName) == null)
+            {
+                errors.Add($"{path}.positioning.strategyEdgeOffsetOverrides contains unknown strategy '{edgeOffsetOverride.StrategyName}'.");
+            }
         }
     }
 

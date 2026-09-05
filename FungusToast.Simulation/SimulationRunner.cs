@@ -28,7 +28,8 @@ namespace FungusToast.Simulation
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
             double? runtimeBudgetSeconds = null,
-            bool enableStartingAdaptations = true)
+            bool enableStartingAdaptations = true,
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -55,7 +56,8 @@ namespace FungusToast.Simulation
                 preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId,
                 gameSeedSchedule: runMetadata?.GameSeedSchedule,
                 runtimeBudgetSeconds: runtimeBudgetSeconds ?? runMetadata?.RuntimeBudgetSeconds,
-                enableStartingAdaptations: enableStartingAdaptations);
+                enableStartingAdaptations: enableStartingAdaptations,
+                strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides);
 
             PrintParityInvariantSummary(results.GameResults);
 

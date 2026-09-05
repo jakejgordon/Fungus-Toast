@@ -17,6 +17,25 @@ are considered complete. The current Aerated Frontier calibration uses
 
 ## Active Initiative — AI Architecture and Balance Overhaul
 
+### 2026-09-05 Hoardspore start-offset diagnosis
+
+- Baseline: `elite_fixed8_no_adapt_500_c00` through `c09`; treatment:
+  `elite_fixed8_hoard_offset0_500_c00` through `c09`.
+- Fixed controls: the same eight-strategy Campaign Elite lineup, 160x160 board,
+  rotating slots, contiguous seeds `2026090400..2026090899`, nutrient patches
+  off, Mycovariants off, and starting Adaptations off. The sole treatment was
+  Hoardspore Regent's strategy-owned starting-spore edge offset changing from
+  `+6` to `0`.
+- Across 500 matched games, Hoardspore's win credit increased from `74.5%` to
+  `78.4%` (paired delta `+3.9` percentage points; bootstrap 95% interval
+  `-1.2..+9.0`, sign-flip `p=0.141`). Its mean board share increased from
+  `28.31%` to `29.74%` (delta `+1.43` points; bootstrap 95% interval
+  `+0.72..+2.14`, `p<0.001`), and mean rank improved from `1.302` to `1.236`
+  (delta `-0.066`; bootstrap 95% interval `-0.128..-0.004`, `p=0.043`).
+- Conclusion: the `+6` offset does not explain Hoardspore's dominance; it is a
+  measurable territorial handicap. Continue diagnosis inside its mutation
+  sequencing/economy behavior rather than treating the offset as an advantage.
+
 ### Objective
 
 Build a simpler, more effective AI strategy system and an autonomous,

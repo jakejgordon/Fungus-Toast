@@ -60,6 +60,8 @@ public static class ResolvedExperimentReplayRunner
             .Select(slot => (IReadOnlyList<string>)(source.Condition.Systems.StartingAdaptations
                 .FirstOrDefault(loadout => loadout.PlayerSlot == slot)?.AdaptationIds ?? Array.Empty<string>()))
             .ToList();
+        var strategyEdgeOffsetOverrides = source.Condition.Positioning.StrategyEdgeOffsetOverrides
+            .ToDictionary(entry => entry.StrategyName, entry => entry.EdgeOffset, StringComparer.OrdinalIgnoreCase);
 
         SimulationBatchResult replayResult;
         ExperimentRunStateStore.MarkRunning(metadata);
@@ -84,7 +86,8 @@ public static class ResolvedExperimentReplayRunner
                 startingAdaptationIds: startingAdaptations,
                 preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null,
                 runtimeBudgetSeconds: source.RuntimeBudgetSeconds,
-                enableStartingAdaptations: source.Condition.Systems.StartingAdaptationsEnabled);
+                enableStartingAdaptations: source.Condition.Systems.StartingAdaptationsEnabled,
+                strategyStartingSporeEdgeOffsetOverrides: strategyEdgeOffsetOverrides);
         }
         catch (Exception exception)
         {

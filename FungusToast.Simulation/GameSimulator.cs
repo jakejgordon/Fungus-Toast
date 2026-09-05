@@ -37,7 +37,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
-            bool enableStartingAdaptations = true
+            bool enableStartingAdaptations = true,
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null
         )
         {
             var gameStopwatch = Stopwatch.StartNew();
@@ -55,7 +56,8 @@ namespace FungusToast.Simulation.GameSimulation
                 startingPositionOverride,
                 startingAdaptationIds,
                 preferredPositionsByPlayerId,
-                enableStartingAdaptations);
+                enableStartingAdaptations,
+                strategyStartingSporeEdgeOffsetOverrides);
             var resolvedStartingPositions = players.ToDictionary(
                 player => player.PlayerId,
                 player =>
@@ -301,7 +303,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
-            bool enableStartingAdaptations = true)
+            bool enableStartingAdaptations = true,
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
         {
             var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
@@ -364,7 +367,12 @@ namespace FungusToast.Simulation.GameSimulation
 
             // Use the shared starting spore placement utility
             var edgeOffsets = strategies
-                .Select(strategy => strategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
+                .Select(strategy => strategyStartingSporeEdgeOffsetOverrides != null
+                    && strategyStartingSporeEdgeOffsetOverrides.TryGetValue(strategy.StrategyName, out int edgeOffset)
+                        ? edgeOffset
+                        : strategy is ParameterizedSpendingStrategy parameterized
+                            ? parameterized.StartingSporeEdgeOffset
+                            : 0)
                 .ToArray();
             StartingSporeUtility.PlaceStartingSpores(
                 board,

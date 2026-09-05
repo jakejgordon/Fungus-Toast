@@ -126,6 +126,25 @@ public sealed class ExperimentManifestTests
     }
 
     [Fact]
+    public void Validate_RejectsUnknownStrategyEdgeOffsetOverride()
+    {
+        var condition = CreateValidCondition() with
+        {
+            Positioning = new ExperimentPositioning
+            {
+                StrategyEdgeOffsetOverrides = new[]
+                {
+                    new StrategyStartingSporeEdgeOffsetOverride { StrategyName = "missing-strategy", EdgeOffset = 0 }
+                }
+            }
+        };
+
+        var errors = ExperimentManifestValidator.Validate(CreateValidManifest(condition: condition));
+
+        Assert.Contains(errors, error => error.Contains("unknown strategy 'missing-strategy'", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Fingerprints_AreStableAndBoardMaskOrderIndependent()
     {
         var first = new ExperimentBoard

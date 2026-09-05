@@ -568,6 +568,7 @@ The simulation supports the following command-line parameters:
 | `--parquet` | | Export canonical Parquet datasets | On |
 | `--no-parquet` | | Disable Parquet export | Off |
 | `--no-starting-adaptations` | | Disable all baseline and explicit starting Adaptations | Off |
+| `--strategy-start-offset-overrides` | | Override strategy-owned starting-spore edge offsets as `Name=value` pairs | Off |
 | `--output` | `-o` | Specify output filename (optional) | Auto-generated timestamp |
 | `--no-keyboard` | | Disable keyboard interruption (`Q`/`Escape`) | Off |
 | `--non-interactive` | | Alias for `--no-keyboard` | Off |
@@ -667,6 +668,7 @@ For starting-position fairness studies and other symmetry-sensitive simulation w
   - `--no-nutrient-patches`
   - `--no-mycovariants`
 - Use `--starting-positions x1:y1,x2:y2,...` to test a candidate layout without changing `StartingSporeUtility`.
+- Use `--strategy-start-offset-overrides "StrategyName=0"` to isolate a strategy-owned edge offset without editing its roster definition.
 - Use `--fixed-slots` for true position studies; use `--rotate-slots` for general balance tests where slot bias should average out.
 - Use explicit `--output` and `--experiment-id` values when comparing multiple candidates so each run can be traced unambiguously.
 - For candidate bakeoffs, use a staged process:

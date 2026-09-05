@@ -136,6 +136,13 @@ public sealed class ExperimentPositioning
 {
     public IReadOnlyList<BoardCoordinate> ExactStartingPositions { get; init; } = Array.Empty<BoardCoordinate>();
     public IReadOnlyList<PlayerStartingPositionPool> PreferredPositionPools { get; init; } = Array.Empty<PlayerStartingPositionPool>();
+    public IReadOnlyList<StrategyStartingSporeEdgeOffsetOverride> StrategyEdgeOffsetOverrides { get; init; } = Array.Empty<StrategyStartingSporeEdgeOffsetOverride>();
+}
+
+public sealed class StrategyStartingSporeEdgeOffsetOverride
+{
+    public required string StrategyName { get; init; }
+    public required int EdgeOffset { get; init; }
 }
 
 public sealed class PlayerStartingPositionPool
