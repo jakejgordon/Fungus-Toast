@@ -651,6 +651,25 @@ fingerprint
 Fallback economy bias alone therefore does not justify building the candidate
 framework or changing a player-facing strategy.
 
+#### Frozen Phase 6 follow-up — Balanced Control opener order
+
+Compare `TST_BalancedControl_AnabolicFirst` against
+`TST_BalancedGeneralistControl`. Both use `ModerateEconomy`, high-tier
+prioritization, the same Mycovariant preferences, and the same four goals; the
+candidate moves `Anabolic Inversion` ahead of `Creeping Mold` while retaining
+`Necrosporulation` and `Catabolic Rebirth` in third and fourth position.
+
+Run one 100-game, two-player, 120x120 rectangular condition with base seed
+`2026090502`, rotating slots, nutrient patches off, Mycovariants off, and all
+starting Adaptations off. The total budget is 100 games and 600 runtime seconds.
+Normalized board share is the sole advancement metric; normalized rank is
+secondary and win credit descriptive. Compute candidate-minus-control share per
+game and its two-sided 95% interval. Advance the candidate only if all games
+complete with no parity failure, mean lift is at least `0.05`, and the interval
+excludes zero in the favorable direction. A pass permits a new-context holdout,
+not a player-facing roster change. A failure ends this line without framework
+construction.
+
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,
