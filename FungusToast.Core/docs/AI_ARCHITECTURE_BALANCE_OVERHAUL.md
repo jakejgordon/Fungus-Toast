@@ -607,6 +607,31 @@ Begin with a bounded deterministic parameter sweep over existing safe tunables
 that writes a results table. Add the framework below only after that simple
 sweep produces at least one candidate worth promoting.
 
+#### Frozen Phase 6 pilot — Balanced Control economy bias
+
+Before running the pilot, compare the three existing Testing definitions whose
+behavior configuration differs only by `EconomyBias`:
+
+- `TST_BalancedControl_MinorEconomy` (`MinorEconomy`);
+- `TST_BalancedGeneralistControl` (`ModerateEconomy`, the control);
+- `TST_BalancedControl_MaxEconomy` (`MaxEconomy`).
+
+Run one 100-game, three-player, 120x120 rectangular condition with base seed
+`2026090501`, rotating slots, nutrient patches off, Mycovariants off, and all
+starting Adaptations off. The total budget is 100 games and 600 runtime seconds.
+This is a bounded multi-arm screen, not a player-facing balance verdict.
+
+Normalized board share is primary, normalized rank is secondary, and win credit
+is descriptive. For each candidate, compute the per-game paired difference from
+the Moderate control. Use a two-sided 97.5% interval for each of the two primary
+comparisons (Bonferroni familywise alpha 0.05). A candidate is worth advancing
+to a separately preregistered holdout only if it completes all 100 games with no
+parity failure, its mean board-share lift is at least `0.05`, and the adjusted
+interval excludes zero in the favorable direction. If both candidates pass,
+advance only the larger primary lift. Secondary metrics cannot advance a
+candidate. If neither passes, do not build the Phase 6 framework from this
+pilot; record that fallback economy bias alone did not justify promotion.
+
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,
