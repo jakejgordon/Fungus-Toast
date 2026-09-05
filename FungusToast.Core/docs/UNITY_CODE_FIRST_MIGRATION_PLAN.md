@@ -191,7 +191,7 @@ to the "Already code-first" table above. What follows starts at Mutation Tree
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | TBD (48 fields) | Largest and most gameplay-central. Do only after the composition and validation patterns have survived **both** a repeated-entry system and the two-instance Game Log case. Clone templates: `UI_MutationNode`, `UI_MutationRow`, `UI_MutationCategoryHeader`, `UI_MutationPlaceholder`, `UI_RootMutationButton`, `UI_GrowthPreviewCell`. |
+| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 1 confirmed remaining (was TBD, 48 fields) | **In progress, split into 6 chunks per-user request (2026-09-05) — see section 9.** Chunks 1–4 closed: 9 of 15 files needed zero changes (7 with no fields at all, `MutationLayoutMetadata.cs` a non-`MonoBehaviour` data class, `UI_TooltipPositioner.cs` unreferenced by either composition root), 2 more (`UI_MutationTreeToastPresenter.cs`, `UI_MutationPointBonusPopupPresenter.cs`) were already fully resolved via existing `AddComponent`+`Initialize()` code predating this plan, and `UI_RemainingPointsPanel.cs` turned out to be dead code (flagged separately, not a wiring concern). Remaining: `MutationTreeBuilder.cs` + `MutationNodeUI.cs` (Chunk 5, expected fully retained — clone templates), and `UI_MutationManager.cs` + `GameUIManager.mutationUIManager` (Chunk 6, the cohort's one real cross-reference). `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) noted as a second inventory gap — never classified into any declared cohort, like `leftSidebar` — not pulled into this slice's scope. |
 | **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
 ### Explicitly out of scope (see section 4)
@@ -431,6 +431,50 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Mutation Tree cohort split into 6 chunks per user request;
+Chunks 1–4 closed, zero code changes.** User asked for the High-risk cohort
+to be broken into small pieces, low-risk first, rather than tackled as one
+slice — surveyed all 15 files in `UI/MutationTree/` first to establish the
+actual risk ordering rather than guessing from the plan's original field
+counts (which the plan's own metric warning already distrusts).
+**Chunk 1 (7 files, zero fields):** `MycelialBackdropGraphic.cs`,
+`MutationCategoryPresentationCatalog.cs`, `MutationTreeColors.cs`,
+`RequirementStatusBadge.cs`, `MutationDependencyGraphGraphic.cs`,
+`UI_MutationLayoutProvider.cs`, `MutationInspectorPanel.cs` — no
+`[SerializeField]` or public fields at all, confirmed by grep.
+**Chunk 2 (2 files, not scene-reference concerns):** `MutationLayoutMetadata.cs`
+is a plain C# class (not a `MonoBehaviour`) — its 3 public fields are
+constructor-set data, not Unity serialization. `UI_TooltipPositioner.cs`
+(class `TooltipPositioner`) has 1 public field but is referenced by neither
+`GameManager.cs` nor `GameUIManager.cs` — confirmed via grep.
+**Chunk 3 (2 files, already resolved by pre-existing code):**
+`UI_MutationTreeToastPresenter.cs` and `UI_MutationPointBonusPopupPresenter.cs`
+are both `AddComponent`'d on demand inside `GameUIManager`'s own
+`MutationTreeToastPresenter`/`MutationPointBonusPopupPresenter` properties —
+the exact Pause Menu construct-inject pattern, predating this plan entirely.
+Confirmed `UI_MutationTreeToastPresenter`'s script GUID appears nowhere in
+`SampleScene.unity` — it is never scene-authored, so its
+`[SerializeField] private UI_MutationManager mutationManager` is populated
+exclusively through its own `Initialize(UI_MutationManager manager)` method,
+never Inspector-wired. Vestigial attribute, not a real cross-reference.
+**Chunk 4 (dead code, flagged not fixed):** `UI_RemainingPointsPanel.cs` is
+completely orphaned — its script GUID appears in no scene or prefab
+(confirmed via grep across `Assets/Scenes/` and `Assets/Prefabs/`), and no
+other file references its class. Its `ShowProjectedCost`/`ClearProjectedCost`
+method names coincidentally match unrelated, different-signature methods on
+`UI_MutationManager.cs` that operate on that class's own
+`mutationPointsCounterText` field — this looks like `UI_MutationManager`
+grew its own inline implementation and the old component was never deleted.
+Nothing points at it, so there's no wiring to migrate; flagged as a
+background task (`task_cb240749`) for separate dead-code removal rather than
+touched here — out of scope for a wiring-only migration.
+**Remaining:** Chunk 5 (`MutationTreeBuilder.cs`, `MutationNodeUI.cs` —
+expected fully retained, clone templates) and Chunk 6 (`UI_MutationManager.cs`
++ `GameUIManager.mutationUIManager`, the cohort's one real cross-reference).
+Also noted: `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) is a second
+field, like `leftSidebar`, that was never classified into any declared
+cohort — left alone rather than silently pulled into this slice.
 
 **2026-09-05 — Cell / mycovariant tooltip panels closed. Zero code changes.**
 Investigated before writing a slice contract, since the survey suggested this
