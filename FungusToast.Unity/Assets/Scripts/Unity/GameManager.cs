@@ -313,9 +313,8 @@ namespace FungusToast.Unity
         public CameraCenterer cameraCenterer = null!; 
         [SerializeField] private MutationManager mutationManager = null!; 
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!; 
-        [SerializeField] private GameUIManager gameUIManager = null!; 
-        [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!; 
-        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker = null!; 
+        [SerializeField] private GameUIManager gameUIManager = null!;
+        [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
         [SerializeField] private MycovariantDraftController mycovariantDraftController = null!;
         [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
         public GameObject SelectionPromptPanel = null!;
@@ -885,9 +884,9 @@ namespace FungusToast.Unity
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
 
-            phaseProgressTracker?.ResetTracker();
+            gameUIManager.PhaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightMutationPhase();
 
             if (cameraCenterer != null)
             {
@@ -972,9 +971,9 @@ namespace FungusToast.Unity
             cameraCenterer?.CaptureInitialFraming();
             InitGameLogs();
 
-            phaseProgressTracker?.ResetTracker();
+            gameUIManager.PhaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightMutationPhase();
             ConfigureDraftHistoryUi();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);
@@ -1188,7 +1187,7 @@ namespace FungusToast.Unity
                 soundEffectService?.PlayOneShot(growthPhaseStartClip, growthPhaseStartVolume);
                 gameUIManager.PhaseBanner.ShowRoutinePhase("Growth");
             }
-            phaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
+            gameUIManager.PhaseProgressTracker?.AdvanceToNextGrowthCycle(Board.CurrentGrowthCycle);
             StartCoroutine(BeginGrowthPhaseAfterPreGrowthEffects());
         }
 
@@ -1292,7 +1291,7 @@ namespace FungusToast.Unity
                 soundEffectService?.PlayOneShot(decayPhaseStartClip, decayPhaseStartVolume);
                 gameUIManager.PhaseBanner.ShowRoutinePhase("Decay");
             }
-            phaseProgressTracker?.HighlightDecayPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightDecayPhase();
             decayPhaseRunner.StartDecayPhase(
                 growthPhaseRunner.FailedGrowthsByPlayerId,
                 rng,
@@ -1437,7 +1436,7 @@ namespace FungusToast.Unity
                 StartCoroutine(specialEventPresentationService.PresentPendingImmediate());
             }
             UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightMutationPhase();
         }
 
         #endregion
@@ -1501,7 +1500,7 @@ namespace FungusToast.Unity
 
         private void UpdatePhaseProgressTrackerLabel()
         {
-            phaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION");
+            gameUIManager.PhaseProgressTracker?.SetMutationPhaseLabel(isInDraftPhase ? "DRAFT" : "MUTATION");
         }
 
         private bool HasQueuedDraftPhaseForCurrentRound()
@@ -1626,7 +1625,7 @@ namespace FungusToast.Unity
                     gameUIManager.GameLogRouter?.OnDraftPhaseStart();
                 }
             }
-            phaseProgressTracker?.HighlightDraftPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightDraftPhase();
             gameUIManager.MutationUIManager.gameObject.SetActive(false);
             gameUIManager.LeftSidebar?.gameObject.SetActive(false);
         }
@@ -2198,9 +2197,9 @@ namespace FungusToast.Unity
                 ShowGameStartBanner();
             }
 
-            phaseProgressTracker?.ResetTracker();
+            gameUIManager.PhaseProgressTracker?.ResetTracker();
             UpdatePhaseProgressTrackerLabel();
-            phaseProgressTracker?.HighlightMutationPhase();
+            gameUIManager.PhaseProgressTracker?.HighlightMutationPhase();
             ConfigureDraftHistoryUi();
             gameUIManager.RightSidebar?.SetGridVisualizer(gridVisualizer);
             gameUIManager.RightSidebar?.InitializePlayerSummaries(players);

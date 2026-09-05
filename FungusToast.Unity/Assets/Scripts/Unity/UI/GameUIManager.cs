@@ -42,11 +42,8 @@ namespace FungusToast.Unity.UI
         [SerializeField] private Sprite nextTrackButtonIcon;
         [SerializeField] private Sprite nextTrackMenuButtonIcon;
 
-        [Header("Phase Transitions")]
-        [SerializeField] private UI_PhaseBanner phaseBanner;
-
-        [Header("Phase Tracker")]
-        [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker;
+        private UI_PhaseBanner phaseBanner;
+        private UI_PhaseProgressTracker phaseProgressTracker;
 
             private void Awake()
             {
@@ -74,6 +71,8 @@ namespace FungusToast.Unity.UI
                     GetComponentInChildren<GlobalGameLogManager>(true));
                 RegisterLoadingScreen(FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include));
                 RegisterEndGamePanel(FindAnyObjectByType<UI_EndGamePanel>(FindObjectsInactive.Include));
+                RegisterPhaseBanner(FindAnyObjectByType<UI_PhaseBanner>(FindObjectsInactive.Include));
+                RegisterPhaseProgressTracker(FindAnyObjectByType<UI_PhaseProgressTracker>(FindObjectsInactive.Include));
             }
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
@@ -306,6 +305,26 @@ namespace FungusToast.Unity.UI
             }
 
             moldProfileRoot = root;
+        }
+
+        public void RegisterPhaseBanner(UI_PhaseBanner banner)
+        {
+            if (banner == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_PhaseBanner found in the scene.");
+            }
+
+            phaseBanner = banner;
+        }
+
+        public void RegisterPhaseProgressTracker(UI_PhaseProgressTracker tracker)
+        {
+            if (tracker == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_PhaseProgressTracker found in the scene.");
+            }
+
+            phaseProgressTracker = tracker;
         }
 
         // Routing observer for unified event handling
