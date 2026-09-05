@@ -12,18 +12,23 @@
 
 ## 1. Status
 
-- **State:** Planning complete for scope and ordering; no phase past the main
-  menu has started.
-- **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0
-  below) — see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there.
+- **State:** Revised 2026-09-05 after an adversarial review (section 10) that
+  found six issues in the first draft, all accepted — see the planner response
+  in section 11. No slice past the main menu has started.
+- **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
+  see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
+  Menu, which the review established was already done before this plan existed.
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
   a dedicated project.
 - **How to use this doc:** When you're about to touch a UI system anyway (a
-  bug fix, a feature ask), check the table in section 5 for that system's
-  phase and current state, do the slice per section 8, and update this file's
-  status/decision log before you're done.
+  bug fix, a feature ask), find it in section 5, write the slice contract from
+  section 7.2, migrate only what you're touching, verify against section 7.3,
+  and record the outcome in section 9 before you're done.
+- **Two things to read first if you're starting a slice:** section 7.1 (the
+  composition boundary — do *not* reach for a static registry) and section 7.3
+  (why a null check is not a sufficient gate).
 
 ## 2. Objective
 
@@ -53,9 +58,9 @@ keep the *policy* changes (if any are ever needed) in the other file.
 
 - **Follow the opportunistic-refactor policy exactly as written** — migrate
   the wiring in whatever system you're already touching, per
-  `UNITY_CODE_FIRST_MIGRATION.md` section 3. This plan's phase ordering is a
-  *preference* for when several things are equally in scope, not a gate that
-  blocks fixing something out of order.
+  `UNITY_CODE_FIRST_MIGRATION.md` section 3. The cohort ordering in section 5
+  is a *readiness preference* for when several things are equally in scope,
+  never a gate that blocks fixing something out of order.
 - **Do not combine a wiring migration with a gameplay or visual behavior
   change** in the same slice, unless the behavior change is explicitly called
   out and tested separately (same rule as the AI overhaul initiative).
@@ -71,15 +76,16 @@ keep the *policy* changes (if any are ever needed) in the other file.
      prefab templates. These stay serialized per the policy doc's own table.
   3. **Prefab-internal wiring** for a prefab used purely as a clone template
      (mutation nodes, log entries, tooltip panels, draft cards, player icon
-     cells — see section 5's Prefabs row). A `Button.targetGraphic` pointing
+     cells — see section 6). A `Button.targetGraphic` pointing
      at a sibling `Image` *within the same prefab* is not a cross-scene
      reference; it's normal prefab authoring. The problem pattern is a
      reference that reaches *out* of the prefab into scene-specific objects.
 - **A migration slice should shrink the scene/prefab diff over time, not grow
   it** (unchanged from the policy doc).
-- **No Unity test framework exists.** Verification is a runtime self-check
-  (matching the `ValidateBuiltUi()` pattern already used on the menu panels)
-  plus an actual Editor playtest of the affected flow.
+- **No Unity test framework exists** (`Assets/Scripts/Tests/` is empty, no
+  asmdef), so verification is manual — but a null-scan self-check is *not* a
+  sufficient gate. See section 7.3 for the required parity contract and the
+  evidence for why.
 - **Non-goals for this initiative specifically:**
   - `GridVisualizer.cs` and the board/tilemap rendering system. It's already
     ~99% code-driven (2 serialized fields across ~2,900 lines) and is a huge,
@@ -90,13 +96,40 @@ keep the *policy* changes (if any are ever needed) in the other file.
     settings. Pure Unity-editor territory; not in scope.
   - ScriptableObject data assets that are rarely hand-edited and hold no
     asset references (see section 6).
+- **Consequence of those non-goals — state it plainly.** `GameManager.cs`
+  holds serialized scene references to systems this initiative excludes:
+  `gridVisualizer`, `cameraCenterer` (`GameManager.cs:312-313`),
+  `growthPhaseRunner`, `decayPhaseRunner` (`:315,:317`), and
+  `magnifyingGlass` (`:390`). Those stay. Therefore this initiative can
+  **not** claim "`GameManager` has no serialized scene references" as a
+  finish line, and section 8 does not. The gate is an enumerated list of
+  UI-owned fields only. Anyone wanting full composition-root cleanup is
+  proposing a *different, larger* initiative that should be scoped as such.
 
 ## 5. Current State Inventory
 
-Signal columns: **SF** = files with `[SerializeField]` / total `.cs` files in
-that folder. **`new GameObject`** = a rough proxy for how much of the system
-already builds its own content at runtime (higher usually means less work
-left). Effort is a rough sizing, not a commitment.
+> **Metric warning — read before trusting any number below.** The first
+> version of this table sized work using raw `[SerializeField]` counts and
+> `new GameObject` counts. Both are bad proxies and the adversarial review in
+> section 10 was right to reject them:
+>
+> - Raw field counts **measure mostly non-work.** `TooltipTrigger.cs`'s 10
+>   fields are authored content and per-instance tunables
+>   (`staticText`, `hoverDelay`, `maxWidth`, `placement`, `pinOnClick`…);
+>   `TooltipView.cs`'s 6 are prefab-internal child references plus a fade
+>   duration. Sections 4 and 6 say *all* of those stay. A row sized at "16
+>   occurrences" was sizing approximately zero cross-references.
+> - `new GameObject` count says nothing about difficulty in either direction.
+>   A high count can mean "already self-building" *or* "large layout surface
+>   to revalidate." A low count can mean "still Inspector-wired" *or*
+>   "constructed by someone else entirely" — which is exactly what a count of
+>   1 meant for the Pause Menu.
+>
+> The only number that sizes this initiative is **confirmed cross-references**:
+> a serialized field pointing at an object the owning component does not itself
+> create or live inside. That number is not yet known per system. Treat the
+> "Effort" column as a *risk/readiness ordering hint only* until the
+> classification pass in section 5.1 replaces it with real counts.
 
 ### Already code-first (verified during the menu migration or this survey)
 
@@ -106,22 +139,29 @@ left). Effort is a rough sizing, not a commitment.
 | Services layer | `Services/*.cs` (8 files) | 0/8 | Already pure C#, constructed in code from `GameManager.BootstrapServices()`. No work needed. |
 | Campaign/state logic (non-UI) | `Campaign/CampaignController.cs`, `CampaignState.cs`, `CampaignSaveService.cs`, `MoldinessProgression.cs`, `MoldinessUnlocks.cs`, `GameMode.cs` | 1/9 | Already plain C#; `BoardPreset.cs`'s 2 fields are legitimate ScriptableObject data. No work needed. |
 | Grid/board rendering | `Grid/GridVisualizer.cs` (2,940 lines) + 15 more | 2/16 | Already code-driven internally. Explicitly out of scope (section 4). |
+| **Pause Menu** | `UI/UI_PauseMenuPanel.cs` (997 lines) | 0 serialized fields | **Reclassified from "Phase 1 candidate" to done.** `PauseMenuService.Initialize()` (`Services/EndgameService.cs:369-390`) already does `AddComponent<UI_PauseMenuPanel>()`, `panel.SetDependencies(...)`, then `gameUIManager.RegisterPauseMenuPanel(panel)`. That is construct-inject-register from a composition root — a *better* pattern than the static registry Phase 0 used, and the reference model for section 7. |
 
-### Not started — candidate phases, in suggested order
+### Not started — readiness cohorts, not numbered gates
 
-| Phase | System | Key files | SF density | `new GameObject` signal | Effort | Why this order |
-|---|---|---|---|---|---|---|
-| 1 | Tooltip system | `UI/Tooltips/*.cs` (11 files) | 2/11, 16 occurrences (`TooltipTrigger.cs` 10, `TooltipView.cs` 6) | 0 in `TooltipView.cs` | Small–Medium | Foundational: every other screen depends on it. `TooltipView` is a prefab component (`Prefabs/UI/UI_TooltipPrefab.prefab`, `UI_ToolTipHelpIconPrefab.prefab`) — likely stays prefab-authored per section 4; audit for any reach-outside-the-prefab references first. |
-| 1 | Pause Menu | `UI/UI_PauseMenuPanel.cs` (997 lines) | 0 serialized fields already | 1 (low — investigate why) | Small | Zero `[SerializeField]` already; verify it isn't secretly relying on `FindObjectOfType`/scene-name lookups that should become a registry entry instead. Likely mostly done — confirm and document. |
-| 1 | Loading Screen | `UI/UI_LoadingScreen.cs` | 3 fields | — | Small | Small, self-contained, low risk — good warm-up slice. |
-| 2 | Game Log (player + global) | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | 2/10, 18 occurrences | 6 in `UI_GameLogPanel.cs` | Medium | Well-scoped pooling pattern already partially dynamic; two log instances (player/global) sharing one implementation is a good test of the registry-vs-serialized-field question at moderate stakes. |
-| 2 | End Game panel | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | 13 + 8 fields | 59 in `UI_EndGamePanel.cs` | Medium | Already mostly code-built (59 `new GameObject` calls) with a handful of top-level anchors still serialized — same shape the menu panels were in before their migration. |
-| 3 | Right Sidebar + Player Summary + Mold Profile Root | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | 4 + 6 + 22 fields | 10 in `UI_RightSideBar.cs` | Medium–Large | `UI_MoldProfileRoot.cs` (22 fields) is the single densest file outside the mutation tree — worth its own careful slice rather than folding into a bigger phase. |
-| 3 | Phase Banner + Progress Tracker | `UI/UI_PhaseBanner.cs`, `UI/UI_PhaseProgressTracker.cs` | 1 + 4 fields | — | Small | Small HUD anchors, low risk, natural companion to the sidebar phase. |
-| 4 | Mycovariant Draft | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | 3/7, 17 occurrences | 38 in `MycovariantDraftController.cs` | Medium | Already heavily code-built; draft overlays are self-contained and don't leak into other systems, good isolation for a mid-size slice. |
-| 4 | Hotseat Turn Prompt | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | 1/1, 9 occurrences | — | Small | Single file, single responsibility. |
-| 5 | Mutation Tree | `UI/MutationTree/*.cs` (15 files: `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, `UI_RemainingPointsPanel.cs`/`UI_MutationTreeToastPresenter.cs` 3 each) | 5/15, 48 occurrences | Present but modest (4 in `MutationNodeUI.cs`) | Large | The largest, most central, most gameplay-adjacent UI system. Do this once the pattern is proven on four smaller phases first — the blast radius of getting it wrong is the highest in the game. `Prefabs/UI/UI_MutationNode.prefab`, `UI_MutationRow.prefab`, `UI_MutationCategoryHeader.prefab`, `UI_MutationPlaceholder.prefab`, `UI_RootMutationButton.prefab`, `UI_GrowthPreviewCell.prefab` are its clone templates. |
-| 6 | GameManager / GameUIManager wiring cleanup | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | — | — | Ongoing, not a discrete slice | These two are the "master glue" holding a serialized reference to nearly every system above. Each field gets removed *as a byproduct* of migrating its owning system (mirroring how `startGamePanel`/`modeSelectPanel` left `GameManager.cs` during Phase 0) rather than as its own phase. Track remaining count here as systems complete. |
+Cohorts express *risk and readiness ordering only*. They are not a schedule
+and not a gate: the opportunistic policy still wins, so if a bug lands you in
+the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
+Completion is tracked per component (section 7), not per row.
+
+| Cohort | System | Key files | Confirmed cross-references | Notes |
+|---|---|---|---|---|
+| **Audit / close** | Tooltip system | `UI/Tooltips/*.cs` (11 files) | Expected 0 — verify | Verified: `TooltipTrigger.cs:16-26` is authored content + per-instance tunables; `TooltipView.cs:13-20` is prefab-internal child refs + a fade duration. Sections 4/6 retain all of these. The one real check: `TooltipTrigger.dynamicProvider` is a loosely-typed `MonoBehaviour`, so a *scene* instance could point outside its own prefab. Confirm per instance; if none do, close as "retained by category." |
+| **Pilot** | Loading Screen | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs:36` | 1 (`GameUIManager` → `loadingScreen`) | Smallest case that still exercises the real question — who constructs and owns an inactive overlay. Note the work is in `GameUIManager`, not the panel: the panel's 3 fields are 1 tunable + 2 optional children, one already self-wiring via `GetComponent<Image>()` (`UI_LoadingScreen.cs:40-44`). |
+| **Pattern proof** | Game Log (player + global) | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | TBD — 4 owner refs at `GameUIManager.cs:28-33` (2 panels + 2 managers) plus panel-internal fields to classify | Deliberately second: **two instances of one implementation** is the case that breaks naive global lookup, so it proves or kills the composition approach before anything larger adopts it. |
+| **Medium risk** | End Game panel | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | TBD (21 fields to classify) | Already substantially self-building; expect most fields to classify as retained, but that must be confirmed field-by-field, not assumed from the count. |
+| **Medium risk** | Right Sidebar / Player Summary / Mold Profile | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | TBD (32 fields to classify) | `UI_MoldProfileRoot.cs` is the densest non-mutation-tree file; treat each of the three as its own slice. |
+| **Medium risk** | Phase Banner + Progress Tracker | `UI/UI_PhaseBanner.cs`, `UI/UI_PhaseProgressTracker.cs` | TBD (5 fields) | Also referenced from `GameManager.cs:318`. |
+| **Medium risk** | Mycovariant Draft | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | TBD (17 fields) | Also referenced from `GameManager.cs:319`. Self-contained overlay; good isolation. |
+| **Medium risk** | Hotseat Turn Prompt | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | TBD (9 fields) | Also referenced from `GameManager.cs:320`. |
+| **Medium risk** | Selection prompt + selection controllers | `GameManager.cs:321-324` (`SelectionPromptPanel`, `SelectionPromptText`, `selectionPromptCancelButton`, `selectionPromptCancelButtonText`), `UI/TileSelectionController.cs`, `UI/MultiTileSelectionController.cs`, `UI/MultiCellSelectionController.cs` | 4 confirmed in `GameManager` + TBD in the controllers | **Added after review (AR-5).** Missing from the first draft entirely. Already served by `SelectionPromptService` — check whether that service can own construction the way `PauseMenuService` does. |
+| **Medium risk** | Cell / mycovariant tooltip panels | `UI/CellTooltipUI.cs` (24 fields — densest loose UI file in the project), `UI/MycovariantTooltipPanel.cs` (4), `UI/MycovariantDraft/MycovariantIcon.cs` (2) | TBD | **Added after review (AR-5).** Omitted from the first draft despite `CellTooltipUI` having the highest field count outside the mutation tree. |
+| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | TBD (48 fields) | Largest and most gameplay-central. Do only after the composition and validation patterns have survived **both** a repeated-entry system and the two-instance Game Log case. Clone templates: `UI_MutationNode`, `UI_MutationRow`, `UI_MutationCategoryHeader`, `UI_MutationPlaceholder`, `UI_RootMutationButton`, `UI_GrowthPreviewCell`. |
+| **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
 ### Explicitly out of scope (see section 4)
 
@@ -129,7 +169,24 @@ left). Effort is a rough sizing, not a commitment.
 `Effects/MycovariantEffectResolver.cs`, `Events/GameUIEventSubscriber.cs`,
 `Input/UnityInputAdapter.cs`, `Phases/GrowthPhaseRunner.cs` /
 `DecayPhaseRunner.cs` — all either already code-first, or hold legitimate
-tunable/asset fields rather than scene wiring.
+tunable/asset fields rather than scene wiring. Also out of scope and
+explicitly retained: `UI/MagnifyingGlassFollowMouse.cs` (5 fields) and the
+`GameManager.cs:390` magnifier reference — a gameplay overlay, already
+documented as the standing exception in `UI_StartGamePanel`; and
+`UI/UiSpriteLibrary.cs` (asset loading by design).
+
+### 5.1 Classification pass (do this before or alongside the pilot)
+
+Every "TBD" above needs converting into a real number before its cohort's
+effort can be trusted. The unit is a **field-level ledger row**:
+
+| field | owning file | category (cross-ref / asset / tunable / prefab-internal) | current owner | target resolution | affected YAML | disposition |
+
+Scope discipline: this is an *inventory correction*, not a migration, and it
+must not become a project that blocks all work behind a complete audit. Do the
+bounded version — classify a system's fields at the moment you pick that
+system up, and record the rows here. The only part worth doing up front is
+whatever is needed to make section 8's Milestone A list finite and honest.
 
 ## 6. What Should Stay Inspector-Driven
 
@@ -151,62 +208,181 @@ Restating the policy doc's table with this survey's specifics:
 - **Project-level configuration**: URP assets, input action assets,
   `ProjectSettings/*`, the Canvas/EventSystem setup itself.
 
-## 7. Doing a Phase
+## 7. Doing a Slice
 
-Same procedure as `UNITY_CODE_FIRST_MIGRATION.md` section 7, applied per
-system instead of per screen:
+The unit of work is a **component or prefab**, not a system row. A system row
+is done when all its component slices are.
 
-1. Read every serialized field in the target file(s); sort into
-   cross-reference (migrate), asset reference (leave), tunable value (leave),
-   prefab-internal wiring (leave).
-2. Check whether the system already self-scaffolds (`Ensure*`/`Build*`
-   methods) — most of the systems in section 5 do, at least partially. Close
-   the remaining gaps rather than rewriting what already works.
-3. For any cross-panel reference (this system needs to reach another
-   already-migrated or about-to-be-migrated system), extend
-   `MainMenuRegistry` — or, once enough in-game systems have migrated that
-   "main menu" no longer describes it, rename/generalize the registry (see
-   the open decision in section 9) rather than inventing a second registry
-   pattern.
-4. Add a `ValidateBuiltUi()`-style self-check.
-5. Verify: build Core/Simulation for sanity, validate Unity compile health,
-   and actually exercise the affected flow in the Editor (open the mutation
-   tree, trigger the draft, end a game, etc.) — there is no automated Unity
-   test suite to lean on.
-6. Update this file: move the row from "not started" to "done" in section 5,
-   note the actual field count removed from `GameManager.cs`/`GameUIManager.cs`
-   if applicable, and log anything surprising in section 9.
+### 7.1 The composition boundary (decided — see AR-2 in section 10)
+
+**Do not extend `MainMenuRegistry`, and do not add per-feature static
+registries.** The static-registry-with-scene-scan-fallback pattern
+(`MainMenuRegistry.cs:17-39`) was a Phase 0 expedient for three menu
+controllers whose lifetimes span the whole session. Generalizing it would
+make order-dependent scene scans and play-lifetime statics the default
+architecture for panels with far more complex activation/teardown/re-entry
+behavior.
+
+The target pattern already exists in this codebase — `PauseMenuService`:
+
+```
+panel = hostObject.GetComponent<UI_PauseMenuPanel>()
+        ?? hostObject.AddComponent<UI_PauseMenuPanel>();   // construct
+panel.SetDependencies(gameUIManager, ...callbacks...);      // inject
+gameUIManager?.RegisterPauseMenuPanel(panel);               // register w/ façade
+```
+(`Services/EndgameService.cs:369-390`)
+
+So, in order of preference:
+1. **Construct + inject from the existing composition root**
+   (`GameManager.BootstrapServices()`, or a service it owns), passing
+   dependencies explicitly via `SetDependencies(...)`.
+2. **Register with `GameUIManager`** where it already owns the lifetime, and
+   have consumers go through that façade.
+3. **Static registry** — only as a temporary discovery bridge with a comment
+   saying so, never as the destination.
+
+`MainMenuRegistry` stays scoped to legacy menu discovery and should shrink,
+not grow. If a menu panel's lookup can move to construct-inject during a slice
+that touches it anyway, do that.
+
+### 7.2 Slice contract — write this before editing
+
+A slice does not start until these are written down (in the PR/commit body or
+this doc):
+
+- Exact serialized references to be removed, by file and field.
+- Who constructs the object afterward, and in what initialization order.
+- Behavior while the GameObject is **inactive** (the Phase 0 bug that broke
+  Custom Game / Campaign was precisely this: `Awake` never runs on an inactive
+  object, so registry self-registration never happened).
+- Teardown and **repeated-entry** behavior — enter, leave, re-enter. Duplicate
+  listeners and stale caches live here.
+- Which scene/prefab YAML is expected to shrink.
+- The parity checks that must pass (see 7.3).
+
+If writing the contract reveals cross-system rewiring, defer it — that is the
+canonical policy's own rule, not a new one.
+
+### 7.3 Verification — parity, not presence
+
+A `ValidateBuiltUi()` null scan is **not** a sufficient gate, and this
+session's own history proves it: the "buttons do nothing" bug, the duplicate
+`Back` button, the wrong logo asset, and the font-size regressions would each
+have passed a null check cleanly. Every constructed field was non-null in all
+four cases.
+
+Minimum per-slice parity evidence:
+
+- **Controls present** — the null scan. Necessary, not sufficient.
+- **Callback routes** — each control invokes the intended handler exactly once.
+  Verify listener count after a re-entry, not just on first build.
+- **Initial and terminal state** — what's visible/interactable on open, and on
+  close.
+- **Repeated entry** — open → leave → reopen at least once.
+- **Supported resolutions** — at least the narrowest and widest the flow
+  supports, since code-built layout is where this most often diverges.
+- **Scene/prefab diff reviewed** — confirm it shrank, per the policy doc.
+
+Record the actual Editor flow performed and its result in the completion note.
+"Playtested it" is not a completion record.
+
+If the project is ever willing to stand up the Unity Test Framework
+(`Assets/Scripts/Tests/` exists but is empty, no asmdef), an edit-mode or
+play-mode smoke test would replace most of the above with something
+executable — worth doing before the Mutation Tree cohort, not after.
+
+> Note: `UNITY_CODE_FIRST_MIGRATION.md:116-119` currently also describes this
+> gate as "asserts nothing critical is null." That wording is too weak for the
+> same reason. Tighten it in the policy doc when convenient — flagged here
+> rather than silently diverging.
+
+### 7.4 Recording completion
+
+Update this file: mark the component slice done, note which
+`GameManager`/`GameUIManager` fields actually left, and log anything
+surprising in section 9.
 
 ## 8. Completion Criteria
 
-- Every system in section 5's "not started" table has moved to "done" or has
-  a documented reason it was reclassified as out of scope.
-- `GameManager.cs` and `GameUIManager.cs` hold only genuine asset-reference
-  and tunable fields — no remaining scene-object cross-references.
-- The registry pattern introduced for the menu (`MainMenuRegistry`) has
-  either been generalized to cover in-game panels too, or a documented
-  decision explains why a different pattern was used instead.
-- `UNITY_CODE_FIRST_MIGRATION.md` section 1's "Completed special case" note
-  is updated to reflect full front-end coverage, and this plan doc can be
-  marked complete (or retired) at that point.
+Split into two milestones, because the original single finish line was not
+reachable within the stated scope (AR-1).
+
+### Milestone A — UI-owned cross-references resolved
+
+Scoped to an **enumerated** list, not the unqualified claim that `GameManager`
+holds no scene references. The UI-owned fields in scope:
+
+- `GameUIManager.cs`: `mutationUIManager`, `playerUIBinder`, `leftSidebar`,
+  `rightSidebar`, `moldProfileRoot`, `playerActivityLogPanel`,
+  `playerActivityLogManager`, `globalEventsLogPanel`, `globalEventsLogManager`,
+  `loadingScreen`, `endGamePanel`, `pauseMenuPanel`, `phaseBanner`,
+  `phaseProgressTracker`. *(Not the three `Sprite` icon fields — retained as
+  asset references.)*
+- `GameManager.cs`: `mutationManager`, `gameUIManager`, `phaseProgressTracker`,
+  `mycovariantDraftController`, `hotseatTurnPrompt`, `SelectionPromptPanel`,
+  `SelectionPromptText`, `selectionPromptCancelButton`,
+  `selectionPromptCancelButtonText`.
+
+Milestone A is met when each of those is either resolved via the section 7.1
+composition pattern, or **explicitly retained** with a recorded category and
+reason. Explicit retention is a valid outcome; silent omission is not.
+
+**Explicitly excluded from Milestone A** (and therefore from any "no scene
+references" claim): `gridVisualizer`, `cameraCenterer`, `growthPhaseRunner`,
+`decayPhaseRunner`, `magnifyingGlass`, `campaignProgression`, and all
+`AudioClip` fields on `GameManager`. These belong to systems section 4 puts
+out of scope. Removing them would be a *different* initiative — full
+composition-root cleanup — and should be scoped separately if ever wanted.
+
+### Milestone B — thin bootstrap scene
+
+The policy doc's end state: menu and HUD panels spawned at runtime, scene YAML
+stripped of the dead authored hierarchy. Tracked today as the "Main Menu
+Bootstrapper + Scene YAML Cleanup" entry in
+[second-level/FUTURE_IMPROVEMENTS.md](second-level/FUTURE_IMPROVEMENTS.md);
+expand that entry's scope to the whole front end once Milestone A lands.
+
+Milestone A does **not** depend on Milestone B, and B should not gate A.
+
+### Doc-completion
+
+When Milestone A is met, update `UNITY_CODE_FIRST_MIGRATION.md` section 1 to
+describe the actual coverage achieved — including what was explicitly
+retained — rather than claiming blanket front-end coverage.
 
 ## 9. Open Decisions / Decision Log
 
-Record scope changes, surprises, and judgment calls here as phases land —
+Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
 
-- *(none yet — this plan has not started execution)*
+**2026-09-05 — Composition boundary decided (closes the prior open question).**
+The original draft left "generalize `MainMenuRegistry` vs. per-feature
+registries" open while simultaneously instructing slices to extend it. Both
+options were wrong. Resolved in favor of construct-inject-register from the
+existing composition root, per section 7.1, on the evidence that
+`PauseMenuService` already implements exactly that and predates this plan.
+`MainMenuRegistry` is now legacy-scoped and expected to shrink.
 
-**Open question to resolve before or during Phase 1:** should
-`MainMenuRegistry` (see
-`FungusToast.Unity/Assets/Scripts/Unity/UI/MainMenuRegistry.cs`) be reused/
-renamed for in-game panel lookups, or should each phase introduce its own
-narrowly-scoped registry (e.g., a `GameHudRegistry`)? Leaning toward
-generalizing the existing one once Phase 1 needs cross-panel lookups, to
-avoid a proliferation of near-identical registries — but this should be
-decided with the first phase that actually needs it, not speculatively now.
+**2026-09-05 — Pause Menu reclassified from candidate to already-done.** It was
+listed as a Phase 1 slice with a note to "investigate why" it had only one
+`new GameObject` call. The answer was that a service constructs and injects it
+externally. This was a direct consequence of surveying by aggregate counts
+instead of reading the code, and it is why section 5's proxy metrics were
+withdrawn.
 
-## 10. Adversarial Review — 2026-09-05 (Pending Planner Response)
+**2026-09-05 — Proxy metrics withdrawn.** Raw `[SerializeField]` and
+`new GameObject` counts were removed as sizing signals; only confirmed
+cross-references count. See the metric warning in section 5.
+
+**2026-09-05 — Inventory gaps closed.** `CellTooltipUI.cs` (24 fields — the
+densest loose UI file in the project), the selection-prompt fields and their
+three controllers, `MycovariantTooltipPanel.cs`, and `MycovariantIcon.cs` were
+absent from the first draft's tables entirely. Added.
+`MagnifyingGlassFollowMouse.cs` and `UiSpriteLibrary.cs` are now explicitly
+retained rather than silently omitted.
+
+## 10. Adversarial Review — 2026-09-05 (Planner Response Recorded in §11)
 
 > **Review status:** Challenge, not accepted plan revision. This section was
 > added without changing the planner's original text so the planner can answer,
@@ -385,3 +561,90 @@ decided with the first phase that actually needs it, not speculatively now.
    constructed fields being non-null?
 5. Which omitted serialized UI files were deliberately retained, and under
    which category?
+
+## 11. Planner Response — 2026-09-05
+
+**Verdict: all six findings accepted.** Each was checked against the code
+before responding, not accepted on assertion. Two carry small corrections to
+the review's own reasoning, noted below. The plan body above has been revised;
+this section records the disposition and answers the five questions.
+
+### Disposition
+
+| ID | Verdict | Verification | Where fixed |
+|---|---|---|---|
+| AR-1 | **Accepted** | Confirmed: `GameManager.cs:312-317` holds `gridVisualizer`, `cameraCenterer`, `growthPhaseRunner`, `decayPhaseRunner`; `:390` holds `magnifyingGlass` — all excluded by §4 while §8 demanded their removal. Genuine unreachable gate. | §4 (consequence stated), §8 (Milestone A enumerated, exclusions listed) |
+| AR-2 | **Accepted** | Confirmed: `MainMenuRegistry.cs:17-39` is a static cache with a scene-wide `FindAnyObjectByType(..., Include)` fallback; `PauseMenuService` (`EndgameService.cs:369-390`) already does construct-inject-register. The draft prescribed extending the former in §7 while calling the question open in §9 — internally inconsistent. | §7.1 (decided), §9 (decision recorded) |
+| AR-3 | **Accepted, with a correction** | Confirmed: `ValidateBuiltUi` (`UI_StartGamePanel.cs:229-236`) only logs on null. **Correction:** the review says the canonical policy is "stronger," but `UNITY_CODE_FIRST_MIGRATION.md:116-119` also specifies only "asserts nothing critical is null" — the policy is equally weak, not a standard the plan fell short of. The conclusion still holds on independent evidence (below). | §7.3 (parity contract), plus a flag to tighten the policy doc |
+| AR-4 | **Accepted — most consequential finding** | Confirmed all three examples: `TooltipTrigger.cs:16-26` (content + tunables), `TooltipView.cs:13-20` (prefab-internal + fade), `UI_LoadingScreen.cs:23-44` (1 tunable + 2 optional, one self-wiring), and Pause Menu already injected. The metrics counted fields the plan's own guardrails exclude. | §5 metric warning, table rebuilt, §5.1 ledger |
+| AR-5 | **Accepted** | True from the survey's own output: `CellTooltipUI.cs` has 24 serialized fields — the highest of any loose UI file — and was omitted from every table. Selection-prompt fields likewise. | §5 rows added, retentions made explicit |
+| AR-6 | **Accepted** | Fair: §7 was titled "Doing a Phase" and instructed moving whole system rows to done, which pressures scope-widening against the opportunistic policy. | §5 (cohorts, not gates), §7 (slice = component) |
+
+### On AR-3's evidence
+
+The review's remedy is right, but the strongest argument for it isn't the
+policy-doc comparison — it's this session's own bug history. Four regressions
+shipped during the Phase 0 menu migration and were caught only by the user
+looking at screenshots:
+
+1. Custom Game / Campaign buttons did nothing (registry returned null for
+   inactive panels — `Awake` never ran).
+2. A duplicate `Back` button rendered (legacy scene object never destroyed).
+3. The wrong logo asset was referenced (orphaned GUID from a deleted file).
+4. Font sizes were wrong on two screens (never set; TMP default applied).
+
+**Every one of those passes a null scan.** Every constructed field was
+non-null in all four cases. That is the empirical case for a parity contract,
+and it is more persuasive than any doc-wording argument.
+
+### On the counter-proposal's item 1
+
+Accepted **with a scope guard.** "Run a classification pass before Phase 1"
+across all serialized UI files risks becoming a large up-front audit that
+blocks all work — which conflicts with the opportunistic policy both docs
+share, and with how Phase 0 actually succeeded. §5.1 therefore adopts the
+ledger format in full, but bounds the up-front portion to whatever is needed
+to make Milestone A's list finite and honest, with per-system classification
+happening when that system is picked up. If that proves too loose in practice,
+tighten it — but the failure mode of "audit everything first" is real.
+
+Counter-proposal items 2–6 are adopted essentially as written.
+
+### Answers to the five questions
+
+**Q1 — Which exact Phase 1 dependency requires any registry?**
+None. That was the tell that the guidance was wrong. Pause Menu is already
+injected, Loading Screen needs one owner reference resolved, and the Tooltip
+row is an audit. No registry is needed for any of them, which is precisely why
+§7.1 now decides the boundary *before* a slice can quietly set the precedent.
+
+**Q2 — UI cross-references, full scene composition, or both?**
+UI cross-references only. The draft implied both by pairing a UI-scoped
+inventory with a composition-root-scoped gate. §8 Milestone A now enumerates
+UI-owned fields and explicitly lists the non-UI `GameManager` references as
+out of scope and retained. Full composition-root cleanup is a legitimate
+larger initiative, but it is not this one.
+
+**Q3 — What evidence makes `new GameObject` count correlate with lower effort?**
+None. I asserted it without support and it is withdrawn. The Pause Menu
+disproves it directly: a count of 1 meant "constructed elsewhere by a service,"
+i.e. already complete — the opposite of what the column implied. High counts
+are equally ambiguous, since more constructed layout means more surface to
+revalidate. See the metric warning in §5.
+
+**Q4 — What concrete parity failures must fail a slice?**
+Per §7.3: a control that invokes the wrong handler or invokes it more than
+once; a listener duplicated after leave-and-reenter; an object that misses
+initialization because it was inactive when constructed; initial/terminal
+visibility or interactability differing from pre-migration; layout diverging
+at a supported resolution; or a scene/prefab diff that grew instead of shrank.
+Any of these fails the slice regardless of a clean null scan.
+
+**Q5 — Which omitted serialized UI files were deliberately retained?**
+None were deliberate — the omission was an oversight, not a judgment. Now
+classified: `CellTooltipUI.cs`, `MycovariantTooltipPanel.cs`,
+`MycovariantIcon.cs`, and the three selection controllers are **in scope**
+(§5, Medium risk). `MagnifyingGlassFollowMouse.cs` is **retained** (gameplay
+overlay, matching the standing `UI_StartGamePanel` exception).
+`UiSpriteLibrary.cs` is **retained** (asset loading by design; its one match
+was a doc comment, not a field).
