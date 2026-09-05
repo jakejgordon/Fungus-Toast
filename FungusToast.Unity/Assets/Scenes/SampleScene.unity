@@ -11409,8 +11409,6 @@ MonoBehaviour:
   mutationUIManager: {fileID: 1424799585}
   playerUIBinder: {fileID: 1278183952}
   leftSidebar: {fileID: 675576749}
-  rightSidebar: {fileID: 456577074}
-  moldProfileRoot: {fileID: 885719218}
   pauseMenuPanel: {fileID: 0}
   pauseMenuButtonIcon: {fileID: 21300000, guid: 761a24c9f8ae3fe41ad60558bafb0887, type: 3}
   nextTrackButtonIcon: {fileID: 21300000, guid: 99e787abb9d5b1f469a7c8814108cf35, type: 3}

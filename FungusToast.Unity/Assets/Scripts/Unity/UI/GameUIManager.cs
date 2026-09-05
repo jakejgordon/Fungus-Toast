@@ -21,8 +21,8 @@ namespace FungusToast.Unity.UI
 
         [Header("Sidebars")]
         [SerializeField] private GameObject leftSidebar;
-        [SerializeField] private UI_RightSidebar rightSidebar;
-        [SerializeField] private UI_MoldProfileRoot moldProfileRoot; // Added mold profile root reference
+        private UI_RightSidebar rightSidebar;
+        private UI_MoldProfileRoot moldProfileRoot;
         
         // Player Activity Log (Left Sidebar)
         private UI_GameLogPanel playerActivityLogPanel;
@@ -61,6 +61,11 @@ namespace FungusToast.Unity.UI
             // managers when GameManager's Awake ran first.
             public void ResolveOwnedReferences()
             {
+                // Must run before RegisterGlobalEventsLog below, which reads rightSidebar
+                // to find its child panel.
+                RegisterRightSidebar(FindAnyObjectByType<UI_RightSidebar>(FindObjectsInactive.Include));
+                RegisterMoldProfileRoot(FindAnyObjectByType<UI_MoldProfileRoot>(FindObjectsInactive.Include));
+
                 RegisterPlayerActivityLog(
                     leftSidebar != null ? leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
                     GetComponentInChildren<GameLogManager>(true));
@@ -281,6 +286,26 @@ namespace FungusToast.Unity.UI
             }
 
             endGamePanel = panel;
+        }
+
+        public void RegisterRightSidebar(UI_RightSidebar sidebar)
+        {
+            if (sidebar == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_RightSidebar found in the scene.");
+            }
+
+            rightSidebar = sidebar;
+        }
+
+        public void RegisterMoldProfileRoot(UI_MoldProfileRoot root)
+        {
+            if (root == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_MoldProfileRoot found in the scene.");
+            }
+
+            moldProfileRoot = root;
         }
 
         // Routing observer for unified event handling

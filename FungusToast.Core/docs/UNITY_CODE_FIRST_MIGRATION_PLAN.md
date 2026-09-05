@@ -15,16 +15,18 @@
 - **State:** Revised twice on 2026-09-05 after two adversarial review passes —
   six findings in section 10 (response in section 11) and three in section 12
   (response in section 13). All nine accepted. Execution then began the same
-  day: Audit/close (Tooltip), Pilot (Loading Screen), and Pattern proof (Game
-  Log) are done and Editor-verified — Game Log caught and fixed a real
-  Awake-order regression (see section 9), the first thing this initiative's
-  parity process actually caught. End Game panel is landed, pending your
-  Editor playtest. Next up after that: Right Sidebar / Player Summary / Mold
-  Profile (Medium risk).
+  day: Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game
+  Log), and End Game panel are done and Editor-verified — Game Log caught and
+  fixed a real Awake-order regression (see section 9), the first thing this
+  initiative's parity process actually caught. Right Sidebar / Player Summary
+  / Mold Profile is landed, pending your Editor playtest — it caught a second,
+  related ordering bug during implementation itself, before any playtest.
+  Next up after that: Phase Banner + Progress Tracker (Medium risk).
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan
-  existed, and the Tooltip, Loading Screen, and Game Log cohorts (2026-09-05).
+  existed, and the Tooltip, Loading Screen, Game Log, and End Game cohorts
+  (2026-09-05).
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -155,6 +157,7 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | **Loading Screen** | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs` | 0 confirmed (was 1) | **Landed 2026-09-05, Pilot slice.** `GameUIManager.Awake()` resolves the singleton via `FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include)` and calls the new `RegisterLoadingScreen(...)`, mirroring `RegisterPauseMenuPanel`. The `[SerializeField]` and its scene wire (`SampleScene.unity` `GameUIManager` → `loadingScreen`) are gone. Panel content (`fadeOutDuration`, `statusLabel`, `backgroundImage`) stays scene-authored and serialized, per the pilot's own scope note. See section 9 for the full slice record. |
 | **Game Log (player + global)** | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | 0 confirmed (was 4) | **Landed 2026-09-05, Pattern-proof slice. Editor-verified, including a caught-and-fixed regression.** The two-instance case: `UI_PlayerActivityLogPanel`/`UI_GlobalEventsLogPanel` are both `UI_GameLogPanel.prefab` instances, so a single-type `FindAnyObjectByType` (the pilot's trick) would be ambiguous. Resolved instead via genuine structural containment already owned by `GameUIManager` — `leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` / `rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` (verified against the scene YAML: each panel is a direct child of its sidebar) — and the two manager types (`GameLogManager`/`GlobalGameLogManager`, distinct types, no ambiguity) via `GetComponentInChildren` scoped to `GameUIManager`'s own transform (both are already its direct children). Injected via new `RegisterPlayerActivityLog(...)`/`RegisterGlobalEventsLog(...)`. Panel-internal fields (`scrollRect`, `contentParent`, `entryPrefab`, `clearButton`, `headerText`) audited and confirmed prefab-internal — no scene overrides on either instance. First real playtest caught an Awake-order regression (both logs stayed empty, no console errors) — fixed by introducing `GameUIManager.ResolveOwnedReferences()`, called explicitly and first from `GameManager.BootstrapServices()` rather than relying on `GameUIManager.Awake()`'s ordering. See section 9 for the full record. |
 | **End Game panel** | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | 0 confirmed (was 1) | **Landed 2026-09-05, Medium-risk cohort's first slice.** Single prefab instance (confirmed via scene YAML — a "stripped" reference into one `PrefabInstance`), so this reused the Pilot's `FindAnyObjectByType<UI_EndGamePanel>(FindObjectsInactive.Include)` pattern directly, injected via new `RegisterEndGamePanel(...)`, added to the now-established `ResolveOwnedReferences()`. All 12 of the panel's own fields (plus 8 on `UI_GameEndPlayerResultsRow`, its clone-template row) audited directly in `UI_EndGamePanel.prefab`: all prefab-internal except the legitimate `playerResultRowPrefab` clone-template reference and two icon `Sprite`s — zero scene overrides, untouched. Checked all 16 call sites of `EndGamePanel` for the same Awake-order hazard Game Log hit — all are runtime endgame/gameplay handlers, none in `Awake()`. See section 9. |
+| **Right Sidebar / Player Summary / Mold Profile** | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | 0 confirmed (was 2) | **Landed 2026-09-05.** Of ~30 total fields across all three files, only 2 were real cross-references — both `GameUIManager` owner pointers (`rightSidebar`, `moldProfileRoot`), not anything inside the components. Both confirmed single scene-authored instances (not prefabs this time — script GUID appears exactly once each, `m_PrefabInstance: {fileID: 0}`), resolved via `FindAnyObjectByType` and injected through new `RegisterRightSidebar(...)`/`RegisterMoldProfileRoot(...)`, added to `ResolveOwnedReferences()`. All of `UI_RightSideBar.cs`'s 4 fields, `PlayerSummaryRow.cs`'s 6 (a clone-template row, like `UI_GameLogEntry`), and `UI_MoldProfileRoot.cs`'s 20 audited and confirmed self-contained or legitimate clone-template/asset references — no scene overrides, untouched. Caught an internal-ordering dependency *within this slice* before it could repeat the Game Log bug: `RegisterGlobalEventsLog`'s resolution reads `rightSidebar` to find its child log panel, so `RegisterRightSidebar` had to be sequenced first inside `ResolveOwnedReferences()`. `leftSidebar` (a plain `GameObject`, listed in section 8's baseline but not owned by any declared cohort) was left untouched — noted, not resolved, to avoid silent scope creep. See section 9. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -163,13 +166,13 @@ and not a gate: the opportunistic policy still wins, so if a bug lands you in
 the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
 Completion is tracked per component (section 7), not per row.
 
-Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game Log), and
-End Game panel are done — moved to the "Already code-first" table above. What
-follows starts at Right Sidebar / Player Summary / Mold Profile.
+Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game Log), End
+Game panel, and Right Sidebar / Player Summary / Mold Profile are done — moved
+to the "Already code-first" table above. What follows starts at Phase Banner +
+Progress Tracker.
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Medium risk** | Right Sidebar / Player Summary / Mold Profile | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | TBD (32 fields to classify) | `UI_MoldProfileRoot.cs` is the densest non-mutation-tree file; treat each of the three as its own slice. |
 | **Medium risk** | Phase Banner + Progress Tracker | `UI/UI_PhaseBanner.cs`, `UI/UI_PhaseProgressTracker.cs` | TBD (5 fields) | Also referenced from `GameManager.cs:318`. |
 | **Medium risk** | Mycovariant Draft | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | TBD (17 fields) | Also referenced from `GameManager.cs:319`. Self-contained overlay; good isolation. |
 | **Medium risk** | Hotseat Turn Prompt | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | TBD (9 fields) | Also referenced from `GameManager.cs:320`. |
@@ -398,6 +401,53 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Right Sidebar / Player Summary / Mold Profile landed. Awaiting
+Editor playtest.** Slice contract: remove `GameUIManager.cs`'s
+`[SerializeField]`s for `rightSidebar` (`UI_RightSidebar`) and
+`moldProfileRoot` (`UI_MoldProfileRoot`) — the only two real cross-references
+out of ~30 total fields surveyed across `UI_RightSideBar.cs` (4),
+`PlayerSummaryRow.cs` (6, a clone-template row), and `UI_MoldProfileRoot.cs`
+(20). Both are single scene-authored instances (checked: each script's GUID
+appears exactly once in `SampleScene.unity`, and neither is a `PrefabInstance`
+— unlike Game Log/End Game, these were never turned into standalone
+prefabs), so resolved via the Pilot's `FindAnyObjectByType(...,
+FindObjectsInactive.Include)` pattern, injected through new
+`RegisterRightSidebar(...)`/`RegisterMoldProfileRoot(...)`, added to
+`ResolveOwnedReferences()`.
+**Ordering bug caught within this slice, before it could repeat Game Log's
+mistake:** `RegisterGlobalEventsLog`'s existing resolution logic reads
+`rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` to find its child
+panel — and `rightSidebar` was about to become a runtime-resolved field
+itself, populated inside the very same `ResolveOwnedReferences()` call. Had
+`RegisterRightSidebar` not been sequenced *before* `RegisterGlobalEventsLog`
+in the method body, this would have reproduced the exact same class of bug
+the Game Log fix was written to prevent — just one level removed. Sequenced
+correctly from the start this time; caught during implementation, not via a
+playtest.
+Traced `GameManager.BootstrapServices()` end-to-end (the method returns at
+line 771) and confirmed it never reads `RightSidebar`/`MoldProfileRoot` —
+unlike `GameLogRouter`, neither is a lazily-cached property, so even a
+hypothetical early read elsewhere wouldn't permanently poison anything the
+way the Game Log bug did. All ~60 call sites across `GameManager.cs`,
+`EndgameService.cs`, `GrowthPhaseRunner.cs`, `DecayPhaseRunner.cs`,
+`HotseatTurnManager.cs`, `FastForwardService.cs`, `MutationPointService.cs`,
+`PlayerInitializer.cs`, `UI_EndGamePanel.cs` are inside runtime gameplay/phase
+methods, none inside an `Awake()`.
+`GameUIManager.leftSidebar` (plain `GameObject`) noted as an inventory gap —
+listed in section 8's known baseline but not owned by any declared cohort row
+in section 5. Left untouched rather than silently expanded into this slice's
+scope; it has no bespoke component type to `FindAnyObjectByType` against
+anyway, so its eventual resolution mechanism needs its own thought, not a
+copy-paste of this pattern.
+Scene diff: 2 lines removed from `GameUIManager`'s block. `dotnet build`
+succeeds (0 errors). **Not yet parity-verified per section 7.3** — needs an
+Editor playtest: confirm the right sidebar shows player summaries (correct
+living/dead/toxin counts and sort order) and round/occupancy text, the mold
+profile panel shows growth-direction percentages/adaptations/mycovariants for
+the human player and updates correctly on hotseat player switch, the endgame
+countdown text appears near game end, and a repeated game start/restart in
+one session re-populates both panels correctly.
 
 **2026-09-05 — End Game panel landed. Awaiting Editor playtest.**
 Slice contract: remove `GameUIManager.cs`'s
