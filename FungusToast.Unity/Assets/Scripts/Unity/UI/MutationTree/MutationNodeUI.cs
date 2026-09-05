@@ -1071,7 +1071,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             float reclaimChancePercent = level * GameBalance.NecrohyphalInfiltrationChancePerLevel * 100f;
             float cascadeChancePercent = level * GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel * 100f;
-            return $"Reclaim adjacent dead enemy cell {reclaimChancePercent:0.00}%, cascade from each successful reclaim {cascadeChancePercent:0.00}%";
+            return $"Reclaim adjacent enemy cells dead for at least {GameBalance.NecrohyphalInfiltrationMinimumCorpseAgeGrowthCycles} Growth Cycles {reclaimChancePercent:0.00}%, cascade from each successful reclaim {cascadeChancePercent:0.00}%";
         }
 
         private string BuildCatabolicRebirthSummary(int level)

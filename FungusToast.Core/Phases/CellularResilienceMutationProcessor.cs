@@ -144,7 +144,8 @@ namespace FungusToast.Core.Phases
                     tile.FungalCell != null &&
                     tile.FungalCell.IsDead &&
                     tile.FungalCell.OwnerPlayerId.HasValue &&
-                    tile.FungalCell.OwnerPlayerId.Value != owner.PlayerId)
+                    tile.FungalCell.OwnerPlayerId.Value != owner.PlayerId &&
+                    IsOldEnoughForNecrohyphalInfiltration(tile.FungalCell, board.CurrentGrowthCycle))
                 .ToList();
 
             Shuffle(deadEnemyNeighbors, rng);
@@ -261,6 +262,7 @@ namespace FungusToast.Core.Phases
                         tile.FungalCell.IsDead &&
                         tile.FungalCell.OwnerPlayerId.HasValue &&
                         tile.FungalCell.OwnerPlayerId.Value != owner.PlayerId &&
+                        IsOldEnoughForNecrohyphalInfiltration(tile.FungalCell, board.CurrentGrowthCycle) &&
                         !alreadyReclaimed.Contains(tile.TileId))
                     .ToList();
 
@@ -284,6 +286,15 @@ namespace FungusToast.Core.Phases
             }
 
             return cascadeCount;
+        }
+
+        private static bool IsOldEnoughForNecrohyphalInfiltration(FungalCell cell, int currentGrowthCycle)
+        {
+            // Legacy saves did not record a corpse timestamp. Preserve their prior
+            // behavior by treating an unknown death time as already eligible.
+            return !cell.DeathGrowthCycle.HasValue ||
+                   currentGrowthCycle - cell.DeathGrowthCycle.Value >=
+                   GameBalance.NecrohyphalInfiltrationMinimumCorpseAgeGrowthCycles;
         }
 
         // Utility: Fisher-Yates shuffle

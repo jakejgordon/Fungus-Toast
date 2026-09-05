@@ -53,6 +53,12 @@ namespace FungusToast.Core.Board
         public bool IsReceivingToxinDrop { get; private set; } = false;
 
         public DeathReason? CauseOfDeath { get; private set; }
+
+        /// <summary>
+        /// Absolute board growth cycle when this cell died. Null is reserved for
+        /// legacy restored corpses whose death time was not persisted.
+        /// </summary>
+        public int? DeathGrowthCycle { get; private set; }
         
         /// <summary>
         /// The source/reason why this cell was created or became alive.
@@ -129,6 +135,7 @@ namespace FungusToast.Core.Board
             GrowthCycleAge = 0;
             // Clear CauseOfDeath when becoming alive - keep LastOwnerPlayerId as historical data
             CauseOfDeath = null;
+            DeathGrowthCycle = null;
             SourceOfGrowth = source;
             IsResistant = false;
             ResistanceSource = null;
@@ -138,6 +145,7 @@ namespace FungusToast.Core.Board
         {
             CellType = FungalCellType.Dead;
             CauseOfDeath = reason;
+            DeathGrowthCycle = null;
             IsResistant = false;
             ResistanceSource = null;
             // For natural deaths (same owner), set LastOwnerPlayerId to track who lost the cell
@@ -150,6 +158,7 @@ namespace FungusToast.Core.Board
             CellType = FungalCellType.Toxin;
             ToxinExpirationAge = toxinLifespan; // This is what determines expiration
             GrowthCycleAge = 0; // Reset growth cycle age when becoming a toxin
+            DeathGrowthCycle = null;
             SourceOfGrowth = growthSource; // Set the provided growth source or null
             IsResistant = false;
             ResistanceSource = null;
@@ -309,6 +318,14 @@ namespace FungusToast.Core.Board
             GrowthCycleAge = age;
         }
 
+        internal void SetDeathGrowthCycle(int growthCycle)
+        {
+            if (!IsDead)
+                throw new InvalidOperationException("Only dead cells can record a death growth cycle.");
+
+            DeathGrowthCycle = Math.Max(0, growthCycle);
+        }
+
         /// <summary>
         /// Marks this cell as newly grown for fade-in effects
         /// </summary>
@@ -394,6 +411,7 @@ namespace FungusToast.Core.Board
             bool isDying,
             bool isReceivingToxinDrop,
             DeathReason? causeOfDeath,
+            int? deathGrowthCycle,
             GrowthSource? sourceOfGrowth,
             int? lastOwnerPlayerId,
             int reclaimCount,
@@ -413,6 +431,7 @@ namespace FungusToast.Core.Board
                 IsDying = isDying,
                 IsReceivingToxinDrop = isReceivingToxinDrop,
                 CauseOfDeath = causeOfDeath,
+                DeathGrowthCycle = deathGrowthCycle,
                 SourceOfGrowth = sourceOfGrowth,
                 LastOwnerPlayerId = lastOwnerPlayerId,
                 ReclaimCount = reclaimCount,

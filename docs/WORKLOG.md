@@ -36,6 +36,51 @@ are considered complete. The current Aerated Frontier calibration uses
   measurable territorial handicap. Continue diagnosis inside its mutation
   sequencing/economy behavior rather than treating the offset as an advantage.
 
+### Proposed — corpse-denial Mycelial Surge
+
+- Working name: `Autolytic Clearance`. This name is provisional because the
+  Mycelial Surges category already contains `Autolytic Surge`; choose a unique
+  final first word before implementation.
+- While active, before each Growth Phase, consume a limited number of the
+  owner's dead cells, prioritizing corpses adjacent to enemy living cells.
+- Intended counterplay: deny enemy Necrohyphal Infiltration targets while
+  sacrificing the owner's opportunities to use Regenerative Hyphae, Catabolic
+  Rebirth, or other corpse-reclamation effects on those cells.
+- Keep it broadly useful against reclamation strategies rather than keying it
+  specifically to Putrefactive Mycotoxin. Tier, prerequisites, duration,
+  activation cost, per-level corpse limit, UI treatment, and analytics remain
+  intentionally undecided until implementation is scheduled.
+
+### 2026-09-05 Necrohyphal Infiltration corpse-age treatment
+
+- Gameplay change: Necrohyphal Infiltration can reclaim an enemy corpse only
+  after it has been dead for at least five completed Growth Cycles. The same
+  eligibility rule applies to the initial reclaim and every cascade target.
+- Implementation: each newly killed cell records one nullable absolute death
+  Growth Cycle. Round-start snapshots persist it additively; legacy corpses
+  without a timestamp remain immediately eligible to preserve old-save
+  behavior.
+- Control artifacts: `elite_fixed8_hoard_offset0_500_c00` and `c01` (the first
+  100 games of the prior no-offset baseline). Treatment artifact:
+  `elite_fixed8_infiltration_age5_100`.
+- Fixed controls: the same eight-strategy Campaign Elite lineup, 160x160 board,
+  rotating slots, seeds `2026090400..2026090499`, nutrient patches off,
+  Mycovariants off, starting Adaptations off, and Hoardspore's start offset
+  overridden to zero. Both runs completed all 100 paired games with no parity
+  mismatches.
+- Hoardspore's Necrohyphal Infiltration living-cell output fell from `451.41`
+  to `312.28` cells/game: paired delta `-139.13` (`-30.8%`), bootstrap 95%
+  interval `-173.81..-105.03`.
+- Hoardspore's win credit fell from `81%` to `73%` (delta `-8` percentage
+  points; interval `-17..+1`), mean board share fell from `29.59%` to `28.72%`
+  (delta `-0.87` points; interval `-2.17..+0.44`), and mean rank changed from
+  `1.21` to `1.33` (delta `+0.12`; interval `+0.01..+0.23`).
+- Conclusion: the cooldown materially and specifically reduces Infiltration's
+  cell production without disabling the mutation. Hoardspore remains dominant,
+  so treat this as a successful first moderation rather than a complete balance
+  solution; continue human-counterplay work before applying another numerical
+  nerf.
+
 ### Objective
 
 Build a simpler, more effective AI strategy system and an autonomous,

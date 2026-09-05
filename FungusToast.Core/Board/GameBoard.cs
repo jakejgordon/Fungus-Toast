@@ -791,6 +791,8 @@ namespace FungusToast.Core.Board
             int ownerId = cell.OwnerPlayerId ?? -1;
             cell.MarkAsDying();
             cell.Kill(reason);
+            if (cell.IsDead)
+                cell.SetDeathGrowthCycle(CurrentGrowthCycle);
             RemoveControlFromPlayer(tileId);
             OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);
         }
@@ -801,6 +803,8 @@ namespace FungusToast.Core.Board
             int ownerId = cell.OwnerPlayerId ?? -1;
             cell.MarkAsDying();
             cell.Kill(reason);
+            if (cell.IsDead)
+                cell.SetDeathGrowthCycle(CurrentGrowthCycle);
             RemoveControlFromPlayer(tileId);
             RemoveCellInternal(tileId, removeControl: false);
             OnCellDeath(ownerId, tileId, reason, killerPlayerId, cell, attackerTileId);

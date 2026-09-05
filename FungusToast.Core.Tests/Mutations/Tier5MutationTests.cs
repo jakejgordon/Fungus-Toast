@@ -24,7 +24,8 @@ public class Tier5MutationTests
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.Necrosporulation && p.RequiredLevel == 1);
         Assert.Contains(mutation.Prerequisites, p => p.MutationId == MutationIds.DetritalEnzymes && p.RequiredLevel == 1);
         Assert.Contains("fails to expand normally", mutation.Description);
-        Assert.Contains("reclaim another adjacent dead enemy cell", mutation.Description);
+        Assert.Contains("dead for at least 5 completed Growth Cycles", mutation.Description);
+        Assert.Contains("reclaim another eligible adjacent dead enemy cell", mutation.Description);
     }
 
     [Fact]
@@ -168,6 +169,7 @@ public class Tier5MutationTests
         var sourceTile = board.GetTileById(sourceCell.TileId)!;
         CreateDeadCell(board, enemy, tileId: 5);
         CreateDeadCell(board, enemy, tileId: 6);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 5, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
 
         var observer = new CountingObserver();
         var infiltrated = CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(
@@ -185,6 +187,130 @@ public class Tier5MutationTests
         Assert.Equal(owner.PlayerId, board.GetCell(6)!.OwnerPlayerId);
         Assert.Equal(1, observer.NecrohyphalInfiltrations);
         Assert.Equal(1, observer.NecrohyphalCascades);
+    }
+
+    [Fact]
+    public void TryNecrohyphalInfiltration_ignores_enemy_cells_dead_for_fewer_than_five_growth_cycles()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 2);
+        var owner = CreatePlayer(0);
+        var enemy = CreatePlayer(1);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+        owner.SetMutationLevel(MutationIds.NecrohyphalInfiltration, newLevel: GameBalance.NecrohyphalInfiltrationMaxLevel, currentRound: 1);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 10, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+
+        var sourceCell = PlaceLivingCell(board, owner, tileId: 4);
+        var sourceTile = board.GetTileById(sourceCell.TileId)!;
+        var youngCorpse = CreateDeadCell(board, enemy, tileId: 5);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 14, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+
+        var observer = new CountingObserver();
+        var infiltrated = CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(
+            board,
+            sourceTile,
+            sourceCell,
+            owner,
+            new AlwaysZeroRandom(),
+            observer);
+
+        Assert.False(infiltrated);
+        Assert.Equal(10, youngCorpse.DeathGrowthCycle);
+        Assert.True(youngCorpse.IsDead, "Expected a four-cycle-old enemy corpse to remain unavailable for infiltration.");
+        Assert.Equal(0, observer.NecrohyphalInfiltrations);
+    }
+
+    [Fact]
+    public void TryNecrohyphalInfiltration_reclaims_enemy_cell_after_five_completed_growth_cycles()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 2);
+        var owner = CreatePlayer(0);
+        var enemy = CreatePlayer(1);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+        owner.SetMutationLevel(MutationIds.NecrohyphalInfiltration, newLevel: GameBalance.NecrohyphalInfiltrationMaxLevel, currentRound: 1);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 10, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+
+        var sourceCell = PlaceLivingCell(board, owner, tileId: 4);
+        var sourceTile = board.GetTileById(sourceCell.TileId)!;
+        CreateDeadCell(board, enemy, tileId: 5);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 15, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+
+        var observer = new CountingObserver();
+        var infiltrated = CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(
+            board,
+            sourceTile,
+            sourceCell,
+            owner,
+            new AlwaysZeroRandom(),
+            observer);
+
+        Assert.True(infiltrated);
+        Assert.True(board.GetCell(5)!.IsAlive, "Expected a five-cycle-old enemy corpse to be eligible for infiltration.");
+        Assert.Equal(owner.PlayerId, board.GetCell(5)!.OwnerPlayerId);
+        Assert.Null(board.GetCell(5)!.DeathGrowthCycle);
+        Assert.Equal(1, observer.NecrohyphalInfiltrations);
+    }
+
+    [Fact]
+    public void TryNecrohyphalInfiltration_treats_legacy_corpse_without_death_cycle_as_eligible()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 2);
+        var owner = CreatePlayer(0);
+        var enemy = CreatePlayer(1);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+        owner.SetMutationLevel(MutationIds.NecrohyphalInfiltration, newLevel: GameBalance.NecrohyphalInfiltrationMaxLevel, currentRound: 1);
+
+        var sourceCell = PlaceLivingCell(board, owner, tileId: 4);
+        var sourceTile = board.GetTileById(sourceCell.TileId)!;
+        var legacyCorpse = PlaceLivingCell(board, enemy, tileId: 5);
+        legacyCorpse.Kill(DeathReason.Unknown);
+        Assert.Null(legacyCorpse.DeathGrowthCycle);
+
+        var infiltrated = CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(
+            board,
+            sourceTile,
+            sourceCell,
+            owner,
+            new AlwaysZeroRandom(),
+            new CountingObserver());
+
+        Assert.True(infiltrated);
+        Assert.Equal(owner.PlayerId, board.GetCell(5)!.OwnerPlayerId);
+    }
+
+    [Fact]
+    public void TryNecrohyphalInfiltration_cascade_skips_enemy_corpses_that_are_too_recent()
+    {
+        var board = new GameBoard(width: 4, height: 3, playerCount: 2);
+        var owner = CreatePlayer(0);
+        var enemy = CreatePlayer(1);
+        board.Players.Add(owner);
+        board.Players.Add(enemy);
+        owner.SetMutationLevel(MutationIds.NecrohyphalInfiltration, newLevel: GameBalance.NecrohyphalInfiltrationMaxLevel, currentRound: 1);
+
+        var sourceCell = PlaceLivingCell(board, owner, tileId: 4);
+        var sourceTile = board.GetTileById(sourceCell.TileId)!;
+        CreateDeadCell(board, enemy, tileId: 5);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 4, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+        CreateDeadCell(board, enemy, tileId: 6);
+        board.RestoreRoundState(currentRound: 1, currentGrowthCycle: 5, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+
+        var observer = new CountingObserver();
+        var infiltrated = CellularResilienceMutationProcessor.TryNecrohyphalInfiltration(
+            board,
+            sourceTile,
+            sourceCell,
+            owner,
+            new AlwaysZeroRandom(),
+            observer);
+
+        Assert.True(infiltrated);
+        Assert.True(board.GetCell(5)!.IsAlive);
+        Assert.True(board.GetCell(6)!.IsDead, "Expected the one-cycle-old cascade target to remain unavailable.");
+        Assert.Equal(1, observer.NecrohyphalInfiltrations);
+        Assert.Equal(0, observer.NecrohyphalCascades);
     }
 
     [Fact]

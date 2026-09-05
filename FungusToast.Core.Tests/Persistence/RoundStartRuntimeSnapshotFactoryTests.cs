@@ -39,6 +39,25 @@ public class RoundStartRuntimeSnapshotFactoryTests
     }
 
     [Fact]
+    public void Export_and_restore_preserve_dead_cell_growth_cycle()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Corpse Age", PlayerTypeEnum.AI);
+        board.Players.Add(player);
+        board.RestoreRoundState(currentRound: 3, currentGrowthCycle: 12, necrophyticBloomActivated: false, pendingHypervariationDraftPlayerIds: Array.Empty<int>());
+        board.SpawnSporeForPlayer(player, tileId: 4, source: GrowthSource.Manual);
+        var deadCell = Assert.IsType<FungalCell>(board.GetCell(4));
+        board.KillFungalCell(deadCell, DeathReason.Randomness);
+
+        var snapshot = RoundStartRuntimeSnapshotFactory.Export(board);
+        var (restoredBoard, _) = RoundStartRuntimeSnapshotFactory.Restore(snapshot);
+
+        var restoredDeadCell = Assert.IsType<FungalCell>(restoredBoard.GetCell(4));
+        Assert.True(restoredDeadCell.IsDead);
+        Assert.Equal(12, restoredDeadCell.DeathGrowthCycle);
+    }
+
+    [Fact]
     public void Export_and_restore_round_trips_representative_round_start_state()
     {
         var board = new GameBoard(width: 6, height: 6, playerCount: 2);

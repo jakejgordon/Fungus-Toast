@@ -80,8 +80,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecrohyphalInfiltration,
                 name: "Necrohyphal Infiltration",
                 description:
-                    $"Failed expansion can reclaim dead enemy cells.\n\n" +
-                    $"<b>Technical:</b> After a living cell fails to expand normally, each level gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance to reclaim an adjacent dead enemy cell in a cardinal direction (up / down / left / right). On success, each level also gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to reclaim another adjacent dead enemy cell.",
+                    $"Failed expansion can reclaim enemy cells that have been dead long enough.\n\n" +
+                    $"<b>Technical:</b> After a living cell fails to expand normally, each level gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance to reclaim an adjacent enemy cell that has been dead for at least {GameBalance.NecrohyphalInfiltrationMinimumCorpseAgeGrowthCycles} completed Growth Cycles in a cardinal direction (up / down / left / right). On success, each level also gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to reclaim another eligible adjacent dead enemy cell.",
                 flavorText: "Necrohyphae tunnel through decaying rivals, infiltrating their remains and reawakening them as loyal extensions of the colony. On rare occasions, this necrotic surge propagates, consuming entire graveyards in a wave of resurrection.",
                 type: MutationType.NecrohyphalInfiltration,
                 effectPerLevel: GameBalance.NecrohyphalInfiltrationChancePerLevel,

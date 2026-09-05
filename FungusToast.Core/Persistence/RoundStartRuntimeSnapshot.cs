@@ -151,6 +151,8 @@ public sealed class FungalCellSnapshot
     public bool IsReceivingToxinDrop;
     public bool HasCauseOfDeath;
     public DeathReason CauseOfDeathValue;
+    public bool HasDeathGrowthCycle;
+    public int DeathGrowthCycleValue;
     public bool HasSourceOfGrowth;
     public GrowthSource SourceOfGrowthValue;
     public bool HasLastOwnerPlayerId;
@@ -176,6 +178,16 @@ public sealed class FungalCellSnapshot
         {
             HasCauseOfDeath = value.HasValue;
             CauseOfDeathValue = value.GetValueOrDefault();
+        }
+    }
+
+    public int? DeathGrowthCycle
+    {
+        get => HasDeathGrowthCycle ? DeathGrowthCycleValue : null;
+        set
+        {
+            HasDeathGrowthCycle = value.HasValue;
+            DeathGrowthCycleValue = value.GetValueOrDefault();
         }
     }
 
