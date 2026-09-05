@@ -186,7 +186,13 @@ namespace FungusToast.Unity.UI.GameStart
             buttonObject.layer = gameObject.layer;
 
             Image background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Button.BackgroundDefault;
+            // Neutral base color: startGameButton ends up affirmative (green)
+            // and backButton ends up dark secondary. A hardcoded base color here
+            // would show through as an incorrect tint, since Button's ColorTint
+            // transition does not fully overwrite the Image's own base color.
+            // ApplyStyle/UpdateSetupStepState (called from Awake) set the real
+            // target color.
+            background.color = Color.white;
 
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;

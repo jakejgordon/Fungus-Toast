@@ -2186,7 +2186,15 @@ namespace FungusToast.Unity.UI.Campaign
             buttonObject.layer = gameObject.layer;
 
             Image background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Surface.PanelElevated;
+            // Neutral base color: these factories are shared by buttons with
+            // different final semantic roles (ApplyNeutralMenuAction's cream
+            // BackgroundDefault for hotseat/campaign vs ApplySecondaryMenuAction's
+            // dark PanelElevated for credits/settings/etc). Hardcoding
+            // PanelElevated here left a visible dark-olive cast under the cream
+            // buttons, since the Button's ColorTint transition does not fully
+            // overwrite the Image's own base color. Let each caller's styling
+            // pass (later in Awake) set the real target color.
+            background.color = Color.white;
 
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;
@@ -2451,7 +2459,15 @@ namespace FungusToast.Unity.UI.Campaign
             buttonObject.layer = gameObject.layer;
 
             Image background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Surface.PanelElevated;
+            // Neutral base color: these factories are shared by buttons with
+            // different final semantic roles (ApplyNeutralMenuAction's cream
+            // BackgroundDefault for hotseat/campaign vs ApplySecondaryMenuAction's
+            // dark PanelElevated for credits/settings/etc). Hardcoding
+            // PanelElevated here left a visible dark-olive cast under the cream
+            // buttons, since the Button's ColorTint transition does not fully
+            // overwrite the Image's own base color. Let each caller's styling
+            // pass (later in Awake) set the real target color.
+            background.color = Color.white;
 
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;

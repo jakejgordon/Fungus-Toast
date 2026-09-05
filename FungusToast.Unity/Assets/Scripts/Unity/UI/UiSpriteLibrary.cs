@@ -15,7 +15,13 @@ namespace FungusToast.Unity.UI
         private static Sprite backArrow;
         private static Sprite forwardArrow;
 
-        public static Sprite TitleLogoWords => titleLogoWords ??= Load("fungus_toast_logo_words_1001x455");
+        // The scene's pre-migration wideTitleLogoSprite field pointed to
+        // fungus_toast_logo_1520x651.png, a file deleted by commit d745b8c
+        // ("better logo") that added this banner as its replacement — the
+        // serialized reference was just never updated. This is the correct
+        // asset: its aspect ratio (1914/821 = 2.331) exactly matches the
+        // logo's target box (WideLogoWidth/WideLogoHeight = 520/223 = 2.332).
+        public static Sprite TitleLogoWords => titleLogoWords ??= Load("fungus_toast_banner_1914x821");
 
         public static Sprite BackArrow => backArrow ??= Load("back_arrow_icon_256x256");
 

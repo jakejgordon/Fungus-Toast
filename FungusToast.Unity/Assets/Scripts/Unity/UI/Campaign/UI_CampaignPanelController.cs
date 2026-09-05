@@ -208,7 +208,14 @@ namespace FungusToast.Unity.UI.Campaign
             buttonObject.layer = gameObject.layer;
 
             Image background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Button.BackgroundDefault;
+            // Neutral base color: resumeButton/newButton end up affirmative
+            // (green) or neutral (cream) depending on save state, and backButton
+            // always ends up dark secondary. A hardcoded base color here would
+            // show through as an incorrect tint under whichever role does not
+            // match it, since Button's ColorTint transition does not fully
+            // overwrite the Image's own base color. ApplyActionButtonSemantics
+            // (called from Awake) sets the real target color.
+            background.color = Color.white;
 
             Button button = buttonObject.GetComponent<Button>();
             button.targetGraphic = background;
