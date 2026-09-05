@@ -14,12 +14,14 @@
 
 - **State:** Revised twice on 2026-09-05 after two adversarial review passes —
   six findings in section 10 (response in section 11) and three in section 12
-  (response in section 13). All nine accepted. The second pass named R2-2 and
-  R2-3 as prerequisites for the Pilot slice; both are fixed, so the Pilot
-  (Loading Screen) is unblocked. No slice past the main menu has started.
+  (response in section 13). All nine accepted. Execution then began the same
+  day: the Audit/close (Tooltip) and Pilot (Loading Screen) cohorts are both
+  done — pending your Editor playtest of Loading Screen (see section 9). Next
+  up: Pattern proof (Game Log).
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
-  Menu, which the review established was already done before this plan existed.
+  Menu, which the review established was already done before this plan
+  existed, and the Tooltip and Loading Screen cohorts (2026-09-05).
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -146,6 +148,8 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | Campaign/state logic (non-UI) | `Campaign/CampaignController.cs`, `CampaignState.cs`, `CampaignSaveService.cs`, `MoldinessProgression.cs`, `MoldinessUnlocks.cs`, `GameMode.cs` | 1/9 | Already plain C#; `BoardPreset.cs`'s 2 fields are legitimate ScriptableObject data. No work needed. |
 | Grid/board rendering | `Grid/GridVisualizer.cs` (2,940 lines) + 15 more | 2/16 | Already code-driven internally. Explicitly out of scope (section 4). |
 | **Pause Menu** | `UI/UI_PauseMenuPanel.cs` (997 lines) | 0 serialized fields | **Reclassified from "Phase 1 candidate" to done.** `PauseMenuService.Initialize()` (`Services/EndgameService.cs:369-390`) already does `AddComponent<UI_PauseMenuPanel>()`, `panel.SetDependencies(...)`, then `gameUIManager.RegisterPauseMenuPanel(panel)`. That is construct-inject-register from a composition root — a *better* pattern than the static registry Phase 0 used, and the reference model for section 7. |
+| Tooltip system | `UI/Tooltips/*.cs` (11 files) | 0/11 confirmed | **Closed 2026-09-05, Audit/close cohort.** See decision log — every `dynamicProvider` occurrence is unassigned; all tooltips use `staticText`. Retained by category, no code change. |
+| **Loading Screen** | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs` | 0 confirmed (was 1) | **Landed 2026-09-05, Pilot slice.** `GameUIManager.Awake()` resolves the singleton via `FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include)` and calls the new `RegisterLoadingScreen(...)`, mirroring `RegisterPauseMenuPanel`. The `[SerializeField]` and its scene wire (`SampleScene.unity` `GameUIManager` → `loadingScreen`) are gone. Panel content (`fadeOutDuration`, `statusLabel`, `backgroundImage`) stays scene-authored and serialized, per the pilot's own scope note. See section 9 for the full slice record. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -154,10 +158,11 @@ and not a gate: the opportunistic policy still wins, so if a bug lands you in
 the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
 Completion is tracked per component (section 7), not per row.
 
+Audit/close (Tooltip) and Pilot (Loading Screen) are done — moved to the
+"Already code-first" table above. What follows starts at Pattern proof.
+
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Audit / close — CLOSED 2026-09-05** | Tooltip system | `UI/Tooltips/*.cs` (11 files) | 0 confirmed | Closed: `TooltipTrigger.cs:16-26` is authored content + per-instance tunables; `TooltipView.cs:13-20` is prefab-internal child refs + a fade duration. Sections 4/6 retain all of these. The one real check — every `TooltipTrigger.dynamicProvider` occurrence in `SampleScene.unity` (13 instances) and the two prefabs that reference it (`UI_GrowthPreviewCell.prefab`, `UI_ToolTipHelpIconPrefab.prefab`) is `{fileID: 0}` (unassigned); every instance relies on `staticText` instead. No scene instance points outside its own object. Retained by category — no code change needed. |
-| **Pilot** | Loading Screen | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs:36` | 1 (`GameUIManager` → `loadingScreen`) | Smallest case that still exercises the real question — who constructs and owns an inactive overlay. Note the work is in `GameUIManager`, not the panel: the panel's 3 fields are 1 tunable + 2 optional children, one already self-wiring via `GetComponent<Image>()` (`UI_LoadingScreen.cs:40-44`). |
 | **Pattern proof** | Game Log (player + global) | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | TBD — 4 owner refs at `GameUIManager.cs:28-33` (2 panels + 2 managers) plus panel-internal fields to classify | Deliberately second: **two instances of one implementation** is the case that breaks naive global lookup, so it proves or kills the composition approach before anything larger adopts it. |
 | **Medium risk** | End Game panel | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | TBD (21 fields to classify) | Already substantially self-building; expect most fields to classify as retained, but that must be confirmed field-by-field, not assumed from the count. |
 | **Medium risk** | Right Sidebar / Player Summary / Mold Profile | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | TBD (32 fields to classify) | `UI_MoldProfileRoot.cs` is the densest non-mutation-tree file; treat each of the three as its own slice. |
@@ -389,6 +394,36 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Pilot (Loading Screen) landed. Awaiting Editor playtest.**
+Slice contract: remove `GameUIManager.cs`'s `[SerializeField] private
+UI_LoadingScreen loadingScreen;`; resolve it instead in `GameUIManager.Awake()`
+via `FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include)`,
+injected through a new `RegisterLoadingScreen(UI_LoadingScreen)` method
+(mirrors `RegisterPauseMenuPanel`). Two alternatives were considered and
+rejected: moving the `[SerializeField]` onto `GameManager` (would only
+relocate the unresolved reference, not resolve it — `GameManager` already
+carries 9 such fields in the Milestone A baseline); and self-registration from
+`UI_LoadingScreen.Awake()` via `GameManager.Instance` (rejected as
+Awake-order-dependent across objects — the exact failure class that broke
+Custom Game/Campaign in Phase 0). `FindAnyObjectByType(...,
+FindObjectsInactive.Include)` has no such dependency and is already the
+established idiom in this codebase, including inside the reference
+implementation itself (`UI_PauseMenuPanel.cs:248`). The panel's own 3 fields
+(`fadeOutDuration`, `statusLabel`, `backgroundImage`) are untouched — the pilot
+note in section 5 scoped the work to `GameUIManager` only, not a panel
+rebuild. `GameManager.cs` required zero changes; its
+`gameUIManager.LoadingScreen?.…` call sites are unaffected.
+Scene diff: `SampleScene.unity`'s `GameUIManager` MonoBehaviour block lost
+its `loadingScreen: {fileID: 1121346468}` line — the only change to that
+file. `dotnet build FungusToast.Unity/Assembly-CSharp.csproj` succeeds (0
+errors; pre-existing unrelated warnings only). **Not yet parity-verified per
+section 7.3** — that requires an Editor playtest, which this session cannot
+run. Editor flow needed: enter Play, confirm the loading overlay still shows
+during game init and fades out on ready (Custom Game start), then restart/start
+a second game in the same session and confirm it still shows/hides correctly
+the second time (repeated-entry check). Record the actual result here once
+run.
 
 **2026-09-05 — Tooltip audit closed, zero cross-references.** Checked every
 `dynamicProvider` occurrence in `SampleScene.unity` (13) and the two prefabs

@@ -32,8 +32,7 @@ namespace FungusToast.Unity.UI
         [SerializeField] private UI_GameLogPanel globalEventsLogPanel;
         [SerializeField] private GlobalGameLogManager globalEventsLogManager;
 
-        [Header("Loading / Transitions")]
-        [SerializeField] private UI_LoadingScreen loadingScreen;
+        private UI_LoadingScreen loadingScreen;
 
         [Header("End-game")]
         [SerializeField] private UI_EndGamePanel endGamePanel;
@@ -53,6 +52,7 @@ namespace FungusToast.Unity.UI
             private void Awake()
             {
                 ApplySidebarLogLayoutBehavior();
+                RegisterLoadingScreen(FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include));
             }
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
@@ -214,6 +214,16 @@ namespace FungusToast.Unity.UI
         }
 
         public void RegisterPauseMenuPanel(UI_PauseMenuPanel panel) => pauseMenuPanel = panel;
+
+        public void RegisterLoadingScreen(UI_LoadingScreen panel)
+        {
+            if (panel == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_LoadingScreen found in the scene.");
+            }
+
+            loadingScreen = panel;
+        }
 
         // Routing observer for unified event handling
         private GameLogRouter gameLogRouter;
