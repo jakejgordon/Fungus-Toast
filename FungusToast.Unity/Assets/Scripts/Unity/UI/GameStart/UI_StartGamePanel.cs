@@ -43,24 +43,34 @@ namespace FungusToast.Unity.UI.GameStart
 
         public static UI_StartGamePanel Instance { get; private set; }
 
-        [SerializeField] private List<UI_PlayerCountButton> playerButtons;
-        [SerializeField] private Button startGameButton;
-        [SerializeField] private Button backButton;
-        [SerializeField] private GameObject modeSelectPanel;
-        [SerializeField] private Sprite backButtonIcon;
-        [SerializeField] private Sprite forwardStepButtonIcon;
+        // The Home screen controller is resolved live through MainMenuRegistry
+        // rather than held as a serialized cross-reference, since panel Awake
+        // order across the scene is not guaranteed. See UNITY_CODE_FIRST_MIGRATION.md.
+        private static UI_ModeSelectPanelController ModeSelectController => MainMenuRegistry.ModeSelectPanel;
+        private static Sprite BackButtonIcon => UiSpriteLibrary.BackArrow;
+        private static Sprite ForwardStepButtonIcon => UiSpriteLibrary.ForwardArrow;
 
-        [Header("Human Players (Hotseat)")]
-        [SerializeField] private GameObject humanPlayerSectionRoot; // container for human player selector (hidden until total picked)
-        [SerializeField] private List<UI_HotseatHumanCountButton> humanPlayerButtons; // 1..8 reuse same prefab style
-        [SerializeField] private TextMeshProUGUI playerSummaryLabel; // "X Players (Y Human / Z AI)"
+        // Built at runtime by EnsureRuntimeLayoutScaffold()/EnsureMoldSelectionSection()/
+        // ConfigureHumanPlayerButtons(); see UNITY_CODE_FIRST_MIGRATION.md.
+        private List<UI_PlayerCountButton> playerButtons;
+        private Button startGameButton;
+        private Button backButton;
 
-        [Header("Legacy Testing Template")]
-        [SerializeField] private GameObject testingOptionsSectionRoot;
+        // Human Players (Hotseat)
+        private GameObject humanPlayerSectionRoot; // container for human player selector (hidden until total picked)
+        private List<UI_HotseatHumanCountButton> humanPlayerButtons; // 1..8 reuse same prefab style
+        private TextMeshProUGUI playerSummaryLabel; // "X Players (Y Human / Z AI)"
 
-        // Magnifying glass UI reference
+        // Legacy testing dropdown template; ResolveDropdownTemplate() falls back to
+        // any TMP_Dropdown in the scene when DevelopmentTestingAccess is available.
+        private GameObject testingOptionsSectionRoot;
+
+        // These belong to the gameplay overlay (GameUIManager's hierarchy), not the
+        // setup screen itself; this panel only toggles their visibility during the
+        // setup flow. Left as the one documented serialized-cross-reference
+        // exception in UNITY_CODE_FIRST_MIGRATION.md rather than reaching into an
+        // unrelated part of the scene to resolve them dynamically.
         [SerializeField] private GameObject magnifyingGlassUI;
-        // Magnifier visuals (child of magnifyingGlassUI)
         [SerializeField] private GameObject magnifierVisualRoot;
 
         private int? selectedPlayerCount = DefaultHotseatPlayerCount;
@@ -112,9 +122,13 @@ namespace FungusToast.Unity.UI.GameStart
         private void Awake()
         {
             Instance = this;
+            MainMenuRegistry.StartGamePanel = this;
             ResolveTestingModeReferences();
-            // Strict validation: all required refs must be assigned in Inspector
-            ValidateSerializedRefs();
+
+            // Built before EnsureRuntimeLayoutScaffold: that method's action-button
+            // stack (and InitializeTestingCard's button template below) both need
+            // startGameButton/backButton to already exist.
+            BuildActionButtons();
 
             EnsureRuntimeLayoutScaffold();
             ApplyStyle();
@@ -134,6 +148,78 @@ namespace FungusToast.Unity.UI.GameStart
             // Ensure magnifier visuals are disabled at startup
             if (magnifierVisualRoot != null)
                 magnifierVisualRoot.SetActive(false);
+
+            ValidateBuiltUi();
+        }
+
+        private void OnDestroy()
+        {
+            if (MainMenuRegistry.StartGamePanel == this)
+            {
+                MainMenuRegistry.StartGamePanel = null;
+            }
+
+            if (Instance == this)
+            {
+                Instance = null;
+            }
+        }
+
+        /// <summary>
+        /// Builds the Start Game/Back buttons as bare button+label objects.
+        /// ConfigureButtonContent/ConfigureMenuActionLayout (driven from
+        /// ApplyStyle/UpdateSetupStepState) finish icon, color, and sizing exactly
+        /// as they did for the scene-authored buttons.
+        /// </summary>
+        private void BuildActionButtons()
+        {
+            startGameButton = CreateActionButton("UI_StartGameStartButton", "Start Game");
+            startGameButton.onClick.AddListener(OnStartGamePressed);
+
+            backButton = CreateActionButton("UI_StartGameBackButton", "Back");
+        }
+
+        private Button CreateActionButton(string objectName, string labelText)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(transform, false);
+            buttonObject.layer = gameObject.layer;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(label);
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.raycastTarget = false;
+
+            return button;
+        }
+
+        private void ValidateBuiltUi()
+        {
+            if (startGameButton == null) Debug.LogError("UI_StartGamePanel: startGameButton failed to build.");
+            if (backButton == null) Debug.LogError("UI_StartGamePanel: backButton failed to build.");
+            if (humanPlayerSectionRoot == null) Debug.LogError("UI_StartGamePanel: humanPlayerSectionRoot failed to build.");
+            if (playerSummaryLabel == null) Debug.LogError("UI_StartGamePanel: playerSummaryLabel failed to build.");
+            if (playerButtons == null || playerButtons.Count == 0) Debug.LogError("UI_StartGamePanel: playerButtons failed to build.");
+            if (humanPlayerButtons == null || humanPlayerButtons.Count == 0) Debug.LogError("UI_StartGamePanel: humanPlayerButtons failed to build.");
         }
 
         private void OnEnable()
@@ -180,17 +266,6 @@ namespace FungusToast.Unity.UI.GameStart
             UpdateButtonVisuals();
             UpdateHumanPlayerButtonVisuals();
             UpdatePlayerSummaryLabel();
-        }
-
-        private void ValidateSerializedRefs()
-        {
-            if (startGameButton == null) throw new InvalidOperationException("UI_StartGamePanel: startGameButton is not assigned.");
-            if (testingOptionsSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: testingOptionsSectionRoot not assigned (will use legacy direct testing refs).");
-            if (backButton == null) Debug.LogWarning("UI_StartGamePanel: backButton not assigned (menu back navigation disabled).");
-            if (modeSelectPanel == null) Debug.LogWarning("UI_StartGamePanel: modeSelectPanel not assigned (menu back navigation disabled).");
-            // Human player selection (soft validation: allow scene to run if not yet wired to avoid editor breakage)
-            if (humanPlayerSectionRoot == null) Debug.LogWarning("UI_StartGamePanel: humanPlayerSectionRoot not assigned (hotseat selector will not show).");
-            if (playerSummaryLabel == null) Debug.LogWarning("UI_StartGamePanel: playerSummaryLabel not assigned.");
         }
 
         private void ResolveTestingModeReferences()
@@ -388,14 +463,24 @@ namespace FungusToast.Unity.UI.GameStart
 
         private void ResolveSetupSectionReferences()
         {
-            titleSectionRoot ??= FindNamedRectTransform("UI_HowManyPlayersText");
-            playerCountSectionRoot ??= FindNamedRectTransform("UI_PlayerCountButtonGroupWrapper");
-            advancedSettingsSectionRoot ??= FindNamedRectTransform("UI_StartGameAdvancedSettingsSection");
-            boardSizeSectionRoot ??= FindNamedRectTransform("UI_StartGameBoardSizeSection");
-            testingCardSectionRoot ??= FindNamedRectTransform("UI_StartGameTestingSection");
+            titleSectionRoot = EnsureNamedSection(titleSectionRoot, "UI_HowManyPlayersText");
+            playerCountSectionRoot = EnsureNamedSection(playerCountSectionRoot, "UI_PlayerCountButtonGroupWrapper");
+            advancedSettingsSectionRoot = EnsureNamedSection(advancedSettingsSectionRoot, "UI_StartGameAdvancedSettingsSection");
+            boardSizeSectionRoot = EnsureNamedSection(boardSizeSectionRoot, "UI_StartGameBoardSizeSection");
+            testingCardSectionRoot = EnsureNamedSection(testingCardSectionRoot, "UI_StartGameTestingSection");
+            EnsureHumanPlayerSectionRoot();
+
             if (setupTitleLabel == null && titleSectionRoot != null)
             {
                 setupTitleLabel = titleSectionRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+                if (setupTitleLabel == null)
+                {
+                    var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                    labelObject.transform.SetParent(titleSectionRoot, false);
+                    labelObject.layer = gameObject.layer;
+                    setupTitleLabel = labelObject.GetComponent<TextMeshProUGUI>();
+                }
+
                 if (setupTitleLabel != null && string.IsNullOrWhiteSpace(defaultTitleText))
                 {
                     defaultTitleText = "Game Setup";
@@ -404,16 +489,208 @@ namespace FungusToast.Unity.UI.GameStart
                 }
             }
 
-            if (playerCountSectionRoot == null)
+            EnsureCountButtonRow(playerCountSectionRoot, "UI_PlayerCountButtonGroup");
+            EnsurePlayerCountButtons();
+            ConfigureCountSelectionSection(playerCountSectionRoot, "Total players", "UI_PlayerCountButtonGroup");
+
+            RectTransform humanSectionRect = humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null;
+            EnsureCountButtonRow(humanSectionRect, "UI_HumanPlayerCountButtonGroup");
+            EnsureHumanPlayerCountButtons();
+            ConfigureCountSelectionSection(humanSectionRect, "Human players", "UI_HumanPlayerCountButtonGroup");
+        }
+
+        /// <summary>
+        /// Finds a named section by scanning the panel (matching the existing
+        /// find-or-create idiom used throughout this file, e.g.
+        /// EnsureActionButtonStack), creating an empty one parented to this panel
+        /// if the scene does not (yet) author it. See UNITY_CODE_FIRST_MIGRATION.md.
+        /// </summary>
+        private RectTransform EnsureNamedSection(RectTransform existing, string objectName)
+        {
+            if (existing != null)
             {
-                playerCountSectionRoot = GetTopLevelSection(playerButtons != null && playerButtons.Count > 0 ? playerButtons[0]?.transform : null) as RectTransform;
+                return existing;
             }
 
-            ConfigureCountSelectionSection(playerCountSectionRoot, "Total players", "UI_PlayerCountButtonGroup");
-            ConfigureCountSelectionSection(
-                humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null,
-                "Human players",
-                "UI_HumanPlayerCountButtonGroup");
+            var found = FindNamedRectTransform(objectName);
+            if (found != null)
+            {
+                return found;
+            }
+
+            var sectionObject = new GameObject(objectName, typeof(RectTransform));
+            sectionObject.transform.SetParent(transform, false);
+            sectionObject.layer = gameObject.layer;
+            return sectionObject.GetComponent<RectTransform>();
+        }
+
+        private void EnsureHumanPlayerSectionRoot()
+        {
+            if (humanPlayerSectionRoot == null)
+            {
+                var existing = FindNamedRectTransform("UI_HumanPlayerCountButtonGroupWrapper");
+                humanPlayerSectionRoot = existing != null ? existing.gameObject : null;
+            }
+
+            if (humanPlayerSectionRoot == null)
+            {
+                humanPlayerSectionRoot = new GameObject("UI_HumanPlayerCountButtonGroupWrapper", typeof(RectTransform));
+                humanPlayerSectionRoot.transform.SetParent(transform, false);
+                humanPlayerSectionRoot.layer = gameObject.layer;
+            }
+
+            // Adopt the scene-authored summary text if present, rather than adding a
+            // second one alongside it.
+            if (playerSummaryLabel == null)
+            {
+                playerSummaryLabel = humanPlayerSectionRoot.GetComponentInChildren<TextMeshProUGUI>(true);
+            }
+
+            if (playerSummaryLabel == null)
+            {
+                var labelObject = new GameObject("UI_HumanPlayerCountSummaryText", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.transform.SetParent(humanPlayerSectionRoot.transform, false);
+                labelObject.transform.SetAsLastSibling();
+                labelObject.layer = gameObject.layer;
+                playerSummaryLabel = labelObject.GetComponent<TextMeshProUGUI>();
+                playerSummaryLabel.alignment = TextAlignmentOptions.Center;
+                playerSummaryLabel.fontSize = 16f;
+                playerSummaryLabel.raycastTarget = false;
+            }
+        }
+
+        /// <summary>
+        /// Creates the HorizontalLayoutGroup row that ConfigureCountSelectionSection
+        /// expects to already exist as a direct child of sectionRoot, named rowName.
+        /// </summary>
+        private RectTransform EnsureCountButtonRow(RectTransform sectionRoot, string rowName)
+        {
+            if (sectionRoot == null)
+            {
+                return null;
+            }
+
+            var existing = sectionRoot.Find(rowName) as RectTransform;
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            var rowObject = new GameObject(rowName, typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            rowObject.transform.SetParent(sectionRoot, false);
+            rowObject.layer = gameObject.layer;
+            return rowObject.GetComponent<RectTransform>();
+        }
+
+        private void EnsurePlayerCountButtons()
+        {
+            if (playerButtons != null && playerButtons.Count > 0)
+            {
+                return;
+            }
+
+            var row = playerCountSectionRoot != null ? playerCountSectionRoot.Find("UI_PlayerCountButtonGroup") : null;
+            if (row == null)
+            {
+                return;
+            }
+
+            // Adopt scene-authored buttons if the row already has them, rather than
+            // adding a second set alongside them.
+            var adopted = row.GetComponentsInChildren<UI_PlayerCountButton>(true);
+            if (adopted.Length > 0)
+            {
+                playerButtons = new List<UI_PlayerCountButton>(adopted);
+                return;
+            }
+
+            playerButtons = new List<UI_PlayerCountButton>();
+            for (int count = 1; count <= 8; count++)
+            {
+                Button button = CreateCountButtonShell(row, $"UI_PlayerButton{count}", count.ToString(), out Image highlight);
+                UI_PlayerCountButton buttonScript = button.gameObject.AddComponent<UI_PlayerCountButton>();
+                buttonScript.playerCount = count;
+                buttonScript.highlightImage = highlight;
+                playerButtons.Add(buttonScript);
+            }
+        }
+
+        private void EnsureHumanPlayerCountButtons()
+        {
+            if (humanPlayerButtons != null && humanPlayerButtons.Count > 0)
+            {
+                return;
+            }
+
+            RectTransform sectionRect = humanPlayerSectionRoot != null ? humanPlayerSectionRoot.GetComponent<RectTransform>() : null;
+            var row = sectionRect != null ? sectionRect.Find("UI_HumanPlayerCountButtonGroup") : null;
+            if (row == null)
+            {
+                return;
+            }
+
+            // Adopt scene-authored buttons if the row already has them, rather than
+            // adding a second set alongside them.
+            var adopted = row.GetComponentsInChildren<UI_HotseatHumanCountButton>(true);
+            if (adopted.Length > 0)
+            {
+                humanPlayerButtons = new List<UI_HotseatHumanCountButton>(adopted);
+                return;
+            }
+
+            humanPlayerButtons = new List<UI_HotseatHumanCountButton>();
+            for (int count = 1; count <= 8; count++)
+            {
+                Button button = CreateCountButtonShell(row, $"UI_HumanPlayerButton{count}", count.ToString(), out Image highlight);
+                UI_HotseatHumanCountButton buttonScript = button.gameObject.AddComponent<UI_HotseatHumanCountButton>();
+                buttonScript.humanPlayerCount = count;
+                buttonScript.highlightImage = highlight;
+                humanPlayerButtons.Add(buttonScript);
+            }
+        }
+
+        /// <summary>
+        /// Builds a bare button+label+highlight-overlay shell shared by the player-
+        /// count and human-count buttons. ConfigureCountSelectionSection normalizes
+        /// the final per-button LayoutElement sizing once the button is parented
+        /// into its row.
+        /// </summary>
+        private Button CreateCountButtonShell(Transform parent, string objectName, string labelText, out Image highlightImage)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(parent, false);
+            buttonObject.layer = gameObject.layer;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+
+            GameObject highlightObject = new GameObject("Highlight", typeof(RectTransform), typeof(Image));
+            highlightObject.transform.SetParent(buttonObject.transform, false);
+            RectTransform highlightRect = highlightObject.GetComponent<RectTransform>();
+            highlightRect.anchorMin = Vector2.zero;
+            highlightRect.anchorMax = Vector2.one;
+            highlightRect.offsetMin = Vector2.zero;
+            highlightRect.offsetMax = Vector2.zero;
+            highlightImage = highlightObject.GetComponent<Image>();
+            highlightImage.raycastTarget = false;
+            highlightObject.SetActive(false);
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.alignment = TextAlignmentOptions.Center;
+            label.raycastTarget = false;
+            label.color = UIStyleTokens.Button.TextDefault;
+
+            return button;
         }
 
         private void HideAudioSettingsSection()
@@ -1772,27 +2049,6 @@ namespace FungusToast.Unity.UI.GameStart
             section.localScale = Vector3.one;
         }
 
-        private Transform GetTopLevelSection(Transform target)
-        {
-            if (target == null)
-            {
-                return null;
-            }
-
-            var current = target;
-            while (current.parent != null && current.parent != transform && current.parent != setupContentRoot)
-            {
-                current = current.parent;
-            }
-
-            if (current.parent == setupContentRoot && current != setupContentRoot)
-            {
-                return current;
-            }
-
-            return current.parent == transform ? current : null;
-        }
-
         private void TryAddSetupSection(List<RectTransform> sections, RectTransform candidate)
         {
             if (candidate == null || sections == null)
@@ -1882,7 +2138,7 @@ namespace FungusToast.Unity.UI.GameStart
                 UIStyleTokens.Button.NarrowMenuActionWidth,
                 UIStyleTokens.Button.NarrowMenuActionHeight,
                 UIStyleTokens.Button.MinimumMenuActionHeight);
-            ConfigureButtonContent(backButton, "Back", backButtonIcon, iconOnRight: false);
+            ConfigureButtonContent(backButton, "Back", BackButtonIcon, iconOnRight: false);
 
             if (playerSummaryLabel != null)
             {
@@ -1955,8 +2211,8 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 RefreshMoldSelectionUi();
             }
-            ConfigureButtonContent(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Start Game", isMoldSelectionStep ? null : forwardStepButtonIcon, iconOnRight: true);
-            ConfigureButtonContent(backButton, "Back", backButtonIcon, iconOnRight: false);
+            ConfigureButtonContent(startGameButton, isMoldSelectionStep ? GetMoldStepPrimaryButtonText() : "Start Game", isMoldSelectionStep ? null : ForwardStepButtonIcon, iconOnRight: true);
+            ConfigureButtonContent(backButton, "Back", BackButtonIcon, iconOnRight: false);
             startGameButton.interactable = isMoldSelectionStep ? IsCurrentHumanMoldSelected() : selectedPlayerCount.HasValue;
             if (resumeSavedGameButton != null)
             {
@@ -3341,28 +3597,12 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             gameObject.SetActive(false);
-            var modeSelectController = modeSelectPanel != null ? modeSelectPanel.GetComponent<UI_ModeSelectPanelController>() : null;
-            if (modeSelectController != null)
-            {
-                modeSelectController.ShowMainMenuAfterSubpanel();
-            }
-            else if (modeSelectPanel != null)
-            {
-                modeSelectPanel.SetActive(true);
-            }
+            ModeSelectController?.ShowMainMenuAfterSubpanel();
         }
 
         private void HideModeSelectBackground()
         {
-            var modeSelectController = modeSelectPanel != null ? modeSelectPanel.GetComponent<UI_ModeSelectPanelController>() : null;
-            if (modeSelectController != null)
-            {
-                modeSelectController.HideForGameplay();
-            }
-            else if (modeSelectPanel != null)
-            {
-                modeSelectPanel.SetActive(false);
-            }
+            ModeSelectController?.HideForGameplay();
         }
 
     }

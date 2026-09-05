@@ -316,14 +316,18 @@ namespace FungusToast.Unity
         [SerializeField] private GameUIManager gameUIManager = null!; 
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!; 
         [SerializeField] private UI_PhaseProgressTracker phaseProgressTracker = null!; 
-        [SerializeField] private MycovariantDraftController mycovariantDraftController = null!; 
-        [SerializeField] private UI_StartGamePanel startGamePanel = null!; 
-        [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!; 
-        public GameObject SelectionPromptPanel = null!; 
-        public TextMeshProUGUI SelectionPromptText = null!; 
+        [SerializeField] private MycovariantDraftController mycovariantDraftController = null!;
+        [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
+        public GameObject SelectionPromptPanel = null!;
+        public TextMeshProUGUI SelectionPromptText = null!;
         [SerializeField] private Button selectionPromptCancelButton = null!;
         [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText = null!;
-        [SerializeField] private GameObject modeSelectPanel = null!; // NEW: root of mode select UI
+
+        // Resolved live through MainMenuRegistry instead of held as serialized
+        // cross-references, since panel Awake order across the scene is not
+        // guaranteed. See UNITY_CODE_FIRST_MIGRATION.md.
+        private UI_StartGamePanel startGamePanel => MainMenuRegistry.StartGamePanel;
+        private GameObject modeSelectPanel => MainMenuRegistry.ModeSelectPanel != null ? MainMenuRegistry.ModeSelectPanel.gameObject : null!;
         [SerializeField] private AudioClip? mutationPhaseStartClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationPhaseStartVolume = 1f;
         [SerializeField] private AudioClip? growthPhaseStartClip = null;

@@ -19,6 +19,15 @@ Inspector-authored wiring toward code-authored construction and configuration.
   separately.
 - **Applies to:** `FungusToast.Unity` only. `FungusToast.Core` is already
   code-first and is the model this initiative moves the Unity layer toward.
+- **Completed special case:** The four main-menu screens (Home, Settings,
+  Campaign, Solo Game) were migrated as a deliberate one-time exception larger
+  than the normal "only the area you touch" scope. Home/Campaign/Solo Game now
+  build their full content hierarchy in code (`MainMenuRegistry` replaces the
+  panel-to-panel `[SerializeField]` cross-references); Settings was already
+  100% code-built. The scene YAML cleanup and a full bootstrapper end-state are
+  deliberately deferred — see the "Main Menu Bootstrapper + Scene YAML Cleanup"
+  entry in
+  [second-level/FUTURE_IMPROVEMENTS.md](second-level/FUTURE_IMPROVEMENTS.md).
 
 ## 2. Why
 

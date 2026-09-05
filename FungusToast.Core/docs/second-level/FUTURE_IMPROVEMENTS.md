@@ -4,6 +4,41 @@ Tracked items for future sessions. Each entry includes context and recommended a
 
 ---
 
+## Main Menu Bootstrapper + Scene YAML Cleanup
+
+**Priority:** Low  
+**Category:** Code-First Migration
+
+Home, Campaign, and Solo Game now build their entire content hierarchy in code
+(`BuildContent`/`BuildContentRoot`/`EnsureRuntimeLayoutScaffold` and friends) per
+[UNITY_CODE_FIRST_MIGRATION.md](../UNITY_CODE_FIRST_MIGRATION.md). Two follow-ups
+were deliberately deferred rather than risked in the same pass:
+
+1. **Phase D scene cleanup.** `SampleScene.unity` still authors the now-dead
+   `UI_ModeSelectContent` / `UI_CampaignContent` subtree and the Solo Game
+   section wrappers/buttons. Each panel destroys its own legacy content root at
+   runtime (`MainMenuRegistry.DestroyLegacyChildIfPresent`, and adopt-if-present
+   guards on the Solo Game player/human-count buttons), so nothing renders
+   twice — but the dead YAML itself is still sitting in the scene file. Strip it
+   by hand in the Unity editor (delete the now-inert child GameObjects, clear
+   the missing-script field warnings, save) once the code-first behavior has
+   been verified in a play session.
+2. **Full bootstrapper.** Once Phase D is done, the three panel roots are empty
+   shells with just a `RectTransform` + controller. Collapsing them into a
+   `MainMenuBootstrapper` that spawns all three under the canvas at runtime
+   (rather than three scene-authored anchor GameObjects) is then mechanical and
+   completes the "thin scene" end state the migration doc describes as the
+   alternative considered.
+
+### Related Files
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/Campaign/UI_ModeSelectPanelController.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/Campaign/UI_CampaignPanelController.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/GameStart/UI_StartGamePanel.cs`
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/MainMenuRegistry.cs`
+- `FungusToast.Unity/Assets/Scenes/SampleScene.unity`
+
+---
+
 ## Responsive / Resizable Panels
 
 **Priority:** Medium  

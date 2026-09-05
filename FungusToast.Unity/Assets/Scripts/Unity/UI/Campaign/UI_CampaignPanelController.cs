@@ -61,19 +61,17 @@ namespace FungusToast.Unity.UI.Campaign
             MoldSelection
         }
 
-        [Header("Buttons")]
-        [SerializeField] private Button resumeButton;
-        [SerializeField] private Button newButton;
-        [SerializeField] private Button backButton;
-        [SerializeField] private Sprite backButtonIcon;
+        // Built at runtime by BuildContentRoot()/BuildActionButtons(); see
+        // UNITY_CODE_FIRST_MIGRATION.md. The Home screen controller is resolved
+        // live through MainMenuRegistry rather than held as a serialized
+        // cross-reference, since panel Awake order across the scene is not
+        // guaranteed.
+        private static UI_ModeSelectPanelController ModeSelectController => MainMenuRegistry.ModeSelectPanel;
+        private static Sprite BackButtonIcon => UiSpriteLibrary.BackArrow;
 
-        [Header("Panels")]
-        [SerializeField] private GameObject modeSelectPanel;
-
-        [Header("Legacy Testing References")]
-        [SerializeField] private GameObject testingOptionsSectionRoot;
-        [SerializeField] private Toggle testingModeToggleTemplate;
-        [SerializeField] private GameObject testingModePanelTemplate;
+        private Button resumeButton;
+        private Button newButton;
+        private Button backButton;
 
         private RectTransform contentRoot;
         private RectTransform layoutShellRoot;
@@ -117,14 +115,19 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void Awake()
         {
-            contentRoot = transform.Find("UI_CampaignContent") as RectTransform;
+            MainMenuRegistry.CampaignPanel = this;
+
+            BuildContentRoot();
             if (contentRoot == null)
             {
-                Debug.LogWarning("UI_CampaignPanelController: UI_CampaignContent not found.");
+                Debug.LogError("UI_CampaignPanelController: contentRoot failed to build.");
                 return;
             }
 
-            RemoveLegacyDeleteButtonObjects();
+            // Built before BuildLayoutScaffold/BuildTestingCard: the testing card
+            // clones backButton as its own button template (see BuildTestingCard),
+            // so the action buttons must exist first.
+            BuildActionButtons();
             BuildLayoutScaffold();
             BuildTestingCard();
             BuildMoldinessSummarySection();
@@ -138,6 +141,108 @@ namespace FungusToast.Unity.UI.Campaign
             if (backButton != null) backButton.onClick.AddListener(OnBackClicked);
 
             ApplyMenuTooltips();
+            ValidateBuiltUi();
+        }
+
+        private void OnDestroy()
+        {
+            if (MainMenuRegistry.CampaignPanel == this)
+            {
+                MainMenuRegistry.CampaignPanel = null;
+            }
+        }
+
+        /// <summary>
+        /// Builds the Campaign screen's root content container in code, replacing
+        /// the scene-authored <c>UI_CampaignContent</c>. BuildLayoutScaffold and the
+        /// section builders populate it exactly as they did for the scene-authored
+        /// version.
+        /// </summary>
+        private void BuildContentRoot()
+        {
+            MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_CampaignContent");
+
+            GameObject contentObject = new GameObject(
+                "UI_CampaignContent",
+                typeof(RectTransform),
+                typeof(ContentSizeFitter),
+                typeof(VerticalLayoutGroup));
+            contentObject.transform.SetParent(transform, false);
+            contentObject.layer = gameObject.layer;
+
+            contentRoot = contentObject.GetComponent<RectTransform>();
+            contentRoot.sizeDelta = new Vector2(400f, 520f);
+
+            ContentSizeFitter contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            VerticalLayoutGroup contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.padding = new RectOffset(40, 40, 40, 40);
+            contentLayout.childAlignment = TextAnchor.UpperCenter;
+            contentLayout.spacing = 18f;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = true;
+            contentLayout.childControlWidth = false;
+            contentLayout.childControlHeight = false;
+        }
+
+        /// <summary>
+        /// Builds the Resume/New/Back buttons as bare button+label objects.
+        /// ConfigureButtonContent/ConfigureMenuActionLayout (driven from
+        /// ApplyStyle/UpdateStepState) finish icon, color, and sizing exactly as
+        /// they did for the scene-authored buttons; BuildActionStack reparents
+        /// these into the action stack it builds.
+        /// </summary>
+        private void BuildActionButtons()
+        {
+            resumeButton = CreateActionButton("UI_CampaignResumeButton", "Resume Campaign");
+            newButton = CreateActionButton("UI_CampaignNewButton", "Start New Campaign");
+            backButton = CreateActionButton("UI_CampaignBackButton", "Back");
+        }
+
+        private Button CreateActionButton(string objectName, string labelText)
+        {
+            GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
+            buttonObject.transform.SetParent(transform, false);
+            buttonObject.layer = gameObject.layer;
+
+            Image background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+
+            Button button = buttonObject.GetComponent<Button>();
+            button.targetGraphic = background;
+
+            GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.layer = gameObject.layer;
+
+            RectTransform labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = labelText;
+            label.alignment = TextAlignmentOptions.Center;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(label);
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.raycastTarget = false;
+
+            return button;
+        }
+
+        private void ValidateBuiltUi()
+        {
+            if (contentRoot == null) Debug.LogError("UI_CampaignPanelController: contentRoot failed to build.");
+            if (resumeButton == null) Debug.LogError("UI_CampaignPanelController: resumeButton failed to build.");
+            if (newButton == null) Debug.LogError("UI_CampaignPanelController: newButton failed to build.");
+            if (backButton == null) Debug.LogError("UI_CampaignPanelController: backButton failed to build.");
+            if (layoutShellRoot == null) Debug.LogError("UI_CampaignPanelController: layoutShellRoot failed to build.");
+            if (mainStackRoot == null) Debug.LogError("UI_CampaignPanelController: mainStackRoot failed to build.");
+            if (actionStack == null) Debug.LogError("UI_CampaignPanelController: actionStack failed to build.");
         }
 
         private void OnEnable()
@@ -199,22 +304,7 @@ namespace FungusToast.Unity.UI.Campaign
                 developmentTestingRailRoot.gameObject.SetActive(DevelopmentTestingAccess.IsAvailable);
             }
 
-            if (testingOptionsSectionRoot != null)
-            {
-                testingOptionsSectionRoot.SetActive(false);
-            }
-
             HideLegacyTestingBlocks();
-
-            if (testingModeToggleTemplate != null)
-            {
-                testingModeToggleTemplate.gameObject.SetActive(false);
-            }
-
-            if (testingModePanelTemplate != null)
-            {
-                testingModePanelTemplate.SetActive(false);
-            }
         }
 
         private void HideLegacyTestingBlocks()
@@ -260,46 +350,6 @@ namespace FungusToast.Unity.UI.Campaign
                 }
 
                 t.gameObject.SetActive(false);
-            }
-        }
-
-        private void RemoveLegacyDeleteButtonObjects()
-        {
-            if (contentRoot == null)
-            {
-                return;
-            }
-
-            var children = GetComponentsInChildren<Transform>(true);
-            for (int index = 0; index < children.Length; index++)
-            {
-                var child = children[index];
-                if (child == null)
-                {
-                    continue;
-                }
-
-                bool hasLegacyDeleteName = child.name.IndexOf("CampaignDeleteButton", StringComparison.OrdinalIgnoreCase) >= 0;
-                var tmpLabel = child.GetComponent<TextMeshProUGUI>();
-                bool hasLegacyDeleteLabel = tmpLabel != null
-                    && string.Equals(tmpLabel.text, "Delete Saved Campaign", StringComparison.Ordinal);
-
-                if (!hasLegacyDeleteName && !hasLegacyDeleteLabel)
-                {
-                    continue;
-                }
-
-                GameObject target = child.GetComponentInParent<Button>(true)?.gameObject ?? child.gameObject;
-                target.SetActive(false);
-
-                if (Application.isPlaying)
-                {
-                    Destroy(target);
-                }
-                else
-                {
-                    DestroyImmediate(target);
-                }
             }
         }
 
@@ -1660,15 +1710,6 @@ namespace FungusToast.Unity.UI.Campaign
 
         private TMP_Dropdown FindDropdownTemplate()
         {
-            if (testingOptionsSectionRoot != null)
-            {
-                var fromLegacy = testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
-                if (fromLegacy != null)
-                {
-                    return fromLegacy;
-                }
-            }
-
             return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
         }
 
@@ -1748,7 +1789,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (backButton != null)
             {
-                ConfigureButtonContent(backButton, "Back", backButtonIcon);
+                ConfigureButtonContent(backButton, "Back", BackButtonIcon);
             }
 
             if (developmentTestingRailRoot != null)
@@ -2640,36 +2681,12 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             gameObject.SetActive(false);
-            if (modeSelectPanel != null)
-            {
-                var modeSelectController = modeSelectPanel.GetComponent<UI_ModeSelectPanelController>();
-                if (modeSelectController != null)
-                {
-                    modeSelectController.ShowMainMenuAfterSubpanel();
-                }
-                else
-                {
-                    modeSelectPanel.SetActive(true);
-                }
-            }
+            ModeSelectController?.ShowMainMenuAfterSubpanel();
         }
 
         private void HideModeSelectBackground()
         {
-            if (modeSelectPanel == null)
-            {
-                return;
-            }
-
-            var modeSelectController = modeSelectPanel.GetComponent<UI_ModeSelectPanelController>();
-            if (modeSelectController != null)
-            {
-                modeSelectController.HideForGameplay();
-            }
-            else
-            {
-                modeSelectPanel.SetActive(false);
-            }
+            ModeSelectController?.HideForGameplay();
         }
 
         private void ForceLayoutNow()

@@ -71,22 +71,22 @@ namespace FungusToast.Unity.UI.Campaign
         private const string SettingsResetPromptText = "Confirm reset? This cannot be undone.";
         private const string SettingsResetSummaryText = "Erases Moldiness level and progress, permanent Moldiness rewards, pending reward choices, and preserved Adaptation carryover. It does not delete the campaign save. If defeat carryover is pending, that run resets.";
 
-        [Header("Panels")] 
-        [SerializeField] private UI_StartGamePanel startGamePanel = null; // existing start / player config panel
-        [SerializeField] private GameObject campaignPanel = null; // UI_CampaignPanel root
+        // Built at runtime by BuildContent(); see UNITY_CODE_FIRST_MIGRATION.md.
+        // The other top-level menu panels are resolved live through MainMenuRegistry
+        // rather than held as serialized cross-references, since panel Awake order
+        // across the scene is not guaranteed.
+        private static UI_StartGamePanel StartGamePanel => MainMenuRegistry.StartGamePanel;
+        private static GameObject CampaignPanelObject => MainMenuRegistry.CampaignPanel != null ? MainMenuRegistry.CampaignPanel.gameObject : null;
+        private static Sprite WideTitleLogoSprite => UiSpriteLibrary.TitleLogoWords;
+        private static Sprite BackButtonIcon => UiSpriteLibrary.BackArrow;
 
-        [Header("Buttons")] 
-        [SerializeField] private Button hotseatButton = null;
-        [SerializeField] private Button campaignButton = null;
-
-        [Header("Layout")]
-        [SerializeField] private RectTransform contentRoot = null;
-        [SerializeField] private Image titleLogoImage = null;
-        [SerializeField] private TextMeshProUGUI titleText = null;
-        [SerializeField] private TextMeshProUGUI hotseatDescriptionText = null;
-        [SerializeField] private TextMeshProUGUI campaignDescriptionText = null;
-        [SerializeField] private Sprite wideTitleLogoSprite = null;
-        [SerializeField] private Sprite backButtonIcon = null;
+        private Button hotseatButton;
+        private Button campaignButton;
+        private RectTransform contentRoot;
+        private Image titleLogoImage;
+        private TextMeshProUGUI titleText;
+        private TextMeshProUGUI hotseatDescriptionText;
+        private TextMeshProUGUI campaignDescriptionText;
 
         private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
@@ -164,7 +164,9 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void Awake()
         {
-            ResolveSceneReferences();
+            MainMenuRegistry.ModeSelectPanel = this;
+
+            BuildContent();
             ConfigureLayout();
             EnsureReleaseUi();
             EnsureAmbientBackdropLayer();
@@ -176,44 +178,86 @@ namespace FungusToast.Unity.UI.Campaign
             if (quitButton != null) quitButton.onClick.AddListener(OnQuitClicked);
 
             ApplyTooltips();
+            ValidateBuiltUi();
         }
 
-        private void ResolveSceneReferences()
+        private void OnDestroy()
         {
-            if (contentRoot == null)
+            if (MainMenuRegistry.ModeSelectPanel == this)
             {
-                contentRoot = FindChildComponent<RectTransform>("UI_ModeSelectContent");
+                MainMenuRegistry.ModeSelectPanel = null;
             }
+        }
 
-            if (titleLogoImage == null)
-            {
-                titleLogoImage = FindChildComponent<Image>("UI_ModeSelectContent/UI_ModeSelectTitleLogo");
-            }
+        /// <summary>
+        /// Builds the Home screen's content hierarchy in code: the scrolling
+        /// content column, title logo, build-status title, both mode buttons, and
+        /// their descriptions. Replaces the scene-authored
+        /// <c>UI_ModeSelectContent</c> subtree; ConfigureLayout/EnsureReleaseUi/
+        /// ApplyStyle finish sizing and styling every element created here exactly
+        /// as they did for the scene-authored version.
+        /// </summary>
+        private void BuildContent()
+        {
+            // Until UNITY_CODE_FIRST_MIGRATION.md Phase D strips the now-dead scene
+            // YAML, SampleScene.unity still authors a UI_ModeSelectContent subtree.
+            // Remove it so this code-built copy is the only one, instead of both
+            // rendering side by side.
+            MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_ModeSelectContent");
 
-            if (titleText == null)
-            {
-                titleText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectTitle");
-            }
+            GameObject contentObject = new GameObject(
+                "UI_ModeSelectContent",
+                typeof(RectTransform),
+                typeof(ContentSizeFitter),
+                typeof(VerticalLayoutGroup));
+            contentObject.transform.SetParent(transform, false);
+            contentObject.layer = gameObject.layer;
 
-            if (hotseatButton == null)
-            {
-                hotseatButton = FindChildComponent<Button>("UI_ModeSelectContent/UI_ModeSelectHotseatButton");
-            }
+            contentRoot = contentObject.GetComponent<RectTransform>();
+            contentRoot.sizeDelta = new Vector2(ExpandedContentWidth, 0f);
 
-            if (campaignButton == null)
-            {
-                campaignButton = FindChildComponent<Button>("UI_ModeSelectContent/UI_ModeSelectCampaignButton");
-            }
+            ContentSizeFitter contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            if (hotseatDescriptionText == null)
-            {
-                hotseatDescriptionText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectHotseatDescriptionText");
-            }
+            GameObject logoObject = new GameObject("UI_ModeSelectTitleLogo", typeof(RectTransform), typeof(Image));
+            logoObject.transform.SetParent(contentRoot, false);
+            logoObject.layer = gameObject.layer;
+            titleLogoImage = logoObject.GetComponent<Image>();
+            titleLogoImage.raycastTarget = false;
 
-            if (campaignDescriptionText == null)
-            {
-                campaignDescriptionText = FindChildComponent<TextMeshProUGUI>("UI_ModeSelectContent/UI_ModeSelectCampaignDescriptionText");
-            }
+            GameObject titleObject = new GameObject("UI_ModeSelectTitle", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(contentRoot, false);
+            titleObject.layer = gameObject.layer;
+            titleText = titleObject.GetComponent<TextMeshProUGUI>();
+            titleText.raycastTarget = false;
+
+            hotseatButton = CreateButtonCore(contentRoot, "UI_ModeSelectHotseatButton", "Custom Game", 24f, FontStyles.Bold);
+            hotseatDescriptionText = CreateLabel(
+                "UI_ModeSelectHotseatDescriptionText",
+                CustomGameDescription,
+                18f,
+                50f,
+                UIStyleTokens.Text.Secondary);
+
+            campaignButton = CreateButtonCore(contentRoot, "UI_ModeSelectCampaignButton", "Campaign", 24f, FontStyles.Bold);
+            campaignDescriptionText = CreateLabel(
+                "UI_ModeSelectCampaignDescriptionText",
+                CampaignDescription,
+                18f,
+                50f,
+                UIStyleTokens.Text.Secondary);
+        }
+
+        private void ValidateBuiltUi()
+        {
+            if (contentRoot == null) Debug.LogError("UI_ModeSelectPanelController: contentRoot failed to build.");
+            if (titleLogoImage == null) Debug.LogError("UI_ModeSelectPanelController: titleLogoImage failed to build.");
+            if (titleText == null) Debug.LogError("UI_ModeSelectPanelController: titleText failed to build.");
+            if (hotseatButton == null) Debug.LogError("UI_ModeSelectPanelController: hotseatButton failed to build.");
+            if (campaignButton == null) Debug.LogError("UI_ModeSelectPanelController: campaignButton failed to build.");
+            if (hotseatDescriptionText == null) Debug.LogError("UI_ModeSelectPanelController: hotseatDescriptionText failed to build.");
+            if (campaignDescriptionText == null) Debug.LogError("UI_ModeSelectPanelController: campaignDescriptionText failed to build.");
         }
 
         private void ApplyStyle()
@@ -281,8 +325,8 @@ namespace FungusToast.Unity.UI.Campaign
             RefreshSettingsState();
 
             // Ensure subordinate panels start hidden so only mode select is visible.
-            if (startGamePanel != null) startGamePanel.gameObject.SetActive(false);
-            if (campaignPanel != null) campaignPanel.SetActive(false);
+            if (StartGamePanel != null) StartGamePanel.gameObject.SetActive(false);
+            if (CampaignPanelObject != null) CampaignPanelObject.SetActive(false);
 
             ambientSequenceStartTime = Time.unscaledTime;
             RefreshAmbientMoldDecorations();
@@ -302,11 +346,11 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void OnHotseatClicked()
         {
-            GameObject target = startGamePanel != null ? startGamePanel.gameObject : null;
+            GameObject target = StartGamePanel != null ? StartGamePanel.gameObject : null;
             BeginStartupTransition(
                 contentRoot != null ? contentRoot.gameObject : null,
                 target,
-                () => PrepareExternalSubpanel(startGamePanel != null ? startGamePanel.transform : null));
+                () => PrepareExternalSubpanel(StartGamePanel != null ? StartGamePanel.transform : null));
         }
 
         private void OnCampaignClicked()
@@ -321,8 +365,8 @@ namespace FungusToast.Unity.UI.Campaign
 
             BeginStartupTransition(
                 contentRoot != null ? contentRoot.gameObject : null,
-                campaignPanel,
-                () => PrepareExternalSubpanel(campaignPanel != null ? campaignPanel.transform : null));
+                CampaignPanelObject,
+                () => PrepareExternalSubpanel(CampaignPanelObject != null ? CampaignPanelObject.transform : null));
         }
 
         private void OnQuitClicked()
@@ -463,9 +507,9 @@ namespace FungusToast.Unity.UI.Campaign
 
             if (titleLogoImage != null)
             {
-                if (wideTitleLogoSprite != null)
+                if (WideTitleLogoSprite != null)
                 {
-                    titleLogoImage.sprite = wideTitleLogoSprite;
+                    titleLogoImage.sprite = WideTitleLogoSprite;
                 }
 
                 titleLogoImage.preserveAspect = true;
@@ -1290,8 +1334,8 @@ namespace FungusToast.Unity.UI.Campaign
             RestoreCanvasGroup(contentRoot != null ? contentRoot.gameObject : null);
             RestoreCanvasGroup(creditsPanel);
             RestoreCanvasGroup(settingsPanel);
-            RestoreCanvasGroup(startGamePanel != null ? startGamePanel.gameObject : null);
-            RestoreCanvasGroup(campaignPanel);
+            RestoreCanvasGroup(StartGamePanel != null ? StartGamePanel.gameObject : null);
+            RestoreCanvasGroup(CampaignPanelObject);
         }
 
         private static void RestoreCanvasGroup(GameObject target)
@@ -1602,12 +1646,12 @@ namespace FungusToast.Unity.UI.Campaign
             musicCopy.fontSizeMax = 22f;
             musicCopy.alignment = TextAlignmentOptions.Left;
 
-            creditsBackButton = CreateCreditsButton(cardObject.transform, "UI_ModeSelectCreditsBackButton", "Back to Menu", backButtonIcon);
+            creditsBackButton = CreateCreditsButton(cardObject.transform, "UI_ModeSelectCreditsBackButton", "Back to Menu", BackButtonIcon);
         }
 
         private void CreateCreditsLogo(Transform parent)
         {
-            if (parent == null || wideTitleLogoSprite == null)
+            if (parent == null || WideTitleLogoSprite == null)
             {
                 return;
             }
@@ -1621,7 +1665,7 @@ namespace FungusToast.Unity.UI.Campaign
             logoObject.layer = gameObject.layer;
 
             Image logo = logoObject.GetComponent<Image>();
-            logo.sprite = wideTitleLogoSprite;
+            logo.sprite = WideTitleLogoSprite;
             logo.preserveAspect = true;
             logo.raycastTarget = false;
 
@@ -1814,7 +1858,7 @@ namespace FungusToast.Unity.UI.Campaign
                 UIStyleTokens.Text.Secondary,
                 FontStyles.Normal);
 
-            settingsBackButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsBackButton", "Back to Menu", backButtonIcon);
+            settingsBackButton = CreateSettingsButton(cardObject.transform, "UI_ModeSelectSettingsBackButton", "Back to Menu", BackButtonIcon);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsBackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             settingsBackButton.onClick.AddListener(OnSettingsBackClicked);
 
@@ -2512,12 +2556,6 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             return TMP_Settings.defaultFontAsset;
-        }
-
-        private T FindChildComponent<T>(string relativePath) where T : Component
-        {
-            Transform child = transform.Find(relativePath);
-            return child != null ? child.GetComponent<T>() : null;
         }
 
         private static bool ShouldShowQuitButton()
