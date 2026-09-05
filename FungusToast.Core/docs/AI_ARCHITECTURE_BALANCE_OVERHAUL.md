@@ -585,7 +585,9 @@ design and add narrow typed seams only for demonstrated needs. See
   adds 0–5 extras from Training through Boss. Authored additions count toward
   the quota and may exceed it; deterministic selection prefers strategy-themed
   options before global fallback. Exact loadouts, position pools, and curated
-  campaign coordinates/geometry remain scenario controls.
+  campaign coordinates/geometry remain scenario controls. The behavior change
+  is frozen in the
+  [P3.5 starting-Adaptation reference baseline v3](second-level/AI_P3_5_REFERENCE_BASELINE_V3.md).
 - **P5.7:** Add reactive board-state policy primitives only for demonstrated
   decisions; avoid a catch-all scoring framework.
 - **P5.8:** Migrate a small reference set, then each roster family in isolated

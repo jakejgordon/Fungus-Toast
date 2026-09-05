@@ -309,8 +309,11 @@ measurement model, phase gates, and open product decisions are in
     Simulation applies mold identity by slot before spore placement and treats
     explicit loadouts as additive. The behavior change increments the corpus to
     `fungus-toast.ai-corpus.phase5-starting-adaptations.v2`. Core currently
-    passes 644/644 and Simulation 19/19; a new corrected reference baseline and
-    Unity Editor flow validation remain pending.
+    passes 644/644 and Simulation 19/19. The versioned
+    `AI_P3_5_REFERENCE_BASELINE_V3.md` freezes two new 50-game corpora; both
+    completed with zero parity mismatches and valid checksums, corpus A matched
+    its separate-process replay outcome, and all 8 analytics tests pass. Unity
+    Editor flow validation remains pending.
 
 ### Completion Criteria
 
