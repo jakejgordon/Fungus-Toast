@@ -7181,7 +7181,6 @@ MonoBehaviour:
   gameUIManager: {fileID: 948889969}
   decayPhaseRunner: {fileID: 2138162645}
   startGamePanel: {fileID: 656464964}
-  hotseatTurnPrompt: {fileID: 1565504626}
   SelectionPromptPanel: {fileID: 373902686}
   SelectionPromptText: {fileID: 818361141}
   selectionPromptCancelButton: {fileID: 0}

@@ -316,7 +316,7 @@ namespace FungusToast.Unity
         [SerializeField] private GameUIManager gameUIManager = null!;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
         private MycovariantDraftController mycovariantDraftController = null!;
-        [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
+        private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
         public GameObject SelectionPromptPanel = null!;
         public TextMeshProUGUI SelectionPromptText = null!;
         [SerializeField] private Button selectionPromptCancelButton = null!;
@@ -624,6 +624,14 @@ namespace FungusToast.Unity
             if (mycovariantDraftController == null)
             {
                 Debug.LogError("[GameManager] No MycovariantDraftController found in the scene.");
+            }
+
+            // Same reasoning as mycovariantDraftController above: HotseatTurnManager
+            // below captures this by value in its constructor.
+            hotseatTurnPrompt = FindAnyObjectByType<UI_HotseatTurnPrompt>(FindObjectsInactive.Include);
+            if (hotseatTurnPrompt == null)
+            {
+                Debug.LogError("[GameManager] No UI_HotseatTurnPrompt found in the scene.");
             }
 
             soundEffectService = new SoundEffectService(gameObject);
