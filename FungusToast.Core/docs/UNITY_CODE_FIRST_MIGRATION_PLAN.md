@@ -427,6 +427,9 @@ parity-verified per section 7.3** — needs an Editor playtest: start a
 hotseat game with 2+ human players, confirm the turn prompt shows the
 correct player's name/icon between human turns and OK dismisses it, and a
 full session of multiple hand-offs still works.
+**Verified 2026-09-05 (user).** Turn prompt worked correctly across a hotseat
+session. Hotseat Turn Prompt cohort closed. Next: Selection prompt +
+selection controllers.
 
 **2026-09-05 — Mycovariant Draft landed. Awaiting Editor playtest.** Slice
 contract: remove `GameManager.cs`'s `[SerializeField] private
