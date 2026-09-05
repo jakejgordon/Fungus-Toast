@@ -7180,7 +7180,6 @@ MonoBehaviour:
   growthPhaseRunner: {fileID: 611285832}
   gameUIManager: {fileID: 948889969}
   decayPhaseRunner: {fileID: 2138162645}
-  mycovariantDraftController: {fileID: 1723225970}
   startGamePanel: {fileID: 656464964}
   hotseatTurnPrompt: {fileID: 1565504626}
   SelectionPromptPanel: {fileID: 373902686}

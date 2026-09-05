@@ -315,7 +315,7 @@ namespace FungusToast.Unity
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!; 
         [SerializeField] private GameUIManager gameUIManager = null!;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
-        [SerializeField] private MycovariantDraftController mycovariantDraftController = null!;
+        private MycovariantDraftController mycovariantDraftController = null!;
         [SerializeField] private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
         public GameObject SelectionPromptPanel = null!;
         public TextMeshProUGUI SelectionPromptText = null!;
@@ -614,6 +614,18 @@ namespace FungusToast.Unity
             // Unity does not guarantee GameUIManager.Awake() has already run
             // by the time GameManager.Awake() calls this method.
             gameUIManager.ResolveOwnedReferences();
+
+            // Must run before GameTransitionService/GameStartService below,
+            // which each capture mycovariantDraftController by value in their
+            // constructors — unlike a lazily-read property, a constructor
+            // argument is captured once and never re-read, so an unresolved
+            // value here would be permanently baked into both services.
+            mycovariantDraftController = FindAnyObjectByType<MycovariantDraftController>(FindObjectsInactive.Include);
+            if (mycovariantDraftController == null)
+            {
+                Debug.LogError("[GameManager] No MycovariantDraftController found in the scene.");
+            }
+
             soundEffectService = new SoundEffectService(gameObject);
             pauseMenuService = new PauseMenuService(
                 gameObject,

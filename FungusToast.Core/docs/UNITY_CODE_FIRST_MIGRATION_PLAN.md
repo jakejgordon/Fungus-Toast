@@ -16,19 +16,21 @@
   six findings in section 10 (response in section 11) and three in section 12
   (response in section 13). All nine accepted. Execution then began the same
   day: Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game
-  Log), End Game panel, and Right Sidebar / Player Summary / Mold Profile are
-  done and Editor-verified — Game Log caught and fixed a real Awake-order
-  regression, and Right Sidebar caught a related ordering bug during
-  implementation itself, before any playtest (see section 9). Phase Banner +
-  Progress Tracker is landed, pending your Editor playtest — it found and
-  fixed a genuine double-wiring bug (the same object serialized on two
-  different classes) rather than just another single unresolved reference.
-  Next up after that: Mycovariant Draft (Medium risk).
+  Log), End Game panel, Right Sidebar / Player Summary / Mold Profile, and
+  Phase Banner + Progress Tracker are done and Editor-verified — Game Log
+  caught a real Awake-order regression, Right Sidebar caught a related
+  ordering bug during implementation, and Phase Banner found a genuine
+  double-wiring bug (same object serialized on two classes) — see section 9.
+  Mycovariant Draft is landed, pending your Editor playtest — it hit a third
+  variant of the ordering hazard (a constructor-captured reference this time,
+  caught by reading the code rather than by a playtest). Next up after that:
+  Hotseat Turn Prompt (Medium risk).
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan
-  existed, and the Tooltip, Loading Screen, Game Log, End Game, and Right
-  Sidebar / Mold Profile cohorts (2026-09-05).
+  existed, and the Tooltip, Loading Screen, Game Log, End Game, Right
+  Sidebar / Mold Profile, and Phase Banner / Progress Tracker cohorts
+  (2026-09-05).
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -161,6 +163,7 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | **End Game panel** | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | 0 confirmed (was 1) | **Landed 2026-09-05, Medium-risk cohort's first slice.** Single prefab instance (confirmed via scene YAML — a "stripped" reference into one `PrefabInstance`), so this reused the Pilot's `FindAnyObjectByType<UI_EndGamePanel>(FindObjectsInactive.Include)` pattern directly, injected via new `RegisterEndGamePanel(...)`, added to the now-established `ResolveOwnedReferences()`. All 12 of the panel's own fields (plus 8 on `UI_GameEndPlayerResultsRow`, its clone-template row) audited directly in `UI_EndGamePanel.prefab`: all prefab-internal except the legitimate `playerResultRowPrefab` clone-template reference and two icon `Sprite`s — zero scene overrides, untouched. Checked all 16 call sites of `EndGamePanel` for the same Awake-order hazard Game Log hit — all are runtime endgame/gameplay handlers, none in `Awake()`. See section 9. |
 | **Right Sidebar / Player Summary / Mold Profile** | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | 0 confirmed (was 2) | **Landed 2026-09-05.** Of ~30 total fields across all three files, only 2 were real cross-references — both `GameUIManager` owner pointers (`rightSidebar`, `moldProfileRoot`), not anything inside the components. Both confirmed single scene-authored instances (not prefabs this time — script GUID appears exactly once each, `m_PrefabInstance: {fileID: 0}`), resolved via `FindAnyObjectByType` and injected through new `RegisterRightSidebar(...)`/`RegisterMoldProfileRoot(...)`, added to `ResolveOwnedReferences()`. All of `UI_RightSideBar.cs`'s 4 fields, `PlayerSummaryRow.cs`'s 6 (a clone-template row, like `UI_GameLogEntry`), and `UI_MoldProfileRoot.cs`'s 20 audited and confirmed self-contained or legitimate clone-template/asset references — no scene overrides, untouched. Caught an internal-ordering dependency *within this slice* before it could repeat the Game Log bug: `RegisterGlobalEventsLog`'s resolution reads `rightSidebar` to find its child log panel, so `RegisterRightSidebar` had to be sequenced first inside `ResolveOwnedReferences()`. `leftSidebar` (a plain `GameObject`, listed in section 8's baseline but not owned by any declared cohort) was left untouched — noted, not resolved, to avoid silent scope creep. See section 9. |
 | **Phase Banner + Progress Tracker** | `UI/UI_PhaseBanner.cs`, `UI/UI_PhaseProgressTracker.cs` | 0 confirmed (was 3) | **Landed 2026-09-05.** Found `UI_PhaseProgressTracker` was double-wired — `GameManager` and `GameUIManager` each held their own `[SerializeField]` pointing at the identical scene object (confirmed via matching fileIDs in the scene YAML); both removed, `GameManager`'s ~11 call sites switched to `gameUIManager.PhaseProgressTracker`. `phaseBanner`'s single `GameUIManager` reference also removed. Both resolved via `FindAnyObjectByType` (confirmed single scene-authored instances), injected through new `RegisterPhaseBanner(...)`/`RegisterPhaseProgressTracker(...)`. Also corrected the field survey itself: the initial `[SerializeField]`-only grep missed `UI_PhaseBanner.cs`'s two **public** fields (`bannerText`, `canvasGroup` — Unity serializes public fields too), which a proper re-survey found and traced through the scene YAML as self-contained (a grandchild and a sibling component of the banner's own GameObject). No internal-ordering dependency this time; traced every `BootstrapServices()` reference and confirmed the only two are inside a deferred lambda, not synchronous. See section 9. |
+| **Mycovariant Draft** | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | 0 confirmed (was 1) | **Landed 2026-09-05.** Of ~21 fields across all 7 files, exactly 1 was a real cross-reference: `GameManager`'s own `mycovariantDraftController` (unlike every prior cohort, this owner pointer lives on `GameManager` directly, not `GameUIManager`). A third distinct variant of the ordering hazard class: `mycovariantDraftController` is captured **by value in two service constructors** (`GameTransitionService`, `GameStartService`) inside `BootstrapServices()` — a constructor argument is captured once and never re-read, unlike a lazy property or a plain accessor, so it had to be resolved before either `new` call, not merely before `Awake()` ends. Resolved via `FindAnyObjectByType` as the second statement in `BootstrapServices()`. `MycovariantDraftController.gridVisualizer` (confirmed pointing at the identical `GridVisualizer` instance as `GameManager`'s own field) is explicitly out of scope per section 4 and left untouched — not a gap. All other fields (`DraftOrderRow`'s clone-template prefab ref, `PlayerIconCellUI`/`MycovariantIcon`/`MycovariantCard`'s own children, `MycovariantDraftController`'s remaining 11 own-children/asset/clone-template fields) audited and confirmed retained. See section 9. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -170,13 +173,12 @@ the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
 Completion is tracked per component (section 7), not per row.
 
 Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game Log), End
-Game panel, Right Sidebar / Player Summary / Mold Profile, and Phase Banner +
-Progress Tracker are done — moved to the "Already code-first" table above.
-What follows starts at Mycovariant Draft.
+Game panel, Right Sidebar / Player Summary / Mold Profile, Phase Banner +
+Progress Tracker, and Mycovariant Draft are done — moved to the "Already
+code-first" table above. What follows starts at Hotseat Turn Prompt.
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Medium risk** | Mycovariant Draft | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | TBD (17 fields) | Also referenced from `GameManager.cs:319`. Self-contained overlay; good isolation. |
 | **Medium risk** | Hotseat Turn Prompt | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | TBD (9 fields) | Also referenced from `GameManager.cs:320`. |
 | **Medium risk** | Selection prompt + selection controllers | `GameManager.cs:321-324` (`SelectionPromptPanel`, `SelectionPromptText`, `selectionPromptCancelButton`, `selectionPromptCancelButtonText`), `UI/TileSelectionController.cs`, `UI/MultiTileSelectionController.cs`, `UI/MultiCellSelectionController.cs` | 4 confirmed in `GameManager` + TBD in the controllers | **Added after review (AR-5).** Missing from the first draft entirely. Already served by `SelectionPromptService` — check whether that service can own construction the way `PauseMenuService` does. |
 | **Medium risk** | Cell / mycovariant tooltip panels | `UI/CellTooltipUI.cs` (24 fields — densest loose UI file in the project), `UI/MycovariantTooltipPanel.cs` (4), `UI/MycovariantDraft/MycovariantIcon.cs` (2) | TBD | **Added after review (AR-5).** Omitted from the first draft despite `CellTooltipUI` having the highest field count outside the mutation tree. |
@@ -403,6 +405,53 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Mycovariant Draft landed. Awaiting Editor playtest.** Slice
+contract: remove `GameManager.cs`'s `[SerializeField] private
+MycovariantDraftController mycovariantDraftController;` — this is the first
+cohort where the owner pointer lives on `GameManager` directly rather than
+`GameUIManager`. Surveyed all 7 files in `UI/MycovariantDraft/` (checking
+public fields too, per the Phase Banner lesson): of ~21 total fields, exactly
+1 was a real cross-reference.
+**A third distinct variant of the ordering hazard, caught before
+implementation this time (from reading the code, not from a playtest):**
+`mycovariantDraftController` is passed **by value into two service
+constructors** — `GameTransitionService` and `GameStartService`, both
+constructed inside `BootstrapServices()` — and each stores it in a field at
+construction time. A constructor argument is captured once, permanently,
+unlike `GameLogRouter` (lazy property — Game Log's bug) or
+`RightSidebar`/`MoldProfileRoot` (plain re-read properties). Resolving it
+after either `new` call would have permanently baked a null into both
+services, regardless of when `BootstrapServices()` finished — a third shape
+of the same underlying class of bug. Fixed by resolving via
+`FindAnyObjectByType<MycovariantDraftController>(FindObjectsInactive.Include)`
+as the very next statement after `gameUIManager.ResolveOwnedReferences()`, at
+the top of `BootstrapServices()`, before either service is constructed.
+**Explicitly out of scope, confirmed not a gap:**
+`MycovariantDraftController.gridVisualizer` — checked its scene-YAML value
+against `GameManager.gridVisualizer`'s own value: identical fileID, same
+`GridVisualizer` instance. Section 4 excludes `GridVisualizer`/board
+rendering from this entire initiative; this is that same exclusion showing up
+on a second consumer, not an overlooked cross-reference.
+All other fields audited and confirmed retained: `MycovariantDraftController`'s
+remaining 11 (`draftPanel` literally points at its own GameObject;
+`interactionBlocker`/`draftBannerText`/`draftBlurbText`/`draftOrderRow`/
+`choiceContainer`/`draftMessagePanel`/`draftMessageTitleText` are own
+children; `cardPrefab` is a legitimate clone-template reference to
+`UI_DraftChoiceCard.prefab`; two `AudioClip`s are legitimate assets);
+`DraftOrderRow.cs`'s `playerIconCellPrefab` (clone template →
+`UI_PlayerIconCell.prefab`); `PlayerIconCellUI.cs`'s 2 and
+`MycovariantIcon.cs`'s 2 (own children); `MycovariantCard.cs`'s 4 (own
+children of its clone-template card, like `UI_GameLogEntry`/
+`UI_PlayerSummaryRow`). `MycovariantArtRepository.cs` and
+`MycovariantEffectHelpers.cs` have no serialized fields.
+Scene diff: 1 line removed from `GameManager`'s block. `dotnet build`
+succeeds (0 errors). **Not yet parity-verified per section 7.3** — needs an
+Editor playtest: trigger a mycovariant draft (natural or testing-forced),
+confirm the panel shows with correctly-rendered cards (icons/names/effects),
+picking a card advances the draft, the draft history overlay still opens
+from the right sidebar, and a second draft later in the same session (or a
+second game) still works.
 
 **2026-09-05 — Phase Banner + Progress Tracker landed. Awaiting Editor
 playtest.** Slice contract: remove `GameUIManager.cs`'s
