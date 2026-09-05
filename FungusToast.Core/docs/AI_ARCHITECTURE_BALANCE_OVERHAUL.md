@@ -693,6 +693,18 @@ candidate-search dimension and permits bounded Phase 6 tooling; it does not by
 itself place this strategy in a player-facing pool. A failure rejects the
 candidate and stops this line.
 
+**Holdout result (2026-09-05): candidate confirmed.** All 100 games completed
+in 292.770 seconds with zero parity mismatches, empty starting loadouts, valid
+checksums, and exactly 50 games in each slot per strategy. Anabolic-first
+produced normalized board share `1.4295` versus `0.5705` for the control:
+paired lift `+0.8590`, 95% interval `[+0.7512, +0.9668]`. Its normalized rank
+and descriptive win credit were both `0.94` versus `0.06`. A separate-process
+replay exactly reproduced outcome fingerprint
+`6283eca7257865fc5b9ab837815170196ca288e2c32f2577627cca0c5a3dbacd`.
+The frozen gate therefore passes: mutation-goal order is a useful bounded
+candidate-search dimension and Phase 6 tooling may proceed. This result does
+not promote the Testing candidate or change a player-facing strategy.
+
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,

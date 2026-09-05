@@ -399,6 +399,17 @@ measurement model, phase gates, and open product decisions are in
     failures, valid checksums, empty starting loadouts, and exactly balanced
     slots. This passes the advancement threshold; an unseen 140x100,
     seed-`2026090503` holdout is frozen in the canonical plan before execution.
+37. The frozen Balanced Control opener-order holdout confirmed the candidate in
+    the unseen 140x100 context. Across 100 games, Anabolic-first beat
+    Creeping-first by `+0.8590` normalized board share (95% CI
+    `+0.7512..+0.9668`) and 94% to 6% win credit. All games completed in
+    292.770 seconds with zero parity failures, empty starting loadouts, valid
+    checksums, and exactly balanced slots. A separate-process replay exactly
+    reproduced outcome fingerprint
+    `6283eca7257865fc5b9ab837815170196ca288e2c32f2577627cca0c5a3dbacd`.
+    The Phase 6 gate now permits bounded candidate tooling around proven safe
+    dimensions such as mutation-goal order; the Testing candidate remains out
+    of player-facing pools pending explicit review.
 
 ### Completion Criteria
 
