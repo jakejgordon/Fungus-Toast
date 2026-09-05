@@ -448,6 +448,10 @@ profile panel shows growth-direction percentages/adaptations/mycovariants for
 the human player and updates correctly on hotseat player switch, the endgame
 countdown text appears near game end, and a repeated game start/restart in
 one session re-populates both panels correctly.
+**Verified 2026-09-05 (user).** Right sidebar and mold profile populate
+correctly (player summaries with correct sort/counts, round/occupancy text,
+global log). Right Sidebar / Player Summary / Mold Profile cohort closed.
+Next: Phase Banner + Progress Tracker.
 
 **2026-09-05 — End Game panel landed. Awaiting Editor playtest.**
 Slice contract: remove `GameUIManager.cs`'s
