@@ -5,6 +5,9 @@
 > runtime patterns, see [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md). For
 > scene/prefab staging, churn guard, and merge rules, see
 > [../../docs/UNITY_CONCURRENT_WORKFLOW.md](../../docs/UNITY_CONCURRENT_WORKFLOW.md).
+> For the inventory, phase ordering, and decision log for applying this policy
+> beyond the main menu, see
+> [UNITY_CODE_FIRST_MIGRATION_PLAN.md](UNITY_CODE_FIRST_MIGRATION_PLAN.md).
 > For the full documentation hierarchy, see [README.md](README.md).
 
 This is the canonical policy for moving the Unity front end away from

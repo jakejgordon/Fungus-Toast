@@ -32,6 +32,7 @@ If a task is unclear, use this routing order before making changes:
 - **Mold icon art generation and board-visual iteration workflow:** `FungusToast.Core/docs/MOLD_ICON_HELPER.md`
 - **Unity UI architecture and service patterns:** `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`
 - **Unity code-first migration (Inspector wiring → code) and its opportunistic-refactor policy:** `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`
+- **Unity code-first migration inventory, phase ordering, and decision log (beyond the main menu):** `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION_PLAN.md`
 - **Tooltip taxonomy, onboarding guidance, hover tooltips, and board inspection tooltips:** `docs/ui/TOOLTIP_GUIDE.md`
 - **Git worktree / branch workflow for isolated task checkouts:** `docs/GIT_WORKTREE_WORKFLOW.md`
 - **Unity scene/prefab staging, churn guard, and conflict workflow:** `docs/UNITY_CONCURRENT_WORKFLOW.md`
@@ -144,7 +145,7 @@ Documentation strategy:
 - Adaptation/campaign work → `ADAPTATION_HELPER.md`, `CAMPAIGN_HELPER.md`, `SAVE_COMPATIBILITY.md`, and `docs/MOLDINESS_HELPER.md` for moldiness-specific progression work
 - AI strategy work → `AI_STRATEGY_AUTHORING.md`
 - UI/service/tooltip/pooling work → `UI_ARCHITECTURE_HELPER.md`, `NEW_BACKGROUND_HELPER.md` for board-background silhouette work, `docs/ui/TOOLTIP_GUIDE.md`, and `UI_STYLE_GUIDE.md`
-- Unity Inspector wiring, serialized-field cleanup, scene/prefab-to-code work → `UNITY_CODE_FIRST_MIGRATION.md`
+- Unity Inspector wiring, serialized-field cleanup, scene/prefab-to-code work → `UNITY_CODE_FIRST_MIGRATION.md`; check `UNITY_CODE_FIRST_MIGRATION_PLAN.md` for what's left and in what order
 - Sound planning / audio trigger work → `SOUNDS.md`, `UI_ARCHITECTURE_HELPER.md`, and `ARCHITECTURE_OVERVIEW.md`
 - Deep architecture questions → `ARCHITECTURE_OVERVIEW.md`
 - Canonical gameplay terms and state-transition verbs → `GAMEPLAY_TERMINOLOGY.md`
