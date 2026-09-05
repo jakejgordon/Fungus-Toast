@@ -51,6 +51,17 @@ namespace FungusToast.Unity.UI
 
             private void Awake()
             {
+                ResolveOwnedReferences();
+                ApplySidebarLogLayoutBehavior();
+            }
+
+            // Idempotent. Also called explicitly, first, from GameManager.BootstrapServices() —
+            // Unity doesn't guarantee this Awake() runs before GameManager's, and
+            // BootstrapServices() reads GameLogRouter synchronously, so relying on
+            // this Awake() alone let GameLogRouter get built (and cached) with null
+            // managers when GameManager's Awake ran first.
+            public void ResolveOwnedReferences()
+            {
                 RegisterPlayerActivityLog(
                     leftSidebar != null ? leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
                     GetComponentInChildren<GameLogManager>(true));
@@ -58,8 +69,6 @@ namespace FungusToast.Unity.UI
                     rightSidebar != null ? rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
                     GetComponentInChildren<GlobalGameLogManager>(true));
                 RegisterLoadingScreen(FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include));
-
-                ApplySidebarLogLayoutBehavior();
             }
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;

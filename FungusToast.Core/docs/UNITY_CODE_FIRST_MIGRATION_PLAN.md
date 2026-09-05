@@ -396,6 +396,48 @@ claiming blanket front-end coverage.
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
 
+**2026-09-05 — Regression found and fixed in the Game Log slice: Awake-order
+hazard, not caught by the null scan.** Editor playtest (user) showed both
+activity logs completely empty at Round 2, no console errors — exactly the
+"passes a null check cleanly" failure class section 7.3 was written to catch,
+and the first slice to actually trigger it. Root cause: `GameManager.cs:737`
+(`gameUIManager.GameLogRouter.SetEndgamePlayerStatisticsTracker(...)`) runs
+synchronously inside `GameManager.BootstrapServices()`, called from
+`GameManager.Awake()`. `GameUIManager.GameLogRouter`'s getter is
+lazily-cached — it builds a `GameLogRouter` from
+`playerActivityLogManager`/`globalEventsLogManager` on first access and never
+rebuilds it. Before this slice those fields were `[SerializeField]`s,
+populated by Unity's deserialization *before any* `Awake()` runs, so read
+order across objects didn't matter. After this slice they were populated only
+inside `GameUIManager.Awake()` — and Unity does not guarantee
+`GameUIManager.Awake()` runs before `GameManager.Awake()`. When
+`GameManager`'s ran first (as it evidently did on the user's run),
+`GameLogRouter` got permanently built and cached with null managers before
+`GameUIManager.Awake()` ever populated them. Every downstream call is
+null-conditional (`?.`), so nothing threw — the logs just silently never
+received events.
+**Fix:** added `GameUIManager.ResolveOwnedReferences()` (idempotent, wraps the
+four `Register...` calls) and call it explicitly as the *first* line of
+`GameManager.BootstrapServices()`, before anything reads `gameUIManager`'s
+owned references — not relying on `GameUIManager.Awake()`'s ordering at all.
+`GameUIManager.Awake()` still calls it too, as a self-sufficiency fallback for
+any entry point that doesn't go through `GameManager`. This is a strictly
+better fit for section 7.1's rank-1 pattern than what the original slice did:
+"construct + inject from the composition root" means the *root* drives the
+timing deterministically, not that a dependent component resolves itself in
+its own `Awake()` and hopes for the best. Checked the two other MonoBehaviours
+that read `gameUIManager.GameLogRouter`/etc.
+(`MycovariantDraftController.cs`, `UI_MutationManager.cs`) — both only do so
+from gameplay-event handlers (draft picks, spend-points), never from `Awake()`,
+so no other latent hazard of this shape exists. This also retroactively
+hardens the Loading Screen resolution from the Pilot slice, which had the same
+latent (but apparently unhit) risk.
+**Lesson for future cohorts:** a resolution that reads correctly in
+`Awake()` is not enough by itself — check every consumer that might read the
+same reference from *its own* `Awake()`/`BootstrapServices()`-style
+synchronous startup path, not just from event handlers. This is exactly the
+class of bug section 7.3 exists to catch, and it did.
+
 **2026-09-05 — Pattern proof (Game Log) landed. Awaiting Editor playtest.**
 Slice contract: remove `GameUIManager.cs`'s four `[SerializeField]`s
 (`playerActivityLogPanel`, `playerActivityLogManager`, `globalEventsLogPanel`,

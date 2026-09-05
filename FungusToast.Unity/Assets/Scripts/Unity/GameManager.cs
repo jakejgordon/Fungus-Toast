@@ -610,6 +610,11 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
+            // Must run before anything below reads gameUIManager's owned
+            // panels/managers (e.g. gameUIManager.GameLogRouter just below) —
+            // Unity does not guarantee GameUIManager.Awake() has already run
+            // by the time GameManager.Awake() calls this method.
+            gameUIManager.ResolveOwnedReferences();
             soundEffectService = new SoundEffectService(gameObject);
             pauseMenuService = new PauseMenuService(
                 gameObject,
