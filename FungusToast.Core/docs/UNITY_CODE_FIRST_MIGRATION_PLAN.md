@@ -449,6 +449,9 @@ phase banner shows on Mutation/Growth/Decay/Draft transitions and campaign
 level intro, the progress tracker highlights the correct phase and advances
 through growth cycles 1–5, and a repeated game start/restart in one session
 still animates/updates both correctly through a full round.
+**Verified 2026-09-05 (user).** Phase banner and progress tracker both worked
+correctly through a full round. Phase Banner + Progress Tracker cohort
+closed. Next: Mycovariant Draft.
 
 **2026-09-05 — Right Sidebar / Player Summary / Mold Profile landed. Awaiting
 Editor playtest.** Slice contract: remove `GameUIManager.cs`'s
