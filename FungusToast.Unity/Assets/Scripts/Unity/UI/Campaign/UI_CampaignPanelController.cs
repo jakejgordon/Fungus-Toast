@@ -386,6 +386,8 @@ namespace FungusToast.Unity.UI.Campaign
                 ControlPrefix = "UI_CampaignTesting",
                 LogPrefix = "UI_CampaignPanelController",
                 LayoutInvalidated = ForceLayoutNow,
+                UseCardBackground = false,
+                UseSecondaryButtonStyle = true,
                 CardWidth = DevelopmentRailWidth,
                 SettingWidth = DevelopmentRailWidth - 24f
             });
