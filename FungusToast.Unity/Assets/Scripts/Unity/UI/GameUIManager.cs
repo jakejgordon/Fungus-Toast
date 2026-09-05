@@ -34,8 +34,7 @@ namespace FungusToast.Unity.UI
 
         private UI_LoadingScreen loadingScreen;
 
-        [Header("End-game")]
-        [SerializeField] private UI_EndGamePanel endGamePanel;
+        private UI_EndGamePanel endGamePanel;
 
         [Header("Pause Menu")]
         [SerializeField] private UI_PauseMenuPanel pauseMenuPanel;
@@ -69,6 +68,7 @@ namespace FungusToast.Unity.UI
                     rightSidebar != null ? rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
                     GetComponentInChildren<GlobalGameLogManager>(true));
                 RegisterLoadingScreen(FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include));
+                RegisterEndGamePanel(FindAnyObjectByType<UI_EndGamePanel>(FindObjectsInactive.Include));
             }
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
@@ -271,6 +271,16 @@ namespace FungusToast.Unity.UI
 
             globalEventsLogPanel = panel;
             globalEventsLogManager = manager;
+        }
+
+        public void RegisterEndGamePanel(UI_EndGamePanel panel)
+        {
+            if (panel == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_EndGamePanel found in the scene.");
+            }
+
+            endGamePanel = panel;
         }
 
         // Routing observer for unified event handling
