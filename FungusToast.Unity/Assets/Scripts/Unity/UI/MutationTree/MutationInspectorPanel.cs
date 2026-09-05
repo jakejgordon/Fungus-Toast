@@ -29,6 +29,9 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float RequirementStatusBadgeSize = 22f;
         private const float RequirementStatusBadgeLeftInset = 8f;
         private const float RequirementStatusBadgeToLabelGap = 8f;
+        // TMP reports a fractional preferred height. Rounding it down during layout can
+        // clip the final baseline at some Canvas scale factors.
+        private const float TextHeightSafetyPadding = 1f;
 
         private RectTransform rootRect = null!;
         private RectTransform contentRect = null!;
@@ -723,7 +726,8 @@ namespace FungusToast.Unity.UI.MutationTree
             float horizontalMargins = label.margin.x + label.margin.z;
             float verticalMargins = label.margin.y + label.margin.w;
             float textWidth = Mathf.Max(80f, contentWidth - horizontalMargins);
-            float requiredHeight = label.GetPreferredValues(label.text, textWidth, 0f).y + verticalMargins;
+            float requiredHeight = Mathf.Ceil(label.GetPreferredValues(label.text, textWidth, 0f).y + verticalMargins)
+                + TextHeightSafetyPadding;
             element.minHeight = minimumHeight;
             element.preferredHeight = Mathf.Max(minimumHeight, requiredHeight);
         }
