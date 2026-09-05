@@ -23,19 +23,37 @@ namespace FungusToast.Unity.UI
 
         private static Sprite Load(string resourceName)
         {
+            string path = $"UI/{resourceName}";
+
             // Resources.Load<Sprite> only returns a result when the texture's
             // Sprite Mode is Single; some of these were imported as Multiple (a
             // texture holding one named sub-sprite), where the main asset at the
-            // path is the Texture2D, not the Sprite. LoadAll<Sprite> finds the
-            // sprite either way.
-            var sprites = Resources.LoadAll<Sprite>($"UI/{resourceName}");
-            if (sprites == null || sprites.Length == 0)
+            // path is the Texture2D, not the Sprite.
+            Sprite sprite = Resources.Load<Sprite>(path);
+            if (sprite != null)
             {
-                Debug.LogError($"UiSpriteLibrary: missing Resources/UI/{resourceName}.");
-                return null;
+                return sprite;
             }
 
-            return sprites[0];
+            Sprite[] sprites = Resources.LoadAll<Sprite>(path);
+            if (sprites != null && sprites.Length > 0)
+            {
+                return sprites[0];
+            }
+
+            // Last resort: build a Sprite from the raw texture, in case neither of
+            // the above resolved a Sprite sub-asset for this import configuration.
+            Texture2D texture = Resources.Load<Texture2D>(path);
+            if (texture != null)
+            {
+                return Sprite.Create(
+                    texture,
+                    new Rect(0f, 0f, texture.width, texture.height),
+                    new Vector2(0.5f, 0.5f));
+            }
+
+            Debug.LogError($"UiSpriteLibrary: missing Resources/{path} (Resources.Load found nothing of any type at that path).");
+            return null;
         }
     }
 }
