@@ -63,12 +63,20 @@ Adaptations commonly do one of two things:
 
 ## Starting Adaptations
 
-Starting Adaptations are a special subset of Adaptations that are granted automatically when a player starts a new campaign run based on the mold they choose. They are **not** offered in the campaign reward draft.
+Starting Adaptations are a special subset of Adaptations granted automatically
+from each player's assigned mold. They are **not** offered in the campaign
+reward draft.
 
 ### Key facts
 
 - `AdaptationDefinition.IsStartingAdaptation == true` marks these adaptations. They are excluded from `GetAdaptationDraftChoices` via `.Where(x => !x.IsStartingAdaptation ...)`.
-- **Only the human player** receives a starting adaptation. AI players do not get mold-specific starting bonuses.
+- Every human and AI receives the starting Adaptation corresponding to the mold
+  icon assigned to that player.
+- Campaign AI receives additional Adaptations by selected start difficulty:
+  Training 0, Easy 1, Medium 2, Hard 3, Elite 4, and Boss 5.
+- Authored AI loadouts are additive, count toward that extra quota, and may
+  exceed it for bespoke encounters. Remaining slots prefer the strategy's
+  themed Adaptation metadata before deterministic random fallback.
 - IDs `adaptation_20` through `adaptation_27` are reserved for the eight starting adaptations (one per mold, index 0â€“7).
 
 ### Single source of truth: `MoldCatalog`
@@ -102,4 +110,6 @@ Use `MoldCatalog` wherever you need mold names or starting adaptation lookups â€
 3. Add a new constant in `AdaptationIds`.
 4. Add any tunable balance constants in `AdaptationGameBalance`.
 5. Implement gameplay effects through `AdaptationEffectProcessor` (or the appropriate passive site in `Player.cs` / `FungicideMutationProcessor.cs`).
-6. The `CampaignController.StartNew` call automatically assigns the starting adaptation via `MoldCatalog`; no additional wiring is needed there.
+6. Human campaign state and `AIStartingAdaptationResolver`/`PlayerInitializer`
+   apply the corresponding mold Adaptation through `MoldCatalog`; do not add a
+   parallel mold-to-Adaptation mapping.

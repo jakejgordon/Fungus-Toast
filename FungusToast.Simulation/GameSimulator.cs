@@ -44,7 +44,7 @@ namespace FungusToast.Simulation.GameSimulation
             var rng = randomStreams.Gameplay;
             var (players, board) = InitializeGame(
                 strategies,
-                rng,
+                randomStreams,
                 context,
                 boardWidth,
                 boardHeight,
@@ -289,7 +289,7 @@ namespace FungusToast.Simulation.GameSimulation
 
         private static (List<Player> players, GameBoard board) InitializeGame(
             List<IMutationSpendingStrategy> strategies,
-            Random rng,
+            RandomStreamContract randomStreams,
             ISimulationObserver observer,
             int boardWidth = GameBalance.BoardWidth,
             int boardHeight = GameBalance.BoardHeight,
@@ -300,6 +300,7 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null)
         {
+            var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
             var players = new List<Player>();
 
@@ -324,6 +325,37 @@ namespace FungusToast.Simulation.GameSimulation
             foreach (var player in players)
                 board.Players.Add(player);
 
+            // Simulation mold identity follows player slot, matching Unity's
+            // default visual assignment. Explicit loadouts are additive.
+            for (int i = 0; i < players.Count; i++)
+            {
+                var authoredAdditionalIds = i < startingAdaptationIds?.Count
+                    ? startingAdaptationIds[i]
+                    : null;
+                foreach (var adaptationId in authoredAdditionalIds ?? Array.Empty<string>())
+                {
+                    if (!AdaptationRepository.TryGetById(adaptationId, out _))
+                    {
+                        Console.WriteLine($"[Simulation] Warning: Unknown adaptation id '{adaptationId}' for player slot {i}. Skipping.");
+                    }
+                }
+
+                var loadout = AIStartingAdaptationResolver.Resolve(
+                    moldIndex: i,
+                    campaignDifficulty: null,
+                    authoredAdditionalIds: authoredAdditionalIds,
+                    suggestedAdaptationSets: null,
+                    rng: randomStreams.CreateAiDecisionRandom(i, round: 0, decisionKind: "starting-adaptation-loadout"));
+
+                foreach (var adaptationId in loadout)
+                {
+                    if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                    {
+                        players[i].TryAddAdaptation(adaptation);
+                    }
+                }
+            }
+
             // Use the shared starting spore placement utility
             var edgeOffsets = strategies
                 .Select(strategy => strategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
@@ -342,21 +374,6 @@ namespace FungusToast.Simulation.GameSimulation
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
             }
-            if (startingAdaptationIds != null)
-            {
-                for (int i = 0; i < players.Count; i++)
-                {
-                    if (i >= startingAdaptationIds.Count) break;
-                    foreach (var id in startingAdaptationIds[i])
-                    {
-                        if (AdaptationRepository.TryGetById(id, out var def))
-                            players[i].TryAddAdaptation(def);
-                        else
-                            Console.WriteLine($"[Simulation] Warning: Unknown adaptation id '{id}' for player slot {i}. Skipping.");
-                    }
-                }
-            }
-
             AdaptationEffectProcessor.OnStartingSporesEstablished(board, players, rng);
 
             return (players, board);

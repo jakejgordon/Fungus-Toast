@@ -1,4 +1,6 @@
+using FungusToast.Core.AI;
 using FungusToast.Core.Campaign;
+using FungusToast.Core.Common;
 using FungusToast.Core.Players;
 
 namespace FungusToast.Core.Tests.Campaign;
@@ -9,6 +11,134 @@ namespace FungusToast.Core.Tests.Campaign;
 /// </summary>
 public class StartingAdaptationTests
 {
+    [Fact]
+    public void Ai_resolver_always_grants_the_mold_matched_starting_adaptation()
+    {
+        var resolved = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 3,
+            campaignDifficulty: null,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: null,
+            new Random(1));
+
+        Assert.Equal(new[] { AdaptationIds.CentripetalGermination }, resolved);
+    }
+
+    [Theory]
+    [InlineData(CampaignDifficulty.Training, 0)]
+    [InlineData(CampaignDifficulty.Easy, 1)]
+    [InlineData(CampaignDifficulty.Medium, 2)]
+    [InlineData(CampaignDifficulty.Hard, 3)]
+    [InlineData(CampaignDifficulty.Elite, 4)]
+    [InlineData(CampaignDifficulty.Boss, 5)]
+    public void Ai_resolver_adds_one_extra_adaptation_per_campaign_difficulty_level(
+        CampaignDifficulty difficulty,
+        int expectedExtraCount)
+    {
+        var resolved = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 0,
+            difficulty,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: null,
+            new Random(123));
+
+        Assert.Equal(1 + expectedExtraCount, resolved.Count);
+        Assert.Equal(AdaptationIds.ObliqueFilament, resolved[0]);
+        Assert.Equal(resolved.Count, resolved.Distinct(StringComparer.Ordinal).Count());
+        Assert.All(
+            resolved.Skip(1),
+            id => Assert.False(RequireAdaptation(id).IsStartingAdaptation));
+    }
+
+    [Fact]
+    public void Ai_resolver_counts_authored_additions_toward_quota_and_preserves_excess_boss_loadout()
+    {
+        var authored = new[]
+        {
+            AdaptationIds.MycotoxicHalo,
+            AdaptationIds.AegisHyphae,
+            AdaptationIds.ApicalYield,
+            AdaptationIds.SporeSalvo,
+            AdaptationIds.VesicleBurst,
+            AdaptationIds.HyphalBridge
+        };
+
+        var resolved = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 1,
+            CampaignDifficulty.Boss,
+            authored,
+            suggestedAdaptationSets: null,
+            new Random(1));
+
+        Assert.Equal(1 + authored.Length, resolved.Count);
+        Assert.Equal(AdaptationIds.ThanatrophicRebound, resolved[0]);
+        Assert.Equal(authored, resolved.Skip(1));
+    }
+
+    [Fact]
+    public void Ai_resolver_uses_themed_candidates_before_global_fallback()
+    {
+        var themed = new AdaptationSynergySet(
+            "Economy theme",
+            "Test",
+            new[]
+            {
+                AdaptationIds.HyphalEconomy,
+                AdaptationIds.ApicalYield,
+                AdaptationIds.RetrogradeBloom
+            });
+
+        var resolved = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 4,
+            CampaignDifficulty.Hard,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: new[] { themed },
+            new Random(7));
+
+        Assert.Equal(4, resolved.Count);
+        Assert.Equal(AdaptationIds.SignalEconomy, resolved[0]);
+        Assert.Equal(
+            themed.AdaptationIds.OrderBy(id => id),
+            resolved.Skip(1).OrderBy(id => id));
+    }
+
+    [Fact]
+    public void Ai_resolver_is_deterministic_for_the_same_random_stream()
+    {
+        var first = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 6,
+            CampaignDifficulty.Elite,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: null,
+            new Random(8675309));
+        var second = AIStartingAdaptationResolver.Resolve(
+            moldIndex: 6,
+            CampaignDifficulty.Elite,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: null,
+            new Random(8675309));
+
+        Assert.Equal(first, second);
+    }
+
+    [Fact]
+    public void Ai_adaptation_selection_does_not_advance_the_gameplay_random_stream()
+    {
+        var treatmentStreams = new RandomStreamContract(12345);
+        var controlStreams = new RandomStreamContract(12345);
+
+        AIStartingAdaptationResolver.Resolve(
+            moldIndex: 2,
+            CampaignDifficulty.Boss,
+            authoredAdditionalIds: null,
+            suggestedAdaptationSets: null,
+            treatmentStreams.CreateAiDecisionRandom(2, round: 0, decisionKind: "starting-adaptation-loadout"));
+
+        Assert.Equal(
+            Enumerable.Range(0, 20).Select(_ => controlStreams.Gameplay.Next()).ToArray(),
+            Enumerable.Range(0, 20).Select(_ => treatmentStreams.Gameplay.Next()).ToArray());
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // TryAddAdaptation — core grant behaviour
     // ─────────────────────────────────────────────────────────────────────────

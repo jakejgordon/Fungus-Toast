@@ -707,7 +707,8 @@ namespace FungusToast.Unity
                 () => campaignController?.CurrentResolvedAiStrategyNames,
                 () => configuredHumanMoldIndices,
                 () => testingForcedStartingAdaptationIds,
-                () => currentLevelGameplaySeed);
+                () => currentLevelGameplaySeed,
+                () => campaignController?.CurrentStartDifficulty ?? CampaignDifficulty.Training);
             hotseatTurnManager = new HotseatTurnManager(
                 gameUIManager,
                 hotseatTurnPrompt,

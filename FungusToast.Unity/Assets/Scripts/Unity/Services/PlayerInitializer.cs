@@ -25,6 +25,7 @@ namespace FungusToast.Unity
         private readonly Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices;
         private readonly Func<IReadOnlyList<string>> getTestingForcedAdaptationIds;
         private readonly Func<int> getGameplaySeed;
+        private readonly Func<CampaignDifficulty> getCampaignStartDifficulty;
 
         public PlayerInitializer(
             GridVisualizer gridVisualizer,
@@ -35,7 +36,8 @@ namespace FungusToast.Unity
             Func<IReadOnlyList<string>> getResolvedCampaignAiStrategyNames,
             Func<IReadOnlyList<int>> getConfiguredHumanMoldIndices,
             Func<IReadOnlyList<string>> getTestingForcedAdaptationIds,
-            Func<int> getGameplaySeed)
+            Func<int> getGameplaySeed,
+            Func<CampaignDifficulty> getCampaignStartDifficulty)
         {
             this.gridVisualizer = gridVisualizer;
             this.ui = ui;
@@ -46,6 +48,7 @@ namespace FungusToast.Unity
             this.getConfiguredHumanMoldIndices = getConfiguredHumanMoldIndices;
             this.getTestingForcedAdaptationIds = getTestingForcedAdaptationIds;
             this.getGameplaySeed = getGameplaySeed;
+            this.getCampaignStartDifficulty = getCampaignStartDifficulty;
         }
 
         // totalPlayers: authoritative total player count for this game (from GameManager)
@@ -119,64 +122,53 @@ namespace FungusToast.Unity
 
         private void ApplyStartingAdaptations(Player ai, int aiIndex, BoardPreset preset, IReadOnlyList<string> resolvedStrategyNames)
         {
-            if (getGameMode() != GameMode.Campaign)
-            {
-                ApplyMoldStartingAdaptationToAi(ai);
-                return;
-            }
-
-            if (preset == null) return;
-
             List<string> adaptationIds = null;
             string strategyName = aiIndex < resolvedStrategyNames.Count ? resolvedStrategyNames[aiIndex] : null;
 
-            if (preset.UsesFixedAiLineup && aiIndex < preset.aiPlayers.Count)
+            if (preset != null && preset.UsesFixedAiLineup && aiIndex < preset.aiPlayers.Count)
             {
                 adaptationIds = preset.aiPlayers[aiIndex].startingAdaptationIds;
             }
-            else if (preset.UsesAiPool && strategyName != null)
+            else if (preset != null && preset.UsesAiPool && strategyName != null)
             {
                 var entry = preset.poolAdaptationOverrides?.Find(e => e.strategyName == strategyName);
                 adaptationIds = entry?.startingAdaptationIds;
             }
 
-            if (adaptationIds == null || adaptationIds.Count == 0) return;
+            if (adaptationIds != null)
+            {
+                foreach (var adaptationId in adaptationIds)
+                {
+                    if (!AdaptationRepository.TryGetById(adaptationId, out _))
+                    {
+                        Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.PlayerName}. Skipping.");
+                    }
+                }
+            }
 
-            foreach (var adaptationId in adaptationIds)
+            int moldIndex = gridVisualizer.GetMoldIndexForPlayer(ai.PlayerId);
+            var definition = ai.MutationStrategy == null
+                ? null
+                : StrategyRegistry.GetDefinition(ai.MutationStrategy);
+            CampaignDifficulty? campaignDifficulty = getGameMode() == GameMode.Campaign
+                ? getCampaignStartDifficulty()
+                : null;
+            var adaptationRng = new RandomStreamContract(getGameplaySeed())
+                .CreateAiDecisionRandom(ai.PlayerId, round: 0, decisionKind: "starting-adaptation-loadout");
+            var resolvedAdaptationIds = AIStartingAdaptationResolver.Resolve(
+                moldIndex,
+                campaignDifficulty,
+                adaptationIds,
+                definition?.Metadata.SuggestedAdaptationSets,
+                adaptationRng);
+
+            foreach (var adaptationId in resolvedAdaptationIds)
             {
                 if (AdaptationRepository.TryGetById(adaptationId, out var def))
                 {
                     ai.TryAddAdaptation(def);
                     Debug.Log($"[PlayerInitializer] Applied adaptation {adaptationId} to AI {strategyName ?? ai.PlayerName}");
                 }
-                else
-                {
-                    Debug.LogWarning($"[PlayerInitializer] Unknown adaptation ID {adaptationId} for AI {strategyName ?? ai.PlayerName}. Skipping.");
-                }
-            }
-        }
-
-        private void ApplyMoldStartingAdaptationToAi(Player ai)
-        {
-            if (ai == null || gridVisualizer == null)
-            {
-                return;
-            }
-
-            int moldIndex = gridVisualizer.GetMoldIndexForPlayer(ai.PlayerId);
-            string adaptationId = MoldCatalog.GetStartingAdaptationId(moldIndex);
-            if (string.IsNullOrWhiteSpace(adaptationId))
-            {
-                return;
-            }
-
-            if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
-            {
-                ai.TryAddAdaptation(adaptation);
-            }
-            else
-            {
-                Debug.LogWarning($"[PlayerInitializer] Unknown starting adaptation '{adaptationId}' for AI mold index {moldIndex}.");
             }
         }
 

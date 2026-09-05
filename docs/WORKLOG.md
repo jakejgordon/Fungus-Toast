@@ -300,6 +300,17 @@ measurement model, phase gates, and open product decisions are in
     `contract_20260904T222728_526758`. Remaining Phase 5/6 work changes product
     behavior and needs an explicit scenario Adaptation grant-count rule or a
     pre-registered AI treatment hypothesis before implementation.
+34. P5.6 AI starting-Adaptation rules are approved and implemented. Every AI
+    gets the Adaptation matching its assigned mold icon. Campaign difficulty
+    adds Training/Easy/Medium/Hard/Elite/Boss = 0/1/2/3/4/5 extras; authored
+    fixed/pool additions count toward the quota and may exceed it, then the
+    resolver fills without replacement from themed suggestions before global
+    non-starting fallback. Selection uses a purpose-scoped per-player RNG.
+    Simulation applies mold identity by slot before spore placement and treats
+    explicit loadouts as additive. The behavior change increments the corpus to
+    `fungus-toast.ai-corpus.phase5-starting-adaptations.v2`. Core currently
+    passes 644/644 and Simulation 19/19; a new corrected reference baseline and
+    Unity Editor flow validation remain pending.
 
 ### Completion Criteria
 

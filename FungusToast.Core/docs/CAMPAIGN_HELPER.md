@@ -56,6 +56,15 @@ Rules:
 - Adaptations are unique per run.
 - Campaign reward draft draws from remaining (unselected) adaptations.
 - If no adaptations remain, campaign advances without a reward pick.
+- Every AI starts with the Adaptation mapped to its assigned mold icon.
+- Selected campaign start difficulty grants AI additional starting Adaptations:
+  Training 0, Easy 1, Medium 2, Hard 3, Elite 4, Boss 5.
+- Fixed-lineup and pool override Adaptations are applied first and count toward
+  the quota. They are never removed when they exceed it, allowing authored boss
+  encounters with larger loadouts.
+- Remaining quota slots are selected deterministically without replacement,
+  preferring the strategy's themed suggestions before the full non-starting
+  Adaptation catalog. Player moldiness locks do not constrain AI loadouts.
 
 ## Campaign Progression Configuration
 

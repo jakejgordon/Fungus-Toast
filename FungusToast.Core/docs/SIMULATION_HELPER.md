@@ -296,16 +296,22 @@ Important reporting rule: the harness summary is still not the final source of t
 Important behavior: the harness now applies the campaign player's starting Adaptations automatically.
 For the safe proxy (`TST_CampaignPlayer_SafeBaseline`), slot 0 receives `X - 1` starting adaptations when simulating campaign level `X`, because the player would normally have earned one adaptation after each previous campaign win.
 
+The simulator also always grants every AI slot its mold-matched starting
+Adaptation (`MoldCatalog` index equals player slot), before starting-spore
+placement. Explicit `--starting-adaptations` values are additions, not
+replacements. This ensures starting effects such as Centripetal Germination are
+represented and matches Unity's default mold-icon assignment.
+
 Implementation detail: this is currently deterministic, not random.
 The harness uses the canonical prefix `adaptation_1..adaptation_(X-1)` as a stand-in for an accumulated campaign run.
 So the current simulation rule is **not** "X-1 random adaptations"; it is "the first X-1 canonical campaign-player adaptations."
 
 Concrete examples:
-- Campaign0 gives the proxy no starting adaptations
-- Campaign1 gives the proxy no starting adaptations
-- Campaign2 gives the proxy `adaptation_1`
-- Campaign4 gives the proxy `adaptation_1,adaptation_2,adaptation_3`
-- Campaign5 gives the proxy `adaptation_1,adaptation_2,adaptation_3,adaptation_4`
+- Campaign0 gives the proxy its mold-matched starting Adaptation only
+- Campaign1 gives the proxy its mold-matched starting Adaptation only
+- Campaign2 adds `adaptation_1` to its mold-matched starting Adaptation
+- Campaign4 adds `adaptation_1,adaptation_2,adaptation_3`
+- Campaign5 adds `adaptation_1,adaptation_2,adaptation_3,adaptation_4`
 
 If you are comparing results against older notes, check whether those runs predate this change; old numbers may be harsher because the proxy was missing its intended starting adaptations.
 

@@ -580,11 +580,12 @@ design and add narrow typed seams only for demonstrated needs. See
   The Phase 4 result keeps this as a focused required interface method rather
   than introducing a separate composed policy.
 - **P5.6:** Resolve complementary starting Adaptations without an AI draft, and
-  keep grant count and forced IDs under explicit scenario control. Exact
-  Adaptation loadouts, board/player-count position pools, and curated campaign
-  pool/coordinate/geometry overrides already exist as scenario controls. Add a
-  ranked automatic resolver only when a scenario supplies its grant count; do
-  not introduce an implicit gameplay default.
+  keep grant count and forced IDs under explicit scenario control. Complete:
+  every AI receives its mold-matched starting Adaptation; campaign difficulty
+  adds 0–5 extras from Training through Boss. Authored additions count toward
+  the quota and may exceed it; deterministic selection prefers strategy-themed
+  options before global fallback. Exact loadouts, position pools, and curated
+  campaign coordinates/geometry remain scenario controls.
 - **P5.7:** Add reactive board-state policy primitives only for demonstrated
   decisions; avoid a catch-all scoring framework.
 - **P5.8:** Migrate a small reference set, then each roster family in isolated
