@@ -428,6 +428,9 @@ a game to completion, confirm the End Game panel shows with correct
 per-player results (ranks, living/dead/toxin counts), Continue/Exit/Play
 Again buttons still work, and a second completed game in the same session
 still shows correct results (repeated-entry check).
+**Verified 2026-09-05 (user).** Playtested to completion; results panel and
+buttons worked correctly. End Game panel cohort closed. Next: Right Sidebar /
+Player Summary / Mold Profile.
 
 **2026-09-05 — Regression found and fixed in the Game Log slice: Awake-order
 hazard, not caught by the null scan.** Editor playtest (user) showed both
