@@ -26,14 +26,18 @@
   code) — see section 9. Selection prompt + selection controllers is done —
   the first cohort with an explicit, recorded retention (two fields with no
   bespoke component type to resolve against) rather than a full resolution;
-  no playtest needed since nothing behavioral changed. Next up: Cell /
-  mycovariant tooltip panels (Medium risk).
+  no playtest needed since nothing behavioral changed. Cell / mycovariant
+  tooltip panels is closed too — zero code changes needed, both components
+  were already self-sufficient (a clone-template prefab and a self-managed
+  singleton) with no cross-reference to resolve. **Only one cohort remains:
+  Mutation Tree (High risk)** — every other row in section 5 is done.
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan
   existed, and the Tooltip, Loading Screen, Game Log, End Game, Right
   Sidebar / Mold Profile, Phase Banner / Progress Tracker, Mycovariant
-  Draft, Hotseat Turn Prompt, and Selection prompt cohorts (2026-09-05).
+  Draft, Hotseat Turn Prompt, Selection prompt, and Cell / mycovariant
+  tooltip cohorts (2026-09-05).
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -169,6 +173,7 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | **Mycovariant Draft** | `UI/MycovariantDraft/*.cs` (7 files), `Prefabs/UI/UI_DraftChoiceCard.prefab`, `UI_PlayerIconCell.prefab` | 0 confirmed (was 1) | **Landed 2026-09-05.** Of ~21 fields across all 7 files, exactly 1 was a real cross-reference: `GameManager`'s own `mycovariantDraftController` (unlike every prior cohort, this owner pointer lives on `GameManager` directly, not `GameUIManager`). A third distinct variant of the ordering hazard class: `mycovariantDraftController` is captured **by value in two service constructors** (`GameTransitionService`, `GameStartService`) inside `BootstrapServices()` — a constructor argument is captured once and never re-read, unlike a lazy property or a plain accessor, so it had to be resolved before either `new` call, not merely before `Awake()` ends. Resolved via `FindAnyObjectByType` as the second statement in `BootstrapServices()`. `MycovariantDraftController.gridVisualizer` (confirmed pointing at the identical `GridVisualizer` instance as `GameManager`'s own field) is explicitly out of scope per section 4 and left untouched — not a gap. All other fields (`DraftOrderRow`'s clone-template prefab ref, `PlayerIconCellUI`/`MycovariantIcon`/`MycovariantCard`'s own children, `MycovariantDraftController`'s remaining 11 own-children/asset/clone-template fields) audited and confirmed retained. See section 9. |
 | **Hotseat Turn Prompt** | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | 0 confirmed (was 1) | **Landed 2026-09-05.** Same shape as Mycovariant Draft: single scene-authored instance, owner reference on `GameManager` directly, and the same constructor-capture hazard (`HotseatTurnManager`'s `private readonly UI_HotseatTurnPrompt prompt;`, set once at construction inside `BootstrapServices()`) — resolved via `FindAnyObjectByType` grouped right alongside the Mycovariant Draft resolution, before `HotseatTurnManager` is constructed. All 9 of the prompt's own fields audited and confirmed self-contained (`root` points at its own GameObject, `canvasGroup` a sibling component on it, the rest are descendants or tunables) — no scene overrides, untouched. See section 9. |
 | **Selection prompt + selection controllers** | `TileSelectionController.cs`, `MultiTileSelectionController.cs`, `MultiCellSelectionController.cs` | 2 resolved (dead fields removed), 2 explicitly retained | **Landed 2026-09-05.** Different shape from every prior cohort. The three controllers hold nothing in-scope — their only fields (`gridVisualizer`, plus `TileSelectionController`'s `hoverHighlighter`, a `FungusToast.Unity.Grid` type) belong to the grid/board-rendering system section 4 excludes. Of `GameManager`'s 4 baseline fields: `selectionPromptCancelButton`/`selectionPromptCancelButtonText` were already `{fileID: 0}` in the scene — `SelectionPromptService` already self-builds them via code when null, so there was no real cross-reference to resolve, just a dead `[SerializeField]` slot; converted to plain `private` fields. `SelectionPromptPanel`/`SelectionPromptText` are **explicitly retained** — `UI_SelectionPromptPanel` has no bespoke component type for `FindAnyObjectByType` to target (just a bare `RectTransform` + generic UI components), and it starts inactive in the scene so `GameObject.Find` can't substitute either (Unity's `Find` doesn't see inactive objects). Fixing this properly would need a small marker component added in the Editor — user chose to retain rather than take that step for two fields on a small overlay. See section 9. |
+| **Cell / mycovariant tooltip panels** | `UI/CellTooltipUI.cs` (24 fields), `UI/MycovariantTooltipPanel.cs` (4), `UI/MycovariantTooltipTrigger.cs`, `UI/MycovariantDraft/MycovariantIcon.cs` | 0 confirmed | **Closed 2026-09-05, audit — zero code changes.** `CellTooltipUI`'s 24 fields are all prefab-internal; it's instantiated at runtime from `MagnifyingGlassFollowMouse.tooltipPrefab`, a legitimate clone-template reference — and `MagnifyingGlassFollowMouse.cs` itself is *already* an explicit standing exception for this whole initiative (§4/§9, gameplay overlay). `MycovariantTooltipPanel`'s 4 fields are self-contained, and the component is a self-managed singleton (`Instance` set in its own `Awake()`, same idiom as `TooltipManager.Instance`/`GameManager.Instance` already used elsewhere in this codebase) — consumers call `MycovariantTooltipPanel.Instance` directly, so no `GameUIManager`/`GameManager` field points at it and there's no cross-reference to resolve. Confirmed via direct grep: neither composition root references either class. `MycovariantTooltipTrigger.cs` has zero serialized fields. `MycovariantIcon.cs` already audited during the Mycovariant Draft slice. See section 9. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -179,13 +184,13 @@ Completion is tracked per component (section 7), not per row.
 
 Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game Log), End
 Game panel, Right Sidebar / Player Summary / Mold Profile, Phase Banner +
-Progress Tracker, Mycovariant Draft, Hotseat Turn Prompt, and Selection
-prompt + selection controllers are done — moved to the "Already code-first"
-table above. What follows starts at Cell / mycovariant tooltip panels.
+Progress Tracker, Mycovariant Draft, Hotseat Turn Prompt, Selection prompt +
+selection controllers, and Cell / mycovariant tooltip panels are done — moved
+to the "Already code-first" table above. What follows starts at Mutation Tree
+— the last cohort.
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Medium risk** | Cell / mycovariant tooltip panels | `UI/CellTooltipUI.cs` (24 fields — densest loose UI file in the project), `UI/MycovariantTooltipPanel.cs` (4), `UI/MycovariantDraft/MycovariantIcon.cs` (2) | TBD | **Added after review (AR-5).** Omitted from the first draft despite `CellTooltipUI` having the highest field count outside the mutation tree. |
 | **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | TBD (48 fields) | Largest and most gameplay-central. Do only after the composition and validation patterns have survived **both** a repeated-entry system and the two-instance Game Log case. Clone templates: `UI_MutationNode`, `UI_MutationRow`, `UI_MutationCategoryHeader`, `UI_MutationPlaceholder`, `UI_RootMutationButton`, `UI_GrowthPreviewCell`. |
 | **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
@@ -426,6 +431,30 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Cell / mycovariant tooltip panels closed. Zero code changes.**
+Investigated before writing a slice contract, since the survey suggested this
+might not need one. Confirmed: `CellTooltipUI.cs`'s 24 fields are all
+prefab-internal — it's instantiated at runtime via
+`MagnifyingGlassFollowMouse.tooltipPrefab` (`Instantiate(tooltipPrefab,
+uiCanvas.transform)`), a legitimate clone-template reference, and
+`MagnifyingGlassFollowMouse.cs` itself is already an explicit standing
+exception for this entire initiative (documented in section 4 and the
+decision log below — a gameplay overlay, not a UI wiring concern).
+`MycovariantTooltipPanel.cs`'s 4 fields are self-contained (own
+children/self-reference), and the component manages its own lifetime as a
+static singleton (`Instance` set in its own `Awake()`) — the exact same
+idiom as `TooltipManager.Instance` (already used throughout `TooltipTrigger.cs`)
+and `GameManager.Instance` itself. Consumers (`MycovariantTooltipTrigger.cs`)
+call `MycovariantTooltipPanel.Instance.ShowTooltip(...)` directly; grepped
+both `GameManager.cs` and `GameUIManager.cs` for any reference to either
+class and found none. Since section 5's ledger only counts "a serialized
+field pointing at an object the owning component does not itself create or
+live inside," and no such field exists anywhere for either class, there was
+nothing to resolve — this closes the same way the original Tooltip audit did.
+`MycovariantTooltipTrigger.cs` has zero serialized fields.
+`MycovariantIcon.cs` was already audited during the Mycovariant Draft slice.
+No build, no scene diff, no playtest needed.
 
 **2026-09-05 — Selection prompt + selection controllers landed. No Editor
 playtest needed — no runtime behavior changed.** Different shape from every
