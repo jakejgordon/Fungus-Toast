@@ -7155,7 +7155,6 @@ MonoBehaviour:
   gridVisualizer: {fileID: 989759029}
   cameraCenterer: {fileID: 743098981}
   growthPhaseRunner: {fileID: 611285832}
-  gameUIManager: {fileID: 948889969}
   decayPhaseRunner: {fileID: 2138162645}
   SelectionPromptPanel: {fileID: 373902686}
   SelectionPromptText: {fileID: 818361141}

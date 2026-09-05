@@ -40,14 +40,18 @@
   distinct double-wired-field bugs found across the initiative, a latent
   ordering hazard traced through existing code, and two cases needing a new
   marker-component pattern where no bespoke type existed to resolve against.
-  **All section 5 rows are done or explicitly retained.** Two things stand
-  between here and calling the whole plan done: (1) **one more Editor
-  step** — attach the new `UI_LeftSidebarMarker` component to the left
-  sidebar's root GameObject in `SampleScene.unity`, then save (same
-  mechanism as the Mutation Tree marker); (2) confirming Milestone A and
-  the doc-completion criteria in section 8 are actually satisfied now that
-  every row is closed — worth a deliberate pass rather than assuming it
-  follows automatically.
+  **All section 5 rows are done or explicitly retained, and both Milestone A
+  baseline lists (section 8) now carry zero unresolved fields** —
+  `GameManager.gameUIManager`, the very last one, closed 2026-09-05 (it had
+  been treated as structural plumbing since every other resolution runs
+  through it, but section 8 lists it in-scope, not excluded). **One thing
+  remains before doc-completion can actually be declared:** attach the new
+  `UI_LeftSidebarMarker` component to the left sidebar's root GameObject in
+  `SampleScene.unity`, save, and playtest (same mechanism as the Mutation
+  Tree marker — Game Log's player-panel lookup depends on this being
+  resolved). A clean build is not parity evidence per section 7.3; that
+  playtest is the one thing standing between "code complete" and "actually
+  done."
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -376,32 +380,45 @@ Known baseline — UI-owned manager fields:
   `globalEventsLogPanel`, `globalEventsLogManager`, `loadingScreen`,
   `endGamePanel`, `pauseMenuPanel`, `phaseBanner`, `phaseProgressTracker`.
   *(Not the three `Sprite` icon fields — retained as asset references.)*
-  **Status as of 2026-09-05:** `rightSidebar`, `moldProfileRoot`,
-  `playerActivityLogPanel`, `playerActivityLogManager`, `globalEventsLogPanel`,
-  `globalEventsLogManager`, `loadingScreen`, `endGamePanel`, `phaseBanner`,
-  `phaseProgressTracker` are resolved (composition-root injection via
-  `ResolveOwnedReferences()`). `mutationUIManager`, `playerUIBinder`,
-  `pauseMenuPanel` (pre-existing, already resolved before this plan) remain.
-  `leftSidebar` remains unresolved — noted as a gap during the Right Sidebar
-  slice, no bespoke component type, not yet owned by any cohort.
+  **Status as of 2026-09-05 (final):** every field in this list is resolved
+  or (pre-existing) already composition-rooted. `mutationUIManager` and
+  `playerUIBinder` resolved via `GetComponentInChildren` (both are direct
+  children of `GameUIManager`'s own transform); `leftSidebar` resolved via
+  the new `UI_LeftSidebarMarker` component (an Editor step — see section 9);
+  `rightSidebar`, `moldProfileRoot`, `playerActivityLogPanel`,
+  `playerActivityLogManager`, `globalEventsLogPanel`, `globalEventsLogManager`,
+  `loadingScreen`, `endGamePanel`, `phaseBanner`, `phaseProgressTracker` all
+  resolved via composition-root injection through `ResolveOwnedReferences()`;
+  `pauseMenuPanel` was already resolved before this plan existed. **Nothing
+  in this list remains unresolved.**
 - `GameManager.cs` (original baseline): `mutationManager`, `gameUIManager`,
   `phaseProgressTracker`, `mycovariantDraftController`, `hotseatTurnPrompt`,
   `SelectionPromptPanel`, `SelectionPromptText`, `selectionPromptCancelButton`,
   `selectionPromptCancelButtonText`.
-  **Status as of 2026-09-05:** `phaseProgressTracker` (the double-wired
-  duplicate, removed entirely — see the Phase Banner slice record),
-  `mycovariantDraftController`, `hotseatTurnPrompt`, `selectionPromptCancelButton`,
-  `selectionPromptCancelButtonText` (the latter two were already dead/null —
-  see the Selection prompt slice record) are resolved. `mutationManager`,
-  `gameUIManager` remain. `SelectionPromptPanel`/`SelectionPromptText` are
-  **explicitly retained** (no bespoke component type for `FindAnyObjectByType`
-  to target, and the panel starts inactive so `GameObject.Find` can't
-  substitute — see section 9's Selection prompt entry).
+  **Status as of 2026-09-05 (final):** `phaseProgressTracker` (the
+  double-wired duplicate, removed entirely — Phase Banner slice),
+  `mutationManager` (also double-wired — Mutation Tree Chunk 6),
+  `gameUIManager` (the very last item — resolved via `FindAnyObjectByType`
+  as the first line of `BootstrapServices()`, once every other cohort was
+  done), `mycovariantDraftController`, `hotseatTurnPrompt`,
+  `selectionPromptCancelButton`, `selectionPromptCancelButtonText` (the
+  latter two were already dead/null — Selection prompt slice) are all
+  resolved. `SelectionPromptPanel`/`SelectionPromptText` are **explicitly
+  retained** (no bespoke component type for `FindAnyObjectByType` to target,
+  and the panel starts inactive so `GameObject.Find` can't substitute —
+  section 9's Selection prompt entry). **Nothing in this list remains
+  unresolved or unclassified.**
 
 Resolving that baseline alone does **not** meet Milestone A. It is met only
 when the baseline *and* every classified component-owned cross-reference are
 resolved or explicitly retained, and no in-scope row in section 5 is still
-carrying an unclassified "TBD."
+carrying an unclassified "TBD." **As of 2026-09-05, both conditions hold:**
+every baseline field above is resolved or retained, and section 5 carries no
+unclassified row (every cohort landed, plus the two post-hoc gaps —
+`leftSidebar`, `playerUIBinder` — closed once discovered rather than left
+loose). **Milestone A is met**, pending the `UI_LeftSidebarMarker` Editor
+step and its playtest (see section 9) — the code is in, the verification
+isn't yet recorded.
 
 **Explicitly excluded from Milestone A** (and therefore from any "no scene
 references" claim): `gridVisualizer`, `cameraCenterer`, `growthPhaseRunner`,
@@ -437,6 +454,31 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Closed the very last baseline field, `GameManager.gameUIManager`
+itself, so Milestone A's known baseline carries zero unresolved entries.**
+This one had been quietly exempted so far simply because it's the field
+`ResolveOwnedReferences()` itself hangs off of — every other resolution in
+this plan runs *through* `gameUIManager`, so it was easy to treat as
+structural plumbing rather than an in-scope item. But section 8 lists it
+explicitly in `GameManager`'s baseline, not as an exclusion, and
+`GameUIManager` is squarely within this initiative's scope (it's the UI
+façade the whole plan is about) — unlike `gridVisualizer`/`cameraCenterer`,
+which are excluded because they belong to a genuinely different, out-of-scope
+system. Confirmed `GameUIManager` is a single scene-authored instance (script
+guid appears once) and that nothing in `GameManager.Awake()` reads it before
+`BootstrapServices()` is called, so resolved it via
+`FindAnyObjectByType<GameUIManager>(FindObjectsInactive.Include)` as the
+literal first statement of that method, before even `ResolveOwnedReferences()`
+is invoked on it. Scene diff: 1 line removed. `dotnet build` succeeds.
+**With this, every field in both baseline lists is resolved or explicitly
+retained — Milestone A's known baseline is fully closed.** Combined with
+every section 5 row being done and the two post-hoc gaps closed, both
+doc-completion conditions in section 8 are met **at the code level**. What's
+still missing: the `UI_LeftSidebarMarker` Editor step hasn't been performed
+yet, and neither it nor this `gameUIManager` change has an Editor playtest
+recorded. Per section 7.3, a clean build is not parity evidence — doc-completion
+should wait for that verification, not be declared from code alone.
 
 **2026-09-05 — Closed the two known gaps (`leftSidebar`, `playerUIBinder`)
 after all declared cohorts finished, so completion isn't reachable by

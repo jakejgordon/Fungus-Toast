@@ -313,7 +313,7 @@ namespace FungusToast.Unity
         public CameraCenterer cameraCenterer = null!; 
         private MutationManager mutationManager = null!;
         [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!;
-        [SerializeField] private GameUIManager gameUIManager = null!;
+        private GameUIManager gameUIManager = null!;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
         private MycovariantDraftController mycovariantDraftController = null!;
         private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
@@ -617,6 +617,16 @@ namespace FungusToast.Unity
 
         private void BootstrapServices()
         {
+            // GameUIManager is a single scene-authored instance; resolved here
+            // rather than serialized so this, the last remaining baseline field
+            // in section 8 of the migration plan, doesn't stay an unexamined
+            // exception. Must run before everything below, all of which uses it.
+            gameUIManager = FindAnyObjectByType<GameUIManager>(FindObjectsInactive.Include);
+            if (gameUIManager == null)
+            {
+                Debug.LogError("[GameManager] No GameUIManager found in the scene.");
+            }
+
             // Must run before anything below reads gameUIManager's owned
             // panels/managers (e.g. gameUIManager.GameLogRouter just below) —
             // Unity does not guarantee GameUIManager.Awake() has already run
