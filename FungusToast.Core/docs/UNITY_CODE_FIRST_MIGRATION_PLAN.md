@@ -205,3 +205,183 @@ narrowly-scoped registry (e.g., a `GameHudRegistry`)? Leaning toward
 generalizing the existing one once Phase 1 needs cross-panel lookups, to
 avoid a proliferation of near-identical registries — but this should be
 decided with the first phase that actually needs it, not speculatively now.
+
+## 10. Adversarial Review — 2026-09-05 (Pending Planner Response)
+
+> **Review status:** Challenge, not accepted plan revision. This section was
+> added without changing the planner's original text so the planner can answer,
+> refute, or incorporate each point explicitly. Findings are ordered by risk.
+
+### Findings and concerns
+
+#### AR-1 — High: the stated completion gate cannot be reached within the stated scope
+
+- **Plan locations:** section 4's exclusions and lines 126–132 exclude the grid,
+  cameras, `GrowthPhaseRunner`, and `DecayPhaseRunner`; section 8 nevertheless
+  requires `GameManager.cs` and `GameUIManager.cs` to retain no scene-object
+  cross-references.
+- **Concrete evidence:** `GameManager.cs:312-324` still holds scene references to
+  `GridVisualizer`, `CameraCenterer`, `MutationManager`, both phase runners,
+  `GameUIManager`, phase-progress UI, draft UI, hotseat UI, and selection-prompt
+  objects. `GameManager.cs:390` also holds `MagnifyingGlassFollowMouse`.
+- **Trigger:** every listed UI row is completed exactly as proposed while the
+  explicit non-goals remain untouched.
+- **Impact:** the initiative can never truthfully satisfy its own completion
+  criteria. A later implementer must either silently expand scope into excluded
+  systems or mark the plan complete with known serialized scene wiring left in
+  `GameManager`.
+- **Required correction:** either limit the gate to an explicit, enumerated set
+  of UI-owned fields, or expand the inventory and risk plan to cover the full
+  composition root. Do not use the unqualified phrase "no remaining
+  scene-object cross-references" while excluding some of those references.
+
+#### AR-2 — High: the plan prescribes a global lookup mechanism before defining ownership and lifecycle
+
+- **Plan location:** lines 165–170 direct later slices to extend or generalize
+  `MainMenuRegistry`, while lines 200–207 present the choice as still open.
+- **Concrete evidence:** `MainMenuRegistry.cs:17-39` is a static cache whose
+  fallback is a scene-wide `FindAnyObjectByType(..., FindObjectsInactive.Include)`.
+  It was built specifically for three main-menu controllers. By contrast,
+  `GameManager.cs:611-693` already acts as the composition root for gameplay
+  services, and `GameUIManager.cs:120-216` is the documented gameplay UI façade.
+- **Trigger:** the suggested guidance is followed for in-game panels with
+  different activation, teardown, and re-entry lifecycles from the menu.
+- **Impact:** hidden dependencies, order-dependent scene scans, ambiguous
+  ownership, and static references spanning play/scene lifetimes become the new
+  default architecture. Generalizing the class name does not fix those
+  properties; multiple narrow registries merely multiply them.
+- **Required correction:** settle the lifetime and composition boundary before
+  the first slice that truly needs cross-panel access. Treat a static registry
+  as a temporary discovery bridge, not the target architecture. Prefer explicit
+  construction and `SetDependencies(...)` from the existing composition root,
+  with `GameUIManager` exposing only the façade operations consumers need.
+
+#### AR-3 — High: the verification gate checks presence, not behavioral parity
+
+- **Plan locations:** lines 80–82 and 171–175 make `ValidateBuiltUi()` plus a
+  manual playtest the only verification model.
+- **Concrete evidence:** the Phase 0 validators such as
+  `UI_StartGamePanel.cs:229-236` only emit `Debug.LogError` when selected fields
+  are null. They do not fail a test, validate callback wiring, prove sibling
+  order/layout, or exercise repeated show/hide and teardown. The canonical
+  policy is stronger: `UNITY_CODE_FIRST_MIGRATION.md:116-119` calls for a
+  play-mode smoke path or edit-mode test that boots the bootstrapper.
+- **Trigger:** a control is present but invokes the wrong callback, a listener is
+  duplicated on re-entry, an inactive object misses initialization, or code-built
+  layout differs at a supported resolution.
+- **Impact:** a slice can pass its documented gate while shipping a broken or
+  subtly changed flow—the exact regression class that compatibility-first
+  migration is supposed to prevent.
+- **Required correction:** define a per-slice parity contract before migration:
+  required controls, callback routes, initial/terminal states, repeated-entry
+  behavior, and supported-resolution checks. A completion record must include
+  the exact manual Editor flow and result. Before Medium/Large cohorts, add an
+  executable Unity smoke/edit-mode validation path if the project is willing to
+  establish that infrastructure; a log-only null scan is not an assertion.
+
+#### AR-4 — Medium: the inventory signals do not measure the work the policy says to do
+
+- **Plan locations:** lines 94–124 use raw `[SerializeField]` counts and
+  `new GameObject` counts to estimate migration scope and readiness.
+- **Concrete evidence:** the Tooltip row's 16 occurrences are mostly authored
+  content/configuration and prefab-local fields (`TooltipTrigger.cs:16-26`,
+  `TooltipView.cs:13-20`), which sections 4 and 6 say should stay serialized.
+  The Loading Screen's three fields comprise one tunable and two optional
+  self-wired child components (`UI_LoadingScreen.cs:23-44`); its actual external
+  wiring is the separate `GameUIManager.cs:35-36` reference. The Pause Menu is
+  already created and injected by `PauseMenuService`
+  (`EndgameService.cs:369-390`) and has no serialized fields.
+- **Trigger:** phase order or effort is selected from these aggregate counts.
+- **Impact:** no-op systems appear to be migration work, legitimate serialized
+  fields inflate risk, and many `new GameObject` calls can be misread as
+  simplicity even though they may indicate more layout surface to revalidate.
+- **Required correction:** replace the proxy columns with a field-level ledger:
+  field, category, current owner, target owner/resolution path, affected YAML,
+  lifecycle, validation, and disposition. Count only confirmed cross-references
+  when sizing wiring work. Reclassify Pause Menu as already complete and Tooltip
+  as an audit unless a real external reference is found.
+
+#### AR-5 — Medium: the inventory is not complete enough to support the objective or completion claim
+
+- **Plan locations:** section 2 targets the rest of the Unity front end, and
+  section 8 defines completion solely in terms of systems listed in section 5.
+- **Concrete evidence:** serialized UI files not classified in the candidate or
+  excluded tables include `CellTooltipUI.cs`, `MultiCellSelectionController.cs`,
+  `MultiTileSelectionController.cs`, `TileSelectionController.cs`,
+  `MycovariantTooltipPanel.cs`, `MycovariantIcon.cs`,
+  `MagnifyingGlassFollowMouse.cs`, and `UiSpriteLibrary.cs`. `GameManager`'s
+  selection-prompt references (`GameManager.cs:321-324`) are also absent.
+- **Trigger:** all listed rows are moved to done and the document is retired.
+- **Impact:** unreviewed Inspector wiring can survive while the initiative claims
+  full front-end coverage.
+- **Required correction:** classify every serialized Unity UI field/file as
+  migrate, retain, already code-first, or separately owned before calling the
+  inventory complete. Explicit retention is acceptable; omission is not.
+
+#### AR-6 — Medium: system-sized "phases" conflict with the opportunistic slice boundary
+
+- **Plan locations:** the policy at lines 54–58 says to migrate only the system
+  already being touched, but section 7 is titled "Doing a Phase" and line 176
+  says to move an entire system row to done. Several rows combine multiple
+  controllers, prefabs, and manager fields.
+- **Trigger:** a small bug touches one component in a multi-file row.
+- **Impact:** the tracking model pressures the implementer either to broaden an
+  unrelated change or to overstate an entire row as complete. It also makes
+  phase ordering look like a gate despite the disclaimer.
+- **Required correction:** keep ordering only as risk/readiness cohorts. Track
+  completion per component/prefab slice, and derive each system's status from
+  those slices.
+
+### Counter-proposal
+
+1. **Run a classification pass before Phase 1.** Build the field-level ledger
+   described in AR-4 across all serialized UI files and the UI-owned fields in
+   `GameManager`/`GameUIManager`. This is an inventory correction, not a wiring
+   migration, and should produce a finite list of actual cross-references.
+2. **Adopt one explicit gameplay UI composition boundary.** Keep
+   `MainMenuRegistry` narrowly scoped as legacy menu discovery. Use
+   `GameManager.BootstrapServices()` (or a deliberately extracted
+   `GameUiCompositionRoot`) to construct/register gameplay UI and inject
+   dependencies. Use `GameUIManager` as the façade where it already owns the
+   lifetime; do not add a general static service locator or per-feature static
+   registries.
+3. **Replace numbered execution phases with readiness cohorts:**
+   - **Audit/close:** Pause Menu (already code-built), Tooltip prefabs/triggers
+     (retain prefab-local/config fields unless an external reference is proven).
+   - **Pilot:** Loading Screen's external owner reference, as the smallest real
+     inactive-overlay lifecycle case.
+   - **Pattern proof:** Game Log, specifically because two instances must be
+     configured without global ambiguity.
+   - **Medium risk:** End Game, sidebar/summary/profile, phase HUD, draft, and
+     hotseat—one component at a time when touched.
+   - **High risk:** Mutation Tree only after the composition and validation
+     patterns have survived at least one repeated-entry and two-instance system.
+4. **Require a slice contract before editing:** exact serialized references to
+   remove, construction owner, initialization order, inactive-object behavior,
+   teardown/re-entry behavior, YAML files expected to shrink, and parity checks.
+   If that contract reveals cross-system rewiring, defer it as the canonical
+   policy requires.
+5. **Use evidence-bearing completion records.** For each slice, record Core/
+   Simulation sanity builds where applicable, Unity compile result, exact Editor
+   flow, repeated-entry check, supported-resolution visual check, and the scene/
+   prefab diff reviewed. A self-check may supplement this evidence but cannot
+   replace it.
+6. **Split the finish line.** Milestone A is "all inventoried UI-owned
+   cross-references resolved or explicitly retained." Milestone B is the thin
+   bootstrap scene from the policy doc. If non-UI `GameManager` references stay
+   out of scope, say so and do not make their removal a Milestone A gate.
+
+### Questions for the original planner to answer or refute
+
+1. Which exact Phase 1 dependency requires any registry, given that Pause Menu
+   is already injected and the Tooltip/Loading candidates can self-wire or be
+   injected by their existing owner?
+2. Is the goal removal of UI cross-references, full scene composition, or both?
+   If both, why are the non-UI `GameManager` references excluded while the
+   completion gate requires their removal?
+3. What evidence makes `new GameObject` count positively correlated with lower
+   migration effort or risk in this codebase?
+4. What concrete parity failures must make a slice fail, beyond a subset of
+   constructed fields being non-null?
+5. Which omitted serialized UI files were deliberately retained, and under
+   which category?
