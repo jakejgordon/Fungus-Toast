@@ -392,6 +392,13 @@ measurement model, phase gates, and open product decisions are in
     Per the frozen gate, do not build the candidate framework or retune a
     player-facing strategy from this result; fallback economy bias alone was
     not a useful promotion lever.
+36. The next preregistered screen isolated Balanced Control's first two goal
+    positions. Across 100 two-player games, Anabolic-first beat Creeping-first
+    by `+0.7509` normalized board share (95% CI `+0.6335..+0.8683`) and 88% to
+    12% win credit. All games completed in 325.002 seconds with zero parity
+    failures, valid checksums, empty starting loadouts, and exactly balanced
+    slots. This passes the advancement threshold; an unseen 140x100,
+    seed-`2026090503` holdout is frozen in the canonical plan before execution.
 
 ### Completion Criteria
 

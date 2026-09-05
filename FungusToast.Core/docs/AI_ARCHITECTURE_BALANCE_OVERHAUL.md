@@ -670,6 +670,29 @@ excludes zero in the favorable direction. A pass permits a new-context holdout,
 not a player-facing roster change. A failure ends this line without framework
 construction.
 
+**Screen result (2026-09-05): candidate advanced to holdout.** All 100 games
+completed in 325.002 seconds with zero parity mismatches, empty starting
+loadouts, valid checksums, and exactly 50 games in each slot per strategy.
+Anabolic-first produced normalized board share `1.3755` versus `0.6245` for the
+control: paired lift `+0.7509`, 95% interval `[+0.6335, +0.8683]`. Its
+normalized rank and descriptive win credit were both `0.88` versus `0.12`.
+This passes the frozen advancement threshold but is not yet a player-facing
+promotion. Source artifact: `p6_opener_order_100`; outcome fingerprint:
+`07dec8cac82a77bf7f37cd457c3b33b40d091becc170eb297dc0ebab48143727`.
+
+#### Frozen opener-order holdout
+
+Repeat the same two definitions and sole goal-order contrast for 100 games on
+an unseen 140x100 rectangular context with base seed `2026090503`. Keep rotating
+slots, nutrient patches off, Mycovariants off, and all starting Adaptations off;
+retain the 100-game and 600-second budgets. Normalized board share remains the
+sole decision metric. The candidate confirms only if its paired mean lift is at
+least `0.05` and the two-sided 95% interval excludes zero favorably, with full
+completion and no parity failure. A pass establishes opener order as a useful
+candidate-search dimension and permits bounded Phase 6 tooling; it does not by
+itself place this strategy in a player-facing pool. A failure rejects the
+candidate and stops this line.
+
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,
