@@ -15,9 +15,10 @@
 - **State:** Revised twice on 2026-09-05 after two adversarial review passes —
   six findings in section 10 (response in section 11) and three in section 12
   (response in section 13). All nine accepted. Execution then began the same
-  day: Audit/close (Tooltip), Pilot (Loading Screen — Editor-verified), and
-  Pattern proof (Game Log — pending your Editor playtest, see section 9) are
-  all done. Next up: End Game panel (Medium risk).
+  day: Audit/close (Tooltip), Pilot (Loading Screen), and Pattern proof (Game
+  Log) are all done and Editor-verified — Game Log caught and fixed a real
+  Awake-order regression (see section 9), the first thing this initiative's
+  parity process actually caught. Next up: End Game panel (Medium risk).
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan
@@ -437,6 +438,10 @@ latent (but apparently unhit) risk.
 same reference from *its own* `Awake()`/`BootstrapServices()`-style
 synchronous startup path, not just from event handlers. This is exactly the
 class of bug section 7.3 exists to catch, and it did.
+**Verified 2026-09-05 (user).** Re-tested after the fix: both logs populate
+correctly through round 1. Game Log cohort is fully done — parity evidence
+recorded, including a real caught-and-fixed regression, not just a null
+check. Next: End Game panel (Medium risk).
 
 **2026-09-05 — Pattern proof (Game Log) landed. Awaiting Editor playtest.**
 Slice contract: remove `GameUIManager.cs`'s four `[SerializeField]`s
