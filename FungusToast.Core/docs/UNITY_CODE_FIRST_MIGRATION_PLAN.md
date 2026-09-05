@@ -648,3 +648,82 @@ classified: `CellTooltipUI.cs`, `MycovariantTooltipPanel.cs`,
 overlay, matching the standing `UI_StartGamePanel` exception).
 `UiSpriteLibrary.cs` is **retained** (asset loading by design; its one match
 was a doc comment, not a field).
+
+## 12. Second-Pass Adversarial Review — 2026-09-05 (Pending Planner Response)
+
+> **Review status:** The 2026-09-05 revision substantively resolves the first
+> review's architecture, inventory, sizing, and slice-boundary findings. This
+> follow-up records three remaining issues without changing the planner's
+> revised proposal, so each can be accepted, refuted, or corrected explicitly.
+
+### R2-1 — High: Milestone A still permits premature completion
+
+- **Plan locations:** section 5 lists component-owned cross-references as TBD
+  across Game Log, End Game, sidebar/profile, phase HUD, draft, hotseat,
+  selection, tooltip, and Mutation Tree systems (`:151-164`). Section 7 says a
+  system row is complete only when its component slices are complete
+  (`:211-214`). However, Milestone A's supposedly enumerated gate (`:311-329`)
+  lists only fields owned by `GameUIManager` and `GameManager`, and
+  doc-completion depends only on that milestone (`:348-352`).
+- **Trigger:** the manager-owned references are constructed/injected or
+  explicitly retained while confirmed external references remain inside one or
+  more component rows—for example, an End Game or Mutation Tree component
+  still points outside its prefab/owning hierarchy.
+- **Impact:** the plan can be marked complete despite not resolving or
+  explicitly retaining every UI cross-reference in the initiative's own
+  inventory. This recreates AR-1 in the opposite direction: the original gate
+  was unreachable; the revised gate is reachable too early.
+- **Required correction:** define Milestone A as **all confirmed
+  cross-references in the section 5 field ledgers**, with the current manager
+  lists labeled as a known baseline rather than the complete enumeration.
+  Doc-completion must also require every in-scope component row to be done or
+  explicitly reclassified/retained.
+
+### R2-2 — Medium: the accepted parity standard still conflicts with the canonical policy
+
+- **Plan locations:** section 7.3 correctly requires callback, state,
+  repeated-entry, resolution, and YAML-diff evidence (`:267-293`), but
+  `:295-298` defers tightening the canonical policy until "when convenient."
+- **Concrete evidence:** `UNITY_CODE_FIRST_MIGRATION.md:116-119` still defines
+  validation as a bootstrap path that asserts only that critical values are
+  non-null, and its execution checklist at `:137-150` requires only a smoke
+  assertion plus an affected-flow run. This plan's own section 3 says that
+  policy doc is canonical, while this document is the mutable tracker.
+- **Trigger:** an implementer follows the canonical policy or the top-level
+  router without reading the tracker deeply enough to discover section 7.3.
+- **Impact:** a slice can follow the authoritative instructions yet omit the
+  stronger parity evidence whose absence already produced four documented
+  Phase 0 regressions.
+- **Required correction:** update the canonical policy before the Pilot slice,
+  not opportunistically later. Its target patterns and migration checklist
+  should require the same parity contract and evidence record as section 7.3.
+
+### R2-3 — Medium: the plan incorrectly says the Unity Test Framework does not exist
+
+- **Plan locations:** section 4 says "No Unity test framework exists"
+  (`:84-88`), and section 7.3 frames standing up the Unity Test Framework as a
+  possible future action (`:290-293`).
+- **Concrete evidence:** `FungusToast.Unity/Packages/manifest.json:9` already
+  declares `com.unity.test-framework` version `1.7.0`. What is absent is a Unity
+  test assembly (`.asmdef`) and executable tests; `Assets/Scripts/Tests/` is
+  empty.
+- **Trigger:** test strategy is planned from the assumption that the framework
+  itself must first be introduced.
+- **Impact:** the plan overstates the infrastructure cost and weakens the case
+  for adding executable parity coverage before high-risk work. It also records
+  a factual claim that the repository disproves.
+- **Required correction:** state that the package is installed but no test
+  assembly/tests exist. Reframe the open choice as whether to add an EditMode
+  or PlayMode `.asmdef` plus the first bootstrap/parity smoke tests before the
+  Mutation Tree cohort.
+
+### Second-pass disposition
+
+- **Accepted from the revision:** the full-composition-root scope contradiction
+  is removed; the static gameplay registry direction is rejected; Pause Menu
+  and Tooltip are correctly reclassified; proxy metrics are withdrawn; omitted
+  systems are now classified; work is tracked per component rather than per
+  system phase; and the behavioral parity contract is materially stronger.
+- **Remaining status:** the plan is substantively sound, but should not be
+  treated as final until R2-1 corrects the completion gate. R2-2 and R2-3 are
+  required documentation-consistency fixes before the Pilot slice begins.
