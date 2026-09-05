@@ -198,6 +198,7 @@ namespace FungusToast.Unity.UI.Testing
         private const int CardVerticalPadding = 6;
         private const float SettingButtonMinHeight = 40f;
         private const float SettingButtonPreferredHeight = 44f;
+        private const float SettingButtonLabelHorizontalPadding = 14f;
         private const float DropdownRowMinHeight = 64f;
         private const float DropdownRowPreferredHeight = 70f;
         private const float DropdownControlMinHeight = 34f;
@@ -909,6 +910,11 @@ namespace FungusToast.Unity.UI.Testing
                 label.fontSizeMax = 24f;
                 label.alignment = TextAlignmentOptions.Center;
                 label.color = options.UseSecondaryButtonStyle ? UIStyleTokens.Text.Primary : UIStyleTokens.Button.TextDefault;
+                // Explicit symmetric inset: these buttons often hold long
+                // "Label: Value" text that auto-sizing grows to nearly the full
+                // button width, so without a reserved margin the text can end up
+                // reading as flush against one edge.
+                label.margin = new Vector4(SettingButtonLabelHorizontalPadding, 0f, SettingButtonLabelHorizontalPadding, 0f);
             }
         }
 
