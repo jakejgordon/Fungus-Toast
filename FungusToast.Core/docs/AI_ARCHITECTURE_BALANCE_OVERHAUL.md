@@ -601,6 +601,10 @@ design and add narrow typed seams only for demonstrated needs. See
   intentional deltas are covered by focused evidence. Traces remain opt-in and
   are required only for decisions under active diagnosis or experimentation.
 
+**Phase 5 gate passed (2026-09-05).** The deterministic Core/Simulation suite,
+reference replay, and Jake's Unity Editor compile and affected-flow validation
+all pass. No unvalidated reactive behavior was added for P5.7.
+
 ### Phase 6 — Prove, then build autonomous candidate evaluation
 
 Begin with a bounded deterministic parameter sweep over existing safe tunables
@@ -631,6 +635,21 @@ interval excludes zero in the favorable direction. If both candidates pass,
 advance only the larger primary lift. Secondary metrics cannot advance a
 candidate. If neither passes, do not build the Phase 6 framework from this
 pilot; record that fallback economy bias alone did not justify promotion.
+
+**Pilot result (2026-09-05): no candidate advanced.** The smoke and 100-game
+screen completed with zero parity mismatches, valid manifest checksums, empty
+starting loadouts, balanced rotating-slot exposure, and a 305.200-second game
+runtime. Relative to Moderate, Minor's paired normalized-board-share lift was
+`+0.0116` with adjusted 97.5% interval `[-0.0922, +0.1154]`; Max's was
+`+0.0242` with interval `[-0.0763, +0.1247]`. Both missed the `+0.05` effect
+threshold and both intervals crossed zero. Mean normalized rank was `0.490`
+for Moderate and `0.505` for both candidates. Descriptive win credit was
+35%/28%/37% for Moderate/Minor/Max. The source artifact is
+`p6_economy_bias_pilot_100`; its separate-process replay verified outcome
+fingerprint
+`99862d893ed77f5ba541a7517f7ad4ab92587c5b6953d1ce3c908b7a5cc1c67c`.
+Fallback economy bias alone therefore does not justify building the candidate
+framework or changing a player-facing strategy.
 
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.

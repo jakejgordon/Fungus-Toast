@@ -376,8 +376,22 @@ measurement model, phase gates, and open product decisions are in
     passes 644/644 and Simulation 19/19. The versioned
     `AI_P3_5_REFERENCE_BASELINE_V3.md` freezes two new 50-game corpora; both
     completed with zero parity mismatches and valid checksums, corpus A matched
-    its separate-process replay outcome, and all 8 analytics tests pass. Unity
-    Editor flow validation remains pending.
+    its separate-process replay outcome, and all 8 analytics tests pass. Jake
+    confirmed the Unity Editor compile and affected game flows on 2026-09-05,
+    closing the Phase 5 gate.
+35. The preregistered Phase 6 economy-bias pilot compared otherwise matched
+    Minor, Moderate, and Max Balanced Control definitions for 100 games with
+    rotating slots and Adaptations/nutrients/Mycovariants disabled. Neither
+    candidate advanced: paired normalized-share lift versus Moderate was
+    `+0.0116` (adjusted 97.5% CI `-0.0922..+0.1154`) for Minor and `+0.0242`
+    (`-0.0763..+0.1247`) for Max, below the `+0.05` threshold with both
+    intervals crossing zero. The run completed in 305.200 seconds with zero
+    parity failures, valid checksums, balanced slot exposure, and exact replay
+    outcome fingerprint
+    `99862d893ed77f5ba541a7517f7ad4ab92587c5b6953d1ce3c908b7a5cc1c67c`.
+    Per the frozen gate, do not build the candidate framework or retune a
+    player-facing strategy from this result; fallback economy bias alone was
+    not a useful promotion lever.
 
 ### Completion Criteria
 
