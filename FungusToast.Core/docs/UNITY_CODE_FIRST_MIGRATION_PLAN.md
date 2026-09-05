@@ -156,7 +156,7 @@ Completion is tracked per component (section 7), not per row.
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Audit / close** | Tooltip system | `UI/Tooltips/*.cs` (11 files) | Expected 0 — verify | Verified: `TooltipTrigger.cs:16-26` is authored content + per-instance tunables; `TooltipView.cs:13-20` is prefab-internal child refs + a fade duration. Sections 4/6 retain all of these. The one real check: `TooltipTrigger.dynamicProvider` is a loosely-typed `MonoBehaviour`, so a *scene* instance could point outside its own prefab. Confirm per instance; if none do, close as "retained by category." |
+| **Audit / close — CLOSED 2026-09-05** | Tooltip system | `UI/Tooltips/*.cs` (11 files) | 0 confirmed | Closed: `TooltipTrigger.cs:16-26` is authored content + per-instance tunables; `TooltipView.cs:13-20` is prefab-internal child refs + a fade duration. Sections 4/6 retain all of these. The one real check — every `TooltipTrigger.dynamicProvider` occurrence in `SampleScene.unity` (13 instances) and the two prefabs that reference it (`UI_GrowthPreviewCell.prefab`, `UI_ToolTipHelpIconPrefab.prefab`) is `{fileID: 0}` (unassigned); every instance relies on `staticText` instead. No scene instance points outside its own object. Retained by category — no code change needed. |
 | **Pilot** | Loading Screen | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs:36` | 1 (`GameUIManager` → `loadingScreen`) | Smallest case that still exercises the real question — who constructs and owns an inactive overlay. Note the work is in `GameUIManager`, not the panel: the panel's 3 fields are 1 tunable + 2 optional children, one already self-wiring via `GetComponent<Image>()` (`UI_LoadingScreen.cs:40-44`). |
 | **Pattern proof** | Game Log (player + global) | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | TBD — 4 owner refs at `GameUIManager.cs:28-33` (2 panels + 2 managers) plus panel-internal fields to classify | Deliberately second: **two instances of one implementation** is the case that breaks naive global lookup, so it proves or kills the composition approach before anything larger adopts it. |
 | **Medium risk** | End Game panel | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | TBD (21 fields to classify) | Already substantially self-building; expect most fields to classify as retained, but that must be confirmed field-by-field, not assumed from the count. |
@@ -389,6 +389,14 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Tooltip audit closed, zero cross-references.** Checked every
+`dynamicProvider` occurrence in `SampleScene.unity` (13) and the two prefabs
+that reference the field (`UI_GrowthPreviewCell.prefab`,
+`UI_ToolTipHelpIconPrefab.prefab`, 1 each). All 15 are `{fileID: 0}` —
+unassigned. Every `TooltipTrigger` instance in the project uses `staticText`
+instead. Section 5's "confirm per instance" check is satisfied; the row is
+retained by category with no code change. Pilot (Loading Screen) is next.
 
 **2026-09-05 — Composition boundary decided (closes the prior open question).**
 The original draft left "generalize `MainMenuRegistry` vs. per-feature
