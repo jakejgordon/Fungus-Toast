@@ -220,6 +220,18 @@ namespace FungusToast.Unity.UI.Campaign
             contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
+            // ConfigureLayout() only overrides padding/spacing below; the rest of
+            // these must match the scene-authored recipe here since nothing else
+            // sets them. Without childControlWidth/Height = false, the layout
+            // group would override every child's sizeDelta with defaults instead
+            // of respecting ConfigureLayout()'s explicit sizing.
+            VerticalLayoutGroup contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.childAlignment = TextAnchor.UpperCenter;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = true;
+            contentLayout.childControlWidth = false;
+            contentLayout.childControlHeight = false;
+
             GameObject logoObject = new GameObject("UI_ModeSelectTitleLogo", typeof(RectTransform), typeof(Image));
             logoObject.transform.SetParent(contentRoot, false);
             logoObject.layer = gameObject.layer;

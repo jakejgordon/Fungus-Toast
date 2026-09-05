@@ -23,13 +23,19 @@ namespace FungusToast.Unity.UI
 
         private static Sprite Load(string resourceName)
         {
-            var sprite = Resources.Load<Sprite>($"UI/{resourceName}");
-            if (sprite == null)
+            // Resources.Load<Sprite> only returns a result when the texture's
+            // Sprite Mode is Single; some of these were imported as Multiple (a
+            // texture holding one named sub-sprite), where the main asset at the
+            // path is the Texture2D, not the Sprite. LoadAll<Sprite> finds the
+            // sprite either way.
+            var sprites = Resources.LoadAll<Sprite>($"UI/{resourceName}");
+            if (sprites == null || sprites.Length == 0)
             {
                 Debug.LogError($"UiSpriteLibrary: missing Resources/UI/{resourceName}.");
+                return null;
             }
 
-            return sprite;
+            return sprites[0];
         }
     }
 }
