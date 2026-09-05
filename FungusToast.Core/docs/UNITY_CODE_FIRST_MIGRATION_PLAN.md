@@ -191,7 +191,7 @@ to the "Already code-first" table above. What follows starts at Mutation Tree
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 1 confirmed remaining (was TBD, 48 fields) | **In progress, split into 6 chunks per-user request (2026-09-05) — see section 9.** Chunks 1–4 closed: 9 of 15 files needed zero changes (7 with no fields at all, `MutationLayoutMetadata.cs` a non-`MonoBehaviour` data class, `UI_TooltipPositioner.cs` unreferenced by either composition root), 2 more (`UI_MutationTreeToastPresenter.cs`, `UI_MutationPointBonusPopupPresenter.cs`) were already fully resolved via existing `AddComponent`+`Initialize()` code predating this plan, and `UI_RemainingPointsPanel.cs` turned out to be dead code (flagged separately, not a wiring concern). Remaining: `MutationTreeBuilder.cs` + `MutationNodeUI.cs` (Chunk 5, expected fully retained — clone templates), and `UI_MutationManager.cs` + `GameUIManager.mutationUIManager` (Chunk 6, the cohort's one real cross-reference). `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) noted as a second inventory gap — never classified into any declared cohort, like `leftSidebar` — not pulled into this slice's scope. |
+| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 1 confirmed remaining (was TBD, 48 fields) | **In progress, split into 6 chunks per-user request (2026-09-05) — see section 9.** Chunks 1–4 closed: 9 of 15 files needed zero changes (7 with no fields at all, `MutationLayoutMetadata.cs` a non-`MonoBehaviour` data class, `UI_TooltipPositioner.cs` unreferenced by either composition root), 2 more (`UI_MutationTreeToastPresenter.cs`, `UI_MutationPointBonusPopupPresenter.cs`) were already fully resolved via existing `AddComponent`+`Initialize()` code predating this plan, and `UI_RemainingPointsPanel.cs` turned out to be dead code (flagged separately, not a wiring concern). Chunk 5 closed too: `MutationTreeBuilder.cs`'s 7 fields (2 clone-template prefab refs — confirmed via matching asset guids — plus 5 own-managed tree-column `RectTransform`s; the component itself is a direct child of `GameUIManager`'s own transform, not a new external reference) and `MutationNodeUI.cs`'s 18 fields (confirmed attached to `UI_MutationNode.prefab` by matching script/prefab guids, zero scene-level overrides on any field — purely a clone template like `UI_GameLogEntry`) are both fully retained. Remaining: `UI_MutationManager.cs` + `GameUIManager.mutationUIManager` (Chunk 6, the cohort's one real cross-reference). `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) noted as a second inventory gap — never classified into any declared cohort, like `leftSidebar` — not pulled into this slice's scope. |
 | **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
 ### Explicitly out of scope (see section 4)
@@ -475,6 +475,23 @@ expected fully retained, clone templates) and Chunk 6 (`UI_MutationManager.cs`
 Also noted: `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) is a second
 field, like `leftSidebar`, that was never classified into any declared
 cohort — left alone rather than silently pulled into this slice.
+
+**2026-09-05 — Mutation Tree Chunk 5 closed, zero code changes.**
+`MutationTreeBuilder.cs`'s 7 fields: `categoryHeaderPrefab`/`mutationNodePrefab`
+confirmed as legitimate clone-template references by matching their scene
+asset guids against `UI_MutationCategoryHeader`-family and
+`UI_MutationNode.prefab`'s own `.meta` guids; the other 5
+(`growthColumn`/`resilienceColumn`/`fungicideColumn`/`driftColumn`/
+`mycelialSurgesColumn`) are the tree's own managed layout columns. The
+component itself is a direct child of `GameUIManager`'s own transform (not a
+new external reference — same object GameUIManager already legitimately
+groups its sub-managers under). `MutationNodeUI.cs`'s 18 fields: confirmed
+attached to `UI_MutationNode.prefab` (script guid matches the prefab's own
+`mutationNodePrefab` reference above), and grepped the scene for four of its
+more distinctive field names (`surgeActiveOverlay`, `prerequisiteHighlightOverlay`,
+`pendingUnlockOverlay`, `maxBadge`) — zero matches, confirming it's never
+scene-baked, purely a clone template like `UI_GameLogEntry`/`UI_PlayerSummaryRow`.
+Both retained, no code change. Only Chunk 6 remains for this cohort.
 
 **2026-09-05 — Cell / mycovariant tooltip panels closed. Zero code changes.**
 Investigated before writing a slice contract, since the survey suggested this
