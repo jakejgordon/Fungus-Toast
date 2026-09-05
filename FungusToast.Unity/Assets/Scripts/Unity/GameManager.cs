@@ -317,10 +317,18 @@ namespace FungusToast.Unity
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
         private MycovariantDraftController mycovariantDraftController = null!;
         private UI_HotseatTurnPrompt hotseatTurnPrompt = null!;
+        // Retained (not resolved via composition root): UI_SelectionPromptPanel
+        // has no bespoke component type for FindAnyObjectByType to target, and
+        // it starts inactive in the scene, so GameObject.Find can't see it
+        // either. See UNITY_CODE_FIRST_MIGRATION_PLAN.md section 9 for the
+        // full reasoning.
         public GameObject SelectionPromptPanel = null!;
         public TextMeshProUGUI SelectionPromptText = null!;
-        [SerializeField] private Button selectionPromptCancelButton = null!;
-        [SerializeField] private TextMeshProUGUI selectionPromptCancelButtonText = null!;
+        // Already unassigned in the scene — SelectionPromptService self-builds
+        // these via code when null, so there was never a real cross-reference
+        // here to resolve, just a dead Inspector slot.
+        private Button selectionPromptCancelButton = null!;
+        private TextMeshProUGUI selectionPromptCancelButtonText = null!;
 
         // Resolved live through MainMenuRegistry instead of held as serialized
         // cross-references, since panel Awake order across the scene is not
