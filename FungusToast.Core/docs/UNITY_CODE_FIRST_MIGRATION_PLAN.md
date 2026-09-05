@@ -578,6 +578,9 @@ grew its own inline implementation and the old component was never deleted.
 Nothing points at it, so there's no wiring to migrate; flagged as a
 background task (`task_cb240749`) for separate dead-code removal rather than
 touched here — out of scope for a wiring-only migration.
+**Update 2026-09-05:** re-verified (GUID absent from all scenes/prefabs, class
+name referenced by no other `.cs` file) and `UI_RemainingPointsPanel.cs` + its
+`.meta` deleted in a standalone code-quality commit. Chunk 4 now closed.
 **Remaining:** Chunk 5 (`MutationTreeBuilder.cs`, `MutationNodeUI.cs` —
 expected fully retained, clone templates) and Chunk 6 (`UI_MutationManager.cs`
 + `GameUIManager.mutationUIManager`, the cohort's one real cross-reference).
