@@ -173,6 +173,13 @@ namespace FungusToast.Unity.UI.GameStart
         /// </summary>
         private void BuildActionButtons()
         {
+            // The scene authored these as direct children of the panel root named
+            // UI_StartButton/UI_BackButton (not the names used below), so nothing
+            // else finds-and-reuses them; destroy them first or the old and new
+            // buttons render as visible duplicates.
+            MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_StartButton");
+            MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_BackButton");
+
             startGameButton = CreateActionButton("UI_StartGameStartButton", "Start Game");
             startGameButton.onClick.AddListener(OnStartGamePressed);
 
