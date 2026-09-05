@@ -452,6 +452,8 @@ confirm the panel shows with correctly-rendered cards (icons/names/effects),
 picking a card advances the draft, the draft history overlay still opens
 from the right sidebar, and a second draft later in the same session (or a
 second game) still works.
+**Verified 2026-09-05 (user).** Draft panel, cards, and picking all worked
+correctly. Mycovariant Draft cohort closed. Next: Hotseat Turn Prompt.
 
 **2026-09-05 — Phase Banner + Progress Tracker landed. Awaiting Editor
 playtest.** Slice contract: remove `GameUIManager.cs`'s
