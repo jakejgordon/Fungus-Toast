@@ -311,8 +311,8 @@ namespace FungusToast.Unity
         [Header("References")] 
         public GridVisualizer gridVisualizer = null!; 
         public CameraCenterer cameraCenterer = null!; 
-        [SerializeField] private MutationManager mutationManager = null!; 
-        [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!; 
+        private MutationManager mutationManager = null!;
+        [SerializeField] private GrowthPhaseRunner growthPhaseRunner = null!;
         [SerializeField] private GameUIManager gameUIManager = null!;
         [SerializeField] private DecayPhaseRunner decayPhaseRunner = null!;
         private MycovariantDraftController mycovariantDraftController = null!;
@@ -622,6 +622,18 @@ namespace FungusToast.Unity
             // Unity does not guarantee GameUIManager.Awake() has already run
             // by the time GameManager.Awake() calls this method.
             gameUIManager.ResolveOwnedReferences();
+
+            // Was double-wired with UI_MutationManager's own separate
+            // [SerializeField] pointing at the identical scene object (same
+            // bug shape as the old phaseProgressTracker duplication). Each
+            // side now resolves its own copy independently — UI_MutationManager
+            // resolves its own in its own Awake(), since it needs the value
+            // synchronously there and can't rely on this method's ordering.
+            mutationManager = FindAnyObjectByType<MutationManager>(FindObjectsInactive.Include);
+            if (mutationManager == null)
+            {
+                Debug.LogError("[GameManager] No MutationManager found in the scene.");
+            }
 
             // Must run before GameTransitionService/GameStartService below,
             // which each capture mycovariantDraftController by value in their

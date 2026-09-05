@@ -63,8 +63,8 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         [Header("General UI References")]
-        [SerializeField] private MutationManager mutationManager = null!;
-        [SerializeField] private GameObject mutationTreePanel = null!;
+        private MutationManager mutationManager = null!;
+        private GameObject mutationTreePanel = null!;
         [SerializeField] private Button spendPointsButton = null!;
         [SerializeField] private TextMeshProUGUI spendPointsButtonText = null!;
         [SerializeField] private Outline buttonOutline = null!;
@@ -198,6 +198,17 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Awake()
         {
+            // Resolved here, in this component's own Awake(), rather than
+            // injected by GameManager/GameUIManager: this logic below needs
+            // both values immediately and synchronously, and Unity does not
+            // guarantee any external composition root's Awake() runs before
+            // this one. Self-resolution sidesteps that ordering hazard
+            // entirely instead of racing it.
+            mutationTreePanel = FindAnyObjectByType<UI_MutationTreePanelMarker>(FindObjectsInactive.Include)?.gameObject;
+            mutationManager = FindAnyObjectByType<MutationManager>(FindObjectsInactive.Include);
+            if (mutationManager == null)
+                Debug.LogError("[UI_MutationManager] No MutationManager found in the scene.");
+
             if (mutationTreePanel != null)
             {
                 CacheMutationPanelLayoutReferences();
@@ -205,7 +216,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 EnsureMutationInspector();
             }
             else
-                Debug.LogError("mutationTreePanel is NULL at Awake()!");
+                Debug.LogError("[UI_MutationManager] No UI_MutationTreePanelMarker found in the scene — attach it to the mutation tree panel GameObject.");
 
             RefreshResponsiveMutationPanelLayout();
 

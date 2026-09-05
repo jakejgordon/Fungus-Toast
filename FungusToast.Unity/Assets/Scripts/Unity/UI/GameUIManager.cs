@@ -16,7 +16,7 @@ namespace FungusToast.Unity.UI
         private const string SpendPointsRowName = "UI_SpendPointsRow";
 
         [Header("Core UI")]
-        [SerializeField] private UI_MutationManager mutationUIManager;
+        private UI_MutationManager mutationUIManager;
         [SerializeField] private UI_PlayerBinder playerUIBinder;
 
         [Header("Sidebars")]
@@ -58,6 +58,10 @@ namespace FungusToast.Unity.UI
             // managers when GameManager's Awake ran first.
             public void ResolveOwnedReferences()
             {
+                // UI_MutationManager is a direct child of this component's own
+                // transform (an organizational grouping, not a visual one).
+                RegisterMutationUIManager(GetComponentInChildren<UI_MutationManager>(true));
+
                 // Must run before RegisterGlobalEventsLog below, which reads rightSidebar
                 // to find its child panel.
                 RegisterRightSidebar(FindAnyObjectByType<UI_RightSidebar>(FindObjectsInactive.Include));
@@ -285,6 +289,16 @@ namespace FungusToast.Unity.UI
             }
 
             endGamePanel = panel;
+        }
+
+        public void RegisterMutationUIManager(UI_MutationManager manager)
+        {
+            if (manager == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_MutationManager found under GameUIManager's own transform.");
+            }
+
+            mutationUIManager = manager;
         }
 
         public void RegisterRightSidebar(UI_RightSidebar sidebar)

@@ -7176,7 +7176,6 @@ MonoBehaviour:
   testingTreatAsFirstGame: 0
   gridVisualizer: {fileID: 989759029}
   cameraCenterer: {fileID: 743098981}
-  mutationManager: {fileID: 355076243}
   growthPhaseRunner: {fileID: 611285832}
   gameUIManager: {fileID: 948889969}
   decayPhaseRunner: {fileID: 2138162645}
@@ -11401,7 +11400,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72ecfdb2519bd4b41aca9c41ec7a5945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mutationUIManager: {fileID: 1424799585}
   playerUIBinder: {fileID: 1278183952}
   leftSidebar: {fileID: 675576749}
   pauseMenuPanel: {fileID: 0}
@@ -16674,8 +16672,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0df038e849fe5e9408aba9abd6e5aba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mutationManager: {fileID: 355076243}
-  mutationTreePanel: {fileID: 1493893195}
   spendPointsButton: {fileID: 1920153775}
   spendPointsButtonText: {fileID: 319804993}
   buttonOutline: {fileID: 1920153776}

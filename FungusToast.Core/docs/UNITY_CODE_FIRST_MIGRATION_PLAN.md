@@ -37,7 +37,13 @@
   existed, and the Tooltip, Loading Screen, Game Log, End Game, Right
   Sidebar / Mold Profile, Phase Banner / Progress Tracker, Mycovariant
   Draft, Hotseat Turn Prompt, Selection prompt, and Cell / mycovariant
-  tooltip cohorts (2026-09-05).
+  tooltip cohorts (2026-09-05), plus Mutation Tree Chunks 1–5. Mutation Tree
+  Chunk 6 (the cohort's real work) is code-complete but **blocked on one
+  manual Editor step** — attach the new `UI_MutationTreePanelMarker`
+  component to `UI_MutationTreePanel` in `SampleScene.unity` — before it can
+  be playtested. See section 9 for the full record, including two more
+  double-wired-field bugs found and a new self-resolution pattern needed
+  where no external composition root can reliably win the Awake-order race.
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -191,7 +197,7 @@ to the "Already code-first" table above. What follows starts at Mutation Tree
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 1 confirmed remaining (was TBD, 48 fields) | **In progress, split into 6 chunks per-user request (2026-09-05) — see section 9.** Chunks 1–4 closed: 9 of 15 files needed zero changes (7 with no fields at all, `MutationLayoutMetadata.cs` a non-`MonoBehaviour` data class, `UI_TooltipPositioner.cs` unreferenced by either composition root), 2 more (`UI_MutationTreeToastPresenter.cs`, `UI_MutationPointBonusPopupPresenter.cs`) were already fully resolved via existing `AddComponent`+`Initialize()` code predating this plan, and `UI_RemainingPointsPanel.cs` turned out to be dead code (flagged separately, not a wiring concern). Chunk 5 closed too: `MutationTreeBuilder.cs`'s 7 fields (2 clone-template prefab refs — confirmed via matching asset guids — plus 5 own-managed tree-column `RectTransform`s; the component itself is a direct child of `GameUIManager`'s own transform, not a new external reference) and `MutationNodeUI.cs`'s 18 fields (confirmed attached to `UI_MutationNode.prefab` by matching script/prefab guids, zero scene-level overrides on any field — purely a clone template like `UI_GameLogEntry`) are both fully retained. Remaining: `UI_MutationManager.cs` + `GameUIManager.mutationUIManager` (Chunk 6, the cohort's one real cross-reference). `GameUIManager.playerUIBinder` (`UI_PlayerBinder.cs`) noted as a second inventory gap — never classified into any declared cohort, like `leftSidebar` — not pulled into this slice's scope. |
+| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 0 confirmed remaining (was TBD, 48 fields) — **pending your Editor step, see below** | **Chunks 1–5 closed, Chunk 6 landed 2026-09-05 — see section 9 for the full record, including two additional double-wired-field bugs found (same shape as Phase Banner's) and one field that needed a new marker component since it crosses from `GameUIManager`'s organizational hierarchy into the Canvas's visual one.** ⚠️ **Requires one manual Editor step before this cohort can be marked verified:** attach the new `UI_MutationTreePanelMarker` component to the `UI_MutationTreePanel` GameObject in `SampleScene.unity`. Until that's done, `UI_MutationManager` will log `[UI_MutationManager] No UI_MutationTreePanelMarker found in the scene` at Play and the mutation tree panel will not initialize. |
 | **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
 ### Explicitly out of scope (see section 4)
@@ -431,6 +437,109 @@ claiming blanket front-end coverage.
 
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
+
+**2026-09-05 — Mutation Tree Chunk 6 landed (the cohort's real work).
+Requires one Editor step before it can be marked verified.** This chunk
+surfaced more than the plan's original framing anticipated — two more
+double-wired fields and one field needing a genuinely new resolution
+mechanism, not a copy of an earlier pattern.
+**Bug found — `MutationManager` (the Unity-side gameplay bridge, in
+`UI/MutationManager.cs`, not to be confused with `UI_MutationManager.cs`)
+was double-wired**, same shape as the Phase Banner `phaseProgressTracker`
+bug: both `GameManager` and `UI_MutationManager` held separate
+`[SerializeField]`s pointing at the identical scene object (confirmed
+matching fileIDs). Fixed by having each side resolve its own copy
+independently via `FindAnyObjectByType<MutationManager>(FindObjectsInactive.Include)`
+— `GameManager` in `BootstrapServices()`, `UI_MutationManager` in its own
+`Awake()` (see below for why the latter couldn't just be injected).
+**Bug found — `GameUIManager.mutationUIManager` was never actually
+resolved**, despite `UI_MutationManager` being present in `GameUIManager`'s
+own `[Header("Core UI")]` block since before this initiative existed.
+Confirmed `UI_MutationManager` is a direct child of `GameUIManager`'s own
+transform (same non-visual grouping as the Game Log managers), so resolved
+via `GetComponentInChildren<UI_MutationManager>(true)`, injected through new
+`RegisterMutationUIManager(...)`, added to `ResolveOwnedReferences()`.
+**A latent version of the Game Log bug, caught by tracing the code, not a
+playtest:** `GameUIManager.MutationTreeToastPresenter` and
+`MutationPointBonusPopupPresenter` are lazily-cached properties (same shape
+as `GameLogRouter`) that call `.Initialize(mutationUIManager)` on first
+access — and both get triggered *indirectly* by `GameLogRouter`'s own first
+access (its constructor takes `MutationTreeToastPresenter` as an argument,
+and its body also calls `SetMutationPointBonusPopupPresenter(...)`).
+`GameLogRouter` is already first-touched synchronously inside
+`BootstrapServices()` (`SetEndgamePlayerStatisticsTracker(...)`). Since
+`mutationUIManager` is now resolved inside `ResolveOwnedReferences()` —
+called as the literal first line of `BootstrapServices()` — this indirect
+chain is safe, but it would NOT have been safe if `mutationUIManager` had
+been resolved anywhere later in the method. Recording this because it's a
+genuinely new variant: the hazard wasn't in code this slice touched, it was
+already latent in existing `GameUIManager` code that this slice's field
+removal happened to make reachable for the first time.
+**New pattern needed — a marker component, the first of this initiative:**
+`UI_MutationManager.mutationTreePanel` reaches from `UI_MutationManager`'s
+own GameObject (a child of `GameUIManager`'s organizational transform) into
+`UI_MutationTreePanel`, which lives directly under the Canvas — two
+genuinely separate hierarchy branches. `UI_MutationTreePanel` has no bespoke
+component type (just `RectTransform` + `Image`), so `FindAnyObjectByType`
+couldn't target it — the same wall `SelectionPromptPanel` hit. Unlike that
+case, this field anchors 8 more of `UI_MutationManager`'s fields (all
+confirmed descendants of the same panel), and it's the single most central,
+most heavily-used panel in the game — presented both options (explicit
+retention, or a marker component) to the user; **user chose the marker
+component.** Added `UI_MutationTreePanelMarker.cs`, a one-line empty
+`MonoBehaviour` whose sole purpose is to be a stable, type-safe anchor.
+**A second ordering wrinkle, found while implementing the marker fix:**
+`UI_MutationManager.Awake()` reads `mutationTreePanel` synchronously
+(`if (mutationTreePanel != null) { CacheMutationPanelLayoutReferences(); ... }
+else Debug.LogError(...)`) — so an external injector (GameManager or
+GameUIManager) could just as easily lose the same Awake-order race the Game
+Log bug hit, since Unity doesn't guarantee any composition root's `Awake()`
+runs before `UI_MutationManager`'s. Rather than fight that race, both
+`mutationTreePanel` and `mutationManager` are now resolved **inside
+`UI_MutationManager`'s own `Awake()`**, via `FindAnyObjectByType` — this
+sidesteps cross-object ordering entirely instead of depending on it, and is
+simpler than the injection dance every other slice used. This is a genuine
+extension of the composition pattern: rank 1 ("construct + inject from the
+composition root") assumes the root can win the timing race; when a
+component needs its own dependency synchronously at its own `Awake()` and no
+external root can reliably beat that, self-resolution via a type-safe
+`FindAnyObjectByType` is the correct fallback — still bounded, still
+type-safe, still zero Inspector wiring, just initiated by the consumer
+instead of the root.
+All other fields on `UI_MutationManager.cs` (`mutationTreePanel`'s 8
+sibling descendants — `spendPointsButton`, `spendPointsButtonText`,
+`buttonOutline`, `playerMoldIcon`, `dockButton`, `dockButtonText`,
+`mutationPointsCounterText`, `storePointsButton` — plus `mutationTreeBuilder`,
+already confirmed a `GameUIManager`-transform sibling in Chunk 5, and two
+icon `Sprite`s plus three `AudioClip`s, all legitimate assets) audited and
+confirmed retained. `gridVisualizer` retained per section 4's grid-system
+exclusion, same as everywhere else. 6 previously-missed public fields
+(`slideDuration`, `hiddenPosition`, `visiblePosition`, `pulseStrength`,
+`pulseSpeed`, `shimmerStaggerDelay`) found during a corrected survey (my
+`[SerializeField]`-only-adjacent regex missed public fields *with
+initializers*, a gap even the Phase Banner fix hadn't caught) — all
+designer-tunable numeric/vector constants, retained.
+Scene diff: 4 lines removed (`GameManager`'s `mutationManager`,
+`GameUIManager`'s `mutationUIManager`, `UI_MutationManager`'s own
+`mutationManager` and `mutationTreePanel`). `dotnet build` succeeds (0
+errors) — required manually adding the new `UI_MutationTreePanelMarker.cs`
+to the gitignored, Unity-generated `Assembly-CSharp.csproj`'s explicit file
+list for local verification only; Unity will regenerate this correctly on
+next import.
+**⚠️ Requires one manual Editor step before Play will work correctly:**
+attach `UI_MutationTreePanelMarker` (Add Component →
+"UI_MutationTreePanelMarker") to the `UI_MutationTreePanel` GameObject, then
+save the scene. Until then, `UI_MutationManager.Awake()` logs an error and
+the tree panel doesn't initialize (`CacheMutationPanelLayoutReferences`/
+`ApplyPanelTheme`/`EnsureMutationInspector` are all skipped) — this is a
+real, expected regression until the component is attached, not a bug.
+**Not yet parity-verified per section 7.3** — needs an Editor playtest after
+the marker is attached: confirm the mutation tree panel opens/closes/slides
+correctly, all node upgrades work, spend/store points buttons work, the
+dock button works, tooltips and coachmarks appear, and a repeated
+open/close/re-open cycle across a full game session still works. This is
+the highest-traffic system this initiative has touched — worth being
+thorough.
 
 **2026-09-05 — Mutation Tree cohort split into 6 chunks per user request;
 Chunks 1–4 closed, zero code changes.** User asked for the High-risk cohort
