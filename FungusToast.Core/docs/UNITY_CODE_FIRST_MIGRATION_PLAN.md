@@ -12,9 +12,11 @@
 
 ## 1. Status
 
-- **State:** Revised 2026-09-05 after an adversarial review (section 10) that
-  found six issues in the first draft, all accepted — see the planner response
-  in section 11. No slice past the main menu has started.
+- **State:** Revised twice on 2026-09-05 after two adversarial review passes —
+  six findings in section 10 (response in section 11) and three in section 12
+  (response in section 13). All nine accepted. The second pass named R2-2 and
+  R2-3 as prerequisites for the Pilot slice; both are fixed, so the Pilot
+  (Loading Screen) is unblocked. No slice past the main menu has started.
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan existed.
@@ -82,10 +84,14 @@ keep the *policy* changes (if any are ever needed) in the other file.
      reference that reaches *out* of the prefab into scene-specific objects.
 - **A migration slice should shrink the scene/prefab diff over time, not grow
   it** (unchanged from the policy doc).
-- **No Unity test framework exists** (`Assets/Scripts/Tests/` is empty, no
-  asmdef), so verification is manual — but a null-scan self-check is *not* a
-  sufficient gate. See section 7.3 for the required parity contract and the
-  evidence for why.
+- **The Unity Test Framework is installed, but there are no tests.**
+  `FungusToast.Unity/Packages/manifest.json:9` declares
+  `com.unity.test-framework` 1.7.0. What's missing is a test assembly — there
+  is no `.asmdef` anywhere under `Assets/`, and `Assets/Scripts/Tests/` is an
+  empty directory. So the cost of executable coverage is "add an asmdef and
+  write the first tests," not "adopt a test framework." Until that happens
+  verification is manual — and a null-scan self-check is *not* a sufficient
+  gate. See section 7.3.
 - **Non-goals for this initiative specifically:**
   - `GridVisualizer.cs` and the board/tilemap rendering system. It's already
     ~99% code-driven (2 serialized fields across ~2,900 lines) and is a huge,
@@ -287,15 +293,21 @@ Minimum per-slice parity evidence:
 Record the actual Editor flow performed and its result in the completion note.
 "Playtested it" is not a completion record.
 
-If the project is ever willing to stand up the Unity Test Framework
-(`Assets/Scripts/Tests/` exists but is empty, no asmdef), an edit-mode or
-play-mode smoke test would replace most of the above with something
-executable — worth doing before the Mutation Tree cohort, not after.
+**Open choice, to settle before the Mutation Tree cohort:** the Unity Test
+Framework is already installed (`Packages/manifest.json:9`,
+`com.unity.test-framework` 1.7.0) — the only missing pieces are an EditMode or
+PlayMode `.asmdef` and the first tests. Given that the framework cost is
+already paid, adding a bootstrap/parity smoke suite is a small lift that would
+make most of the checklist above executable instead of manual. Decide this
+before the highest-risk cohort, not after it.
 
-> Note: `UNITY_CODE_FIRST_MIGRATION.md:116-119` currently also describes this
-> gate as "asserts nothing critical is null." That wording is too weak for the
-> same reason. Tighten it in the policy doc when convenient — flagged here
-> rather than silently diverging.
+> **Resolved 2026-09-05 (R2-2).** The canonical policy previously described
+> this gate as "asserts nothing critical is null," which meant the
+> *authoritative* doc carried the weaker instruction while this tracker carried
+> the stronger one. That has been fixed at the source rather than deferred:
+> `UNITY_CODE_FIRST_MIGRATION.md` section 5 now requires parity evidence, and
+> its section 7 checklist now includes the pre-edit slice contract and the
+> parity/record step. The two docs no longer diverge.
 
 ### 7.4 Recording completion
 
@@ -310,8 +322,22 @@ reachable within the stated scope (AR-1).
 
 ### Milestone A — UI-owned cross-references resolved
 
-Scoped to an **enumerated** list, not the unqualified claim that `GameManager`
-holds no scene references. The UI-owned fields in scope:
+**Definition:** every confirmed cross-reference in the section 5 field ledgers
+is either resolved via the section 7.1 composition pattern or **explicitly
+retained** with a recorded category and reason.
+
+That means Milestone A cannot be evaluated until section 5.1's classification
+has actually been done for every in-scope row — the "TBD" entries are not
+absent work, they are unmeasured work. Explicit retention is a valid outcome;
+silent omission is not, and neither is leaving a row unclassified.
+
+The manager-owned fields below are a **known baseline**, not the complete
+enumeration. They are listed because they were confirmable up front; the
+component-owned references inside Game Log, End Game, sidebar/profile, phase
+HUD, draft, hotseat, selection, tooltip panels, and the Mutation Tree count
+toward Milestone A on exactly equal footing once classified.
+
+Known baseline — UI-owned manager fields:
 
 - `GameUIManager.cs`: `mutationUIManager`, `playerUIBinder`, `leftSidebar`,
   `rightSidebar`, `moldProfileRoot`, `playerActivityLogPanel`,
@@ -324,9 +350,10 @@ holds no scene references. The UI-owned fields in scope:
   `SelectionPromptText`, `selectionPromptCancelButton`,
   `selectionPromptCancelButtonText`.
 
-Milestone A is met when each of those is either resolved via the section 7.1
-composition pattern, or **explicitly retained** with a recorded category and
-reason. Explicit retention is a valid outcome; silent omission is not.
+Resolving that baseline alone does **not** meet Milestone A. It is met only
+when the baseline *and* every classified component-owned cross-reference are
+resolved or explicitly retained, and no in-scope row in section 5 is still
+carrying an unclassified "TBD."
 
 **Explicitly excluded from Milestone A** (and therefore from any "no scene
 references" claim): `gridVisualizer`, `cameraCenterer`, `growthPhaseRunner`,
@@ -347,9 +374,16 @@ Milestone A does **not** depend on Milestone B, and B should not gate A.
 
 ### Doc-completion
 
-When Milestone A is met, update `UNITY_CODE_FIRST_MIGRATION.md` section 1 to
-describe the actual coverage achieved — including what was explicitly
-retained — rather than claiming blanket front-end coverage.
+This document may be marked complete only when **both** hold:
+
+1. Milestone A is met as defined above — including every in-scope component
+   row, not just the manager baseline.
+2. Every row in section 5's cohort table is marked done, or explicitly
+   reclassified as retained/out-of-scope with a reason recorded in section 9.
+
+Then update `UNITY_CODE_FIRST_MIGRATION.md` section 1 to describe the actual
+coverage achieved — including what was explicitly retained — rather than
+claiming blanket front-end coverage.
 
 ## 9. Open Decisions / Decision Log
 
@@ -649,7 +683,7 @@ overlay, matching the standing `UI_StartGamePanel` exception).
 `UiSpriteLibrary.cs` is **retained** (asset loading by design; its one match
 was a doc comment, not a field).
 
-## 12. Second-Pass Adversarial Review — 2026-09-05 (Pending Planner Response)
+## 12. Second-Pass Adversarial Review — 2026-09-05 (Planner Response in §13)
 
 > **Review status:** The 2026-09-05 revision substantively resolves the first
 > review's architecture, inventory, sizing, and slice-boundary findings. This
@@ -727,3 +761,55 @@ was a doc comment, not a field).
 - **Remaining status:** the plan is substantively sound, but should not be
   treated as final until R2-1 corrects the completion gate. R2-2 and R2-3 are
   required documentation-consistency fixes before the Pilot slice begins.
+
+## 13. Planner Response (Second Pass) — 2026-09-05
+
+**Verdict: all three findings accepted, and one additional defect found while
+fixing R2-2.** As with the first pass, each claim was checked against the repo
+before responding. All corrections are applied in this commit — including to
+the canonical policy doc, which R2-2 correctly argued should not wait.
+
+### Disposition
+
+| ID | Verdict | Verification | Fix |
+|---|---|---|---|
+| R2-1 | **Accepted** | Correct reading: §5 carries TBD component-owned references, §7 defines a row as done only when its component slices are, yet Milestone A enumerated *only* manager-owned fields and doc-completion depended solely on Milestone A. The gate could be satisfied with unclassified component references outstanding. | §8: Milestone A redefined as **all confirmed cross-references in the §5 ledgers**, manager fields relabeled a "known baseline," and doc-completion now additionally requires every cohort row done or explicitly reclassified. |
+| R2-2 | **Accepted** | Confirmed: policy `:116-119` said "asserts nothing critical is null"; its checklist step 5 asked only for "a smoke assertion" and step 6 only to "run the affected flow." Since §3 designates that doc canonical and the router points at it, the authoritative path carried the weaker gate. | Fixed at the source, now, not deferred. Policy §5 validation bullet rewritten around parity (with the four Phase 0 regressions as the stated rationale); policy §7 checklist gains a pre-edit slice-contract step and a parity/record step. §7.3's deferral note replaced with a resolution note. |
+| R2-3 | **Accepted** | Confirmed: `Packages/manifest.json:9` declares `com.unity.test-framework` 1.7.0. Verified separately that no `.asmdef` exists anywhere under `Assets/` and `Assets/Scripts/Tests/` is empty. My "no Unity test framework exists" was simply wrong. | §4 and §7.3 corrected: package installed, no test assembly or tests. The open choice is now framed as "add an EditMode/PlayMode asmdef + first smoke tests," a materially smaller lift than implied. |
+
+### Additional defect found while fixing R2-2 (not in the review)
+
+The divergence between the two docs was **wider than the validation half**.
+The canonical policy's §5 Target Patterns still read:
+
+> "A panel gets its collaborators through `SetDependencies(...)` **or a
+> lightweight service locator**…"
+
+and its checklist step 3 listed "**service locator entry**" as the first
+option. That is precisely the direction §7.1 rejected in response to AR-2 —
+so an implementer following the authoritative doc would have been steered
+toward the pattern the plan had just ruled out, on top of the weaker
+verification gate. Policy §5 now states the three-tier preference order
+explicitly (construct+inject → façade → static registry as temporary bridge
+only) and names `PauseMenuService` as the reference implementation.
+
+This strengthens R2-2's underlying point rather than qualifying it: deferring
+canonical-doc corrections until "convenient" let *two* superseded instructions
+sit in the authoritative location simultaneously.
+
+### On R2-1 being "AR-1 in the opposite direction"
+
+Accepted, and worth recording as a lesson rather than a one-off fix. AR-1
+found an unreachable gate; the correction made it enumerable; enumerating it
+from the confirmable subset made it reachable too early. The general failure
+was defining completion from *what was easy to list* rather than from *what
+the initiative claims to accomplish*. Milestone A is now defined by the
+ledger — which means it deliberately cannot be evaluated until §5.1's
+classification is actually done. That is the intended property: "TBD" now
+blocks completion instead of quietly falling outside it.
+
+### Status
+
+R2-1's correction is applied, so the plan is no longer gated on it. R2-2 and
+R2-3 were named as prerequisites for the Pilot slice; both are fixed in this
+commit, so the Pilot (Loading Screen) is unblocked.

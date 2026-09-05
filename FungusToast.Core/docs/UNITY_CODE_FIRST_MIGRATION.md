@@ -98,11 +98,19 @@ agent?" as the deciding question. If yes, it wants to be text.
 - **Thin bootstrap scene.** One `GameObject` with a bootstrapper `MonoBehaviour`.
   The startup sequence is a readable code file, not a hierarchy you reconstruct by
   clicking through the scene.
-- **No serialized cross-references.** A panel gets its collaborators through
-  `SetDependencies(...)` or a lightweight service locator, wired in
-  `GameManager.BootstrapServices()` / the bootstrapper. Follow the
-  Service Extraction, `GameUIManager` Façade, and `SetDependencies` patterns in
-  [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md).
+- **No serialized cross-references.** A panel is **constructed and injected
+  from a composition root**, not discovered. In order of preference:
+  1. Construct + inject explicitly — `AddComponent` then `SetDependencies(...)`
+     from `GameManager.BootstrapServices()` or a service it owns, then register
+     with the `GameUIManager` façade. `PauseMenuService.Initialize()`
+     (`Services/EndgameService.cs:369-390`) is the reference implementation.
+  2. Go through the `GameUIManager` façade where it already owns the lifetime.
+  3. A static registry **only** as a temporary discovery bridge, commented as
+     such. It is not a destination. `MainMenuRegistry` is a Phase 0 expedient
+     scoped to legacy menu discovery and should shrink, not grow.
+
+  Follow the Service Extraction, `GameUIManager` Façade, and `SetDependencies`
+  patterns in [UI_ARCHITECTURE_HELPER.md](UI_ARCHITECTURE_HELPER.md).
 - **Self-wiring components.** Prefer `GetComponent`, `GetComponentInChildren`, and
   runtime `AddComponent` over serialized fields that require Inspector
   assignment (this is already the rule in
@@ -113,10 +121,18 @@ agent?" as the deciding question. If yes, it wants to be text.
 - **Data as text.** In-scope data moves to static C# tables or JSON loaded at
   startup, validated by a repository-integrity test rather than by opening the
   Inspector.
-- **Validation replaces the eyeball.** Because you lose the Inspector's visual
-  "is that slot filled?" check, a migrated area needs a play-mode smoke path (or
-  an edit-mode test) that boots the bootstrapper and asserts nothing critical is
-  null.
+- **Validation replaces the eyeball — with parity, not presence.** Losing the
+  Inspector's "is that slot filled?" check is the *smallest* part of what you
+  give up. A null scan is necessary but **not sufficient**: the four
+  regressions that shipped during the Phase 0 menu migration (dead buttons from
+  `Awake` never running on an inactive GameObject, a duplicate legacy button, a
+  wrong logo asset, wrong font sizes) would each have passed a null check
+  cleanly. A migrated area needs evidence that controls invoke the right
+  handler exactly once, that state is correct on open and close, that a
+  leave-and-reenter cycle doesn't duplicate listeners or stale caches, and that
+  layout holds at the narrowest and widest supported resolution. See
+  `UNITY_CODE_FIRST_MIGRATION_PLAN.md` section 7.3 for the full contract and
+  section 7.2 for the pre-edit slice contract.
 
 ## 6. Guardrails
 
@@ -141,14 +157,23 @@ agent?" as the deciding question. If yes, it wants to be text.
 2. Read its serialized fields. Sort them into: cross-references (migrate), logic
    tuning (migrate to constants), asset references (leave), pure visual layout
    (leave or move to code depending on effort).
-3. Introduce or reuse a wiring path (service locator entry, `SetDependencies`
-   parameter, `BootstrapServices` registration).
-4. Remove the now-dead `[SerializeField]` declarations and the corresponding
+3. Write the slice contract *before editing* — see
+   `UNITY_CODE_FIRST_MIGRATION_PLAN.md` section 7.2. It names the exact fields
+   to remove, who constructs the object afterward, initialization order,
+   inactive-object behavior, teardown/re-entry behavior, and the YAML expected
+   to shrink.
+4. Introduce or reuse a wiring path, preferring construct + `SetDependencies`
+   from `BootstrapServices` / an owning service, per section 5's ordering.
+5. Remove the now-dead `[SerializeField]` declarations and the corresponding
    YAML references from the scene/prefab.
-5. Add or extend a smoke assertion covering the wiring you just moved.
-6. Build Core, build Simulation if shared behavior changed, validate Unity
-   compile health, run the affected flow.
-7. Commit with the scene/prefab diff reduced to exactly the removed references.
+6. Add or extend a smoke assertion covering the wiring you just moved. This is
+   the floor, not the gate.
+7. Build Core, build Simulation if shared behavior changed, validate Unity
+   compile health, and verify **parity** on the affected flow — callback
+   routes, initial/terminal state, a leave-and-reenter cycle, and supported
+   resolutions. Record the exact flow performed and its result; "playtested it"
+   is not a completion record.
+8. Commit with the scene/prefab diff reduced to exactly the removed references.
    Note larger follow-on opportunities in `docs/WORKLOG.md` rather than chasing
    them now.
 
