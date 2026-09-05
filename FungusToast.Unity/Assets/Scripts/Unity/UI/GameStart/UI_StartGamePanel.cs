@@ -478,9 +478,20 @@ namespace FungusToast.Unity.UI.GameStart
         {
             titleSectionRoot = EnsureNamedSection(titleSectionRoot, "UI_HowManyPlayersText");
             playerCountSectionRoot = EnsureNamedSection(playerCountSectionRoot, "UI_PlayerCountButtonGroupWrapper");
-            advancedSettingsSectionRoot = EnsureNamedSection(advancedSettingsSectionRoot, "UI_StartGameAdvancedSettingsSection");
-            boardSizeSectionRoot = EnsureNamedSection(boardSizeSectionRoot, "UI_StartGameBoardSizeSection");
-            testingCardSectionRoot = EnsureNamedSection(testingCardSectionRoot, "UI_StartGameTestingSection");
+
+            // advancedSettingsSectionRoot/boardSizeSectionRoot/testingCardSectionRoot
+            // deliberately use a bare find here, NOT EnsureNamedSection. Each has its
+            // own EnsureXSection() method downstream (EnsureAdvancedSettingsSection,
+            // EnsureBoardSizeSection, EnsureTestingCardSection) that already does a
+            // proper find-or-create-with-full-components. Those methods only run
+            // their creation branch when the field is still null; resolving it here
+            // first with EnsureNamedSection's bare RectTransform-only fallback would
+            // short-circuit that and hand ConfigureAdvancedSettingsSection/
+            // ConfigureTestingCardSection an object with no VerticalLayoutGroup,
+            // which they assume is already present (NullReferenceException).
+            advancedSettingsSectionRoot ??= FindNamedRectTransform("UI_StartGameAdvancedSettingsSection");
+            boardSizeSectionRoot ??= FindNamedRectTransform("UI_StartGameBoardSizeSection");
+            testingCardSectionRoot ??= FindNamedRectTransform("UI_StartGameTestingSection");
             EnsureHumanPlayerSectionRoot();
 
             if (setupTitleLabel == null && titleSectionRoot != null)
@@ -1377,6 +1388,10 @@ namespace FungusToast.Unity.UI.GameStart
             sectionRoot.localScale = Vector3.one;
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = sectionRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
             layoutGroup.padding = new RectOffset(0, 0, 0, 0);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 0f;
@@ -1386,10 +1401,18 @@ namespace FungusToast.Unity.UI.GameStart
             layoutGroup.childControlHeight = true;
 
             var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = sectionRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = sectionRoot.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                element = sectionRoot.gameObject.AddComponent<LayoutElement>();
+            }
             element.minWidth = StartMenuDevelopmentRailWidth;
             element.preferredWidth = StartMenuDevelopmentRailWidth;
             element.minHeight = 56f;
@@ -1417,6 +1440,10 @@ namespace FungusToast.Unity.UI.GameStart
             }
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = sectionRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
             layoutGroup.padding = new RectOffset(12, 12, 10, 12);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 8f;
@@ -1426,10 +1453,18 @@ namespace FungusToast.Unity.UI.GameStart
             layoutGroup.childControlHeight = true;
 
             var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = sectionRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = sectionRoot.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                element = sectionRoot.gameObject.AddComponent<LayoutElement>();
+            }
             element.minWidth = StartMenuPrimaryColumnWidth;
             element.preferredWidth = StartMenuPrimaryColumnWidth;
             element.minHeight = 86f;
@@ -1600,6 +1635,10 @@ namespace FungusToast.Unity.UI.GameStart
             sectionRoot.localScale = Vector3.one;
 
             var layoutGroup = sectionRoot.GetComponent<VerticalLayoutGroup>();
+            if (layoutGroup == null)
+            {
+                layoutGroup = sectionRoot.gameObject.AddComponent<VerticalLayoutGroup>();
+            }
             layoutGroup.padding = new RectOffset(0, 0, 0, 0);
             layoutGroup.childAlignment = TextAnchor.UpperCenter;
             layoutGroup.spacing = 8f;
@@ -1609,10 +1648,18 @@ namespace FungusToast.Unity.UI.GameStart
             layoutGroup.childControlHeight = true;
 
             var fitter = sectionRoot.GetComponent<ContentSizeFitter>();
+            if (fitter == null)
+            {
+                fitter = sectionRoot.gameObject.AddComponent<ContentSizeFitter>();
+            }
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var element = sectionRoot.GetComponent<LayoutElement>();
+            if (element == null)
+            {
+                element = sectionRoot.gameObject.AddComponent<LayoutElement>();
+            }
             element.minWidth = StartMenuDevelopmentRailWidth;
             element.preferredWidth = StartMenuDevelopmentRailWidth;
             element.minHeight = 52f;
