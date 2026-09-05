@@ -232,6 +232,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = labelText;
+            label.fontSize = 24f;
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(label);

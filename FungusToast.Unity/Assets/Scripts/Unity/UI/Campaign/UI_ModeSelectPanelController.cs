@@ -244,7 +244,7 @@ namespace FungusToast.Unity.UI.Campaign
             titleText = titleObject.GetComponent<TextMeshProUGUI>();
             titleText.raycastTarget = false;
 
-            hotseatButton = CreateButtonCore(contentRoot, "UI_ModeSelectHotseatButton", "Custom Game", 24f, FontStyles.Bold);
+            hotseatButton = CreateButtonCore(contentRoot, "UI_ModeSelectHotseatButton", "Custom Game", 32f, FontStyles.Bold);
             hotseatDescriptionText = CreateLabel(
                 "UI_ModeSelectHotseatDescriptionText",
                 CustomGameDescription,
@@ -252,7 +252,7 @@ namespace FungusToast.Unity.UI.Campaign
                 50f,
                 UIStyleTokens.Text.Secondary);
 
-            campaignButton = CreateButtonCore(contentRoot, "UI_ModeSelectCampaignButton", "Campaign", 24f, FontStyles.Bold);
+            campaignButton = CreateButtonCore(contentRoot, "UI_ModeSelectCampaignButton", "Campaign", 32f, FontStyles.Bold);
             campaignDescriptionText = CreateLabel(
                 "UI_ModeSelectCampaignDescriptionText",
                 CampaignDescription,

@@ -180,13 +180,13 @@ namespace FungusToast.Unity.UI.GameStart
             MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_StartButton");
             MainMenuRegistry.DestroyLegacyChildIfPresent(transform, "UI_BackButton");
 
-            startGameButton = CreateActionButton("UI_StartGameStartButton", "Start Game");
+            startGameButton = CreateActionButton("UI_StartGameStartButton", "Start Game", 30f);
             startGameButton.onClick.AddListener(OnStartGamePressed);
 
-            backButton = CreateActionButton("UI_StartGameBackButton", "Back");
+            backButton = CreateActionButton("UI_StartGameBackButton", "Back", 24f);
         }
 
-        private Button CreateActionButton(string objectName, string labelText)
+        private Button CreateActionButton(string objectName, string labelText, float fontSize)
         {
             GameObject buttonObject = new GameObject(objectName, typeof(RectTransform), typeof(Image), typeof(Button));
             buttonObject.transform.SetParent(transform, false);
@@ -216,6 +216,7 @@ namespace FungusToast.Unity.UI.GameStart
 
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = labelText;
+            label.fontSize = fontSize;
             label.alignment = TextAlignmentOptions.Center;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(label);
