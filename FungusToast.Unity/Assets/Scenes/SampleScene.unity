@@ -1379,17 +1379,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6991360991755448775, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
   m_PrefabInstance: {fileID: 134439308}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &134439310 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 514390771763418657, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
-  m_PrefabInstance: {fileID: 134439308}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a55f39445f714c4988c449f4c177cb6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &134800809 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 5006008502602895819, guid: ce0955788dfeb544185c031002e3e817, type: 3}
@@ -1985,17 +1974,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 163149092}
   m_CullTransparentMesh: 1
---- !u!114 &193983058 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3735512653404784170, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
-  m_PrefabInstance: {fileID: 3260186341754328459}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3d149e6fef2a4594cb42bd5ba5529b9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &193983060 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 828393007671468900, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
@@ -7179,10 +7157,8 @@ MonoBehaviour:
   growthPhaseRunner: {fileID: 611285832}
   gameUIManager: {fileID: 948889969}
   decayPhaseRunner: {fileID: 2138162645}
-  startGamePanel: {fileID: 656464964}
   SelectionPromptPanel: {fileID: 373902686}
   SelectionPromptText: {fileID: 818361141}
-  modeSelectPanel: {fileID: 1539722632}
   mutationPhaseStartClip: {fileID: 8300000, guid: e06edae16b552c140b6e01b40f246962, type: 3}
   mutationPhaseStartVolume: 1
   growthPhaseStartClip: {fileID: 8300000, guid: 5bc9ed4756ce8224587179badd93bd1a, type: 3}
@@ -8381,32 +8357,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bc5772c9c3c60fd44acbf785c39735a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerButtons:
-  - {fileID: 865636678}
-  - {fileID: 1212228559}
-  - {fileID: 362278031}
-  - {fileID: 1342378989}
-  - {fileID: 2081644801}
-  - {fileID: 1331444125}
-  - {fileID: 1045095623}
-  - {fileID: 1197299224}
-  startGameButton: {fileID: 1279758131}
-  backButton: {fileID: 2146000003}
-  modeSelectPanel: {fileID: 1539722632}
-  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
-  forwardStepButtonIcon: {fileID: 21300000, guid: 7702dcd5c39cf824ba1f1efe2429fad6, type: 3}
-  humanPlayerSectionRoot: {fileID: 1152862161}
-  humanPlayerButtons:
-  - {fileID: 476987861}
-  - {fileID: 2011791221}
-  - {fileID: 872256734}
-  - {fileID: 213309712}
-  - {fileID: 354172063}
-  - {fileID: 437777570}
-  - {fileID: 2129553945}
-  - {fileID: 952816454}
-  playerSummaryLabel: {fileID: 1671315638}
-  testingOptionsSectionRoot: {fileID: 0}
   magnifyingGlassUI: {fileID: 325918925}
   magnifierVisualRoot: {fileID: 1145352011}
 --- !u!225 &656464965
@@ -11400,8 +11350,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 72ecfdb2519bd4b41aca9c41ec7a5945, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerUIBinder: {fileID: 1278183952}
-  leftSidebar: {fileID: 675576749}
   pauseMenuPanel: {fileID: 0}
   pauseMenuButtonIcon: {fileID: 21300000, guid: 761a24c9f8ae3fe41ad60558bafb0887, type: 3}
   nextTrackButtonIcon: {fileID: 21300000, guid: 99e787abb9d5b1f469a7c8814108cf35, type: 3}
@@ -13196,14 +13144,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13f62e0294f99bd45a665b83c5c2d387, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resumeButton: {fileID: 1550400851}
-  newButton: {fileID: 1196639415}
-  backButton: {fileID: 803248674}
-  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
-  modeSelectPanel: {fileID: 1539722632}
-  testingOptionsSectionRoot: {fileID: 0}
-  testingModeToggleTemplate: {fileID: 0}
-  testingModePanelTemplate: {fileID: 0}
 --- !u!1 &1117693803
 GameObject:
   m_ObjectHideFlags: 0
@@ -15613,17 +15553,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6991360991755448775, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
   m_PrefabInstance: {fileID: 1326162882}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1326162884 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 514390771763418657, guid: 5120fdf416926fd4c8c18a63f73a90f2, type: 3}
-  m_PrefabInstance: {fileID: 1326162882}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3a55f39445f714c4988c449f4c177cb6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1331444120
 GameObject:
   m_ObjectHideFlags: 0
@@ -17235,6 +17164,7 @@ GameObject:
   - component: {fileID: 1493893196}
   - component: {fileID: 1493893198}
   - component: {fileID: 1493893197}
+  - component: {fileID: 1493893199}
   m_Layer: 5
   m_Name: UI_MutationTreePanel
   m_TagString: Untagged
@@ -17303,6 +17233,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1493893195}
   m_CullTransparentMesh: 1
+--- !u!114 &1493893199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1493893195}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b4acb013a1f72540937af4f66c65468, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::FungusToast.Unity.UI.MutationTree.UI_MutationTreePanelMarker
 --- !u!1 &1512317296 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 200007940375941483, guid: 6bfae62bd7629fe46a110eb496737e9c, type: 3}
@@ -17653,17 +17595,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ee4f6564bd6864499cec78e45d2b2a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startGamePanel: {fileID: 656464964}
-  campaignPanel: {fileID: 1114499026}
-  hotseatButton: {fileID: 1959796935}
-  campaignButton: {fileID: 1450973920}
-  contentRoot: {fileID: 679560467}
-  titleLogoImage: {fileID: 2099012202}
-  titleText: {fileID: 1112309357}
-  hotseatDescriptionText: {fileID: 2072126646}
-  campaignDescriptionText: {fileID: 1467730301}
-  wideTitleLogoSprite: {fileID: -8837426643450192954, guid: c8071e25a05e01c41b6d7b9a8ff2187f, type: 3}
-  backButtonIcon: {fileID: 21300000, guid: 91cf79313f7f9e94584475cd34b54261, type: 3}
 --- !u!1 &1550400849
 GameObject:
   m_ObjectHideFlags: 0
@@ -25306,7 +25237,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 853.7838
+      value: 854.26245
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_SizeDelta.y
@@ -25314,7 +25245,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 474.8919
+      value: 475.13123
       objectReference: {fileID: 0}
     - target: {fileID: 8186122567850025029, guid: 6eabac80f2c663c4692ddcb83d63c55e, type: 3}
       propertyPath: m_AnchoredPosition.y

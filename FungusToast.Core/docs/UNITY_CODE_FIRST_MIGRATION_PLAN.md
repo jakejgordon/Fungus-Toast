@@ -33,17 +33,21 @@
   Mutation Tree (High risk)** — every other row in section 5 is done.
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
-  Menu, which the review established was already done before this plan
-  existed, and the Tooltip, Loading Screen, Game Log, End Game, Right
-  Sidebar / Mold Profile, Phase Banner / Progress Tracker, Mycovariant
-  Draft, Hotseat Turn Prompt, Selection prompt, and Cell / mycovariant
-  tooltip cohorts (2026-09-05), plus Mutation Tree Chunks 1–5. Mutation Tree
-  Chunk 6 (the cohort's real work) is code-complete but **blocked on one
-  manual Editor step** — attach the new `UI_MutationTreePanelMarker`
-  component to `UI_MutationTreePanel` in `SampleScene.unity` — before it can
-  be playtested. See section 9 for the full record, including two more
-  double-wired-field bugs found and a new self-resolution pattern needed
-  where no external composition root can reliably win the Awake-order race.
+  Menu (already done before this plan existed), every cohort in section 5
+  including Mutation Tree (Editor-verified 2026-09-05, the last one), and
+  the two gaps noticed along the way — `leftSidebar` and `playerUIBinder` —
+  closed rather than left loose. See section 9 for the full record: three
+  distinct double-wired-field bugs found across the initiative, a latent
+  ordering hazard traced through existing code, and two cases needing a new
+  marker-component pattern where no bespoke type existed to resolve against.
+  **All section 5 rows are done or explicitly retained.** Two things stand
+  between here and calling the whole plan done: (1) **one more Editor
+  step** — attach the new `UI_LeftSidebarMarker` component to the left
+  sidebar's root GameObject in `SampleScene.unity`, then save (same
+  mechanism as the Mutation Tree marker); (2) confirming Milestone A and
+  the doc-completion criteria in section 8 are actually satisfied now that
+  every row is closed — worth a deliberate pass rather than assuming it
+  follows automatically.
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -180,6 +184,9 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | **Hotseat Turn Prompt** | `UI/Hotseat/UI_HotseatTurnPrompt.cs` | 0 confirmed (was 1) | **Landed 2026-09-05.** Same shape as Mycovariant Draft: single scene-authored instance, owner reference on `GameManager` directly, and the same constructor-capture hazard (`HotseatTurnManager`'s `private readonly UI_HotseatTurnPrompt prompt;`, set once at construction inside `BootstrapServices()`) — resolved via `FindAnyObjectByType` grouped right alongside the Mycovariant Draft resolution, before `HotseatTurnManager` is constructed. All 9 of the prompt's own fields audited and confirmed self-contained (`root` points at its own GameObject, `canvasGroup` a sibling component on it, the rest are descendants or tunables) — no scene overrides, untouched. See section 9. |
 | **Selection prompt + selection controllers** | `TileSelectionController.cs`, `MultiTileSelectionController.cs`, `MultiCellSelectionController.cs` | 2 resolved (dead fields removed), 2 explicitly retained | **Landed 2026-09-05.** Different shape from every prior cohort. The three controllers hold nothing in-scope — their only fields (`gridVisualizer`, plus `TileSelectionController`'s `hoverHighlighter`, a `FungusToast.Unity.Grid` type) belong to the grid/board-rendering system section 4 excludes. Of `GameManager`'s 4 baseline fields: `selectionPromptCancelButton`/`selectionPromptCancelButtonText` were already `{fileID: 0}` in the scene — `SelectionPromptService` already self-builds them via code when null, so there was no real cross-reference to resolve, just a dead `[SerializeField]` slot; converted to plain `private` fields. `SelectionPromptPanel`/`SelectionPromptText` are **explicitly retained** — `UI_SelectionPromptPanel` has no bespoke component type for `FindAnyObjectByType` to target (just a bare `RectTransform` + generic UI components), and it starts inactive in the scene so `GameObject.Find` can't substitute either (Unity's `Find` doesn't see inactive objects). Fixing this properly would need a small marker component added in the Editor — user chose to retain rather than take that step for two fields on a small overlay. See section 9. |
 | **Cell / mycovariant tooltip panels** | `UI/CellTooltipUI.cs` (24 fields), `UI/MycovariantTooltipPanel.cs` (4), `UI/MycovariantTooltipTrigger.cs`, `UI/MycovariantDraft/MycovariantIcon.cs` | 0 confirmed | **Closed 2026-09-05, audit — zero code changes.** `CellTooltipUI`'s 24 fields are all prefab-internal; it's instantiated at runtime from `MagnifyingGlassFollowMouse.tooltipPrefab`, a legitimate clone-template reference — and `MagnifyingGlassFollowMouse.cs` itself is *already* an explicit standing exception for this whole initiative (§4/§9, gameplay overlay). `MycovariantTooltipPanel`'s 4 fields are self-contained, and the component is a self-managed singleton (`Instance` set in its own `Awake()`, same idiom as `TooltipManager.Instance`/`GameManager.Instance` already used elsewhere in this codebase) — consumers call `MycovariantTooltipPanel.Instance` directly, so no `GameUIManager`/`GameManager` field points at it and there's no cross-reference to resolve. Confirmed via direct grep: neither composition root references either class. `MycovariantTooltipTrigger.cs` has zero serialized fields. `MycovariantIcon.cs` already audited during the Mycovariant Draft slice. See section 9. |
+| **Mutation Tree** | `UI/MutationTree/*.cs` (15 files) | 0 confirmed (was TBD, 48 fields) | **Landed and Editor-verified 2026-09-05 — the last declared cohort, split into 6 chunks per user request (small pieces, low-risk first).** 9 of 15 files needed zero changes, 2 more were already resolved via pre-existing `AddComponent`+`Initialize()` code, one turned out to be dead code (removed separately). The real work: `GameUIManager.mutationUIManager` had never actually been resolved (a genuine gap, not just unclassified); `MutationManager` (the Unity-side gameplay bridge) was double-wired between `GameManager` and `UI_MutationManager`, same shape as Phase Banner's bug; and `UI_MutationManager.mutationTreePanel` crossed from `GameUIManager`'s organizational hierarchy into the Canvas's visual one with no bespoke component type to resolve against — the same wall `SelectionPromptPanel` hit, but here anchoring 9 fields on the game's most central panel, so the user chose to add a new marker component (`UI_MutationTreePanelMarker.cs`) rather than retain it. Also found that component needed to self-resolve its dependencies inside its own `Awake()` rather than accept injection, since it reads them synchronously and no external composition root could reliably win that Awake-order race. Full Editor playtest (tree open/close/slide, upgrades, spend/store points, dock button, tooltips/coachmarks, repeated open/close across a session) passed. See section 9 for the complete record. |
+| **Left Sidebar container** | `GameUIManager.cs`'s `leftSidebar` field | 0 confirmed (was 1) | **Closed 2026-09-05 — a gap noticed during the Game Log and Right Sidebar slices (used as a lookup anchor without ever being resolved itself), classified once all declared cohorts were done.** Same wall as `mutationTreePanel`/`SelectionPromptPanel`: a plain `GameObject` with no bespoke component type. Given it's load-bearing infrastructure other resolutions already depend on (not a small rarely-touched field like `SelectionPromptPanel`), applied the same fix as `mutationTreePanel`: added `UI_LeftSidebarMarker.cs`, a one-line empty marker `MonoBehaviour`, resolved via `FindAnyObjectByType`, injected through new `RegisterLeftSidebar(...)` — sequenced first in `ResolveOwnedReferences()` since `RegisterPlayerActivityLog` depends on it. Requires the same kind of Editor step as the Mutation Tree marker: attach `UI_LeftSidebarMarker` to the left sidebar's root GameObject. |
+| **Player Binder** | `UI_PlayerBinder.cs`, owner ref at `GameUIManager.cs`'s `playerUIBinder` field | 0 confirmed (was 1) | **Closed 2026-09-05 — a gap noticed during the Mutation Tree slice, classified once all declared cohorts were done.** `UI_PlayerBinder.cs` itself has zero serialized fields — a pure runtime icon-lookup class (`Dictionary`-backed, no Unity references at all). Confirmed a direct child of `GameUIManager`'s own transform (same organizational grouping as the Game Log managers and `UI_MutationManager`), so resolved the same way: `GetComponentInChildren<UI_PlayerBinder>(true)`, injected through new `RegisterPlayerBinder(...)`. No Editor step needed for this one. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -188,16 +195,9 @@ and not a gate: the opportunistic policy still wins, so if a bug lands you in
 the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
 Completion is tracked per component (section 7), not per row.
 
-Audit/close (Tooltip), Pilot (Loading Screen), Pattern proof (Game Log), End
-Game panel, Right Sidebar / Player Summary / Mold Profile, Phase Banner +
-Progress Tracker, Mycovariant Draft, Hotseat Turn Prompt, Selection prompt +
-selection controllers, and Cell / mycovariant tooltip panels are done — moved
-to the "Already code-first" table above. What follows starts at Mutation Tree
-— the last cohort.
-
-| Cohort | System | Key files | Confirmed cross-references | Notes |
-|---|---|---|---|---|
-| **High risk** | Mutation Tree | `UI/MutationTree/*.cs` (15 files; `MutationNodeUI.cs` 18 fields, `UI_MutationManager.cs` 17, `MutationTreeBuilder.cs` 7, two more at 3 each) | 0 confirmed remaining (was TBD, 48 fields) — **pending your Editor step, see below** | **Chunks 1–5 closed, Chunk 6 landed 2026-09-05 — see section 9 for the full record, including two additional double-wired-field bugs found (same shape as Phase Banner's) and one field that needed a new marker component since it crosses from `GameUIManager`'s organizational hierarchy into the Canvas's visual one.** ⚠️ **Requires one manual Editor step before this cohort can be marked verified:** attach the new `UI_MutationTreePanelMarker` component to the `UI_MutationTreePanel` GameObject in `SampleScene.unity`. Until that's done, `UI_MutationManager` will log `[UI_MutationManager] No UI_MutationTreePanelMarker found in the scene` at Play and the mutation tree panel will not initialize. |
+All declared cohorts in section 5 are done, and both gaps noticed along the
+way (`leftSidebar`, `playerUIBinder`) are closed too — see section 9. Nothing
+remains in this table.
 | **Byproduct** | UI-owned fields in `GameManager` / `GameUIManager` | `GameManager.cs` (25 fields), `UI/GameUIManager.cs` (17 fields) | Enumerated in section 8's Milestone A | Not a standalone slice. Each field leaves as its owning system migrates, exactly as `startGamePanel`/`modeSelectPanel` left `GameManager` during Phase 0. |
 
 ### Explicitly out of scope (see section 4)
@@ -438,6 +438,55 @@ claiming blanket front-end coverage.
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
 
+**2026-09-05 — Closed the two known gaps (`leftSidebar`, `playerUIBinder`)
+after all declared cohorts finished, so completion isn't reachable by
+omission.** With Mutation Tree Chunk 6 verified, every row in section 5 was
+done — but two fields flagged along the way (`leftSidebar` during the Game
+Log/Right Sidebar slices, `playerUIBinder` during Mutation Tree) had never
+been given their own row or actually classified, only noted as gaps. Since
+Milestone A is defined over "every confirmed cross-reference in the section
+5 field ledgers," and these were never added as ledger entries, closing the
+declared cohorts alone would have made the plan's own completion gate
+satisfiable by omission — the exact AR-1/R2-1 failure shape, just at a
+smaller scale. Investigated and closed both before considering the plan
+complete, rather than leaving them for "later."
+`UI_PlayerBinder.cs` turned out trivial: zero serialized fields (pure
+runtime `Dictionary`-backed icon lookup, no Unity references), confirmed a
+direct child of `GameUIManager`'s own transform — resolved via
+`GetComponentInChildren<UI_PlayerBinder>(true)`, injected through new
+`RegisterPlayerBinder(...)`. No Editor step needed.
+`leftSidebar` hit the same wall as `mutationTreePanel`/`SelectionPromptPanel`
+(plain `GameObject`, no bespoke component type), but unlike
+`SelectionPromptPanel` it's load-bearing infrastructure —
+`RegisterPlayerActivityLog` already depends on it to find the player
+activity log panel. Applied the marker-component fix rather than
+re-litigating retain-vs-marker: added `UI_LeftSidebarMarker.cs`, resolved
+via `FindAnyObjectByType`, injected through new `RegisterLeftSidebar(...)`,
+sequenced first in `ResolveOwnedReferences()` since the Game Log resolution
+needs it. **Requires the same kind of Editor step as the Mutation Tree
+marker:** attach `UI_LeftSidebarMarker` to the left sidebar's root
+GameObject, then save the scene.
+**Unrelated but notable — the scene file shrank by a lot more than these
+two slices account for**, once the user's Editor session (attaching the
+Mutation Tree marker, confirmed present in the scene diff at the expected
+fileID/guid) triggered the first scene *save* since well before this plan
+existed. Fields like `UI_StartGamePanel`'s `playerButtons`/`startGameButton`/
+`humanPlayerSectionRoot`/`testingOptionsSectionRoot` and several others from
+the already-migrated Phase 0 screens disappeared from the YAML. Verified
+this is cleanup, not data loss: grepped `UI_StartGamePanel.cs` and confirmed
+those are all private, non-serialized, code-built fields today (e.g.
+`startGameButton = CreateActionButton(...)`) — the scene had simply never
+been re-saved since Phase 0's migration removed `[SerializeField]` from
+them, so Unity was carrying years-old orphaned YAML for fields that no
+longer exist on the class. The re-save finally caught the file up. Also saw
+minor sub-pixel layout float drift on one `PrefabInstance` override
+(`853.7838` → `854.26245`) — matches the already-documented cosmetic-drift
+category in the scene-churn tooling, harmless. Also committed
+`UI_MutationTreePanelMarker.cs.meta`, which only now exists because the
+user's Editor session generated it — its GUID (`5b4acb013a1f72540937af4f66c65468`)
+is what the scene now references, so it must ship together with the script
+or the reference breaks on next import elsewhere.
+
 **2026-09-05 — Mutation Tree Chunk 6 landed (the cohort's real work).
 Requires one Editor step before it can be marked verified.** This chunk
 surfaced more than the plan's original framing anticipated — two more
@@ -540,6 +589,11 @@ dock button works, tooltips and coachmarks appear, and a repeated
 open/close/re-open cycle across a full game session still works. This is
 the highest-traffic system this initiative has touched — worth being
 thorough.
+**Verified 2026-09-05 (user).** Marker attached, scene saved, full playtest
+passed — tree open/close/slide, node upgrades, spend/store points, dock
+button, tooltips/coachmarks, and a repeated open/close cycle across a
+session all worked correctly. Mutation Tree Chunk 6 — and with it, the
+entire Mutation Tree cohort — is closed.
 
 **2026-09-05 — Mutation Tree cohort split into 6 chunks per user request;
 Chunks 1–4 closed, zero code changes.** User asked for the High-risk cohort

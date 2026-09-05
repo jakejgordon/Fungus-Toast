@@ -17,10 +17,10 @@ namespace FungusToast.Unity.UI
 
         [Header("Core UI")]
         private UI_MutationManager mutationUIManager;
-        [SerializeField] private UI_PlayerBinder playerUIBinder;
+        private UI_PlayerBinder playerUIBinder;
 
         [Header("Sidebars")]
-        [SerializeField] private GameObject leftSidebar;
+        private GameObject leftSidebar;
         private UI_RightSidebar rightSidebar;
         private UI_MoldProfileRoot moldProfileRoot;
         
@@ -58,9 +58,15 @@ namespace FungusToast.Unity.UI
             // managers when GameManager's Awake ran first.
             public void ResolveOwnedReferences()
             {
-                // UI_MutationManager is a direct child of this component's own
-                // transform (an organizational grouping, not a visual one).
+                // UI_MutationManager and UI_PlayerBinder are direct children of
+                // this component's own transform (an organizational grouping,
+                // not a visual one).
                 RegisterMutationUIManager(GetComponentInChildren<UI_MutationManager>(true));
+                RegisterPlayerBinder(GetComponentInChildren<UI_PlayerBinder>(true));
+
+                // Must run before RegisterPlayerActivityLog below, which reads
+                // leftSidebar to find its child panel.
+                RegisterLeftSidebar(FindAnyObjectByType<UI_LeftSidebarMarker>(FindObjectsInactive.Include)?.gameObject);
 
                 // Must run before RegisterGlobalEventsLog below, which reads rightSidebar
                 // to find its child panel.
@@ -299,6 +305,26 @@ namespace FungusToast.Unity.UI
             }
 
             mutationUIManager = manager;
+        }
+
+        public void RegisterPlayerBinder(UI_PlayerBinder binder)
+        {
+            if (binder == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_PlayerBinder found under GameUIManager's own transform.");
+            }
+
+            playerUIBinder = binder;
+        }
+
+        public void RegisterLeftSidebar(GameObject sidebar)
+        {
+            if (sidebar == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_LeftSidebarMarker found in the scene.");
+            }
+
+            leftSidebar = sidebar;
         }
 
         public void RegisterRightSidebar(UI_RightSidebar sidebar)
