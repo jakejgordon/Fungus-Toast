@@ -24,13 +24,13 @@ namespace FungusToast.Unity.UI
         [SerializeField] private UI_RightSidebar rightSidebar;
         [SerializeField] private UI_MoldProfileRoot moldProfileRoot; // Added mold profile root reference
         
-        [Header("Player Activity Log (Left Sidebar)")]
-        [SerializeField] private UI_GameLogPanel playerActivityLogPanel;
-        [SerializeField] private GameLogManager playerActivityLogManager;
-        
-        [Header("Global Events Log (Right Sidebar)")]
-        [SerializeField] private UI_GameLogPanel globalEventsLogPanel;
-        [SerializeField] private GlobalGameLogManager globalEventsLogManager;
+        // Player Activity Log (Left Sidebar)
+        private UI_GameLogPanel playerActivityLogPanel;
+        private GameLogManager playerActivityLogManager;
+
+        // Global Events Log (Right Sidebar)
+        private UI_GameLogPanel globalEventsLogPanel;
+        private GlobalGameLogManager globalEventsLogManager;
 
         private UI_LoadingScreen loadingScreen;
 
@@ -51,8 +51,15 @@ namespace FungusToast.Unity.UI
 
             private void Awake()
             {
-                ApplySidebarLogLayoutBehavior();
+                RegisterPlayerActivityLog(
+                    leftSidebar != null ? leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
+                    GetComponentInChildren<GameLogManager>(true));
+                RegisterGlobalEventsLog(
+                    rightSidebar != null ? rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true) : null,
+                    GetComponentInChildren<GlobalGameLogManager>(true));
                 RegisterLoadingScreen(FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include));
+
+                ApplySidebarLogLayoutBehavior();
             }
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
@@ -223,6 +230,38 @@ namespace FungusToast.Unity.UI
             }
 
             loadingScreen = panel;
+        }
+
+        public void RegisterPlayerActivityLog(UI_GameLogPanel panel, GameLogManager manager)
+        {
+            if (panel == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_GameLogPanel found under leftSidebar for the player activity log.");
+            }
+
+            if (manager == null)
+            {
+                Debug.LogError("[GameUIManager] No GameLogManager found for the player activity log.");
+            }
+
+            playerActivityLogPanel = panel;
+            playerActivityLogManager = manager;
+        }
+
+        public void RegisterGlobalEventsLog(UI_GameLogPanel panel, GlobalGameLogManager manager)
+        {
+            if (panel == null)
+            {
+                Debug.LogError("[GameUIManager] No UI_GameLogPanel found under rightSidebar for the global events log.");
+            }
+
+            if (manager == null)
+            {
+                Debug.LogError("[GameUIManager] No GlobalGameLogManager found for the global events log.");
+            }
+
+            globalEventsLogPanel = panel;
+            globalEventsLogManager = manager;
         }
 
         // Routing observer for unified event handling

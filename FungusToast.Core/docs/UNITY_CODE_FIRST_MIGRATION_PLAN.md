@@ -15,13 +15,13 @@
 - **State:** Revised twice on 2026-09-05 after two adversarial review passes —
   six findings in section 10 (response in section 11) and three in section 12
   (response in section 13). All nine accepted. Execution then began the same
-  day: the Audit/close (Tooltip) and Pilot (Loading Screen) cohorts are both
-  done — pending your Editor playtest of Loading Screen (see section 9). Next
-  up: Pattern proof (Game Log).
+  day: Audit/close (Tooltip), Pilot (Loading Screen — Editor-verified), and
+  Pattern proof (Game Log — pending your Editor playtest, see section 9) are
+  all done. Next up: End Game panel (Medium risk).
 - **Completed:** Home, Campaign, Solo Game, and Settings screens (Phase 0) —
   see `UNITY_CODE_FIRST_MIGRATION.md` for what shipped there. Plus the Pause
   Menu, which the review established was already done before this plan
-  existed, and the Tooltip and Loading Screen cohorts (2026-09-05).
+  existed, and the Tooltip, Loading Screen, and Game Log cohorts (2026-09-05).
 - **Migration posture:** Same as the policy doc — incremental, opportunistic,
   compatibility-first. No big-bang rewrite, no deadline. This plan exists to
   give the opportunistic work a *destination* and an *order*, not to schedule
@@ -150,6 +150,7 @@ keep the *policy* changes (if any are ever needed) in the other file.
 | **Pause Menu** | `UI/UI_PauseMenuPanel.cs` (997 lines) | 0 serialized fields | **Reclassified from "Phase 1 candidate" to done.** `PauseMenuService.Initialize()` (`Services/EndgameService.cs:369-390`) already does `AddComponent<UI_PauseMenuPanel>()`, `panel.SetDependencies(...)`, then `gameUIManager.RegisterPauseMenuPanel(panel)`. That is construct-inject-register from a composition root — a *better* pattern than the static registry Phase 0 used, and the reference model for section 7. |
 | Tooltip system | `UI/Tooltips/*.cs` (11 files) | 0/11 confirmed | **Closed 2026-09-05, Audit/close cohort.** See decision log — every `dynamicProvider` occurrence is unassigned; all tooltips use `staticText`. Retained by category, no code change. |
 | **Loading Screen** | `UI/UI_LoadingScreen.cs`, owner ref at `GameUIManager.cs` | 0 confirmed (was 1) | **Landed 2026-09-05, Pilot slice.** `GameUIManager.Awake()` resolves the singleton via `FindAnyObjectByType<UI_LoadingScreen>(FindObjectsInactive.Include)` and calls the new `RegisterLoadingScreen(...)`, mirroring `RegisterPauseMenuPanel`. The `[SerializeField]` and its scene wire (`SampleScene.unity` `GameUIManager` → `loadingScreen`) are gone. Panel content (`fadeOutDuration`, `statusLabel`, `backgroundImage`) stays scene-authored and serialized, per the pilot's own scope note. See section 9 for the full slice record. |
+| **Game Log (player + global)** | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | 0 confirmed (was 4) | **Landed 2026-09-05, Pattern-proof slice.** The two-instance case: `UI_PlayerActivityLogPanel`/`UI_GlobalEventsLogPanel` are both `UI_GameLogPanel.prefab` instances, so a single-type `FindAnyObjectByType` (the pilot's trick) would be ambiguous. Resolved instead via genuine structural containment already owned by `GameUIManager` — `leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` / `rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` (verified against the scene YAML: each panel is a direct child of its sidebar) — and the two manager types (`GameLogManager`/`GlobalGameLogManager`, distinct types, no ambiguity) via `GetComponentInChildren` scoped to `GameUIManager`'s own transform (both are already its direct children). Injected via new `RegisterPlayerActivityLog(...)`/`RegisterGlobalEventsLog(...)`. Panel-internal fields (`scrollRect`, `contentParent`, `entryPrefab`, `clearButton`, `headerText`) audited and confirmed prefab-internal — no scene overrides on either instance. See section 9 for the full slice record, including an ordering bug caught before commit. |
 
 ### Not started — readiness cohorts, not numbered gates
 
@@ -158,12 +159,12 @@ and not a gate: the opportunistic policy still wins, so if a bug lands you in
 the Mutation Tree tomorrow, migrate the wiring you touch there tomorrow.
 Completion is tracked per component (section 7), not per row.
 
-Audit/close (Tooltip) and Pilot (Loading Screen) are done — moved to the
-"Already code-first" table above. What follows starts at Pattern proof.
+Audit/close (Tooltip), Pilot (Loading Screen), and Pattern proof (Game Log) are
+done — moved to the "Already code-first" table above. What follows starts at
+End Game.
 
 | Cohort | System | Key files | Confirmed cross-references | Notes |
 |---|---|---|---|---|
-| **Pattern proof** | Game Log (player + global) | `UI/GameLog/*.cs` (10 files), `Prefabs/UI/UI_GameLogEntry.prefab`, `UI_GameLogPanel.prefab` | TBD — 4 owner refs at `GameUIManager.cs:28-33` (2 panels + 2 managers) plus panel-internal fields to classify | Deliberately second: **two instances of one implementation** is the case that breaks naive global lookup, so it proves or kills the composition approach before anything larger adopts it. |
 | **Medium risk** | End Game panel | `UI/UI_EndGamePanel.cs`, `UI/UI_GameEndPlayerResultsRow.cs`, matching prefabs | TBD (21 fields to classify) | Already substantially self-building; expect most fields to classify as retained, but that must be confirmed field-by-field, not assumed from the count. |
 | **Medium risk** | Right Sidebar / Player Summary / Mold Profile | `UI/UI_RightSideBar.cs`, `UI/PlayerSummaryRow.cs`, `UI/UI_MoldProfileRoot.cs` | TBD (32 fields to classify) | `UI_MoldProfileRoot.cs` is the densest non-mutation-tree file; treat each of the three as its own slice. |
 | **Medium risk** | Phase Banner + Progress Tracker | `UI/UI_PhaseBanner.cs`, `UI/UI_PhaseProgressTracker.cs` | TBD (5 fields) | Also referenced from `GameManager.cs:318`. |
@@ -395,6 +396,48 @@ claiming blanket front-end coverage.
 Record scope changes, surprises, and judgment calls here as slices land —
 newest entries first.
 
+**2026-09-05 — Pattern proof (Game Log) landed. Awaiting Editor playtest.**
+Slice contract: remove `GameUIManager.cs`'s four `[SerializeField]`s
+(`playerActivityLogPanel`, `playerActivityLogManager`, `globalEventsLogPanel`,
+`globalEventsLogManager`). Checked `isPlayerSpecificPanel` as an obvious
+disambiguator first and rejected it — both `UI_GameLogPanel` instances default
+to `false` in the prefab; it's only flipped true at runtime by
+`PlayerPerspectiveService.EnablePlayerSpecificFiltering()`
+(`EndgameService.cs:1768`), which itself currently depends on
+`gameUIManager.PlayerActivityLogPanel` — using it to resolve that same field
+would be circular. Verified against the actual scene YAML instead:
+`UI_PlayerActivityLogPanel` is a direct child of `leftSidebar`'s transform,
+`UI_GlobalEventsLogPanel` a direct child of `rightSidebar`'s transform (its
+sole child). So `GameUIManager.Awake()` now resolves
+`leftSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` and
+`rightSidebar.GetComponentInChildren<UI_GameLogPanel>(true)` — genuine
+structural containment through fields `GameUIManager` already holds, not a
+name/string lookup. The two managers are different concrete types
+(`GameLogManager` vs `GlobalGameLogManager`), so no disambiguation was needed
+there at all — and both turned out to already be direct children of
+`GameUIManager`'s own transform, so `GetComponentInChildren<T>(true)` scoped to
+`transform` finds each with no scene-wide search. Injected via
+`RegisterPlayerActivityLog(...)`/`RegisterGlobalEventsLog(...)`.
+**Ordering bug caught during implementation, before commit:** the pre-existing
+`ApplySidebarLogLayoutBehavior()` reads `playerActivityLogPanel`/
+`globalEventsLogPanel` directly and was called first in the old `Awake()`.
+Resolving those fields at runtime instead of via the Inspector meant that call
+would have silently no-op'd (its null check would just skip the flexible-log
+layout pass) had the resolution calls not been moved ahead of it. Reordered so
+all four registrations happen before `ApplySidebarLogLayoutBehavior()` runs.
+Panel-internal fields (`scrollRect`, `contentParent`, `entryPrefab`,
+`clearButton`, `headerText`) audited directly in `UI_GameLogPanel.prefab` and
+`SampleScene.unity`: all point to objects local to the prefab (or, for
+`entryPrefab`, to the legitimate `UI_GameLogEntry.prefab` clone template), zero
+scene-level overrides on either instance — untouched, no code change.
+Scene diff: 4 lines removed from `GameUIManager`'s block, nothing else.
+`dotnet build` succeeds (0 errors). **Not yet parity-verified per section
+7.3** — needs an Editor playtest: confirm both logs populate independently
+during a game, player-specific filtering still isolates the human player's
+events, each Clear button only clears its own log, and a repeated game
+start/restart in one session re-initializes both without duplicate
+subscriptions or missing entries.
+
 **2026-09-05 — Pilot (Loading Screen) landed. Awaiting Editor playtest.**
 Slice contract: remove `GameUIManager.cs`'s `[SerializeField] private
 UI_LoadingScreen loadingScreen;`; resolve it instead in `GameUIManager.Awake()`
@@ -424,6 +467,10 @@ during game init and fades out on ready (Custom Game start), then restart/start
 a second game in the same session and confirm it still shows/hides correctly
 the second time (repeated-entry check). Record the actual result here once
 run.
+**Verified 2026-09-05 (user).** Editor playtest confirmed working: loading
+overlay shows/fades correctly, including across a repeated game start in the
+same Play session. Loading Screen cohort is fully done — parity evidence
+recorded, not just a null-check. Next: Pattern proof (Game Log).
 
 **2026-09-05 — Tooltip audit closed, zero cross-references.** Checked every
 `dynamicProvider` occurrence in `SampleScene.unity` (13) and the two prefabs
