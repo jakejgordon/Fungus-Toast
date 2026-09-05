@@ -37,4 +37,31 @@ public class GameSimulatorStartingAdaptationTests
             new[] { AdaptationIds.ThanatrophicRebound },
             result.StartingAdaptationIdsByPlayerId[1]);
     }
+
+    [Fact]
+    public void Simulation_can_disable_all_starting_adaptations()
+    {
+        var result = GameSimulator.RunSimulation(
+            strategies: new List<IMutationSpendingStrategy>
+            {
+                new RandomMutationSpendingStrategy("Slot 0"),
+                new RandomMutationSpendingStrategy("Slot 1")
+            },
+            seed: 24680,
+            context: new SimulationTrackingContext(),
+            boardWidth: 10,
+            boardHeight: 10,
+            shuffleStartingSpores: false,
+            enableNutrientPatches: false,
+            enableMycovariantDraft: false,
+            startingAdaptationIds: new List<IReadOnlyList<string>>
+            {
+                new[] { AdaptationIds.AegisHyphae },
+                Array.Empty<string>()
+            },
+            enableStartingAdaptations: false);
+
+        Assert.Empty(result.StartingAdaptationIdsByPlayerId[0]);
+        Assert.Empty(result.StartingAdaptationIdsByPlayerId[1]);
+    }
 }

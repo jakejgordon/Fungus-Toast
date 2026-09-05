@@ -122,6 +122,7 @@ public sealed class ExperimentSystems
 {
     public required bool NutrientPatchesEnabled { get; init; }
     public required bool MycovariantDraftEnabled { get; init; }
+    public bool StartingAdaptationsEnabled { get; init; } = true;
     public IReadOnlyList<PlayerStartingAdaptations> StartingAdaptations { get; init; } = Array.Empty<PlayerStartingAdaptations>();
 }
 

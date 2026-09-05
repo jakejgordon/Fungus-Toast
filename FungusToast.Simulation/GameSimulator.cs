@@ -36,7 +36,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
-            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null
+            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
+            bool enableStartingAdaptations = true
         )
         {
             var gameStopwatch = Stopwatch.StartNew();
@@ -53,7 +54,8 @@ namespace FungusToast.Simulation.GameSimulation
                 permanentlyBlockedTileIds,
                 startingPositionOverride,
                 startingAdaptationIds,
-                preferredPositionsByPlayerId);
+                preferredPositionsByPlayerId,
+                enableStartingAdaptations);
             var resolvedStartingPositions = players.ToDictionary(
                 player => player.PlayerId,
                 player =>
@@ -298,7 +300,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyCollection<int>? permanentlyBlockedTileIds = null,
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
-            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null)
+            IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
+            bool enableStartingAdaptations = true)
         {
             var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
@@ -327,31 +330,34 @@ namespace FungusToast.Simulation.GameSimulation
 
             // Simulation mold identity follows player slot, matching Unity's
             // default visual assignment. Explicit loadouts are additive.
-            for (int i = 0; i < players.Count; i++)
+            if (enableStartingAdaptations)
             {
-                var authoredAdditionalIds = i < startingAdaptationIds?.Count
-                    ? startingAdaptationIds[i]
-                    : null;
-                foreach (var adaptationId in authoredAdditionalIds ?? Array.Empty<string>())
+                for (int i = 0; i < players.Count; i++)
                 {
-                    if (!AdaptationRepository.TryGetById(adaptationId, out _))
+                    var authoredAdditionalIds = i < startingAdaptationIds?.Count
+                        ? startingAdaptationIds[i]
+                        : null;
+                    foreach (var adaptationId in authoredAdditionalIds ?? Array.Empty<string>())
                     {
-                        Console.WriteLine($"[Simulation] Warning: Unknown adaptation id '{adaptationId}' for player slot {i}. Skipping.");
+                        if (!AdaptationRepository.TryGetById(adaptationId, out _))
+                        {
+                            Console.WriteLine($"[Simulation] Warning: Unknown adaptation id '{adaptationId}' for player slot {i}. Skipping.");
+                        }
                     }
-                }
 
-                var loadout = AIStartingAdaptationResolver.Resolve(
-                    moldIndex: i,
-                    campaignDifficulty: null,
-                    authoredAdditionalIds: authoredAdditionalIds,
-                    suggestedAdaptationSets: null,
-                    rng: randomStreams.CreateAiDecisionRandom(i, round: 0, decisionKind: "starting-adaptation-loadout"));
+                    var loadout = AIStartingAdaptationResolver.Resolve(
+                        moldIndex: i,
+                        campaignDifficulty: null,
+                        authoredAdditionalIds: authoredAdditionalIds,
+                        suggestedAdaptationSets: null,
+                        rng: randomStreams.CreateAiDecisionRandom(i, round: 0, decisionKind: "starting-adaptation-loadout"));
 
-                foreach (var adaptationId in loadout)
-                {
-                    if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                    foreach (var adaptationId in loadout)
                     {
-                        players[i].TryAddAdaptation(adaptation);
+                        if (AdaptationRepository.TryGetById(adaptationId, out var adaptation))
+                        {
+                            players[i].TryAddAdaptation(adaptation);
+                        }
                     }
                 }
             }

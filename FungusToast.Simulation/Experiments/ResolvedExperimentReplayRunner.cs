@@ -83,7 +83,8 @@ public static class ResolvedExperimentReplayRunner
                 startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,
                 startingAdaptationIds: startingAdaptations,
                 preferredStartingPositionPoolsByPlayerId: preferredPools.Count > 0 ? preferredPools : null,
-                runtimeBudgetSeconds: source.RuntimeBudgetSeconds);
+                runtimeBudgetSeconds: source.RuntimeBudgetSeconds,
+                enableStartingAdaptations: source.Condition.Systems.StartingAdaptationsEnabled);
         }
         catch (Exception exception)
         {

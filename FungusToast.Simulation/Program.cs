@@ -172,7 +172,8 @@ namespace FungusToast.Simulation
                     startingPositionOverride: config.StartingPositionOverride,
                     startingAdaptationIds: config.StartingAdaptationIds,
                     preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
-                    runtimeBudgetSeconds: config.RuntimeBudgetSeconds));
+                    runtimeBudgetSeconds: config.RuntimeBudgetSeconds,
+                    enableStartingAdaptations: config.EnableStartingAdaptations));
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
@@ -267,7 +268,8 @@ namespace FungusToast.Simulation
                                     startingPositionOverride: config.StartingPositionOverride,
                                     startingAdaptationIds: config.StartingAdaptationIds,
                                     preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
-                                    runtimeBudgetSeconds: remainingRuntimeSeconds));
+                                    runtimeBudgetSeconds: remainingRuntimeSeconds,
+                                    enableStartingAdaptations: config.EnableStartingAdaptations));
                         }
                         catch (Exception exception)
                         {
@@ -512,6 +514,7 @@ namespace FungusToast.Simulation
                     {
                         NutrientPatchesEnabled = config.EnableNutrientPatches,
                         MycovariantDraftEnabled = config.EnableMycovariantDraft,
+                        StartingAdaptationsEnabled = config.EnableStartingAdaptations,
                         StartingAdaptations = config.StartingAdaptationIds?
                             .Select((ids, slot) => new PlayerStartingAdaptations
                             {
@@ -617,6 +620,7 @@ namespace FungusToast.Simulation
                 Resume = false,
                 EnableNutrientPatches = true,
                 EnableMycovariantDraft = true,
+                EnableStartingAdaptations = true,
                 StartingPositionOverride = null,
                 ExperimentId = "",
                 ExperimentPurpose = "CLI simulation run",
@@ -981,6 +985,10 @@ namespace FungusToast.Simulation
                     case "--no-mycovariant-draft":
                         config.EnableMycovariantDraft = false;
                         break;
+                    case "--no-starting-adaptations":
+                    case "--disable-starting-adaptations":
+                        config.EnableStartingAdaptations = false;
+                        break;
                     case "--starting-positions":
                         if (i + 1 < args.Length)
                         {
@@ -1191,6 +1199,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --resume                 Skip matching complete conditions; retry missing/failed/interrupted ones");
             Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
+            Console.WriteLine("  --no-starting-adaptations Disable all baseline and explicit starting Adaptations");
             Console.WriteLine("  --starting-positions     Override start positions as x1:y1,x2:y2,...");
             Console.WriteLine("  --starting-adaptations   Per-slot adaptation IDs; pipe-delimited slots, comma-delimited IDs (e.g. \"|adaptation_3,adaptation_4||adaptation_1\")");
             Console.WriteLine("  --blocked-tiles-file     Text file with permanently blocked tile ids for shaped boards");
@@ -1240,6 +1249,7 @@ namespace FungusToast.Simulation
             public bool Resume { get; set; }
             public bool EnableNutrientPatches { get; set; }
             public bool EnableMycovariantDraft { get; set; }
+            public bool EnableStartingAdaptations { get; set; }
             public List<(int x, int y)>? StartingPositionOverride { get; set; }
             public string ExperimentId { get; set; } = "";
             public string ExperimentPurpose { get; set; } = "";

@@ -302,6 +302,11 @@ placement. Explicit `--starting-adaptations` values are additions, not
 replacements. This ensures starting effects such as Centripetal Germination are
 represented and matches Unity's default mold-icon assignment.
 
+Use `--no-starting-adaptations` for controlled experiments that intentionally
+require empty starting loadouts. It suppresses both the mold-matched baselines
+and explicit `--starting-adaptations`; the resolved artifact records the toggle
+and each player's realized empty loadout.
+
 Implementation detail: this is currently deterministic, not random.
 The harness uses the canonical prefix `adaptation_1..adaptation_(X-1)` as a stand-in for an accumulated campaign run.
 So the current simulation rule is **not** "X-1 random adaptations"; it is "the first X-1 canonical campaign-player adaptations."
@@ -562,6 +567,7 @@ The simulation supports the following command-line parameters:
 | `--experiment-id` | | Export tag for analytics artifacts | Auto timestamp ID |
 | `--parquet` | | Export canonical Parquet datasets | On |
 | `--no-parquet` | | Disable Parquet export | Off |
+| `--no-starting-adaptations` | | Disable all baseline and explicit starting Adaptations | Off |
 | `--output` | `-o` | Specify output filename (optional) | Auto-generated timestamp |
 | `--no-keyboard` | | Disable keyboard interruption (`Q`/`Escape`) | Off |
 | `--non-interactive` | | Alias for `--no-keyboard` | Off |

@@ -27,7 +27,8 @@ namespace FungusToast.Simulation
             IReadOnlyList<(int x, int y)>? startingPositionOverride = null,
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
-            double? runtimeBudgetSeconds = null)
+            double? runtimeBudgetSeconds = null,
+            bool enableStartingAdaptations = true)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -35,7 +36,7 @@ namespace FungusToast.Simulation
             var effectiveSeed = baseSeed ?? 0;
 
             Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
-            Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy} | Nutrients: {(enableNutrientPatches ? "On" : "Off")} | Mycovariants: {(enableMycovariantDraft ? "On" : "Off")} | StartOverride: {(startingPositionOverride is { Count: > 0 } ? "On" : "Off")}\n");
+            Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy} | Nutrients: {(enableNutrientPatches ? "On" : "Off")} | Mycovariants: {(enableMycovariantDraft ? "On" : "Off")} | Starting Adaptations: {(enableStartingAdaptations ? "On" : "Off")} | StartOverride: {(startingPositionOverride is { Count: > 0 } ? "On" : "Off")}\n");
 
             // Run simulation
             var results = MatchupRunner.RunMatchups(
@@ -53,7 +54,8 @@ namespace FungusToast.Simulation
                 startingAdaptationIds: startingAdaptationIds,
                 preferredStartingPositionPoolsByPlayerId: preferredStartingPositionPoolsByPlayerId,
                 gameSeedSchedule: runMetadata?.GameSeedSchedule,
-                runtimeBudgetSeconds: runtimeBudgetSeconds ?? runMetadata?.RuntimeBudgetSeconds);
+                runtimeBudgetSeconds: runtimeBudgetSeconds ?? runMetadata?.RuntimeBudgetSeconds,
+                enableStartingAdaptations: enableStartingAdaptations);
 
             PrintParityInvariantSummary(results.GameResults);
 
