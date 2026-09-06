@@ -378,9 +378,10 @@ namespace FungusToast.Simulation
         {
             var metadata = new SimulationRunMetadata
             {
-                ExperimentId = config.IsBatchMode
-                    ? $"{inputManifest.ExperimentId}__p{condition.PlayerCount}_w{condition.Board.Width}_h{condition.Board.Height}_s{strategySet}"
-                    : inputManifest.ExperimentId,
+                ExperimentId = ExperimentArtifactId.Derive(
+                    inputManifest.ExperimentId,
+                    condition.ConditionId,
+                    config.IsBatchMode),
                 RunTimestampUtc = DateTime.UtcNow,
                 StrategySet = strategySet,
                 BaseSeed = baseSeed,

@@ -40,7 +40,8 @@ if [[ "$skip_count" -ne 2 || "$run_count" -ne 1 ]]; then
   exit 1
 fi
 
-source_artifact="FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/${experiment_id}__p2_w20_h20_sTesting"
+# Artifact folders are named from the condition ID, which the CLI generates as p<n>.w<w>.h<h>.s.<set>.
+source_artifact="FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/${experiment_id}__p2_w20_h20_s_testing"
 replay_id="${experiment_id}_replay"
 dotnet run --project "$project" --no-build -- \
   --replay-manifest "${source_artifact}/resolved-manifest.json" \

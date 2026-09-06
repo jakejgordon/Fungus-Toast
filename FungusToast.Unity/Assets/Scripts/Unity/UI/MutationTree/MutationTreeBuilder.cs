@@ -476,7 +476,17 @@ namespace FungusToast.Unity.UI.MutationTree
             columnObject.layer = content.gameObject.layer;
             plannedSubstrateEcologyColumn = columnObject.GetComponent<RectTransform>();
             plannedSubstrateEcologyColumn.SetParent(content, false);
-            plannedSubstrateEcologyColumn.SetAsLastSibling();
+
+            // Substrate Ecology sits immediately left of Mycelial Surges so the
+            // surges lane stays on the far right of the tree.
+            if (mycelialSurgesColumn != null && mycelialSurgesColumn.parent == content)
+            {
+                plannedSubstrateEcologyColumn.SetSiblingIndex(mycelialSurgesColumn.GetSiblingIndex());
+            }
+            else
+            {
+                plannedSubstrateEcologyColumn.SetAsLastSibling();
+            }
 
             var group = columnObject.GetComponent<VerticalLayoutGroup>();
             group.padding = new RectOffset(0, 0, 0, 0);

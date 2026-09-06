@@ -64,8 +64,8 @@ namespace FungusToast.Unity.UI.MutationTree
             CellularResilience,
             Fungicide,
             GeneticDrift,
-            MycelialSurges,
-            SubstrateEcology
+            SubstrateEcology,
+            MycelialSurges
         };
 
         public static MutationCategoryPresentation Get(MutationCategory category)

@@ -7,7 +7,7 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         /// <summary>
         /// Playable column order: 0-Growth, 1-Cellular Resilience, 2-Fungicide,
-        /// 3-Genetic Drift, 4-Mycelial Surges, 5-Substrate Ecology.
+        /// 3-Genetic Drift, 4-Substrate Ecology, 5-Mycelial Surges.
         /// Row index increments downward within each playable column.
         /// </summary>
         public static Dictionary<int, MutationLayoutMetadata> GetDefaultLayout() =>
@@ -50,21 +50,21 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.HyperadaptiveDrift,     new MutationLayoutMetadata(3, 5, MutationCategory.GeneticDrift) },
                 { MutationIds.OntogenicRegression,    new MutationLayoutMetadata(3, 6, MutationCategory.GeneticDrift) },
 
-                /* ---------------Mycelial Surge (col 4) -------------- */
-                { MutationIds.HyphalSurge,            new MutationLayoutMetadata(4, 0, MutationCategory.MycelialSurges) },
-                { MutationIds.ChemotacticBeacon,      new MutationLayoutMetadata(4, 1, MutationCategory.MycelialSurges) },
-                { MutationIds.ChitinFortification,    new MutationLayoutMetadata(4, 2, MutationCategory.MycelialSurges) },
-                { MutationIds.MimeticResilience,      new MutationLayoutMetadata(4, 3, MutationCategory.MycelialSurges) },
-                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(4, 4, MutationCategory.MycelialSurges) },
+                /* ------------ Substrate Ecology (col 4) ------------ */
+                { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(4, 0, MutationCategory.SubstrateEcology) },
+                { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(4, 1, MutationCategory.SubstrateEcology) },
+                { MutationIds.CompactionPressure,   new MutationLayoutMetadata(4, 2, MutationCategory.SubstrateEcology) },
+                { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(4, 3, MutationCategory.SubstrateEcology) },
+                { MutationIds.ToxinMargin,          new MutationLayoutMetadata(4, 4, MutationCategory.SubstrateEcology) },
+                { MutationIds.NecrophyticBloom,     new MutationLayoutMetadata(4, 5, MutationCategory.SubstrateEcology) },
+                { MutationIds.MycotoxinFission,     new MutationLayoutMetadata(4, 6, MutationCategory.SubstrateEcology) },
 
-                /* ------------ Substrate Ecology (col 5) ------------ */
-                { MutationIds.AeratedFrontier,       new MutationLayoutMetadata(5, 0, MutationCategory.SubstrateEcology) },
-                { MutationIds.CrustwardTropism,     new MutationLayoutMetadata(5, 1, MutationCategory.SubstrateEcology) },
-                { MutationIds.CompactionPressure,   new MutationLayoutMetadata(5, 2, MutationCategory.SubstrateEcology) },
-                { MutationIds.DetritalEnzymes,      new MutationLayoutMetadata(5, 3, MutationCategory.SubstrateEcology) },
-                { MutationIds.ToxinMargin,          new MutationLayoutMetadata(5, 4, MutationCategory.SubstrateEcology) },
-                { MutationIds.NecrophyticBloom,     new MutationLayoutMetadata(5, 5, MutationCategory.SubstrateEcology) },
-                { MutationIds.MycotoxinFission,     new MutationLayoutMetadata(5, 6, MutationCategory.SubstrateEcology) }
+                /* ---------------Mycelial Surge (col 5) -------------- */
+                { MutationIds.HyphalSurge,            new MutationLayoutMetadata(5, 0, MutationCategory.MycelialSurges) },
+                { MutationIds.ChemotacticBeacon,      new MutationLayoutMetadata(5, 1, MutationCategory.MycelialSurges) },
+                { MutationIds.ChitinFortification,    new MutationLayoutMetadata(5, 2, MutationCategory.MycelialSurges) },
+                { MutationIds.MimeticResilience,      new MutationLayoutMetadata(5, 3, MutationCategory.MycelialSurges) },
+                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(5, 4, MutationCategory.MycelialSurges) }
             };
     }
 }
