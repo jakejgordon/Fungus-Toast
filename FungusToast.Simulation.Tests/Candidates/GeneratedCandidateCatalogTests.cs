@@ -139,6 +139,139 @@ public sealed class GeneratedCandidateCatalogTests : IDisposable
         Assert.Contains("is published twice", exception.Message, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// The whole reason references join the generated set. A paired swap runs a control arm
+    /// (parent + opponent) and a treatment arm (candidate + the same opponent) that are identical
+    /// in players, board, seeds and strategy set, differing only in one lineup slot. Both arms must
+    /// therefore name a single strategy set, which is only possible once the parent and opponent
+    /// live alongside the candidate.
+    /// </summary>
+    [Fact]
+    public void APairedControlAndTreatmentComparison_Validates()
+    {
+        var candidates = GenerateCandidates();
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
+        var opponent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_RebirthAttrition")!;
+
+        GeneratedCandidateCatalog.Publish(candidates, new[] { parent, opponent });
+
+        var manifest = CreatePairedManifest(
+            controlStrategyNames: new[] { parent.Strategy.StrategyName, opponent.Strategy.StrategyName },
+            treatmentStrategyNames: new[] { candidates[0].DisplayName, opponent.Strategy.StrategyName });
+
+        Assert.Empty(ExperimentManifestValidator.Validate(manifest));
+
+        // Same players, board and set: only the condition ID keeps their artifacts apart.
+        var controlArtifact = ExperimentArtifactId.Derive(manifest.ExperimentId, manifest.Conditions[0].ConditionId, isBatchMode: true);
+        var treatmentArtifact = ExperimentArtifactId.Derive(manifest.ExperimentId, manifest.Conditions[1].ConditionId, isBatchMode: true);
+        Assert.NotEqual(controlArtifact, treatmentArtifact);
+        Assert.Equal(manifest.Conditions[0].PairingGroupId, manifest.Conditions[1].PairingGroupId);
+    }
+
+    [Fact]
+    public void PublishedReferences_KeepTheirAuthoredIdentity()
+    {
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
+
+        GeneratedCandidateCatalog.Publish(GenerateCandidates(), new[] { parent });
+
+        var republished = Assert.Single(
+            GeneratedCandidateCatalog.GetPublished(),
+            definition => definition.Strategy.StrategyName == parent.Strategy.StrategyName);
+        // strategy_id and the definition fingerprint are what identify behavior in an artifact, so
+        // a reference must carry its authored ones rather than a generated identity.
+        Assert.Equal(parent.StrategyId, republished.StrategyId);
+        Assert.Equal(parent.DefinitionFingerprint, republished.DefinitionFingerprint);
+        Assert.StartsWith("legacy.", republished.StrategyId, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// StrategyRegistry.GetDefinition(IMutationSpendingStrategy) resolves by reference across every
+    /// set, so a reference registered twice must not change what roster metadata reports for it.
+    /// </summary>
+    [Fact]
+    public void PublishingAReference_DoesNotChangeItsRosterMetadata()
+    {
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
+        var themeBefore = AIRoster.GetThemeForStrategy(parent.Strategy);
+        var favoredBefore = AIRoster.GetFavoredAgainstForStrategy(parent.Strategy);
+
+        GeneratedCandidateCatalog.Publish(GenerateCandidates(), new[] { parent });
+
+        Assert.Equal(themeBefore, AIRoster.GetThemeForStrategy(parent.Strategy));
+        Assert.Equal(favoredBefore, AIRoster.GetFavoredAgainstForStrategy(parent.Strategy));
+    }
+
+    [Fact]
+    public void PublishedReferences_StillBelongToNoPool()
+    {
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
+
+        GeneratedCandidateCatalog.Publish(GenerateCandidates(), new[] { parent });
+
+        Assert.All(
+            AIRoster.GetStrategyCatalogEntries(StrategySetEnum.Generated),
+            entry => Assert.Equal(StrategyPool.None, entry.Pools));
+        // The authored registration keeps its real pools; only the generated copy is cleared.
+        Assert.NotEqual(StrategyPool.None, parent.Metadata.Pools);
+    }
+
+    [Fact]
+    public void PublishingTheSameReferenceTwice_Throws()
+    {
+        var candidates = GenerateCandidates();
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
+
+        var exception = Assert.Throws<ArgumentException>(
+            () => GeneratedCandidateCatalog.Publish(candidates, new[] { parent, parent }));
+        Assert.Contains("published twice", exception.Message, StringComparison.Ordinal);
+    }
+
+    private static ExperimentManifest CreatePairedManifest(
+        IReadOnlyList<string> controlStrategyNames,
+        IReadOnlyList<string> treatmentStrategyNames) => new()
+    {
+        SchemaVersion = ExperimentManifest.CurrentSchemaVersion,
+        ExperimentId = "paired_candidate_swap",
+        Purpose = "Paired two-artifact swap: control runs the parent, treatment runs the candidate, same opponent.",
+        GamesPerCondition = 3,
+        BaseSeed = 2026090601,
+        TotalGameBudget = 12,
+        RuntimeBudgetSeconds = 300,
+        Analysis = new ExperimentAnalysisPlan
+        {
+            AnalysisVersion = "v2",
+            EvidenceStage = ExperimentEvidenceStage.Smoke
+        },
+        Conditions = new[]
+        {
+            CreatePairedCondition("paired.control", controlStrategyNames),
+            CreatePairedCondition("paired.treatment", treatmentStrategyNames)
+        }
+    };
+
+    private static ExperimentCondition CreatePairedCondition(string conditionId, IReadOnlyList<string> strategyNames) => new()
+    {
+        ConditionId = conditionId,
+        PairingGroupId = "candidate-swap",
+        PlayerCount = strategyNames.Count,
+        Board = new ExperimentBoard { Width = 40, Height = 40 },
+        Strategies = new ExperimentStrategySelection
+        {
+            StrategySet = StrategySetEnum.Generated,
+            SelectionPolicy = StrategySelectionPolicy.RandomUnique,
+            ExplicitStrategyNames = strategyNames
+        },
+        Systems = new ExperimentSystems
+        {
+            NutrientPatchesEnabled = false,
+            MycovariantDraftEnabled = false,
+            StartingAdaptationsEnabled = false
+        },
+        Positioning = new ExperimentPositioning(),
+        SlotAssignmentPolicy = SlotAssignmentPolicy.RotateByGame
+    };
+
     private static ExperimentManifest CreateManifest(params string[] strategyNames) => new()
     {
         SchemaVersion = ExperimentManifest.CurrentSchemaVersion,

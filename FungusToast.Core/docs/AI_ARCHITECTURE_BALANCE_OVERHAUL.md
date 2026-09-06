@@ -891,10 +891,50 @@ candidate saw itself as a collision. The rule now excludes the generated set,
 which is the candidate's own home; duplicates within one publish are caught by
 the catalog instead.
 
-**Still outstanding for P6.3:** the three game-consuming stages (smoke,
-calibration comparison, unseen holdout) — per-stage manifest emission, paired
-control conditions, and progression rules that stop a candidate at its first
-failing stage.
+#### Frozen candidate evaluation shape (approved 2026-09-06)
+
+Jake approved the shape for P6.3's remaining stages:
+
+- **Paired two-artifact swap.** A control condition runs the parent and a
+  treatment condition runs the candidate, matched on seeds, slots, board, and
+  RNG controls and sharing one pairing group. This is what the P3.R4/P3.R5
+  machinery was built for, so `--emit-verdict` and preregistered margins apply.
+  It costs two conditions per comparison.
+- **Two players against one fixed opponent.** Control is `[parent, opponent]`,
+  treatment is `[candidate, opponent]`. Highest signal per game, and closest to
+  the two-player context of the frozen opener-order holdout.
+- **A holdout must change both board geometry and seed**, matching the frozen
+  opener-order holdout that moved 120x120 to 140x100 on a new base seed.
+
+Two infrastructure gaps blocked that shape, and both are now closed.
+
+**Per-condition artifact IDs collided.** They were derived from a condition's
+shape — players, board, strategy set — which is unique only by coincidence: the
+CLI encodes exactly that shape into the condition ID it generates, so it can
+never emit two colliding conditions. A hand-authored manifest can, and a paired
+swap is precisely that case. Both arms derived one artifact ID, so the second
+run overwrote the first's export, or under `--resume` failed with an execution
+fingerprint mismatch pointing nowhere near the cause. `ExperimentArtifactId` now
+derives from the condition ID, which the manifest already validates as unique.
+
+**A condition names exactly one strategy set**, but the treatment arm needs a
+generated candidate beside an authored opponent. The catalog now publishes an
+evaluation cast: candidates plus the authored references they are measured
+against. The alternative — per-name set qualification in the manifest — was
+rejected because Parquet records the strategy set once per run, so it would turn
+a run-level invariant into a per-player one and ripple through the input schema,
+resolved manifest, replay runner, export schema, and every set-grouping
+analytic, with three schema bumps that would invalidate replay of existing
+artifacts. Republishing an authored strategy under a second set label costs
+nothing that identifies behavior: a reference keeps its authored stable ID and
+definition fingerprint. Read `strategy_id`, not `strategy_set`, to know what a
+control arm was. Reference metadata is copied verbatim except for pools, because
+`StrategyRegistry.GetDefinition(IMutationSpendingStrategy)` resolves by
+reference across every set — a faithful copy makes it irrelevant which
+registration a metadata lookup finds.
+
+**Still outstanding for P6.3:** per-stage manifest emission and the progression
+rules that stop a candidate at its first failing stage.
 
 ### Phase 7 — Calibrate contextual performance bands
 

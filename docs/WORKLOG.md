@@ -511,6 +511,28 @@ measurement model, phase gates, and open product decisions are in
     concurrent session sharing this working tree; only its tests and this
     record are in the commit that names it. Next: per-stage manifest emission
     and progression rules.
+43. The second blocker for the approved evaluation shape is closed. A condition
+    names exactly one strategy set, but a treatment arm needs a generated
+    candidate beside an authored opponent, so `GeneratedCandidateCatalog` now
+    publishes an evaluation cast: candidates plus the authored references they
+    are measured against. Per-name set qualification in the manifest was
+    considered and rejected — Parquet records the strategy set once per run, so
+    it would turn a run-level invariant into a per-player one and ripple
+    through the input schema, resolved manifest, replay runner, export schema,
+    and every set-grouping analytic, with three schema bumps that would
+    invalidate replay of existing artifacts. A republished reference keeps its
+    authored stable ID and definition fingerprint, so `strategy_id` still
+    identifies a control arm exactly; only the set label changes. Reference
+    metadata is copied verbatim except pools, because
+    `StrategyRegistry.GetDefinition(IMutationSpendingStrategy)` resolves by
+    reference across every set and a faithful copy makes it irrelevant which
+    registration a metadata lookup finds — regression-tested against
+    `GetThemeForStrategy` and `GetFavoredAgainstForStrategy`. A paired
+    control/treatment manifest with matched players, board, set, and pairing
+    group now validates and derives two distinct artifact IDs. 98 Simulation
+    tests and 651 Core tests pass, and the experiment contract verified end to
+    end including its checksum. Next: per-stage manifest emission and
+    progression rules.
 
 ### Completion Criteria
 

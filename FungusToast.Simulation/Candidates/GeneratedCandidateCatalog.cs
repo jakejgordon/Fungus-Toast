@@ -19,11 +19,26 @@ namespace FungusToast.Simulation.Candidates;
 public static class GeneratedCandidateCatalog
 {
     /// <summary>
-    /// Replaces the generated set with exactly these candidates. Publishing is wholesale rather
-    /// than incremental so the catalog always reflects one search, never an accumulation of
+    /// Replaces the generated set with exactly this evaluation cast. Publishing is wholesale
+    /// rather than incremental so the catalog always reflects one search, never an accumulation of
     /// candidates from runs nobody is tracking any more.
     /// </summary>
-    public static IReadOnlyList<StrategyDefinition> Publish(IEnumerable<CandidateGenome> candidates)
+    /// <param name="references">
+    /// Authored strategies the candidates are measured against - typically the parent control and
+    /// the fixed opponent. They join the generated set so a paired comparison's control and
+    /// treatment conditions can name one strategy set each.
+    ///
+    /// The alternative was per-name set qualification in the manifest, but Parquet records the
+    /// strategy set once per run, so that would turn a run-level invariant into a per-player one
+    /// and ripple through the input schema, resolved manifest, replay runner, export schema, and
+    /// every analytic that groups by set. Republishing an authored strategy under a second set
+    /// label is much cheaper, and it costs nothing that matters: the reference keeps its authored
+    /// stable ID and definition fingerprint, which are what identify behavior in an artifact. Read
+    /// <c>strategy_id</c>, not <c>strategy_set</c>, to know what a control arm actually was.
+    /// </param>
+    public static IReadOnlyList<StrategyDefinition> Publish(
+        IEnumerable<CandidateGenome> candidates,
+        IEnumerable<StrategyDefinition>? references = null)
     {
         ArgumentNullException.ThrowIfNull(candidates);
 
@@ -53,13 +68,66 @@ public static class GeneratedCandidateCatalog
             strategies.Add(CandidateGenomeFactory.Materialize(candidate));
         }
 
+        var referencesByName = new Dictionary<string, StrategyDefinition>(StringComparer.OrdinalIgnoreCase);
+        foreach (var reference in references ?? Array.Empty<StrategyDefinition>())
+        {
+            ArgumentNullException.ThrowIfNull(reference);
+            if (genomesByName.ContainsKey(reference.Strategy.StrategyName))
+                throw new ArgumentException(
+                    $"Reference strategy '{reference.Strategy.StrategyName}' collides with a candidate display name.",
+                    nameof(references));
+            if (!referencesByName.TryAdd(reference.Strategy.StrategyName, reference))
+                throw new ArgumentException(
+                    $"Reference strategy '{reference.Strategy.StrategyName}' is published twice.",
+                    nameof(references));
+
+            strategies.Add(reference.Strategy);
+        }
+
         StrategyRegistry.Register(
             StrategySetEnum.Generated,
             strategies,
-            strategy => BuildCatalogEntry(genomesByName[strategy.StrategyName]),
-            strategy => genomesByName[strategy.StrategyName].CandidateId);
+            strategy => referencesByName.TryGetValue(strategy.StrategyName, out var reference)
+                ? BuildReferenceEntry(reference)
+                : BuildCatalogEntry(genomesByName[strategy.StrategyName]),
+            strategy => referencesByName.TryGetValue(strategy.StrategyName, out var reference)
+                ? reference.StrategyId
+                : genomesByName[strategy.StrategyName].CandidateId);
 
         return StrategyRegistry.GetDefinitions(StrategySetEnum.Generated);
+    }
+
+    /// <summary>
+    /// Copies an authored strategy's metadata verbatim, overriding only the set label and pool
+    /// membership.
+    ///
+    /// The copy has to be faithful. <c>StrategyRegistry.GetDefinition(IMutationSpendingStrategy)</c>
+    /// resolves by reference across every set, so once an authored strategy is registered twice, a
+    /// caller like <c>AIRoster.GetThemeForStrategy</c> may read either copy's metadata. Keeping
+    /// every measured field identical makes which copy it finds irrelevant; clearing pools is safe
+    /// precisely because pool membership is the one thing a generated-set entry must never assert.
+    /// </summary>
+    private static StrategyCatalogEntry BuildReferenceEntry(StrategyDefinition reference)
+    {
+        var authored = reference.Metadata;
+        return new StrategyCatalogEntry(
+            strategyName: authored.StrategyName,
+            strategySet: StrategySetEnum.Generated,
+            archetype: authored.Archetype,
+            status: authored.Status,
+            powerTier: authored.PowerTier,
+            role: authored.Role,
+            lifecycle: authored.Lifecycle,
+            difficultyBands: authored.DifficultyBands,
+            campaignDifficulty: authored.CampaignDifficulty,
+            pools: StrategyPool.None,
+            friendlyName: authored.FriendlyName,
+            aiPlayerIntentions: authored.AIPlayerIntentions,
+            intent: authored.Intent,
+            notes: authored.Notes,
+            favoredAgainst: authored.FavoredAgainst,
+            weakAgainst: authored.WeakAgainst,
+            suggestedAdaptationSets: authored.SuggestedAdaptationSets);
     }
 
     /// <summary>Empties the generated set, leaving every authored strategy set untouched.</summary>
