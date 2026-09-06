@@ -718,7 +718,7 @@ not promote the Testing candidate or change a player-facing strategy.
   resumable queues, and an enforced maximum of 100 games in any one batch.
   **Complete (2026-09-06)** — see the contract below.
 - **P6.5:** Rank strength and robustness separately from archetype fidelity and
-  behavioral diversity.
+  behavioral diversity. **Complete (2026-09-06)** — see the contract below.
 - **P6.6:** Produce a promotion packet containing definition diff, lineage,
   manifests, metrics, intervals, context bands, traces, failures, and holdouts.
 - **Gate:** A clean run can generate, evaluate, reject, and add passing candidates
@@ -1019,6 +1019,44 @@ The 100-game ceiling holds: it is per batch, and each arm is its own batch, so a
 holdout costs 200 games as two runs of 100 rather than one run of 200.
 
 138 Simulation, 651 Core, and 10 analytics tests pass.
+
+#### P6.5 candidate ranking (delivered 2026-09-06)
+
+`CandidateRanking` reports four independent measures and **deliberately publishes
+no composite score**. They answer different questions, and collapsing them would
+let a strong-but-fragile candidate outrank a steady one, or hide that a whole
+field converged on one behavior. Rows are ordered by conservative strength purely
+so the list reads sensibly; the other three travel alongside.
+
+- **Strength** is the paired estimate at the deepest measured stage, ordered by
+  the interval's *lower* bound. Ranking on the point estimate would put a noisy
+  candidate above a steadier one that is better on the evidence.
+- **Robustness** reports the worst lower bound across measured contexts and
+  whether the estimate kept its sign. One context cannot demonstrate robustness
+  at all, so that is reported rather than scored — a single-context candidate is
+  never mistaken for a proven one.
+- **Lineage fidelity** is cosine similarity between the candidate's observed
+  category profile and its parent's. It is measured against the parent's actual
+  behavior, not an authored archetype label, because generated candidates carry
+  placeholder catalog metadata until Phase 7 assigns bands from evidence —
+  scoring against that label would be scoring against a fabrication.
+- **Behavioral diversity** is mean cosine distance from the rest of the field,
+  measured over the raw per-mutation build rather than the category profile.
+  Categories are right for fidelity, where two builds pursuing the same end by
+  different means should read as similar, but that coarseness collapses genuinely
+  different candidates onto identical vectors and understates coverage.
+
+Both comparisons use the characterization script, so candidate and parent are
+observed on identical terms. Measured over a seven-candidate field, fidelity
+ranged `0.836`–`1.000` and diversity `0.084`–`0.170`, with the
+promote-to-front candidates correctly reading as the most drifted and most
+exploratory — they moved a later goal to the opening, shifting observed Growth
+from 21 levels to 14 and Cellular Resilience from 5 to 17. Three candidates
+produce identical scripted builds despite different genomes, which is a true
+finding rather than an artifact: a goal reorder or economy bias need not change
+what gets bought under a fixed-budget script.
+
+147 Simulation and 651 Core tests pass.
 
 ### Phase 7 — Calibrate contextual performance bands
 

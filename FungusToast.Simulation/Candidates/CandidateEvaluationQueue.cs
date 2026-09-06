@@ -61,6 +61,22 @@ public sealed class CandidateQueueEntry
     public double? LatestCi95Low { get; set; }
 
     public double? LatestCi95High { get; set; }
+
+    /// <summary>
+    /// Per-stage measurements, kept rather than overwritten because robustness is about agreement
+    /// across contexts: comparison runs in the screening context and holdout in an unseen one, and
+    /// only keeping both makes that comparison possible.
+    /// </summary>
+    public Dictionary<CandidateEvaluationStage, CandidateStageMeasurement> Measurements { get; set; } = new();
+}
+
+public sealed class CandidateStageMeasurement
+{
+    public required double Estimate { get; set; }
+
+    public required double Ci95Low { get; set; }
+
+    public required double Ci95High { get; set; }
 }
 
 /// <summary>
@@ -186,6 +202,15 @@ public sealed class CandidateEvaluationQueue
         if (estimate.HasValue) entry.LatestEstimate = estimate;
         if (ci95Low.HasValue) entry.LatestCi95Low = ci95Low;
         if (ci95High.HasValue) entry.LatestCi95High = ci95High;
+        if (estimate.HasValue && ci95Low.HasValue && ci95High.HasValue)
+        {
+            entry.Measurements[stage] = new CandidateStageMeasurement
+            {
+                Estimate = estimate.Value,
+                Ci95Low = ci95Low.Value,
+                Ci95High = ci95High.Value
+            };
+        }
 
         switch (result)
         {

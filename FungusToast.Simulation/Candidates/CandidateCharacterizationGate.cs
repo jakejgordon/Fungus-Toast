@@ -216,6 +216,23 @@ public static class CandidateCharacterizationGate
     }
 
     /// <summary>
+    /// Runs the same scripted spend against any strategy and returns the levels it bought.
+    ///
+    /// Exposed because ranking needs a parent's build on identical terms to a candidate's: a
+    /// behavioral comparison is only meaningful if both sides were observed under the same script.
+    /// </summary>
+    public static IReadOnlyDictionary<int, int> ObserveBuild(
+        IMutationSpendingStrategy strategy,
+        CandidateCharacterizationSettings? settings = null)
+    {
+        ArgumentNullException.ThrowIfNull(strategy);
+        return RunSpendingScript(
+            strategy,
+            settings ?? new CandidateCharacterizationSettings(),
+            MutationRegistry.GetAll().ToList());
+    }
+
+    /// <summary>
     /// Grants a fixed budget each round and lets the strategy spend it, exactly as a real mutation
     /// phase would, without running growth, decay, or any other board simulation.
     /// </summary>

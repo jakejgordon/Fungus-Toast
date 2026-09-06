@@ -578,6 +578,24 @@ measurement model, phase gates, and open product decisions are in
     batch and each arm is its own batch, so a holdout is two runs of 100. 138
     Simulation, 651 Core, and 10 analytics tests pass. Next: P6.5 ranking
     strength and robustness separately from archetype fidelity.
+46. P6.5 is complete. `CandidateRanking` reports four independent measures and
+    deliberately publishes no composite score, since collapsing them would let a
+    strong-but-fragile candidate outrank a steady one or hide that a field
+    converged on one behavior. Strength orders by the interval's lower bound
+    rather than the point estimate. Robustness reports the worst context and
+    whether the estimate kept its sign, and treats one context as not
+    demonstrating robustness at all. Lineage fidelity compares observed category
+    profiles against the parent's actual behavior rather than an authored
+    archetype label, because generated candidates carry placeholder metadata
+    until Phase 7 assigns bands from evidence. Behavioral diversity uses the raw
+    per-mutation build instead, because category granularity is right for
+    fidelity but collapses genuinely different candidates onto identical
+    vectors. Over a seven-candidate field fidelity ranged `0.836`-`1.000` and
+    diversity `0.084`-`0.170`, with promote-to-front candidates correctly the
+    most drifted (observed Growth 21 to 14, Cellular Resilience 5 to 17). The
+    queue now keeps per-stage measurements rather than overwriting, which is
+    what makes cross-context robustness computable. 147 Simulation and 651 Core
+    tests pass. Next: P6.6 promotion packet.
 
 ### Completion Criteria
 
