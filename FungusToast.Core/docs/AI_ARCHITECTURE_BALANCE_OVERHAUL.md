@@ -856,12 +856,45 @@ lets tests hand the gate a strategy that throws, buys nothing, drifts under a
 fixed seed, buys an excluded mutation, or drafts an unoffered mycovariant, so
 each of the seven checks is shown to fire rather than assumed to work.
 
+#### Generated testing catalog (delivered 2026-09-06)
+
+The Phase 6 gate's "generated testing catalog" now exists.
+`GeneratedCandidateCatalog` publishes candidates into a new
+`StrategySetEnum.Generated`, which `AIRoster` never registers.
+
+Registering rather than injecting is the point. Every reproducibility guarantee
+built in Phases 2 and 3 — resolved manifests, stable strategy identity in
+Parquet, replay outcome fingerprints — keys off a registered definition. A
+candidate handed straight to the simulator would run, but outside all of that,
+which is exactly the confounding this initiative exists to remove. A manifest
+naming a published candidate now passes the ordinary
+`ExperimentManifestValidator`; one naming an unpublished candidate fails.
+
+Two small additive Core changes support it. `StrategyRegistry.Register` accepts
+an optional stable-ID factory, so a candidate keeps its own
+`candidate.<parent-slug>.<fingerprint>` identity instead of being minted a
+second `legacy.*` one and ending up addressed two ways across artifacts. And
+`AIRoster.AuthoredStrategySets` names the four sets the roster registers, so
+invariants about authored content iterate that rather than every enum value —
+two Core tests had assumed those were the same thing.
+
+Nothing player-facing can reach these entries: every published candidate carries
+`StrategyPool.None`, so pool-filtered campaign and single-player selection
+returns nothing even by accident, and each carries no difficulty band and no
+campaign difficulty rather than an authored guess. Phase 7 assigns real bands
+from evidence. Publishing is wholesale, so the catalog always reflects one
+search rather than an accumulation of untracked runs.
+
+Making candidates registrable also exposed an assumption in the P6.1 validator:
+its display-name collision rule checked every registered set, so re-publishing a
+candidate saw itself as a collision. The rule now excludes the generated set,
+which is the candidate's own home; duplicates within one publish are caught by
+the catalog instead.
+
 **Still outstanding for P6.3:** the three game-consuming stages (smoke,
-calibration comparison, unseen holdout). Those need generated candidates to be
-addressable by the existing manifest pipeline, which resolves strategies through
-`StrategyRegistry` by set and name — so the next slice is the generated testing
-catalog the Phase 6 gate already calls for, followed by per-stage manifest
-emission and progression rules.
+calibration comparison, unseen holdout) — per-stage manifest emission, paired
+control conditions, and progression rules that stop a candidate at its first
+failing stage.
 
 ### Phase 7 — Calibrate contextual performance bands
 

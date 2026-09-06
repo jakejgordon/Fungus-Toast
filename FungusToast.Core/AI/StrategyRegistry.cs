@@ -35,10 +35,16 @@ namespace FungusToast.Core.AI
             DefinitionsBySet.Clear();
         }
 
+        /// <param name="stableIdFactory">
+        /// Overrides the derived <c>legacy.*</c> identity. Machine-generated candidates arrive
+        /// with an identity of their own, and minting a second one for the registry would leave
+        /// the same strategy addressed two different ways across artifacts.
+        /// </param>
         public static void Register(
             StrategySetEnum strategySet,
             IEnumerable<IMutationSpendingStrategy> strategies,
-            Func<IMutationSpendingStrategy, StrategyCatalogEntry> entryFactory)
+            Func<IMutationSpendingStrategy, StrategyCatalogEntry> entryFactory,
+            Func<IMutationSpendingStrategy, string>? stableIdFactory = null)
         {
             if (entryFactory == null)
             {
@@ -49,7 +55,7 @@ namespace FungusToast.Core.AI
                 .Select(strategy => new StrategyDefinition(
                     strategy,
                     entryFactory(strategy),
-                    StrategyIdentity.GetStableId(strategySet, strategy),
+                    stableIdFactory?.Invoke(strategy) ?? StrategyIdentity.GetStableId(strategySet, strategy),
                     StrategyIdentity.GetDefinitionFingerprint(strategy)))
                 .ToList();
 

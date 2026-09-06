@@ -1,4 +1,4 @@
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
@@ -17,7 +17,11 @@ public class StrategyCatalogTests
     {
         _ = AIRoster.ProvenStrategies.Count;
 
-        foreach (var strategySet in Enum.GetValues<StrategySetEnum>())
+        // Generated holds run-time candidates rather than authored content, so it is empty here
+        // and carries identities the simulation supplies instead of GetStableId's legacy.* scheme.
+        Assert.Empty(StrategyRegistry.GetDefinitions(StrategySetEnum.Generated));
+
+        foreach (var strategySet in AIRoster.AuthoredStrategySets)
         {
             var definitions = StrategyRegistry.GetDefinitions(strategySet);
             Assert.NotEmpty(definitions);

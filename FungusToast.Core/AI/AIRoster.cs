@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -33,7 +33,16 @@ namespace FungusToast.Core.AI
         /// <summary>
         /// Campaign strategies (simple naming) mirroring ProvenStrategies.
         /// </summary>
-        Campaign
+        Campaign,
+
+        /// <summary>
+        /// Machine-generated Phase 6 candidates. AIRoster never registers this set; the
+        /// simulation's candidate catalog publishes into it at run time so generated candidates
+        /// are addressable by the normal manifest, replay, and export pipeline instead of
+        /// bypassing it. Entries here are deliberately in no <see cref="StrategyPool"/>, so no
+        /// campaign or single-player selection path can reach them.
+        /// </summary>
+        Generated
     }
 
     public enum StrategySelectionPolicy
@@ -2794,6 +2803,20 @@ namespace FungusToast.Core.AI
         public static readonly Dictionary<string, IMutationSpendingStrategy> ProvenStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> TestingStrategiesByName;
         public static readonly Dictionary<string, IMutationSpendingStrategy> CampaignStrategiesByName;
+
+        /// <summary>
+        /// The strategy sets this roster registers at startup. <see cref="StrategySetEnum.Generated"/>
+        /// is deliberately absent: it is populated at run time by the simulation's candidate
+        /// catalog and is empty in a normal process, so invariants about authored content must
+        /// iterate this list rather than every enum value.
+        /// </summary>
+        public static IReadOnlyList<StrategySetEnum> AuthoredStrategySets { get; } = new[]
+        {
+            StrategySetEnum.Proven,
+            StrategySetEnum.Testing,
+            StrategySetEnum.Mycovariants,
+            StrategySetEnum.Campaign
+        };
 
         static AIRoster()
         {

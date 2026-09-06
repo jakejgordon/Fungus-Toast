@@ -1,4 +1,4 @@
-using FungusToast.Core.AI;
+﻿using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
 
 namespace FungusToast.Core.Tests.AI;
@@ -35,12 +35,15 @@ public sealed class StrategyIdentityTests
     [Fact]
     public void Registered_strategy_ids_are_unique_across_all_rosters()
     {
-        var ids = Enum.GetValues<StrategySetEnum>()
+        // Generated is excluded: the simulation's candidate catalog populates it at run time with
+        // identities of its own, so it is empty here and its IDs are not minted by GetStableId.
+        var ids = AIRoster.AuthoredStrategySets
             .SelectMany(strategySet => AIRoster.GetStrategiesByFilter(strategySet, new StrategyCatalogFilter())
                 .Select(strategy => StrategyIdentity.GetStableId(strategySet, strategy)))
             .ToList();
 
         Assert.NotEmpty(ids);
+        Assert.Empty(StrategyRegistry.GetDefinitions(StrategySetEnum.Generated));
         Assert.Equal(ids.Count, ids.Distinct(StringComparer.Ordinal).Count());
     }
 

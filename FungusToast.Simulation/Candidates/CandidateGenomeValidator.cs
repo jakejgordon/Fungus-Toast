@@ -48,14 +48,18 @@ public static partial class CandidateGenomeValidator
             return;
         }
 
-        // A generated candidate must never shadow a roster strategy: StrategyRegistry rejects
-        // duplicate names, and a collision would also make artifacts ambiguous after the fact.
+        // A generated candidate must never shadow an authored roster strategy: StrategyRegistry
+        // rejects duplicate names, and a collision would also make artifacts ambiguous after the
+        // fact. The Generated set is excluded because it is the candidate's own home - publishing
+        // replaces it wholesale, so re-validating a published candidate must not see itself as a
+        // collision. Duplicates within a single publish are caught by the catalog instead.
         var collides = Enum.GetValues(typeof(StrategySetEnum))
             .Cast<StrategySetEnum>()
+            .Where(strategySet => strategySet != StrategySetEnum.Generated)
             .SelectMany(StrategyRegistry.GetDefinitions)
             .Any(definition => string.Equals(definition.Strategy.StrategyName, displayName, StringComparison.OrdinalIgnoreCase));
         if (collides)
-            errors.Add($"displayName '{displayName}' collides with a registered strategy name.");
+            errors.Add($"displayName '{displayName}' collides with an authored strategy name.");
     }
 
     private static void ValidateGenes(CandidateGeneSet genes, ICollection<string> errors)

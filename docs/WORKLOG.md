@@ -468,6 +468,28 @@ measurement model, phase gates, and open product decisions are in
     manifest pipeline, which resolves strategies through `StrategyRegistry` by
     set and name, so the next slice is the generated testing catalog, then
     per-stage manifest emission and progression rules.
+41. The generated testing catalog the Phase 6 gate calls for now exists.
+    `GeneratedCandidateCatalog` publishes candidates into a new
+    `StrategySetEnum.Generated` that `AIRoster` never registers, so a manifest
+    naming a published candidate passes the ordinary
+    `ExperimentManifestValidator` and its evaluation inherits the existing
+    resolved-manifest and replay guarantees instead of bypassing them. Two
+    additive Core changes support it: `StrategyRegistry.Register` takes an
+    optional stable-ID factory so a candidate keeps its own `candidate.*`
+    identity rather than being minted a second `legacy.*` one, and
+    `AIRoster.AuthoredStrategySets` names the four registered sets so
+    authored-content invariants stop iterating every enum value — two Core
+    tests had assumed those were the same thing. Every published candidate
+    carries `StrategyPool.None`, no difficulty band, and no campaign
+    difficulty, so no pool-filtered selection path can reach one. Publishing is
+    wholesale rather than incremental. Making candidates registrable also
+    exposed a P6.1 assumption: the display-name collision rule checked every
+    set, so re-publishing a candidate saw itself as a collision; it now
+    excludes the generated set. 86 Simulation tests and 651 Core tests pass,
+    Unity compiles against the refreshed Core plugin, and the experiment
+    contract's selective resume and exact replay both passed. Next: per-stage
+    manifest emission and progression rules for the three game-consuming
+    stages.
 
 ### Completion Criteria
 
