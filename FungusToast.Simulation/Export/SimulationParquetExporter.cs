@@ -114,7 +114,7 @@ namespace FungusToast.Simulation.Export
             var resolvedManifestSha256 = ExperimentFingerprint.ForFile(resolvedManifestPath);
             File.WriteAllText(
                 Path.Combine(runFolder, "resolved-manifest.sha256"),
-                $"{resolvedManifestSha256}  {Path.GetFileName(resolvedManifestPath)}{Environment.NewLine}");
+                $"{resolvedManifestSha256}  {Path.GetFileName(resolvedManifestPath)}\n");
             ExperimentRunStateStore.MarkFinished(
                 metadata,
                 resolvedManifest.Sampling.CompletionStatus,
