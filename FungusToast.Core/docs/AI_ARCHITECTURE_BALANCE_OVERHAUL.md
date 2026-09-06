@@ -713,6 +713,8 @@ not promote the Testing candidate or change a player-facing strategy.
   contract below.
 - **P6.3:** Implement staged evaluation: static validation, unit/characterization
   checks, tiny smoke, calibration comparison, then unseen holdout conditions.
+  **Partially complete (2026-09-06)** — the two zero-game stages are done; the
+  game-consuming stages remain. See the contract below.
 - **P6.4:** Add dominated-candidate pruning, resource/time budgets, retry caps,
   resumable queues, and an enforced maximum of 100 games in any one batch.
 - **P6.5:** Rank strength and robustness separately from archetype fidelity and
@@ -824,6 +826,42 @@ kept a process-wide non-concurrent dictionary that tore once a second Simulation
 test class ran in parallel. It is fixed separately in commit `b3e1807`; the map
 holds only handler references, so no simulation outcome, replay fingerprint, or
 corpus version is affected.
+
+#### P6.3 characterization gate (delivered 2026-09-06; stages 1–2 of 5)
+
+P6.3's two zero-game stages are complete. Static validation is the P6.2 plan,
+genome, and rejection layer. `CandidateCharacterizationGate` adds the
+unit/characterization stage: it materializes each candidate and asks whether it
+actually plays — constructs, spends without throwing, buys something, honors its
+own declared exclusions, drafts a mycovariant that was actually offered, and does
+all of it identically under a repeated seed.
+
+The stage exists because a gene set can be structurally perfect and behaviorally
+inert, and because catching that later is expensive: no games here, a batch at
+smoke, fifty at comparison. Determinism is checked rather than assumed —
+P3.R4 paired inference compares a candidate against its control under matched
+seeds, so a candidate whose own decisions drifted under a fixed seed would
+silently corrupt every downstream interval.
+
+Evidence: generating from **all 132 registered parameterized parents** across
+goal-order, economy, high-tier, and max-tier operators produced 1,559 proposals
+and 1,247 accepted candidates, and **all 1,247 passed characterization in 2.5
+seconds** with zero findings. That is a clean no-false-positive result, and it
+independently confirms AI seed-determinism across 1,247 distinct configurations
+rather than the handful covered by existing tests.
+
+Because every failure the gate detects is unreachable through the real
+materialization path, `Run` takes an optional materializer. That seam is what
+lets tests hand the gate a strategy that throws, buys nothing, drifts under a
+fixed seed, buys an excluded mutation, or drafts an unoffered mycovariant, so
+each of the seven checks is shown to fire rather than assumed to work.
+
+**Still outstanding for P6.3:** the three game-consuming stages (smoke,
+calibration comparison, unseen holdout). Those need generated candidates to be
+addressable by the existing manifest pipeline, which resolves strategies through
+`StrategyRegistry` by set and name — so the next slice is the generated testing
+catalog the Phase 6 gate already calls for, followed by per-stage manifest
+emission and progression rules.
 
 ### Phase 7 — Calibrate contextual performance bands
 

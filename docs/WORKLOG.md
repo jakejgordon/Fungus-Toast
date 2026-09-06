@@ -450,6 +450,24 @@ measurement model, phase gates, and open product decisions are in
     that tore once a second Simulation test class ran in parallel, fixed
     separately in `b3e1807` with no effect on outcomes, replay fingerprints, or
     the corpus version. Next: P6.3 staged evaluation.
+40. P6.3 is partially complete: both zero-game stages are done. Static
+    validation is the existing plan/genome/rejection layer, and the new
+    `CandidateCharacterizationGate` adds the unit/characterization stage — it
+    materializes each candidate and checks that it constructs, spends without
+    throwing, buys something, honors its own declared exclusions, drafts an
+    offered mycovariant, and repeats all of it identically under a fixed seed.
+    Generating from all 132 registered parameterized parents produced 1,559
+    proposals and 1,247 accepted candidates, and all 1,247 passed
+    characterization in 2.5 seconds with zero findings; that is both a
+    no-false-positive result and independent confirmation of AI seed
+    determinism across 1,247 configurations. Because every failure the gate
+    detects is unreachable through real materialization, `Run` takes an
+    optional materializer so tests can prove each of the seven checks fires.
+    78 Simulation tests and 651 Core tests pass. Still outstanding for P6.3:
+    the three game-consuming stages. Those need candidates addressable by the
+    manifest pipeline, which resolves strategies through `StrategyRegistry` by
+    set and name, so the next slice is the generated testing catalog, then
+    per-stage manifest emission and progression rules.
 
 ### Completion Criteria
 
