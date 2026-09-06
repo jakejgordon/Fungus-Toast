@@ -1492,7 +1492,14 @@ namespace FungusToast.Unity.UI.MutationTree
                 btn.DisableUpgrade();
         }
 
-        private void ApplyResponsiveMutationPanelLayout()
+        private void ApplyResponsiveMutationPanelLayout() => ApplyResponsiveMutationPanelLayout(GetMutationPanelTopInset());
+
+        // Takes topInset explicitly so RefreshResponsiveMutationPanelLayout() can pass the
+        // exact same value it later hands to PositionMutationInspector(). Both used to call
+        // GetMutationPanelTopInset() independently, but ForceMutationPanelLayoutRebuild()
+        // runs between those two calls and can shift the header row's measured rect, letting
+        // the scroll view and the inspector panel align to two subtly different top insets.
+        private void ApplyResponsiveMutationPanelLayout(float topInset)
         {
             if (mutationTreeRect == null)
             {
@@ -1507,7 +1514,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 ConfigureMutationPanelRect(targetWidth);
             }
 
-            float topInset = GetMutationPanelTopInset();
             float inspectorWidth = GetMutationInspectorWidth();
             ConfigureMutationScrollViewRect(topInset, inspectorWidth);
 
@@ -1742,7 +1748,9 @@ namespace FungusToast.Unity.UI.MutationTree
             return Mathf.Clamp(canvasSize.x * 0.23f, 320f, MutationInspectorPanel.PreferredWidth);
         }
 
-        private void PositionMutationInspector()
+        private void PositionMutationInspector() => PositionMutationInspector(GetMutationPanelTopInset());
+
+        private void PositionMutationInspector(float topInset)
         {
             if (mutationInspector == null || mutationTreeRect == null || mutationScrollViewContentRect == null)
             {
@@ -1750,7 +1758,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             float inspectorWidth = GetMutationInspectorWidth();
-            float topInset = GetMutationPanelTopInset();
             Bounds treeBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(
                 mutationTreeRect,
                 mutationScrollViewContentRect);
@@ -1884,9 +1891,13 @@ namespace FungusToast.Unity.UI.MutationTree
         private void RefreshResponsiveMutationPanelLayout()
         {
             CacheMutationPanelLayoutReferences();
-            ApplyResponsiveMutationPanelLayout();
+            // Computed once and reused below so the scroll view and the inspector
+            // panel can't drift onto two different top insets — see the comment
+            // on ApplyResponsiveMutationPanelLayout(float).
+            float topInset = GetMutationPanelTopInset();
+            ApplyResponsiveMutationPanelLayout(topInset);
             ForceMutationPanelLayoutRebuild();
-            PositionMutationInspector();
+            PositionMutationInspector(topInset);
 
             if (IsTimeLapseCoachmarkVisible())
             {
