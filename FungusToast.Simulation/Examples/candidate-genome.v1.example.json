@@ -1,0 +1,104 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-genome.v1",
+  "candidateId": "candidate.tst-balancedgeneralistcontrol.07e66bd8103f",
+  "displayName": "CAND_OpenerOrderAnabolicFirst",
+  "lineage": {
+    "parentStrategyId": "legacy.testing.tst-balancedgeneralistcontrol.v1",
+    "parentDefinitionFingerprint": "fabaf0bed5b34ed0aa939d02a8df5192b250608768eb1e6a8f1a1d61853a91c3",
+    "parentStrategySet": "testing",
+    "notes": "Balanced Control with Anabolic Inversion moved ahead of Creeping Mold; the contrast confirmed by the frozen Phase 6 opener-order holdout."
+  },
+  "genes": {
+    "prioritizeHighTier": true,
+    "maxTier": "tier10",
+    "priorityMutationCategories": null,
+    "targetMutationGoals": [
+      {
+        "mutationId": 14,
+        "targetLevel": null
+      },
+      {
+        "mutationId": 16,
+        "targetLevel": null
+      },
+      {
+        "mutationId": 11,
+        "targetLevel": null
+      },
+      {
+        "mutationId": 25,
+        "targetLevel": null
+      }
+    ],
+    "surgePriorityIds": [],
+    "surgeAttemptTurnFrequency": 5,
+    "economyBias": "moderateEconomy",
+    "mycovariantPreferences": [
+      {
+        "mycovariantIds": [
+          1027
+        ],
+        "priority": 1000
+      },
+      {
+        "mycovariantIds": [
+          1028
+        ],
+        "priority": 999
+      },
+      {
+        "mycovariantIds": [
+          1029
+        ],
+        "priority": 998
+      },
+      {
+        "mycovariantIds": [
+          1012
+        ],
+        "priority": 997
+      },
+      {
+        "mycovariantIds": [
+          1030
+        ],
+        "priority": 996
+      },
+      {
+        "mycovariantIds": [
+          1024
+        ],
+        "priority": 995
+      },
+      {
+        "mycovariantIds": [
+          1025
+        ],
+        "priority": 994
+      },
+      {
+        "mycovariantIds": [
+          1026
+        ],
+        "priority": 993
+      },
+      {
+        "mycovariantIds": [
+          1021
+        ],
+        "priority": 992
+      },
+      {
+        "mycovariantIds": [
+          1017
+        ],
+        "priority": 991
+      }
+    ],
+    "excludedMutationIds": [],
+    "startingSporeEdgeOffset": 0
+  },
+  "variedGenes": [
+    "targetMutationGoals"
+  ]
+}

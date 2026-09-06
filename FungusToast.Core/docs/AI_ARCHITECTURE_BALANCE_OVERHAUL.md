@@ -707,6 +707,7 @@ not promote the Testing candidate or change a player-facing strategy.
 
 - **P6.1:** Define a bounded, serializable candidate genome from safe policy
   choices and tunables. Every dimension must be independently switchable.
+  **Complete (2026-09-06)** — see the contract below.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,
   lineage, and invalid-candidate rejection.
 - **P6.3:** Implement staged evaluation: static validation, unit/characterization
@@ -720,6 +721,60 @@ not promote the Testing candidate or change a player-facing strategy.
 - **Gate:** A clean run can generate, evaluate, reject, and add passing candidates
   to the generated testing catalog without manual file edits, while no candidate
   enters a player-facing pool without review.
+
+#### P6.1 candidate genome contract (delivered 2026-09-06)
+
+`fungus-toast.ai-candidate-genome.v1` lives in `FungusToast.Simulation/Candidates`,
+alongside the Phase 2 experiment contract rather than in Core. It is search
+tooling, not gameplay: Core is untouched, no AI behavior changed, and the AI
+corpus version is unaffected, so the frozen P3.5 v3 baselines remain valid.
+A materialized candidate is an ordinary `ParameterizedSpendingStrategy`.
+
+Ten genes cover the whole behavior surface: `PrioritizeHighTier`, `MaxTier`,
+`PriorityMutationCategories`, `TargetMutationGoals`, `SurgePriorityIds`,
+`SurgeAttemptTurnFrequency`, `EconomyBias`, `MycovariantPreferences`,
+`ExcludedMutationIds`, and `StartingSporeEdgeOffset`.
+
+Four decisions define the contract:
+
+- **The gene set is stated in full, not as a sparse diff.** A genome materializes
+  without consulting the roster, and two genomes describing the same behavior
+  always share one fingerprint, which is what P6.2 deduplication will need.
+- **"Independently switchable" is enforced, not documented.** Each genome declares
+  `variedGenes`; validation fails both when a gene actually differs but is not
+  declared and when a declared gene did not change. This is the same
+  declared-difference contract `--compare-manifests` already applies to
+  experiment inputs, so a candidate is a single-variable treatment by
+  construction rather than by reviewer diligence.
+- **Identity is derived, never authored.** The behavior fingerprint is SHA-256 over
+  a canonical per-gene text, and `candidateId` is
+  `candidate.<parent-slug>.<fingerprint-prefix>`. Validation recomputes it, and
+  lineage stores the parent's stable ID plus Core's definition fingerprint, so a
+  changed parent invalidates the lineage claim instead of silently reparenting.
+  Display names are namespaced `CAND_` and rejected if they collide with a
+  registered strategy.
+- **Bounds are semantic, not just structural.** Every mutation, mycovariant, and
+  category ID must exist; surge entries must actually be Mycelial Surges; target
+  levels must be within the mutation's own range; exclusions may not overlap
+  goals; and preferences must be serialized in Core's evaluation order.
+
+Two Core details the genome deliberately preserves rather than inherits. Core's
+definition fingerprint flattens a null `priorityMutationCategories` and an empty
+one to the same text even though it treats null as "every category"; the genome
+keeps them distinct so deduplication cannot merge two different behaviors.
+And repeating a mutation in the goal list is a real roster idiom — buy it to a
+low level early, return for more later — so repeats are legal as a strictly
+rising ladder and rejected when flat or falling, which is dead configuration.
+
+Validation evidence: 48 Simulation tests pass, including a round trip over all
+132 registered parameterized strategies proving that extracting a strategy's
+genes and re-materializing it under its own name reproduces Core's definition
+fingerprint exactly. That is what makes "the genome covers the safe surface" a
+checked claim rather than an assertion; it also fixed the two bounds
+(`startingSporeEdgeOffset`, the goal ladder) where the first draft contradicted
+real roster content. Core passes 649/649. The checked-in example
+`FungusToast.Simulation/Examples/candidate-genome.v1.example.json` encodes the
+opener-order candidate the Phase 6 holdout already confirmed.
 
 ### Phase 7 — Calibrate contextual performance bands
 

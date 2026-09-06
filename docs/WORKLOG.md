@@ -410,6 +410,26 @@ measurement model, phase gates, and open product decisions are in
     The Phase 6 gate now permits bounded candidate tooling around proven safe
     dimensions such as mutation-goal order; the Testing candidate remains out
     of player-facing pools pending explicit review.
+38. P6.1 is complete. `fungus-toast.ai-candidate-genome.v1` in
+    `FungusToast.Simulation/Candidates` defines a bounded, serializable
+    candidate genome over ten genes covering the entire
+    `ParameterizedSpendingStrategy` behavior surface. It sits beside the Phase 2
+    experiment contract rather than in Core, so no AI behavior changed and the
+    AI corpus version is unaffected. Genomes state their gene set in full,
+    derive `candidateId` from parent lineage plus a SHA-256 behavior
+    fingerprint, and declare `variedGenes`; validation fails both undeclared
+    differences and declared genes that did not change, making single-variable
+    treatments structural rather than procedural. Semantic bounds reject
+    unknown mutation/mycovariant/category IDs, non-surge surge entries,
+    out-of-range target levels, goal/exclusion overlap, and preferences not in
+    Core's evaluation order. A round trip over all 132 registered parameterized
+    strategies proves an extracted gene set re-materializes to Core's exact
+    definition fingerprint; that test caught two first-draft bounds that
+    contradicted real roster content, and established that a repeated mutation
+    goal is a legitimate rising-level ladder. 48 Simulation tests and 649 Core
+    tests pass, and the experiment-contract script's selective resume and exact
+    replay both passed. Next: P6.2 deterministic candidate generation,
+    deduplication, and lineage.
 
 ### Completion Criteria
 
