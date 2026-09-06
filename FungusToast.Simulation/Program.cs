@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using FungusToast.Simulation.Candidates;
 using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
 using System.Text;
@@ -72,6 +73,11 @@ namespace FungusToast.Simulation
                 }
                 return;
             }
+
+            // Generated candidates live only in the process that published them, so a catalog must
+            // be loaded before any lineup is resolved - ParseCommandLineArguments resolves
+            // --strategy-names against the registry as it parses.
+            if (!TryLoadCandidateCatalog(args)) return;
 
             // Parse command-line arguments
             var config = ParseCommandLineArguments(args);
@@ -432,8 +438,16 @@ namespace FungusToast.Simulation
                     .ToList()
             };
             var targetStrategyId = inputManifest.Analysis.Hypothesis?.TargetStrategyId;
-            if (!string.IsNullOrWhiteSpace(targetStrategyId)
-                && metadata.SelectedStrategies.All(strategy => !string.Equals(strategy.StrategyId, targetStrategyId, StringComparison.Ordinal)))
+            // A strategy-swap treatment declares both sides of the swap, and each arm contains only
+            // its own side: the control arm runs the control strategy, the treatment arm runs the
+            // target. Both arms carry the same hypothesis because the analyzer reads it from the
+            // control manifest, so either declared identity satisfies this check.
+            var controlStrategyId = inputManifest.Analysis.Hypothesis?.ControlStrategyId;
+            var acceptableStrategyIds = new[] { targetStrategyId, controlStrategyId }
+                .Where(id => !string.IsNullOrWhiteSpace(id))
+                .ToList();
+            if (acceptableStrategyIds.Count > 0
+                && metadata.SelectedStrategies.All(strategy => !acceptableStrategyIds.Contains(strategy.StrategyId, StringComparer.Ordinal)))
             {
                 throw new InvalidOperationException(
                     $"Preregistered target strategy '{targetStrategyId}' is not present in the resolved lineup.");
@@ -572,6 +586,37 @@ namespace FungusToast.Simulation
             };
         }
 
+        /// <summary>
+        /// Publishes a candidate catalog named by --candidate-catalog, if present. Returns false
+        /// when loading failed, so the run stops instead of silently falling back to a lineup that
+        /// happens to resolve.
+        /// </summary>
+        private static bool TryLoadCandidateCatalog(string[] args)
+        {
+            var index = Array.FindIndex(args, argument => string.Equals(argument, "--candidate-catalog", StringComparison.Ordinal));
+            if (index < 0) return true;
+            if (index + 1 >= args.Length || args[index + 1].StartsWith("-", StringComparison.Ordinal))
+            {
+                Console.Error.WriteLine("--candidate-catalog requires a path to a candidate catalog JSON file.");
+                Environment.ExitCode = 1;
+                return false;
+            }
+
+            var path = args[index + 1];
+            try
+            {
+                var published = CandidateCatalogLoader.LoadAndPublish(path);
+                Console.WriteLine($"Loaded candidate catalog '{path}' with {published.Count} generated entries.");
+                return true;
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Failed to load candidate catalog '{path}': {exception.Message}");
+                Environment.ExitCode = 1;
+                return false;
+            }
+        }
+
         private static ExperimentAnalysisPlan BuildAnalysisPlan(SimulationConfig config)
         {
             ExperimentHypothesis? hypothesis = null;
@@ -598,6 +643,8 @@ namespace FungusToast.Simulation
                     HypothesisId = config.HypothesisId,
                     PrimaryContextId = config.PairingGroupId,
                     TargetStrategyId = config.TargetStrategyId,
+                    // Optional: only a strategy-swap treatment needs to name the control side.
+                    ControlStrategyId = string.IsNullOrWhiteSpace(config.ControlStrategyId) ? null : config.ControlStrategyId,
                     PrimaryMetric = config.PrimaryMetric!.Value,
                     Estimand = ExperimentEstimand.PairedMeanDifference,
                     Direction = config.HypothesisDirection!.Value,
@@ -954,6 +1001,13 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--control-strategy-id":
+                        if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
+                        {
+                            config.ControlStrategyId = args[i + 1].Trim();
+                            i++;
+                        }
+                        break;
                     case "--primary-metric":
                         if (i + 1 < args.Length && Enum.TryParse<ExperimentPrimaryMetric>(args[i + 1], true, out var primaryMetric))
                         {
@@ -1288,6 +1342,8 @@ namespace FungusToast.Simulation
             public ExperimentEvidenceStage EvidenceStage { get; set; }
             public string HypothesisId { get; set; } = "";
             public string TargetStrategyId { get; set; } = "";
+            /// <summary>Set only when the treatment swaps one strategy for another.</summary>
+            public string ControlStrategyId { get; set; } = "";
             public ExperimentPrimaryMetric? PrimaryMetric { get; set; }
             public ExperimentDirection? HypothesisDirection { get; set; }
             public double? HypothesisMargin { get; set; }

@@ -73,6 +73,9 @@ public static partial class ExperimentManifestValidator
         if (string.IsNullOrWhiteSpace(hypothesis.HypothesisId)) errors.Add("analysis.hypothesis.hypothesisId is required.");
         if (string.IsNullOrWhiteSpace(hypothesis.PrimaryContextId)) errors.Add("analysis.hypothesis.primaryContextId is required.");
         if (string.IsNullOrWhiteSpace(hypothesis.TargetStrategyId)) errors.Add("analysis.hypothesis.targetStrategyId is required.");
+        // Present-but-blank is an authoring mistake; absent means "the same strategy in both arms".
+        if (hypothesis.ControlStrategyId != null && string.IsNullOrWhiteSpace(hypothesis.ControlStrategyId))
+            errors.Add("analysis.hypothesis.controlStrategyId must be non-blank when present; omit it when both arms run the same strategy.");
         if (!double.IsFinite(hypothesis.Margin) || hypothesis.Margin < 0) errors.Add("analysis.hypothesis.margin must be finite and non-negative.");
         if (hypothesis.Estimand != ExperimentEstimand.PairedMeanDifference)
             errors.Add("analysis.hypothesis.estimand must be pairedMeanDifference.");

@@ -713,8 +713,7 @@ not promote the Testing candidate or change a player-facing strategy.
   contract below.
 - **P6.3:** Implement staged evaluation: static validation, unit/characterization
   checks, tiny smoke, calibration comparison, then unseen holdout conditions.
-  **Partially complete (2026-09-06)** — the two zero-game stages are done; the
-  game-consuming stages remain. See the contract below.
+  **Complete (2026-09-06)** — see the contracts below.
 - **P6.4:** Add dominated-candidate pruning, resource/time budgets, retry caps,
   resumable queues, and an enforced maximum of 100 games in any one batch.
 - **P6.5:** Rank strength and robustness separately from archetype fidelity and
@@ -933,8 +932,55 @@ control arm was. Reference metadata is copied verbatim except for pools, because
 reference across every set — a faithful copy makes it irrelevant which
 registration a metadata lookup finds.
 
-**Still outstanding for P6.3:** per-stage manifest emission and the progression
-rules that stop a candidate at its first failing stage.
+#### P6.3 complete — staged emission and the closed loop (2026-09-06)
+
+`CandidateEvaluationEmitter` emits a stage's two arms, and the loop now runs end
+to end: generate, characterize, publish, emit, run both arms, verdict.
+
+**Two single-condition runs, not one two-condition manifest.** The batch runner
+derives its conditions from config strata (player counts x boards x strategy
+sets), so it cannot express two conditions of identical shape differing only in
+lineup. The offline analyzer, meanwhile, pairs two artifact *folders*. Two runs
+satisfy both. Each arm declares the same analysis plan and combined budget,
+because the analyzer refuses a verdict whose arms disagree on either.
+
+Progression is refused, not warned about: a stage cannot be emitted until every
+earlier stage has passed, and a holdout must change both board and seed.
+Comparison and holdout carry a preregistered hypothesis; smoke and calibration
+carry none, because the frozen gates forbid a decision-bearing plan below
+comparison.
+
+Three blockers surfaced only by trying to run it, and each is fixed:
+
+- **The verdict could not describe a strategy swap.** `build_preregistered_verdict`
+  matched its target row with `strategy_id_control == target AND
+  strategy_id_treatment == target`, which holds only when the treatment leaves
+  strategy identity unchanged. A swap put a different strategy in the target slot
+  per arm, so the filter found no rows. The hypothesis now takes an optional
+  `controlStrategyId`; omitting it preserves the original behavior exactly. This
+  corrects the claim made when the evaluation shape was chosen — the paired
+  machinery did *not* already support a swap.
+- **The runner rejected the control arm**, because it required the hypothesis
+  target to be in the resolved lineup and the control arm contains the parent.
+  Either declared identity now satisfies that check.
+- **Candidates did not exist for the simulator.** It runs as its own process,
+  where the generated set is empty, so candidates could be designed and screened
+  but never played. `--candidate-catalog` loads a serialized evaluation cast
+  before any lineup is resolved.
+
+Input schema is `fungus-toast.experiment-input.v4`. `controlStrategyId` is
+omitted from JSON when unset, so every manifest written before it existed still
+serializes byte-identically and keeps its recorded checksum; the result schema
+stays at v7 and existing artifacts remain replayable.
+
+**End-to-end evidence.** A real comparison stage ran through the new path: 4
+generated candidates characterized and published, both 50-game arms executed from
+emitted command lines on a 40x40 board, and the analyzer issued a preregistered
+verdict — estimate `-0.0173` on normalized board share, 95% interval
+`[-0.0564, +0.0218]` against a `0.05` margin over 50 complete pairs, `not_supported`.
+The candidate does not beat its parent, which is a real result rather than a
+placeholder. 122 Simulation, 651 Core, and 10 analytics tests pass, and the
+experiment contract verified end to end.
 
 ### Phase 7 — Calibrate contextual performance bands
 

@@ -1,4 +1,4 @@
-using FungusToast.Core.AI;
+﻿using FungusToast.Core.AI;
 using FungusToast.Simulation.Models;
 using System.Text.Json.Serialization;
 
@@ -10,7 +10,7 @@ namespace FungusToast.Simulation.Experiments;
 /// </summary>
 public sealed class ExperimentManifest
 {
-    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v3";
+    public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v4";
     public const int MaximumGamesPerCondition = 100;
 
     public required string SchemaVersion { get; init; }
@@ -45,6 +45,18 @@ public sealed class ExperimentHypothesis
     public required string HypothesisId { get; init; }
     public required string PrimaryContextId { get; init; }
     public required string TargetStrategyId { get; init; }
+
+    /// <summary>
+    /// The strategy occupying the target's slot in the control arm, when the treatment is a
+    /// strategy swap rather than an environment change. Omit it when both arms run the same
+    /// strategy, which is the original paired shape.
+    ///
+    /// Serialized only when set, so every manifest written before this field existed still
+    /// produces byte-identical JSON and keeps its recorded checksum.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? ControlStrategyId { get; init; }
+
     public required ExperimentPrimaryMetric PrimaryMetric { get; init; }
     public required ExperimentEstimand Estimand { get; init; }
     public required ExperimentDirection Direction { get; init; }

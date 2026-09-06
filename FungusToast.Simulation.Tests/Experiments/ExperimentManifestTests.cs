@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
@@ -12,7 +12,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void CheckedInExample_DeserializesAndValidates()
     {
-        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v3.example.json");
+        var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", "experiment-input.v4.example.json");
         var manifest = ExperimentManifestJson.Deserialize(File.ReadAllText(path));
         Assert.Empty(ExperimentManifestValidator.Validate(manifest));
     }
@@ -37,7 +37,7 @@ public sealed class ExperimentManifestTests
     [Fact]
     public void Deserialize_RejectsMissingRequiredFields()
     {
-        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v3\" }";
+        const string json = "{ \"schemaVersion\": \"fungus-toast.experiment-input.v4\" }";
         Assert.Throws<JsonException>(() => ExperimentManifestJson.Deserialize(json));
     }
 

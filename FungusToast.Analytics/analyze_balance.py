@@ -346,12 +346,19 @@ def build_preregistered_verdict(
     if set(paired_summary["pairing_group_id"].astype(str)) != {context_id}:
         raise ValueError("paired results do not match the preregistered primary context")
     target_id = hypothesis.get("targetStrategyId")
+    # When the treatment is a strategy swap the target's slot holds a different strategy in each
+    # arm, so the control side is named separately. Omitting it keeps the original shape, where the
+    # same strategy appears in both arms and only the environment changed.
+    control_target_id = hypothesis.get("controlStrategyId") or target_id
     target_rows = paired_summary[
-        (paired_summary["strategy_id_control"] == target_id)
+        (paired_summary["strategy_id_control"] == control_target_id)
         & (paired_summary["strategy_id_treatment"] == target_id)
     ]
     if len(target_rows) != 1:
-        raise ValueError(f"preregistered target strategy '{target_id}' did not resolve to exactly one paired row")
+        raise ValueError(
+            f"preregistered target strategy '{target_id}' (control '{control_target_id}') "
+            "did not resolve to exactly one paired row"
+        )
 
     metric_names = {
         "normalizedBoardShare": "normalized_board_share",
@@ -387,6 +394,7 @@ def build_preregistered_verdict(
         "hypothesis_id": hypothesis.get("hypothesisId"),
         "primary_context_id": context_id,
         "target_strategy_id": target_id,
+        "control_strategy_id": control_target_id,
         "primary_metric": declared_metric,
         "estimand": hypothesis.get("estimand"),
         "direction": direction,

@@ -132,6 +132,69 @@ class AnalyzeBalanceTests(unittest.TestCase):
                 self._resolved_manifest(analysis, games=50),
             )
 
+    def test_preregistered_verdict_supports_a_strategy_swap_treatment(self):
+        """A candidate swap puts a different strategy in the target slot in each arm, so the
+        control side of the target is named separately. Without controlStrategyId the verdict
+        could only describe treatments that left strategy identity unchanged."""
+        control_zero = [6 + (i % 3) for i in range(50)]
+        control_one = [10 - value for value in control_zero]
+        treatment_zero = [value + 1 for value in control_zero]
+        treatment_one = [value - 1 for value in control_one]
+        control = self._paired_players(control_zero, control_one, treatment=False, slot_zero_strategy_id="parent")
+        treatment = self._paired_players(treatment_zero, treatment_one, treatment=True, slot_zero_strategy_id="candidate")
+        paired = ANALYZE_BALANCE.build_paired_comparison(control, treatment)
+        analysis = {
+            "analysisVersion": ANALYZE_BALANCE.ANALYSIS_VERSION,
+            "evidenceStage": "comparison",
+            "hypothesis": {
+                "hypothesisId": "candidate-beats-parent",
+                "primaryContextId": "paired-test",
+                "targetStrategyId": "candidate",
+                "controlStrategyId": "parent",
+                "primaryMetric": "normalizedBoardShare",
+                "estimand": "pairedMeanDifference",
+                "direction": "increase",
+                "margin": 0.1,
+            },
+        }
+
+        verdict = ANALYZE_BALANCE.build_preregistered_verdict(
+            paired,
+            self._resolved_manifest(analysis, games=50),
+            self._resolved_manifest(analysis, games=50),
+        )
+
+        self.assertEqual("supported", verdict["verdict"])
+        self.assertEqual("candidate", verdict["target_strategy_id"])
+        self.assertEqual("parent", verdict["control_strategy_id"])
+
+    def test_preregistered_verdict_refuses_a_swap_that_omits_the_control_strategy(self):
+        """Omitting controlStrategyId means "the same strategy in both arms", so a swap must fail
+        loudly rather than silently resolving to no rows."""
+        control = self._paired_players([6, 7], [4, 3], treatment=False, slot_zero_strategy_id="parent")
+        treatment = self._paired_players([7, 8], [3, 2], treatment=True, slot_zero_strategy_id="candidate")
+        paired = ANALYZE_BALANCE.build_paired_comparison(control, treatment)
+        analysis = {
+            "analysisVersion": ANALYZE_BALANCE.ANALYSIS_VERSION,
+            "evidenceStage": "comparison",
+            "hypothesis": {
+                "hypothesisId": "candidate-beats-parent",
+                "primaryContextId": "paired-test",
+                "targetStrategyId": "candidate",
+                "primaryMetric": "normalizedBoardShare",
+                "estimand": "pairedMeanDifference",
+                "direction": "increase",
+                "margin": 0.1,
+            },
+        }
+
+        with self.assertRaisesRegex(ValueError, "did not resolve to exactly one paired row"):
+            ANALYZE_BALANCE.build_preregistered_verdict(
+                paired,
+                self._resolved_manifest(analysis, games=50),
+                self._resolved_manifest(analysis, games=50),
+            )
+
     @staticmethod
     def _players():
         return pd.DataFrame(
@@ -163,7 +226,7 @@ class AnalyzeBalanceTests(unittest.TestCase):
         }
 
     @staticmethod
-    def _paired_players(player_zero_living, player_one_living, treatment):
+    def _paired_players(player_zero_living, player_one_living, treatment, slot_zero_strategy_id="strategy-0"):
         rows = []
         for game_index, (zero, one) in enumerate(zip(player_zero_living, player_one_living), start=1):
             for player_id, living in enumerate((zero, one)):
@@ -177,8 +240,8 @@ class AnalyzeBalanceTests(unittest.TestCase):
                         "assigned_slot": player_id,
                         "player_id": player_id,
                         "player_count": 2,
-                        "strategy_name": f"strategy-{player_id}",
-                        "strategy_id": f"strategy-{player_id}",
+                        "strategy_name": slot_zero_strategy_id if player_id == 0 else f"strategy-{player_id}",
+                        "strategy_id": slot_zero_strategy_id if player_id == 0 else f"strategy-{player_id}",
                         "strategy_definition_fingerprint": "treatment" if treatment else "control",
                         "strategy_theme": "test",
                         "living_cells": living,

@@ -533,6 +533,33 @@ measurement model, phase gates, and open product decisions are in
     tests and 651 Core tests pass, and the experiment contract verified end to
     end including its checksum. Next: per-stage manifest emission and
     progression rules.
+44. P6.3 is complete and the candidate loop now runs end to end: generate,
+    characterize, publish, emit, run both arms, verdict.
+    `CandidateEvaluationEmitter` emits a stage as two single-condition runs
+    rather than one two-condition manifest, because the batch runner derives
+    conditions from config strata and cannot express two conditions of
+    identical shape differing only in lineup, while the analyzer pairs two
+    artifact folders. Progression is refused rather than warned about, and a
+    holdout must change both board and seed. Three blockers surfaced only by
+    trying to run it. The verdict could not describe a strategy swap at all:
+    it matched its target row requiring the same strategy ID in both arms, so
+    a swap found no rows; an optional `controlStrategyId` fixes it, and
+    omitting it preserves the original behavior exactly. This corrects the
+    claim made when the shape was chosen — the paired machinery did not
+    already support a swap. The runner also rejected the control arm because
+    it required the hypothesis target in the lineup, and candidates did not
+    exist for the simulator at all, since it runs as its own process with an
+    empty generated set; `--candidate-catalog` loads a serialized evaluation
+    cast before any lineup resolves. Input schema is now
+    `fungus-toast.experiment-input.v4`; `controlStrategyId` is omitted when
+    unset so existing manifests serialize byte-identically and the result
+    schema stays at v7. A real comparison ran through the new path: both
+    50-game arms executed from emitted command lines, and the analyzer issued
+    a preregistered verdict of `not_supported` (estimate `-0.0173`, 95%
+    interval `[-0.0564, +0.0218]`, margin `0.05`, 50 complete pairs). 122
+    Simulation, 651 Core, and 10 analytics tests pass; the experiment contract
+    verified end to end. Next: P6.4 pruning, budgets, retry caps, and
+    resumable queues.
 
 ### Completion Criteria
 
