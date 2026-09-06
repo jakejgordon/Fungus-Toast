@@ -721,6 +721,7 @@ not promote the Testing candidate or change a player-facing strategy.
   behavioral diversity. **Complete (2026-09-06)** — see the contract below.
 - **P6.6:** Produce a promotion packet containing definition diff, lineage,
   manifests, metrics, intervals, context bands, traces, failures, and holdouts.
+  **Complete (2026-09-06)** — see the contract below.
 - **Gate:** A clean run can generate, evaluate, reject, and add passing candidates
   to the generated testing catalog without manual file edits, while no candidate
   enters a player-facing pool without review.
@@ -1057,6 +1058,54 @@ finding rather than an artifact: a goal reorder or economy bias need not change
 what gets bought under a fixed-budget script.
 
 147 Simulation and 651 Core tests pass.
+
+#### P6.6 promotion packet (delivered 2026-09-06)
+
+`CandidatePromotionPacket` assembles everything a person needs to decide on a
+candidate: the gene-level diff against its parent, lineage with the parent's
+definition fingerprint, per-stage artifact IDs and contexts, measurements with
+intervals, the four ranking measures, the observed category profile, and every
+failure and retry recorded along the way. `CandidatePromotionPacketMarkdown`
+renders it for review, because promotion is a judgement a person makes and a JSON
+blob is a poor thing to make one from.
+
+**The packet reports mechanical eligibility and stops there.** Phase 6's gate is
+that no candidate enters a player-facing pool without review, so a packet that
+recommended promotion would be quietly doing the reviewing. An empty blocker list
+means "nothing mechanical is in the way", not "promote this". Blockers cover a
+status short of passed, a holdout that never ran, robustness measured in fewer
+than two contexts, and — importantly — an advantage that reversed sign between
+contexts, which blocks eligibility even though every stage technically passed.
+
+155 Simulation and 651 Core tests pass.
+
+#### Phase 6 gate assessment (2026-09-06)
+
+> A clean run can generate, evaluate, reject, and add passing candidates to the
+> generated testing catalog without manual file edits, while no candidate enters
+> a player-facing pool without review.
+
+Met, with one piece outstanding:
+
+- **Generate, reject** — done, with four typed rejection reasons plus the
+  zero-game characterization gate.
+- **Evaluate** — done and proven by running it: a real 50-pair comparison
+  executed both arms from emitted command lines and produced a preregistered
+  verdict.
+- **Add to the generated catalog without manual file edits** — done. The catalog
+  is published programmatically and reloaded from a generated file; nothing is
+  hand-edited.
+- **No candidate enters a player-facing pool without review** — done
+  structurally, not procedurally: every generated entry carries
+  `StrategyPool.None`, so pool-filtered selection cannot return one even by
+  accident.
+
+**Outstanding: an unattended driver.** Every component composes, and the loop has
+been run end to end, but the stages between "emit" and "record result" were
+driven by hand — launching each arm's process, running the analyzer, feeding the
+verdict back into the queue. Closing that means process orchestration rather than
+new evaluation logic, and it is the last mile before Phase 6 can run without
+steering.
 
 ### Phase 7 — Calibrate contextual performance bands
 

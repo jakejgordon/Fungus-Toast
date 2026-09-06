@@ -596,6 +596,24 @@ measurement model, phase gates, and open product decisions are in
     queue now keeps per-stage measurements rather than overwriting, which is
     what makes cross-context robustness computable. 147 Simulation and 651 Core
     tests pass. Next: P6.6 promotion packet.
+47. P6.6 is complete, and Phase 6's gate is met except for one piece.
+    `CandidatePromotionPacket` assembles the gene-level diff against the parent,
+    lineage with the parent's definition fingerprint, per-stage artifact IDs and
+    contexts, measurements with intervals, the four ranking measures, the
+    observed category profile, and every recorded failure and retry;
+    `CandidatePromotionPacketMarkdown` renders it for human review. The packet
+    reports mechanical eligibility and stops there, since a packet that
+    recommended promotion would be quietly doing the reviewing that the gate
+    reserves for a person. Blockers cover a status short of passed, a missing
+    holdout, robustness in fewer than two contexts, and an advantage that
+    reversed sign between contexts. Gate assessment: generate, reject, evaluate,
+    and add-to-catalog-without-manual-edits are all done, and no candidate can
+    reach a player-facing pool because every generated entry carries
+    `StrategyPool.None`. Outstanding is an unattended driver: every component
+    composes and the loop has been run end to end, but launching each arm's
+    process, running the analyzer, and feeding the verdict back into the queue
+    were done by hand. That is process orchestration rather than new evaluation
+    logic. 155 Simulation and 651 Core tests pass.
 
 ### Completion Criteria
 
