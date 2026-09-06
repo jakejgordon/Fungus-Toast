@@ -490,6 +490,27 @@ measurement model, phase gates, and open product decisions are in
     contract's selective resume and exact replay both passed. Next: per-stage
     manifest emission and progression rules for the three game-consuming
     stages.
+42. Jake chose the evaluation shape for the remaining P6.3 stages on
+    2026-09-06: a paired two-artifact swap (control runs the parent, treatment
+    runs the candidate, matched seeds/slots/board/RNG) against one fixed
+    opponent in a two-player context, with a holdout that must change both
+    board geometry and seed. That choice exposed a latent pipeline defect and
+    it is now fixed. Per-condition artifact IDs were derived from the
+    condition's *shape* (players, board, strategy set), which is unique only
+    because the CLI happens to encode exactly that shape into the condition ID
+    it generates. A hand-authored manifest whose two conditions differ only in
+    lineup — precisely a paired control/treatment comparison — derived one
+    artifact ID, so the second run overwrote the first's export, or under
+    `--resume` failed with an execution fingerprint mismatch that pointed
+    nowhere near the cause. `ExperimentArtifactId` now derives from the
+    condition ID, which the manifest already validates as unique. Artifact
+    folders are renamed accordingly (`__p2_w20_h20_sTesting` becomes
+    `__p2_w20_h20_s_testing`), and `verify-experiment-contract.sh` was updated
+    and passes end to end. 93 Simulation tests and 651 Core tests pass.
+    Note: the code for this fix was swept into unrelated commit `9f76786` by a
+    concurrent session sharing this working tree; only its tests and this
+    record are in the commit that names it. Next: per-stage manifest emission
+    and progression rules.
 
 ### Completion Criteria
 
