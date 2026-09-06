@@ -430,6 +430,26 @@ measurement model, phase gates, and open product decisions are in
     tests pass, and the experiment-contract script's selective resume and exact
     replay both passed. Next: P6.2 deterministic candidate generation,
     deduplication, and lineage.
+39. P6.2 is complete. `fungus-toast.ai-candidate-plan.v1` adds a validated
+    generation plan and a generator that enumerates candidates exhaustively
+    rather than sampling, so it takes no seed: the same plan against the same
+    registry always yields identical candidates, names, lineage notes, and
+    rejections in identical order. A plan whose enumeration exceeds its own cap
+    fails before generating. Seven single-gene operators cover goal order,
+    economy bias, high-tier preference, surge frequency, edge offset, and max
+    tier; the three sweeps require declared value lists, and a value list
+    without its operator is refused. Deduplication is by behavior fingerprint
+    and emits typed rejections for parent duplicates, earlier-candidate
+    duplicates, registered-strategy duplicates, and validation failures. Real
+    roster behavior exercises all four: swapping Balanced Control's first two
+    goals reconstructs `TST_BalancedControl_AnabolicFirst` and is refused, and
+    promoting goals in `TST_Arch06_SurgeGrowth` inverts its rising level ladder
+    into three validation rejections. 68 Simulation tests and 651 Core tests
+    pass. The slice also exposed a latent non-AI defect:
+    `AnalyticsEventSubscriber` kept a process-wide non-concurrent dictionary
+    that tore once a second Simulation test class ran in parallel, fixed
+    separately in `b3e1807` with no effect on outcomes, replay fingerprints, or
+    the corpus version. Next: P6.3 staged evaluation.
 
 ### Completion Criteria
 

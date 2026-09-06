@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "opener-order-v1",
+  "purpose": "Bounded opener-order search around Balanced Control, the only candidate dimension the frozen Phase 6 holdout has proven useful.",
+  "parentStrategyId": "legacy.testing.tst-balancedgeneralistcontrol.v1",
+  "parentStrategySet": "testing",
+  "operators": [
+    "goalOrderAdjacentSwap",
+    "goalOrderPromoteToFront"
+  ],
+  "maximumCandidates": 16,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": []
+}

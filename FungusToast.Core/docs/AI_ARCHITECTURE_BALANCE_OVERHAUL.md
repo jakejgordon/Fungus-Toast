@@ -709,7 +709,8 @@ not promote the Testing candidate or change a player-facing strategy.
   choices and tunables. Every dimension must be independently switchable.
   **Complete (2026-09-06)** — see the contract below.
 - **P6.2:** Add deterministic candidate generation, deduplication, fingerprints,
-  lineage, and invalid-candidate rejection.
+  lineage, and invalid-candidate rejection. **Complete (2026-09-06)** — see the
+  contract below.
 - **P6.3:** Implement staged evaluation: static validation, unit/characterization
   checks, tiny smoke, calibration comparison, then unseen holdout conditions.
 - **P6.4:** Add dominated-candidate pruning, resource/time budgets, retry caps,
@@ -775,6 +776,54 @@ checked claim rather than an assertion; it also fixed the two bounds
 real roster content. Core passes 649/649. The checked-in example
 `FungusToast.Simulation/Examples/candidate-genome.v1.example.json` encodes the
 opener-order candidate the Phase 6 holdout already confirmed.
+
+#### P6.2 candidate generation contract (delivered 2026-09-06)
+
+`fungus-toast.ai-candidate-plan.v1` adds `CandidateGenerationPlan`,
+`CandidateGenerationPlanValidator`, and `CandidateGenerator` beside the P6.1
+genome. A plan names one parent, an ordered operator list, declared value lists,
+and a candidate cap; generation returns accepted genomes plus every rejection.
+
+**Generation is exhaustive, not sampled, and takes no seed.** Each operator
+enumerates a finite ordered set of gene sets derived from the parent, so the
+same plan against the same registry always yields the same candidates, display
+names, lineage notes, and rejections in the same order. That is a stronger
+reproducibility guarantee than a recorded seed, and it is affordable precisely
+because Phase 6 batches cap at 100 games: a search wide enough to need sampling
+could not be evaluated anyway. A plan whose enumeration exceeds its own
+`maximumCandidates` fails before generating rather than silently truncating.
+
+Seven operators, each varying exactly one gene: `GoalOrderAdjacentSwap`,
+`GoalOrderPromoteToFront`, `EconomyBiasSweep`, `PrioritizeHighTierToggle`,
+`SurgeAttemptTurnFrequencySweep`, `StartingSporeEdgeOffsetSweep`, and
+`MaxTierSweep`. The three sweeps require a declared value list, and a value list
+without its operator is refused — an ignored field in a search plan is a silent
+lie about what was searched.
+
+**Deduplication is by behavior fingerprint, in three tiers**, each recorded as a
+typed rejection rather than a silent drop, which is the candidate-search half of
+the Static evidence stage:
+
+- `DuplicateOfParent` — sweeps deliberately include the parent's current value so
+  the no-op is logged instead of skipped.
+- `DuplicateOfEarlierCandidate` — two operators that converge on one build
+  collapse to a single candidate.
+- `DuplicateOfRegisteredStrategy` — a candidate that reproduces an existing
+  roster build is rejected, because testing it spends batch budget re-proving a
+  known result.
+
+Real roster behavior exercises all four rejection paths. Swapping Balanced
+Control's first two goals reconstructs `TST_BalancedControl_AnabolicFirst`, so
+the generator refuses the build the Phase 6 holdout already confirmed. Promoting
+goals in `TST_Arch06_SurgeGrowth` inverts its rising level ladder, producing
+three `FailedValidation` rejections rather than unusable candidates.
+
+Validation evidence: 68 Simulation tests and 651 Core tests pass. Building this
+slice also exposed a latent defect unrelated to AI work — `AnalyticsEventSubscriber`
+kept a process-wide non-concurrent dictionary that tore once a second Simulation
+test class ran in parallel. It is fixed separately in commit `b3e1807`; the map
+holds only handler references, so no simulation outcome, replay fingerprint, or
+corpus version is affected.
 
 ### Phase 7 — Calibrate contextual performance bands
 
