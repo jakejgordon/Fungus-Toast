@@ -31,6 +31,29 @@ Inspector-authored wiring toward code-authored construction and configuration.
   deliberately deferred — see the "Main Menu Bootstrapper + Scene YAML Cleanup"
   entry in
   [second-level/FUTURE_IMPROVEMENTS.md](second-level/FUTURE_IMPROVEMENTS.md).
+- **Front-end-wide UI wiring (Milestone A, done 2026-09-05):** every UI-owned
+  scene cross-reference identified in
+  [UNITY_CODE_FIRST_MIGRATION_PLAN.md](UNITY_CODE_FIRST_MIGRATION_PLAN.md) —
+  the in-game HUD, overlays, and pooled UI beyond the main menu — is now
+  either resolved via construct-inject-register from the composition root
+  (`GameManager`/`GameUIManager`) or explicitly retained with a recorded
+  reason. This is **UI wiring coverage, not full composition-root coverage**:
+  `GameManager` still holds direct serialized references to systems this
+  initiative excludes by design — `gridVisualizer`, `cameraCenterer`,
+  `growthPhaseRunner`, `decayPhaseRunner`, `magnifyingGlass`,
+  `campaignProgression`, and its `AudioClip` fields — because those belong to
+  the grid/board-rendering and camera systems, not UI wiring. See that plan's
+  section 8 for the exact gate and section 4 for what's excluded and why.
+  Two fields are **explicitly retained**, not resolved, because no bespoke
+  component type exists for `FindAnyObjectByType` to target and the cost of
+  adding one wasn't judged worthwhile for their scope: `GameManager`'s
+  `SelectionPromptPanel`/`SelectionPromptText`. Everywhere else a bespoke type
+  was missing but the field was load-bearing, a small marker `MonoBehaviour`
+  was added instead (`UI_LeftSidebarMarker`, `UI_MutationTreePanelMarker`) —
+  see the plan's section 9 for both cases. The thin-bootstrap-scene end state
+  (scene YAML fully stripped of authored hierarchy) remains future work,
+  tracked as Milestone B in the plan doc — this completion is about wiring,
+  not about eliminating the Inspector from scene authoring.
 
 ## 2. Why
 
