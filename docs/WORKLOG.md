@@ -560,6 +560,24 @@ measurement model, phase gates, and open product decisions are in
     Simulation, 651 Core, and 10 analytics tests pass; the experiment contract
     verified end to end. Next: P6.4 pruning, budgets, retry caps, and
     resumable queues.
+45. P6.4 is complete. `CandidateEvaluationQueue` holds durable, resumable state
+    for running a field of candidates through the ladder, breadth-first by
+    stage so a field is thinned at 10 games a head rather than 200. Retry caps
+    distinguish two failure kinds, which is the safeguard that matters most: an
+    integrity failure says nothing about the candidate and may be retried to the
+    cap, while an evidence failure answers a preregistered question and stops
+    the candidate immediately with no retry at any cap — retrying a lost
+    hypothesis until it passes would turn the staged gates into a search for a
+    favorable sample. Budgets are checked before dispatch rather than after, so
+    a stage that cannot fit is never started; the runtime budget projects from
+    the queue's own measured throughput rather than an authored guess. Two
+    interval-based pruning rules: futility (the optimistic bound is below the
+    margin) and domination (another candidate's whole interval sits above
+    theirs, compared only within one stage since intervals from different game
+    counts are not comparable). The 100-game ceiling holds because it is per
+    batch and each arm is its own batch, so a holdout is two runs of 100. 138
+    Simulation, 651 Core, and 10 analytics tests pass. Next: P6.5 ranking
+    strength and robustness separately from archetype fidelity.
 
 ### Completion Criteria
 

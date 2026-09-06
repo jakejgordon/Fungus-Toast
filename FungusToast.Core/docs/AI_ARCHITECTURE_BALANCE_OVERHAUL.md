@@ -716,6 +716,7 @@ not promote the Testing candidate or change a player-facing strategy.
   **Complete (2026-09-06)** — see the contracts below.
 - **P6.4:** Add dominated-candidate pruning, resource/time budgets, retry caps,
   resumable queues, and an enforced maximum of 100 games in any one batch.
+  **Complete (2026-09-06)** — see the contract below.
 - **P6.5:** Rank strength and robustness separately from archetype fidelity and
   behavioral diversity.
 - **P6.6:** Produce a promotion packet containing definition diff, lineage,
@@ -981,6 +982,43 @@ verdict — estimate `-0.0173` on normalized board share, 95% interval
 The candidate does not beat its parent, which is a real result rather than a
 placeholder. 122 Simulation, 651 Core, and 10 analytics tests pass, and the
 experiment contract verified end to end.
+
+#### P6.4 evaluation queue (delivered 2026-09-06)
+
+`CandidateEvaluationQueue` is the durable, resumable state for running a field of
+candidates through the ladder. It is deliberately the one mutable model in the
+candidate code: it exists to record progress, and persisting it after each
+recorded result is what makes a long search resumable rather than restartable.
+
+**Breadth-first by stage.** Every candidate clears a cheap stage before any
+candidate starts an expensive one, so a field is thinned at 10 games a head
+rather than 200.
+
+**Retry caps distinguish two kinds of failure, and this is the safeguard that
+matters most.** An integrity failure — a crash, a parity failure, an incomplete
+run — says nothing about the candidate and may be retried up to the cap. An
+evidence failure is the answer to a preregistered question and stops the
+candidate immediately, with no retry at any cap. Retrying a lost hypothesis until
+it passes would turn the staged gates into a search for a favorable sample,
+which is precisely what they exist to prevent.
+
+**Budgets are checked before dispatch, never after.** A stage that cannot fit the
+remaining game budget is never started, so the queue never leaves a half-funded
+comparison behind. The runtime budget is a real gate too, projected from the
+queue's own measured throughput rather than an authored guess: before any games
+have run there is nothing to project from, so only an already-exhausted budget
+blocks dispatch.
+
+**Two pruning rules, both interval-based.** Futility pruning drops a candidate
+whose optimistic bound is below the margin, since more games can only spend
+budget. Domination pruning drops a candidate another one confidently beats — its
+whole interval sits above theirs — and only within a single stage, because
+intervals from different game counts are not comparable.
+
+The 100-game ceiling holds: it is per batch, and each arm is its own batch, so a
+holdout costs 200 games as two runs of 100 rather than one run of 200.
+
+138 Simulation, 651 Core, and 10 analytics tests pass.
 
 ### Phase 7 — Calibrate contextual performance bands
 
