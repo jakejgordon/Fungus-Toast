@@ -139,6 +139,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerCenterSlotRect = null!;
         private RectTransform headerRightSlotRect = null!;
         private RectTransform headerReturnSlotRect = null!;
+        // Cached by RefreshResponsiveMutationPanelLayout() so a dock-side flip
+        // (UpdateMutationInspectorDockSide) repositions the inspector against the
+        // exact same top inset the scroll view was last laid out with, instead of
+        // recomputing GetMutationPanelTopInset() independently and risking drift.
+        private float cachedMutationPanelTopInset = -1f;
         private MutationInspectorPanel? mutationInspector;
         private MutationDependencyGraphGraphic? mutationDependencyGraph;
         private MycelialBackdropGraphic? mycelialBackdrop;
@@ -1748,7 +1753,8 @@ namespace FungusToast.Unity.UI.MutationTree
             return Mathf.Clamp(canvasSize.x * 0.23f, 320f, MutationInspectorPanel.PreferredWidth);
         }
 
-        private void PositionMutationInspector() => PositionMutationInspector(GetMutationPanelTopInset());
+        private void PositionMutationInspector() =>
+            PositionMutationInspector(cachedMutationPanelTopInset >= 0f ? cachedMutationPanelTopInset : GetMutationPanelTopInset());
 
         private void PositionMutationInspector(float topInset)
         {
@@ -1895,6 +1901,7 @@ namespace FungusToast.Unity.UI.MutationTree
             // panel can't drift onto two different top insets — see the comment
             // on ApplyResponsiveMutationPanelLayout(float).
             float topInset = GetMutationPanelTopInset();
+            cachedMutationPanelTopInset = topInset;
             ApplyResponsiveMutationPanelLayout(topInset);
             ForceMutationPanelLayoutRebuild();
             PositionMutationInspector(topInset);

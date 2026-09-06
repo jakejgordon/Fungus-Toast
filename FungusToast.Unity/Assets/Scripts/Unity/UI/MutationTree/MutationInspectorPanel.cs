@@ -83,7 +83,11 @@ namespace FungusToast.Unity.UI.MutationTree
             rootRect.anchorMax = new Vector2(0f, 1f);
             rootRect.pivot = new Vector2(0f, 1f);
             rootRect.anchoredPosition = new Vector2(leftInset, -topInset);
-            rootRect.sizeDelta = new Vector2(width, -(topInset + OuterGap));
+            // Bottom edge sits flush with the tree panel's bottom (no OuterGap here —
+            // that constant is only for the horizontal gap between the scroll view and
+            // this panel). Subtracting OuterGap from the vertical sizeDelta left a
+            // permanent Bottom = OuterGap inset that made the panel end early.
+            rootRect.sizeDelta = new Vector2(width, -topInset);
             LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
             RefreshTextHeights();
             LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
