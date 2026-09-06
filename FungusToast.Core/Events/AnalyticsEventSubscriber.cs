@@ -2,6 +2,7 @@
 using FungusToast.Core.Death;
 using FungusToast.Core.Metrics;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 
@@ -30,7 +31,12 @@ namespace FungusToast.Core.Events
             public GameBoard.NutrientPatchConsumedEventHandler NutrientPatchConsumedHandler { get; }
         }
 
-        private static readonly Dictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
+        /// <summary>
+        /// Process-wide because subscription bookkeeping outlives any single caller. A test host
+        /// drives independent boards in parallel even though the game never does, so this must be
+        /// concurrent: a torn map here surfaces as an unrelated simulation test failing.
+        /// </summary>
+        private static readonly ConcurrentDictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
 
         /// <summary>
         /// Subscribes all analytics event handlers to the GameBoard.
@@ -77,7 +83,7 @@ namespace FungusToast.Core.Events
         /// </summary>
         public static void Unsubscribe(GameBoard board, ISimulationObserver observer)
         {
-            if (board == null || !subscriptionsByBoard.TryGetValue(board, out var subscriptions))
+            if (board == null || !subscriptionsByBoard.TryRemove(board, out var subscriptions))
             {
                 return;
             }
@@ -85,7 +91,6 @@ namespace FungusToast.Core.Events
             board.CellDeath -= subscriptions.CellDeathHandler;
             board.NecrotoxicConversion -= subscriptions.NecrotoxicConversionHandler;
             board.NutrientPatchConsumed -= subscriptions.NutrientPatchConsumedHandler;
-            subscriptionsByBoard.Remove(board);
         }
     }
 }
