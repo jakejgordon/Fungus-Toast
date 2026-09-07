@@ -74,6 +74,10 @@ namespace FungusToast.Unity.UI.Tooltips
         public void ShowAfterDelay(TooltipTrigger source, TooltipRequest request, float? delaySeconds = null)
         {
             EnsureInstance();
+            // Only one tooltip exists for the session, so a new source implicitly evicts the
+            // previous one. Tell it, so a pinned trigger cannot keep pin state with nothing shown.
+            if (currentSource != null && currentSource != source)
+                currentSource.NotifyTooltipReleased();
             currentSource = source;
             currentRequest = request;
             requestTime = Time.unscaledTime;
@@ -100,6 +104,8 @@ namespace FungusToast.Unity.UI.Tooltips
             pendingShow = false;
             if (view != null)
                 view.HideImmediate();
+            if (currentSource != null)
+                currentSource.NotifyTooltipReleased();
             currentSource = null;
         }
 

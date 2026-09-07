@@ -442,7 +442,7 @@ namespace FungusToast.Unity.UI
                 var player = players.Find(p => p.PlayerId == playerId);
                 if (player != null)
                 {
-                    provider.Initialize(player, players);
+                    provider.Initialize(player);
                     tooltipTrigger.SetDynamicProvider(provider);
                 }
             }

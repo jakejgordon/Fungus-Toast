@@ -62,6 +62,27 @@ If you need to answer "where do the existing coaching tooltips live?", start wit
 - the player is asking “what is this control / icon / card?”
 - the explanation should be available any time the element is present
 
+**Click-to-pin:**
+`TooltipTrigger.SetPinOnClick(true)` makes clicking the element hold the tooltip open past pointer
+exit. Only one tooltip exists per session, so when another source takes the shared view the manager
+calls `NotifyTooltipReleased()` on the previous trigger — do not add pin state that bypasses that
+handshake. A pinned trigger appends its own “Pinned / Click to pin” hint line, so the affordance
+comes for free.
+
+Currently used by: the player summary mold icon.
+
+**Player summary mold icon (shared content):**
+The mold-icon tooltip does not build its own text. Content comes from
+`FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorContent.cs`, which returns
+presentation-neutral sections, rendered to rich text by `PlayerInspectorMarkup`. This exists so a
+future docked player inspector can render the same sections as real UI without the two surfaces
+drifting apart — add new player detail there, not in `PlayerSummaryTooltipProvider`.
+
+`BuildDevelopmentSections` is appended only when the Development Testing toggle is on, and carries
+AI tuning parameters (strategy identity, max tier, economy bias, priority categories, surge
+frequency, excluded mutations, mycovariant plan vs. actual drafts). Nothing in it is player-facing
+copy.
+
 ---
 
 ### C. Toast cell / board inspection tooltips

@@ -29,6 +29,9 @@ namespace FungusToast.Unity.UI.Tooltips
         private bool tooltipVisible;
         private bool isPinned = false;
 
+        /// <summary>True while this trigger is holding the shared tooltip open via click-to-pin.</summary>
+        public bool IsPinned => isPinned;
+
         private void Awake()
         {
             touchMode = UnityInputAdapter.IsTouchSupportedOnCurrentPlatform();
@@ -134,6 +137,17 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerUp(PointerEventData eventData) { }
 
+        /// <summary>
+        /// Called by <see cref="TooltipManager"/> when another source takes over the single shared
+        /// tooltip view. Without this the pinned flag outlived the visible tooltip, so the next
+        /// click on a pinned element only cleared invisible state and appeared to do nothing.
+        /// </summary>
+        internal void NotifyTooltipReleased()
+        {
+            isPinned = false;
+            tooltipVisible = false;
+        }
+
         private void TogglePin()
         {
             if (isPinned)
@@ -210,6 +224,14 @@ namespace FungusToast.Unity.UI.Tooltips
                 dyn = provider.GetTooltipText;
             }
 
+            if (pinOnClick && !touchMode)
+            {
+                // The manager re-resolves text every frame while visible, so the hint tracks the
+                // pin state live and gives click-to-pin the affordance it was missing.
+                Func<string> body = dyn ?? (() => staticText);
+                dyn = () => AppendPinHint(body());
+            }
+
             return new TooltipRequest
             {
                 Anchor = transform as RectTransform,
@@ -221,6 +243,13 @@ namespace FungusToast.Unity.UI.Tooltips
                 Placement = placement,
                 AutoPlacementOffsetX = autoPlacementOffsetX
             };
+        }
+
+        private string AppendPinHint(string body)
+        {
+            string hint = isPinned ? "Pinned — click again to unpin" : "Click to pin";
+            string hintColor = ColorUtility.ToHtmlStringRGB(UIStyleTokens.Text.Muted);
+            return $"{body}\n<color=#{hintColor}><i>{hint}</i></color>";
         }
 
         public void SetStaticText(string text) => staticText = text;
