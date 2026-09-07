@@ -678,12 +678,23 @@ measurement model, phase gates, and open product decisions are in
     requires the calibration half to vary at least two player-count and two
     board-scale classes, since a matrix varying neither can only produce a
     global label with no evidence it generalizes. The checked-in
-    `calibration-matrix.v1.example.json` freezes five calibration contexts and
-    two unseen holdouts for 450 planned games with systems off. 212 Simulation
-    and 651 Core tests pass. Next: P7.2 measuring reference strategies, which
-    needs a per-strategy sampling decision — a context runs one lineup, so
-    coverage-balanced selection across games is what gives each strategy enough
-    samples.
+    `calibration-matrix.v1.example.json` freezes the reference panel Jake chose
+    on 2026-09-07: the 19 `Proven` strategies solo play already draws from, so
+    the yardstick is the opponents players actually meet. Sizing that panel
+    exposed two problems the matrix now solves. One condition cannot supply a
+    panel — 19 strategies sharing 100 two-player games get ten each — so a
+    context declares `repeats` at consecutive seed blocks and
+    `minimumGamesPerStrategy` is checked against panel size before anything
+    runs, with the error naming the repeats needed. And even exposure is not
+    fair opposition: `StratifiedCycle` slides a window over a fixed ordering, so
+    in two-player games each strategy would face only its two neighbours and its
+    rating would describe those matchups rather than general strength;
+    `CoverageBalanced` over-samples rare themes for the same reason. The matrix
+    requires `RandomUnique` whenever the panel exceeds a lineup, and checks that
+    context seed spans do not overlap. The frozen matrix is 1,600 games across
+    16 conditions with at least 30 games per strategy per context. 216
+    Simulation and 651 Core tests pass. Next: P7.2, running the matrix and
+    quantifying slot, geometry, and lineup effects.
 
 ### Completion Criteria
 

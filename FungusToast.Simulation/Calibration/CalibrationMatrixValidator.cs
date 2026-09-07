@@ -1,5 +1,6 @@
 using System.Text.RegularExpressions;
 using FungusToast.Core.AI;
+using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Calibration;
 
@@ -36,12 +37,18 @@ public static partial class CalibrationMatrixValidator
         if (!Enum.IsDefined(typeof(StrategySetEnum), matrix.StrategySet))
             errors.Add($"strategySet '{matrix.StrategySet}' is not a defined strategy set.");
 
+        if (matrix.MinimumGamesPerStrategy < 1)
+            errors.Add("minimumGamesPerStrategy must be positive.");
+
         ValidateStrategies(matrix, errors);
+        ValidateSelectionPolicy(matrix, errors);
         ValidateContexts("calibrationContexts", matrix.CalibrationContexts, errors);
         ValidateContexts("holdoutContexts", matrix.HoldoutContexts, errors);
         ValidateUniqueIds(matrix, errors);
         ValidateHoldoutIndependence(matrix, errors);
         ValidateCoverage(matrix, errors);
+        ValidateSamplingAdequacy(matrix, errors);
+        ValidateSeedIndependence(matrix, errors);
         ValidateBudgets(matrix, errors);
         return errors;
     }
@@ -63,6 +70,79 @@ public static partial class CalibrationMatrixValidator
             if (!seen.Add(name)) errors.Add($"strategyNames repeats '{name}'.");
             if (registered.All(definition => !string.Equals(definition.Strategy.StrategyName, name, StringComparison.OrdinalIgnoreCase)))
                 errors.Add($"strategyNames contains '{name}', which is not registered in '{matrix.StrategySet}'.");
+        }
+    }
+
+    /// <summary>
+    /// A panel larger than a lineup must be sampled randomly. StratifiedCycle takes a sliding
+    /// window over a fixed ordering, so each strategy faces only its neighbours and its rating
+    /// measures those matchups rather than general strength; CoverageBalanced picks one strategy
+    /// per theme and over-samples rare ones. When the panel is exactly a lineup there is nothing to
+    /// choose and any policy is equivalent.
+    /// </summary>
+    private static void ValidateSelectionPolicy(CalibrationMatrix matrix, ICollection<string> errors)
+    {
+        if (matrix.SelectionPolicy == StrategySelectionPolicy.RandomUnique) return;
+
+        var panelSize = matrix.ResolvePanelSize();
+        var forcedLineups = (matrix.CalibrationContexts ?? Array.Empty<CalibrationContext>())
+            .Concat(matrix.HoldoutContexts ?? Array.Empty<CalibrationContext>())
+            .All(context => context != null && context.PlayerCount >= panelSize);
+        if (forcedLineups) return;
+
+        errors.Add(
+            $"selectionPolicy '{matrix.SelectionPolicy}' cannot measure general strength for a panel of {panelSize}: "
+            + "it fixes which strategies meet, so the result describes those matchups. Use RandomUnique.");
+    }
+
+    /// <summary>
+    /// Sizes each context against the declared minimum, so an under-powered matrix fails before it
+    /// runs rather than producing intervals too wide to band.
+    /// </summary>
+    private static void ValidateSamplingAdequacy(CalibrationMatrix matrix, ICollection<string> errors)
+    {
+        if (matrix.MinimumGamesPerStrategy < 1) return;
+        var panelSize = matrix.ResolvePanelSize();
+        if (panelSize <= 0) return;
+
+        foreach (var context in matrix.AllContexts)
+        {
+            if (context == null || context.PlayerCount < 2 || context.GamesPerCondition < 1 || context.Repeats < 1) continue;
+
+            var expected = context.ExpectedGamesPerStrategy(panelSize);
+            if (expected >= matrix.MinimumGamesPerStrategy) continue;
+
+            var neededGames = (int)Math.Ceiling((double)matrix.MinimumGamesPerStrategy * panelSize / context.PlayerCount);
+            errors.Add(
+                $"context '{context.ContextId}' gives each of {panelSize} strategies about {expected:0.#} games, "
+                + $"below the declared minimum of {matrix.MinimumGamesPerStrategy}. It needs about {neededGames} games "
+                + $"({(int)Math.Ceiling((double)neededGames / context.GamesPerCondition)} repeats of {context.GamesPerCondition}).");
+        }
+    }
+
+    /// <summary>
+    /// Per-game seeds run from a condition's base, so two contexts whose seed spans overlap would
+    /// replay the same games and stop being independent evidence.
+    /// </summary>
+    private static void ValidateSeedIndependence(CalibrationMatrix matrix, ICollection<string> errors)
+    {
+        var footprints = matrix.AllContexts
+            .Where(context => context != null && context.GamesPerCondition >= 1 && context.Repeats >= 1)
+            .Select(context => (context.ContextId, Span: context.SeedFootprint))
+            .OrderBy(entry => entry.Span.First)
+            .ToList();
+
+        for (var index = 1; index < footprints.Count; index++)
+        {
+            var previous = footprints[index - 1];
+            var current = footprints[index];
+            if (current.Span.First <= previous.Span.Last)
+            {
+                errors.Add(
+                    $"contexts '{previous.ContextId}' and '{current.ContextId}' consume overlapping seed ranges "
+                    + $"([{previous.Span.First}, {previous.Span.Last}] and [{current.Span.First}, {current.Span.Last}]); "
+                    + "they would replay the same games.");
+            }
         }
     }
 
@@ -94,6 +174,8 @@ public static partial class CalibrationMatrixValidator
 
             if (context.GamesPerCondition < 1 || context.GamesPerCondition > CalibrationMatrix.MaximumGamesPerContext)
                 errors.Add($"{path}.gamesPerCondition must be between 1 and {CalibrationMatrix.MaximumGamesPerContext}.");
+            if (context.Repeats < 1)
+                errors.Add($"{path}.repeats must be at least 1.");
 
             var tileCount = (long)context.BoardWidth * context.BoardHeight;
             var blocked = context.BlockedTileIds ?? Array.Empty<int>();
@@ -179,7 +261,7 @@ public static partial class CalibrationMatrixValidator
         if (!double.IsFinite(matrix.RuntimeBudgetSeconds) || matrix.RuntimeBudgetSeconds <= 0)
             errors.Add("runtimeBudgetSeconds must be finite and positive.");
 
-        var planned = matrix.AllContexts.Sum(context => context?.GamesPerCondition ?? 0);
+        var planned = matrix.AllContexts.Sum(context => context?.TotalGames ?? 0);
         if (matrix.TotalGameBudget >= 1 && planned > matrix.TotalGameBudget)
             errors.Add($"planned games ({planned}) exceed totalGameBudget ({matrix.TotalGameBudget}).");
     }

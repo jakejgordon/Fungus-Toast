@@ -1178,11 +1178,37 @@ Three validation rules carry the weight:
   matrix varying neither can only produce a global label with no evidence it
   generalizes — the failure this initiative exists to stop.
 
+**The reference panel is the 19 `Proven` strategies solo play already draws
+from** (approved 2026-09-07), which makes the yardstick the opponents players
+actually meet rather than an invented set.
+
+Sizing a panel that large exposed two problems the matrix now solves.
+
+**One condition does not give a panel enough games.** The per-condition ceiling
+is 100, but 19 strategies sharing 100 two-player games get ten games each, which
+cannot support a band. A context therefore declares `repeats` — several
+conditions at consecutive seed blocks — and `minimumGamesPerStrategy` is checked
+against the panel size before anything runs, with the error naming the repeats
+the context actually needs. An under-powered matrix fails in milliseconds instead
+of after hours of simulation.
+
+**Even exposure is not the same as fair opposition.** `StratifiedCycle` gives
+perfectly even appearance counts, but it slides a window over a fixed ordering,
+so in two-player games each strategy would only ever face its two neighbours —
+a rating that measures particular matchups and reports them as general strength.
+`CoverageBalanced` picks one strategy per theme and over-samples rare themes for
+the same reason. The matrix therefore requires `RandomUnique` whenever the panel
+is larger than a lineup, trading exact exposure counts for an unbiased
+cross-section of the field. Seed spans are also checked for overlap, since
+per-game seeds run from a condition's base and two overlapping contexts would
+replay the same games.
+
 The checked-in `calibration-matrix.v1.example.json` freezes five calibration
 contexts (duel and small-table across small, medium, and large boards) and two
-unseen holdout contexts that also change aspect, for 450 planned games with
-systems off so a band reflects strategy strength rather than draft or nutrient
-luck. 212 Simulation tests pass.
+unseen holdout contexts that also change aspect: 1,600 games across 16
+conditions, at least 30 games per strategy in every context, systems off so a
+band reflects strategy strength rather than draft or nutrient luck.
+216 Simulation and 651 Core tests pass.
 
 ### Phase 8 — Define and fill the target roster matrix
 

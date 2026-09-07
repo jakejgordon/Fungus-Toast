@@ -26,6 +26,13 @@ public sealed class CalibrationContext
 
     public required int GamesPerCondition { get; init; }
 
+    /// <summary>
+    /// How many conditions run at this context. The per-condition ceiling is 100 games, but a
+    /// panel needs more seats than one condition provides before each strategy has enough games,
+    /// so a context is sampled by several conditions at consecutive seed blocks.
+    /// </summary>
+    public int Repeats { get; init; } = 1;
+
     public string GeometryId { get; init; } = "rectangle";
 
     public IReadOnlyList<int> BlockedTileIds { get; init; } = Array.Empty<int>();
@@ -42,6 +49,31 @@ public sealed class CalibrationContext
     [JsonIgnore]
     public ContextClasses Classes => ContextTaxonomy.Classify(
         PlayerCount, BoardWidth, BoardHeight, GeometryId, BlockedTileIds, 0, 0);
+
+    [JsonIgnore]
+    public int TotalGames => Repeats * GamesPerCondition;
+
+    /// <summary>Seats this context offers, which the panel shares between its strategies.</summary>
+    [JsonIgnore]
+    public int TotalSeats => TotalGames * PlayerCount;
+
+    /// <summary>
+    /// Per-game seeds run from the condition's base, so each repeat starts a block past the last.
+    /// </summary>
+    public int SeedForRepeat(int repeatIndex)
+    {
+        if (repeatIndex < 0 || repeatIndex >= Repeats)
+            throw new ArgumentOutOfRangeException(nameof(repeatIndex), repeatIndex, $"This context has {Repeats} repeats.");
+        return BaseSeed + repeatIndex * GamesPerCondition;
+    }
+
+    /// <summary>The whole span of seeds this context consumes, used to keep contexts independent.</summary>
+    [JsonIgnore]
+    public (int First, int Last) SeedFootprint => (BaseSeed, BaseSeed + TotalGames - 1);
+
+    /// <summary>Expected games per strategy when <paramref name="panelSize"/> strategies share the seats.</summary>
+    public double ExpectedGamesPerStrategy(int panelSize)
+        => panelSize <= 0 ? 0 : (double)TotalSeats / panelSize;
 }
 
 /// <summary>
@@ -69,8 +101,28 @@ public sealed class CalibrationMatrix
     /// <summary>The roster being measured. Every strategy in the set is measured in every context.</summary>
     public required StrategySetEnum StrategySet { get; init; }
 
-    /// <summary>Explicit lineup, or empty to measure the whole set.</summary>
+    /// <summary>The reference panel, or empty to measure the whole set.</summary>
     public IReadOnlyList<string> StrategyNames { get; init; } = Array.Empty<string>();
+
+    /// <summary>
+    /// How each game's lineup is drawn from the panel.
+    ///
+    /// Random selection is the honest default for a panel larger than a lineup. StratifiedCycle
+    /// gives perfectly even exposure, but it takes a sliding window over a fixed ordering, so in
+    /// two-player games each strategy would only ever face its two neighbours - that measures
+    /// particular matchups and reports them as general strength. CoverageBalanced picks one
+    /// strategy per theme, which over-samples rare themes for the same reason. Random opposition
+    /// trades exact exposure counts for an unbiased cross-section of the field, which is what a
+    /// yardstick needs.
+    /// </summary>
+    public StrategySelectionPolicy SelectionPolicy { get; init; } = StrategySelectionPolicy.RandomUnique;
+
+    /// <summary>
+    /// The smallest number of games any strategy may be measured on in a context. Validation sizes
+    /// the contexts against it, so an under-powered matrix fails before it runs rather than
+    /// producing intervals too wide to band.
+    /// </summary>
+    public required int MinimumGamesPerStrategy { get; init; }
 
     public required IReadOnlyList<CalibrationContext> CalibrationContexts { get; init; }
 
@@ -83,8 +135,18 @@ public sealed class CalibrationMatrix
     [JsonIgnore]
     public IEnumerable<CalibrationContext> AllContexts => CalibrationContexts.Concat(HoldoutContexts);
 
-    /// <summary>Games the whole matrix will consume, before any strategy-level fan-out.</summary>
-    public int PlannedGames => AllContexts.Sum(context => context.GamesPerCondition);
+    /// <summary>Games the whole matrix will consume across every context and repeat.</summary>
+    public int PlannedGames => AllContexts.Sum(context => context.TotalGames);
+
+    /// <summary>Conditions the matrix will run, each a separate batch under the 100-game ceiling.</summary>
+    public int PlannedConditions => AllContexts.Sum(context => context.Repeats);
+
+    /// <summary>
+    /// The panel being measured: the declared names, or the whole registered set when none are
+    /// named.
+    /// </summary>
+    public int ResolvePanelSize()
+        => StrategyNames.Count > 0 ? StrategyNames.Count : StrategyRegistry.GetDefinitions(StrategySet).Count;
 }
 
 public static class CalibrationMatrixJson

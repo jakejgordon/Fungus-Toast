@@ -1,9 +1,11 @@
 {
   "schemaVersion": "fungus-toast.ai-calibration-matrix.v1",
-  "matrixId": "p7-reference-v1",
-  "purpose": "Frozen P7.1 reference matrix. Contexts are fixed before any strategy is measured so bands cannot be fitted to boards a strategy happens to like, and the holdout half is reserved to check thresholds fitted on the calibration half. Systems are off so a band reflects strategy strength rather than draft or nutrient luck.",
-  "strategySet": "testing",
+  "matrixId": "p7-solo-panel-v1",
+  "purpose": "Frozen P7.1 reference matrix over the 19 Proven strategies solo games already draw from. Contexts are fixed before any strategy is measured so bands cannot be fitted to boards a strategy happens to like, and the holdout half is reserved to check thresholds fitted on the calibration half. Systems are off so a band reflects strategy strength rather than draft or nutrient luck. Contexts are sized so every strategy gets at least 30 games in each, which is why the duel contexts need three conditions.",
+  "strategySet": "proven",
   "strategyNames": [],
+  "selectionPolicy": "randomUnique",
+  "minimumGamesPerStrategy": 30,
   "calibrationContexts": [
     {
       "contextId": "duel.small.square.rectangle.generated.80x80",
@@ -11,39 +13,44 @@
       "boardWidth": 80,
       "boardHeight": 80,
       "baseSeed": 2026090700,
-      "gamesPerCondition": 50
+      "gamesPerCondition": 100,
+      "repeats": 3
     },
     {
       "contextId": "duel.medium.square.rectangle.generated.120x120",
       "playerCount": 2,
       "boardWidth": 120,
       "boardHeight": 120,
-      "baseSeed": 2026090701,
-      "gamesPerCondition": 50
+      "baseSeed": 2026091000,
+      "gamesPerCondition": 100,
+      "repeats": 3
     },
     {
       "contextId": "smalltable.medium.square.rectangle.generated.120x120",
       "playerCount": 4,
       "boardWidth": 120,
       "boardHeight": 120,
-      "baseSeed": 2026090702,
-      "gamesPerCondition": 50
+      "baseSeed": 2026091300,
+      "gamesPerCondition": 100,
+      "repeats": 2
     },
     {
       "contextId": "smalltable.large.square.rectangle.generated.180x180",
       "playerCount": 4,
       "boardWidth": 180,
       "boardHeight": 180,
-      "baseSeed": 2026090703,
-      "gamesPerCondition": 50
+      "baseSeed": 2026091500,
+      "gamesPerCondition": 100,
+      "repeats": 2
     },
     {
       "contextId": "crowded.large.square.rectangle.generated.180x180",
       "playerCount": 6,
       "boardWidth": 180,
       "boardHeight": 180,
-      "baseSeed": 2026090704,
-      "gamesPerCondition": 50
+      "baseSeed": 2026091700,
+      "gamesPerCondition": 100,
+      "repeats": 1
     }
   ],
   "holdoutContexts": [
@@ -52,18 +59,20 @@
       "playerCount": 2,
       "boardWidth": 140,
       "boardHeight": 100,
-      "baseSeed": 2026090710,
-      "gamesPerCondition": 100
+      "baseSeed": 2026092000,
+      "gamesPerCondition": 100,
+      "repeats": 3
     },
     {
       "contextId": "smalltable.small.tall.rectangle.generated.60x100",
       "playerCount": 4,
       "boardWidth": 60,
       "boardHeight": 100,
-      "baseSeed": 2026090711,
-      "gamesPerCondition": 100
+      "baseSeed": 2026092300,
+      "gamesPerCondition": 100,
+      "repeats": 2
     }
   ],
-  "totalGameBudget": 500,
-  "runtimeBudgetSeconds": 5400
+  "totalGameBudget": 1600,
+  "runtimeBudgetSeconds": 21600
 }
