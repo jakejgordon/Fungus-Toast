@@ -1100,12 +1100,36 @@ Met, with one piece outstanding:
   `StrategyPool.None`, so pool-filtered selection cannot return one even by
   accident.
 
-**Outstanding: an unattended driver.** Every component composes, and the loop has
-been run end to end, but the stages between "emit" and "record result" were
-driven by hand — launching each arm's process, running the analyzer, feeding the
-verdict back into the queue. Closing that means process orchestration rather than
-new evaluation logic, and it is the last mile before Phase 6 can run without
-steering.
+**Closed (2026-09-06): the unattended driver.** `CandidateEvaluationDriver` runs a
+queue to completion — emit a stage, run both arms, analyze the pair, record the
+result, prune, persist, repeat. Arm execution and analysis are injected;
+`ProcessCandidateExecution` supplies the process-backed defaults that shell out
+to the simulator and the Python analyzer. Arms stay separate processes on
+purpose: it is the isolation the replay contract relies on, and it forces a
+candidate to arrive through the catalog file rather than surviving in memory, so
+an unattended run exercises exactly the path a hand-run experiment does.
+
+The outcome-to-result mapping is where the frozen gates live. A failed arm or
+failed analysis is always an integrity failure, because it says nothing about the
+candidate. Comparison and holdout pass or fail on their preregistered verdict,
+and a *missing* verdict at those stages is an integrity failure rather than a
+loss. Calibration has no verdict and exists to catch a clear regression, so it
+fails only when the whole interval sits below the negative margin. Smoke checks
+integrity alone and never judges a candidate.
+
+Building it surfaced a real defect in P6.4's pruning: futility was evaluated
+against whatever interval was most recent, including smoke's. Smoke runs a
+handful of games per arm, so its interval is noise — the staged gates say never
+to promote on smoke, and eliminating on it is the same mistake inverted. Pruning
+now ignores any measurement shallower than calibration, the first stage with
+enough games to be indicative. It also caught that a paired summary holds one row
+for the swapped slot and one for the unchanged opponent, so the reader selects
+the row where the strategies actually differ rather than whichever came first.
+
+Phase 6 is therefore complete: a clean run generates, evaluates, rejects, prunes,
+and records candidates without steering, and no candidate can reach a
+player-facing pool because every generated entry carries `StrategyPool.None`.
+166 Simulation and 651 Core tests pass.
 
 ### Phase 7 — Calibrate contextual performance bands
 

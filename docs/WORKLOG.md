@@ -614,6 +614,31 @@ measurement model, phase gates, and open product decisions are in
     process, running the analyzer, and feeding the verdict back into the queue
     were done by hand. That is process orchestration rather than new evaluation
     logic. 155 Simulation and 651 Core tests pass.
+48. The unattended driver is done, closing Phase 6. `CandidateEvaluationDriver`
+    runs a queue to completion — emit, run both arms, analyze, record, prune,
+    persist, repeat — with arm execution and analysis injected so the decision
+    logic is testable without spawning processes;
+    `ProcessCandidateExecution` supplies the process-backed defaults. Arms stay
+    separate processes deliberately, which forces a candidate to arrive through
+    the catalog file rather than surviving in memory. A failed arm or analysis
+    is always an integrity failure; comparison and holdout pass or fail on their
+    verdict, and a missing verdict there is integrity rather than a loss;
+    calibration fails only on a clear regression; smoke never judges a
+    candidate. Building it exposed a real defect in P6.4's pruning: futility was
+    evaluated against the most recent interval including smoke's, whose few
+    games per arm make it noise — the gates say never promote on smoke, and
+    eliminating on it is the same mistake inverted. Pruning now ignores anything
+    shallower than calibration. It also caught that a paired summary contains one
+    row for the swapped slot and one for the unchanged opponent, so the reader
+    now selects the row where the strategies actually differ rather than
+    whichever came first. 166 Simulation and 651 Core tests pass.
+    Jake set the near-term goal on 2026-09-06: use this machinery to identify
+    over- and under-powered mutations, then tune ability strength,
+    prerequisites, max-level bonuses, or add countering effects. The genome
+    already carries the lever for that in `ExcludedMutationIds` — running a
+    strategy with and without a mutation under matched seeds measures its
+    contribution directly — but no generation operator produces ablations yet.
+    Next: a mutation-ablation operator.
 
 ### Completion Criteria
 

@@ -239,6 +239,16 @@ public sealed class CandidateEvaluationQueue
     }
 
     /// <summary>
+    /// The shallowest stage whose interval may eliminate a candidate.
+    ///
+    /// Smoke runs a handful of games per arm, so its interval is noise. The staged gates say never
+    /// to promote on smoke; eliminating on it is the same mistake inverted, and it would kill good
+    /// candidates on almost no evidence. Calibration is the first stage with enough games to be
+    /// indicative.
+    /// </summary>
+    public const CandidateEvaluationStage ShallowestPruningStage = CandidateEvaluationStage.Calibration;
+
+    /// <summary>
     /// Drops pending candidates whose own interval shows they cannot reach the threshold: even the
     /// optimistic end of the estimate is below the margin, so more games can only cost budget.
     /// </summary>
@@ -248,10 +258,13 @@ public sealed class CandidateEvaluationQueue
         foreach (var entry in Entries)
         {
             if (entry.Status != CandidateQueueStatus.Pending) continue;
-            if (entry.LatestCi95High is not { } upperBound || upperBound >= margin) continue;
+            if (FindIndicativeMeasurement(entry) is not { } indicative) continue;
+            if (indicative.Measurement.Ci95High >= margin) continue;
 
             entry.Status = CandidateQueueStatus.Pruned;
-            entry.Detail = $"Upper interval bound {upperBound:0.####} is below the {margin:0.####} margin; it cannot reach the threshold.";
+            entry.Detail =
+                $"Upper interval bound {indicative.Measurement.Ci95High:0.####} at {indicative.Stage} is below the "
+                + $"{margin:0.####} margin; it cannot reach the threshold.";
             pruned++;
         }
 
@@ -266,29 +279,46 @@ public sealed class CandidateEvaluationQueue
     public int PruneDominatedCandidates()
     {
         var measured = Entries
-            .Where(entry => entry.Status == CandidateQueueStatus.Pending
-                && entry.LatestCi95Low.HasValue
-                && entry.LatestCi95High.HasValue
-                && entry.HighestPassedStage.HasValue)
+            .Where(entry => entry.Status == CandidateQueueStatus.Pending)
+            .Select(entry => (Entry: entry, Indicative: FindIndicativeMeasurement(entry)))
+            .Where(pair => pair.Indicative.HasValue)
+            .Select(pair => (pair.Entry, Indicative: pair.Indicative!.Value))
             .ToList();
 
         var pruned = 0;
-        foreach (var entry in measured)
+        foreach (var (entry, indicative) in measured)
         {
             var dominator = measured.FirstOrDefault(other =>
-                !ReferenceEquals(other, entry)
-                && other.HighestPassedStage == entry.HighestPassedStage
-                && other.LatestCi95Low > entry.LatestCi95High);
-            if (dominator == null) continue;
+                !ReferenceEquals(other.Entry, entry)
+                && other.Indicative.Stage == indicative.Stage
+                && other.Indicative.Measurement.Ci95Low > indicative.Measurement.Ci95High);
+            if (dominator.Entry == null) continue;
 
             entry.Status = CandidateQueueStatus.Pruned;
             entry.Detail =
-                $"Dominated by '{dominator.DisplayName}', whose interval lower bound {dominator.LatestCi95Low:0.####} "
-                + $"exceeds this candidate's upper bound {entry.LatestCi95High:0.####}.";
+                $"Dominated by '{dominator.Entry.DisplayName}', whose interval lower bound "
+                + $"{dominator.Indicative.Measurement.Ci95Low:0.####} exceeds this candidate's upper bound "
+                + $"{indicative.Measurement.Ci95High:0.####} at {indicative.Stage}.";
             pruned++;
         }
 
         return pruned;
+    }
+
+    /// <summary>
+    /// The deepest measurement at or beyond <see cref="ShallowestPruningStage"/>, or null when the
+    /// candidate has only been measured on evidence too thin to eliminate it.
+    /// </summary>
+    private static (CandidateEvaluationStage Stage, CandidateStageMeasurement Measurement)? FindIndicativeMeasurement(
+        CandidateQueueEntry entry)
+    {
+        var indicative = entry.Measurements
+            .Where(pair => (int)pair.Key >= (int)ShallowestPruningStage)
+            .OrderByDescending(pair => (int)pair.Key)
+            .Cast<KeyValuePair<CandidateEvaluationStage, CandidateStageMeasurement>?>()
+            .FirstOrDefault();
+
+        return indicative.HasValue ? (indicative.Value.Key, indicative.Value.Value) : null;
     }
 
     /// <summary>
