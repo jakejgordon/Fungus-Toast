@@ -926,6 +926,15 @@ measurement model, phase gates, and open product decisions are in
     pools smaller than their seat count, and any level whose mean fails to
     exceed its predecessor. Negative-tested against a reintroduced duplicate and
     a typo.
+60. Post-pull validation caught one stale test left by the campaign reroster:
+    `Campaign_progression_board_presets_only_use_cmp_strategy_names` still
+    treated the `CMP_` prefix as a runtime invariant, although the measured
+    roster intentionally fields registered Campaign entries named `AI12`,
+    `AI13`, and `TST_*`. The proposed naming standard below explicitly remains
+    unapproved, and runtime selection is based on Campaign-set registration,
+    not a prefix. The regression now verifies that every strategy referenced by
+    a BoardPreset resolves in `CampaignStrategiesByName`, preserving the actual
+    safety property without rejecting valid measured entries.
 
 ### Proposed — AI strategy naming and metadata standard
 

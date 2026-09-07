@@ -503,7 +503,7 @@ public class StrategyCatalogTests
     }
 
     [Fact]
-    public void Campaign_progression_board_presets_only_use_cmp_strategy_names()
+    public void Campaign_progression_board_presets_only_use_registered_campaign_strategies()
     {
         var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
         var presetDir = Path.Combine(repoRoot, "FungusToast.Unity", "Assets", "Configs", "Board Presets");
@@ -516,7 +516,9 @@ public class StrategyCatalogTests
             .ToList();
 
         Assert.NotEmpty(strategyNames);
-        Assert.All(strategyNames, name => Assert.StartsWith("CMP_", name));
+        Assert.All(strategyNames, name => Assert.True(
+            AIRoster.CampaignStrategiesByName.ContainsKey(name),
+            $"Board preset references strategy '{name}', which is not registered in the Campaign set."));
     }
 
     [Fact]
