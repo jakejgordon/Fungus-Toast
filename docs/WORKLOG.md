@@ -704,6 +704,23 @@ measurement model, phase gates, and open product decisions are in
     and 651 Core tests pass, and the experiment contract verifies end to end.
     Next: P7.2, running the matrix and quantifying slot, geometry, and lineup
     effects.
+51. P7.2 scaffolding is in: `CalibrationConditionEmitter` renders runnable
+    conditions with derived experiment IDs and `CalibrationDriver` runs them
+    with durable resumable state, retrying a transient failure inside the pass
+    rather than leaving a hole for analysis to find, refusing to resume against
+    a different matrix, and costing only the added contexts when a matrix is
+    widened. Running one condition for real proved the whole path — emit, run,
+    analyze, read per-strategy shares with intervals — and exposed a wrong
+    assumption in the P7.1 sizing. The artifact measured two strategies, not
+    nineteen: the runner resolves its lineup once per run and rotates only slots
+    within it, so a 300-game duel condition measures one pair rather than the
+    panel. Every per-strategy sample calculation in P7.1 assumed the lineup was
+    redrawn per game. The fix is per-game lineup selection from a purpose-scoped
+    deterministic stream; enumerating all 171 duel pairs would work today with no
+    code change and is statistically cleanest, but multiplies conditions by two
+    orders of magnitude for the same evidence. 231 Simulation and 651 Core tests
+    pass. Next: per-game lineup selection, without which the frozen matrix
+    measures far less than it claims.
 
 ### Completion Criteria
 

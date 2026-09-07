@@ -1224,6 +1224,35 @@ band reflects strategy strength rather than draft or nutrient luck.
 221 Simulation and 651 Core tests pass, and the experiment contract still
 verifies end to end.
 
+#### P7.2 calibration scaffolding (delivered 2026-09-07)
+
+`CalibrationConditionEmitter` turns a frozen matrix into runnable conditions with
+derived experiment IDs, and `CalibrationDriver` runs them with durable,
+resumable state. A campaign is hours of simulation, so state is written after
+every condition; a resumed run skips completed work, retries a transient failure
+inside the same pass rather than leaving a hole to be discovered at analysis
+time, and refuses to resume against a different matrix, since that would mix
+evidence from two frozen designs. Widening a matrix later costs only the
+contexts that were added.
+
+**A real run exposed a wrong assumption in the P7.1 sizing.** Emitting a
+condition, running it, and analyzing the artifact works end to end - but the
+artifact measured **two** strategies, not the nineteen in the panel. The runner
+resolves its lineup **once per run** and then rotates only slots within it, so a
+300-game duel condition measures one pair rather than the panel. Every
+per-strategy sample calculation in P7.1 assumed the lineup was redrawn per game,
+and it is not.
+
+The panel design needs per-game lineup selection: a lineup drawn for each game
+from a purpose-scoped deterministic stream, so a context samples the field rather
+than one pairing. Enumerating lineups instead would work today with no code
+change - 19 strategies give 171 duel pairs - and is statistically the cleanest
+design, but it multiplies conditions by two orders of magnitude for the same
+evidence. That fix is the next slice; until it lands, the frozen matrix would
+measure far less than it claims.
+
+231 Simulation and 651 Core tests pass.
+
 ### Phase 8 — Define and fill the target roster matrix
 
 - **P8.1:** Cluster or compare existing behavior to find real archetype coverage,
