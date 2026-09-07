@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "fungus-toast.ai-calibration-matrix.v1",
+  "matrixId": "p7-campaign-panel-v1",
+  "purpose": "Frozen P7 reference matrix over the 53 Campaign strategies, so campaign difficulty slotting can be evidenced rather than inferred from the Proven panel. Contexts favour higher player counts because that is how campaigns are actually played and because more seats per game is what makes a 53-strategy panel affordable. Systems are off, matching p7-solo-panel-v1, so the two panels' bands are comparable and a band reflects strategy strength rather than draft or nutrient luck; a systems-on context is the natural follow-up if draft interaction turns out to matter.",
+  "strategySet": "campaign",
+  "strategyNames": [],
+  "selectionPolicy": "randomUnique",
+  "minimumGamesPerStrategy": 30,
+  "calibrationContexts": [
+    {
+      "contextId": "smalltable.small.square.rectangle.generated.80x80",
+      "playerCount": 4,
+      "boardWidth": 80,
+      "boardHeight": 80,
+      "baseSeed": 2026110000,
+      "gamesPerCondition": 400,
+      "repeats": 1
+    },
+    {
+      "contextId": "crowded.small.square.rectangle.generated.80x80",
+      "playerCount": 6,
+      "boardWidth": 80,
+      "boardHeight": 80,
+      "baseSeed": 2026110500,
+      "gamesPerCondition": 300,
+      "repeats": 1
+    },
+    {
+      "contextId": "crowded.medium.square.rectangle.generated.100x100",
+      "playerCount": 6,
+      "boardWidth": 100,
+      "boardHeight": 100,
+      "baseSeed": 2026111000,
+      "gamesPerCondition": 300,
+      "repeats": 1
+    },
+    {
+      "contextId": "swarm.medium.square.rectangle.generated.120x120",
+      "playerCount": 8,
+      "boardWidth": 120,
+      "boardHeight": 120,
+      "baseSeed": 2026111500,
+      "gamesPerCondition": 200,
+      "repeats": 1
+    }
+  ],
+  "holdoutContexts": [
+    {
+      "contextId": "swarm.medium.wide.rectangle.generated.140x100",
+      "playerCount": 8,
+      "boardWidth": 140,
+      "boardHeight": 100,
+      "baseSeed": 2026112000,
+      "gamesPerCondition": 200,
+      "repeats": 1
+    },
+    {
+      "contextId": "smalltable.small.tall.rectangle.generated.60x100",
+      "playerCount": 4,
+      "boardWidth": 60,
+      "boardHeight": 100,
+      "baseSeed": 2026112500,
+      "gamesPerCondition": 400,
+      "repeats": 1
+    }
+  ],
+  "totalGameBudget": 1800,
+  "runtimeBudgetSeconds": 21600
+}
