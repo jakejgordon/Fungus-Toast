@@ -531,21 +531,96 @@ with intervals that never tighten is the signature of a boom-or-bust strategy, n
 strong one, and they should not be slotted on the pooled mean alone. Measuring their variance
 directly is the natural follow-up.
 
-## Proposed reslotting — not applied
+## Reslotting — applied 2026-09-07
 
-The evidence supports a reslotting, but how many encounters belong in each tier and how the
-campaign paces them is a design decision, so nothing here has been changed. Applying it is a
-metadata edit plus a Unity validation pass.
+Applied to `_explicitCampaignDifficultyByName` in `AIRoster`. **45 of the 53 strategies changed
+tier**, which is the size of the drift rather than the size of the edit.
 
-The defensible mapping is to slot on measured band: `Elite` for pooled share above `1.25`, `Hard`
-above `1.05`, `Medium` for the parity band, `Easy` below `0.95`, and `Training` for the bottom.
-On this panel that moves the six under-strength bosses down out of `Elite`, promotes
+The band classifier's thresholds are a four-way split and leave the parity band nearly empty, so
+the campaign ladder uses its own five thresholds on pooled parity-normalized board share, frozen
+here: `Elite` at `1.50`, `Hard` at `1.25`, `Medium` at `0.95`, `Easy` at `0.50`, `Training` below.
+They keep all five tiers populated while preserving measured order. The resulting distribution is
+13 Elite / 5 Hard / 7 Medium / 12 Easy / 16 Training — top- and bottom-heavy, which is an honest
+reflection of a roster with many training dummies and many strong lines but little middle.
+
+The six under-strength bosses all move down out of `Elite`, four of them to `Easy` and
+`CMP_AnabolicBeaconRhizolith_Elite` to `Training`. `AI12` moves `Easy` to `Elite`.
 `CMP_Bloom_AnabolicRegression_Medium` (1.934), `CMP_Control_AnabolicRebirth_Medium` (1.619) and
-`CMP_Control_RebirthFurnace_Medium` (1.613) into the top tier, and moves `AI12` (1.959) out of
-`Easy` entirely.
+`CMP_Control_RebirthFurnace_Medium` (1.613) are promoted from `Medium` into the top tier. `AI13`
+moves `Hard` to `Elite`, which required updating the test that pinned its authored tier; its
+`Boss` role and `Strong` power tier are unchanged, because measurement says how strong a strategy
+is and authoring says what it is for.
+
+The two unplaceable Toxinborne variants are slotted `Elite` on direction rather than on their
+pooled mean, and carry a comment saying so. Nine entries in the dictionary name strategies outside
+the Campaign panel; this matrix says nothing about them and they were left as authored.
 
 Two caveats worth settling first. `Boss` is a role, not a difficulty, so a boss that measures Easy
 may be a design intent about *shape* rather than an error — but six of ten is too many for that to
 be the explanation. And reslotting on pooled strength alone discards the contextual specialists the
 report flags; a strategy that is Elite at four players and Easy at eight is badly served by any
 single label.
+
+## What the reslotting does not fix
+
+Worth stating plainly, because it is easy to assume otherwise: **a strategy's `CampaignDifficulty`
+does not decide which AIs a campaign level fields.** It is read in exactly two places — a label in
+the Board Preset inspector, and an optional filter on `StrategyCatalogFilter`. Every level's roster
+is a hand-authored list of strategy names inside its `BoardPreset` asset, either a fixed ordered
+lineup (`aiPlayers`) or a pool plus a count (`aiStrategyPool` + `pooledAiPlayerCount`). So the
+reslotting makes the metadata honest and makes the editor tell the truth, but on its own it changes
+no gameplay.
+
+The separate `CampaignState.startDifficulty` — the Training/Easy/Medium/Hard/Elite/Boss choice on
+the campaign menu — is a *different* use of the same enum. It picks the level you start at
+(0/3/4/5/6/7) and it does drive two live levers: `AIStartingAdaptationResolver` grants every AI
+0/1/2/3/4/5 extra starting adaptations by that difficulty, and
+`CampaignStartingPositionDifficultyResolver` slides the human's allowed starting tiles toward worse
+positions as it rises.
+
+### The level curve, measured
+
+Joining each `BoardPreset` roster with its measured shares gives the campaign's real difficulty
+curve, which is the thing the player actually experiences.
+
+| Level | Preset | Mode | AIs | Mean share | Range |
+|---|---|---|---:|---:|---|
+| Campaign0 | 10x10 1 AI | pool | 1 | 0.415 | 0.415 |
+| Campaign1 | 15x15 1 AI | fixed | 1 | 0.446 | 0.446 |
+| Campaign2 | 20x20 2 AI | fixed | 2 | **0.321** | 0.152 – 0.490 |
+| Campaign3 | 30x30 3 AI | fixed | 3 | 0.347 | 0.140 – 0.455 |
+| Campaign4 | 40x40 4 AI | pool | 4 | 0.520 | 0.141 – 1.092 |
+| Campaign5 | 50x50 5 AI | pool | 5 | 0.740 | 0.141 – 1.619 |
+| Campaign6 | 75x75 4 AI | pool | 4 | 1.098 | 0.361 – 1.619 |
+| Campaign7 | 90x90 6 AI | pool | 6 | 1.223 | 0.361 – 2.062 |
+| Campaign8 | 100x100 6 AI | fixed | 6 | **1.182** | 0.306 – 1.619 |
+| Campaign9 | 110x110 6 AI | fixed | 6 | 1.210 | 0.756 – 1.619 |
+| Campaign10 | 115x115 4 AI Elite | fixed | 5 | **1.052** | 0.361 – 1.619 |
+| Campaign11 | 120x120 6 AI | fixed | 6 | 1.286 | 0.809 – 1.619 |
+| Campaign12 | 130x130 7 AI | pool | 7 | 1.317 | 0.358 – 2.244 |
+| Campaign13 | 140x140 7 AI | fixed | 7 | **1.314** | 0.831 – 1.727 |
+| Campaign14 | 150x150 7 AI | fixed | 7 | 1.440 | 1.112 – 1.727 |
+| Campaign15 | 160x160 7 AI | fixed | 7 | **1.232** | 0.358 – 1.708 |
+
+The curve is broadly right — it climbs from `0.42` to `1.44` across sixteen levels — and it is much
+better behaved than the strategy metadata was. Five levels dip below their predecessor (bolded),
+and three of those are worth attention.
+
+**Campaign15 is the finale and it is the third-weakest of the last six levels.** It fields
+`CMP_Economy_Economancer_Elite` and `CMP_Economy_HoardsporeRegent_Elite` **twice each**, which
+spends four of seven seats on two strategies, and it fills a fifth seat with
+`CMP_Surge_BeaconSprinter_Medium` at `0.358` — the fourth-weakest AI in the entire roster. The last
+fight of the campaign is easier than the two before it. Campaign14 also duplicates Economancer.
+
+**Campaign10 is named "4 AI Elite" but is the softest level of its neighbourhood** at `1.052`, and
+it is the only level fielding `CMP_AnabolicBeaconRhizolith_Elite` (`0.498`) — the strategy the
+matrix identifies as the single worst-slotted in the roster. It also carries
+`CMP_Surge_BeaconTempo_Medium` at `0.361`, and it has five entries despite the name.
+
+**Campaign2 is the sharpest drop in the ladder**, falling from `0.446` to `0.321` because it pairs
+`CMP_Attrition_ToxicTurtle_Training` (`0.152`) with `CMP_Mobility_Overextender_Training` (`0.490`).
+Early levels are the tutorial, so a dip is defensible; a dip that leaves level 3 easier than level 2
+is less so.
+
+Fixing these means editing `BoardPreset` assets, not metadata, and how the campaign should pace is
+a design decision rather than a measurement one — so nothing here has been changed.

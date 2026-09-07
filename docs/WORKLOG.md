@@ -861,6 +861,41 @@ measurement model, phase gates, and open product decisions are in
     encounters belong per tier and how the campaign paces them is a design
     call, and it needs a Unity validation pass.
 
+58. The campaign reslotting was applied on 2026-09-07 at Jake's direction.
+    **45 of the 53 strategies changed tier.** The band classifier's four-way
+    thresholds leave the parity band nearly empty, so the campaign ladder got
+    its own five, frozen in `AI_P7_CAMPAIGN_BANDS_V1.md`: `Elite` at `1.50`,
+    `Hard` at `1.25`, `Medium` at `0.95`, `Easy` at `0.50`, `Training` below,
+    giving 13/5/7/12/16. All six under-strength bosses left `Elite`;
+    `CMP_AnabolicBeaconRhizolith_Elite` fell to `Training`. `AI12` went `Easy`
+    to `Elite`, `AI13` `Hard` to `Elite` — which required updating the test
+    pinning AI13's authored tier, though its `Boss` role and `Strong` power tier
+    are untouched, since measurement says how strong a strategy is and authoring
+    says what it is for. 652 Core and 259 Simulation tests pass; Unity Core
+    DLL/PDB refreshed.
+
+    **The reslotting is cosmetic on its own, and that is the more important
+    finding.** A strategy's `CampaignDifficulty` is read in only two places — a
+    label in the Board Preset inspector and an optional `StrategyCatalogFilter`
+    predicate. It does *not* select which AIs a level fields: every level's
+    roster is a hand-authored name list in its `BoardPreset` asset, either a
+    fixed `aiPlayers` lineup or `aiStrategyPool` + `pooledAiPlayerCount`. The
+    same enum's *other* use, `CampaignState.startDifficulty`, is unrelated to
+    strategy metadata and does drive live levers: extra AI starting adaptations
+    (0/1/2/3/4/5 by difficulty) and how far the human's allowed starting tiles
+    slide toward worse positions.
+    Joining each preset's roster with measured shares gives the real curve,
+    which climbs `0.42` → `1.44` over sixteen levels and is far healthier than
+    the metadata was, but dips at five levels. Three matter: **Campaign15, the
+    finale, is the third-weakest of the last six** because it duplicates
+    Economancer and HoardsporeRegent (four of seven seats on two strategies) and
+    spends a fifth on `CMP_Surge_BeaconSprinter_Medium` at `0.358`;
+    **Campaign10, named "4 AI Elite", is the softest of its neighbourhood** at
+    `1.052` and is the only level fielding `CMP_AnabolicBeaconRhizolith_Elite`
+    (`0.498`); and **Campaign2 is the sharpest drop**, leaving level 3 easier
+    than level 2. Fixing these means editing BoardPreset assets, which is a
+    pacing decision rather than a measurement one, so none were changed.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

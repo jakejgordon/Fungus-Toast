@@ -54,8 +54,14 @@ public class StrategyCatalogTests
         }
     }
 
+    /// <summary>
+    /// AI13 is the campaign's flagship boss, so its identity is pinned against accidental drift.
+    /// Its campaign tier moved Hard -> Elite when the P7 campaign matrix measured it at 2.076
+    /// pooled parity-normalized board share; the authored role and power tier did not move,
+    /// because measurement says how strong it is and authoring says what it is for.
+    /// </summary>
     [Fact]
-    public void Campaign_ai13_keeps_its_hard_boss_metadata()
+    public void Campaign_ai13_keeps_its_boss_identity_and_measured_elite_tier()
     {
         var definition = Assert.IsType<StrategyDefinition>(
             StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, "AI13"));
@@ -64,7 +70,7 @@ public class StrategyCatalogTests
         Assert.Equal(StrategyRole.Boss, definition.Metadata.Role);
         Assert.Contains(DifficultyBand.Hard, definition.Metadata.DifficultyBands);
         Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
-        Assert.Equal(CampaignDifficulty.Hard, definition.Metadata.CampaignDifficulty);
+        Assert.Equal(CampaignDifficulty.Elite, definition.Metadata.CampaignDifficulty);
     }
 
     [Fact]

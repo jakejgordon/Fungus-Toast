@@ -2720,62 +2720,76 @@ namespace FungusToast.Core.AI
         private static readonly UniqueKeyDictionary<CampaignDifficulty> _explicitCampaignDifficultyByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
-                ["AI6"] = CampaignDifficulty.Training,
-                ["AI12"] = CampaignDifficulty.Easy,
-                ["AI13"] = CampaignDifficulty.Hard,
-                ["CMP_Surge_BeaconSprinter_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Control_RebirthFurnace_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Growth_PutridTendrils_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Growth_WildfireBloom_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Economy_Economancer_Elite"] = CampaignDifficulty.Elite,
-                ["CMP_Economy_HoardsporeRegent_Elite"] = CampaignDifficulty.Elite,
-                ["CMP_Defense_IronShell_Elite"] = CampaignDifficulty.Elite,
-                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = CampaignDifficulty.Elite,
-                ["TST_AI10_CreepingRegression"] = CampaignDifficulty.Elite,
-                ["CMP_Bloom_Thanatophyte_Elite"] = CampaignDifficulty.Elite,
-                ["TST_AI10_BeaconRegression"] = CampaignDifficulty.Elite,
-                ["Growth/Resilience"] = CampaignDifficulty.Easy,
+                // Slotted from the P7 Campaign matrix (1,800 games, six contexts), frozen in
+                // AI_P7_CAMPAIGN_BANDS_V1.md. Thresholds on pooled parity-normalized board share:
+                // Elite >= 1.50, Hard >= 1.25, Medium >= 0.95, Easy >= 0.50, Training below.
+                // They were chosen to keep all five tiers populated while preserving measured
+                // order; the previous assignments were authored by hand and the measurement
+                // found the ladder non-monotonic, with Elite's median below parity.
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = CampaignDifficulty.Elite, // 2.244, IntervalTooWide: high variance, slotted on direction not mean
+                ["AI13"] = CampaignDifficulty.Elite, // 2.076
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = CampaignDifficulty.Elite, // 2.062, IntervalTooWide: high variance, slotted on direction not mean
+                ["AI12"] = CampaignDifficulty.Elite, // 1.959
+                ["CMP_Bloom_AnabolicRegression_Medium"] = CampaignDifficulty.Elite, // 1.934
+                ["CMP_Control_AnabolicFirst_Hard"] = CampaignDifficulty.Elite, // 1.727
+                ["CMP_Economy_Economancer_Elite"] = CampaignDifficulty.Elite, // 1.708
+                ["CMP_Control_AnabolicRebirth_Medium"] = CampaignDifficulty.Elite, // 1.619
+                ["CMP_Control_RebirthFurnace_Medium"] = CampaignDifficulty.Elite, // 1.613
+                ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Elite, // 1.610
+                ["TST_Campaign7_KillReclaim_Offset2"] = CampaignDifficulty.Elite, // 1.588
+                ["CMP_Growth_PutridTendrils_Medium"] = CampaignDifficulty.Elite, // 1.571
+                ["TST_Campaign7_KillReclaim_Offset3"] = CampaignDifficulty.Elite, // 1.501
+                ["TST_Campaign7_KillReclaim_Offset1"] = CampaignDifficulty.Hard, // 1.485
+                ["CMP_Economy_HoardsporeRegent_Elite"] = CampaignDifficulty.Hard, // 1.366
+                ["TST_Campaign7_KillReclaim_Offset8"] = CampaignDifficulty.Hard, // 1.317
+                ["CMP_Bloom_BeaconRegression_Medium"] = CampaignDifficulty.Hard, // 1.295
+                ["CMP_Defense_IronShell_Elite"] = CampaignDifficulty.Hard, // 1.284
+                ["CMP_Bloom_CreepingNecro_Medium"] = CampaignDifficulty.Medium, // 1.212
+                ["AI4"] = CampaignDifficulty.Medium, // 1.197
+                ["AI5"] = CampaignDifficulty.Medium, // 1.194
+                ["CMP_Economy_LateSpike_Hard"] = CampaignDifficulty.Medium, // 1.173
+                ["CMP_Bloom_CreepingRegression_Elite"] = CampaignDifficulty.Medium, // 1.112
+                ["CMP_Economy_TempoReclaim_Medium"] = CampaignDifficulty.Medium, // 1.111
+                ["CMP_Reclaim_Scavenger_Easy"] = CampaignDifficulty.Medium, // 1.092
+                ["CMP_Growth_Pressure_Medium"] = CampaignDifficulty.Easy, // 0.934
+                ["TST_CampaignPlayer_SafeBaseline"] = CampaignDifficulty.Easy, // 0.902
+                ["CMP_Bloom_Thanatophyte_Elite"] = CampaignDifficulty.Easy, // 0.867
+                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = CampaignDifficulty.Easy, // 0.831
+                ["CMP_Growth_WildfireBloom_Medium"] = CampaignDifficulty.Easy, // 0.809
+                ["CMP_Bloom_FortifyMimic_Medium"] = CampaignDifficulty.Easy, // 0.756
+                ["CMP_TierCap_GrowthResilience_Easy"] = CampaignDifficulty.Easy, // 0.725
+                ["AI6"] = CampaignDifficulty.Easy, // 0.720
+                ["CMP_Defense_ReclaimShell_Easy"] = CampaignDifficulty.Easy, // 0.704
+                ["TST_AI10_CreepingRegression"] = CampaignDifficulty.Easy, // 0.648
+                ["CMP_Surge_Pulsar_Easy"] = CampaignDifficulty.Easy, // 0.644
+                ["TST_AI10_BeaconRegression"] = CampaignDifficulty.Easy, // 0.524
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = CampaignDifficulty.Training, // 0.498
+                ["CMP_Mobility_Overextender_Training"] = CampaignDifficulty.Training, // 0.490
+                ["CMP_Defense_ResilientShell_Easy"] = CampaignDifficulty.Training, // 0.455
+                ["CMP_Mobility_Overextender_Training_Offset1"] = CampaignDifficulty.Training, // 0.447
+                ["CMP_Mobility_Overextender_Training_Offset2"] = CampaignDifficulty.Training, // 0.446
+                ["CMP_Mobility_Overextender_Training_Offset3"] = CampaignDifficulty.Training, // 0.415
+                ["TST_Training_ResilientMycelium_Offset3"] = CampaignDifficulty.Training, // 0.415
+                ["TST_Training_ResilientMycelium_Offset1"] = CampaignDifficulty.Training, // 0.401
+                ["TST_Training_ResilientMycelium"] = CampaignDifficulty.Training, // 0.370
+                ["CMP_Surge_BeaconTempo_Medium"] = CampaignDifficulty.Training, // 0.361
+                ["CMP_Surge_BeaconSprinter_Medium"] = CampaignDifficulty.Training, // 0.358
+                ["CMP_Surge_GrowthTempo_Medium"] = CampaignDifficulty.Training, // 0.306
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = CampaignDifficulty.Training, // 0.271
+                ["CMP_Attrition_ToxicTurtle_Training"] = CampaignDifficulty.Training, // 0.152
+                ["CMP_Attrition_ToxicTurtle_Training_Offset1"] = CampaignDifficulty.Training, // 0.141
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = CampaignDifficulty.Training, // 0.140
+
+                // Not in the Campaign panel, so the P7 campaign matrix says nothing about
+                // them. Left as authored.
+                ["Creeping>Necrosporulation"] = CampaignDifficulty.Medium,
                 ["Grow>Kill>Reclaim(Econ)"] = CampaignDifficulty.Medium,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = CampaignDifficulty.Medium,
-                ["Creeping>Necrosporulation"] = CampaignDifficulty.Medium,
-                ["TST_CampaignPlayer_SafeBaseline"] = CampaignDifficulty.Medium,
-                ["TST_Training_ResilientMycelium"] = CampaignDifficulty.Training,
-                ["TST_Training_ResilientMycelium_Offset3"] = CampaignDifficulty.Training,
-                ["CMP_Mobility_Overextender_Training"] = CampaignDifficulty.Easy,
-                ["CMP_Mobility_Overextender_Training_Offset2"] = CampaignDifficulty.Easy,
-                ["CMP_Mobility_Overextender_Training_Offset3"] = CampaignDifficulty.Easy,
-                ["CMP_Attrition_ToxicTurtle_Training"] = CampaignDifficulty.Easy,
-                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = CampaignDifficulty.Easy,
+                ["Growth/Resilience"] = CampaignDifficulty.Easy,
+                ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = CampaignDifficulty.Medium,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = CampaignDifficulty.Medium,
-                ["CMP_TierCap_GrowthResilience_Easy"] = CampaignDifficulty.Easy,
-                ["CMP_Reclaim_Scavenger_Easy"] = CampaignDifficulty.Easy,
-                ["CMP_Surge_Pulsar_Easy"] = CampaignDifficulty.Medium,
-                ["CMP_Reclaim_InfiltrationSurge_Easy"] = CampaignDifficulty.Easy,
-                ["CMP_Defense_ResilientShell_Easy"] = CampaignDifficulty.Easy,
-                ["CMP_Defense_ReclaimShell_Easy"] = CampaignDifficulty.Easy,
-                ["CMP_Surge_BeaconTempo_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Control_AnabolicRebirth_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Surge_GrowthTempo_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Growth_Pressure_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Bloom_FortifyMimic_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Economy_KillReclaim_Medium"] = CampaignDifficulty.Elite,
-                ["TST_Campaign7_KillReclaim_Offset1"] = CampaignDifficulty.Medium,
-                ["TST_Campaign7_KillReclaim_Offset2"] = CampaignDifficulty.Medium,
-                ["TST_Campaign7_KillReclaim_Offset3"] = CampaignDifficulty.Medium,
-                ["TST_Campaign7_KillReclaim_Offset8"] = CampaignDifficulty.Medium,
-                ["CMP_Economy_TempoReclaim_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Bloom_CreepingNecro_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Bloom_BeaconRegression_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Bloom_AnabolicRegression_Medium"] = CampaignDifficulty.Medium,
-                ["CMP_Bloom_ToxinborneJetting_Medium"] = CampaignDifficulty.Medium,
                 ["TST_BalancedControl_AnabolicFirst"] = CampaignDifficulty.Hard,
-                ["CMP_Control_AnabolicFirst_Hard"] = CampaignDifficulty.Hard,
-                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = CampaignDifficulty.Hard,
-                ["Power Mutations Max Econ"] = CampaignDifficulty.Hard,
-                ["CMP_Economy_LateSpike_Hard"] = CampaignDifficulty.Hard,
-                ["CMP_Bloom_CreepingRegression_Elite"] = CampaignDifficulty.Elite,
-                ["CMP_AnabolicBeaconRhizolith_Elite"] = CampaignDifficulty.Elite,
                 ["TST_CreepingNecroRegressionCascade"] = CampaignDifficulty.Elite,
             };
 
