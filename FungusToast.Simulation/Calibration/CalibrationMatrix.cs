@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FungusToast.Core.AI;
+using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
 
 namespace FungusToast.Simulation.Calibration;
@@ -89,8 +90,15 @@ public sealed class CalibrationMatrix
 {
     public const string CurrentSchemaVersion = "fungus-toast.ai-calibration-matrix.v1";
 
-    /// <summary>Per-condition ceiling, inherited from the staged evidence gates.</summary>
-    public const int MaximumGamesPerContext = 100;
+    /// <summary>
+    /// Per-condition ceiling. A calibration context measures rather than decides, so it runs as an
+    /// exploratory condition and takes that ceiling: the staged 100-game limit exists to stop a
+    /// candidate buying significance with a larger batch, and nothing here advances on this
+    /// evidence. Repeats remain available and are still worth using for very long contexts, since
+    /// each condition is a separate artifact and a failure then costs one block rather than all of
+    /// them.
+    /// </summary>
+    public const int MaximumGamesPerContext = ExperimentManifest.MaximumExploratoryGamesPerCondition;
 
     public required string SchemaVersion { get; init; }
 

@@ -19,8 +19,14 @@ public static partial class ExperimentManifestValidator
             errors.Add("experimentId must be 1-128 characters using only letters, numbers, '.', '_' or '-'.");
         if (string.IsNullOrWhiteSpace(manifest.Purpose))
             errors.Add("purpose is required.");
-        if (manifest.GamesPerCondition < 1 || manifest.GamesPerCondition > ExperimentManifest.MaximumGamesPerCondition)
-            errors.Add($"gamesPerCondition must be between 1 and {ExperimentManifest.MaximumGamesPerCondition}.");
+        // The ceiling is a promotion safeguard, so it follows the evidence stage: the four staged
+        // gates keep their frozen limit, while an exploratory run - which cannot carry a hypothesis
+        // or emit a verdict - may measure as widely as its budget allows.
+        var gamesCeiling = manifest.Analysis == null
+            ? ExperimentManifest.MaximumGamesPerCondition
+            : ExperimentManifest.MaximumGamesForStage(manifest.Analysis.EvidenceStage);
+        if (manifest.GamesPerCondition < 1 || manifest.GamesPerCondition > gamesCeiling)
+            errors.Add($"gamesPerCondition must be between 1 and {gamesCeiling}.");
         if (manifest.TotalGameBudget < 1)
             errors.Add("totalGameBudget must be positive.");
         if (!double.IsFinite(manifest.RuntimeBudgetSeconds) || manifest.RuntimeBudgetSeconds <= 0)

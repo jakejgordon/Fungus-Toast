@@ -691,10 +691,19 @@ measurement model, phase gates, and open product decisions are in
     rating would describe those matchups rather than general strength;
     `CoverageBalanced` over-samples rare themes for the same reason. The matrix
     requires `RandomUnique` whenever the panel exceeds a lineup, and checks that
-    context seed spans do not overlap. The frozen matrix is 1,600 games across
-    16 conditions with at least 30 games per strategy per context. 216
-    Simulation and 651 Core tests pass. Next: P7.2, running the matrix and
-    quantifying slot, geometry, and lineup effects.
+    context seed spans do not overlap. Jake approved raising the per-condition
+    game ceiling on 2026-09-07, having confirmed that agent token usage does not
+    scale with games run — it is driven by how much run output is read back, and
+    only summaries are read. The ceiling now follows the evidence stage: it is a
+    promotion safeguard, so the four staged gates keep their frozen counts while
+    an exploratory run, which cannot carry a hypothesis or emit a verdict, may
+    run up to 1,000 games per condition. No schema bump, because the change only
+    widens an accepted range and an older binary rejects an over-sized manifest
+    rather than misreading it. The frozen matrix is 1,600 games across 7
+    conditions with at least 30 games per strategy per context. 221 Simulation
+    and 651 Core tests pass, and the experiment contract verifies end to end.
+    Next: P7.2, running the matrix and quantifying slot, geometry, and lineup
+    effects.
 
 ### Completion Criteria
 

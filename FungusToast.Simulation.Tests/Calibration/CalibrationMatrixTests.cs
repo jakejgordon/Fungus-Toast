@@ -17,7 +17,7 @@ public sealed class CalibrationMatrixTests
 
         Assert.Equal(string.Empty, string.Join("; ", CalibrationMatrixValidator.Validate(matrix)));
         Assert.Equal(1600, matrix.PlannedGames);
-        Assert.Equal(16, matrix.PlannedConditions);
+        Assert.Equal(7, matrix.PlannedConditions);
 
         // The panel is exactly what solo play draws from, and every context reaches the minimum.
         Assert.Equal(StrategySetEnum.Proven, matrix.StrategySet);
@@ -146,7 +146,8 @@ public sealed class CalibrationMatrixTests
         var matrix = CreateMatrix();
         var oversized = WithCalibrationContexts(matrix, new[]
         {
-            Context("duel.small.square.rectangle.generated.big", players: 2, width: 80, height: 80, seed: 1, games: 101),
+            Context("duel.small.square.rectangle.generated.big", players: 2, width: 80, height: 80, seed: 1,
+                games: CalibrationMatrix.MaximumGamesPerContext + 1),
             matrix.CalibrationContexts[1]
         });
 

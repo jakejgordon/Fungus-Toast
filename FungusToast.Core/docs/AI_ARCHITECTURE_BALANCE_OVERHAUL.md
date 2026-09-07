@@ -1184,13 +1184,26 @@ actually meet rather than an invented set.
 
 Sizing a panel that large exposed two problems the matrix now solves.
 
-**One condition does not give a panel enough games.** The per-condition ceiling
-is 100, but 19 strategies sharing 100 two-player games get ten games each, which
-cannot support a band. A context therefore declares `repeats` — several
-conditions at consecutive seed blocks — and `minimumGamesPerStrategy` is checked
-against the panel size before anything runs, with the error naming the repeats
-the context actually needs. An under-powered matrix fails in milliseconds instead
-of after hours of simulation.
+**One condition does not give a panel enough games.** Nineteen strategies sharing
+100 two-player games get ten games each, which cannot support a band.
+`minimumGamesPerStrategy` is therefore checked against the panel size before
+anything runs, with the error naming the repeats the context actually needs, so
+an under-powered matrix fails in milliseconds instead of after hours of
+simulation. A context may also declare `repeats` — several conditions at
+consecutive seed blocks — which stays useful for very long contexts because each
+condition is a separate artifact and a failure then costs one block rather than
+all of them.
+
+**The 100-game ceiling now follows the evidence stage** (approved 2026-09-07).
+That limit is a promotion safeguard: the staged gates exist so a candidate cannot
+buy significance with an ever-larger batch, which is why P3.3 caps them. An
+exploratory run cannot carry a hypothesis and cannot emit a verdict, so nothing
+advances on its evidence and the reason for the cap does not apply. Exploratory
+conditions may now run up to 1,000 games; smoke, calibration, comparison, and
+holdout keep their exact frozen counts, and a regression test pins that. No
+schema bump: the change only widens an accepted range, an older binary rejects an
+over-sized manifest rather than misreading it, and a newer binary treats every
+existing manifest identically.
 
 **Even exposure is not the same as fair opposition.** `StratifiedCycle` gives
 perfectly even appearance counts, but it slides a window over a fixed ordering,
@@ -1205,10 +1218,11 @@ replay the same games.
 
 The checked-in `calibration-matrix.v1.example.json` freezes five calibration
 contexts (duel and small-table across small, medium, and large boards) and two
-unseen holdout contexts that also change aspect: 1,600 games across 16
+unseen holdout contexts that also change aspect: 1,600 games across 7
 conditions, at least 30 games per strategy in every context, systems off so a
 band reflects strategy strength rather than draft or nutrient luck.
-216 Simulation and 651 Core tests pass.
+221 Simulation and 651 Core tests pass, and the experiment contract still
+verifies end to end.
 
 ### Phase 8 — Define and fill the target roster matrix
 

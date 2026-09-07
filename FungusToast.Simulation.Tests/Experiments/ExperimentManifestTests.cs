@@ -9,6 +9,22 @@ namespace FungusToast.Simulation.Tests.Experiments;
 
 public sealed class ExperimentManifestTests
 {
+    /// <summary>
+    /// The staged ceiling is a promotion safeguard: it stops a candidate buying significance with a
+    /// larger batch. An exploratory run cannot carry a hypothesis or emit a verdict, so nothing
+    /// advances on its evidence and it may measure as widely as its budget allows.
+    /// </summary>
+    [Fact]
+    public void ExploratoryRunsMayExceedTheStagedGamesCeiling_ButStagedOnesMayNot()
+    {
+        Assert.Equal(100, ExperimentManifest.MaximumGamesForStage(ExperimentEvidenceStage.Holdout));
+        Assert.Equal(100, ExperimentManifest.MaximumGamesForStage(ExperimentEvidenceStage.Comparison));
+        Assert.Equal(
+            ExperimentManifest.MaximumExploratoryGamesPerCondition,
+            ExperimentManifest.MaximumGamesForStage(ExperimentEvidenceStage.Exploratory));
+        Assert.True(ExperimentManifest.MaximumExploratoryGamesPerCondition > ExperimentManifest.MaximumGamesPerCondition);
+    }
+
     [Fact]
     public void CheckedInExample_DeserializesAndValidates()
     {
@@ -42,10 +58,50 @@ public sealed class ExperimentManifestTests
     }
 
     [Fact]
-    public void Validate_RejectsBatchAboveOneHundredGames()
+    public void Validate_RejectsBatchAboveTheCeilingForItsStage()
     {
-        var errors = ExperimentManifestValidator.Validate(CreateValidManifest(gamesPerCondition: 101));
-        Assert.Contains(errors, error => error.Contains("gamesPerCondition", StringComparison.Ordinal));
+        // An exploratory run measures rather than decides, so its ceiling is the wider one - but it
+        // is still a ceiling.
+        var withinExploratory = ExperimentManifestValidator.Validate(
+            CreateValidManifest(gamesPerCondition: 101, totalGameBudget: 10_000));
+        Assert.DoesNotContain(withinExploratory, error => error.Contains("gamesPerCondition", StringComparison.Ordinal));
+
+        var aboveExploratory = ExperimentManifestValidator.Validate(CreateValidManifest(
+            gamesPerCondition: ExperimentManifest.MaximumExploratoryGamesPerCondition + 1,
+            totalGameBudget: 10_000));
+        Assert.Contains(aboveExploratory, error => error.Contains("gamesPerCondition", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The four staged gates keep their frozen counts: relaxing the exploratory ceiling must not
+    /// let a promotion stage buy significance with a larger batch.
+    /// </summary>
+    [Theory]
+    [InlineData(ExperimentEvidenceStage.Smoke, 101)]
+    [InlineData(ExperimentEvidenceStage.Calibration, 101)]
+    [InlineData(ExperimentEvidenceStage.Comparison, 101)]
+    [InlineData(ExperimentEvidenceStage.Holdout, 101)]
+    public void Validate_StillPinsTheStagedGatesToTheirFrozenCounts(ExperimentEvidenceStage stage, int games)
+    {
+        var manifest = CreateValidManifest(gamesPerCondition: games, totalGameBudget: 10_000);
+        var staged = new ExperimentManifest
+        {
+            SchemaVersion = manifest.SchemaVersion,
+            ExperimentId = manifest.ExperimentId,
+            Purpose = manifest.Purpose,
+            GamesPerCondition = manifest.GamesPerCondition,
+            BaseSeed = manifest.BaseSeed,
+            TotalGameBudget = manifest.TotalGameBudget,
+            RuntimeBudgetSeconds = manifest.RuntimeBudgetSeconds,
+            Analysis = new ExperimentAnalysisPlan
+            {
+                AnalysisVersion = "fungus-toast.analysis.v2",
+                EvidenceStage = stage
+            },
+            Conditions = manifest.Conditions
+        };
+
+        Assert.NotEmpty(ExperimentManifestValidator.Validate(staged));
     }
 
     [Fact]

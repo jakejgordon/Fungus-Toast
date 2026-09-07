@@ -11,7 +11,26 @@ namespace FungusToast.Simulation.Experiments;
 public sealed class ExperimentManifest
 {
     public const string CurrentSchemaVersion = "fungus-toast.experiment-input.v4";
+    /// <summary>
+    /// Ceiling for the four staged evidence gates. It exists so a candidate cannot buy
+    /// significance with an ever-larger batch: failure must stop it rather than consume more games.
+    /// </summary>
     public const int MaximumGamesPerCondition = 100;
+
+    /// <summary>
+    /// Ceiling for exploratory runs, which measure rather than decide. An exploratory plan cannot
+    /// carry a hypothesis and cannot emit a verdict, so nothing advances on its evidence and the
+    /// reason for the staged ceiling does not apply. Calibrating a reference panel needs far more
+    /// games per context than a promotion stage does, because the seats are shared across a whole
+    /// panel rather than spent on one comparison.
+    /// </summary>
+    public const int MaximumExploratoryGamesPerCondition = 1_000;
+
+    /// <summary>The ceiling that applies to a given evidence stage.</summary>
+    public static int MaximumGamesForStage(ExperimentEvidenceStage stage)
+        => stage == ExperimentEvidenceStage.Exploratory
+            ? MaximumExploratoryGamesPerCondition
+            : MaximumGamesPerCondition;
 
     public required string SchemaVersion { get; init; }
     public required string ExperimentId { get; init; }
