@@ -835,6 +835,32 @@ measurement model, phase gates, and open product decisions are in
     correlate over genes rather than builds, because goals and biases are what
     an author chose and purchases are what the tree then forced.
 
+57. The Campaign-set matrix ran on 2026-09-07: all 53 Campaign strategies,
+    six contexts, 1,800 games, no failed or skipped conditions, 3,647s.
+    Results are frozen in `AI_P7_CAMPAIGN_BANDS_V1.md`, and they say the
+    campaign difficulty ladder does not hold. Median parity-normalized share by
+    authored tier runs Training `0.415` < Easy `0.455` < **Elite `0.990`** <
+    Medium `1.194` < Hard `1.902` — **`Elite` is the fourth-strongest tier of
+    five and its median is below parity**, so a player promoted from Hard to
+    Elite gets an easier fight. Six of the ten Elite bosses measure at or below
+    parity and four band as `Easy`; the worst,
+    `CMP_AnabolicBeaconRhizolith_Elite`, is authored `Strong`, slotted `Elite`,
+    used as a Boss, and holds `0.498` — half an average opponent's board share.
+    The middle tiers are not tiers: `Easy` and `Medium` each span ~14× and
+    overlap almost totally, with `AI12` slotted `Easy` at `1.959` (second
+    strongest in the panel) and a `Medium` entry at `0.141`. Twenty-five of 53
+    strategies sit in `Medium`, so for half the roster the label carries almost
+    no information. `Training` and `Hard` are internally tight at 1.9× and
+    correctly ordered, so the ladder's ends work and its middle and top do not.
+    Two strategies could not be placed at all:
+    `CMP_Bloom_ToxinborneBallistospore_Hard` (2.244) and
+    `CMP_Bloom_ToxinborneJetting_Medium` (2.062) return `IntervalTooWide` in
+    every context on adequate games, which is the signature of boom-or-bust
+    rather than reliable strength; they should not be slotted on pooled mean.
+    **A reslotting is proposed but deliberately not applied** — how many
+    encounters belong per tier and how the campaign paces them is a design
+    call, and it needs a Unity validation pass.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
