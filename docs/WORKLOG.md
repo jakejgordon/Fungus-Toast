@@ -721,6 +721,22 @@ measurement model, phase gates, and open product decisions are in
     orders of magnitude for the same evidence. 231 Simulation and 651 Core tests
     pass. Next: per-game lineup selection, without which the frozen matrix
     measures far less than it claims.
+52. Per-game lineup selection is done, closing that gap. `PerGameLineupSelector`
+    draws each game's lineup from a purpose-scoped stream keyed on that game's
+    own seed, so a context samples the field, a replay reproduces the same
+    lineups, and draw count cannot perturb gameplay. Enumerating all 171 duel
+    pairs was considered — statistically cleanest, since every pair would meet
+    equally often — but multiplies conditions by two orders of magnitude for the
+    same evidence. Selection is opt-in via `--per-game-lineups`, added by the
+    emitter only when the panel exceeds the table, so every existing run behaves
+    exactly as before; when the panel is the table no selector is created, which
+    is why the defect went unnoticed until a panel larger than a table was
+    measured. Verified by running it: 40 two-player games over the 19-strategy
+    panel measured all 19, with appearance counts spread 11 down to 1 around the
+    expected mean of 4.2, where the same run previously measured two. 238
+    Simulation and 651 Core tests pass and the experiment contract verifies end
+    to end. Next: P7.2 proper — running the frozen matrix and quantifying slot,
+    geometry, and lineup effects.
 
 ### Completion Criteria
 

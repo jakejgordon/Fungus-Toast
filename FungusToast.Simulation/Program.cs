@@ -2,6 +2,7 @@
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Simulation.Analysis;
+using FungusToast.Simulation.Calibration;
 using FungusToast.Simulation.Candidates;
 using FungusToast.Simulation.Experiments;
 using FungusToast.Simulation.Models;
@@ -139,16 +140,25 @@ namespace FungusToast.Simulation
             var condition = inputManifest.Conditions.Single();
             var strategyRng = config.BaseSeed.HasValue ? new Random(config.BaseSeed.Value) : null;
             var filteredStrategyPool = AIRoster.GetStrategiesByFilter(config.StrategySet, config.StrategyFilter);
+            // A per-game-lineup run measures a panel, so the panel is kept whole rather than being
+            // truncated to the table: the lineup is drawn per game from everything available.
             var strategies = config.ExplicitStrategyNames is { Count: > 0 }
                 ? AIRoster.GetStrategiesByName(config.StrategySet, config.ExplicitStrategyNames, out _)
-                : SelectStrategies(
-                    config.NumberOfPlayers,
-                    config.StrategySet,
-                    strategyRng,
-                    config.StrategySelectionPolicy,
-                    config.StrategyFilter,
-                    cycleIndex: 0,
-                    prefilteredStrategies: filteredStrategyPool);
+                : config.UsePerGameLineups
+                    ? filteredStrategyPool
+                    : SelectStrategies(
+                        config.NumberOfPlayers,
+                        config.StrategySet,
+                        strategyRng,
+                        config.StrategySelectionPolicy,
+                        config.StrategyFilter,
+                        cycleIndex: 0,
+                        prefilteredStrategies: filteredStrategyPool);
+
+            var perGameLineupSelector = config.UsePerGameLineups
+                ? PerGameLineupSelector.Create(strategies, config.NumberOfPlayers)
+                : null;
+            var playersPerGame = config.UsePerGameLineups ? config.NumberOfPlayers : strategies.Count;
             var runMetadata = BuildRunMetadata(
                 config,
                 inputManifest,
@@ -161,7 +171,7 @@ namespace FungusToast.Simulation
 
             ExecuteWithRunState(config, runMetadata, () =>
                 SimulationRunner.RunStandardSimulation(
-                    strategies.Count,
+                    playersPerGame,
                     config.NumberOfGames,
                     strategies,
                     config.BoardWidth,
@@ -180,7 +190,8 @@ namespace FungusToast.Simulation
                     preferredStartingPositionPoolsByPlayerId: config.PreferredStartingPositionPoolsByPlayerId,
                     runtimeBudgetSeconds: config.RuntimeBudgetSeconds,
                     enableStartingAdaptations: config.EnableStartingAdaptations,
-                    strategyStartingSporeEdgeOffsetOverrides: config.StrategyStartingSporeEdgeOffsetOverrides));
+                    strategyStartingSporeEdgeOffsetOverrides: config.StrategyStartingSporeEdgeOffsetOverrides,
+                    perGameLineupSelector: perGameLineupSelector));
         }
 
         private static void RunStratifiedBatch(SimulationConfig config, ExperimentManifest inputManifest)
@@ -1001,6 +1012,9 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--per-game-lineups":
+                        config.UsePerGameLineups = true;
+                        break;
                     case "--control-strategy-id":
                         if (i + 1 < args.Length && !args[i + 1].StartsWith("-"))
                         {
@@ -1344,6 +1358,8 @@ namespace FungusToast.Simulation
             public string TargetStrategyId { get; set; } = "";
             /// <summary>Set only when the treatment swaps one strategy for another.</summary>
             public string ControlStrategyId { get; set; } = "";
+            /// <summary>Draw each game's lineup from the panel instead of fixing one for the whole run.</summary>
+            public bool UsePerGameLineups { get; set; }
             public ExperimentPrimaryMetric? PrimaryMetric { get; set; }
             public ExperimentDirection? HypothesisDirection { get; set; }
             public double? HypothesisMargin { get; set; }

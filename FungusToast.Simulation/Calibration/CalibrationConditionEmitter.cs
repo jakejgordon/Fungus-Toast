@@ -96,6 +96,10 @@ public static class CalibrationConditionEmitter
             arguments.Add(string.Join(",", matrix.StrategyNames));
         }
 
+        // The panel is larger than the table, so each game draws its own lineup. Without this the
+        // run would fix one lineup and measure that pairing for every game in the context.
+        if (matrix.ResolvePanelSize() > context.PlayerCount) arguments.Add("--per-game-lineups");
+
         arguments.Add(context.SlotAssignmentPolicy == Models.SlotAssignmentPolicy.RotateByGame
             ? "--rotate-slots"
             : "--fixed-slots");

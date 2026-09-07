@@ -1243,13 +1243,26 @@ resolves its lineup **once per run** and then rotates only slots within it, so a
 per-strategy sample calculation in P7.1 assumed the lineup was redrawn per game,
 and it is not.
 
-The panel design needs per-game lineup selection: a lineup drawn for each game
-from a purpose-scoped deterministic stream, so a context samples the field rather
-than one pairing. Enumerating lineups instead would work today with no code
-change - 19 strategies give 171 duel pairs - and is statistically the cleanest
-design, but it multiplies conditions by two orders of magnitude for the same
-evidence. That fix is the next slice; until it lands, the frozen matrix would
-measure far less than it claims.
+**Fixed the same day by `PerGameLineupSelector`.** A lineup is now drawn for each
+game from a purpose-scoped deterministic stream keyed on that game's own seed, so
+a context samples the field, a replay reproduces the same lineups, and the number
+of draws cannot perturb gameplay - the guarantee the P3.R3 random-stream contract
+gives every other AI decision. Enumerating lineups instead would work with no code
+change and is statistically the cleanest design, since 19 strategies give 171 duel
+pairs that would each meet equally often, but it multiplies conditions by two
+orders of magnitude for the same evidence.
+
+Per-game selection is opt-in through `--per-game-lineups`, and the emitter adds it
+only when the panel is larger than the table. Every existing run therefore behaves
+exactly as before, including the frozen baselines and the replay contract, which
+still verifies end to end. When the panel *is* the table - eight strategies in an
+eight-player game, as the earlier diagnosis runs used - no selector is created and
+the historical path is untouched, which is why this went unnoticed until a panel
+larger than a table was measured.
+
+Verified by running it: 40 two-player games over the 19-strategy panel measured
+**all 19**, with appearance counts spread from 11 down to 1 around the expected
+mean of 4.2. The same run before the fix measured two.
 
 231 Simulation and 651 Core tests pass.
 

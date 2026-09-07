@@ -29,14 +29,17 @@ namespace FungusToast.Simulation
             IReadOnlyDictionary<int, IReadOnlyList<(int x, int y)>>? preferredStartingPositionPoolsByPlayerId = null,
             double? runtimeBudgetSeconds = null,
             bool enableStartingAdaptations = true,
-            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
+            Func<int, int, List<IMutationSpendingStrategy>>? perGameLineupSelector = null)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
 
             var effectiveSeed = baseSeed ?? 0;
 
-            Console.WriteLine($"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n");
+            Console.WriteLine(perGameLineupSelector == null
+                ? $"Running simulation with {strategies.Count} players for {numberOfGames} games each...\n"
+                : $"Running simulation with {numberOfPlayers} players drawn per game from a panel of {strategies.Count}, for {numberOfGames} games...\n");
             Console.WriteLine($"Strategy Set: {strategySet} | Base Seed: {effectiveSeed} | Slot Policy: {slotAssignmentPolicy} | Nutrients: {(enableNutrientPatches ? "On" : "Off")} | Mycovariants: {(enableMycovariantDraft ? "On" : "Off")} | Starting Adaptations: {(enableStartingAdaptations ? "On" : "Off")} | StartOverride: {(startingPositionOverride is { Count: > 0 } ? "On" : "Off")}\n");
 
             // Run simulation
@@ -57,7 +60,8 @@ namespace FungusToast.Simulation
                 gameSeedSchedule: runMetadata?.GameSeedSchedule,
                 runtimeBudgetSeconds: runtimeBudgetSeconds ?? runMetadata?.RuntimeBudgetSeconds,
                 enableStartingAdaptations: enableStartingAdaptations,
-                strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides);
+                strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides,
+                perGameLineupSelector: perGameLineupSelector);
 
             PrintParityInvariantSummary(results.GameResults);
 

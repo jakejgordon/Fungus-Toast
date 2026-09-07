@@ -84,7 +84,8 @@ namespace FungusToast.Simulation.Analysis
             IReadOnlyList<int>? gameSeedSchedule = null,
             double? runtimeBudgetSeconds = null,
             bool enableStartingAdaptations = true,
-            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
+            Func<int, int, List<IMutationSpendingStrategy>>? perGameLineupSelector = null)
         {
             if (gameSeedSchedule != null && gameSeedSchedule.Count != gamesToPlay)
                 throw new ArgumentException("Game seed schedule count must match gamesToPlay.", nameof(gameSeedSchedule));
@@ -118,10 +119,14 @@ namespace FungusToast.Simulation.Analysis
                     }
                 }
 
-                var assigned = BuildAssignedStrategies(strategies, i, slotAssignmentPolicy);
-
                 var context = new SimulationTrackingContext();
                 int gameSeed = gameSeedSchedule?[i] ?? unchecked(baseSeed + i);
+
+                // Without a selector the lineup is the whole strategy list, which is the historical
+                // behaviour and is right when the panel is the table. A panel larger than the table
+                // needs a lineup drawn per game, or every game measures the same few strategies.
+                var lineup = perGameLineupSelector?.Invoke(i, gameSeed) ?? strategies;
+                var assigned = BuildAssignedStrategies(lineup, i, slotAssignmentPolicy);
                 var preferredPositionsByPlayerId = SelectPreferredStartingPositions(preferredStartingPositionPoolsByPlayerId, gameSeed);
 
                 var result = GameSimulator.RunSimulation(
