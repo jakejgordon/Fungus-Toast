@@ -82,7 +82,7 @@ public class StrategyCatalogTests
     }
 
     [Fact]
-    public void Filament_regrowth_is_a_strong_single_player_growth_regeneration_strategy()
+    public void Filament_regrowth_is_a_measured_standard_single_player_growth_regeneration_strategy()
     {
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.ProvenStrategiesByName["Filament Regrowth"]);
 
@@ -100,7 +100,9 @@ public class StrategyCatalogTests
 
         var catalogEntry = AIRoster.GetStrategyCatalogEntry(StrategySetEnum.Proven, strategy.StrategyName);
         Assert.NotNull(catalogEntry);
-        Assert.Equal(StrategyPowerTier.Strong, catalogEntry.PowerTier);
+        // Authored Strong until the P7 calibration measured it at 1.058 normalized board share
+        // over 187 games, which is parity rather than above it. See AI_P7_REFERENCE_BANDS_V1.
+        Assert.Equal(StrategyPowerTier.Standard, catalogEntry.PowerTier);
         Assert.Equal(StrategyRole.Spice, catalogEntry.Role);
         Assert.Equal(StrategyLifecycle.Active, catalogEntry.Lifecycle);
         Assert.Equal(StrategyArchetype.Defense, catalogEntry.Archetype);

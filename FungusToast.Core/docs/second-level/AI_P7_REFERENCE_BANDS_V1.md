@@ -210,3 +210,63 @@ Holdout contexts are measured and shown but never pooled into the overall band, 
 - Growth/Resilience in crowded.large.square.rectangle.generated.180x180: TooFewGames on 22 games.
 - Growth/Resilience in duel.medium.wide.rectangle.generated.140x100: TooFewGames on 18 games.
 - Best_MaxEcon_Surge10_HyphalSurge in duel.medium.square.rectangle.generated.120x120: TooFewGames on 20 games.
+
+## Addendum 2026-09-07: why the weakest strategies underperform
+
+### What the panel's builds look like
+
+Observed under the shared characterization script, levels bought per category:
+
+| Share | Strategy | Cap | Growth | Fungicide | Economy | Substrate |
+|---:|---|---|---:|---:|---:|---:|
+| 1.915 | TST_CampaignMirror_AI13_AnabolicFirst | Tier10 | 19 | 7 | 18 | 0 |
+| 1.866 | TST_BalancedControl_AnabolicFirst | Tier10 | 19 | 7 | 18 | 0 |
+| 0.705 | TST_AnabolicCreepingNecroRegressionCascade | Tier10 | 20 | **0** | 16 | 12 |
+| 0.490 | TST_CreepingNecroRegressionCascade | Tier10 | 21 | **0** | 15 | 14 |
+| 0.366 | TST_AnabolicBeaconNecroRegressionCascade | Tier10 | 20 | **0** | 14 | 16 |
+| 0.333 | Growth/Resilience | Tier3 | 18 | **0** | 10 | 0 |
+| 0.153 | Best_MaxEcon_Surge10_HyphalSurge | Tier4 | **5** | **0** | 21 | 0 |
+
+### Correlations with measured strength
+
+- **Fungicide levels: r = 0.792.** The 14 strategies that buy any average `1.202`; the 5 that
+  buy none average `0.409`. Those five are the bottom of the panel.
+- Growth levels r = 0.288, economy r = 0.133, resilience r = -0.148, total levels r = 0.173.
+- The three `RegressionCascade` strategies each sink 12-16 levels into Substrate Ecology and
+  buy no Fungicide at all; they occupy three of the bottom five places.
+- Tier-capped strategies average `0.243` against `1.082` for uncapped.
+
+These are correlations over a scripted build, not causes. Two were tested directly.
+
+### Causal tests, both negative
+
+Paired 50-game comparisons against a near-parity opponent, each changing exactly one gene on
+`Best_MaxEcon_Surge10_HyphalSurge`:
+
+- **Lifting the Tier4 cap to Tier10:** estimate `-0.0004`, 95% CI `[-0.011, +0.010]`,
+  `not_supported`. The cap is not what breaks it. It is not even binding - the strategy already
+  buys a Tier5 mutation through its goal path.
+- **Changing MaxEconomy to Neutral:** estimate exactly `0.000`, and the two arms produced
+  bit-identical games. The gene is inert for this strategy, because its economy spending comes
+  from its goal path rather than from the fallback the bias governs.
+
+The tier-cap arms did differ from each other, so the harness detects real differences; these
+nulls are findings, not failures to measure.
+
+### What actually explains it
+
+`Best_MaxEcon_Surge10_HyphalSurge` has only two goals, `HyphalSurge` and `HyperadaptiveDrift`,
+which pull it into Mycelial Surges and Genetic Drift. It ends up with **5 Growth levels against
+16-21 for every other strategy in the panel**, and no Fungicide. Its behaviour is dominated by
+that goal list; the structural genes around it barely matter, which is exactly what the two null
+results show. Fixing it means changing what it is told to build, not which tier it may reach or
+how it values economy.
+
+The `RegressionCascade` family is a different shape of the same problem: adequate Growth, but
+Substrate Ecology investment where the strong strategies buy Fungicide.
+
+### Not yet evidenced
+
+The Fungicide correlation is the strongest signal here and is **untested causally**. An ablation
+sweep over Fungicide goals in a strong strategy would settle whether it is a cause or a marker of
+an otherwise good plan. That is the obvious next experiment.

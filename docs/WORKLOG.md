@@ -757,6 +757,34 @@ measurement model, phase gates, and open product decisions are in
     651 Core tests pass. Next: P7.5 regression alerts, then Phase 8 — or acting
     on these findings, which is a balance decision for Jake rather than an
     engineering one.
+54. Jake approved relabelling from measurement on 2026-09-07. Seven metadata
+    corrections applied to the Proven set: two authored `Strong` raised to
+    `Spike` (measured Elite at 1.915/1.866), `Filament Regrowth` and
+    `Power Mutations Max Econ` lowered to `Standard` (measured Normal), and
+    `TST_CreepingNecroRegressionCascade` plus
+    `Best_MaxEcon_Surge10_HyphalSurge` lowered to `Weak`. The Boss role on
+    `TST_CreepingNecroRegressionCascade` became `Experimental`, since a strategy
+    measuring Easy in all seven contexts cannot keep a Boss promise. One Core
+    test pinned Filament Regrowth as Strong from authored intent and now asserts
+    the measured value with the evidence cited.
+    Campaign slotting was **not** changed, and should not be from this evidence:
+    the panel measured is `Proven`, campaign presets reference only `CMP_*`
+    strategies, and neither weak strategy appears in any preset. Both do affect
+    solo play, which draws from `Proven`. Rearranging campaign difficulty needs
+    the same matrix run against the Campaign set first. This also corrects an
+    earlier characterisation: the Boss label was decorative metadata, not a
+    campaign encounter players meet.
+    Diagnosis is recorded in the reference doc. Fungicide investment correlates
+    with strength at `r = 0.792` (buyers average 1.202, the five non-buyers
+    0.409); the three `RegressionCascade` strategies sink 12-16 levels into
+    Substrate Ecology instead and occupy three of the bottom five. Two causal
+    tests on the weakest strategy both came back null: lifting its Tier4 cap
+    gave `-0.0004` (CI `-0.011..+0.010`), and changing MaxEconomy to Neutral
+    produced bit-identical games, so both genes are inert for it. Its weakness
+    is its two-goal plan, which leaves it 5 Growth levels against 16-21 for
+    every other strategy. The Fungicide correlation remains causally untested;
+    an ablation sweep would settle it. 251 Simulation and 651 Core tests pass.
+    Next: P7.5 regression alerts.
 
 ### Completion Criteria
 

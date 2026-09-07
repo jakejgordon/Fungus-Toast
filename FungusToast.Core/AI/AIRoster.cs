@@ -2444,13 +2444,13 @@ namespace FungusToast.Core.AI
                 ["TST_Arch06_SurgeGrowth"] = StrategyPowerTier.Standard,
                 ["TST_Arch07_DriftFungicide"] = StrategyPowerTier.Strong,
                 ["TST_Arch08_SurgeResilience"] = StrategyPowerTier.Standard,
-                ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Spike, // P7 measured Elite (1.866)
                 ["TST_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
-                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Strong,
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Spike, // P7 measured Elite (1.915)
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
-                ["Filament Regrowth"] = StrategyPowerTier.Strong,
+                ["Filament Regrowth"] = StrategyPowerTier.Standard, // P7 measured Normal (1.058)
                 ["TST_FortressResilience"] = StrategyPowerTier.Weak,
                 ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
                 ["TST_RebirthAttrition"] = StrategyPowerTier.Weak,
@@ -2467,7 +2467,7 @@ namespace FungusToast.Core.AI
                 ["TST_AI10_CreepingRegression"] = StrategyPowerTier.Strong,
                 ["CMP_Bloom_Thanatophyte_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AI10_BeaconRegression"] = StrategyPowerTier.Strong,
-                ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Strong,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Weak, // P7 measured Easy (0.490) in all 7 contexts
                 ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyPowerTier.Strong,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyPowerTier.Standard,
@@ -2496,8 +2496,8 @@ namespace FungusToast.Core.AI
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyPowerTier.Standard,
                 ["CMP_Control_AnabolicFirst_Hard"] = StrategyPowerTier.Strong,
                 ["TST_LateGameSpike"] = StrategyPowerTier.Spike,
-                ["Power Mutations Max Econ"] = StrategyPowerTier.Spike,
-                ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyPowerTier.Spike,
+                ["Power Mutations Max Econ"] = StrategyPowerTier.Standard, // P7 measured Normal (0.943)
+                ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyPowerTier.Weak, // P7 measured Easy (0.153), weakest in panel
             };
 
         private static readonly UniqueKeyDictionary<StrategyRole> _explicitRolesByName =
@@ -2534,7 +2534,7 @@ namespace FungusToast.Core.AI
                 ["Filament Regrowth"] = StrategyRole.Spice,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyRole.Experimental,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyRole.Experimental,
-                ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Boss,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyRole.Experimental, // P7: Easy in all 7 contexts, cannot serve as a Boss
                 ["CMP_TierCap_GrowthResilience_Easy"] = StrategyRole.Training,
                 ["CMP_Reclaim_Scavenger_Easy"] = StrategyRole.Training,
                 ["CMP_Surge_Pulsar_Easy"] = StrategyRole.Experimental,
