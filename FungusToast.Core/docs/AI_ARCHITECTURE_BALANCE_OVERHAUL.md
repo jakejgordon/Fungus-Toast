@@ -261,6 +261,45 @@ Contract requirements:
 - decision failures, no-action reasons, illegal proposals, and fallback use
 - runtime per game and candidate, for automation capacity planning
 
+### Structural confounding
+
+A realized build is not a set of choices. It is the strategy's declared goals
+plus everything the prerequisite tree forced along the way, so correlating any
+outcome against raw mutation purchases measures the shape of the tree at least
+as much as the value of any mutation. The effect is strongest for exactly the
+mutations that look most interesting: low-tier roots that every successful
+build is required to own.
+
+This cost a diagnostic cycle in Phase 7. A category-level correlation of
+`r = 0.792` between Fungicide investment and measured strength was in fact one
+Tier-1 mutation, `Mycotoxin Tracer`, which gates `Necrosporulation` and is
+therefore bought by every strategy targeting that line. No owner could have
+gone without it, and a variable that could not have differed carries no
+information about value. The correlation was an artifact of the tree, knowable
+from the graph alone before any game was played.
+
+Three rules follow, in order of leverage.
+
+1. **Correlate over genes, not builds.** A strategy's free parameters are its
+   goals, ordering, biases, and exclusions. Its purchases are downstream
+   consequences. Correlating against goal selection would have reported
+   "targets the Necrosporulation line", which is true and actionable, instead
+   of "buys Fungicide", which is not.
+2. **Screen before believing.** `StructuralConfoundScreen` partitions every
+   mutation in an observed build into `Goal`, `RequiredByGoal`, or `Free`, and
+   a purchase-level finding may only be reported as a lead when the mutation
+   comes back `FreeVariation`. This is pure graph work over the prerequisite
+   closure: no games, milliseconds.
+3. **Check achievability when the lead is formed, not when the experiment is
+   launched.** The generator already refuses ablations that would break a goal,
+   and characterization already rejects them. Running that check first turns a
+   dead hypothesis into a compile-time answer rather than a discovery made
+   after an experiment is designed around it.
+
+A structurally entailed variable is not a weak signal to be measured more
+carefully. It is not a signal at all, and it should be labeled confounded by
+construction rather than queued for evidence.
+
 ### Banding principles
 
 - Compute empirical bands from a frozen reference corpus before assigning final

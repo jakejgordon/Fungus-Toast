@@ -297,3 +297,67 @@ was offered, and did not re-apply the exclusion list - so an excluded tendril co
 through the substitution. That is the same bypass free upgrades had. No registered strategy
 excludes a tendril, so no existing result changes, but it would have silently broken any ablation
 of a tendril and any controlled treatment that removed one. Fixed with a regression test.
+
+### Addendum 2026-09-07: the process failure this exposed, and the guard added
+
+The Fungicide correction above is right, but it was reached the expensive way. The confound was
+knowable from the prerequisite graph alone, before the correlation was computed, let alone before
+an ablation was designed around it. `RequiresTransitively` had been in the codebase the whole time;
+it was simply run *after* the hypothesis was formed instead of before.
+
+Worse, this is not a one-off. Every root mutation and every low-tier gateway will produce the same
+spurious signal, and any category dominated by one - Fungicide here is entirely `Mycotoxin Tracer` -
+will inherit it. Left alone, the pattern recurs on every diagnostic pass.
+
+`StructuralConfoundScreen` closes it. It partitions each mutation in an observed build into `Goal`
+(chosen), `RequiredByGoal` (forced by the prerequisite closure of something the strategy targets),
+or `Free` (bought discretionarily through the fallback path with nothing forcing it), then screens
+a whole panel: a mutation whose owners were all forced into it is `StructurallyEntailed`, a mixed
+one is `PartiallyEntailed`, and only `FreeVariation` may be reported as a lead.
+`ExplainWhyNotEvidence` returns the sentence to write instead of the correlation.
+
+Run against this panel it flags `Mycotoxin Tracer` immediately, which is what a regression test now
+asserts. The deeper rule - recorded in the plan's *Structural confounding* section - is to correlate
+over genes rather than builds, because goals and biases are what an author actually chose and
+purchases are merely what the tree then forced.
+
+### What the screen says about this panel
+
+Run over the nineteen Proven strategies, the result is much larger than the Fungicide case that
+prompted it: **17 of the 24 mutations the panel buys are not usable as purchase-level evidence.**
+
+| Mutation | Category | Owners | Chose it | Forced | Verdict |
+|---|---|---:|---:|---:|---|
+| Mycelial Bloom | Growth | 19 | 2 | 17 | PartiallyEntailed |
+| Homeostatic Harmony | CellularResilience | 19 | 1 | 18 | PartiallyEntailed |
+| Mutator Phenotype | GeneticDrift | 19 | 4 | 15 | PartiallyEntailed |
+| Tendril (each of four) | Growth | 17 | 2 | 15 | PartiallyEntailed |
+| Mycotropic Induction | Growth | 16 | 3 | 13 | PartiallyEntailed |
+| Mycotoxin Tracer | Fungicide | 14 | 1 | 13 | PartiallyEntailed |
+| Adaptive Expression | GeneticDrift | 14 | 2 | 12 | PartiallyEntailed |
+| Creeping Mold | Growth | 13 | 13 | 0 | **FreeVariation** |
+| Chronoresilient Cytoplasm | CellularResilience | 10 | 2 | 8 | PartiallyEntailed |
+| Anabolic Inversion | GeneticDrift | 10 | 7 | 3 | PartiallyEntailed |
+| Aerated Frontier | SubstrateEcology | 8 | 6 | 2 | PartiallyEntailed |
+| Chitin Fortification | MycelialSurges | 4 | 0 | 4 | StructurallyEntailed |
+| Regenerative Hyphae | CellularResilience | 3 | 3 | 0 | **FreeVariation** |
+| Mycotoxin Catabolism | GeneticDrift | 3 | 0 | 3 | StructurallyEntailed |
+| Crustward Tropism | SubstrateEcology | 3 | 3 | 0 | **FreeVariation** |
+| Detrital Enzymes | SubstrateEcology | 3 | 0 | 3 | StructurallyEntailed |
+
+Three readings matter.
+
+First, the mutations owned by *everyone* are the most confounded, not the least. `Mycelial Bloom`,
+`Homeostatic Harmony`, and `Mutator Phenotype` appear in all nineteen builds and were forced in
+15–18 of them. Universality is a symptom of being a gateway, not of being good, and a correlation
+over any of them would have been the Fungicide error again.
+
+Second, `Mycotoxin Tracer` is `PartiallyEntailed` rather than fully so: one panel member does
+declare it as a goal, thirteen were dragged through it. That single free owner is the entire
+independent evidence available for it in this panel, which is why ablation was the right instinct
+and why it had nowhere to run.
+
+Third, only four mutations vary freely across three or more owners, and `Creeping Mold` is the only
+one with real sample. **That is the honest size of the purchase-level evidence base for this panel** —
+and it is a reason to correlate over genes instead, not a reason to measure the confounded
+variables harder.

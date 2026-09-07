@@ -809,6 +809,32 @@ measurement model, phase gates, and open product decisions are in
     to walk the full prerequisite closure rather than only goal-to-goal links.
     652 Core and 254 Simulation tests pass.
 
+56. A guard against the class of error item 55 represents. Jake's point was
+    that the Fungicide conclusion was predictable from the prerequisite tree
+    before any effort was spent on it, and that the pattern will recur — every
+    root mutation and low-tier gateway produces the same spurious correlation,
+    and any category dominated by one inherits it. The root cause is that a
+    realized build is not a set of choices: it is declared goals plus whatever
+    the prerequisite closure forced. `StructuralConfoundScreen` now partitions
+    every mutation in an observed build into `Goal`, `RequiredByGoal`, or
+    `Free`, and screens a panel so that only `FreeVariation` mutations may be
+    reported as a purchase-level lead; `ExplainWhyNotEvidence` returns the
+    sentence to write instead of the correlation. It is pure graph work over
+    the prerequisite closure — no games, milliseconds — so the check is cheap
+    enough to run when a lead is *formed* rather than when an experiment is
+    launched, which was the actual sequencing failure. A regression test
+    asserts `Mycotoxin Tracer` is never reportable across the Proven panel.
+    Run over the panel the result is far larger than the case that prompted it:
+    **17 of the 24 mutations the panel buys are not usable as purchase-level
+    evidence**, and the most universal ones are the most confounded —
+    `Mycelial Bloom`, `Homeostatic Harmony`, and `Mutator Phenotype` appear in
+    all nineteen builds and were forced in 15–18 of them. Only four mutations
+    vary freely across three or more owners, and only `Creeping Mold` has real
+    sample. That is the honest size of the purchase-level evidence base.
+    The deeper rule is recorded in the plan's *Structural confounding* section:
+    correlate over genes rather than builds, because goals and biases are what
+    an author chose and purchases are what the tree then forced.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
