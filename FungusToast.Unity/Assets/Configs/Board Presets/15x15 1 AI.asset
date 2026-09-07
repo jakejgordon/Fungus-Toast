@@ -15,8 +15,9 @@ MonoBehaviour:
   presetId: Campaign1
   boardWidth: 15
   boardHeight: 15
-  aiPlayers:
-  - strategyName: CMP_Mobility_Overextender_Training_Offset2
-    startingAdaptationIds: []
-  pooledAiPlayerCount: 0
-  aiStrategyPool: []
+  aiPlayers: []
+  pooledAiPlayerCount: 1
+  aiStrategyPool:
+  - CMP_Reclaim_InfiltrationSurge_Easy
+  - CMP_Surge_GrowthTempo_Medium
+  poolAdaptationOverrides: []

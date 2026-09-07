@@ -16,9 +16,18 @@ MonoBehaviour:
   boardWidth: 120
   boardHeight: 120
   aiPlayers:
-  - strategyName: CMP_Growth_WildfireBloom_Medium
-  - strategyName: CMP_Economy_KillReclaim_Medium
-  - strategyName: CMP_Bloom_CreepingNecro_Medium
-  - strategyName: CMP_Bloom_BeaconRegression_Medium
-  - strategyName: CMP_Control_AnabolicRebirth_Medium
   - strategyName: CMP_Economy_LateSpike_Hard
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_CreepingNecro_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Defense_IronShell_Elite
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_BeaconRegression_Medium
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset8
+    startingAdaptationIds: []
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

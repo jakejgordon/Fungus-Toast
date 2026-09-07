@@ -16,10 +16,20 @@ MonoBehaviour:
   boardWidth: 160
   boardHeight: 160
   aiPlayers:
+  - strategyName: AI13
+    startingAdaptationIds: []
+  - strategyName: AI12
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_AnabolicRegression_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_AnabolicFirst_Hard
+    startingAdaptationIds: []
   - strategyName: CMP_Economy_Economancer_Elite
-  - strategyName: CMP_Economy_HoardsporeRegent_Elite
-  - strategyName: CMP_Defense_IronShell_Elite
-  - strategyName: CMP_Bloom_NecrotoxinGauntlet_Elite
-  - strategyName: CMP_Economy_Economancer_Elite
-  - strategyName: CMP_Economy_HoardsporeRegent_Elite
-  - strategyName: CMP_Surge_BeaconSprinter_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_AnabolicRebirth_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_RebirthFurnace_Medium
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

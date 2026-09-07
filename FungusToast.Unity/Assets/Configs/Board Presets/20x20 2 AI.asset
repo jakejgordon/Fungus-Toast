@@ -15,10 +15,10 @@ MonoBehaviour:
   presetId: Campaign2
   boardWidth: 20
   boardHeight: 20
-  aiPlayers:
-  - strategyName: CMP_Mobility_Overextender_Training
-    startingAdaptationIds: []
-  - strategyName: CMP_Attrition_ToxicTurtle_Training
-    startingAdaptationIds: []
-  pooledAiPlayerCount: 0
-  aiStrategyPool: []
+  aiPlayers: []
+  pooledAiPlayerCount: 2
+  aiStrategyPool:
+  - CMP_Surge_BeaconSprinter_Medium
+  - CMP_Surge_BeaconTempo_Medium
+  - TST_Training_ResilientMycelium
+  poolAdaptationOverrides: []

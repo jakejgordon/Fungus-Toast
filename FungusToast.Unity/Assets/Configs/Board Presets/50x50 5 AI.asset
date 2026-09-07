@@ -18,9 +18,10 @@ MonoBehaviour:
   aiPlayers: []
   pooledAiPlayerCount: 5
   aiStrategyPool:
-  - TST_Training_ResilientMycelium
-  - CMP_Control_AnabolicRebirth_Medium
-  - CMP_Mobility_Overextender_Training
-  - CMP_Attrition_ToxicTurtle_Training_Offset1
+  - TST_AI10_BeaconRegression
+  - CMP_Surge_Pulsar_Easy
+  - TST_AI10_CreepingRegression
+  - CMP_Defense_ReclaimShell_Easy
+  - AI6
   - CMP_TierCap_GrowthResilience_Easy
-  - CMP_Reclaim_Scavenger_Easy
+  poolAdaptationOverrides: []

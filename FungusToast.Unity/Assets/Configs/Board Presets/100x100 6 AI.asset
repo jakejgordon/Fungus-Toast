@@ -16,9 +16,18 @@ MonoBehaviour:
   boardWidth: 100
   boardHeight: 100
   aiPlayers:
-  - strategyName: CMP_Control_AnabolicRebirth_Medium
-  - strategyName: CMP_Growth_PutridTendrils_Medium
-  - strategyName: CMP_Surge_GrowthTempo_Medium
+  - strategyName: CMP_Bloom_Thanatophyte_Elite
+    startingAdaptationIds: []
+  - strategyName: TST_CampaignPlayer_SafeBaseline
+    startingAdaptationIds: []
+  - strategyName: CMP_Growth_Pressure_Medium
+    startingAdaptationIds: []
   - strategyName: CMP_Reclaim_Scavenger_Easy
-  - strategyName: CMP_Bloom_CreepingNecro_Medium
-  - strategyName: CMP_Bloom_BeaconRegression_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Economy_TempoReclaim_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_CreepingRegression_Elite
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

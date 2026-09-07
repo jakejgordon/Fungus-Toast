@@ -18,15 +18,12 @@ MonoBehaviour:
   aiPlayers: []
   pooledAiPlayerCount: 6
   aiStrategyPool:
-  - CMP_Surge_BeaconTempo_Medium
-  - CMP_Control_AnabolicRebirth_Medium
-  - CMP_Growth_PutridTendrils_Medium
-  - CMP_Reclaim_Scavenger_Easy
-  - CMP_Bloom_CreepingNecro_Medium
   - CMP_TierCap_GrowthResilience_Easy
-  - CMP_Growth_Pressure_Medium
   - CMP_Bloom_FortifyMimic_Medium
-  - CMP_Economy_TempoReclaim_Medium
-  - CMP_Bloom_BeaconRegression_Medium
-  - CMP_Bloom_AnabolicRegression_Medium
-  - CMP_Bloom_ToxinborneJetting_Medium
+  - CMP_Growth_WildfireBloom_Medium
+  - CMP_Bloom_NecrotoxinGauntlet_Elite
+  - CMP_Bloom_Thanatophyte_Elite
+  - TST_CampaignPlayer_SafeBaseline
+  - CMP_Growth_Pressure_Medium
+  - CMP_Reclaim_Scavenger_Easy
+  poolAdaptationOverrides: []

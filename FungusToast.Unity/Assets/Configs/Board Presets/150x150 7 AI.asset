@@ -16,17 +16,20 @@ MonoBehaviour:
   boardWidth: 150
   boardHeight: 150
   aiPlayers:
+  - strategyName: TST_Campaign7_KillReclaim_Offset3
+    startingAdaptationIds: []
+  - strategyName: CMP_Growth_PutridTendrils_Medium
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset2
+    startingAdaptationIds: []
+  - strategyName: CMP_Economy_KillReclaim_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_RebirthFurnace_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Control_AnabolicRebirth_Medium
+    startingAdaptationIds: []
   - strategyName: CMP_Economy_Economancer_Elite
-  - strategyName: CMP_Economy_HoardsporeRegent_Elite
-  - strategyName: CMP_Defense_IronShell_Elite
-  - strategyName: CMP_Bloom_CreepingRegression_Elite
-    startingAdaptationIds:
-    - adaptation_13
-    - adaptation_3
-    - adaptation_4
-    - adaptation_14
-    - adaptation_15
-    - adaptation_9
-  - strategyName: CMP_Economy_Economancer_Elite
-  - strategyName: CMP_Control_AnabolicFirst_Hard
-  - strategyName: CMP_Economy_LateSpike_Hard
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

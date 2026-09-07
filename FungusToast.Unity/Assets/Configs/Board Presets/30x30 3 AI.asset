@@ -16,14 +16,12 @@ MonoBehaviour:
   boardWidth: 30
   boardHeight: 30
   aiPlayers:
-  - strategyName: CMP_Defense_ResilientShell_Easy
-    startingAdaptationIds:
-    - adaptation_1
-  - strategyName: CMP_Mobility_Overextender_Training_Offset2
-    startingAdaptationIds:
-    - adaptation_1
-  - strategyName: CMP_Attrition_ToxicTurtle_Training_Offset2
-    startingAdaptationIds:
-    - adaptation_1
+  - strategyName: TST_Training_ResilientMycelium_Offset1
+    startingAdaptationIds: []
+  - strategyName: CMP_Mobility_Overextender_Training_Offset3
+    startingAdaptationIds: []
+  - strategyName: TST_Training_ResilientMycelium_Offset3
+    startingAdaptationIds: []
   pooledAiPlayerCount: 0
   aiStrategyPool: []
+  poolAdaptationOverrides: []

@@ -18,11 +18,10 @@ MonoBehaviour:
   aiPlayers: []
   pooledAiPlayerCount: 4
   aiStrategyPool:
-  - TST_Training_ResilientMycelium_Offset1
+  - CMP_Mobility_Overextender_Training_Offset2
   - CMP_Mobility_Overextender_Training_Offset1
-  - CMP_Attrition_ToxicTurtle_Training_Offset1
-  - CMP_Reclaim_Scavenger_Easy
-  poolAdaptationOverrides:
-  - strategyName: CMP_Attrition_ToxicTurtle_Training_Offset1
-    startingAdaptationIds:
-    - adaptation_1
+  - CMP_Defense_ResilientShell_Easy
+  - CMP_Mobility_Overextender_Training
+  - CMP_AnabolicBeaconRhizolith_Elite
+  - TST_AI10_BeaconRegression
+  poolAdaptationOverrides: []

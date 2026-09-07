@@ -25,16 +25,19 @@ MonoBehaviour:
   - x: 88
     y: 27
   aiPlayers:
-  - strategyName: CMP_AnabolicBeaconRhizolith_Elite
+  - strategyName: CMP_Defense_IronShell_Elite
     startingAdaptationIds:
     - adaptation_6
     - adaptation_10
-    - adaptation_8
-  - strategyName: CMP_Surge_BeaconTempo_Medium
+    - adaptation_7
+  - strategyName: AI4
     startingAdaptationIds: []
-  - strategyName: CMP_Control_AnabolicRebirth_Medium
+  - strategyName: CMP_Bloom_CreepingRegression_Elite
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_CreepingNecro_Medium
     startingAdaptationIds: []
   - strategyName: CMP_Economy_LateSpike_Hard
     startingAdaptationIds: []
-  - strategyName: CMP_Economy_KillReclaim_Medium
-    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

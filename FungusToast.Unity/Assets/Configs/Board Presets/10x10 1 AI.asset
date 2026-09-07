@@ -18,4 +18,7 @@ MonoBehaviour:
   aiPlayers: []
   pooledAiPlayerCount: 1
   aiStrategyPool:
-  - TST_Training_ResilientMycelium_Offset3
+  - CMP_Attrition_ToxicTurtle_Training
+  - CMP_Attrition_ToxicTurtle_Training_Offset1
+  - CMP_Attrition_ToxicTurtle_Training_Offset2
+  poolAdaptationOverrides: []

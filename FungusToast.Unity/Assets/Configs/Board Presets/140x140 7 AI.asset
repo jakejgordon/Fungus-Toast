@@ -16,10 +16,20 @@ MonoBehaviour:
   boardWidth: 140
   boardHeight: 140
   aiPlayers:
-  - strategyName: CMP_Economy_Economancer_Elite
+  - strategyName: CMP_Bloom_BeaconRegression_Medium
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset8
+    startingAdaptationIds: []
   - strategyName: CMP_Economy_HoardsporeRegent_Elite
-  - strategyName: CMP_Defense_IronShell_Elite
-  - strategyName: CMP_Bloom_NecrotoxinGauntlet_Elite
-  - strategyName: CMP_Control_AnabolicFirst_Hard
-  - strategyName: CMP_Economy_LateSpike_Hard
-  - strategyName: CMP_Bloom_CreepingRegression_Elite
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset1
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset3
+    startingAdaptationIds: []
+  - strategyName: CMP_Growth_PutridTendrils_Medium
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset2
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

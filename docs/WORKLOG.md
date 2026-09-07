@@ -896,6 +896,37 @@ measurement model, phase gates, and open product decisions are in
     than level 2. Fixing these means editing BoardPreset assets, which is a
     pacing decision rather than a measurement one, so none were changed.
 
+59. The campaign board presets were rerostered on 2026-09-07 at Jake's
+    direction, so measured difficulty now rises at **every one of the sixteen
+    levels**, `0.144` at Campaign0 to `1.805` at the finale. Board sizes, seat
+    counts, human starting pools and level titles are untouched; only which
+    opponents each level fields changed. The mean is a relative difficulty
+    index, not a prediction of in-game share — shares were measured against a
+    mixed panel and do not add up within one lineup.
+    Four things worth remembering. **The finale now fields `AI13`**, which is
+    authored `Role = Boss`, `PowerTier = Strong`, measures `2.076`, and
+    previously appeared in no campaign level at all; the duplicated Economancer
+    and HoardsporeRegent seats and the `0.358` filler are gone. **Campaign10's
+    boss slot carried an Iron Shell loadout on the wrong strategy** —
+    `adaptation_6/10/8` on `CMP_AnabolicBeaconRhizolith_Elite` (`0.498`, no
+    suggested sets of its own), which is nearly
+    `CMP_Defense_IronShell_Elite`'s own authored set `adaptation_6/10/7`, so
+    Iron Shell (`1.284`) now holds the slot and Rhizolith moved down to
+    Campaign4. **Authored `startingAdaptationIds` are a genuine difficulty
+    lever**, not flavor: `AIStartingAdaptationResolver` adds them
+    unconditionally and only tops up to the difficulty quota afterwards, so a
+    boss with three authored adaptations still has three at `Training` where
+    everyone else has none — Campaign10 is the only level using it. **Both
+    Toxinborne variants are deliberately unfielded** because they are the only
+    strategies the matrix could not place, so their effect on a level's
+    difficulty is unpredictable; they suit the unused `bossBoardPresets` pool
+    once their variance is measured. 51 of 53 strategies are fielded.
+    `scripts/validate_campaign_ai_rosters.py` enforces the invariants: unknown
+    names (which would silently fall back to a random lineup), duplicate seats,
+    pools smaller than their seat count, and any level whose mean fails to
+    exceed its predecessor. Negative-tested against a reintroduced duplicate and
+    a typo.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

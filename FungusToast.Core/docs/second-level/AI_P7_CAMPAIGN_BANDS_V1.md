@@ -622,5 +622,61 @@ matrix identifies as the single worst-slotted in the roster. It also carries
 Early levels are the tutorial, so a dip is defensible; a dip that leaves level 3 easier than level 2
 is less so.
 
-Fixing these means editing `BoardPreset` assets, not metadata, and how the campaign should pace is
-a design decision rather than a measurement one — so nothing here has been changed.
+### The reroster, applied 2026-09-07
+
+All sixteen `BoardPreset` rosters were rebuilt so measured strength rises at every step, from
+`0.144` at Campaign0 to `1.805` at the finale. Board sizes, seat counts, human starting pools and
+level titles are untouched; only which opponents each level fields changed.
+
+| Level | Mode | Seats | Listed | Mean before | Mean after |
+|---|---|---:|---:|---:|---:|
+| Campaign0 | pool | 1 | 3 | 0.415 | 0.144 |
+| Campaign1 | pool | 1 | 2 | 0.446 | 0.288 |
+| Campaign2 | pool | 2 | 3 | 0.321 | 0.363 |
+| Campaign3 | fixed | 3 | 3 | 0.347 | 0.410 |
+| Campaign4 | pool | 4 | 6 | 0.520 | 0.477 |
+| Campaign5 | pool | 5 | 6 | 0.740 | 0.661 |
+| Campaign6 | pool | 4 | 5 | 1.098 | 0.768 |
+| Campaign7 | pool | 6 | 8 | 1.223 | 0.865 |
+| Campaign8 | fixed | 6 | 6 | 1.182 | 1.003 |
+| Campaign9 | fixed | 6 | 6 | 1.210 | 1.147 |
+| Campaign10 | fixed | 5 | 5 | 1.052 | 1.196 |
+| Campaign11 | fixed | 6 | 6 | 1.286 | 1.274 |
+| Campaign12 | pool | 7 | 8 | 1.317 | 1.379 |
+| Campaign13 | fixed | 7 | 7 | 1.314 | 1.446 |
+| Campaign14 | fixed | 7 | 7 | 1.440 | 1.601 |
+| Campaign15 | fixed | 7 | 7 | 1.232 | 1.805 |
+
+Read the mean as a **relative difficulty index, not a prediction of in-game share**. Shares were
+measured against a mixed panel and normalized so parity is `1.0`; they do not add up within a single
+lineup, and seven opponents averaging `1.8` will not each hold `1.8` when they also have to fight
+each other. What the index supports is ordering, which is exactly what a ladder needs.
+
+Four changes are worth calling out.
+
+**The finale now fields the roster's flagship boss.** `AI13` is authored `Role = Boss`,
+`PowerTier = Strong`, and measures `2.076` — and it appeared in **no campaign level at all**. It now
+leads Campaign15, alongside `AI12` (`1.959`) and `CMP_Bloom_AnabolicRegression_Medium` (`1.934`).
+The duplicated Economancer and HoardsporeRegent seats are gone, as is the `0.358` filler.
+
+**The Elite level's boss slot got a strategy that matches its own loadout.** Campaign10's boss
+carried `adaptation_6, adaptation_10, adaptation_8` on `CMP_AnabolicBeaconRhizolith_Elite`, a
+strategy with no suggested adaptation sets of its own and a measured `0.498`. That loadout is
+almost exactly `CMP_Defense_IronShell_Elite`'s authored *Iron Shell* set
+(`adaptation_6, adaptation_10, adaptation_7`), so Iron Shell now holds the slot with its own themed
+set, at `1.284`. `AnabolicBeaconRhizolith` moves down to Campaign4, where its strength fits.
+
+**Authored `startingAdaptationIds` are a real difficulty lever, not just flavor.** The resolver adds
+them unconditionally and only *tops up* to the difficulty quota afterwards, so an AI with three
+authored adaptations still has three at `Training`, where everyone else has none. That is the
+mechanism for making a thematic boss genuinely harder without changing its strategy, and Campaign10
+is currently the only level using it.
+
+**Both Toxinborne variants are deliberately unfielded.** They are the only two strategies the matrix
+could not place — `IntervalTooWide` in every context on adequate games — so their contribution to a
+level's difficulty is unpredictable in a way the rest of the roster is not. They are good candidates
+for the unused `bossBoardPresets` pool once their variance is measured directly. Every other
+measured strategy is fielded somewhere: 51 of 53.
+
+`scripts/validate_campaign_ai_rosters.py` now enforces all of this — unknown names, duplicate seats,
+pools smaller than their seat count, and any level whose mean fails to exceed the one before it.
