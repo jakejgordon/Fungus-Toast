@@ -639,6 +639,31 @@ measurement model, phase gates, and open product decisions are in
     strategy with and without a mutation under matched seeds measures its
     contribution directly — but no generation operator produces ablations yet.
     Next: a mutation-ablation operator.
+49. The mutation-ablation operator is done, and Jake clarified on 2026-09-06
+    that there are two goals, not one: balancing mutations *and* identifying and
+    tuning effective AI strategies. Ablation serves both, since a large drop
+    when mutation X is removed says both that X is strong and that the strategy
+    depends on it. `AblateTargetGoal` emits one candidate per distinct build
+    goal, removing every occurrence of that mutation from the plan and blocking
+    it outright; paired against the untouched parent, the difference is what
+    that mutation contributed. Verified against the roster: exclusions hold on
+    every acquisition path, and ablating Anabolic Inversion actually *grows*
+    the observed build from 12 mutations to 14 as freed points go elsewhere,
+    which is exactly why this needs measuring rather than reasoning about.
+    Two correctness issues came out of it. Blocking a mutation also blocks
+    everything gated behind it, so the measured effect is not that mutation
+    alone; the operator now walks the prerequisite graph and records the
+    downstream goals on the candidate — real chains were found, such as
+    Necrosporulation gating Catabolic Rebirth. And pruning was direction-blind:
+    an ablation hunts large *negative* differences, which increase-shaped
+    futility pruning would have discarded first, silently deleting exactly the
+    important mutations. Futility and domination pruning now require an explicit
+    direction with no default, the calibration regression check applies only to
+    increase hypotheses, and the driver passes the plan's direction through.
+    176 Simulation, 651 Core, and 10 analytics tests pass. Next: Phase 7
+    contextual band calibration, which is the roster-wide half of the strategy
+    goal — measuring how strong each existing strategy is, rather than whether
+    one variation beats its parent.
 
 ### Completion Criteria
 

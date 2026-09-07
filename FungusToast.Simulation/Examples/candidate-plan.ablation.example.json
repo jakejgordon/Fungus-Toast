@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "ablate-balanced-control",
+  "purpose": "Measure what each build goal contributes to Balanced Control by removing one mutation at a time and pairing against the untouched strategy. Evaluate with a Decrease hypothesis, where a supported verdict means the mutation measurably mattered.",
+  "parentStrategyId": "legacy.testing.tst-balancedgeneralistcontrol.v1",
+  "parentStrategySet": "testing",
+  "operators": [
+    "ablateTargetGoal"
+  ],
+  "maximumCandidates": 16,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": []
+}

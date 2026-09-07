@@ -136,11 +136,11 @@ public sealed class CandidateEvaluationQueueTests
             queue.Entries[1].CandidateId, CandidateEvaluationStage.Calibration, CandidateStageResult.Passed,
             40, 10, estimate: 0.09, ci95Low: 0.01, ci95High: 0.17);
 
-        var pruned = queue.PruneFutileCandidates(margin: 0.05);
+        var pruned = queue.PruneFutileCandidates(margin: 0.05, ExperimentDirection.Increase);
 
         Assert.Equal(1, pruned);
         Assert.Equal(CandidateQueueStatus.Pruned, queue.Entries[0].Status);
-        Assert.Contains("cannot reach the threshold", queue.Entries[0].Detail, StringComparison.Ordinal);
+        Assert.Contains("cannot reach the 0.05 threshold", queue.Entries[0].Detail, StringComparison.Ordinal);
         Assert.Equal(CandidateQueueStatus.Pending, queue.Entries[1].Status);
     }
 
@@ -155,7 +155,7 @@ public sealed class CandidateEvaluationQueueTests
             queue.Entries[1].CandidateId, CandidateEvaluationStage.Calibration, CandidateStageResult.Passed,
             40, 10, estimate: 0.20, ci95Low: 0.15, ci95High: 0.25);
 
-        var pruned = queue.PruneDominatedCandidates();
+        var pruned = queue.PruneDominatedCandidates(ExperimentDirection.Increase);
 
         Assert.Equal(1, pruned);
         Assert.Equal(CandidateQueueStatus.Pruned, queue.Entries[0].Status);
@@ -178,7 +178,7 @@ public sealed class CandidateEvaluationQueueTests
             queue.Entries[1].CandidateId, CandidateEvaluationStage.Calibration, CandidateStageResult.Passed,
             40, 10, estimate: 0.20, ci95Low: 0.15, ci95High: 0.25);
 
-        Assert.Equal(0, queue.PruneDominatedCandidates());
+        Assert.Equal(0, queue.PruneDominatedCandidates(ExperimentDirection.Increase));
         Assert.All(queue.Entries, entry => Assert.Equal(CandidateQueueStatus.Pending, entry.Status));
     }
 
@@ -190,7 +190,7 @@ public sealed class CandidateEvaluationQueueTests
             queue.Entries[0].CandidateId, CandidateEvaluationStage.Comparison, CandidateStageResult.FailedEvidence,
             100, 30, "not_supported", estimate: -0.2, ci95Low: -0.3, ci95High: -0.1);
 
-        Assert.Equal(0, queue.PruneFutileCandidates(margin: 0.05));
+        Assert.Equal(0, queue.PruneFutileCandidates(margin: 0.05, ExperimentDirection.Increase));
         Assert.Equal(CandidateQueueStatus.StoppedOnEvidence, queue.Entries[0].Status);
     }
 

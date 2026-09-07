@@ -249,22 +249,38 @@ public sealed class CandidateEvaluationQueue
     public const CandidateEvaluationStage ShallowestPruningStage = CandidateEvaluationStage.Calibration;
 
     /// <summary>
-    /// Drops pending candidates whose own interval shows they cannot reach the threshold: even the
-    /// optimistic end of the estimate is below the margin, so more games can only cost budget.
+    /// Drops pending candidates whose own interval shows they cannot reach the threshold, so more
+    /// games could only cost budget.
+    ///
+    /// The direction is required rather than defaulted because getting it wrong is silently
+    /// destructive. An ablation sweep asks whether removing something makes a strategy *worse*, so
+    /// its most important results are large negative differences - exactly what an
+    /// increase-shaped futility test would prune away first.
     /// </summary>
-    public int PruneFutileCandidates(double margin)
+    public int PruneFutileCandidates(double margin, ExperimentDirection direction)
     {
+        // Non-inferiority asks whether a candidate stayed close enough, which no one-sided bound
+        // can rule out early, so nothing is pruned for futility under it.
+        if (direction == ExperimentDirection.NonInferiority) return 0;
+
         var pruned = 0;
         foreach (var entry in Entries)
         {
             if (entry.Status != CandidateQueueStatus.Pending) continue;
             if (FindIndicativeMeasurement(entry) is not { } indicative) continue;
-            if (indicative.Measurement.Ci95High >= margin) continue;
 
+            var measurement = indicative.Measurement;
+            var isFutile = direction == ExperimentDirection.Increase
+                ? measurement.Ci95High < margin
+                : measurement.Ci95Low > -margin;
+            if (!isFutile) continue;
+
+            var bound = direction == ExperimentDirection.Increase ? measurement.Ci95High : measurement.Ci95Low;
+            var threshold = direction == ExperimentDirection.Increase ? margin : -margin;
             entry.Status = CandidateQueueStatus.Pruned;
             entry.Detail =
-                $"Upper interval bound {indicative.Measurement.Ci95High:0.####} at {indicative.Stage} is below the "
-                + $"{margin:0.####} margin; it cannot reach the threshold.";
+                $"Interval bound {bound:0.####} at {indicative.Stage} cannot reach the {threshold:0.####} "
+                + $"threshold in the {direction} direction.";
             pruned++;
         }
 
@@ -272,12 +288,15 @@ public sealed class CandidateEvaluationQueue
     }
 
     /// <summary>
-    /// Drops pending candidates another candidate confidently beats - its whole interval sits above
-    /// theirs. Both must have been measured at the same stage, since intervals from different game
-    /// counts are not comparable.
+    /// Drops pending candidates another candidate confidently beats - its whole interval sits on
+    /// the better side of theirs. Both must have been measured at the same stage, since intervals
+    /// from different game counts are not comparable.
     /// </summary>
-    public int PruneDominatedCandidates()
+    public int PruneDominatedCandidates(ExperimentDirection direction)
     {
+        // Under non-inferiority there is no "better", only "close enough", so nothing dominates.
+        if (direction == ExperimentDirection.NonInferiority) return 0;
+
         var measured = Entries
             .Where(entry => entry.Status == CandidateQueueStatus.Pending)
             .Select(entry => (Entry: entry, Indicative: FindIndicativeMeasurement(entry)))
@@ -291,19 +310,26 @@ public sealed class CandidateEvaluationQueue
             var dominator = measured.FirstOrDefault(other =>
                 !ReferenceEquals(other.Entry, entry)
                 && other.Indicative.Stage == indicative.Stage
-                && other.Indicative.Measurement.Ci95Low > indicative.Measurement.Ci95High);
+                && Dominates(other.Indicative.Measurement, indicative.Measurement, direction));
             if (dominator.Entry == null) continue;
 
             entry.Status = CandidateQueueStatus.Pruned;
             entry.Detail =
-                $"Dominated by '{dominator.Entry.DisplayName}', whose interval lower bound "
-                + $"{dominator.Indicative.Measurement.Ci95Low:0.####} exceeds this candidate's upper bound "
-                + $"{indicative.Measurement.Ci95High:0.####} at {indicative.Stage}.";
+                $"Dominated by '{dominator.Entry.DisplayName}' at {indicative.Stage} in the {direction} direction; "
+                + "its whole interval sits on the better side of this candidate's.";
             pruned++;
         }
 
         return pruned;
     }
+
+    private static bool Dominates(
+        CandidateStageMeasurement contender,
+        CandidateStageMeasurement incumbent,
+        ExperimentDirection direction)
+        => direction == ExperimentDirection.Increase
+            ? contender.Ci95Low > incumbent.Ci95High
+            : contender.Ci95High < incumbent.Ci95Low;
 
     /// <summary>
     /// The deepest measurement at or beyond <see cref="ShallowestPruningStage"/>, or null when the

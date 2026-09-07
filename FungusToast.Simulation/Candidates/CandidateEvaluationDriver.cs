@@ -1,4 +1,5 @@
 using FungusToast.Core.AI;
+using FungusToast.Simulation.Experiments;
 
 namespace FungusToast.Simulation.Candidates;
 
@@ -115,7 +116,7 @@ public sealed class CandidateEvaluationDriver
             else
             {
                 analysis = analyzePair(control.ArtifactPath, treatment.ArtifactPath);
-                (result, detail) = Interpret(workItem.Stage, analysis, stagePlan.Margin);
+                (result, detail) = Interpret(workItem.Stage, analysis, stagePlan.Margin, stagePlan.Direction);
             }
 
             queue.RecordStageResult(
@@ -133,8 +134,8 @@ public sealed class CandidateEvaluationDriver
 
             // Pruning after each step is what keeps a doomed candidate from consuming the next,
             // more expensive stage.
-            queue.PruneFutileCandidates(stagePlan.Margin);
-            queue.PruneDominatedCandidates();
+            queue.PruneFutileCandidates(stagePlan.Margin, stagePlan.Direction);
+            queue.PruneDominatedCandidates(stagePlan.Direction);
 
             if (!string.IsNullOrWhiteSpace(queueStatePath)) CandidateEvaluationQueueJson.Save(queue, queueStatePath);
 
@@ -153,7 +154,8 @@ public sealed class CandidateEvaluationDriver
     private static (CandidateStageResult Result, string Detail) Interpret(
         CandidateEvaluationStage stage,
         CandidateStageAnalysis analysis,
-        double margin)
+        double margin,
+        ExperimentDirection direction)
     {
         if (!analysis.Succeeded)
             return (CandidateStageResult.FailedIntegrity, $"Analysis failed: {analysis.Detail}");
@@ -165,12 +167,23 @@ public sealed class CandidateEvaluationDriver
                 return (CandidateStageResult.Passed, "Smoke completed and paired cleanly.");
 
             case CandidateEvaluationStage.Calibration:
-                // No verdict at this stage; it exists to reject a clear regression, which means the
-                // entire interval sitting below the negative margin rather than a weak point estimate.
-                if (analysis.Ci95High is { } upper && upper < -margin)
+                // No verdict at this stage; it exists to stop a candidate that is clearly going the
+                // wrong way relative to its own hypothesis, which means the entire interval past the
+                // negative margin rather than a weak point estimate.
+                //
+                // Only an increase hypothesis has a wrong way here. An ablation asks whether removing
+                // something hurts, so a large drop is the result it is hunting; and a drop that turns
+                // into a gain means the removed thing was harmful, which is a finding worth carrying
+                // forward rather than a reason to stop. Uninteresting ablations are removed by
+                // direction-aware futility pruning instead.
+                if (direction == ExperimentDirection.Increase
+                    && analysis.Ci95High is { } upper && upper < -margin)
+                {
                     return (CandidateStageResult.FailedEvidence,
                         $"Clear regression at calibration: interval upper bound {upper:0.####} is below -{margin:0.####}.");
-                return (CandidateStageResult.Passed, "Calibration showed no clear regression.");
+                }
+
+                return (CandidateStageResult.Passed, "Calibration showed no clearly wrong-way result.");
 
             case CandidateEvaluationStage.Comparison:
             case CandidateEvaluationStage.Holdout:

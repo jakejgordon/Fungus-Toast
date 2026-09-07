@@ -1,3 +1,4 @@
+using System.Globalization;
 using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
 
@@ -162,6 +163,7 @@ public static class CandidateGenerator
                 CandidateOperator.SurgeAttemptTurnFrequencySweep => EnumerateSurgeFrequencySweep(parentGenes, plan.SurgeAttemptTurnFrequencyValues),
                 CandidateOperator.StartingSporeEdgeOffsetSweep => EnumerateEdgeOffsetSweep(parentGenes, plan.StartingSporeEdgeOffsetValues),
                 CandidateOperator.MaxTierSweep => EnumerateMaxTierSweep(parentGenes, plan.MaxTierValues),
+                CandidateOperator.AblateTargetGoal => EnumerateGoalAblations(parentGenes),
                 _ => throw new NotSupportedException($"Operator '{candidateOperator}' has no enumeration.")
             };
 
@@ -197,6 +199,64 @@ public static class CandidateGenerator
                 WithGoals(parentGenes, reordered),
                 $"Promoted the build goal at position {position} to the opening.");
         }
+    }
+
+    /// <summary>
+    /// One ablation per distinct mutation in the build plan: the goal is removed and the mutation
+    /// blocked, so the paired difference against the parent is what that mutation contributed.
+    ///
+    /// Every occurrence of a repeated mutation goes, because a rising ladder is one intent
+    /// expressed in stages and leaving part of it behind would ablate something else.
+    /// </summary>
+    private static IEnumerable<(CandidateGeneSet Genes, string Note)> EnumerateGoalAblations(CandidateGeneSet parentGenes)
+    {
+        var goals = parentGenes.TargetMutationGoals;
+        foreach (var mutationId in goals.Select(goal => goal.MutationId).Distinct())
+        {
+            var remaining = goals.Where(goal => goal.MutationId != mutationId).ToList();
+            var exclusions = parentGenes.ExcludedMutationIds.Concat(new[] { mutationId }).Distinct().OrderBy(id => id).ToList();
+            var name = MutationRegistry.GetById(mutationId)?.Name ?? mutationId.ToString(CultureInfo.InvariantCulture);
+
+            // A mutation that gates other goals cannot be ablated alone: blocking it blocks
+            // everything behind it, and the measured effect covers all of them. Saying so here is
+            // what stops the result being read as that one mutation's contribution.
+            var gated = FindGoalsGatedBehind(mutationId, remaining.Select(goal => goal.MutationId).Distinct().ToList());
+            var note = $"Ablates {name}: removed from the build plan and blocked outright.";
+            if (gated.Count > 0)
+            {
+                var gatedNames = gated.Select(id => MutationRegistry.GetById(id)?.Name ?? id.ToString(CultureInfo.InvariantCulture));
+                note += $" It also gates {string.Join(", ", gatedNames)}, so the measured effect covers "
+                    + (gated.Count == 1 ? "that too." : "those too.");
+            }
+
+            yield return (Clone(parentGenes, targetMutationGoals: remaining, excludedMutationIds: exclusions), note);
+        }
+    }
+
+    /// <summary>
+    /// Goals that transitively require <paramref name="mutationId"/>, and so become unreachable
+    /// when it is blocked.
+    /// </summary>
+    private static IReadOnlyList<int> FindGoalsGatedBehind(int mutationId, IReadOnlyList<int> remainingGoalIds)
+    {
+        var blocked = new HashSet<int> { mutationId };
+        // Repeat until nothing new is blocked: a goal behind a blocked goal is blocked as well.
+        bool grew;
+        do
+        {
+            grew = false;
+            foreach (var goalId in remainingGoalIds)
+            {
+                if (blocked.Contains(goalId)) continue;
+                var mutation = MutationRegistry.GetById(goalId);
+                if (mutation == null) continue;
+                if (!mutation.Prerequisites.Any(prerequisite => blocked.Contains(prerequisite.MutationId))) continue;
+                blocked.Add(goalId);
+                grew = true;
+            }
+        } while (grew);
+
+        return blocked.Where(id => id != mutationId).OrderBy(id => id).ToList();
     }
 
     private static IEnumerable<(CandidateGeneSet Genes, string Note)> EnumerateEconomyBiasSweep(CandidateGeneSet parentGenes)
@@ -245,7 +305,8 @@ public static class CandidateGenerator
         IReadOnlyList<CandidateMutationGoal>? targetMutationGoals = null,
         int? surgeAttemptTurnFrequency = null,
         EconomyBias? economyBias = null,
-        int? startingSporeEdgeOffset = null)
+        int? startingSporeEdgeOffset = null,
+        IReadOnlyList<int>? excludedMutationIds = null)
     {
         return new CandidateGeneSet
         {
@@ -257,7 +318,7 @@ public static class CandidateGenerator
             SurgeAttemptTurnFrequency = surgeAttemptTurnFrequency ?? source.SurgeAttemptTurnFrequency,
             EconomyBias = economyBias ?? source.EconomyBias,
             MycovariantPreferences = source.MycovariantPreferences,
-            ExcludedMutationIds = source.ExcludedMutationIds,
+            ExcludedMutationIds = excludedMutationIds ?? source.ExcludedMutationIds,
             StartingSporeEdgeOffset = startingSporeEdgeOffset ?? source.StartingSporeEdgeOffset
         };
     }

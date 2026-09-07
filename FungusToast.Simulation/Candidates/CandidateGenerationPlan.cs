@@ -30,7 +30,19 @@ public enum CandidateOperator
     StartingSporeEdgeOffsetSweep,
 
     /// <summary>Every value in the plan's maxTierValues.</summary>
-    MaxTierSweep
+    MaxTierSweep,
+
+    /// <summary>
+    /// One candidate per distinct mutation in the parent's build plan, with that mutation removed
+    /// from the plan and blocked outright.
+    ///
+    /// This is the diagnostic operator: paired against the unmodified parent, the difference is
+    /// what that mutation was contributing. It varies two genes rather than one, because blocking a
+    /// mutation the strategy is still told to buy would be incoherent - the goal has to go with it.
+    /// Read an ablation sweep with a Decrease hypothesis, where "supported" means the mutation
+    /// measurably mattered.
+    /// </summary>
+    AblateTargetGoal
 }
 
 /// <summary>
