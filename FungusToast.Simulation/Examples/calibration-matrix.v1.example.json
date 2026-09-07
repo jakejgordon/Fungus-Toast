@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "fungus-toast.ai-calibration-matrix.v1",
+  "matrixId": "p7-reference-v1",
+  "purpose": "Frozen P7.1 reference matrix. Contexts are fixed before any strategy is measured so bands cannot be fitted to boards a strategy happens to like, and the holdout half is reserved to check thresholds fitted on the calibration half. Systems are off so a band reflects strategy strength rather than draft or nutrient luck.",
+  "strategySet": "testing",
+  "strategyNames": [],
+  "calibrationContexts": [
+    {
+      "contextId": "duel.small.square.rectangle.generated.80x80",
+      "playerCount": 2,
+      "boardWidth": 80,
+      "boardHeight": 80,
+      "baseSeed": 2026090700,
+      "gamesPerCondition": 50
+    },
+    {
+      "contextId": "duel.medium.square.rectangle.generated.120x120",
+      "playerCount": 2,
+      "boardWidth": 120,
+      "boardHeight": 120,
+      "baseSeed": 2026090701,
+      "gamesPerCondition": 50
+    },
+    {
+      "contextId": "smalltable.medium.square.rectangle.generated.120x120",
+      "playerCount": 4,
+      "boardWidth": 120,
+      "boardHeight": 120,
+      "baseSeed": 2026090702,
+      "gamesPerCondition": 50
+    },
+    {
+      "contextId": "smalltable.large.square.rectangle.generated.180x180",
+      "playerCount": 4,
+      "boardWidth": 180,
+      "boardHeight": 180,
+      "baseSeed": 2026090703,
+      "gamesPerCondition": 50
+    },
+    {
+      "contextId": "crowded.large.square.rectangle.generated.180x180",
+      "playerCount": 6,
+      "boardWidth": 180,
+      "boardHeight": 180,
+      "baseSeed": 2026090704,
+      "gamesPerCondition": 50
+    }
+  ],
+  "holdoutContexts": [
+    {
+      "contextId": "duel.medium.wide.rectangle.generated.140x100",
+      "playerCount": 2,
+      "boardWidth": 140,
+      "boardHeight": 100,
+      "baseSeed": 2026090710,
+      "gamesPerCondition": 100
+    },
+    {
+      "contextId": "smalltable.small.tall.rectangle.generated.60x100",
+      "playerCount": 4,
+      "boardWidth": 60,
+      "boardHeight": 100,
+      "baseSeed": 2026090711,
+      "gamesPerCondition": 100
+    }
+  ],
+  "totalGameBudget": 500,
+  "runtimeBudgetSeconds": 5400
+}

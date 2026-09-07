@@ -1135,7 +1135,7 @@ player-facing pool because every generated entry carries `StrategyPool.None`.
 
 - **P7.1:** Freeze representative calibration and holdout matrices across map
   classes, geometries, player counts, seeds, slots, opponent pools, and system
-  toggles.
+  toggles. **Complete (2026-09-07)** — see the contract below.
 - **P7.2:** Measure stable reference strategies and quantify slot, geometry,
   lineup, mycovariant, nutrient, and adaptation effects.
 - **P7.3:** Choose empirical thresholds and material-context rules; version the
@@ -1146,6 +1146,43 @@ player-facing pool because every generated entry carries `StrategyPool.None`.
   drift, parity failures, and abnormal fallback/decision-failure rates.
 - **Gate:** All retained player-facing strategies have reproducible measured
   metadata or an explicit evidence-gap status.
+
+#### P7.1 frozen calibration matrix (delivered 2026-09-07)
+
+Two pieces. `ContextTaxonomy` implements the P3.4 class table, which until now
+existed only as documentation: player-count, board-scale, aspect, geometry, and
+start-regime classes, all derived from resolved values rather than matched
+against a preset list that would go stale the first time someone ran an unusual
+board. Thresholds are pinned to the anchors the plan names (80x80 tops the small
+class, 160x160 tops medium) and are deliberately not tunable — redrawing class
+boundaries after seeing results is how a contextual specialist gets relabelled a
+generalist.
+
+`CalibrationMatrix` is the frozen context set, split into a calibration half that
+thresholds are fitted on and a holdout half reserved to check them. Freezing it
+before measurement is the entire point: choosing contexts after seeing results
+lets a strategy be called strong by picking the boards it likes, and choosing
+thresholds afterwards does the same thing one step later.
+
+Three validation rules carry the weight:
+
+- **A context ID must start with its own derived rollup key**, so a matrix cannot
+  claim coverage it does not have. An entry calling itself a duel while running
+  four players is refused.
+- **Holdout contexts must differ from every calibration context in board, player
+  count, and seed.** A holdout that reuses a calibration board is not independent
+  evidence; it re-measures what the thresholds were fitted on and reports it as
+  confirmation.
+- **The calibration half must vary at least two player-count classes and two
+  board-scale classes.** The taxonomy says to begin with those two axes, and a
+  matrix varying neither can only produce a global label with no evidence it
+  generalizes — the failure this initiative exists to stop.
+
+The checked-in `calibration-matrix.v1.example.json` freezes five calibration
+contexts (duel and small-table across small, medium, and large boards) and two
+unseen holdout contexts that also change aspect, for 450 planned games with
+systems off so a band reflects strategy strength rather than draft or nutrient
+luck. 212 Simulation tests pass.
 
 ### Phase 8 — Define and fill the target roster matrix
 

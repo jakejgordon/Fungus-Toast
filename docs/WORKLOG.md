@@ -664,6 +664,26 @@ measurement model, phase gates, and open product decisions are in
     contextual band calibration, which is the roster-wide half of the strategy
     goal — measuring how strong each existing strategy is, rather than whether
     one variation beats its parent.
+50. Jake confirmed Unity plays fine on 2026-09-07, closing the manual gate for
+    everything through the ablation operator. P7.1 is complete.
+    `ContextTaxonomy` implements the P3.4 class table, which had existed only as
+    documentation: player-count, board-scale, aspect, geometry, and start-regime
+    classes derived from resolved values rather than a preset list, with
+    thresholds pinned to the anchors the plan names and deliberately not
+    tunable. `CalibrationMatrix` freezes the context set before any measurement,
+    split into a calibration half thresholds are fitted on and a holdout half
+    reserved to check them. Validation refuses a context ID that does not start
+    with its own derived rollup key, so a matrix cannot claim coverage it lacks;
+    refuses a holdout reusing a calibration board, player count, or seed; and
+    requires the calibration half to vary at least two player-count and two
+    board-scale classes, since a matrix varying neither can only produce a
+    global label with no evidence it generalizes. The checked-in
+    `calibration-matrix.v1.example.json` freezes five calibration contexts and
+    two unseen holdouts for 450 planned games with systems off. 212 Simulation
+    and 651 Core tests pass. Next: P7.2 measuring reference strategies, which
+    needs a per-strategy sampling decision — a context runs one lineup, so
+    coverage-balanced selection across games is what gives each strategy enough
+    samples.
 
 ### Completion Criteria
 
