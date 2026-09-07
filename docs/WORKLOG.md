@@ -737,6 +737,26 @@ measurement model, phase gates, and open product decisions are in
     Simulation and 651 Core tests pass and the experiment contract verifies end
     to end. Next: P7.2 proper — running the frozen matrix and quantifying slot,
     geometry, and lineup effects.
+53. P7.2 through P7.4 are complete for strategy strength. The frozen matrix ran
+    clean on 2026-09-07: 1,600 games across 7 conditions, zero failures, 96
+    minutes, 145-195 games per strategy. `StrategyBandClassifier` places
+    strategies into difficulty bands from parity-relative thresholds that were
+    frozen before the campaign finished, so they could not be drawn around the
+    results; placement uses the interval bound arguing against the band, and thin
+    evidence is reported rather than guessed. Pooling averages interval bounds
+    rather than inverse-variance weighting, which deliberately does not narrow
+    the interval, because contexts genuinely differ and treating that as noise
+    would claim confidence the design does not earn. Results are frozen in
+    `AI_P7_REFERENCE_BANDS_V1.md`: a 12.5x spread across the strategies solo
+    players face (`1.915` down to `0.153`), and six of nineteen contradicting
+    their authored power tier — including one authored `Strong` and used as a
+    Boss that measures Easy at `0.490`, and one authored `Spike` measuring
+    `0.153`. Random per-game lineups gave uneven exposure (18-39 per cell against
+    an expected 31.6), so six strategy/context cells fell under the 25-game floor
+    and are reported unplaced; overall bands are unaffected. 251 Simulation and
+    651 Core tests pass. Next: P7.5 regression alerts, then Phase 8 — or acting
+    on these findings, which is a balance decision for Jake rather than an
+    engineering one.
 
 ### Completion Criteria
 

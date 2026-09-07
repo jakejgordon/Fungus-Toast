@@ -1137,11 +1137,15 @@ player-facing pool because every generated entry carries `StrategyPool.None`.
   classes, geometries, player counts, seeds, slots, opponent pools, and system
   toggles. **Complete (2026-09-07)** — see the contract below.
 - **P7.2:** Measure stable reference strategies and quantify slot, geometry,
-  lineup, mycovariant, nutrient, and adaptation effects.
+  lineup, mycovariant, nutrient, and adaptation effects. **Complete for strategy
+  strength (2026-09-07)**; system-toggle effects remain, since the frozen matrix
+  runs with systems off by design.
 - **P7.3:** Choose empirical thresholds and material-context rules; version the
-  classifier and reference corpus.
+  classifier and reference corpus. **Complete (2026-09-07).**
 - **P7.4:** Classify every active strategy overall and by material context;
-  flag insufficient evidence rather than guessing.
+  flag insufficient evidence rather than guessing. **Complete (2026-09-07)** —
+  results frozen in
+  [AI_P7_REFERENCE_BANDS_V1.md](second-level/AI_P7_REFERENCE_BANDS_V1.md).
 - **P7.5:** Add regression alerts for band movement, robustness loss, archetype
   drift, parity failures, and abnormal fallback/decision-failure rates.
 - **Gate:** All retained player-facing strategies have reproducible measured
@@ -1265,6 +1269,39 @@ Verified by running it: 40 two-player games over the 19-strategy panel measured
 mean of 4.2. The same run before the fix measured two.
 
 231 Simulation and 651 Core tests pass.
+
+#### P7.3-P7.4 measured bands (delivered 2026-09-07)
+
+`StrategyBandClassifier` places strategies into `DifficultyBand` from measured
+evidence. **Thresholds are parity-relative and were frozen before the campaign
+finished**, precisely so they could not be drawn around the gaps that appeared in
+the data: Elite above `1.25`, Hard above `1.05`, Easy below `0.95`, each placed on
+the interval bound that argues *against* the band so a noisy strategy is never
+promoted on a lucky point estimate. Thin evidence is reported as `TooFewGames` or
+`IntervalTooWide` rather than guessed.
+
+Pooling across contexts averages the interval bounds rather than using
+inverse-variance weighting. That deliberately does not narrow the interval:
+inverse-variance pooling assumes every context measures one underlying quantity,
+and the premise of a contextual matrix is that strength genuinely differs between
+a duel and a crowded table. Heterogeneity is surfaced as material contexts instead
+of being averaged into false confidence.
+
+**The campaign ran clean:** 1,600 games across 7 conditions, zero failures, 96
+minutes, 145-195 games per strategy.
+
+**Results are frozen in [AI_P7_REFERENCE_BANDS_V1.md](second-level/AI_P7_REFERENCE_BANDS_V1.md).**
+The headline is a **12.5x spread** across the strategies solo players actually
+face, from `1.915` down to `0.153`, and **six of nineteen contradict their authored
+power tier** - including a strategy authored `Strong` and used as a **Boss** that
+measures **Easy** at `0.490`, and one authored `Spike` that measures `0.153`,
+the weakest in the panel by a wide margin. That gap between authored label and
+measurement is exactly what Phase 7 existed to find.
+
+A known limitation: random per-game lineups buy unbiased opposition at the cost of
+uneven exposure (18-39 games per cell against an expected 31.6), so six
+strategy/context cells fell under the 25-game floor and are reported unplaced
+rather than guessed. Overall bands are unaffected.
 
 ### Phase 8 — Define and fill the target roster matrix
 
