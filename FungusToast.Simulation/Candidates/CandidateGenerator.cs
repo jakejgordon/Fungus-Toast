@@ -37,7 +37,13 @@ public static class CandidateGenerator
         var parentGenes = CandidateGenomeFactory.ExtractGenes(parentStrategy);
         var parentFingerprint = CandidateGenomeFingerprint.Compute(parentGenes);
 
-        var proposals = EnumerateProposals(plan, parentGenes).ToList();
+        // Observing the parent's real build costs a scripted run, so it happens only when an
+        // operator needs it. The script is deterministic, so generation stays reproducible.
+        var observedBuild = plan.Operators.Contains(CandidateOperator.AblateObservedPurchase)
+            ? CandidateCharacterizationGate.ObserveBuild(parentStrategy)
+            : null;
+
+        var proposals = EnumerateProposals(plan, parentGenes, observedBuild).ToList();
         if (proposals.Count > plan.MaximumCandidates)
         {
             throw new InvalidOperationException(
@@ -118,7 +124,10 @@ public static class CandidateGenerator
         if (parent?.Strategy is not ParameterizedSpendingStrategy parameterized)
             throw new ArgumentException($"Plan parent '{plan.ParentStrategyId}' is not a registered parameterized strategy.", nameof(plan));
 
-        return EnumerateProposals(plan, CandidateGenomeFactory.ExtractGenes(parameterized)).Count();
+        var observedBuild = plan.Operators.Contains(CandidateOperator.AblateObservedPurchase)
+            ? CandidateCharacterizationGate.ObserveBuild(parameterized)
+            : null;
+        return EnumerateProposals(plan, CandidateGenomeFactory.ExtractGenes(parameterized), observedBuild).Count();
     }
 
     private static CandidateRejection Reject(
@@ -150,7 +159,10 @@ public static class CandidateGenerator
     private static string BuildDisplayNameSuffix(CandidateGenerationPlan plan, CandidateProposal proposal, string fingerprint)
         => $"{plan.PlanId}_{proposal.Operator}_{fingerprint[..8]}";
 
-    private static IEnumerable<CandidateProposal> EnumerateProposals(CandidateGenerationPlan plan, CandidateGeneSet parentGenes)
+    private static IEnumerable<CandidateProposal> EnumerateProposals(
+        CandidateGenerationPlan plan,
+        CandidateGeneSet parentGenes,
+        IReadOnlyDictionary<int, int>? observedBuild)
     {
         foreach (var candidateOperator in plan.Operators)
         {
@@ -164,6 +176,8 @@ public static class CandidateGenerator
                 CandidateOperator.StartingSporeEdgeOffsetSweep => EnumerateEdgeOffsetSweep(parentGenes, plan.StartingSporeEdgeOffsetValues),
                 CandidateOperator.MaxTierSweep => EnumerateMaxTierSweep(parentGenes, plan.MaxTierValues),
                 CandidateOperator.AblateTargetGoal => EnumerateGoalAblations(parentGenes),
+                CandidateOperator.AblateObservedPurchase => EnumerateObservedAblations(parentGenes, observedBuild
+                    ?? throw new InvalidOperationException("AblateObservedPurchase needs the parent's observed build.")),
                 _ => throw new NotSupportedException($"Operator '{candidateOperator}' has no enumeration.")
             };
 
@@ -234,29 +248,83 @@ public static class CandidateGenerator
     }
 
     /// <summary>
+    /// One ablation per mutation the parent actually buys, ordered by mutation ID so the sweep is
+    /// stable. A purchase that is also a goal has the goal removed with it, exactly as goal
+    /// ablation does, because blocking a mutation the strategy is still told to buy is incoherent.
+    /// </summary>
+    private static IEnumerable<(CandidateGeneSet Genes, string Note)> EnumerateObservedAblations(
+        CandidateGeneSet parentGenes,
+        IReadOnlyDictionary<int, int> observedBuild)
+    {
+        var alreadyExcluded = parentGenes.ExcludedMutationIds.ToHashSet();
+        foreach (var mutationId in observedBuild.Keys.Where(id => !alreadyExcluded.Contains(id)).OrderBy(id => id))
+        {
+            var remaining = parentGenes.TargetMutationGoals.Where(goal => goal.MutationId != mutationId).ToList();
+            var exclusions = parentGenes.ExcludedMutationIds.Concat(new[] { mutationId }).Distinct().OrderBy(id => id).ToList();
+            var mutation = MutationRegistry.GetById(mutationId);
+            var name = mutation?.Name ?? mutationId.ToString(CultureInfo.InvariantCulture);
+            var wasGoal = parentGenes.TargetMutationGoals.Any(goal => goal.MutationId == mutationId);
+
+            var note = $"Ablates {name} ({mutation?.Category.ToString() ?? "unknown"}, {observedBuild[mutationId]} levels observed), "
+                + $"which the parent reaches {(wasGoal ? "as a declared goal" : "through the fallback path only")}.";
+
+            var gated = FindGoalsGatedBehind(mutationId, remaining.Select(goal => goal.MutationId).Distinct().ToList());
+            if (gated.Count > 0)
+            {
+                var gatedNames = gated.Select(id => MutationRegistry.GetById(id)?.Name ?? id.ToString(CultureInfo.InvariantCulture));
+                note += $" It also gates {string.Join(", ", gatedNames)}, so the measured effect covers "
+                    + (gated.Count == 1 ? "that too." : "those too.");
+                // Excluding it cannot actually work: the strategy still has goals behind it, and the
+                // prerequisite path buys what a goal needs regardless of the exclusion list. The
+                // candidate is still emitted so the conflict is visible, and characterization
+                // rejects it as ViolatedExclusions rather than it passing as a real measurement.
+                note += " The exclusion cannot hold while those goals remain, so this ablation is not achievable.";
+            }
+
+            yield return (Clone(parentGenes, targetMutationGoals: remaining, excludedMutationIds: exclusions), note);
+        }
+    }
+
+    /// <summary>
     /// Goals that transitively require <paramref name="mutationId"/>, and so become unreachable
     /// when it is blocked.
+    ///
+    /// The walk has to follow the whole prerequisite chain, not just goal-to-goal links: a root
+    /// mutation usually gates a goal through intermediates that are not themselves goals, and
+    /// stopping at goals would report such an ablation as clean when the strategy will simply buy
+    /// the mutation anyway to reach what depends on it.
     /// </summary>
     private static IReadOnlyList<int> FindGoalsGatedBehind(int mutationId, IReadOnlyList<int> remainingGoalIds)
     {
-        var blocked = new HashSet<int> { mutationId };
-        // Repeat until nothing new is blocked: a goal behind a blocked goal is blocked as well.
-        bool grew;
-        do
-        {
-            grew = false;
-            foreach (var goalId in remainingGoalIds)
-            {
-                if (blocked.Contains(goalId)) continue;
-                var mutation = MutationRegistry.GetById(goalId);
-                if (mutation == null) continue;
-                if (!mutation.Prerequisites.Any(prerequisite => blocked.Contains(prerequisite.MutationId))) continue;
-                blocked.Add(goalId);
-                grew = true;
-            }
-        } while (grew);
+        return remainingGoalIds
+            .Where(goalId => goalId != mutationId && RequiresTransitively(goalId, mutationId))
+            .OrderBy(goalId => goalId)
+            .ToList();
+    }
 
-        return blocked.Where(id => id != mutationId).OrderBy(id => id).ToList();
+    /// <summary>Whether <paramref name="goalId"/> needs <paramref name="mutationId"/> anywhere in its prerequisite chain.</summary>
+    private static bool RequiresTransitively(int goalId, int mutationId)
+    {
+        var visited = new HashSet<int>();
+        var pending = new Stack<int>();
+        pending.Push(goalId);
+
+        while (pending.Count > 0)
+        {
+            var current = pending.Pop();
+            if (!visited.Add(current)) continue;
+
+            var mutation = MutationRegistry.GetById(current);
+            if (mutation == null) continue;
+
+            foreach (var prerequisite in mutation.Prerequisites)
+            {
+                if (prerequisite.MutationId == mutationId) return true;
+                pending.Push(prerequisite.MutationId);
+            }
+        }
+
+        return false;
     }
 
     private static IEnumerable<(CandidateGeneSet Genes, string Note)> EnumerateEconomyBiasSweep(CandidateGeneSet parentGenes)

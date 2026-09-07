@@ -265,8 +265,35 @@ how it values economy.
 The `RegressionCascade` family is a different shape of the same problem: adequate Growth, but
 Substrate Ecology investment where the strong strategies buy Fungicide.
 
-### Not yet evidenced
+### Addendum: the Fungicide correlation is confounded, not causal
 
-The Fungicide correlation is the strongest signal here and is **untested causally**. An ablation
-sweep over Fungicide goals in a strong strategy would settle whether it is a cause or a marker of
-an otherwise good plan. That is the obvious next experiment.
+Tested at mutation level on 2026-09-07, and the result corrects the reading above.
+
+**All seven Fungicide levels in every top strategy are one Tier-1 mutation, `Mycotoxin Tracer`
+(id 2), and none of them declares it as a goal** - they all reach it through the fallback path.
+So the category-level correlation was really a single-mutation correlation.
+
+Ablating it is **not possible**, and the reason is the finding: `Mycotoxin Tracer` is a
+prerequisite of `Necrosporulation`, which the strongest strategies target as a goal, and
+`Catabolic Rebirth` depends on `Necrosporulation` in turn. The generator emits the ablation, marks
+it unachievable, and the characterization gate rejects it as `ViolatedExclusions` - the strategy
+buys the mutation anyway to reach what depends on it.
+
+**So Fungicide investment is largely an artifact of the prerequisite tree, not an independent
+choice.** Strategies that "buy Fungicide" are mostly strategies that target the
+Necrosporulation / Catabolic Rebirth line; the Fungicide levels come along for free. The three
+`RegressionCascade` strategies target `NecrophyticBloom` instead - a different mutation despite the
+similar name - and so are never forced to buy `Mycotoxin Tracer` at all.
+
+The honest conclusion is that `r = 0.792` measures *"targets the Necrosporulation line"*, and no
+strategy in this panel buys `Mycotoxin Tracer` without needing it, so its own contribution cannot
+be isolated by ablation within this panel. If the mutation's individual value matters, it needs a
+purpose-built strategy pair that differs only in that mutation and shares no dependent goals.
+
+### Tooling defect found while testing this
+
+`PickBestTendrilMutation` substitutes the best-direction tendril for whichever tendril candidate
+was offered, and did not re-apply the exclusion list - so an excluded tendril could be reacquired
+through the substitution. That is the same bypass free upgrades had. No registered strategy
+excludes a tendril, so no existing result changes, but it would have silently broken any ablation
+of a tendril and any controlled treatment that removed one. Fixed with a regression test.

@@ -188,6 +188,94 @@ public sealed class CandidateAblationTests
         });
     }
 
+    /// <summary>
+    /// The gap goal ablation cannot reach. The panel's strongest strategies buy seven levels of
+    /// Mycotoxin Tracer through the fallback path and never declare it as a goal, so a goal-only
+    /// sweep would report that their most-bought Fungicide mutation does not exist.
+    /// </summary>
+    [Fact]
+    public void ObservedAblation_ReachesFallbackPurchasesThatGoalAblationCannot()
+    {
+        _ = AIRoster.TestingStrategies.Count;
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Proven, "TST_CampaignMirror_AI13_AnabolicFirst")!;
+        var parameterized = (ParameterizedSpendingStrategy)parent.Strategy;
+        var goalIds = parameterized.TargetMutationGoals.Select(goal => goal.MutationId).ToHashSet();
+
+        var goalSweep = Generate(parent, CandidateOperator.AblateTargetGoal);
+        var observedSweep = Generate(parent, CandidateOperator.AblateObservedPurchase);
+
+        int Ablated(CandidateGenome genome) => genome.Genes.ExcludedMutationIds
+            .Except(CandidateGenomeFactory.ExtractGenes(parameterized).ExcludedMutationIds).Single();
+
+        Assert.DoesNotContain(goalSweep.Accepted, genome => Ablated(genome) == MutationIds.MycotoxinTracer);
+        var tracer = Assert.Single(observedSweep.Accepted, genome => Ablated(genome) == MutationIds.MycotoxinTracer);
+        Assert.Contains("fallback path only", tracer.Lineage.Notes, StringComparison.Ordinal);
+        Assert.DoesNotContain(goalIds, id => id == MutationIds.MycotoxinTracer);
+    }
+
+    /// <summary>
+    /// A mutation a remaining goal depends on cannot be ablated: the prerequisite path buys what a
+    /// goal needs whatever the exclusion list says. Those ablations are still emitted so the
+    /// conflict is visible, and the characterization gate rejects them as ViolatedExclusions rather
+    /// than letting them pass as real measurements of nothing.
+    /// </summary>
+    [Fact]
+    public void ObservedAblation_CoversEveryPurchase_AndUnachievableOnesAreCaughtNotBelieved()
+    {
+        _ = AIRoster.TestingStrategies.Count;
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Proven, "TST_CampaignMirror_AI13_AnabolicFirst")!;
+        var parameterized = (ParameterizedSpendingStrategy)parent.Strategy;
+        var parentGenes = CandidateGenomeFactory.ExtractGenes(parameterized);
+        var observed = CandidateCharacterizationGate.ObserveBuild(parameterized);
+
+        var sweep = Generate(parent, CandidateOperator.AblateObservedPurchase);
+        Assert.Equal(observed.Count, sweep.GeneratedCount);
+
+        var report = CandidateCharacterizationGate.Run(sweep.Accepted);
+
+        foreach (var genome in report.Passed)
+        {
+            var ablated = genome.Genes.ExcludedMutationIds.Except(parentGenes.ExcludedMutationIds).Single();
+            var rebuilt = CandidateCharacterizationGate.ObserveBuild(CandidateGenomeFactory.Materialize(genome));
+            Assert.False(rebuilt.ContainsKey(ablated), $"Mutation {ablated} passed the gate but survived its own ablation.");
+        }
+
+        // Whatever could not be ablated was caught rather than reported as a measurement.
+        Assert.All(report.Findings, finding =>
+            Assert.Equal(CandidateCharacterizationFailure.ViolatedExclusions, finding.Failure));
+    }
+
+    /// <summary>
+    /// The unachievable ablations are exactly the ones whose mutation still gates a goal, and the
+    /// candidate says so before anything is run.
+    /// </summary>
+    [Fact]
+    public void AnUnachievableAblation_SaysSoOnTheCandidate()
+    {
+        _ = AIRoster.TestingStrategies.Count;
+        var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Proven, "TST_CampaignMirror_AI13_AnabolicFirst")!;
+        var sweep = Generate(parent, CandidateOperator.AblateObservedPurchase);
+        var report = CandidateCharacterizationGate.Run(sweep.Accepted);
+
+        foreach (var finding in report.Findings)
+        {
+            var genome = sweep.Accepted.Single(candidate => candidate.CandidateId == finding.CandidateId);
+            Assert.Contains("not achievable", genome.Lineage.Notes, StringComparison.Ordinal);
+        }
+    }
+
+    private static CandidateGenerationResult Generate(StrategyDefinition parent, CandidateOperator candidateOperator)
+        => CandidateGenerator.Generate(new CandidateGenerationPlan
+        {
+            SchemaVersion = CandidateGenerationPlan.CurrentSchemaVersion,
+            PlanId = "obsablate",
+            Purpose = "Measure what each purchase contributes.",
+            ParentStrategyId = parent.StrategyId,
+            ParentStrategySet = StrategySetEnum.Proven,
+            Operators = new[] { candidateOperator },
+            MaximumCandidates = CandidateGenerationPlan.CandidateCeiling
+        });
+
     private static void Measure(CandidateEvaluationQueue queue, int index, double estimate, double low, double high)
         => queue.RecordStageResult(
             queue.Entries[index].CandidateId,

@@ -42,7 +42,17 @@ public enum CandidateOperator
     /// Read an ablation sweep with a Decrease hypothesis, where "supported" means the mutation
     /// measurably mattered.
     /// </summary>
-    AblateTargetGoal
+    AblateTargetGoal,
+
+    /// <summary>
+    /// One candidate per mutation the parent actually buys, whether or not it is a declared goal.
+    ///
+    /// Goal ablation cannot reach a mutation acquired through the fallback path, and some of the
+    /// most-bought mutations are exactly that - a strategy's declared plan is not the whole of what
+    /// it builds. This operator observes the parent's real build under the characterization script
+    /// and blocks one purchase at a time, so a fallback staple can be measured like any goal.
+    /// </summary>
+    AblateObservedPurchase
 }
 
 /// <summary>

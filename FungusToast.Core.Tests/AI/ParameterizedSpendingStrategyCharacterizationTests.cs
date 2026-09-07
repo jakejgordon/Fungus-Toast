@@ -1,4 +1,4 @@
-using FungusToast.Core.AI;
+﻿using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
@@ -220,6 +220,36 @@ public class ParameterizedSpendingStrategyCharacterizationTests
             economyBias: EconomyBias.IgnoreEconomy,
             mycovariantPreferences: mycovariantPreferences,
             excludedMutationIds: excludedMutationIds);
+    }
+
+    /// <summary>
+    /// Tendril choice substitutes the best direction for whichever tendril was offered, so it has
+    /// to re-apply the exclusion list. Without that, a strategy could get an excluded tendril back
+    /// through the substitution - the same bypass free upgrades had, and the reason an ablation of
+    /// a tendril silently failed to hold.
+    /// </summary>
+    [Fact]
+    public void Tendril_choice_never_substitutes_an_excluded_tendril()
+    {
+        var excluded = MutationRegistry.GetById(MutationIds.TendrilSouthwest)!;
+        var allowed = MutationRegistry.GetById(MutationIds.TendrilNortheast)!;
+        var strategy = CreateStrategy(
+            priorityCategories: new List<MutationCategory> { MutationCategory.Growth },
+            excludedMutationIds: new[] { MutationIds.TendrilSouthwest });
+        var (board, player) = CreateBoardAndPlayer(mutationPoints: 40, round: 1);
+
+        strategy.SpendMutationPoints(
+            player,
+            MutationRegistry.GetAll().ToList(),
+            board,
+            new Random(7),
+            new TestSimulationObserver());
+
+        Assert.Equal(0, player.GetMutationLevel(excluded.Id));
+        Assert.True(
+            player.PlayerMutations.Count > 0,
+            "The strategy should still have spent its points on something.");
+        _ = allowed;
     }
 
     private static (GameBoard Board, Player Player) CreateBoardAndPlayer(

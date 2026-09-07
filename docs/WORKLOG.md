@@ -785,6 +785,65 @@ measurement model, phase gates, and open product decisions are in
     every other strategy. The Fungicide correlation remains causally untested;
     an ablation sweep would settle it. 251 Simulation and 651 Core tests pass.
     Next: P7.5 regression alerts.
+55. The Fungicide correlation was tested at mutation level and is **confounded,
+    not causal**. All seven Fungicide levels in every top strategy are one
+    Tier-1 mutation, `Mycotoxin Tracer`, reached through the fallback path and
+    never declared as a goal. It cannot be ablated: it is a prerequisite of
+    `Necrosporulation`, which the strong strategies target, and of
+    `Catabolic Rebirth` through it. The generator marks the ablation
+    unachievable and characterization rejects it as `ViolatedExclusions`. So
+    `r = 0.792` measures "targets the Necrosporulation line" rather than any
+    value of Fungicide itself; the `RegressionCascade` family targets
+    `NecrophyticBloom` — a different mutation despite the name — and is never
+    forced to buy the Tracer. No strategy in the panel buys it without needing
+    it, so its own contribution cannot be isolated within this panel.
+    Two enabling pieces landed. `AblateObservedPurchase` ablates any mutation a
+    parent actually buys, not just declared goals, which is what mutation-level
+    diagnosis needs since the most-bought Fungicide mutation is fallback-only.
+    And a real defect was found and fixed: `PickBestTendrilMutation` substituted
+    the best-direction tendril without re-applying the exclusion list, so an
+    excluded tendril could be reacquired — the same bypass free upgrades once
+    had. No registered strategy excludes a tendril so no existing result
+    changes, but it would have silently broken any tendril ablation or
+    controlled treatment. The unachievable-ablation detector was also corrected
+    to walk the full prerequisite closure rather than only goal-to-goal links.
+    652 Core and 254 Simulation tests pass.
+
+### Proposed — AI strategy naming and metadata standard
+
+No convention currently governs AI strategy names, and the roster shows it:
+`Grow>Kill>Reclaim(Econ/Reclaim)`, `Best_MaxEcon_Surge10_HyphalSurge`,
+`TST_CampaignMirror_AI13_BalancedControl_MaxEconomy`, and `AI13` coexist. Names
+mix prefix conventions (`TST_`, `CMP_`, none), embed implementation details
+(`Surge10`), embed superlatives that measurement has since contradicted
+(`Best_`), and use characters (`>`, `(`, `/`) that complicate CSV, path, and
+report handling. `Best_MaxEcon_Surge10_HyphalSurge` measuring `0.153` is the
+clearest case: the name asserts a claim the evidence refutes.
+
+Scope for the proposal, to be agreed before any rename:
+
+1. **A naming grammar.** The canonical plan already sketches
+   `ai.<primary-archetype>.<identity>.v<major>` for machine IDs plus a short
+   display name; settle both, and forbid superlatives, implementation details,
+   and difficulty claims in either, since all three go stale.
+2. **Migration.** Names appear in campaign preset assets, board presets, saved
+   games, frozen baseline documents, and simulation artifacts. Stable strategy
+   IDs already exist, so the rename should move display names while identity
+   stays put; enumerate every reference site first and confirm save
+   compatibility.
+3. **Metadata fields to add.** Measured band, classifier version, and evidence
+   date, so a label carries its provenance rather than an assertion. Consider a
+   `MeasuredContext` note for contextual specialists.
+4. **Metadata fields to reconsider.** `PowerTier` and `DifficultyBand` overlap
+   now that bands are measured; decide whether the authored tier survives as
+   intent, is derived from evidence, or goes. `StrategyTheme` versus
+   `StrategyArchetype` similarly duplicate.
+5. **A staleness rule.** Authored labels drifted from reality until Phase 7
+   measured them. Decide what happens when a measurement contradicts a label:
+   auto-derive, flag, or fail a test.
+
+This is deliberately a proposal rather than a task list; the rename itself
+should not start until the grammar and the migration surface are agreed.
 
 ### Completion Criteria
 

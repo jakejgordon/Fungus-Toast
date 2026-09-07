@@ -44,8 +44,12 @@ namespace FungusToast.Core.AI
                 [MutationRegistry.GetById(MutationIds.TendrilSoutheast)] = (1, -1),
             };
 
+            // Tendril choice substitutes the best direction for whatever candidate was offered, so
+            // it must re-apply the exclusion list here. Without this an excluded tendril can be
+            // reacquired through the substitution, which would let a controlled treatment quietly
+            // get its removed lever back - the same bypass that free upgrades had.
             var tendrilMutations = directionMap.Keys
-                .Where(m => m != null && options.Contains(m))
+                .Where(m => m != null && options.Contains(m) && !ExcludedMutationIds.Contains(m.Id))
                 .Cast<Mutation>()
                 .ToList();
 
