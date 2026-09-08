@@ -937,6 +937,16 @@ measurement model, phase gates, and open product decisions are in
     a BoardPreset resolves in `CampaignStrategiesByName`, preserving the actual
     safety property without rejecting valid measured entries.
 
+61. P7.5 regression-alert foundation is in. `StrategyRegressionAlerts` compares
+    version-matched calibration snapshots and reports measured band movement,
+    material-context/robustness changes, category-profile archetype drift,
+    replay parity failures, and abnormal fallback or decision-failure rate
+    increases. A missing profile or execution-health record is an explicit
+    evidence gap, never silently interpreted as a zero rate; a classifier
+    version change refuses all band comparisons. The detector is pure and
+    tested; next, export the execution-health inputs from calibration artifacts
+    and render/store the alert report with each recalibration run.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
