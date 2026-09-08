@@ -176,6 +176,13 @@ namespace FungusToast.Core.Config
         public const int ChitinFortificationSurgeDuration = 3;
         public const int ChitinFortificationPointIncreasePerLevel = 1;
 
+        // Necrotic Clearance (Tier 2 MycelialSurges)
+        public const float NecroticClearanceChancePerLevel = 0.05f;
+        public const int NecroticClearanceMaxLevel = 3;
+        public const int NecroticClearancePointsPerActivation = 5;
+        public const int NecroticClearanceSurgeDuration = 3;
+        public const int NecroticClearancePointIncreasePerLevel = 1;
+
         // Necrosporulation (Tier 4 CellularResilience)
         public const float NecrosporulationEffectPerLevel = 0.04f;
         public const int NecrosporulationMaxLevel = 5;

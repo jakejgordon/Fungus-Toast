@@ -154,6 +154,9 @@ namespace FungusToast.Core.Phases
             
             // 2. Chitin Fortification (surge effect - should happen after toxin processing to maximize benefit)
             MycelialSurgeMutationProcessor.OnPreGrowthPhase_ChitinFortification(board, players, rng, observer);
+
+            // 3. Necrotic Clearance (surge effect - clears own corpse targets before growth)
+            MycelialSurgeMutationProcessor.OnPreGrowthPhase_NecroticClearance(board, players, rng, observer);
         }
 
         // Post-Growth Phase Events

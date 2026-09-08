@@ -151,6 +151,8 @@ namespace FungusToast.Simulation.Models
 
                     // --- Surge mutation effect counters ---
                     ChitinFortificationCellsFortified = tracking.GetChitinFortificationCellsFortified(player.PlayerId),
+                    NecroticClearanceCorpsesCleared = tracking.GetNecroticClearanceCorpsesCleared(player.PlayerId),
+                    NecroticClearanceContestedCorpsesCleared = tracking.GetNecroticClearanceContestedCorpsesCleared(player.PlayerId),
                     MimeticResilienceInfestations = tracking.GetMimeticResilienceInfestations(player.PlayerId),
                     MimeticResilienceDrops = tracking.GetMimeticResilienceDrops(player.PlayerId),
 

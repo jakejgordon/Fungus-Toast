@@ -44,5 +44,6 @@
         public const int LatentPolymorphism = 39;
         public const int MycotoxinFission = 40;
         public const int FilamentOverdrive = 41;
+        public const int NecroticClearance = 42;
     }
 }

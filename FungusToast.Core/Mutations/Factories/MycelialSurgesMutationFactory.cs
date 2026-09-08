@@ -35,6 +35,27 @@ namespace FungusToast.Core.Mutations.Factories
             );
 
             helper.MakeChild(new Mutation(
+                id: MutationIds.NecroticClearance,
+                name: "Necrotic Clearance",
+                description:
+                    "Lets your living cells clear nearby dead cells before rivals can reclaim them.\n\n" +
+                    $"<b>Technical:</b> While active, before each Growth Phase, each living cell has a {helper.FormatPercent(GameBalance.NecroticClearanceChancePerLevel)} chance per level to remove one adjacent dead cell you own, preferring corpses next to enemy living cells. Attempts against those contested corpses have double chance. Removed corpses cannot be reclaimed. Each activation costs {GameBalance.NecroticClearancePointsPerActivation} mutation points plus {GameBalance.NecroticClearancePointIncreasePerLevel} per current level.",
+                flavorText: "The colony dissolves compromised tissue before rival hyphae can turn it into a foothold.",
+                type: MutationType.NecroticClearance,
+                effectPerLevel: GameBalance.NecroticClearanceChancePerLevel,
+                pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
+                maxLevel: GameBalance.NecroticClearanceMaxLevel,
+                category: MutationCategory.MycelialSurges,
+                tier: MutationTier.Tier2,
+                isSurge: true,
+                surgeDuration: GameBalance.NecroticClearanceSurgeDuration,
+                pointsPerActivation: GameBalance.NecroticClearancePointsPerActivation,
+                pointIncreasePerLevel: GameBalance.NecroticClearancePointIncreasePerLevel
+            ),
+            new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5)
+            );
+
+            helper.MakeChild(new Mutation(
                 id: MutationIds.ChemotacticBeacon,
                 name: "Chemotactic Beacon",
                 description:

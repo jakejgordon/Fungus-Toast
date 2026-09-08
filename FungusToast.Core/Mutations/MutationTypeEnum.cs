@@ -46,5 +46,6 @@ namespace FungusToast.Core
         LatentPolymorphismBankedInterest,
         ToxinborneSeedingGrowthChance,
         FilamentOverdrive,
+        NecroticClearance,
     }
 }

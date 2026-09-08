@@ -901,6 +901,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 MutationIds.MimeticResilience => BuildMimeticResilienceSummary(level),
                 MutationIds.CompetitiveAntagonism => BuildCompetitiveAntagonismSummary(level),
                 MutationIds.ChitinFortification => BuildChitinFortificationSummary(level),
+                MutationIds.NecroticClearance => BuildNecroticClearanceSummary(level),
                 MutationIds.AeratedFrontier => BuildAeratedFrontierSummary(level),
                 MutationIds.CrustwardTropism => BuildCrustwardTropismSummary(level),
                 MutationIds.CompactionPressure => BuildCompactionPressureSummary(level),
@@ -963,6 +964,15 @@ namespace FungusToast.Unity.UI.MutationTree
 
             int cellsPerGrowthPhase = level * GameBalance.ChitinFortificationCellsPerLevel;
             return $"While active: permanently fortifies {cellsPerGrowthPhase} living cells per Growth Phase for {GameBalance.ChitinFortificationSurgeDuration} rounds";
+        }
+
+        private string BuildNecroticClearanceSummary(int level)
+        {
+            if (level <= 0)
+                return "No corpse-clearance chance yet.";
+
+            float baseChance = level * GameBalance.NecroticClearanceChancePerLevel * 100f;
+            return $"While active: each living cell has a {baseChance:0}% chance to clear one adjacent own corpse before Growth; contested corpses use {baseChance * 2f:0}%";
         }
 
         private string BuildAeratedFrontierSummary(int level)

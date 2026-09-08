@@ -251,6 +251,13 @@ namespace FungusToast.Simulation.Analysis
                     if (player.ChitinFortificationCellsFortified > 0)
                         effects["Cells Fortified"] = player.ChitinFortificationCellsFortified;
                     break;
+
+                case MutationIds.NecroticClearance:
+                    if (player.NecroticClearanceCorpsesCleared > 0)
+                        effects["Corpses Cleared"] = player.NecroticClearanceCorpsesCleared;
+                    if (player.NecroticClearanceContestedCorpsesCleared > 0)
+                        effects["Contested Cleared"] = player.NecroticClearanceContestedCorpsesCleared;
+                    break;
                     
                 case MutationIds.PutrefactiveCascade:
                     if (player.PutrefactiveCascadeKills > 0)

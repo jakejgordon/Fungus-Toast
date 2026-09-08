@@ -742,8 +742,10 @@ namespace FungusToast.Core.AI
                 {
                     new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
                     new TargetMutationGoal(MutationIds.ChitinFortification, 3),
+                    new TargetMutationGoal(MutationIds.NecroticClearance, GameBalance.NecroticClearanceMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 1)
                 },
+                surgePriorityIds: new List<int> { MutationIds.NecroticClearance },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Reclamation)
             ),
             new ParameterizedSpendingStrategy(

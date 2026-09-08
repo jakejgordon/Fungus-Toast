@@ -150,6 +150,8 @@ namespace FungusToast.Simulation.Models
         // SURGE MUTATION EFFECT COUNTERS
         // ──────────────
         public int ChitinFortificationCellsFortified { get; set; }
+        public int NecroticClearanceCorpsesCleared { get; set; }
+        public int NecroticClearanceContestedCorpsesCleared { get; set; }
 
         // ──────────────
         // PUTREFACTIVE CASCADE EFFECT COUNTERS

@@ -28,7 +28,8 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 6. Follow the naming and description rules in this document exactly.
 7. Wire gameplay behavior through the correct Core processors, coordinators, and analytics seams.
 8. Update Unity mutation-tree placement when the new mutation needs a node.
-9. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
+9. After gameplay tuning is stabilized, decide and document whether named AI strategies should use the mutation. If yes, identify the exact roster entries, human-visible activation criteria, and focused AI tests; if no, record why generic AI access is sufficient.
+10. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
 
 ---
 

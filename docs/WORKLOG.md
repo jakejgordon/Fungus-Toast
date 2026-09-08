@@ -36,20 +36,21 @@ are considered complete. The current Aerated Frontier calibration uses
   measurable territorial handicap. Continue diagnosis inside its mutation
   sequencing/economy behavior rather than treating the offset as an advantage.
 
-### Proposed — corpse-denial Mycelial Surge
+### 2026-09-07 Necrotic Clearance
 
-- Working name: `Autolytic Clearance`. This name is provisional because the
-  Mycelial Surges category already contains `Autolytic Surge`; choose a unique
-  final first word before implementation.
-- While active, before each Growth Phase, consume a limited number of the
-  owner's dead cells, prioritizing corpses adjacent to enemy living cells.
-- Intended counterplay: deny enemy Necrohyphal Infiltration targets while
-  sacrificing the owner's opportunities to use Regenerative Hyphae, Catabolic
-  Rebirth, or other corpse-reclamation effects on those cells.
-- Keep it broadly useful against reclamation strategies rather than keying it
-  specifically to Putrefactive Mycotoxin. Tier, prerequisites, duration,
-  activation cost, per-level corpse limit, UI treatment, and analytics remain
-  intentionally undecided until implementation is scheduled.
+- Implemented `Necrotic Clearance`, a Tier-2 Mycelial Surge requiring
+  Homeostatic Harmony 5. It has three levels, costs 5/6/7 mutation points, and
+  lasts three rounds.
+- Before Growth, each living cell may clear one adjacent own corpse: 5% per
+  level normally, doubled when that corpse is adjacent to enemy living cells.
+  Each source prioritizes contested corpses, and cleared corpses are removed
+  directly without another death event or reactive death effect.
+- This provides broadly applicable corpse denial while directly sacrificing
+  nearby Regenerative Hyphae targets. Simulation exports track all cleared
+  corpses and the subset cleared while contested.
+- The resilience-oriented `CMP_Defense_ReclaimShell_Easy` AI is the initial
+  named adopter. It uses the same visible eligibility rule as players and does
+  not inspect enemy mutations.
 
 ### 2026-09-05 Necrohyphal Infiltration corpse-age treatment
 

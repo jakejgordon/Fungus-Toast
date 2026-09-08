@@ -15,6 +15,72 @@ namespace FungusToast.Core.Phases
     /// </summary>
     public static class MycelialSurgeMutationProcessor
     {
+        public static bool HasNecroticClearanceEligibleTargets(Player player, GameBoard board)
+        {
+            return board.GetAllCellsOwnedBy(player.PlayerId).Any(cell =>
+                cell.IsAlive && board.GetOrthogonalNeighbors(cell.TileId).Any(IsOwnedDeadCell(player)));
+        }
+
+        /// <summary>
+        /// Each living cell gets one local cleanup attempt. Contested corpses are selected first and
+        /// receive double chance; a corpse removed by an earlier source cannot be selected again.
+        /// </summary>
+        public static void OnPreGrowthPhase_NecroticClearance(
+            GameBoard board,
+            List<Player> players,
+            Random rng,
+            ISimulationObserver observer)
+        {
+            foreach (var player in players)
+            {
+                int level = player.GetMutationLevel(MutationIds.NecroticClearance);
+                if (level <= 0 || !player.IsSurgeActive(MutationIds.NecroticClearance))
+                    continue;
+
+                int cleared = 0;
+                int contestedCleared = 0;
+                var livingSources = board.GetAllCellsOwnedBy(player.PlayerId)
+                    .Where(cell => cell.IsAlive)
+                    .OrderBy(cell => cell.TileId)
+                    .ToList();
+
+                foreach (var source in livingSources)
+                {
+                    var candidates = board.GetOrthogonalNeighbors(source.TileId)
+                        .Where(IsOwnedDeadCell(player))
+                        .OrderByDescending(tile => IsAdjacentToEnemyLivingCell(tile, player.PlayerId, board))
+                        .ThenBy(tile => tile.TileId)
+                        .ToList();
+                    if (candidates.Count == 0)
+                        continue;
+
+                    var target = candidates[0];
+                    bool contested = IsAdjacentToEnemyLivingCell(target, player.PlayerId, board);
+                    float chance = level * GameBalance.NecroticClearanceChancePerLevel * (contested ? 2f : 1f);
+                    if (rng.NextDouble() >= Math.Min(1f, chance))
+                        continue;
+
+                    // Directly remove an existing corpse: this is not a new death and must not fire death reactions.
+                    if (target.FungalCell?.IsDead == true && target.FungalCell.OwnerPlayerId == player.PlayerId)
+                    {
+                        board.RemoveCellInternal(target.TileId, removeControl: true);
+                        cleared++;
+                        if (contested) contestedCleared++;
+                    }
+                }
+
+                if (cleared > 0)
+                    observer.RecordNecroticClearanceCorpsesCleared(player.PlayerId, cleared, contestedCleared);
+            }
+        }
+
+        private static Func<BoardTile, bool> IsOwnedDeadCell(Player player)
+            => tile => tile.FungalCell is { IsDead: true, IsToxin: false } && tile.FungalCell.OwnerPlayerId == player.PlayerId;
+
+        private static bool IsAdjacentToEnemyLivingCell(BoardTile tile, int ownerPlayerId, GameBoard board)
+            => board.GetOrthogonalNeighbors(tile.TileId).Any(neighbor =>
+                neighbor.FungalCell is { IsAlive: true } && neighbor.FungalCell.OwnerPlayerId != ownerPlayerId);
+
         public static void ProcessChemotacticBeacon(
             GameBoard board,
             List<Player> players,

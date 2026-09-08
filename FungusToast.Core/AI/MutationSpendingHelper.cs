@@ -6,6 +6,7 @@ using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.Phases;
 
 namespace FungusToast.Core.AI
 {
@@ -37,6 +38,12 @@ namespace FungusToast.Core.AI
 
         public static bool TryUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
         {
+            if (mutation.Id == MutationIds.NecroticClearance
+                && !MycelialSurgeMutationProcessor.HasNecroticClearanceEligibleTargets(player, board))
+            {
+                return false;
+            }
+
             if (mutation.Id == MutationIds.ChemotacticBeacon)
             {
                 int projectedLevel = Math.Min(player.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);

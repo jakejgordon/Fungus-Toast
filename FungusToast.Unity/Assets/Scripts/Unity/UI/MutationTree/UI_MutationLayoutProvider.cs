@@ -64,7 +64,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 { MutationIds.ChemotacticBeacon,      new MutationLayoutMetadata(5, 1, MutationCategory.MycelialSurges) },
                 { MutationIds.ChitinFortification,    new MutationLayoutMetadata(5, 2, MutationCategory.MycelialSurges) },
                 { MutationIds.MimeticResilience,      new MutationLayoutMetadata(5, 3, MutationCategory.MycelialSurges) },
-                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(5, 4, MutationCategory.MycelialSurges) }
+                { MutationIds.CompetitiveAntagonism,  new MutationLayoutMetadata(5, 4, MutationCategory.MycelialSurges) },
+                { MutationIds.NecroticClearance,      new MutationLayoutMetadata(5, 5, MutationCategory.MycelialSurges) }
             };
     }
 }

@@ -57,5 +57,20 @@ namespace FungusToast.Simulation.Models
         public int GetChitinFortificationCellsFortified(int playerId)
             => chitinFortificationCellsFortified.TryGetValue(playerId, out var val) ? val : 0;
         public Dictionary<int, int> GetAllChitinFortificationCellsFortified() => new(chitinFortificationCellsFortified);
+
+        // ────────────────
+        // Necrotic Clearance
+        // ────────────────
+        private readonly Dictionary<int, int> necroticClearanceCorpsesCleared = new();
+        private readonly Dictionary<int, int> necroticClearanceContestedCorpsesCleared = new();
+        public void RecordNecroticClearanceCorpsesCleared(int playerId, int count, int contestedCount)
+        {
+            necroticClearanceCorpsesCleared[playerId] = GetNecroticClearanceCorpsesCleared(playerId) + count;
+            necroticClearanceContestedCorpsesCleared[playerId] = GetNecroticClearanceContestedCorpsesCleared(playerId) + contestedCount;
+        }
+        public int GetNecroticClearanceCorpsesCleared(int playerId)
+            => necroticClearanceCorpsesCleared.TryGetValue(playerId, out var value) ? value : 0;
+        public int GetNecroticClearanceContestedCorpsesCleared(int playerId)
+            => necroticClearanceContestedCorpsesCleared.TryGetValue(playerId, out var value) ? value : 0;
     }
 }
