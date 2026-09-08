@@ -1023,6 +1023,69 @@ Scope for the proposal, to be agreed before any rename:
 This is deliberately a proposal rather than a task list; the rename itself
 should not start until the grammar and the migration surface are agreed.
 
+### Proposed — Follow-ups from the 2026-09-08 mycovariant and ladder work
+
+None of these were done in that session; they are the loose ends it exposed.
+
+1. **Nothing checks that measured proxy outcome is monotonic.**
+   `validate_campaign_ai_rosters` checks authored difficulty means, and the
+   Campaign10 reroster note already records that the mean is a relative index
+   rather than a share prediction. The gap is that no check covers the measured
+   quantity the bands are written against: proxy win rate peaks at levels 7 and
+   8 and then falls away, so the validator passes on a ladder that inverts.
+   Decide whether the measured ladder gets a recorded expectation, a periodic
+   artifact-backed check, or stays a manual review step.
+
+2. **A category preference is a very weak draft identity.** 78 of the 80
+   `GetPreferredMycovariantIds` call sites name only one or two categories, and
+   the categories are large — Fungicide holds ten mycovariants, Growth and
+   Economy eight each, Resistance seven, out of roughly three dozen total. After
+   the ordering fix a two-category preference marks fifteen or more mycovariants
+   as equally wanted and resolves purely by `AIScore`, so most strategies express
+   almost no draft intent. Decide whether campaign strategies should declare
+   narrower, authored preferences instead of whole categories.
+
+3. **`AIScore` calibration now carries weight it did not before.** Category sets
+   are resolved entirely by score, so a mis-scored mycovariant now directly
+   causes a wrong pick where list position used to mask it. Worth an audit pass
+   over the score constants, particularly across tiered families.
+
+4. **Dead code found while tracing the draft path.**
+   `MycovariantGameBalance.MycelialBastionSynergyBonusAIScore` is declared and
+   never read — the Bastion `AIScore` lambdas return their flat base score, and
+   only `ReclamationRhizomorphsBonusAIScore` has a live synergy path. Decide
+   whether Bastion was meant to gain a synergy bonus or the constant should go.
+   `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` is public with
+   no callers anywhere in the solution.
+
+5. **`Player.AIType` is dead state.** All three construction sites pass
+   `AITypeEnum.Random` and nothing varies it, so the field reads as a setting
+   that does not exist. Either wire it to something real or remove it and the
+   enum. It was dropped from the development-testing inspector block for exactly
+   this reason.
+
+6. **The player inspector was only built to step one.** The hover tooltip now
+   renders shared sections from `PlayerInspectorContent`, but the docked
+   `PlayerInspectorPanel` those sections were designed for does not exist yet.
+   The dev block also carries only the strategy tuning parameters; the fields
+   that actually catch AI misbehavior — unspent mutation points and banking
+   intent, target-goal progress, the mutation ledger with first-acquired round,
+   active surges, and effective growth/self-death rates — were deferred with it.
+
+7. **Twenty games per level cannot resolve a small balance effect.** That is the
+   `run_campaign_balance.py` default and what the mycovariant confirmation ran
+   at; one game moves a level by five points, and the interval on a
+   before/after difference is far wider than any effect worth shipping. The
+   experiment contract caps a condition at 100 games. Agree a standard game
+   count for balance confirmations rather than deciding per run.
+
+8. **The analytics virtual environment does not exist where it is documented.**
+   `FungusToast.Analytics/README.md` and the `validate-campaign-balance` skill
+   both point at `FungusToast.Analytics/.venv`; on the current machine only the
+   repository-root `.venv` exists, and it happens to carry pandas and pyarrow.
+   Create the documented environment or change both documents to name the real
+   one, so a validation run does not have to rediscover this.
+
 ### Proposed — Interactive HTML simulation results page
 
 Reading a simulation run currently means opening several CSVs from
