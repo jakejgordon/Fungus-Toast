@@ -8,6 +8,7 @@ using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace FungusToast.Core.Events
@@ -68,7 +69,12 @@ namespace FungusToast.Core.Events
             public GameBoard.ToxinExpiredEventHandler ToxinExpiredHandler { get; }
         }
 
-        private static readonly Dictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
+        /// <summary>
+        /// Process-wide because subscription bookkeeping outlives any single caller. A test host
+        /// drives independent boards in parallel even though the game never does, so this must be
+        /// concurrent: a torn map here surfaces as an unrelated simulation test failing.
+        /// </summary>
+        private static readonly ConcurrentDictionary<GameBoard, SubscriptionSet> subscriptionsByBoard = new();
 
         /// <summary>
         /// Subscribes all mutation-related rule handlers to board events.
@@ -222,7 +228,7 @@ namespace FungusToast.Core.Events
 
         public static void UnsubscribeAll(GameBoard board)
         {
-            if (board == null || !subscriptionsByBoard.TryGetValue(board, out var subscriptions))
+            if (board == null || !subscriptionsByBoard.TryRemove(board, out var subscriptions))
             {
                 return;
             }
@@ -241,7 +247,6 @@ namespace FungusToast.Core.Events
             board.MutationPhaseStart -= subscriptions.MutationPhaseStartHandler;
             board.ToxinPlaced -= subscriptions.ToxinPlacedHandler;
             board.ToxinExpired -= subscriptions.ToxinExpiredHandler;
-            subscriptionsByBoard.Remove(board);
         }
     }
 }
