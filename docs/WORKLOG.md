@@ -973,6 +973,42 @@ Scope for the proposal, to be agreed before any rename:
 This is deliberately a proposal rather than a task list; the rename itself
 should not start until the grammar and the migration surface are agreed.
 
+### Proposed — Interactive HTML simulation results page
+
+Reading a simulation run currently means opening several CSVs from
+`FungusToast.Analytics/analyze_balance.py` side by side, or scrolling console
+output. Neither supports the question actually being asked most of the time,
+which is "why did this player win" — that requires pivoting between the player
+summary, growth sources, mycovariant picks, and mutation timing, and each pivot
+is a manual join.
+
+Proposal: have `analyze_balance.py` emit a self-contained `results.html`
+alongside the existing CSVs, explorable by clicking rather than by re-running
+the analyzer with different flags.
+
+Scope to agree before building:
+
+1. **What the landing view answers.** Likely the per-player summary already in
+   `post_simulation_player_summary.csv`, with win %, board share, and rank, plus
+   the run's identity (experiment ID, seed, board, lineup) visible without a
+   click.
+2. **What drilling down opens.** Per-player growth sources, drafted
+   mycovariants, and mutation purchase timing are the obvious three. Decide
+   whether a game-by-game view is in scope or whether aggregate is enough.
+3. **Multi-run comparison.** The recurring real task is before/after on one
+   code change across a level sweep. Decide whether one page holds several runs
+   or whether comparison stays a separate paired-analysis page.
+4. **Self-containment.** The page should open from disk with no server and no
+   network, which means inlining CSS/JS and embedding the data. Confirm that
+   holds at the largest run sizes currently produced.
+5. **Relationship to existing outputs.** The CSVs and `balance_recommendations.md`
+   stay authoritative; the page is a reading surface over them, not a second
+   source of truth, and should not re-derive numbers.
+
+Prompted by the 2026-09-07 mycovariant-draft validation, where answering one
+before/after question meant hand-assembling a table from eighteen separate
+`post_simulation_player_summary.csv` files.
+
 ### Completion Criteria
 
 - Strategy authoring and behavior are materially simpler or more capable than
