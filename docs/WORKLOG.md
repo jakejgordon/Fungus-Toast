@@ -70,9 +70,21 @@ are considered complete. The current Aerated Frontier calibration uses
   rungs, and 9 and 10 are markedly easier than both. `validate_campaign_ai_rosters`
   passes because authored difficulty means rise monotonically, so that check does
   not currently predict measured proxy outcome at the top of the ladder.
-- Caveats: 20 games per level cannot resolve a small effect; levels 7 and 8 were
-  measured on newer Core than the other levels, so this is not a single-baseline
-  ladder. A pinned single-baseline sweep of all 11 levels is the follow-up.
+- Confirmed on a single baseline. All eleven levels were rerun in a worktree
+  pinned to `670bebc` (20 games each, seed `20260327`), and every proxy win rate
+  reproduced the figure above exactly. That also shows `401eaee` and `d69d203`,
+  which landed mid-measurement, did not move these outcomes. Artifacts are under
+  `SimulationParquet/_ladder_singlebaseline_670bebc/`.
+- Levels 7 and 8 land in band for a degenerate reason. In both, one strategy runs
+  away with the level rather than the field being uniformly strong:
+  `CMP_Reclaim_Scavenger_Easy` takes `65%` of Campaign7 and
+  `CMP_Bloom_CreepingRegression_Elite` takes `70%` of Campaign8. Suppressing the
+  proxy through a single dominant opponent is a different design than a level
+  that is hard across the board, and it is worth deciding which was intended
+  before treating those two rungs as correct.
+- Remaining caveat: 20 games per level cannot resolve a small effect, so this
+  ladder is reliable for its large shape and not for small differences between
+  adjacent rungs.
 
 ### 2026-09-07 Necrotic Clearance
 
