@@ -23,7 +23,7 @@ MonoBehaviour:
   - CMP_Growth_WildfireBloom_Medium
   - CMP_Bloom_NecrotoxinGauntlet_Elite
   - CMP_Bloom_Thanatophyte_Elite
-  - TST_CampaignPlayer_SafeBaseline
+  - CMP_Defense_ReclaimShell_Easy
   - CMP_Growth_Pressure_Medium
   - CMP_Reclaim_Scavenger_Easy
   poolAdaptationOverrides: []

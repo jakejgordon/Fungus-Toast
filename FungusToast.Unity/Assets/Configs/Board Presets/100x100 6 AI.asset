@@ -18,7 +18,7 @@ MonoBehaviour:
   aiPlayers:
   - strategyName: CMP_Bloom_Thanatophyte_Elite
     startingAdaptationIds: []
-  - strategyName: TST_CampaignPlayer_SafeBaseline
+  - strategyName: CMP_Bloom_NecrotoxinGauntlet_Elite
     startingAdaptationIds: []
   - strategyName: CMP_Growth_Pressure_Medium
     startingAdaptationIds: []
