@@ -34,6 +34,10 @@ namespace FungusToast.Core.Metrics
         void RecordNecrophyticBloomPatchCreation(int playerId, int createdPatchCount);
         void ReportMycotoxinTracerSporeDrop(int playerId, int sporesDropped);
         void RecordMutationPointIncome(int playerId, int newMutationPoints);
+        /// <summary>One AI mutation-spending turn; a zero spend is observable but not a failure (it may be intentional banking).</summary>
+        void RecordAiMutationSpendingDecision(int playerId, int pointsAvailable, int pointsSpent) { }
+        /// <summary>The strategy reached its generic fallback-spending branch.</summary>
+        void RecordAiMutationFallbackSpend(int playerId) { }
         void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordBankedPoints(int playerId, int pointsBanked);

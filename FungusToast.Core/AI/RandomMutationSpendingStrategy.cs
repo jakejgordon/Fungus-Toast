@@ -43,10 +43,16 @@ namespace FungusToast.Core.AI
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver observer)
         {
+            var pointsBefore = player.MutationPoints;
             while (player.MutationPoints > 0)
             {
                 if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations, board, rnd, observer, board.CurrentRound))
                     break;
+            }
+            if (pointsBefore > 0)
+            {
+                observer.RecordAiMutationFallbackSpend(player.PlayerId);
+                observer.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);
             }
         }
     }

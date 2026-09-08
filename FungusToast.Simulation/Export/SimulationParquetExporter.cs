@@ -310,6 +310,8 @@ namespace FungusToast.Simulation.Export
                         MutationPointIncome = player.MutationPointIncome,
                         TotalMutationPointsSpent = player.TotalMutationPointsSpent,
                         BankedPoints = player.BankedPoints,
+                        AiMutationSpendingDecisions = player.AiMutationSpendingDecisions,
+                        AiMutationFallbackSpends = player.AiMutationFallbackSpends,
                         EffectiveGrowthChance = player.EffectiveGrowthChance,
                         EffectiveSelfDeathChance = player.EffectiveSelfDeathChance,
                         FilamentOverdriveTriggers = player.FilamentOverdriveTriggers,

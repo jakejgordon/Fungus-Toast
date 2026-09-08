@@ -61,6 +61,24 @@ namespace FungusToast.Simulation.Models
             => bankedPointsByPlayer;
 
         // ────────────────
+        // AI decision health
+        // ────────────────
+
+        private readonly Dictionary<int, int> aiMutationSpendingDecisions = new();
+        private readonly Dictionary<int, int> aiMutationFallbackSpends = new();
+        public void RecordAiMutationSpendingDecision(int playerId, int pointsAvailable, int pointsSpent)
+        {
+            if (pointsAvailable <= 0) return;
+            aiMutationSpendingDecisions[playerId] = GetAiMutationSpendingDecisions(playerId) + 1;
+        }
+        public void RecordAiMutationFallbackSpend(int playerId)
+            => aiMutationFallbackSpends[playerId] = GetAiMutationFallbackSpends(playerId) + 1;
+        public int GetAiMutationSpendingDecisions(int playerId)
+            => aiMutationSpendingDecisions.TryGetValue(playerId, out var value) ? value : 0;
+        public int GetAiMutationFallbackSpends(int playerId)
+            => aiMutationFallbackSpends.TryGetValue(playerId, out var value) ? value : 0;
+
+        // ────────────────
         // Nutrient Patches
         // ────────────────
 

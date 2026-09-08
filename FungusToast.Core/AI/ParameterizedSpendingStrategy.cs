@@ -606,6 +606,7 @@ namespace FungusToast.Core.AI
             // Only do fallback spending if we don't have an incomplete target with met prerequisites
             if (!hasIncompleteTarget)
             {
+                simulationObserver.RecordAiMutationFallbackSpend(player.PlayerId);
                 SpendFallbackPoints(player, allMutations, board, rnd, simulationObserver);
             }
 

@@ -188,6 +188,8 @@ namespace FungusToast.Simulation.Models
                     MutationPointsSpentByTier = tracking.GetMutationPointsSpentByTier(player.PlayerId),
                     TotalMutationPointsSpent = tracking.GetTotalMutationPointsSpent(player.PlayerId),
                     BankedPoints = tracking.GetBankedPoints(player.PlayerId),
+                    AiMutationSpendingDecisions = tracking.GetAiMutationSpendingDecisions(player.PlayerId),
+                    AiMutationFallbackSpends = tracking.GetAiMutationFallbackSpends(player.PlayerId),
 
                     // Mycovariant summary
                     Mycovariants = BuildMycovariantResults(player, tracking),

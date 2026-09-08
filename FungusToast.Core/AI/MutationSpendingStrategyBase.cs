@@ -29,9 +29,12 @@ namespace FungusToast.Core.AI
         public void SpendMutationPoints(Player player, List<Mutation> allMutations, GameBoard board,
             Random rnd, ISimulationObserver simulationObserver)
         {
+            var pointsBefore = player.MutationPoints;
             // Delegate actual spending logic to child
             // Individual TryUpgradeMutation calls will handle point tracking correctly
             PerformSpendingLogic(player, allMutations, board, rnd, simulationObserver);
+            if (pointsBefore > 0)
+                simulationObserver.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);
         }
 
         protected Mutation? PickBestTendrilMutation(Player player, List<Mutation> options, GameBoard board)

@@ -999,6 +999,14 @@ measurement model, phase gates, and open product decisions are in
     next, instrument/export the execution-health inputs from calibration
     artifacts and invoke the report as part of each recalibration run.
 
+62. P7.5 execution-health export is in. Each funded AI mutation-spending turn
+    now records a decision count and its actual points spent, while reaching a
+    generic fallback branch records a separate fallback count; intentionally
+    banking points is not mislabeled as a decision failure. Both counts are
+    carried through game results into `players.parquet`, and the Unity Core
+    plugin was refreshed. Next: aggregate those player rows into a calibration
+    snapshot and invoke the persisted regression report after a recalibration.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

@@ -125,6 +125,8 @@ namespace FungusToast.Simulation.Export
         public int MutationPointIncome { get; set; }
         public int TotalMutationPointsSpent { get; set; }
         public int BankedPoints { get; set; }
+        public int AiMutationSpendingDecisions { get; set; }
+        public int AiMutationFallbackSpends { get; set; }
         public float EffectiveGrowthChance { get; set; }
         public float EffectiveSelfDeathChance { get; set; }
         public int FilamentOverdriveTriggers { get; set; }
