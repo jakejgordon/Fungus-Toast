@@ -415,6 +415,11 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordNecrophoricAdaptationReclamation(int playerId, int count) { }
         public void RecordBallistosporeDischarge(int playerId, int count) { }
         public void RecordChitinFortificationCellsFortified(int playerId, int count) { }
+        public void RecordNecroticClearanceCorpsesCleared(int playerId, int count, int contestedCount)
+        {
+            if (IsSilentMode) return;
+            playerActivityLogManager?.RecordNecroticClearanceCorpsesCleared(playerId, count, contestedCount);
+        }
         public void RecordPutrefactiveCascadeKills(int playerId, int cascadeKills) { }
         public void RecordPutrefactiveCascadeToxified(int playerId, int toxified) { }
         public void RecordMimeticResilienceInfestations(int playerId, int infestations) { }

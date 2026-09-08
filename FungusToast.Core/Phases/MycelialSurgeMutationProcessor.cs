@@ -39,6 +39,7 @@ namespace FungusToast.Core.Phases
 
                 int cleared = 0;
                 int contestedCleared = 0;
+                var clearedTileIds = new List<int>();
                 var livingSources = board.GetAllCellsOwnedBy(player.PlayerId)
                     .Where(cell => cell.IsAlive)
                     .OrderBy(cell => cell.TileId)
@@ -65,12 +66,16 @@ namespace FungusToast.Core.Phases
                     {
                         board.RemoveCellInternal(target.TileId, removeControl: true);
                         cleared++;
+                        clearedTileIds.Add(target.TileId);
                         if (contested) contestedCleared++;
                     }
                 }
 
                 if (cleared > 0)
+                {
+                    board.OnNecroticClearanceBatch(player.PlayerId, clearedTileIds);
                     observer.RecordNecroticClearanceCorpsesCleared(player.PlayerId, cleared, contestedCleared);
+                }
             }
         }
 

@@ -162,6 +162,7 @@ namespace FungusToast.Core.Board
         public delegate void CatabolicRebirthEventHandler(object sender, CatabolicRebirthEventArgs e);
         public delegate void PreGrowthPhaseEventHandler();
         public delegate void ResistanceAppliedBatchEventHandler(int playerId, GrowthSource source, IReadOnlyList<int> tileIds);
+        public delegate void NecroticClearanceBatchEventHandler(int playerId, IReadOnlyList<int> tileIds);
         public delegate void DirectedVectorSurgeEventHandler(DirectedVectorSurgeEventArgs e);
         public delegate void ConduitProjectionEventHandler(ConduitProjectionEventArgs e);
         public delegate void HyphalGrowthVisualEventHandler(HyphalGrowthVisualEventArgs e);
@@ -200,6 +201,7 @@ namespace FungusToast.Core.Board
         public event CatabolicRebirthEventHandler? CatabolicRebirth;
         public event PreGrowthPhaseEventHandler? PreGrowthPhase;
         public event ResistanceAppliedBatchEventHandler? ResistanceAppliedBatch;
+        public event NecroticClearanceBatchEventHandler? NecroticClearanceBatch;
         public event DirectedVectorSurgeEventHandler? DirectedVectorSurge;
         public event ConduitProjectionEventHandler? ConduitProjection;
         public event HyphalGrowthVisualEventHandler? HyphalGrowthVisualized;
@@ -251,6 +253,7 @@ namespace FungusToast.Core.Board
         protected virtual void OnBeforeGrowthAttempt(GrowthAttemptEventArgs e) => BeforeGrowthAttempt?.Invoke(this, e);
         protected virtual void OnAfterGrowthAttempt(GrowthAttemptEventArgs e) => AfterGrowthAttempt?.Invoke(this, e);
         public virtual void OnResistanceAppliedBatch(int playerId, GrowthSource source, List<int> tileIds) => ResistanceAppliedBatch?.Invoke(playerId, source, tileIds);
+        public virtual void OnNecroticClearanceBatch(int playerId, IReadOnlyList<int> tileIds) => NecroticClearanceBatch?.Invoke(playerId, tileIds);
         public virtual void OnDirectedVectorSurge(int playerId, int originTileId, IReadOnlyList<int> affectedTileIds) => DirectedVectorSurge?.Invoke(new DirectedVectorSurgeEventArgs(playerId, originTileId, affectedTileIds));
         public virtual void OnConduitProjection(int playerId, GrowthSource source, int originTileId, IReadOnlyList<int> pathTileIds, IReadOnlyList<int> affectedTileIds, int finalLandingTileId)
             => ConduitProjection?.Invoke(new ConduitProjectionEventArgs(playerId, source, originTileId, pathTileIds, affectedTileIds, finalLandingTileId));

@@ -1318,6 +1318,19 @@ namespace FungusToast.Unity.UI.GameLog
         public void RecordNecrophoricAdaptationReclamation(int playerId, int count) { }
         public void RecordBallistosporeDischarge(int playerId, int count) { }
         public void RecordChitinFortificationCellsFortified(int playerId, int count) { }
+        public void RecordNecroticClearanceCorpsesCleared(int playerId, int count, int contestedCount)
+        {
+            if (!IsHuman(playerId) || count <= 0)
+            {
+                return;
+            }
+
+            string cleared = count == 1 ? "1 dead cell" : $"{count} dead cells";
+            string contested = contestedCount > 0
+                ? contestedCount == 1 ? " (1 contested)" : $" ({contestedCount} contested)"
+                : string.Empty;
+            AddPlayerEvent(playerId, $"Necrotic Clearance cleared {cleared}{contested}", GameLogCategory.Lucky);
+        }
         public void RecordPutrefactiveCascadeKills(int playerId, int cascadeKills) { }
         public void RecordPutrefactiveCascadeToxified(int playerId, int toxified) { if (IsHuman(playerId) && toxified > 0) Inc(EventKinds.Toxified, playerId, GrowthSource.PutrefactiveCascade, toxified); }
         public void RecordMimeticResilienceInfestations(int playerId, int infestations) { if (IsHuman(playerId) && infestations > 0) Inc(EventKinds.Infested, playerId, GrowthSource.MimeticResilience, infestations); }

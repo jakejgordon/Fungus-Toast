@@ -134,6 +134,7 @@ namespace FungusToast.Unity.Grid
         private readonly List<CreepingMoldVisualMove> _pendingCreepingMoldMoves = new();
         private readonly List<HyphalGrowthVisualMove> _pendingHyphalGrowthMoves = new();
         private readonly List<FilamentOverdriveVisual> _pendingFilamentOverdrives = new();
+        private readonly Dictionary<int, NecroticClearanceVisualSnapshot> _pendingNecroticClearanceSnapshots = new();
         private readonly HashSet<int> moldIdleAnimatedTileIds = new();
         private readonly HashSet<int> moldIdleEligibleTileIds = new();
         private readonly List<int> moldIdleResetTileIds = new();
@@ -184,6 +185,24 @@ namespace FungusToast.Unity.Grid
             public int PlayerId { get; }
             public int SourceTileId { get; }
             public IReadOnlyList<int> RunnerTileIds { get; }
+        }
+
+        private readonly struct NecroticClearanceVisualSnapshot
+        {
+            public NecroticClearanceVisualSnapshot(int tileId, Vector3Int position, TileBase tile, Color color, Matrix4x4 transform)
+            {
+                TileId = tileId;
+                Position = position;
+                Tile = tile;
+                Color = color;
+                Transform = transform;
+            }
+
+            public int TileId { get; }
+            public Vector3Int Position { get; }
+            public TileBase Tile { get; }
+            public Color Color { get; }
+            public Matrix4x4 Transform { get; }
         }
 
         private static List<int>[] CreateMoldIdleCohorts()
@@ -362,6 +381,7 @@ namespace FungusToast.Unity.Grid
             presentationEffects?.DestroyLingeringToasts();
             ResetTrackedMoldIdleOffsets();
             ClearMoldIdleCache();
+            _pendingNecroticClearanceSnapshots.Clear();
 
             this.board = board;
 
@@ -370,6 +390,7 @@ namespace FungusToast.Unity.Grid
                 this.board.ToxinPlaced += HandleToxinPlaced;
                 this.board.CellReclaimed += HandleCellReclaimed;
                 this.board.ResistanceAppliedBatch += HandleResistanceAppliedBatch;
+                this.board.NecroticClearanceBatch += HandleNecroticClearanceBatch;
                 this.board.CellInfested += HandleCellInfested;
                 this.board.CellOvergrown += HandleCellOvergrown;
                 this.board.CreepingMoldMove += HandleCreepingMoldMove;
@@ -399,6 +420,7 @@ namespace FungusToast.Unity.Grid
             _pendingCreepingMoldMoves.Clear();
             _pendingHyphalGrowthMoves.Clear();
             _pendingFilamentOverdrives.Clear();
+            _pendingNecroticClearanceSnapshots.Clear();
             ClearMoldIdleCache();
             overlayRenderer?.ResetRuntimeState();
 
@@ -972,6 +994,7 @@ namespace FungusToast.Unity.Grid
                 board.ToxinPlaced -= HandleToxinPlaced;
                 board.CellReclaimed -= HandleCellReclaimed;
                 board.ResistanceAppliedBatch -= HandleResistanceAppliedBatch;
+                board.NecroticClearanceBatch -= HandleNecroticClearanceBatch;
                 board.CellInfested -= HandleCellInfested;
                 board.CellOvergrown -= HandleCellOvergrown;
                 board.CreepingMoldMove -= HandleCreepingMoldMove;
@@ -985,6 +1008,7 @@ namespace FungusToast.Unity.Grid
             _pendingCreepingMoldMoves.Clear();
             _pendingHyphalGrowthMoves.Clear();
             _pendingFilamentOverdrives.Clear();
+            _pendingNecroticClearanceSnapshots.Clear();
         }
 
         private void HandleToxinPlaced(object sender, ToxinPlacedEventArgs e)
@@ -1017,6 +1041,103 @@ namespace FungusToast.Unity.Grid
             foreach (int tileId in tileIds)
             {
                 cellStateAnimationController?.RenderImmediateResolvedTile(tileId);
+            }
+        }
+
+        private void HandleNecroticClearanceBatch(int playerId, IReadOnlyList<int> tileIds)
+        {
+            if (ShouldSuppressBoardEventPresentation() || board == null || moldTilemap == null || tileIds == null)
+            {
+                return;
+            }
+
+            foreach (int tileId in tileIds)
+            {
+                Vector3Int position = GetPositionForTileId(tileId);
+                TileBase tile = moldTilemap.GetTile(position);
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                _pendingNecroticClearanceSnapshots[tileId] = new NecroticClearanceVisualSnapshot(
+                    tileId,
+                    position,
+                    tile,
+                    moldTilemap.GetColor(position),
+                    moldTilemap.GetTransformMatrix(position));
+            }
+        }
+
+        /// <summary>
+        /// Restores corpse snapshots captured before the pre-growth refresh and shrinks them out
+        /// independently of phase timing. It intentionally does not call BeginAnimation.
+        /// </summary>
+        public void PlayNecroticClearanceShrinkAsync(IReadOnlyList<int> tileIds)
+        {
+            if (tileIds == null || tileIds.Count == 0 || moldTilemap == null)
+            {
+                return;
+            }
+
+            var snapshots = new List<NecroticClearanceVisualSnapshot>();
+            foreach (int tileId in tileIds.Distinct())
+            {
+                if (_pendingNecroticClearanceSnapshots.Remove(tileId, out var snapshot))
+                {
+                    snapshots.Add(snapshot);
+                }
+            }
+
+            if (snapshots.Count > 0)
+            {
+                StartCoroutine(PlayNecroticClearanceShrink(snapshots));
+            }
+        }
+
+        private IEnumerator PlayNecroticClearanceShrink(IReadOnlyList<NecroticClearanceVisualSnapshot> snapshots)
+        {
+            if (moldTilemap == null)
+            {
+                yield break;
+            }
+
+            foreach (var snapshot in snapshots)
+            {
+                moldTilemap.SetTile(snapshot.Position, snapshot.Tile);
+                moldTilemap.SetTileFlags(snapshot.Position, TileFlags.None);
+                moldTilemap.SetColor(snapshot.Position, snapshot.Color);
+                moldTilemap.SetTransformMatrix(snapshot.Position, snapshot.Transform);
+            }
+
+            float elapsed = 0f;
+            float duration = UIEffectConstants.NecroticClearanceShrinkDurationSeconds;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = duration <= 0f ? 1f : Mathf.Clamp01(elapsed / duration);
+                float eased = 1f - Mathf.Pow(1f - progress, 3f);
+                float scale = Mathf.Lerp(1f, 0f, eased);
+
+                foreach (var snapshot in snapshots)
+                {
+                    if (!moldTilemap.HasTile(snapshot.Position))
+                    {
+                        continue;
+                    }
+
+                    Color color = snapshot.Color;
+                    color.a *= 1f - eased;
+                    moldTilemap.SetColor(snapshot.Position, color);
+                    moldTilemap.SetTransformMatrix(snapshot.Position, ApplyAdditionalUniformScale(snapshot.Transform, scale));
+                }
+
+                yield return null;
+            }
+
+            foreach (var snapshot in snapshots)
+            {
+                RenderTileFromBoard(snapshot.TileId);
             }
         }
 

@@ -39,7 +39,14 @@ public class NecroticClearanceMutationTests
         PlaceLiving(board, enemy, 2);
         board.KillFungalCell(corpse, FungusToast.Core.Death.DeathReason.Randomness);
         int deathEvents = 0;
+        int batchEvents = 0;
+        IReadOnlyList<int>? clearedTileIds = null;
         board.CellDeath += (_, _) => deathEvents++;
+        board.NecroticClearanceBatch += (_, tileIds) =>
+        {
+            batchEvents++;
+            clearedTileIds = tileIds;
+        };
 
         MycelialSurgeMutationProcessor.OnPreGrowthPhase_NecroticClearance(
             board, board.Players, new FixedRandom(0.0), new TestSimulationObserver());
@@ -47,6 +54,8 @@ public class NecroticClearanceMutationTests
         Assert.Null(board.GetTileById(1)!.FungalCell);
         Assert.Equal(0, deathEvents);
         Assert.DoesNotContain(1, player.ControlledTileIds);
+        Assert.Equal(1, batchEvents);
+        Assert.Equal(new[] { 1 }, clearedTileIds);
     }
 
     [Fact]

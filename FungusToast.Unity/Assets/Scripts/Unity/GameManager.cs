@@ -1244,6 +1244,7 @@ namespace FungusToast.Unity
         private IEnumerator BeginGrowthPhaseAfterPreGrowthEffects()
         {
             var chitinFortificationTileIds = new List<int>();
+            var necroticClearanceTileIds = new List<int>();
             var conduitProjections = new List<GameBoard.ConduitProjectionEventArgs>();
 
             void BufferPreGrowthResistanceAnimation(int playerId, GrowthSource source, IReadOnlyList<int> tileIds)
@@ -1272,7 +1273,24 @@ namespace FungusToast.Unity
                 conduitProjections.Add(e);
             }
 
+            void BufferNecroticClearanceAnimation(int playerId, IReadOnlyList<int> tileIds)
+            {
+                if (tileIds == null || tileIds.Count == 0)
+                {
+                    return;
+                }
+
+                foreach (int tileId in tileIds)
+                {
+                    if (!necroticClearanceTileIds.Contains(tileId))
+                    {
+                        necroticClearanceTileIds.Add(tileId);
+                    }
+                }
+            }
+
             Board.ResistanceAppliedBatch += BufferPreGrowthResistanceAnimation;
+            Board.NecroticClearanceBatch += BufferNecroticClearanceAnimation;
             Board.ConduitProjection += BufferConduitProjection;
             try
             {
@@ -1281,11 +1299,12 @@ namespace FungusToast.Unity
             finally
             {
                 Board.ResistanceAppliedBatch -= BufferPreGrowthResistanceAnimation;
+                Board.NecroticClearanceBatch -= BufferNecroticClearanceAnimation;
                 Board.ConduitProjection -= BufferConduitProjection;
             }
 
             if (!(isFastForwarding || IsFastRoundPresentationMode)
-                && (chitinFortificationTileIds.Count > 0 || conduitProjections.Count > 0))
+                && (chitinFortificationTileIds.Count > 0 || necroticClearanceTileIds.Count > 0 || conduitProjections.Count > 0))
             {
                 if (chitinFortificationTileIds.Count > 0)
                 {
@@ -1302,6 +1321,9 @@ namespace FungusToast.Unity
                 }
 
                 gridVisualizer.RenderBoard(Board, suppressAnimations: true);
+
+                // This visual deliberately runs outside WaitForAllAnimations so it never delays Growth Phase.
+                gridVisualizer.PlayNecroticClearanceShrinkAsync(necroticClearanceTileIds);
 
                 if (chitinFortificationTileIds.Count > 0)
                 {
