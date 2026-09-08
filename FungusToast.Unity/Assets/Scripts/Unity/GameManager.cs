@@ -631,7 +631,10 @@ namespace FungusToast.Unity
             // panels/managers (e.g. gameUIManager.GameLogRouter just below) —
             // Unity does not guarantee GameUIManager.Awake() has already run
             // by the time GameManager.Awake() calls this method.
-            gameUIManager.ResolveOwnedReferences();
+            // Null-forgiving: gameUIManager is a non-null invariant of this
+            // component; a missing one is a scene-authoring error, already
+            // reported above, and every use below dereferences it unguarded.
+            gameUIManager!.ResolveOwnedReferences();
 
             // Was double-wired with UI_MutationManager's own separate
             // [SerializeField] pointing at the identical scene object (same

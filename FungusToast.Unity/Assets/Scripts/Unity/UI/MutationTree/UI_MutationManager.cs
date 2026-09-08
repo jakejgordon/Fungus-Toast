@@ -209,7 +209,11 @@ namespace FungusToast.Unity.UI.MutationTree
             // guarantee any external composition root's Awake() runs before
             // this one. Self-resolution sidesteps that ordering hazard
             // entirely instead of racing it.
-            mutationTreePanel = FindAnyObjectByType<UI_MutationTreePanelMarker>(FindObjectsInactive.Include)?.gameObject;
+            // Null-forgiving: the field is a required scene reference; the
+            // missing-marker case is caught by the guard below and reported,
+            // rather than being modelled as a nullable field every call site
+            // would have to re-check.
+            mutationTreePanel = (FindAnyObjectByType<UI_MutationTreePanelMarker>(FindObjectsInactive.Include)?.gameObject)!;
             mutationManager = FindAnyObjectByType<MutationManager>(FindObjectsInactive.Include);
             if (mutationManager == null)
                 Debug.LogError("[UI_MutationManager] No MutationManager found in the scene.");
