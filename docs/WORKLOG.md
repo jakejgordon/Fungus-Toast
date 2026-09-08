@@ -36,6 +36,44 @@ are considered complete. The current Aerated Frontier calibration uses
   measurable territorial handicap. Continue diagnosis inside its mutation
   sequencing/economy behavior rather than treating the offset as an advantage.
 
+### 2026-09-08 Mycovariant draft fix and campaign ladder measurement
+
+- `MycovariantCategoryHelper.GetPreferredMycovariantIds` returned category ids in
+  repository declaration order, and `ParameterizedSpendingStrategy` consumed that
+  order as a strict ranking. Every strategy built that way preferred the weakest
+  member of each tiered family — offered Mycelial Bastion I and III together it
+  took I, 8 resistant cells instead of 16, and left III for an opponent.
+  `AIDraftAlwaysPickScoreThreshold` never intervened: it is `99f` while the
+  Bastion scores are 4/5/6. 82 roster entries were affected.
+- Fixed by tagging the helper's output as `CategoryDerivedMycovariantIds` and
+  resolving such a set by AI score at draft time. Hand-written id lists keep
+  strict positional ranking, because those orderings are deliberate.
+- Balance effect is not detectable. Proxy win rate across levels 0-6, 9 and 10
+  (20 games each, seed `20260327`) moved by a mean of `-1.7` points, maximum
+  single-level delta `10` points, which is two games. Every level's band verdict
+  was identical before and after.
+- The practical impact is smaller than the defect description implies. Tier-I
+  variants are `IsUniversal` and permanently draftable, while tiers II and III
+  are unique and leave the pool once anyone takes them, so the pathological
+  comparison rarely arises. Treat this as a correctness fix, not a balance lever.
+- Campaign levels 7 and 8 previously could not simulate at all: both presets
+  listed `TST_CampaignPlayer_SafeBaseline` among their AI players while the
+  harness also prepends it as the proxy, and the experiment contract rejects
+  duplicate strategy names. Replaced with the nearest measured difficulty among
+  strategies carrying a `FriendlyName` (`CMP_Defense_ReclaimShell_Easy` for
+  Campaign7, `CMP_Bloom_NecrotoxinGauntlet_Elite` for Campaign8).
+- Measured proxy win rate against the `CAMPAIGN_HELPER.md` bands: `L0 100%`
+  (inside), `L1 80%` (below), `L2 95%` (inside), `L3 100%` (above), `L4 100%`
+  (above), `L5 60%` (above), `L6 70%` (above), `L7 15%` (inside), `L8 10%`
+  (inside), `L9 30%` (above), `L10 60%` (above).
+- The ladder inverts after level 8. Levels 7 and 8 are the hardest measured
+  rungs, and 9 and 10 are markedly easier than both. `validate_campaign_ai_rosters`
+  passes because authored difficulty means rise monotonically, so that check does
+  not currently predict measured proxy outcome at the top of the ladder.
+- Caveats: 20 games per level cannot resolve a small effect; levels 7 and 8 were
+  measured on newer Core than the other levels, so this is not a single-baseline
+  ladder. A pinned single-baseline sweep of all 11 levels is the follow-up.
+
 ### 2026-09-07 Necrotic Clearance
 
 - Implemented `Necrotic Clearance`, a Tier-2 Mycelial Surge requiring
