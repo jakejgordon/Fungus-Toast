@@ -76,8 +76,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             var identity = new List<PlayerInspectorLine>
             {
+                // Player.AIType is deliberately omitted: every construction site passes
+                // AITypeEnum.Random, so the line would always read "Random" and imply a setting
+                // that does not exist. MutationStrategy is what actually drives AI behavior.
                 new PlayerInspectorLine("Player Type", player.PlayerType.ToString()),
-                new PlayerInspectorLine("AI Type", player.AIType.ToString()),
                 new PlayerInspectorLine("Strategy", GetStrategyDisplayText(player)),
                 new PlayerInspectorLine("Score", player.Score.ToString()),
                 new PlayerInspectorLine("Controlled Tiles", player.ControlledTileIds.Count.ToString()),
@@ -154,15 +156,15 @@ namespace FungusToast.Unity.UI.PlayerInspector
                     .Where(pm => pm.Mycovariant != null)
                     .Select(pm => pm.Mycovariant.Id));
 
-            foreach (var preference in preferences.Take(MaxListedItems))
+            for (int i = 0; i < preferences.Count && i < MaxListedItems; i++)
             {
+                MycovariantPreference preference = preferences[i];
+                int rank = i + 1;
                 string names = string.Join(" / ", preference.MycovariantIds.Select(GetMycovariantName));
                 bool satisfied = preference.MycovariantIds.Any(ownedIds.Contains);
                 string marker = satisfied ? "[x]" : "[ ]";
-                string description = string.IsNullOrWhiteSpace(preference.Description)
-                    ? string.Empty
-                    : $" — {preference.Description}";
-                lines.Add(PlayerInspectorLine.Plain($"{marker} P{preference.Priority}: {names}{description}"));
+                lines.Add(PlayerInspectorLine.Plain(
+                    $"#{rank} {marker} {names}{FormatPreferenceDescription(preference, rank)}"));
             }
 
             if (preferences.Count > MaxListedItems)
@@ -171,6 +173,21 @@ namespace FungusToast.Unity.UI.PlayerInspector
             }
 
             return lines;
+        }
+
+        /// <summary>
+        /// Preferences built from a plain id list get an auto-generated "Preferred #N" description
+        /// that only restates the rank already shown. Suppress those and keep authored ones.
+        /// </summary>
+        private static string FormatPreferenceDescription(MycovariantPreference preference, int rank)
+        {
+            if (string.IsNullOrWhiteSpace(preference.Description)
+                || preference.Description == $"Preferred #{rank}")
+            {
+                return string.Empty;
+            }
+
+            return $" — {preference.Description}";
         }
 
         private static string FormatNullableBool(bool? value) =>
