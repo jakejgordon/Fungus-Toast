@@ -1,5 +1,8 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Mutations;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FungusToast.Simulation.Calibration;
 
@@ -21,12 +24,55 @@ public sealed record StrategyExecutionHealth(
 /// </summary>
 public sealed class StrategyRegressionSnapshot
 {
+    public const string CurrentSchemaVersion = "fungus-toast.ai-regression-snapshot.v1";
+
+    public required string SchemaVersion { get; init; } = CurrentSchemaVersion;
+    public required string SnapshotId { get; init; }
+    public required string MatrixId { get; init; }
+    public required DateTime CreatedUtc { get; init; }
     public required string ClassifierVersion { get; init; }
     public required IReadOnlyList<StrategyBandResult> Bands { get; init; }
     public IReadOnlyDictionary<string, IReadOnlyDictionary<MutationCategory, int>> CategoryProfiles { get; init; }
         = new Dictionary<string, IReadOnlyDictionary<MutationCategory, int>>(StringComparer.Ordinal);
     public IReadOnlyDictionary<string, StrategyExecutionHealth> ExecutionHealth { get; init; }
         = new Dictionary<string, StrategyExecutionHealth>(StringComparer.Ordinal);
+}
+
+public static class StrategyRegressionSnapshotJson
+{
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    public static string Serialize(StrategyRegressionSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        Validate(snapshot);
+        return JsonSerializer.Serialize(snapshot, SerializerOptions);
+    }
+
+    public static StrategyRegressionSnapshot Deserialize(string json)
+    {
+        var snapshot = JsonSerializer.Deserialize<StrategyRegressionSnapshot>(json, SerializerOptions)
+            ?? throw new JsonException("Regression snapshot must contain a JSON object.");
+        Validate(snapshot);
+        return snapshot;
+    }
+
+    private static void Validate(StrategyRegressionSnapshot snapshot)
+    {
+        if (!string.Equals(snapshot.SchemaVersion, StrategyRegressionSnapshot.CurrentSchemaVersion, StringComparison.Ordinal))
+            throw new InvalidOperationException($"Regression snapshot schema '{snapshot.SchemaVersion}' is not supported.");
+        if (string.IsNullOrWhiteSpace(snapshot.SnapshotId))
+            throw new InvalidOperationException("Regression snapshot ID is required.");
+        if (string.IsNullOrWhiteSpace(snapshot.MatrixId))
+            throw new InvalidOperationException("Regression snapshot matrix ID is required.");
+        if (string.IsNullOrWhiteSpace(snapshot.ClassifierVersion))
+            throw new InvalidOperationException("Regression snapshot classifier version is required.");
+    }
 }
 
 public enum StrategyRegressionAlertKind
@@ -182,5 +228,40 @@ public static class StrategyRegressionAlerts
         return leftMagnitude <= 0 || rightMagnitude <= 0
             ? 0
             : dot / (Math.Sqrt(leftMagnitude) * Math.Sqrt(rightMagnitude));
+    }
+}
+
+/// <summary>Renders a reviewable alert artifact beside calibration results.</summary>
+public static class StrategyRegressionAlertReport
+{
+    public static string Render(
+        StrategyRegressionSnapshot baseline,
+        StrategyRegressionSnapshot current,
+        IReadOnlyList<StrategyRegressionAlert> alerts)
+    {
+        ArgumentNullException.ThrowIfNull(baseline);
+        ArgumentNullException.ThrowIfNull(current);
+        ArgumentNullException.ThrowIfNull(alerts);
+
+        var builder = new StringBuilder();
+        builder.AppendLine($"# Calibration regression alerts — {current.SnapshotId}");
+        builder.AppendLine();
+        builder.AppendLine($"- Baseline: `{baseline.SnapshotId}` ({baseline.MatrixId})");
+        builder.AppendLine($"- Current: `{current.SnapshotId}` ({current.MatrixId})");
+        builder.AppendLine($"- Classifier: `{current.ClassifierVersion}`");
+        builder.AppendLine($"- Generated: `{current.CreatedUtc:O}`");
+        builder.AppendLine();
+
+        if (alerts.Count == 0)
+        {
+            builder.AppendLine("No regressions detected.");
+            return builder.ToString();
+        }
+
+        builder.AppendLine("| Alert | Strategy | Detail |");
+        builder.AppendLine("|---|---|---|");
+        foreach (var alert in alerts.OrderBy(alert => alert.Kind).ThenBy(alert => alert.StrategyName, StringComparer.Ordinal))
+            builder.AppendLine($"| {alert.Kind} | {alert.StrategyName} | {alert.Message} |");
+        return builder.ToString();
     }
 }

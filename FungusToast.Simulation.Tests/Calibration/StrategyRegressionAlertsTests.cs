@@ -45,10 +45,28 @@ public sealed class StrategyRegressionAlertsTests
         Assert.Equal(StrategyRegressionAlertKind.ClassifierVersionChanged, alert.Kind);
     }
 
+    [Fact]
+    public void SnapshotJsonAndReport_PreserveTheComparisonProvenance()
+    {
+        var baseline = Snapshot(Band("Alpha", DifficultyBand.Normal), profile: Profile((MutationCategory.Growth, 10)));
+        var current = Snapshot(Band("Alpha", DifficultyBand.Easy), profile: Profile((MutationCategory.Growth, 10)));
+
+        var restored = StrategyRegressionSnapshotJson.Deserialize(StrategyRegressionSnapshotJson.Serialize(current));
+        var report = StrategyRegressionAlertReport.Render(baseline, restored, StrategyRegressionAlerts.Compare(baseline, restored));
+
+        Assert.Equal(current.SnapshotId, restored.SnapshotId);
+        Assert.Contains($"Baseline: `{baseline.SnapshotId}`", report);
+        Assert.Contains("BandMoved", report);
+    }
+
     private static StrategyRegressionSnapshot Snapshot(StrategyBandResult band, StrategyExecutionHealth? health = null,
         IReadOnlyDictionary<MutationCategory, int>? profile = null, string version = "fungus-toast.ai-bands.v1")
         => new()
         {
+            SchemaVersion = StrategyRegressionSnapshot.CurrentSchemaVersion,
+            SnapshotId = "snapshot.current",
+            MatrixId = "matrix.test",
+            CreatedUtc = new DateTime(2026, 9, 8, 12, 0, 0, DateTimeKind.Utc),
             ClassifierVersion = version,
             Bands = new[] { band },
             CategoryProfiles = profile == null

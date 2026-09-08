@@ -981,9 +981,11 @@ measurement model, phase gates, and open product decisions are in
     replay parity failures, and abnormal fallback or decision-failure rate
     increases. A missing profile or execution-health record is an explicit
     evidence gap, never silently interpreted as a zero rate; a classifier
-    version change refuses all band comparisons. The detector is pure and
-    tested; next, export the execution-health inputs from calibration artifacts
-    and render/store the alert report with each recalibration run.
+    version change refuses all band comparisons. Versioned JSON snapshots and a
+    Markdown report retain baseline/current matrix IDs, classifier version, and
+    generation time beside the alert set. The detector is pure and tested;
+    next, instrument/export the execution-health inputs from calibration
+    artifacts and invoke the report as part of each recalibration run.
 
 ### Proposed — AI strategy naming and metadata standard
 
