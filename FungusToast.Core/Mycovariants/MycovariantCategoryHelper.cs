@@ -12,30 +12,39 @@ namespace FungusToast.Core.Mycovariants
         /// Returns a list of mycovariant IDs that belong to the specified category.
         /// </summary>
         /// <param name="category">The mycovariant category to filter by.</param>
-        /// <returns>A list of mycovariant IDs in the specified category.</returns>
-        public static List<int> GetPreferredMycovariantIds(MycovariantCategory category)
+        /// <returns>
+        /// The category's mycovariant IDs, tagged as category-derived so consumers know the
+        /// order is declaration order and carries no ranking.
+        /// </returns>
+        public static CategoryDerivedMycovariantIds GetPreferredMycovariantIds(MycovariantCategory category)
         {
-            return MycovariantRepository.All
-                .Where(m => m.Category == category)
-                .Select(m => m.Id)
-                .ToList();
+            return new CategoryDerivedMycovariantIds(
+                MycovariantRepository.All
+                    .Where(m => m.Category == category)
+                    .Select(m => m.Id));
         }
 
         /// <summary>
         /// Returns a list of mycovariant IDs that belong to any of the specified categories.
         /// </summary>
-        /// <param name="categories">The mycovariant categories to filter by.</param>
-        /// <returns>A list of mycovariant IDs in any of the specified categories.</returns>
-        public static List<int> GetPreferredMycovariantIds(params MycovariantCategory[] categories)
+        /// <param name="categories">
+        /// The mycovariant categories to filter by. These act as a set filter — argument order
+        /// does not influence the returned order, which is repository declaration order.
+        /// </param>
+        /// <returns>
+        /// The matching mycovariant IDs, tagged as category-derived so consumers know the order
+        /// carries no ranking.
+        /// </returns>
+        public static CategoryDerivedMycovariantIds GetPreferredMycovariantIds(params MycovariantCategory[] categories)
         {
             if (categories == null || categories.Length == 0)
-                return new List<int>();
+                return new CategoryDerivedMycovariantIds(Enumerable.Empty<int>());
 
             var categorySet = categories.ToHashSet();
-            return MycovariantRepository.All
-                .Where(m => categorySet.Contains(m.Category))
-                .Select(m => m.Id)
-                .ToList();
+            return new CategoryDerivedMycovariantIds(
+                MycovariantRepository.All
+                    .Where(m => categorySet.Contains(m.Category))
+                    .Select(m => m.Id));
         }
 
         /// <summary>

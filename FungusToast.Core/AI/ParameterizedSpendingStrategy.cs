@@ -29,17 +29,31 @@ namespace FungusToast.Core.AI
         public int Priority { get; } // Higher number = higher priority
         public string Description { get; }
 
+        /// <summary>
+        /// True when this preference was derived from whole mycovariant categories rather than
+        /// authored by hand. Such a set has no internal ranking, so the spender picks the highest
+        /// scoring member on offer, and owning one member does not retire the rest of the set.
+        /// An authored preference keeps the opposite contract: list position is the ranking, and
+        /// owning any member means the want is satisfied.
+        /// </summary>
+        public bool IsCategoryDerived { get; }
+
         public MycovariantPreference(int mycovariantId, int priority = 1, string description = "")
         {
             MycovariantIds = new List<int> { mycovariantId };
             Priority = priority;
             Description = description;
         }
-        public MycovariantPreference(IEnumerable<int> mycovariantIds, int priority = 1, string description = "")
+        public MycovariantPreference(
+            IEnumerable<int> mycovariantIds,
+            int priority = 1,
+            string description = "",
+            bool isCategoryDerived = false)
         {
             MycovariantIds = mycovariantIds.ToList();
             Priority = priority;
             Description = description;
+            IsCategoryDerived = isCategoryDerived;
         }
     }
 
@@ -119,17 +133,37 @@ namespace FungusToast.Core.AI
             // Convert preferred mycovariant IDs to preferences if provided
             if (preferredMycovariantIds != null)
             {
-                var convertedPreferences = new List<MycovariantPreference>();
-                for (int i = 0; i < preferredMycovariantIds.Count; i++)
+                List<MycovariantPreference> convertedPreferences;
+
+                if (preferredMycovariantIds is CategoryDerivedMycovariantIds)
                 {
-                    // Priority decreases with position in list (first = highest priority)
-                    int priority = 1000 - i; // Start at 1000 to ensure these are higher than existing preferences
-                    convertedPreferences.Add(new MycovariantPreference(
-                        preferredMycovariantIds[i], 
-                        priority, 
-                        $"Preferred #{i + 1}"));
+                    // Category-derived ids arrive in repository declaration order, which says
+                    // nothing about strength. Ranking them by position made every strategy prefer
+                    // the weakest tier of each family (Mycelial Bastion I over III, and so on), so
+                    // they become one equally-preferred set resolved by AI score at draft time.
+                    convertedPreferences = new List<MycovariantPreference>
+                    {
+                        new MycovariantPreference(
+                            preferredMycovariantIds,
+                            priority: 1000,
+                            description: "Category set — best available",
+                            isCategoryDerived: true)
+                    };
                 }
-                
+                else
+                {
+                    convertedPreferences = new List<MycovariantPreference>();
+                    for (int i = 0; i < preferredMycovariantIds.Count; i++)
+                    {
+                        // Priority decreases with position in list (first = highest priority)
+                        int priority = 1000 - i; // Start at 1000 to ensure these are higher than existing preferences
+                        convertedPreferences.Add(new MycovariantPreference(
+                            preferredMycovariantIds[i],
+                            priority,
+                            $"Preferred #{i + 1}"));
+                    }
+                }
+
                 // Merge with existing preferences, keeping the higher priorities
                 this.mycovariantPreferences = this.mycovariantPreferences
                     .Concat(convertedPreferences)
@@ -337,18 +371,26 @@ namespace FungusToast.Core.AI
             }
 
             // First, check if any preferred mycovariants are in the choices
+            var ownedIds = player.PlayerMycovariants.Select(pm => pm.MycovariantId).ToHashSet();
             foreach (var preference in mycovariantPreferences.OrderByDescending(p => p.Priority))
             {
-                // Skip if player already has any of these mycovariants
-                if (player.PlayerMycovariants.Any(pm => preference.MycovariantIds.Contains(pm.MycovariantId)))
+                // An authored preference is one want: owning any member satisfies it. A
+                // category-derived set has no such meaning, so it keeps offering its remainder.
+                if (!preference.IsCategoryDerived && preference.MycovariantIds.Any(ownedIds.Contains))
                     continue;
-                    
-                // Look for any preferred mycovariant in the current choices
-                var preferredChoice = choices.FirstOrDefault(c => preference.MycovariantIds.Contains(c.Id));
-                if (preferredChoice != null)
-                {
-                    return preferredChoice;
-                }
+
+                var preferredChoices = choices
+                    .Where(c => preference.MycovariantIds.Contains(c.Id) && !ownedIds.Contains(c.Id))
+                    .ToList();
+
+                if (preferredChoices.Count == 0)
+                    continue;
+
+                // Every member of one preference is equally wanted, so take the strongest on
+                // offer rather than whichever happened to be listed first.
+                return preferredChoices
+                    .OrderByDescending(c => c.GetBaseAIScore(player, board))
+                    .First();
             }
             
             // No preferred mycovariants available, fall back to AI scoring

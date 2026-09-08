@@ -54,6 +54,101 @@ public class ParameterizedSpendingStrategyCharacterizationTests
         Assert.Same(mustPick, selected);
     }
 
+    /// <summary>
+    /// Category-derived ids arrive in repository declaration order, which puts the weakest tier of
+    /// each family first. Consuming that as a ranking made every roster strategy draft Mycelial
+    /// Bastion I ahead of III, so the set must resolve by AI score instead.
+    /// </summary>
+    [Fact]
+    public void Category_derived_preference_drafts_the_strongest_member_on_offer()
+    {
+        var weak = CreateMycovariant(101, score: 4f);
+        var strong = CreateMycovariant(103, score: 6f);
+        var strategy = CreateStrategy(
+            preferredMycovariantIds: new CategoryDerivedMycovariantIds(new[] { weak.Id, strong.Id }));
+        var (board, player) = CreateBoardAndPlayer();
+
+        var selected = strategy.SelectMycovariantFromChoices(
+            player,
+            new List<Mycovariant> { weak, strong },
+            board,
+            new Random(1));
+
+        Assert.Same(strong, selected);
+    }
+
+    /// <summary>
+    /// A hand-written list is the opposite contract: the author ranked those ids on purpose, so
+    /// position still beats score.
+    /// </summary>
+    [Fact]
+    public void Authored_preferred_id_list_still_ranks_by_position()
+    {
+        var firstListed = CreateMycovariant(101, score: 4f);
+        var higherScored = CreateMycovariant(103, score: 6f);
+        var strategy = CreateStrategy(
+            preferredMycovariantIds: new List<int> { firstListed.Id, higherScored.Id });
+        var (board, player) = CreateBoardAndPlayer();
+
+        var selected = strategy.SelectMycovariantFromChoices(
+            player,
+            new List<Mycovariant> { firstListed, higherScored },
+            board,
+            new Random(1));
+
+        Assert.Same(firstListed, selected);
+    }
+
+    /// <summary>
+    /// Owning one member of a category set does not satisfy the whole category, so the remaining
+    /// members stay preferred over an unrelated fallback pick.
+    /// </summary>
+    [Fact]
+    public void Category_derived_preference_keeps_offering_members_the_player_lacks()
+    {
+        var owned = CreateMycovariant(101, score: 4f);
+        var remaining = CreateMycovariant(103, score: 5f);
+        var unrelated = CreateMycovariant(500, score: 9f);
+        var strategy = CreateStrategy(
+            preferredMycovariantIds: new CategoryDerivedMycovariantIds(new[] { owned.Id, remaining.Id }));
+        var (board, player) = CreateBoardAndPlayer();
+        player.AddMycovariant(owned);
+
+        var selected = strategy.SelectMycovariantFromChoices(
+            player,
+            new List<Mycovariant> { unrelated, remaining },
+            board,
+            new Random(1));
+
+        Assert.Same(remaining, selected);
+    }
+
+    /// <summary>
+    /// An authored preference means one want, so owning any member retires it and the strategy
+    /// falls through to ordinary scoring.
+    /// </summary>
+    [Fact]
+    public void Authored_preference_is_satisfied_once_any_member_is_owned()
+    {
+        var owned = CreateMycovariant(101, score: 4f);
+        var sibling = CreateMycovariant(103, score: 5f);
+        var unrelated = CreateMycovariant(500, score: 9f);
+        var strategy = CreateStrategy(mycovariantPreferences: new List<MycovariantPreference>
+        {
+            new(new[] { owned.Id, sibling.Id }, priority: 5)
+        });
+        var (board, player) = CreateBoardAndPlayer();
+        player.AddMycovariant(owned);
+
+        var selected = strategy.SelectMycovariantFromChoices(
+            player,
+            new List<Mycovariant> { unrelated, sibling },
+            board,
+            new Random(1));
+
+        Assert.Same(unrelated, selected);
+    }
+
     [Fact]
     public void Scheduled_surge_runs_before_ordinary_fallback_spending()
     {
@@ -209,6 +304,7 @@ public class ParameterizedSpendingStrategyCharacterizationTests
         List<int>? surgePriorityIds = null,
         int surgeFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
         List<MycovariantPreference>? mycovariantPreferences = null,
+        List<int>? preferredMycovariantIds = null,
         IEnumerable<int>? excludedMutationIds = null)
     {
         return new ParameterizedSpendingStrategy(
@@ -219,6 +315,7 @@ public class ParameterizedSpendingStrategyCharacterizationTests
             surgeAttemptTurnFrequency: surgeFrequency,
             economyBias: EconomyBias.IgnoreEconomy,
             mycovariantPreferences: mycovariantPreferences,
+            preferredMycovariantIds: preferredMycovariantIds,
             excludedMutationIds: excludedMutationIds);
     }
 

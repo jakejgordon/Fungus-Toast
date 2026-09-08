@@ -160,6 +160,22 @@ namespace FungusToast.Unity.UI.PlayerInspector
             {
                 MycovariantPreference preference = preferences[i];
                 int rank = i + 1;
+
+                if (preference.IsCategoryDerived)
+                {
+                    // A category set can hold well over a dozen ids, so list what actually
+                    // converted rather than every option.
+                    var drafted = preference.MycovariantIds.Where(ownedIds.Contains).ToList();
+                    string draftedNames = drafted.Count == 0
+                        ? "none yet"
+                        : string.Join(", ", drafted.Select(GetMycovariantName));
+                    lines.Add(PlayerInspectorLine.Plain(
+                        $"#{rank} Category set ({preference.MycovariantIds.Count} options, best available)"));
+                    lines.Add(PlayerInspectorLine.Plain(
+                        $"    drafted {drafted.Count}/{preference.MycovariantIds.Count}: {draftedNames}"));
+                    continue;
+                }
+
                 string names = string.Join(" / ", preference.MycovariantIds.Select(GetMycovariantName));
                 bool satisfied = preference.MycovariantIds.Any(ownedIds.Contains);
                 string marker = satisfied ? "[x]" : "[ ]";
