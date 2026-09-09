@@ -68,6 +68,22 @@ class AnalyzeBalanceTests(unittest.TestCase):
         self.assertEqual(4, len(summary))
         self.assertTrue((summary["games"] == 2).all())
 
+    def test_execution_health_aggregates_decisions_and_fallback_rate(self):
+        players = self._players().assign(
+            ai_mutation_spending_decisions=[10, 20, 5, 5],
+            ai_mutation_fallback_spends=[2, 10, 0, 5],
+        )
+
+        health = ANALYZE_BALANCE.build_strategy_execution_health(players)
+
+        self.assertEqual(4, len(health))
+        self.assertAlmostEqual(0.5, health.loc[health["strategy_name"] == "Player 1", "fallback_rate"].iloc[0])
+
+    def test_execution_health_does_not_invent_legacy_telemetry(self):
+        health = ANALYZE_BALANCE.build_strategy_execution_health(self._players())
+
+        self.assertTrue(health.empty)
+
     def test_paired_comparison_uses_slot_pairs_and_reports_observed_gain(self):
         control = self._paired_players([6, 7, 8], [4, 3, 2], treatment=False)
         treatment = self._paired_players([7, 8, 9], [3, 2, 1], treatment=True)

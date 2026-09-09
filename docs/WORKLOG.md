@@ -1007,6 +1007,15 @@ measurement model, phase gates, and open product decisions are in
     plugin was refreshed. Next: aggregate those player rows into a calibration
     snapshot and invoke the persisted regression report after a recalibration.
 
+63. The offline analyzer now writes `strategy_execution_health.csv`, grouped by
+    stable strategy identity, with total funded decisions, fallback-branch
+    decisions, and their observed rate. Legacy artifacts without the telemetry
+    yield an empty health table rather than fabricated zeroes. Local Python
+    unit execution is blocked because WSL lacks the repo's `numpy` dependency;
+    the script passes syntax compilation. Next: have the calibration reader
+    load this health artifact into a `StrategyRegressionSnapshot` and provide a
+    command that writes the paired snapshot/report artifacts.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

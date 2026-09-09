@@ -186,6 +186,35 @@ def _empty_growth_source_summary() -> pd.DataFrame:
     return pd.DataFrame(columns=cols)
 
 
+def build_strategy_execution_health(players: pd.DataFrame) -> pd.DataFrame:
+    """Aggregate AI decision telemetry without inferring health for legacy artifacts."""
+    required = {
+        "strategy_name", "strategy_id", "strategy_definition_fingerprint",
+        "ai_mutation_spending_decisions", "ai_mutation_fallback_spends",
+    }
+    players = _ensure_strategy_identity(players)
+    missing = sorted(required.difference(players.columns))
+    columns = [
+        "strategy_name", "strategy_id", "strategy_definition_fingerprint",
+        "decisions", "fallback_decisions", "fallback_rate",
+    ]
+    if players.empty or missing:
+        return pd.DataFrame(columns=columns)
+
+    identity = ["strategy_id", "strategy_definition_fingerprint"]
+    grouped = players.groupby(identity, as_index=False).agg(
+        strategy_name=("strategy_name", "first"),
+        decisions=("ai_mutation_spending_decisions", "sum"),
+        fallback_decisions=("ai_mutation_fallback_spends", "sum"),
+    )
+    grouped["fallback_rate"] = np.where(
+        grouped["decisions"] > 0,
+        grouped["fallback_decisions"] / grouped["decisions"],
+        0.0,
+    )
+    return grouped[columns].sort_values(["strategy_name", "strategy_id"]).reset_index(drop=True)
+
+
 def _prepare_outcome_metrics(players: pd.DataFrame) -> pd.DataFrame:
     players = _ensure_win_credit(_ensure_strategy_identity(players)).copy()
     outcome_group_columns = ["condition_id", "game_index"]
@@ -1094,6 +1123,7 @@ def main() -> None:
         living_cell_sources = _ensure_strategy_identity(_normalize_columns(living_cell_sources))
 
     player_summary = build_player_summary(players)
+    execution_health = build_strategy_execution_health(players)
     growth_source_summary = build_growth_source_summary(players, living_cell_sources)
     mutation_scores = build_mutation_scores(players, mutations)
     mycovariant_scores = build_mycovariant_scores(players, mycovariants)
@@ -1108,6 +1138,7 @@ def main() -> None:
     nutrient_summary = build_nutrient_summary(players)
 
     player_summary.to_csv(output_dir / "post_simulation_player_summary.csv", index=False)
+    execution_health.to_csv(output_dir / "strategy_execution_health.csv", index=False)
     growth_source_summary.to_csv(output_dir / "growth_source_summary.csv", index=False)
     mutation_scores.to_csv(output_dir / "mutation_recommendations.csv", index=False)
     mycovariant_scores.to_csv(output_dir / "mycovariant_recommendations.csv", index=False)
