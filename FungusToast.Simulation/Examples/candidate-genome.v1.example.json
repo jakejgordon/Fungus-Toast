@@ -1,10 +1,10 @@
 {
   "schemaVersion": "fungus-toast.ai-candidate-genome.v1",
-  "candidateId": "candidate.tst-balancedgeneralistcontrol.07e66bd8103f",
+  "candidateId": "candidate.tst-balancedgeneralistcontrol.a300ff5ba902",
   "displayName": "CAND_OpenerOrderAnabolicFirst",
   "lineage": {
     "parentStrategyId": "legacy.testing.tst-balancedgeneralistcontrol.v1",
-    "parentDefinitionFingerprint": "fabaf0bed5b34ed0aa939d02a8df5192b250608768eb1e6a8f1a1d61853a91c3",
+    "parentDefinitionFingerprint": "9ab25f75cce15b004bc3645a180fa534b6635712f70a33d3f297e665f87769c8",
     "parentStrategySet": "testing",
     "notes": "Balanced Control with Anabolic Inversion moved ahead of Creeping Mold; the contrast confirmed by the frozen Phase 6 opener-order holdout."
   },
@@ -36,63 +36,18 @@
     "mycovariantPreferences": [
       {
         "mycovariantIds": [
-          1027
-        ],
-        "priority": 1000
-      },
-      {
-        "mycovariantIds": [
-          1028
-        ],
-        "priority": 999
-      },
-      {
-        "mycovariantIds": [
-          1029
-        ],
-        "priority": 998
-      },
-      {
-        "mycovariantIds": [
-          1012
-        ],
-        "priority": 997
-      },
-      {
-        "mycovariantIds": [
+          1012,
+          1017,
+          1021,
+          1024,
+          1025,
+          1026,
+          1027,
+          1028,
+          1029,
           1030
         ],
-        "priority": 996
-      },
-      {
-        "mycovariantIds": [
-          1024
-        ],
-        "priority": 995
-      },
-      {
-        "mycovariantIds": [
-          1025
-        ],
-        "priority": 994
-      },
-      {
-        "mycovariantIds": [
-          1026
-        ],
-        "priority": 993
-      },
-      {
-        "mycovariantIds": [
-          1021
-        ],
-        "priority": 992
-      },
-      {
-        "mycovariantIds": [
-          1017
-        ],
-        "priority": 991
+        "priority": 1000
       }
     ],
     "excludedMutationIds": [],
