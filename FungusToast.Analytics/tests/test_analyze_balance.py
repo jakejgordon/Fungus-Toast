@@ -77,7 +77,7 @@ class AnalyzeBalanceTests(unittest.TestCase):
         health = ANALYZE_BALANCE.build_strategy_execution_health(players)
 
         self.assertEqual(4, len(health))
-        self.assertAlmostEqual(0.5, health.loc[health["strategy_name"] == "Player 1", "fallback_rate"].iloc[0])
+        self.assertAlmostEqual(0.5, health.loc[health["strategy_name"] == "strategy-1", "fallback_rate"].iloc[0])
 
     def test_execution_health_does_not_invent_legacy_telemetry(self):
         health = ANALYZE_BALANCE.build_strategy_execution_health(self._players())
