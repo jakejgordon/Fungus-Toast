@@ -1,4 +1,5 @@
 using FungusToast.Simulation.Calibration;
+using FungusToast.Core.Mutations;
 using Xunit;
 
 namespace FungusToast.Simulation.Tests.Calibration;
@@ -35,6 +36,7 @@ public sealed class StrategyRegressionSnapshotBuilderTests
             Assert.Equal("matrix.test", snapshot.MatrixId);
             Assert.Single(snapshot.Bands);
             Assert.Equal("Alpha", snapshot.Bands[0].StrategyName);
+            Assert.Equal(10, snapshot.CategoryProfiles["Alpha"][MutationCategory.Growth]);
         }
         finally
         {
@@ -63,7 +65,9 @@ public sealed class StrategyRegressionSnapshotBuilderTests
                 state, root, "snapshot.test", DateTime.UtcNow, out var warnings);
 
             Assert.Empty(snapshot.ExecutionHealth);
+            Assert.Empty(snapshot.CategoryProfiles);
             Assert.Contains(warnings, warning => warning.Contains(CalibrationMeasurementReader.ExecutionHealthFileName, StringComparison.Ordinal));
+            Assert.Contains(warnings, warning => warning.Contains(CalibrationMeasurementReader.CategoryProfileFileName, StringComparison.Ordinal));
         }
         finally
         {
@@ -88,5 +92,7 @@ public sealed class StrategyRegressionSnapshotBuilderTests
             $"player,games,avg_normalized_board_share,normalized_board_share_ci95_low,normalized_board_share_ci95_high\nAlpha,{games},1,0.9,1.1\n");
         File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.ExecutionHealthFileName),
             $"strategy_name,decisions,fallback_decisions\nAlpha,{decisions},{fallbackDecisions}\n");
+        File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.CategoryProfileFileName),
+            "strategy_name,mutation_category,total_levels\nAlpha,Growth,2\nAlpha,Growth,3\n");
     }
 }

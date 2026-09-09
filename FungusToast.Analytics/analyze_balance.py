@@ -215,6 +215,32 @@ def build_strategy_execution_health(players: pd.DataFrame) -> pd.DataFrame:
     return grouped[columns].sort_values(["strategy_name", "strategy_id"]).reset_index(drop=True)
 
 
+def build_strategy_category_profiles(mutations: pd.DataFrame) -> pd.DataFrame:
+    """Summarize observed final mutation levels by strategy/category for regression drift checks."""
+    required = {
+        "strategy_name", "strategy_id", "strategy_definition_fingerprint",
+        "mutation_category", "mutation_level",
+    }
+    columns = [
+        "strategy_name", "strategy_id", "strategy_definition_fingerprint",
+        "mutation_category", "total_levels",
+    ]
+    mutations = _ensure_strategy_identity(mutations)
+    missing = sorted(required.difference(mutations.columns))
+    if mutations.empty or missing:
+        return pd.DataFrame(columns=columns)
+
+    grouped = mutations.groupby(
+        ["strategy_id", "strategy_definition_fingerprint", "mutation_category"], as_index=False
+    ).agg(
+        strategy_name=("strategy_name", "first"),
+        total_levels=("mutation_level", "sum"),
+    )
+    return grouped[columns].sort_values(
+        ["strategy_name", "strategy_id", "mutation_category"]
+    ).reset_index(drop=True)
+
+
 def _prepare_outcome_metrics(players: pd.DataFrame) -> pd.DataFrame:
     players = _ensure_win_credit(_ensure_strategy_identity(players)).copy()
     outcome_group_columns = ["condition_id", "game_index"]
@@ -1124,6 +1150,7 @@ def main() -> None:
 
     player_summary = build_player_summary(players)
     execution_health = build_strategy_execution_health(players)
+    category_profiles = build_strategy_category_profiles(mutations)
     growth_source_summary = build_growth_source_summary(players, living_cell_sources)
     mutation_scores = build_mutation_scores(players, mutations)
     mycovariant_scores = build_mycovariant_scores(players, mycovariants)
@@ -1139,6 +1166,7 @@ def main() -> None:
 
     player_summary.to_csv(output_dir / "post_simulation_player_summary.csv", index=False)
     execution_health.to_csv(output_dir / "strategy_execution_health.csv", index=False)
+    category_profiles.to_csv(output_dir / "strategy_category_profiles.csv", index=False)
     growth_source_summary.to_csv(output_dir / "growth_source_summary.csv", index=False)
     mutation_scores.to_csv(output_dir / "mutation_recommendations.csv", index=False)
     mycovariant_scores.to_csv(output_dir / "mycovariant_recommendations.csv", index=False)

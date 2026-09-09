@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using FungusToast.Core.Mutations;
 
 namespace FungusToast.Simulation.Calibration;
 
@@ -15,6 +16,7 @@ public static class CalibrationMeasurementReader
 {
     public const string PlayerSummaryFileName = "post_simulation_player_summary.csv";
     public const string ExecutionHealthFileName = "strategy_execution_health.csv";
+    public const string CategoryProfileFileName = "strategy_category_profiles.csv";
 
     /// <summary>
     /// Collects every completed condition's measurements. Conditions that did not complete are
@@ -173,6 +175,82 @@ public static class CalibrationMeasurementReader
         }
 
         return health;
+    }
+
+    /// <summary>
+    /// Aggregates the analyzer's observed mutation-level vectors. An absent file remains absent
+    /// evidence, so regression comparison can distinguish it from a genuine zero-level category.
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyDictionary<MutationCategory, int>> ReadCategoryProfiles(
+        CalibrationRunState state,
+        string exportRoot,
+        out IReadOnlyList<string> warnings)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var totals = new Dictionary<string, Dictionary<MutationCategory, int>>(StringComparer.Ordinal);
+        var problems = new List<string>();
+
+        foreach (var record in state.Conditions)
+        {
+            if (record.Status != CalibrationConditionStatus.Complete)
+            {
+                problems.Add($"{record.ExperimentId}: {record.Status}, so its category profile is missing from this run.");
+                continue;
+            }
+
+            var path = Path.Combine(exportRoot, record.ExperimentId, CategoryProfileFileName);
+            if (!File.Exists(path))
+            {
+                problems.Add($"{record.ExperimentId}: no {CategoryProfileFileName}; run the analyzer over its artifact.");
+                continue;
+            }
+
+            foreach (var (strategyName, category, levels) in ReadCategoryProfileSummary(path))
+            {
+                if (!totals.TryGetValue(strategyName, out var profile))
+                {
+                    profile = new Dictionary<MutationCategory, int>();
+                    totals[strategyName] = profile;
+                }
+                profile[category] = profile.GetValueOrDefault(category) + levels;
+            }
+        }
+
+        warnings = problems;
+        return totals.ToDictionary(
+            entry => entry.Key,
+            entry => (IReadOnlyDictionary<MutationCategory, int>)entry.Value,
+            StringComparer.Ordinal);
+    }
+
+    private static IReadOnlyList<(string StrategyName, MutationCategory Category, int Levels)> ReadCategoryProfileSummary(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        if (lines.Length < 2) return Array.Empty<(string, MutationCategory, int)>();
+
+        var headers = SplitCsvLine(lines[0]);
+        var columns = headers
+            .Select((header, index) => (header, index))
+            .ToDictionary(entry => entry.header.Trim(), entry => entry.index, StringComparer.OrdinalIgnoreCase);
+        foreach (var required in new[] { "strategy_name", "mutation_category", "total_levels" })
+        {
+            if (!columns.ContainsKey(required))
+                throw new InvalidOperationException($"'{path}' is missing the '{required}' column.");
+        }
+
+        var profiles = new List<(string, MutationCategory, int)>();
+        foreach (var line in lines.Skip(1))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var values = SplitCsvLine(line);
+            var name = Value(values, columns, "strategy_name");
+            var categoryText = Value(values, columns, "mutation_category");
+            if (string.IsNullOrWhiteSpace(name) || !Enum.TryParse<MutationCategory>(categoryText, true, out var category))
+                throw new InvalidOperationException($"'{path}' contains an unknown mutation category '{categoryText}'.");
+            profiles.Add((name, category, (int)ParseDouble(values, columns, "total_levels")));
+        }
+
+        return profiles;
     }
 
     private static string Value(IReadOnlyList<string> values, IReadOnlyDictionary<string, int> columns, string column)

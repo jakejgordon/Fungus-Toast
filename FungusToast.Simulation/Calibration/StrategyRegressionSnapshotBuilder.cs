@@ -19,7 +19,8 @@ public static class StrategyRegressionSnapshotBuilder
 
         var measurements = CalibrationMeasurementReader.ReadAll(state, exportRoot, out var measurementWarnings);
         var executionHealth = CalibrationMeasurementReader.ReadExecutionHealth(state, exportRoot, out var healthWarnings);
-        warnings = measurementWarnings.Concat(healthWarnings).Distinct(StringComparer.Ordinal).ToList();
+        var categoryProfiles = CalibrationMeasurementReader.ReadCategoryProfiles(state, exportRoot, out var profileWarnings);
+        warnings = measurementWarnings.Concat(healthWarnings).Concat(profileWarnings).Distinct(StringComparer.Ordinal).ToList();
 
         return new StrategyRegressionSnapshot
         {
@@ -29,6 +30,7 @@ public static class StrategyRegressionSnapshotBuilder
             CreatedUtc = createdUtc.ToUniversalTime(),
             ClassifierVersion = StrategyBandClassifier.ClassifierVersion,
             Bands = StrategyBandClassifier.ClassifyAll(measurements),
+            CategoryProfiles = categoryProfiles,
             ExecutionHealth = executionHealth
         };
     }

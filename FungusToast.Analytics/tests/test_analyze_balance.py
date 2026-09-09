@@ -84,6 +84,20 @@ class AnalyzeBalanceTests(unittest.TestCase):
 
         self.assertTrue(health.empty)
 
+    def test_category_profiles_aggregate_final_levels_by_strategy_and_category(self):
+        mutations = pd.DataFrame(
+            [
+                {"strategy_name": "strategy-0", "strategy_id": "id.0", "strategy_definition_fingerprint": "fp", "mutation_category": "Growth", "mutation_level": 2},
+                {"strategy_name": "strategy-0", "strategy_id": "id.0", "strategy_definition_fingerprint": "fp", "mutation_category": "Growth", "mutation_level": 3},
+                {"strategy_name": "strategy-0", "strategy_id": "id.0", "strategy_definition_fingerprint": "fp", "mutation_category": "Economy", "mutation_level": 1},
+            ]
+        )
+
+        profiles = ANALYZE_BALANCE.build_strategy_category_profiles(mutations)
+
+        self.assertEqual(2, len(profiles))
+        self.assertEqual(5, profiles.loc[profiles["mutation_category"] == "Growth", "total_levels"].iloc[0])
+
     def test_paired_comparison_uses_slot_pairs_and_reports_observed_gain(self):
         control = self._paired_players([6, 7, 8], [4, 3, 2], treatment=False)
         treatment = self._paired_players([7, 8, 9], [3, 2, 1], treatment=True)

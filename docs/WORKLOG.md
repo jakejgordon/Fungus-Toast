@@ -1029,6 +1029,18 @@ measurement model, phase gates, and open product decisions are in
     their own artifact sources exist, so the existing alert engine continues to
     report those as evidence gaps rather than guessing.
 
+65. P7.5 category-profile evidence is now artifact-backed. The offline analyzer
+    emits `strategy_category_profiles.csv`, summing each strategy's observed
+    final mutation levels by category; the calibration reader aggregates those
+    vectors across completed conditions into `StrategyRegressionSnapshot`.
+    Therefore a strategy that shifts its realized build category mix can produce
+    an archetype-drift alert instead of an unconditional missing-profile gap.
+    Missing profile artifacts still remain explicit gaps. All 266 Simulation
+    tests and Core/Simulation builds pass; Python unit execution is unavailable
+    on this checkout because no documented `.venv` exists, so the analyzer was
+    syntax-compiled only. Replay-parity telemetry remains the final P7.5 source
+    gap.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
