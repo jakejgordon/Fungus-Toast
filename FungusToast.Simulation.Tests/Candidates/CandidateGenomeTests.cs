@@ -228,6 +228,34 @@ public sealed class CandidateGenomeTests
         Assert.Equal(new[] { CandidateGene.TargetMutationGoals }, genome.VariedGenes);
     }
 
+    /// <summary>
+    /// The examples record their parent's definition fingerprint and the exact genes that differ
+    /// from it, so any change to a parent strategy makes them stale. Comparing against a freshly
+    /// built copy catches that at the moment it happens and names the command that fixes it -
+    /// the previous check only reported that the file was invalid, which left whoever changed the
+    /// parent to work out both the cause and the remedy.
+    /// </summary>
+    [Fact]
+    public void CheckedInExamples_MatchRegeneratedOutput()
+    {
+        foreach (var example in CandidateGenomeExamples.BuildAll())
+        {
+            var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", example.FileName);
+            Assert.True(File.Exists(path), $"Checked-in example '{example.FileName}' is missing. Run: {CandidateGenomeExamples.RegenerateCommand}");
+
+            // The repository is canonical LF; normalize so a CRLF checkout cannot fail this.
+            var checkedIn = File.ReadAllText(path).Replace("\r\n", "\n");
+
+            Assert.True(
+                string.Equals(checkedIn, example.Json, StringComparison.Ordinal),
+                $"Checked-in example '{example.FileName}' is stale - its parent strategy changed since it was "
+                + $"generated.{Environment.NewLine}Regenerate it with:{Environment.NewLine}  "
+                + $"{CandidateGenomeExamples.RegenerateCommand}{Environment.NewLine}"
+                + $"Do not hand-edit the file: candidateId, the parent fingerprint, and variedGenes are all derived, "
+                + $"and editing one without the others trades this failure for a different one.");
+        }
+    }
+
     [Theory]
     [MemberData(nameof(OutOfBoundsGeneSets))]
     public void OutOfBoundsGeneSet_FailsValidation(string expectedErrorFragment, CandidateGeneSet genes)

@@ -819,6 +819,24 @@ real roster content. Core passes 649/649. The checked-in example
 `FungusToast.Simulation/Examples/candidate-genome.v1.example.json` encodes the
 opener-order candidate the Phase 6 holdout already confirmed.
 
+**The examples are generated, not hand-authored.** A genome records its parent's
+definition fingerprint and the exact set of genes that differ from that parent, so
+any change to a parent strategy makes every example derived from it stale. Do not
+hand-edit the JSON: `candidateId`, `lineage.parentDefinitionFingerprint`, and
+`variedGenes` are all derived from the parent and the gene set, and refreshing one
+without the others simply trades one validation failure for another. Regenerate them
+from the tool whenever a parent strategy changes:
+
+```sh
+dotnet run --project FungusToast.Simulation -- --regenerate-examples
+```
+
+`CandidateGenomeTests.CheckedInExamples_MatchRegeneratedOutput` rebuilds each example
+from the live registry and compares it to the checked-in copy, so a stale file fails
+the build and names this command rather than leaving the cause to be rediscovered.
+Both the command and the test build the examples through
+`CandidateGenomeExamples`, so they cannot drift apart.
+
 #### P6.2 candidate generation contract (delivered 2026-09-06)
 
 `fungus-toast.ai-candidate-plan.v1` adds `CandidateGenerationPlan`,

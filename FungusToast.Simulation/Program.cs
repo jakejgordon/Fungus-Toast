@@ -58,6 +58,29 @@ namespace FungusToast.Simulation
                 return;
             }
 
+            if (Array.Exists(args, argument =>
+                string.Equals(argument, "--regenerate-examples", StringComparison.OrdinalIgnoreCase)))
+            {
+                try
+                {
+                    var examplesDirectory = GetOptionValue(args, "--examples-directory")
+                        ?? ResolveExamplesDirectory();
+                    foreach (var example in CandidateGenomeExamples.BuildAll())
+                    {
+                        var path = Path.Combine(examplesDirectory, example.FileName);
+                        var changed = !File.Exists(path) || File.ReadAllText(path) != example.Json;
+                        File.WriteAllText(path, example.Json);
+                        Console.WriteLine($"{(changed ? "updated" : "unchanged")}: {path}");
+                    }
+                }
+                catch (Exception exception)
+                {
+                    Console.Error.WriteLine($"Example regeneration failed: {exception.Message}");
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
+
             var replayManifestPath = GetOptionValue(args, "--replay-manifest");
             if (replayManifestPath != null)
             {
@@ -133,6 +156,30 @@ namespace FungusToast.Simulation
                     return args[index + 1];
             }
             return null;
+        }
+
+        /// <summary>
+        /// Finds the checked-in examples directory by walking up from the working directory and
+        /// then the binary location, mirroring how the commit resolver locates the repository.
+        /// </summary>
+        private static string ResolveExamplesDirectory()
+        {
+            foreach (var start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory })
+            {
+                var directory = new DirectoryInfo(start);
+                while (directory != null)
+                {
+                    var candidate = Path.Combine(
+                        directory.FullName,
+                        CandidateGenomeExamples.ExamplesDirectoryRelativePath.Replace('/', Path.DirectorySeparatorChar));
+                    if (Directory.Exists(candidate)) return candidate;
+                    directory = directory.Parent;
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Could not locate '{CandidateGenomeExamples.ExamplesDirectoryRelativePath}' from the working directory "
+                + "or the binary location. Pass --examples-directory <path> to set it explicitly.");
         }
 
         private static void RunSingleSimulation(SimulationConfig config, ExperimentManifest inputManifest)
@@ -1286,6 +1333,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --replay-experiment-id   Optional artifact ID for a replay (default: timestamped)");
             Console.WriteLine("  --compare-manifests <control> <treatment>  Diff causal inputs in two resolved manifests");
             Console.WriteLine("  --allow-differences <csv> Declared treatment paths for manifest comparison");
+            Console.WriteLine("  --regenerate-examples    Rewrite the checked-in candidate genome examples from the live registry");
+            Console.WriteLine("  --examples-directory <path> Override where --regenerate-examples writes (default: resolved from the repo)");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
