@@ -35,6 +35,19 @@ public sealed class StrategyRegressionAlertsTests
     }
 
     [Fact]
+    public void Compare_ReportsMissingHealthDimensions_AsEvidenceGaps()
+    {
+        var baseline = Snapshot(Band("Alpha", DifficultyBand.Normal), health: Health("Alpha", 100, 0, null, null), profile: Profile((MutationCategory.Growth, 10)));
+        var current = Snapshot(Band("Alpha", DifficultyBand.Normal), health: Health("Alpha", 100, 0, null, null), profile: Profile((MutationCategory.Growth, 10)));
+
+        var alerts = StrategyRegressionAlerts.Compare(baseline, current);
+
+        Assert.Equal(2, alerts.Count(alert => alert.Kind == StrategyRegressionAlertKind.EvidenceGap));
+        Assert.Contains(alerts, alert => alert.Message.Contains("Replay-parity", StringComparison.Ordinal));
+        Assert.Contains(alerts, alert => alert.Message.Contains("Decision-failure", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Compare_RefusesToCompareAcrossClassifierVersions()
     {
         var baseline = Snapshot(Band("Alpha", DifficultyBand.Normal), version: "v1");
@@ -89,7 +102,7 @@ public sealed class StrategyRegressionAlertsTests
             MaterialContexts = contexts ?? Array.Empty<string>()
         };
 
-    private static StrategyExecutionHealth Health(string name, int decisions, int fallback, int failures, int parity)
+    private static StrategyExecutionHealth Health(string name, int decisions, int fallback, int? failures, int? parity)
         => new(name, decisions, fallback, failures, parity);
 
     private static IReadOnlyDictionary<MutationCategory, int> Profile(params (MutationCategory Category, int Levels)[] values)

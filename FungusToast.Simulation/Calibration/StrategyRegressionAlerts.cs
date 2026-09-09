@@ -11,11 +11,13 @@ public sealed record StrategyExecutionHealth(
     string StrategyName,
     int Decisions,
     int FallbackDecisions,
-    int DecisionFailures,
-    int ReplayParityFailures)
+    int? DecisionFailures,
+    int? ReplayParityFailures)
 {
     public double FallbackRate => Decisions == 0 ? 0 : (double)FallbackDecisions / Decisions;
-    public double DecisionFailureRate => Decisions == 0 ? 0 : (double)DecisionFailures / Decisions;
+    public double? DecisionFailureRate => DecisionFailures is null
+        ? null
+        : Decisions == 0 ? 0 : (double)DecisionFailures.Value / Decisions;
 }
 
 /// <summary>
@@ -192,14 +194,27 @@ public static class StrategyRegressionAlerts
             return;
         }
 
-        if (candidate.ReplayParityFailures > 0)
+        if (candidate.ReplayParityFailures is null)
+        {
+            alerts.Add(new StrategyRegressionAlert(StrategyRegressionAlertKind.EvidenceGap, strategyName,
+                "Replay-parity telemetry is missing."));
+        }
+        else if (candidate.ReplayParityFailures > 0)
             alerts.Add(new StrategyRegressionAlert(StrategyRegressionAlertKind.ReplayParityFailure, strategyName,
                 $"Observed {candidate.ReplayParityFailures} replay parity failure(s)."));
 
         CompareRate("fallback", prior.FallbackRate, candidate.FallbackRate, candidate.Decisions,
             StrategyRegressionAlertKind.AbnormalFallbackRate, strategyName, alerts);
-        CompareRate("decision-failure", prior.DecisionFailureRate, candidate.DecisionFailureRate, candidate.Decisions,
-            StrategyRegressionAlertKind.AbnormalDecisionFailureRate, strategyName, alerts);
+        if (prior.DecisionFailureRate is not { } priorFailureRate || candidate.DecisionFailureRate is not { } candidateFailureRate)
+        {
+            alerts.Add(new StrategyRegressionAlert(StrategyRegressionAlertKind.EvidenceGap, strategyName,
+                "Decision-failure telemetry is missing."));
+        }
+        else
+        {
+            CompareRate("decision-failure", priorFailureRate, candidateFailureRate, candidate.Decisions,
+                StrategyRegressionAlertKind.AbnormalDecisionFailureRate, strategyName, alerts);
+        }
     }
 
     private static void CompareRate(string label, double prior, double candidate, int decisions,

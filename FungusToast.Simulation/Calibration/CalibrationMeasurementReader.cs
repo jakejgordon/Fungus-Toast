@@ -140,7 +140,7 @@ public static class CalibrationMeasurementReader
         warnings = problems;
         return totals.ToDictionary(
             entry => entry.Key,
-            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, 0, 0),
+            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, null, null),
             StringComparer.Ordinal);
     }
 

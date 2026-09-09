@@ -1041,6 +1041,16 @@ measurement model, phase gates, and open product decisions are in
     syntax-compiled only. Replay-parity telemetry remains the final P7.5 source
     gap.
 
+66. P7.5 alert semantics are hardened: an unavailable decision-failure or
+    replay-parity dimension is nullable in `StrategyExecutionHealth` and emits
+    its own evidence-gap alert. Snapshot assembly no longer fabricates zero
+    failures for dimensions that the health CSV does not observe. This preserves
+    the valid fallback-rate comparison while preventing a clean-looking report
+    from overstating evidence. 267 Simulation tests and the Simulation build
+    pass. The next concrete source work is a bounded calibration replay verifier
+    that records parity results without attempting to replay the full matrix in
+    this session.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
