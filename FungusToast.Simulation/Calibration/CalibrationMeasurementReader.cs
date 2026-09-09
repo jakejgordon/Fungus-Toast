@@ -14,6 +14,7 @@ namespace FungusToast.Simulation.Calibration;
 public static class CalibrationMeasurementReader
 {
     public const string PlayerSummaryFileName = "post_simulation_player_summary.csv";
+    public const string ExecutionHealthFileName = "strategy_execution_health.csv";
 
     /// <summary>
     /// Collects every completed condition's measurements. Conditions that did not complete are
@@ -95,6 +96,83 @@ public static class CalibrationMeasurementReader
         }
 
         return measurements;
+    }
+
+    /// <summary>
+    /// Collects the analyzer's decision-health rows across completed conditions. Missing files are
+    /// reported as evidence gaps rather than converted to healthy zero-rate telemetry.
+    /// </summary>
+    public static IReadOnlyDictionary<string, StrategyExecutionHealth> ReadExecutionHealth(
+        CalibrationRunState state,
+        string exportRoot,
+        out IReadOnlyList<string> warnings)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var totals = new Dictionary<string, (int Decisions, int FallbackDecisions)>(StringComparer.Ordinal);
+        var problems = new List<string>();
+
+        foreach (var record in state.Conditions)
+        {
+            if (record.Status != CalibrationConditionStatus.Complete)
+            {
+                problems.Add($"{record.ExperimentId}: {record.Status}, so its execution health is missing from this run.");
+                continue;
+            }
+
+            var path = Path.Combine(exportRoot, record.ExperimentId, ExecutionHealthFileName);
+            if (!File.Exists(path))
+            {
+                problems.Add($"{record.ExperimentId}: no {ExecutionHealthFileName}; run the analyzer over its artifact.");
+                continue;
+            }
+
+            foreach (var health in ReadExecutionHealthSummary(path))
+            {
+                totals.TryGetValue(health.StrategyName, out var total);
+                totals[health.StrategyName] = (
+                    total.Decisions + health.Decisions,
+                    total.FallbackDecisions + health.FallbackDecisions);
+            }
+        }
+
+        warnings = problems;
+        return totals.ToDictionary(
+            entry => entry.Key,
+            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, 0, 0),
+            StringComparer.Ordinal);
+    }
+
+    private static IReadOnlyList<StrategyExecutionHealth> ReadExecutionHealthSummary(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        if (lines.Length < 2) return Array.Empty<StrategyExecutionHealth>();
+
+        var headers = SplitCsvLine(lines[0]);
+        var columns = headers
+            .Select((header, index) => (header, index))
+            .ToDictionary(entry => entry.header.Trim(), entry => entry.index, StringComparer.OrdinalIgnoreCase);
+        foreach (var required in new[] { "strategy_name", "decisions", "fallback_decisions" })
+        {
+            if (!columns.ContainsKey(required))
+                throw new InvalidOperationException($"'{path}' is missing the '{required}' column.");
+        }
+
+        var health = new List<StrategyExecutionHealth>();
+        foreach (var line in lines.Skip(1))
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            var values = SplitCsvLine(line);
+            var name = Value(values, columns, "strategy_name");
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            health.Add(new StrategyExecutionHealth(
+                name,
+                (int)ParseDouble(values, columns, "decisions"),
+                (int)ParseDouble(values, columns, "fallback_decisions"),
+                0,
+                0));
+        }
+
+        return health;
     }
 
     private static string Value(IReadOnlyList<string> values, IReadOnlyDictionary<string, int> columns, string column)

@@ -1016,6 +1016,19 @@ measurement model, phase gates, and open product decisions are in
     load this health artifact into a `StrategyRegressionSnapshot` and provide a
     command that writes the paired snapshot/report artifacts.
 
+64. P7.5's artifact bridge is complete. `CalibrationMeasurementReader` now
+    aggregates each completed condition's `strategy_execution_health.csv` into
+    the durable regression snapshot; absent files and incomplete conditions are
+    surfaced as evidence gaps, never healthy zeroes. The simulator's
+    `--write-regression-snapshot` command writes the versioned snapshot from a
+    calibration state plus analyzed artifact root, and with
+    `--regression-baseline-snapshot` writes the paired Markdown alert report.
+    Snapshot-building coverage includes aggregation and the missing-health gap;
+    all 266 Simulation tests, plus Core and Simulation builds, pass. Category
+    profiles and replay-parity telemetry remain intentionally absent until
+    their own artifact sources exist, so the existing alert engine continues to
+    report those as evidence gaps rather than guessing.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

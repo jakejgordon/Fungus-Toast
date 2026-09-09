@@ -20,6 +20,13 @@ namespace FungusToast.Simulation
 
         static void Main(string[] args)
         {
+            var snapshotPath = GetOptionValue(args, "--write-regression-snapshot");
+            if (snapshotPath != null)
+            {
+                RunRegressionSnapshotCommand(args, snapshotPath);
+                return;
+            }
+
             var compareIndex = Array.FindIndex(args, argument =>
                 string.Equals(argument, "--compare-manifests", StringComparison.OrdinalIgnoreCase));
             if (compareIndex >= 0)
@@ -157,6 +164,46 @@ namespace FungusToast.Simulation
             }
             return null;
         }
+
+        private static void RunRegressionSnapshotCommand(string[] args, string snapshotPath)
+        {
+            try
+            {
+                var statePath = GetRequiredOptionValue(args, "--calibration-state");
+                var exportRoot = GetRequiredOptionValue(args, "--calibration-export-root");
+                var snapshotId = GetRequiredOptionValue(args, "--regression-snapshot-id");
+                var state = CalibrationRunStateJson.Load(statePath);
+                var snapshot = StrategyRegressionSnapshotBuilder.Build(
+                    state, exportRoot, snapshotId, DateTime.UtcNow, out var warnings);
+
+                var fullSnapshotPath = Path.GetFullPath(snapshotPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullSnapshotPath)!);
+                File.WriteAllText(fullSnapshotPath, StrategyRegressionSnapshotJson.Serialize(snapshot));
+                Console.WriteLine($"Wrote regression snapshot: {fullSnapshotPath}");
+                foreach (var warning in warnings) Console.WriteLine($"[EVIDENCE GAP] {warning}");
+
+                var baselinePath = GetOptionValue(args, "--regression-baseline-snapshot");
+                if (baselinePath == null) return;
+
+                var baseline = StrategyRegressionSnapshotJson.Deserialize(File.ReadAllText(baselinePath));
+                var alerts = StrategyRegressionAlerts.Compare(baseline, snapshot);
+                var reportPath = GetOptionValue(args, "--regression-report")
+                    ?? Path.ChangeExtension(fullSnapshotPath, ".md");
+                var fullReportPath = Path.GetFullPath(reportPath);
+                Directory.CreateDirectory(Path.GetDirectoryName(fullReportPath)!);
+                File.WriteAllText(fullReportPath, StrategyRegressionAlertReport.Render(baseline, snapshot, alerts));
+                Console.WriteLine($"Wrote regression report: {fullReportPath} ({alerts.Count} alert(s))");
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Regression snapshot failed: {exception.Message}");
+                Environment.ExitCode = 1;
+            }
+        }
+
+        private static string GetRequiredOptionValue(string[] args, string option)
+            => GetOptionValue(args, option)
+               ?? throw new ArgumentException($"{option} is required with --write-regression-snapshot.");
 
         /// <summary>
         /// Finds the checked-in examples directory by walking up from the working directory and
@@ -1335,6 +1382,12 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --allow-differences <csv> Declared treatment paths for manifest comparison");
             Console.WriteLine("  --regenerate-examples    Rewrite the checked-in candidate genome examples from the live registry");
             Console.WriteLine("  --examples-directory <path> Override where --regenerate-examples writes (default: resolved from the repo)");
+            Console.WriteLine("  --write-regression-snapshot <path> Build a calibration snapshot from analyzed artifacts");
+            Console.WriteLine("  --calibration-state <path> Durable calibration run-state JSON (required with --write-regression-snapshot)");
+            Console.WriteLine("  --calibration-export-root <path> Root containing one analyzed folder per calibration experiment");
+            Console.WriteLine("  --regression-snapshot-id <id> Durable ID for the new regression snapshot");
+            Console.WriteLine("  --regression-baseline-snapshot <path> Optional prior snapshot to compare and report");
+            Console.WriteLine("  --regression-report <path> Optional Markdown report path (defaults beside the new snapshot)");
             Console.WriteLine("  -o, --output <filename>  Specify output filename (default: auto-generated with timestamp)");
             Console.WriteLine("  --no-keyboard            Disable keyboard interruption (Q/Escape), useful for automation");
             Console.WriteLine("  --non-interactive        Alias for --no-keyboard");
