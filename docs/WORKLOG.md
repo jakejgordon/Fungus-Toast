@@ -1051,6 +1051,12 @@ measurement model, phase gates, and open product decisions are in
     that records parity results without attempting to replay the full matrix in
     this session.
 
+67. Replay validation now accepts the same 1,000-game exploratory ceiling as
+    calibration artifacts. Previously `ResolvedExperimentReplayRunner` rejected
+    valid exploratory conditions above the 100-game decision-stage cap, making
+    the planned parity verifier unable to inspect the frozen calibration matrix.
+    267 Simulation tests and the Simulation build pass.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
