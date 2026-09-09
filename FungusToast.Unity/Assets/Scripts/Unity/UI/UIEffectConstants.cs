@@ -32,7 +32,7 @@ namespace FungusToast.Unity.UI
         /// Duration for a Necrotic Clearance corpse to shrink out after the pre-growth board refresh.
         /// This presentation is deliberately asynchronous and does not delay phase progression.
         /// </summary>
-        public const float NecroticClearanceShrinkDurationSeconds = 0.25f;
+        public const float NecroticClearanceShrinkDurationSeconds = 0.4f;
 
         /// <summary>
         /// Duration (in seconds) for cell growth fade-in animation.
