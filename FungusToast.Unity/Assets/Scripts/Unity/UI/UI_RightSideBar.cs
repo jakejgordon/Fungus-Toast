@@ -12,6 +12,7 @@ using FungusToast.Unity.UI.GameLog;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders; // ensure provider namespace is imported
 using FungusToast.Unity.UI.Onboarding;
+using FungusToast.Unity.UI.PlayerInspector;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI
@@ -55,6 +56,13 @@ namespace FungusToast.Unity.UI
         private UI_GameLogPanel draftHistoryLogPanel;
         private Action onDraftHistoryRequested;
         private Func<bool> canOpenDraftHistory;
+        private RectTransform inspectPlayersCoachmarkRoot;
+        private CanvasGroup inspectPlayersCoachmarkCanvasGroup;
+        private TextMeshProUGUI inspectPlayersCoachmarkTitleTextLabel;
+        private TextMeshProUGUI inspectPlayersCoachmarkBodyTextLabel;
+        private Button inspectPlayersCoachmarkCloseButton;
+        private bool hasDismissedInspectPlayersCoachmarkThisGame;
+        private bool hasOpenedPlayerInspectorThisGame;
         private bool hasDismissedScoreboardCoachmarkThisGame;
         private bool hasDismissedEndgameCountdownCoachmarkThisGame;
         private int lastDraftHistoryAttentionRound = -1;
@@ -65,6 +73,16 @@ namespace FungusToast.Unity.UI
         {
             ApplyStyle();
             UpdateRoundAndOccupancyTooltip();
+        }
+
+        private void OnEnable()
+        {
+            PlayerInspectorPanel.Opened += OnPlayerInspectorOpened;
+        }
+
+        private void OnDisable()
+        {
+            PlayerInspectorPanel.Opened -= OnPlayerInspectorOpened;
         }
 
         private void ApplyStyle()
@@ -284,8 +302,11 @@ namespace FungusToast.Unity.UI
             lastDraftHistoryAttentionRound = -1;
             hasDismissedScoreboardCoachmarkThisGame = false;
             hasDismissedEndgameCountdownCoachmarkThisGame = false;
+            hasDismissedInspectPlayersCoachmarkThisGame = false;
+            hasOpenedPlayerInspectorThisGame = false;
             HideScoreboardCoachmarkImmediate(false);
             HideEndgameCountdownCoachmarkImmediate(false);
+            HideInspectPlayersCoachmarkImmediate(false);
             UpdateRoundAndOccupancyTooltip();
             RefreshDraftHistoryAvailability();
         }
@@ -519,6 +540,243 @@ namespace FungusToast.Unity.UI
             scoreboardCoachmarkCanvasGroup.blocksRaycasts = true;
             scoreboardCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(scoreboardCoachmarkRoot);
+        }
+
+        /// <summary>
+        /// Teaches the mold-icon inspector. Hover alone shows a text tooltip; the interactive
+        /// panel with hoverable adaptation and mycovariant icons only appears on click, which is
+        /// not discoverable without a nudge.
+        /// </summary>
+        public void TryShowInspectPlayersCoachmark(int currentRound)
+        {
+            var gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowInspectPlayersIntro(
+                    forceFirstGame,
+                    currentRound,
+                    hasDismissedInspectPlayersCoachmarkThisGame,
+                    hasOpenedPlayerInspectorThisGame,
+                    isFastForwarding))
+            {
+                return;
+            }
+
+            EnsureInspectPlayersCoachmarkUi();
+            if (inspectPlayersCoachmarkRoot == null || inspectPlayersCoachmarkCanvasGroup == null)
+            {
+                return;
+            }
+
+            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.InspectPlayersIntro);
+            inspectPlayersCoachmarkTitleTextLabel.text = definition.Title;
+            inspectPlayersCoachmarkBodyTextLabel.text = definition.Body;
+            PositionInspectPlayersCoachmark();
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(inspectPlayersCoachmarkRoot);
+            inspectPlayersCoachmarkRoot.gameObject.SetActive(true);
+            inspectPlayersCoachmarkRoot.SetAsLastSibling();
+            inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = true;
+            inspectPlayersCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(inspectPlayersCoachmarkRoot);
+        }
+
+        private void EnsureInspectPlayersCoachmarkUi()
+        {
+            if (inspectPlayersCoachmarkRoot != null)
+            {
+                return;
+            }
+
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (canvas == null)
+            {
+                return;
+            }
+
+            var rootObject = new GameObject("UI_InspectPlayersCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(canvas.transform, false);
+
+            inspectPlayersCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            inspectPlayersCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            inspectPlayersCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            inspectPlayersCoachmarkRoot.pivot = new Vector2(1f, 1f);
+            inspectPlayersCoachmarkRoot.anchoredPosition = Vector2.zero;
+            inspectPlayersCoachmarkRoot.sizeDelta = new Vector2(360f, 210f);
+
+            inspectPlayersCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            inspectPlayersCoachmarkCanvasGroup.alpha = 0f;
+            inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = false;
+            inspectPlayersCoachmarkCanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f);
+            backgroundColor.a = 0.98f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-52f, -12f);
+
+            inspectPlayersCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            inspectPlayersCoachmarkTitleTextLabel.text = string.Empty;
+            inspectPlayersCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            inspectPlayersCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            inspectPlayersCoachmarkTitleTextLabel.fontSize = 24f;
+            inspectPlayersCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            inspectPlayersCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(inspectPlayersCoachmarkTitleTextLabel);
+            inspectPlayersCoachmarkTitleTextLabel.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -50f);
+
+            inspectPlayersCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            inspectPlayersCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            inspectPlayersCoachmarkBodyTextLabel.fontSize = 19f;
+            inspectPlayersCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            inspectPlayersCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            inspectPlayersCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            inspectPlayersCoachmarkBodyTextLabel.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(34f, 34f);
+            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+
+            var closeImage = closeObject.GetComponent<Image>();
+            closeImage.color = UIStyleTokens.Surface.PanelElevated;
+
+            inspectPlayersCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(inspectPlayersCoachmarkCloseButton);
+            inspectPlayersCoachmarkCloseButton.onClick.RemoveAllListeners();
+            inspectPlayersCoachmarkCloseButton.onClick.AddListener(OnInspectPlayersCoachmarkDismissed);
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = 20f;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                inspectPlayersCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                inspectPlayersCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+        }
+
+        private void PositionInspectPlayersCoachmark()
+        {
+            if (inspectPlayersCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            {
+                return;
+            }
+
+            RectTransform parentRect = inspectPlayersCoachmarkRoot.parent as RectTransform;
+            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
+            if (parentRect == null || canvas == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            sidebarRect.GetWorldCorners(corners);
+            Vector3 topLeftWorld = corners[1];
+
+            // Sits below the win-condition slot so the two never overlap if both are pending.
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                inspectPlayersCoachmarkRoot,
+                parentRect,
+                canvas,
+                topLeftWorld,
+                new Vector2(-16f, -240f),
+                CoachmarkLayoutUtility.DefaultScreenPadding);
+        }
+
+        /// <summary>
+        /// Opening the inspector is the behaviour this coachmark teaches, so discovering it
+        /// retires the hint for good rather than showing it again next round.
+        /// </summary>
+        private void OnPlayerInspectorOpened()
+        {
+            hasOpenedPlayerInspectorThisGame = true;
+
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.InspectPlayersIntro);
+            }
+
+            HideInspectPlayersCoachmarkImmediate(false);
+        }
+
+        private void OnInspectPlayersCoachmarkDismissed()
+        {
+            hasDismissedInspectPlayersCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.InspectPlayersIntro);
+            }
+
+            HideInspectPlayersCoachmarkImmediate(false);
+        }
+
+        private void HideInspectPlayersCoachmarkImmediate(bool resetSessionDismissal)
+        {
+            if (resetSessionDismissal)
+            {
+                hasDismissedInspectPlayersCoachmarkThisGame = false;
+            }
+
+            if (inspectPlayersCoachmarkCanvasGroup != null)
+            {
+                inspectPlayersCoachmarkCanvasGroup.alpha = 0f;
+                inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = false;
+                inspectPlayersCoachmarkCanvasGroup.interactable = false;
+            }
+
+            if (inspectPlayersCoachmarkRoot != null)
+            {
+                inspectPlayersCoachmarkRoot.gameObject.SetActive(false);
+            }
         }
 
         private void EnsureScoreboardCoachmarkUi()

@@ -23,8 +23,13 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
         /// <summary>
         /// The always-visible player summary: identity, highest mutation, mycovariants, adaptations.
+        /// Set <paramref name="includeTraitLines"/> to false on a surface that renders the owned
+        /// mycovariants and adaptations as icon grids instead, so the same names are not listed twice.
         /// </summary>
-        public static IReadOnlyList<PlayerInspectorSection> BuildSummarySections(Player? player, GameManager? manager)
+        public static IReadOnlyList<PlayerInspectorSection> BuildSummarySections(
+            Player? player,
+            GameManager? manager,
+            bool includeTraitLines = true)
         {
             if (player == null)
             {
@@ -54,10 +59,42 @@ namespace FungusToast.Unity.UI.PlayerInspector
             }
 
             lines.Add(new PlayerInspectorLine("Highest Mutation", GetHighestMutationText(player)));
-            lines.Add(new PlayerInspectorLine("Mycovariants", GetMycovariantsList(player)));
-            lines.Add(new PlayerInspectorLine("Adaptations", GetAdaptationsList(player)));
+
+            if (includeTraitLines)
+            {
+                lines.Add(new PlayerInspectorLine("Mycovariants", GetMycovariantsList(player)));
+                lines.Add(new PlayerInspectorLine("Adaptations", GetAdaptationsList(player)));
+            }
 
             return new[] { new PlayerInspectorSection(null, lines) };
+        }
+
+        /// <summary>
+        /// The player's owned adaptations, for a surface that renders them as icons. Entries with a
+        /// missing definition are dropped so a caller can assume <c>Adaptation</c> is non-null.
+        /// </summary>
+        public static IReadOnlyList<PlayerAdaptation> GetOwnedAdaptations(Player? player)
+        {
+            if (player?.PlayerAdaptations == null)
+            {
+                return System.Array.Empty<PlayerAdaptation>();
+            }
+
+            return player.PlayerAdaptations.Where(pa => pa?.Adaptation != null).ToList();
+        }
+
+        /// <summary>
+        /// The player's owned mycovariants, for a surface that renders them as icons. Entries with a
+        /// missing definition are dropped so a caller can assume <c>Mycovariant</c> is non-null.
+        /// </summary>
+        public static IReadOnlyList<PlayerMycovariant> GetOwnedMycovariants(Player? player)
+        {
+            if (player?.PlayerMycovariants == null)
+            {
+                return System.Array.Empty<PlayerMycovariant>();
+            }
+
+            return player.PlayerMycovariants.Where(pm => pm?.Mycovariant != null).ToList();
         }
 
         /// <summary>

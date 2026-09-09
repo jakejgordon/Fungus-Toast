@@ -28,6 +28,8 @@ namespace FungusToast.Unity.UI.Tooltips
         private bool touchMode;
         private bool tooltipVisible;
         private bool isPinned = false;
+        private string hintLine;
+        private bool suppressed;
 
         /// <summary>True while this trigger is holding the shared tooltip open via click-to-pin.</summary>
         public bool IsPinned => isPinned;
@@ -104,6 +106,8 @@ namespace FungusToast.Unity.UI.Tooltips
 
         public void OnPointerEnter(PointerEventData eventData)
         {
+            if (suppressed)
+                return; // a richer surface (the pinned player inspector) already shows this content
             if (touchMode && !isHelpIcon)
                 return; // use long press instead (not yet implemented for simplicity)
             float delay = useCustomDelay ? hoverDelay : (TooltipManager.Instance != null ? TooltipManager.Instance.showDelay : 0.35f);
@@ -229,7 +233,13 @@ namespace FungusToast.Unity.UI.Tooltips
                 // The manager re-resolves text every frame while visible, so the hint tracks the
                 // pin state live and gives click-to-pin the affordance it was missing.
                 Func<string> body = dyn ?? (() => staticText);
-                dyn = () => AppendPinHint(body());
+                dyn = () => AppendHint(body(), isPinned ? "Pinned — click again to unpin" : "Click to pin");
+            }
+            else if (!string.IsNullOrEmpty(hintLine) && !touchMode)
+            {
+                Func<string> body = dyn ?? (() => staticText);
+                string hint = hintLine;
+                dyn = () => AppendHint(body(), hint);
             }
 
             return new TooltipRequest
@@ -245,14 +255,36 @@ namespace FungusToast.Unity.UI.Tooltips
             };
         }
 
-        private string AppendPinHint(string body)
+        private static string AppendHint(string body, string hint)
         {
-            string hint = isPinned ? "Pinned — click again to unpin" : "Click to pin";
             string hintColor = ColorUtility.ToHtmlStringRGB(UIStyleTokens.Text.Muted);
             return $"{body}\n<color=#{hintColor}><i>{hint}</i></color>";
         }
 
         public void SetStaticText(string text) => staticText = text;
         public void SetPinOnClick(bool value) => pinOnClick = value;
+
+        /// <summary>
+        /// Appends a muted affordance line to the tooltip, for an element whose click does
+        /// something other than pin the shared tooltip. Ignored while <c>pinOnClick</c> is set,
+        /// which supplies its own live pin hint.
+        /// </summary>
+        public void SetHintLine(string value) => hintLine = value;
+
+        /// <summary>
+        /// Stops this trigger from showing the shared tooltip, and hides it if it is currently
+        /// this trigger's. Used while a richer surface already displays the same content.
+        /// </summary>
+        public void SetSuppressed(bool value)
+        {
+            suppressed = value;
+            if (!suppressed)
+                return;
+
+            isPinned = false;
+            tooltipVisible = false;
+            if (TooltipManager.Instance != null)
+                TooltipManager.Instance.Cancel(this);
+        }
     }
 }

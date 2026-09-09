@@ -62,6 +62,13 @@ If you need to answer "where do the existing coaching tooltips live?", start wit
 - the player is asking “what is this control / icon / card?”
 - the explanation should be available any time the element is present
 
+**What this tooltip cannot do:**
+`TooltipView` is a single shared instance that sets `blocksRaycasts = false` whenever it is shown,
+and its whole body is one `TextMeshProUGUI`. So it can never contain anything hoverable or
+clickable, and a tooltip opened from inside it would evict itself through the manager's
+`NotifyTooltipReleased()` handshake. If the content needs interactive parts, it needs a real panel
+— see section F.
+
 **Click-to-pin:**
 `TooltipTrigger.SetPinOnClick(true)` makes clicking the element hold the tooltip open past pointer
 exit. Only one tooltip exists per session, so when another source takes the shared view the manager
@@ -69,14 +76,16 @@ calls `NotifyTooltipReleased()` on the previous trigger — do not add pin state
 handshake. A pinned trigger appends its own “Pinned / Click to pin” hint line, so the affordance
 comes for free.
 
-Currently used by: the player summary mold icon.
+For an element whose click does something *other* than pin — like opening the player inspector —
+use `SetHintLine("…")` for the same muted affordance line, and `SetSuppressed(true)` while the
+richer surface is showing so the hover tooltip does not stack on top of it.
 
 **Player summary mold icon (shared content):**
 The mold-icon tooltip does not build its own text. Content comes from
 `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorContent.cs`, which returns
-presentation-neutral sections, rendered to rich text by `PlayerInspectorMarkup`. This exists so a
-future docked player inspector can render the same sections as real UI without the two surfaces
-drifting apart — add new player detail there, not in `PlayerSummaryTooltipProvider`.
+presentation-neutral sections, rendered to rich text by `PlayerInspectorMarkup`. Add new player
+detail there, not in `PlayerSummaryTooltipProvider`, so the hover tooltip and the pinned inspector
+panel (section F) never drift apart.
 
 `BuildDevelopmentSections` is appended only when the Development Testing toggle is on, and carries
 AI tuning parameters (strategy identity, max tier, economy bias, priority categories, surge
@@ -132,6 +141,45 @@ copy.
 
 If it is specifically first-time teaching content, still store the copy and seen-state in the onboarding catalog even if the presentation surface is a banner.
 
+---
+
+### F. Interactive inspector panels
+
+**Purpose:** the same explanatory content as a hover tooltip, but with parts the player can
+interact with — icons to hover, links to click, controls to use.
+
+**Current systems/files:**
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorPanel.cs` — the pinned
+  player inspector, opened by clicking a scoreboard mold icon
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorLauncher.cs` — the
+  click handler that opens it and suppresses the hover tooltip while it is open
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/MutationInspectorPanel.cs` — the docked
+  mutation inspector
+
+**Trigger model:**
+- explicit click, never hover. A raycast-blocking panel that appeared on hover over the live board
+  would break cell hover, placement clicks, and hover-exit.
+
+**Use this when:**
+- the content needs hoverable or clickable parts (the hover tooltip cannot host them at all)
+- the player will read it for more than a moment, so it must survive pointer-exit
+
+**How the player inspector is built:**
+It renders `PlayerInspectorContent` sections with `includeTraitLines: false`, then shows owned
+adaptations and mycovariants as real icon tiles from `CompactIconTileFactory` — the same tiles the
+mold profile sidebar uses. Each tile carries its own `AdaptationTooltipProvider` /
+`MycovariantTooltipProvider` plus a `TooltipTrigger`, so hovering one explains that trait. Nested
+tooltips work here precisely because the panel is *not* the shared tooltip view.
+
+The panel repositions against its anchor every `LateUpdate`, because the scoreboard re-sorts its
+rows by rank. Content re-derives on a timer rather than per frame, and the icon grids only rebuild
+when the owned-trait signature changes.
+
+If you add another interactive inspector, reuse `CompactIconTileFactory` for icon tiles rather than
+hand-rolling the tile geometry a third time.
+
+---
+
 ## 2. Decision Rules
 
 When adding explanatory UI, use this decision order:
@@ -142,7 +190,9 @@ When adding explanatory UI, use this decision order:
    - Use the standard hover tooltip pipeline.
 3. **Is this explanation about a live toast cell or board state?**
    - Use the cell/board inspection tooltip path.
-4. **Is this a transient status message rather than a tooltip?**
+4. **Does the explanation itself need hoverable or clickable parts?**
+   - Use an interactive inspector panel. The shared hover tooltip cannot host them.
+5. **Is this a transient status message rather than a tooltip?**
    - Use the appropriate toast/banner/panel system.
 
 ## 3. Current New-player Onboarding Inventory
@@ -154,6 +204,7 @@ These currently live in `NewPlayerTooltipCatalog.cs`:
 - `TimeLapseCarriedOverIntro`
 - `StoreMutationPointsIntro`
 - `ScoreboardWinCondition`
+- `InspectPlayersIntro`
 - `AdaptationPanelIntro`
 - `CameraPanIntro`
 - `MycovariantDraftIntro`
@@ -179,6 +230,7 @@ Use this section when you want a quick description of what already exists withou
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
 | `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `InspectPlayersIntro` | sidebar coachmark | Shown from round 4 onward — deliberately after `ScoreboardWinCondition` (round 2) and `AdaptationPanelIntro` (round 3) so the sidebar does not stack coaching panels. Suppressed while fast-forwarding, after dismissal this game, and for a player who already opened the inspector this game. Opening the inspector marks it seen for good. Outside forced first-game experience, it only shows once per profile. |
 | `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `CameraPanIntro` | board coachmark | Shown during round 1 after a short delay for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
 | `MycovariantDraftIntro` | draft coachmark | Shown the first time the Mycovariant draft panel opens, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
@@ -202,5 +254,6 @@ For exact gating conditions, prefer `NewPlayerTooltipRules` over this prose summ
 - **“Teach new players what the scoreboard means.”** → onboarding coachmark
 - **“Teach new players how to move around the board.”** → onboarding coachmark
 - **“Show details for the tile under the mouse.”** → cell/board inspection tooltip
+- **“Let the player hover the icons inside an explanation.”** → interactive inspector panel
 - **“Announce a phase or status change.”** → informational banner/toast
 - **“Teach the player a system the first time they encounter it.”** → onboarding catalog entry
