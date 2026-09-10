@@ -263,9 +263,10 @@ namespace FungusToast.Core.Players
             }
 
             if (HasAdaptation(AdaptationIds.SignalEconomy)
-                && mutation.Id == MutationIds.ChemotacticBeacon)
+                && mutation.IsSurge
+                && mutation.Tier == MutationTier.Tier2)
             {
-                activationCost -= 1;
+                activationCost -= AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction;
             }
 
             return Math.Max(0, activationCost);

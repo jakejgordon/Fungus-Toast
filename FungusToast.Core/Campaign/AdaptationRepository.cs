@@ -181,7 +181,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.ThanatrophicRebound,
                         "Thanatrophic Rebound",
-                        "The first time one of your living cells dies, it immediately reclaims itself as a resistant cell.",
+                        $"The first {AdaptationGameBalance.ThanatrophicReboundReclaimCount} times one of your living cells dies, it immediately reclaims itself as a resistant cell.",
                         "thanatrophic_rebound",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
@@ -199,7 +199,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.SignalEconomy,
                         "Signal Economy",
-                        "Your Chemotactic Beacon surge costs 1 fewer mutation point to activate.",
+                        $"Your Tier 2 Surge Mutations (Autolytic Surge, Necrotic Clearance, Chemotactic Beacon, and Chitin Fortification) cost {AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction} fewer mutation point to activate.",
                         "signal_economy",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(

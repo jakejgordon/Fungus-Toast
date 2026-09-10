@@ -43,6 +43,36 @@ public class AdaptationBehaviorTests
             cost);
     }
 
+    [Theory]
+    [InlineData(MutationIds.HyphalSurge)]
+    [InlineData(MutationIds.NecroticClearance)]
+    [InlineData(MutationIds.ChemotacticBeacon)]
+    [InlineData(MutationIds.ChitinFortification)]
+    public void SignalEconomy_reduces_every_tier_two_surge_activation_cost(int mutationId)
+    {
+        var player = CreatePlayer();
+        var mutation = RequireMutation(mutationId);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.SignalEconomy));
+
+        int cost = player.GetMutationPointCost(mutation);
+
+        Assert.Equal(
+            Math.Max(0, mutation.GetSurgeActivationCost(currentLevel: 0) - AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction),
+            cost);
+    }
+
+    [Fact]
+    public void SignalEconomy_does_not_reduce_non_tier_two_surge_activation_cost()
+    {
+        var player = CreatePlayer();
+        var mutation = RequireMutation(MutationIds.MimeticResilience);
+        player.TryAddAdaptation(RequireAdaptation(AdaptationIds.SignalEconomy));
+
+        int cost = player.GetMutationPointCost(mutation);
+
+        Assert.Equal(mutation.GetSurgeActivationCost(currentLevel: 0), cost);
+    }
+
     [Fact]
     public void HyphalEcho_extends_future_mycelial_surge_activations_by_one_round()
     {
@@ -118,21 +148,37 @@ public class AdaptationBehaviorTests
     }
 
     [Fact]
-    public void ThanatrophicRebound_reclaims_first_dead_cell_as_resistant()
+    public void ThanatrophicRebound_reclaims_first_two_dead_cells_as_resistant()
     {
         var board = CreateBoardWithPlayer(out var player);
         player.TryAddAdaptation(RequireAdaptation(AdaptationIds.ThanatrophicRebound));
-        var cell = PlaceOwnedCell(board, player, tileId: 12);
+        var firstCell = PlaceOwnedCell(board, player, tileId: 12);
+        var secondCell = PlaceOwnedCell(board, player, tileId: 13);
+        var thirdCell = PlaceOwnedCell(board, player, tileId: 14);
 
-        board.KillFungalCell(cell, DeathReason.Age);
+        board.KillFungalCell(firstCell, DeathReason.Age);
         AdaptationEffectProcessor.OnCellDeath(
-            new FungalCellDiedEventArgs(cell.TileId, player.PlayerId, DeathReason.Age, null, cell),
+            new FungalCellDiedEventArgs(firstCell.TileId, player.PlayerId, DeathReason.Age, null, firstCell),
             board,
             board.Players);
 
-        var reclaimedCell = Assert.IsType<FungalCell>(board.GetCell(12));
-        Assert.True(reclaimedCell.IsAlive);
-        Assert.True(reclaimedCell.IsResistant);
+        board.KillFungalCell(secondCell, DeathReason.Age);
+        AdaptationEffectProcessor.OnCellDeath(
+            new FungalCellDiedEventArgs(secondCell.TileId, player.PlayerId, DeathReason.Age, null, secondCell),
+            board,
+            board.Players);
+
+        board.KillFungalCell(thirdCell, DeathReason.Age);
+        AdaptationEffectProcessor.OnCellDeath(
+            new FungalCellDiedEventArgs(thirdCell.TileId, player.PlayerId, DeathReason.Age, null, thirdCell),
+            board,
+            board.Players);
+
+        Assert.True(board.GetCell(12)!.IsAlive, "Expected the first dead cell to be reclaimed.");
+        Assert.True(board.GetCell(12)!.IsResistant, "Expected the first reclaimed cell to be resistant.");
+        Assert.True(board.GetCell(13)!.IsAlive, "Expected the second dead cell to be reclaimed.");
+        Assert.True(board.GetCell(13)!.IsResistant, "Expected the second reclaimed cell to be resistant.");
+        Assert.True(board.GetCell(14)!.IsDead, "Expected the third dead cell to remain dead.");
         Assert.True(player.GetAdaptation(AdaptationIds.ThanatrophicRebound)!.HasTriggered);
     }
 
