@@ -1098,6 +1098,21 @@ measurement model, phase gates, and open product decisions are in
     artifact and combine it with measured context and matchup evidence before
     proposing any roster changes.
 
+72. P8.1's deterministic behavior evidence is complete. The new
+    `--write-roster-behavior-report` command writes a provenance-stamped Markdown
+    artifact with current code hashes, stable IDs, definition fingerprints, complete
+    observed builds, and all pairwise raw/category similarities. The frozen Proven
+    artifact is `AI_P8_ROSTER_BEHAVIOR_V1.md`: four of its 171 pairs have an exact
+    observed raw build — Creeping>Necrosporulation/Filament Regrowth,
+    Grow>Kill>Reclaim(Econ)/Grow>Kill>Reclaim(Econ/Reclaim), and the two Balanced
+    Control/CampaignMirror pairs. They are not automatic retirement targets. The P7
+    reference matrix measures different shares within every pair (0.965/1.058,
+    1.372/1.373, 1.866/1.915, and 1.347/1.271 respectively), confirming that the
+    scripted spender is only one behavioral surface. There is no matched matchup
+    matrix, so counter claims and merge/retire recommendations remain evidence gaps.
+    All 272 Simulation tests pass. Next: P8.2 target-matrix policy, with the static
+    review candidates and matchup-evidence gap explicit rather than hidden.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

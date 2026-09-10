@@ -37,5 +37,6 @@ public sealed class RosterBehaviorReportTests
         Assert.Contains("0.750", report);
         Assert.Contains("1.000", report);
         Assert.Contains("redundancy-review candidate", report);
+        Assert.Contains("Exact raw-build matches", report);
     }
 }

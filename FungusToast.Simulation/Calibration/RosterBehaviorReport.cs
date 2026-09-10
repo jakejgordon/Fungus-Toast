@@ -38,6 +38,24 @@ public static class RosterBehaviorReport
         builder.AppendLine("This artifact compares deterministic observed mutation spending, not authored theme or difficulty labels. High raw-build similarity identifies a redundancy-review candidate only; it is not evidence to retire either strategy. Counter claims and player-value claims require contextual matchup evidence.");
         builder.AppendLine();
 
+        var exactMatches = pairs.Where(pair => pair.MutationDistance <= 0).ToList();
+        builder.AppendLine("## Exact raw-build matches");
+        builder.AppendLine();
+        if (exactMatches.Count == 0)
+        {
+            builder.AppendLine("No pair has an identical observed raw mutation build.");
+        }
+        else
+        {
+            builder.AppendLine("These pairs have identical observed mutation builds under this script. Their separate identities may still affect reactive behavior, draft choices, surge timing, or real-game outcomes, so they remain review candidates rather than automatic merge targets.");
+            builder.AppendLine();
+            builder.AppendLine("| First strategy | Second strategy | Category similarity |");
+            builder.AppendLine("|---|---|---:|");
+            foreach (var pair in exactMatches)
+                builder.AppendLine($"| {pair.FirstStrategyName} | {pair.SecondStrategyName} | {pair.CategorySimilarity:0.000} |");
+        }
+        builder.AppendLine();
+
         builder.AppendLine("## Observed profiles");
         builder.AppendLine();
         builder.AppendLine("| Strategy | Stable ID | Definition fingerprint | Mutation build | Category profile |");
