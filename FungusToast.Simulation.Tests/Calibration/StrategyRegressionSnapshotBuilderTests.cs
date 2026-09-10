@@ -93,7 +93,7 @@ public sealed class StrategyRegressionSnapshotBuilderTests
         File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.PlayerSummaryFileName),
             $"player,games,avg_normalized_board_share,normalized_board_share_ci95_low,normalized_board_share_ci95_high\nAlpha,{games},1,0.9,1.1\n");
         File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.ExecutionHealthFileName),
-            $"strategy_name,decisions,fallback_decisions\nAlpha,{decisions},{fallbackDecisions}\n");
+            $"strategy_name,decisions,fallback_decisions,decision_failures\nAlpha,{decisions},{fallbackDecisions},0\n");
         File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.CategoryProfileFileName),
             "strategy_name,mutation_category,total_levels\nAlpha,Growth,2\nAlpha,Growth,3\n");
         File.WriteAllText(Path.Combine(artifact, "resolved-manifest.json"), "{}");

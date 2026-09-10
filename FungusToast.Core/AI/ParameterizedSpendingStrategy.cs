@@ -508,6 +508,7 @@ namespace FungusToast.Core.AI
                 {
                     // Record that we're banking points for expensive mutations
                     int pointsBanked = player.MutationPoints;
+                    player.WantsToBankPointsThisTurn = true;
                     simulationObserver.RecordBankedPoints(player.PlayerId, pointsBanked);
                     AdaptationEffectProcessor.OnMutationPointsBanked(player, pointsBanked);
                     GeneticDriftMutationProcessor.OnMutationPointsBanked_LatentPolymorphism(player, pointsBanked, simulationObserver);
@@ -561,6 +562,7 @@ namespace FungusToast.Core.AI
             if (ShouldBankForSurges(player, allMutations, board))
             {
                 int pointsBanked = player.MutationPoints;
+                player.WantsToBankPointsThisTurn = true;
                 simulationObserver.RecordBankedPoints(player.PlayerId, pointsBanked);
                 AdaptationEffectProcessor.OnMutationPointsBanked(player, pointsBanked);
                 GeneticDriftMutationProcessor.OnMutationPointsBanked_LatentPolymorphism(player, pointsBanked, simulationObserver);

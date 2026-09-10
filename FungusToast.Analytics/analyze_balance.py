@@ -190,13 +190,13 @@ def build_strategy_execution_health(players: pd.DataFrame) -> pd.DataFrame:
     """Aggregate AI decision telemetry without inferring health for legacy artifacts."""
     required = {
         "strategy_name", "strategy_id", "strategy_definition_fingerprint",
-        "ai_mutation_spending_decisions", "ai_mutation_fallback_spends",
+        "ai_mutation_spending_decisions", "ai_mutation_fallback_spends", "ai_mutation_decision_failures",
     }
     players = _ensure_strategy_identity(players)
     missing = sorted(required.difference(players.columns))
     columns = [
         "strategy_name", "strategy_id", "strategy_definition_fingerprint",
-        "decisions", "fallback_decisions", "fallback_rate",
+        "decisions", "fallback_decisions", "decision_failures", "fallback_rate", "decision_failure_rate",
     ]
     if players.empty or missing:
         return pd.DataFrame(columns=columns)
@@ -206,10 +206,16 @@ def build_strategy_execution_health(players: pd.DataFrame) -> pd.DataFrame:
         strategy_name=("strategy_name", "first"),
         decisions=("ai_mutation_spending_decisions", "sum"),
         fallback_decisions=("ai_mutation_fallback_spends", "sum"),
+        decision_failures=("ai_mutation_decision_failures", "sum"),
     )
     grouped["fallback_rate"] = np.where(
         grouped["decisions"] > 0,
         grouped["fallback_decisions"] / grouped["decisions"],
+        0.0,
+    )
+    grouped["decision_failure_rate"] = np.where(
+        grouped["decisions"] > 0,
+        grouped["decision_failures"] / grouped["decisions"],
         0.0,
     )
     return grouped[columns].sort_values(["strategy_name", "strategy_id"]).reset_index(drop=True)

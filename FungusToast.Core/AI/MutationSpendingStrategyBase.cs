@@ -30,11 +30,19 @@ namespace FungusToast.Core.AI
             Random rnd, ISimulationObserver simulationObserver)
         {
             var pointsBefore = player.MutationPoints;
+            player.WantsToBankPointsThisTurn = false;
             // Delegate actual spending logic to child
             // Individual TryUpgradeMutation calls will handle point tracking correctly
             PerformSpendingLogic(player, allMutations, board, rnd, simulationObserver);
             if (pointsBefore > 0)
+            {
                 simulationObserver.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);
+                var hasAffordableLegalUpgrade = allMutations.Any(mutation =>
+                    player.CanUpgrade(mutation, board.CurrentRound, board)
+                    && player.GetMutationPointCost(mutation) <= player.MutationPoints);
+                if (player.MutationPoints > 0 && !player.WantsToBankPointsThisTurn && hasAffordableLegalUpgrade)
+                    simulationObserver.RecordAiMutationDecisionFailure(player.PlayerId);
+            }
         }
 
         protected Mutation? PickBestTendrilMutation(Player player, List<Mutation> options, GameBoard board)

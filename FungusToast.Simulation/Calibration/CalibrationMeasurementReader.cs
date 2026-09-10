@@ -110,7 +110,7 @@ public static class CalibrationMeasurementReader
         out IReadOnlyList<string> warnings)
     {
         ArgumentNullException.ThrowIfNull(state);
-        var totals = new Dictionary<string, (int Decisions, int FallbackDecisions)>(StringComparer.Ordinal);
+        var totals = new Dictionary<string, (int Decisions, int FallbackDecisions, int DecisionFailures)>(StringComparer.Ordinal);
         var strategiesByExperiment = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var problems = new List<string>();
 
@@ -134,7 +134,8 @@ public static class CalibrationMeasurementReader
                 totals.TryGetValue(health.StrategyName, out var total);
                 totals[health.StrategyName] = (
                     total.Decisions + health.Decisions,
-                    total.FallbackDecisions + health.FallbackDecisions);
+                    total.FallbackDecisions + health.FallbackDecisions,
+                    total.DecisionFailures + health.DecisionFailures!.Value);
             }
             strategiesByExperiment[record.ExperimentId] = ReadExecutionHealthSummary(path)
                 .Select(health => health.StrategyName)
@@ -160,7 +161,7 @@ public static class CalibrationMeasurementReader
         }
         return totals.ToDictionary(
             entry => entry.Key,
-            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, null, replayFailures[entry.Key]),
+            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, entry.Value.DecisionFailures, replayFailures[entry.Key]),
             StringComparer.Ordinal);
     }
 
@@ -173,7 +174,7 @@ public static class CalibrationMeasurementReader
         var columns = headers
             .Select((header, index) => (header, index))
             .ToDictionary(entry => entry.header.Trim(), entry => entry.index, StringComparer.OrdinalIgnoreCase);
-        foreach (var required in new[] { "strategy_name", "decisions", "fallback_decisions" })
+        foreach (var required in new[] { "strategy_name", "decisions", "fallback_decisions", "decision_failures" })
         {
             if (!columns.ContainsKey(required))
                 throw new InvalidOperationException($"'{path}' is missing the '{required}' column.");
@@ -190,7 +191,7 @@ public static class CalibrationMeasurementReader
                 name,
                 (int)ParseDouble(values, columns, "decisions"),
                 (int)ParseDouble(values, columns, "fallback_decisions"),
-                0,
+                (int)ParseDouble(values, columns, "decision_failures"),
                 0));
         }
 

@@ -66,6 +66,7 @@ namespace FungusToast.Simulation.Models
 
         private readonly Dictionary<int, int> aiMutationSpendingDecisions = new();
         private readonly Dictionary<int, int> aiMutationFallbackSpends = new();
+        private readonly Dictionary<int, int> aiMutationDecisionFailures = new();
         public void RecordAiMutationSpendingDecision(int playerId, int pointsAvailable, int pointsSpent)
         {
             if (pointsAvailable <= 0) return;
@@ -73,10 +74,14 @@ namespace FungusToast.Simulation.Models
         }
         public void RecordAiMutationFallbackSpend(int playerId)
             => aiMutationFallbackSpends[playerId] = GetAiMutationFallbackSpends(playerId) + 1;
+        public void RecordAiMutationDecisionFailure(int playerId)
+            => aiMutationDecisionFailures[playerId] = GetAiMutationDecisionFailures(playerId) + 1;
         public int GetAiMutationSpendingDecisions(int playerId)
             => aiMutationSpendingDecisions.TryGetValue(playerId, out var value) ? value : 0;
         public int GetAiMutationFallbackSpends(int playerId)
             => aiMutationFallbackSpends.TryGetValue(playerId, out var value) ? value : 0;
+        public int GetAiMutationDecisionFailures(int playerId)
+            => aiMutationDecisionFailures.TryGetValue(playerId, out var value) ? value : 0;
 
         // ────────────────
         // Nutrient Patches

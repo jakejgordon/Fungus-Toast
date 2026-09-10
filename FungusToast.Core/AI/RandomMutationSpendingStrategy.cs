@@ -53,6 +53,10 @@ namespace FungusToast.Core.AI
             {
                 observer.RecordAiMutationFallbackSpend(player.PlayerId);
                 observer.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);
+                if (player.MutationPoints > 0 && allMutations.Any(mutation =>
+                        player.CanUpgrade(mutation, board.CurrentRound, board)
+                        && player.GetMutationPointCost(mutation) <= player.MutationPoints))
+                    observer.RecordAiMutationDecisionFailure(player.PlayerId);
             }
         }
     }

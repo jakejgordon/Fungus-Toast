@@ -1074,6 +1074,16 @@ measurement model, phase gates, and open product decisions are in
     successful persisted replay result resolves to zero failures. 268 Simulation
     tests pass.
 
+70. P7.5 decision-failure telemetry is now defined and exported: it records
+    only an avoidable idle turn — funded points remain, the strategy did not
+    declare banking, and at least one legal upgrade was affordable. Generic
+    fallback use, unaffordable options, exhausted trees, prerequisites, surge
+    plans, and failed simulation runs are not mislabeled as decision failures.
+    The count flows through Core, Parquet, analyzer CSV, and regression snapshots;
+    the Unity Core DLL/PDB was refreshed. 268 Simulation tests, Core and
+    Simulation builds, and analyzer syntax compilation pass. Unity Editor
+    compile plus normal and fast-forward AI spending remain the manual check.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
