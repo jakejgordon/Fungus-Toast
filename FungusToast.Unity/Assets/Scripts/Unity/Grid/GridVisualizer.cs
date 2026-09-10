@@ -1720,11 +1720,14 @@ namespace FungusToast.Unity.Grid
         private static float GetNewGrowthVisualScale(FungalCell cell)
         {
             if (cell?.IsAlive != true
+                || cell.IsResistant
                 || (cell.SourceOfGrowth ?? GrowthSource.Unknown) == GrowthSource.InitialSpore)
             {
                 return 1f;
             }
 
+            // Resistance overlays are full-size. A newly resistant reclaim should not
+            // spend several Growth Cycles at the young-cell scale beneath its shield.
             // Cells are aged at the end of the cycle that creates them, so age one
             // still represents the initial half-size visual state. IsNewlyGrown is
             // only an animation marker and clears when the next growth phase starts;
