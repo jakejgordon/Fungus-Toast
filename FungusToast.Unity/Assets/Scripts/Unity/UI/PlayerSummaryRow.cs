@@ -4,8 +4,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using FungusToast.Unity.UI.PlayerInspector;
-using FungusToast.Unity.UI.Tooltips;
-using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System.Globalization;
 
 namespace FungusToast.Unity.UI
@@ -420,34 +418,18 @@ namespace FungusToast.Unity.UI
 
             hoverHandler = PlayerMoldIconHoverHandler.Attach(moldIconImage.gameObject, playerId, gridVisualizer);
 
-            // --- Wire tooltip provider on the icon ---
-            var tooltipTrigger = moldIconImage.GetComponent<TooltipTrigger>();
-            if (tooltipTrigger == null)
-                tooltipTrigger = moldIconImage.gameObject.AddComponent<TooltipTrigger>();
-
-            var provider = moldIconImage.GetComponent<PlayerSummaryTooltipProvider>();
-            if (provider == null)
-                provider = moldIconImage.gameObject.AddComponent<PlayerSummaryTooltipProvider>();
-
-            // Resolve the Player instance from the GameManager's board
+            // The icon's only inspection surface is the player inspector: hover previews it,
+            // click pins it. It deliberately does not also get a TooltipTrigger, because the
+            // shared tooltip is text-only and cannot host the trait icons, and having both
+            // meant hovering one row stacked the tooltip over a panel pinned on another.
             var board = GameManager.Instance?.Board;
-            var players = board?.Players;
-            if (players != null)
+            var player = board?.Players?.Find(p => p.PlayerId == playerId);
+            if (player != null)
             {
-                var player = players.Find(p => p.PlayerId == playerId);
-                if (player != null)
-                {
-                    provider.Initialize(player);
-                    tooltipTrigger.SetDynamicProvider(provider);
-
-                    // Clicking opens the interactive inspector rather than pinning the shared
-                    // tooltip: the tooltip view is text-only and never a raycast target, so it
-                    // cannot host hoverable adaptation and mycovariant icons.
-                    var launcher = moldIconImage.GetComponent<PlayerInspectorLauncher>();
-                    if (launcher == null)
-                        launcher = moldIconImage.gameObject.AddComponent<PlayerInspectorLauncher>();
-                    launcher.Initialize(player, tooltipTrigger);
-                }
+                var launcher = moldIconImage.GetComponent<PlayerInspectorLauncher>();
+                if (launcher == null)
+                    launcher = moldIconImage.gameObject.AddComponent<PlayerInspectorLauncher>();
+                launcher.Initialize(player);
             }
         }
 

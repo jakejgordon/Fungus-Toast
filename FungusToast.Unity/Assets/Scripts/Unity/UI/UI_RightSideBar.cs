@@ -62,7 +62,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI inspectPlayersCoachmarkBodyTextLabel;
         private Button inspectPlayersCoachmarkCloseButton;
         private bool hasDismissedInspectPlayersCoachmarkThisGame;
-        private bool hasOpenedPlayerInspectorThisGame;
+        private bool hasPinnedPlayerInspectorThisGame;
         private bool hasDismissedScoreboardCoachmarkThisGame;
         private bool hasDismissedEndgameCountdownCoachmarkThisGame;
         private int lastDraftHistoryAttentionRound = -1;
@@ -77,12 +77,12 @@ namespace FungusToast.Unity.UI
 
         private void OnEnable()
         {
-            PlayerInspectorPanel.Opened += OnPlayerInspectorOpened;
+            PlayerInspectorPanel.Pinned += OnPlayerInspectorPinned;
         }
 
         private void OnDisable()
         {
-            PlayerInspectorPanel.Opened -= OnPlayerInspectorOpened;
+            PlayerInspectorPanel.Pinned -= OnPlayerInspectorPinned;
         }
 
         private void ApplyStyle()
@@ -303,7 +303,7 @@ namespace FungusToast.Unity.UI
             hasDismissedScoreboardCoachmarkThisGame = false;
             hasDismissedEndgameCountdownCoachmarkThisGame = false;
             hasDismissedInspectPlayersCoachmarkThisGame = false;
-            hasOpenedPlayerInspectorThisGame = false;
+            hasPinnedPlayerInspectorThisGame = false;
             HideScoreboardCoachmarkImmediate(false);
             HideEndgameCountdownCoachmarkImmediate(false);
             HideInspectPlayersCoachmarkImmediate(false);
@@ -556,7 +556,7 @@ namespace FungusToast.Unity.UI
                     forceFirstGame,
                     currentRound,
                     hasDismissedInspectPlayersCoachmarkThisGame,
-                    hasOpenedPlayerInspectorThisGame,
+                    hasPinnedPlayerInspectorThisGame,
                     isFastForwarding))
             {
                 return;
@@ -731,12 +731,12 @@ namespace FungusToast.Unity.UI
         }
 
         /// <summary>
-        /// Opening the inspector is the behaviour this coachmark teaches, so discovering it
-        /// retires the hint for good rather than showing it again next round.
+        /// Pinning the inspector is the behaviour this coachmark teaches (hover alone is easy to
+        /// stumble into), so doing it retires the hint for good rather than showing it next round.
         /// </summary>
-        private void OnPlayerInspectorOpened()
+        private void OnPlayerInspectorPinned()
         {
-            hasOpenedPlayerInspectorThisGame = true;
+            hasPinnedPlayerInspectorThisGame = true;
 
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
             if (!forceFirstGame)

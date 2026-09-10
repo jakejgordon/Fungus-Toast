@@ -15,14 +15,15 @@ using UnityEngine.UI;
 namespace FungusToast.Unity.UI.PlayerInspector
 {
     /// <summary>
-    /// The pinned, interactive counterpart to the mold-icon hover tooltip. The shared
-    /// <see cref="TooltipView"/> is deliberately text-only and never a raycast target, so it can
-    /// never host hoverable adaptation and mycovariant icons. This panel does: it renders the same
-    /// <see cref="PlayerInspectorContent"/> sections, but shows owned traits as real icon tiles
-    /// that each carry their own tooltip trigger.
+    /// The only inspection surface for a scoreboard mold icon. Hover shows it as a preview that
+    /// behaves like a tooltip (no raycasts, closes on pointer exit); clicking pins it, which turns
+    /// raycasts on so the owned adaptation and mycovariant icon tiles become hoverable.
     ///
-    /// Nested tooltips work because this panel is not the shared tooltip view — an icon inside it
-    /// can take that view without evicting anything.
+    /// It replaces the shared <see cref="TooltipView"/> for this icon entirely rather than
+    /// layering on it: that view is text-only and never a raycast target, so it could never host
+    /// the trait icons, and running both meant hovering one row stacked the tooltip over a panel
+    /// pinned on another. Nested tooltips from the tiles still work because this panel is not the
+    /// shared tooltip view.
     ///
     /// One instance exists per session, mirroring <see cref="TooltipManager"/>.
     /// </summary>
@@ -54,8 +55,11 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 (PanelWidth - (PanelPadding * 2f) + CompactIconTileFactory.Spacing)
                 / (CompactIconTileFactory.TileSize + CompactIconTileFactory.Spacing)));
 
-        /// <summary>Raised whenever the player opens the inspector, so onboarding can retire its hint.</summary>
-        public static event Action? Opened;
+        private const string PreviewHint = "Click to pin";
+        private const string PinnedHint = "Pinned — click again to unpin. Hover an icon to read it.";
+
+        /// <summary>Raised whenever the player pins the inspector, so onboarding can retire its hint.</summary>
+        public static event Action? Pinned;
 
         private static PlayerInspectorPanel? instance;
 
@@ -67,6 +71,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private TextMeshProUGUI bodyText = null!;
         private TextMeshProUGUI adaptationHeaderText = null!;
         private TextMeshProUGUI mycovariantHeaderText = null!;
+        private TextMeshProUGUI hintText = null!;
         private RectTransform adaptationGrid = null!;
         private RectTransform mycovariantGrid = null!;
 
@@ -75,6 +80,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
         private Player? trackedPlayer;
         private RectTransform? anchor;
+        private bool isPinned;
         private float nextContentRefreshTime;
 
         // Null means "never built", which an empty trait list must not match: otherwise the first
@@ -84,26 +90,66 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
         public static bool IsOpen => instance != null && instance.gameObject.activeSelf;
 
+        public static bool IsPinned => IsOpen && instance!.isPinned;
+
         /// <summary>True when the panel is currently open against this exact anchor.</summary>
         public static bool IsOpenFor(RectTransform? candidateAnchor) =>
             IsOpen && candidateAnchor != null && instance!.anchor == candidateAnchor;
 
         /// <summary>
-        /// Opens the inspector for <paramref name="player"/>, or closes it if it is already open
-        /// against the same anchor. Returns true when the panel ended up open.
+        /// Shows the non-interactive hover preview for <paramref name="player"/>. Ignored while
+        /// the panel is pinned elsewhere: like the mutation tree's Pin, a pinned inspector holds
+        /// its subject until the player unpins or pins something else.
         /// </summary>
-        public static bool Toggle(Player? player, RectTransform? anchorRect, Canvas? canvas)
+        public static void Preview(Player? player, RectTransform? anchorRect, Canvas? canvas)
         {
-            if (IsOpenFor(anchorRect))
+            if (IsPinned)
             {
-                Close();
+                return;
+            }
+
+            Open(player, anchorRect, canvas, pinned: false);
+        }
+
+        /// <summary>Closes the hover preview, but only if it is the one shown for this anchor.</summary>
+        public static void EndPreview(RectTransform? anchorRect)
+        {
+            if (IsOpenFor(anchorRect) && !instance!.isPinned)
+            {
+                instance.Hide();
+            }
+        }
+
+        /// <summary>
+        /// Pins the panel to <paramref name="anchorRect"/>, or unpins it if it is already pinned
+        /// there. Returns true when the panel ended up pinned.
+        /// </summary>
+        public static bool TogglePin(Player? player, RectTransform? anchorRect, Canvas? canvas)
+        {
+            if (IsOpenFor(anchorRect) && instance!.isPinned)
+            {
+                instance.Hide();
                 return false;
             }
 
-            return Show(player, anchorRect, canvas);
+            if (!Open(player, anchorRect, canvas, pinned: true))
+            {
+                return false;
+            }
+
+            Pinned?.Invoke();
+            return true;
         }
 
-        public static bool Show(Player? player, RectTransform? anchorRect, Canvas? canvas)
+        public static void Close()
+        {
+            if (instance != null)
+            {
+                instance.Hide();
+            }
+        }
+
+        private static bool Open(Player? player, RectTransform? anchorRect, Canvas? canvas, bool pinned)
         {
             if (player == null || anchorRect == null)
             {
@@ -122,17 +168,8 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 return false;
             }
 
-            panel.Open(player, anchorRect);
-            Opened?.Invoke();
+            panel.Open(player, anchorRect, pinned);
             return true;
-        }
-
-        public static void Close()
-        {
-            if (instance != null)
-            {
-                instance.Hide();
-            }
         }
 
         private static PlayerInspectorPanel? EnsureInstance(Canvas host)
@@ -212,6 +249,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
             adaptationGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorAdaptationGrid", IconColumns);
             mycovariantHeaderText = CreateLabel("MycovariantsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
             mycovariantGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorMycovariantGrid", IconColumns);
+            hintText = CreateLabel("Hint", BodyFontSize, FontStyles.Italic, UIStyleTokens.Text.Muted);
 
             gameObject.SetActive(false);
         }
@@ -305,18 +343,29 @@ namespace FungusToast.Unity.UI.PlayerInspector
             }
         }
 
-        private void Open(Player player, RectTransform anchorRect)
+        private void Open(Player player, RectTransform anchorRect, bool pinned)
         {
+            bool sameSubject = gameObject.activeSelf && anchor == anchorRect && trackedPlayer == player;
+
             trackedPlayer = player;
             anchor = anchorRect;
-            adaptationSignature = null;
-            mycovariantSignature = null;
+            isPinned = pinned;
+            if (!sameSubject)
+            {
+                adaptationSignature = null;
+                mycovariantSignature = null;
+            }
             nextContentRefreshTime = 0f;
 
             gameObject.SetActive(true);
             transform.SetAsLastSibling();
 
-            // The hover tooltip and this panel would otherwise stack on the same icon.
+            // Pinning promotes the preview to a real panel; the preview must stay a passthrough
+            // so hovering a row never blocks board cells, placement clicks, or its own pointer-exit.
+            canvasGroup.blocksRaycasts = pinned;
+            canvasGroup.interactable = pinned;
+
+            // A trait tile's tooltip may still be up from a previously pinned state.
             TooltipManager.Instance?.CancelAll();
 
             RefreshContent();
@@ -327,6 +376,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
         {
             trackedPlayer = null;
             anchor = null;
+            isPinned = false;
             ClearTiles(adaptationTiles);
             ClearTiles(mycovariantTiles);
             adaptationSignature = null;
@@ -384,6 +434,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             adaptationHeaderText.text = FormatSectionHeader("Adaptations", adaptations.Count);
             mycovariantHeaderText.text = FormatSectionHeader("Mycovariants", mycovariants.Count);
+            hintText.text = isPinned ? PinnedHint : PreviewHint;
 
             RebuildAdaptationTiles(adaptations);
             RebuildMycovariantTiles(mycovariants);

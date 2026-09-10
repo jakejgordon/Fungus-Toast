@@ -76,16 +76,12 @@ calls `NotifyTooltipReleased()` on the previous trigger — do not add pin state
 handshake. A pinned trigger appends its own “Pinned / Click to pin” hint line, so the affordance
 comes for free.
 
-For an element whose click does something *other* than pin — like opening the player inspector —
-use `SetHintLine("…")` for the same muted affordance line, and `SetSuppressed(true)` while the
-richer surface is showing so the hover tooltip does not stack on top of it.
-
-**Player summary mold icon (shared content):**
-The mold-icon tooltip does not build its own text. Content comes from
+**Player summary mold icon:**
+Deliberately has *no* `TooltipTrigger`. Its only inspection surface is the player inspector panel
+(section F), which handles both hover and click. An earlier version layered the two, and hovering
+one row stacked the text tooltip over a panel pinned on another. Player detail content lives in
 `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorContent.cs`, which returns
-presentation-neutral sections, rendered to rich text by `PlayerInspectorMarkup`. Add new player
-detail there, not in `PlayerSummaryTooltipProvider`, so the hover tooltip and the pinned inspector
-panel (section F) never drift apart.
+presentation-neutral sections rendered by `PlayerInspectorMarkup`.
 
 `BuildDevelopmentSections` is appended only when the Development Testing toggle is on, and carries
 AI tuning parameters (strategy identity, max tier, economy bias, priority categories, surge
@@ -149,16 +145,22 @@ If it is specifically first-time teaching content, still store the copy and seen
 interact with — icons to hover, links to click, controls to use.
 
 **Current systems/files:**
-- `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorPanel.cs` — the pinned
-  player inspector, opened by clicking a scoreboard mold icon
+- `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorPanel.cs` — the
+  player inspector, previewed by hovering a scoreboard mold icon and pinned by clicking it
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/PlayerInspector/PlayerInspectorLauncher.cs` — the
-  click handler that opens it and suppresses the hover tooltip while it is open
+  hover/click handler on the icon that drives it
 - `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/MutationInspectorPanel.cs` — the docked
   mutation inspector
 
 **Trigger model:**
-- explicit click, never hover. A raycast-blocking panel that appeared on hover over the live board
-  would break cell hover, placement clicks, and hover-exit.
+- hover shows a **preview** after the standard tooltip delay: the same panel, but with its
+  `CanvasGroup` raycasts off, so it behaves like a tooltip — it cannot block board cells or
+  placement clicks, and closes on pointer exit
+- click **pins** it: raycasts turn on and the trait icons become hoverable. While pinned, hovering
+  other icons does nothing (like the mutation tree’s Pin); clicking another icon moves the pin,
+  clicking the same one or the close button unpins
+- never make the hover preview interactive. A raycast-blocking panel that appeared on hover over the
+  live board would break cell hover, placement clicks, and its own pointer-exit
 
 **Use this when:**
 - the content needs hoverable or clickable parts (the hover tooltip cannot host them at all)
@@ -230,7 +232,7 @@ Use this section when you want a quick description of what already exists withou
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
 | `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
-| `InspectPlayersIntro` | sidebar coachmark | Shown from round 8 onward — deliberately the last of the fixed-round hints, after the round 1–3 sidebar/mold-profile coachmarks and the round 5–6 mutation tree ones, and before the round-15 draft intro, so it never shares a round with another. Suppressed while fast-forwarding, after dismissal this game, and for a player who already opened the inspector this game. Opening the inspector marks it seen for good. Outside forced first-game experience, it only shows once per profile. |
+| `InspectPlayersIntro` | sidebar coachmark | Shown from round 8 onward — deliberately the last of the fixed-round hints, after the round 1–3 sidebar/mold-profile coachmarks and the round 5–6 mutation tree ones, and before the round-15 draft intro, so it never shares a round with another. Suppressed while fast-forwarding, after dismissal this game, and for a player who already pinned the inspector this game. Pinning the inspector marks it seen for good. Outside forced first-game experience, it only shows once per profile. |
 | `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `CameraPanIntro` | board coachmark | Shown during round 1 after a short delay for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
 | `MycovariantDraftIntro` | draft coachmark | Shown the first time the Mycovariant draft panel opens, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

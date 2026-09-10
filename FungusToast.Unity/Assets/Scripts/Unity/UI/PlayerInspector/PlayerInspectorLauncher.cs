@@ -1,6 +1,7 @@
 #nullable enable
 
 using FungusToast.Core.Players;
+using FungusToast.Unity.Input;
 using FungusToast.Unity.UI.Tooltips;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -8,25 +9,50 @@ using UnityEngine.EventSystems;
 namespace FungusToast.Unity.UI.PlayerInspector
 {
     /// <summary>
-    /// Turns a player's mold icon into the entry point for <see cref="PlayerInspectorPanel"/>.
-    /// Hover still shows the cheap, non-blocking text tooltip; clicking swaps it for the
-    /// interactive panel, which is the only surface that can host hoverable trait icons.
+    /// Makes a player's mold icon drive <see cref="PlayerInspectorPanel"/>: hover previews it
+    /// after the same delay the shared tooltip uses, pointer-exit closes the preview, and a click
+    /// pins it. This replaces the old <c>TooltipTrigger</c> on the icon rather than sitting beside
+    /// one, so there is exactly one surface per icon and nothing to fight over.
     /// </summary>
-    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerClickHandler
+    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
-        private const string HintText = "Click to inspect";
+        private const float FallbackHoverDelaySeconds = 0.35f;
 
         private Player? player;
-        private TooltipTrigger? tooltipTrigger;
         private Canvas? hostCanvas;
-        private bool wasPanelOpen;
+        private bool touchMode;
+        private bool isHovering;
+        private float previewDueTime;
+        private bool previewShown;
 
-        public void Initialize(Player targetPlayer, TooltipTrigger? trigger)
+        public void Initialize(Player targetPlayer)
         {
             player = targetPlayer;
-            tooltipTrigger = trigger;
             hostCanvas = GetComponentInParent<Canvas>();
-            tooltipTrigger?.SetHintLine(HintText);
+            touchMode = UnityInputAdapter.IsTouchSupportedOnCurrentPlatform();
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            if (touchMode)
+            {
+                return; // no hover on touch; tap pins instead, matching TooltipTrigger
+            }
+
+            isHovering = true;
+            previewShown = false;
+            float delay = TooltipManager.Instance != null ? TooltipManager.Instance.showDelay : FallbackHoverDelaySeconds;
+            previewDueTime = Time.unscaledTime + delay;
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            isHovering = false;
+            if (previewShown)
+            {
+                previewShown = false;
+                PlayerInspectorPanel.EndPreview(transform as RectTransform);
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -36,37 +62,30 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 return;
             }
 
-            bool opened = PlayerInspectorPanel.Toggle(player, transform as RectTransform, hostCanvas);
-            ApplyTooltipSuppression(opened);
+            isHovering = false;
+            previewShown = false;
+            PlayerInspectorPanel.TogglePin(player, transform as RectTransform, hostCanvas);
         }
 
         private void Update()
         {
-            // The panel closes on its own (close button, anchor destroyed, another row clicked),
-            // and it has no back-reference here, so track its state to release the hover tooltip.
-            bool isPanelOpen = PlayerInspectorPanel.IsOpenFor(transform as RectTransform);
-            if (isPanelOpen == wasPanelOpen)
+            if (!isHovering || previewShown || player == null || Time.unscaledTime < previewDueTime)
             {
                 return;
             }
 
-            ApplyTooltipSuppression(isPanelOpen);
-        }
-
-        private void ApplyTooltipSuppression(bool isPanelOpen)
-        {
-            wasPanelOpen = isPanelOpen;
-            tooltipTrigger?.SetSuppressed(isPanelOpen);
+            previewShown = true;
+            PlayerInspectorPanel.Preview(player, transform as RectTransform, hostCanvas);
         }
 
         private void OnDisable()
         {
-            if (wasPanelOpen)
+            isHovering = false;
+            previewShown = false;
+            if (PlayerInspectorPanel.IsOpenFor(transform as RectTransform))
             {
                 PlayerInspectorPanel.Close();
             }
-
-            ApplyTooltipSuppression(false);
         }
     }
 }

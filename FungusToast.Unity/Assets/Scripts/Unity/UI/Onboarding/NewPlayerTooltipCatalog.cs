@@ -108,9 +108,9 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipId.InspectPlayersIntro,
                 "Onboarding.InspectPlayersIntroSeen",
                 "Scout Your Rivals",
-                "Hover any mold icon in the scoreboard to see what that colony has been up to.\n\nClick the icon to open a panel you can keep open, then hover its adaptation and mycovariant icons to read exactly what each one does.",
+                "Hover any mold icon in the scoreboard to see what that colony has been up to.\n\nClick the icon to pin that panel open, then hover its adaptation and mycovariant icons to read exactly what each one does.",
                 NewPlayerTooltipSurface.SidebarCoachmark,
-                "Show on round 8 or later unless the player has already opened the inspector, dismissed it this game, or the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+                "Show on round 8 or later unless the player has already pinned the inspector, dismissed it this game, or the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.AdaptationPanelIntro,
                 "Onboarding.AdaptationPanelIntroSeen",
@@ -248,16 +248,16 @@ namespace FungusToast.Unity.UI.Onboarding
         /// Deliberately the last of the fixed-round hints: after the round 1-3 sidebar and mold
         /// profile coachmarks and the round 5-6 mutation tree ones, and before the round-15 draft
         /// intro, so it never shares a round with another. Skipped entirely for a player who
-        /// already found the inspector on their own.
+        /// already pinned the inspector on their own.
         /// </summary>
         public static bool ShouldShowInspectPlayersIntro(
             bool forceFirstGameExperience,
             int currentRound,
             bool hasDismissedThisGame,
-            bool hasOpenedInspector,
+            bool hasPinnedInspector,
             bool isFastForwarding)
         {
-            if (currentRound < 8 || hasDismissedThisGame || hasOpenedInspector || isFastForwarding)
+            if (currentRound < 8 || hasDismissedThisGame || hasPinnedInspector || isFastForwarding)
             {
                 return false;
             }
