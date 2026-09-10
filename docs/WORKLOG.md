@@ -1125,6 +1125,19 @@ measurement model, phase gates, and open product decisions are in
     the review candidates and decide retain/merge/retire/replace only on that
     evidence.
 
+74. P8.3's first exact-build review screen ran cleanly. With the two-player
+    Proven lineup, rotating slots, seed `2026091001`, 160x160 board, and nutrient
+    patches, Mycovariants, and starting Adaptations all disabled, Filament Regrowth
+    earned 29/50 win credit (58%, mean normalized board share 1.053) against
+    Creeping>Necrosporulation's 21/50 (42%, 0.947). Their raw scripted builds are
+    identical, so the difference confirms a real-game behavioral surface outside
+    that screen; it is exploratory and has no holdout, therefore blocks an
+    automatic merge rather than proving a permanent retain decision. The new
+    `--summarize-direct-match` command reads a completed two-strategy Parquet
+    artifact without needing the optional Python environment. Next: either repeat
+    this review under the preregistered holdout matrix or screen another exact-build
+    pair; do not retire either member yet.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

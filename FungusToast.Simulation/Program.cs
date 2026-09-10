@@ -5,7 +5,9 @@ using FungusToast.Simulation.Analysis;
 using FungusToast.Simulation.Calibration;
 using FungusToast.Simulation.Candidates;
 using FungusToast.Simulation.Experiments;
+using FungusToast.Simulation.Export;
 using FungusToast.Simulation.Models;
+using Parquet.Serialization;
 using System.Text;
 
 namespace FungusToast.Simulation
@@ -37,6 +39,13 @@ namespace FungusToast.Simulation
             if (rosterBehaviorReportPath != null)
             {
                 RunRosterBehaviorReportCommand(args, rosterBehaviorReportPath);
+                return;
+            }
+
+            var directMatchArtifactPath = GetOptionValue(args, "--summarize-direct-match");
+            if (directMatchArtifactPath != null)
+            {
+                RunDirectMatchSummaryCommand(directMatchArtifactPath);
                 return;
             }
 
@@ -242,6 +251,29 @@ namespace FungusToast.Simulation
             catch (Exception exception)
             {
                 Console.Error.WriteLine($"Roster behavior report failed: {exception.Message}");
+                Environment.ExitCode = 1;
+            }
+        }
+
+        private static void RunDirectMatchSummaryCommand(string artifactPath)
+        {
+            try
+            {
+                var playersPath = Path.Combine(Path.GetFullPath(artifactPath), "players.parquet");
+                using var stream = File.OpenRead(playersPath);
+                var rows = ParquetSerializer.DeserializeAsync<PlayerExportRow>(stream).GetAwaiter().GetResult();
+                var summaries = DirectMatchSummary.Build(rows);
+                if (summaries.Count != 2)
+                    throw new InvalidOperationException($"Expected exactly two strategies, found {summaries.Count}.");
+
+                Console.WriteLine("| Strategy | Games | Win credit | Win rate | Mean normalized board share |");
+                Console.WriteLine("|---|---:|---:|---:|---:|");
+                foreach (var summary in summaries)
+                    Console.WriteLine($"| {summary.StrategyName} | {summary.Games} | {summary.WinCredit:0.0} | {summary.WinRate:P1} | {summary.MeanNormalizedBoardShare:0.000} |");
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Direct-match summary failed: {exception.Message}");
                 Environment.ExitCode = 1;
             }
         }
@@ -1446,6 +1478,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --write-regression-snapshot <path> Build a calibration snapshot from analyzed artifacts");
             Console.WriteLine("  --write-roster-behavior-report <path> Render deterministic observed roster behavior to Markdown");
             Console.WriteLine("  --behavior-strategy-set <set> Strategy set for the behavior report (default: Proven)");
+            Console.WriteLine("  --summarize-direct-match <artifact-dir> Summarize a completed two-strategy Parquet artifact");
             Console.WriteLine("  --verify-calibration-replays Replay completed calibration artifacts and persist parity results");
             Console.WriteLine("  --calibration-state <path> Durable calibration run-state JSON (required with --write-regression-snapshot)");
             Console.WriteLine("  --calibration-export-root <path> Root containing one analyzed folder per calibration experiment");

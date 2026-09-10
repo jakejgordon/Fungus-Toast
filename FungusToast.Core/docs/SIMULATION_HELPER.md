@@ -90,6 +90,18 @@ builds as the redundancy-review signal and category profiles as a coarser
 explanation. Similarity is not a retirement or counter verdict; use contextual
 matchup evidence before making either claim.
 
+When Python analytics is unavailable, summarize a completed two-strategy
+Parquet artifact directly:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --summarize-direct-match /path/to/simulation-artifact
+```
+
+The command reports games, fractional win credit, win rate, and mean normalized
+board share. It only accepts a two-strategy artifact and is a descriptive reader,
+not a significance or promotion verdict.
+
 Resume an experiment matrix without rerunning matching completed conditions:
 
 ```bash

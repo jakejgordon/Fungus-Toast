@@ -1380,7 +1380,13 @@ rather than guessed. Overall bands are unaffected.
   behaviorally distinct strategies. It does not change the roster and explicitly
   withholds counter claims pending matched matchup evidence.
 - **P8.3:** Retire redundant/opaque strategies, complete the standardized-name
-  cutover, migrate campaign references, and record replacements.
+  cutover, migrate campaign references, and record replacements. **In progress
+  (2026-09-10):** the first exact-build review pair was screened directly under
+  controlled, systems-off conditions. Filament Regrowth earned 29/50 win credit
+  against Creeping>Necrosporulation's 21/50, so the shared scripted mutation build
+  does not establish redundant real-game behavior. This is exploratory only; it
+  blocks an automatic merge and needs the preregistered holdout before a retention
+  decision.
 - **P8.4:** Search for candidates in each gap, with archetype constraints and
   diversity penalties in addition to performance targets.
 - **P8.5:** Review promotion packets and promote only candidates that pass
