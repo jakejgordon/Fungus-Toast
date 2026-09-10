@@ -1363,7 +1363,12 @@ rather than guessed. Overall bands are unaffected.
 ### Phase 8 — Define and fill the target roster matrix
 
 - **P8.1:** Cluster or compare existing behavior to find real archetype coverage,
-  redundancy, counters, and gaps; do not trust authored labels alone.
+  redundancy, counters, and gaps; do not trust authored labels alone. **In progress
+  (2026-09-09):** `RosterBehaviorComparison` now observes every strategy under the
+  shared deterministic characterization script and compares raw-mutation and
+  category-profile cosine similarity. Similarity identifies review candidates only;
+  retirement, counter, and player-value conclusions still require contextual matchup
+  evidence.
 - **P8.2:** Define target counts by difficulty, archetype, role, and contextual
   niche, with a maximum roster size justified by player value and maintenance
   cost.

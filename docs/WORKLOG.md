@@ -1084,6 +1084,20 @@ measurement model, phase gates, and open product decisions are in
     Simulation builds, and analyzer syntax compilation pass. Unity Editor
     compile plus normal and fast-forward AI spending remain the manual check.
 
+71. P8.1 has its first reusable behavior-comparison primitive.
+    `RosterBehaviorComparison` observes the complete roster with the same
+    deterministic characterization script used for candidate evaluation, then
+    compares each pair by raw mutation-build cosine similarity and the coarser
+    category-profile similarity. Raw mutation similarity is deliberately the
+    redundancy signal: two strategies can have identical category totals while
+    pursuing different mutations. The result intentionally does not declare a
+    retirement, counter, or player-value verdict; similarity only identifies
+    candidates for review, which still need contextual matchup evidence. Three
+    focused Simulation tests pass, including the whole Proven roster (19 profiles
+    and 171 pairs). Next: render the comparison into a durable P8.1 evidence
+    artifact and combine it with measured context and matchup evidence before
+    proposing any roster changes.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
