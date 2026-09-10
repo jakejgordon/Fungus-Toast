@@ -1138,6 +1138,14 @@ measurement model, phase gates, and open product decisions are in
     this review under the preregistered holdout matrix or screen another exact-build
     pair; do not retire either member yet.
 
+75. The second exact-build screen used the same systems-off, rotating-slot protocol
+    with seed `2026091002`. Grow>Kill>Reclaim(Econ/Reclaim) earned 26/50 win credit
+    (52%, mean normalized board share 0.964) against Grow>Kill>Reclaim(Econ)'s
+    24/50 (48%, 1.036). This exploratory sample is effectively even and cannot
+    establish either a separate role or a merge; it leaves this pair as an explicit
+    holdout-review candidate rather than a roster action. Two of the four exact-build
+    pairs are now screened; the two Balanced Control/CampaignMirror pairs remain.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
