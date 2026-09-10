@@ -58,6 +58,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/AI_P7_REFERENCE_BANDS_V1.md` — frozen solo-panel contextual performance bands
 - `second-level/AI_P8_ROSTER_BEHAVIOR_V1.md` — provenance-stamped observed build comparison for the Proven roster
 - `second-level/AI_P8_TARGET_MATRIX_PROPOSAL_V1.md` — proposed solo roster shape and evidence gates for Phase 8 actions
+- `second-level/AI_P8_CANDIDATE_SEARCH_PROTOCOL_V1.md` — proposed evidence-bound search lanes for the P8 Hard and Elite gaps
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

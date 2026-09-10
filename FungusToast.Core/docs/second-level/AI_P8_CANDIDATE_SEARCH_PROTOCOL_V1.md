@@ -1,0 +1,86 @@
+# AI P8 Candidate Search Protocol V1
+
+**Status:** proposed search protocol; no candidate, strategy, pool, campaign
+preset, or balance value changes in this document.
+
+## Purpose and prerequisite
+
+P8.2 established a solo target of four Easy, four Normal, four Hard, and three
+Elite behaviorally distinct strategies. The frozen P7 panel currently supplies
+two distinct Hard builds and two distinct Elite builds, leaving two Hard search
+lanes and one Elite search lane.
+
+The candidate generator can make a bounded, reproducible mutation around one
+parameterized parent and rejects a build already registered in the roster. That
+is necessary but insufficient for P8: the policy requires diversity against the
+**retained fifteen**, not merely against the present nineteen-name roster.
+
+P8.3 has completed its four exploratory exact-build screens, but it has not made
+a retain, merge, retire, or replace decision. Therefore no final retained-fifteen
+reference panel exists yet. This protocol deliberately does not run or promote a
+candidate before that panel is recorded. A candidate produced sooner is useful
+only as a static/characterization observation; it cannot fill a matrix slot.
+
+## Search lanes
+
+Each lane is a job hypothesis, not a promised difficulty label. The indicated
+parent is a source of bounded single-gene proposals; passing a generated
+candidate through the evaluation ladder is still required before it receives a
+measured band.
+
+| Lane | Target slot | Player-facing job | Initial parent family | Allowed initial operators | Required observable distinction |
+|---|---|---|---|---|---|
+| H1 | Hard economy/control | Convert an economy opening into durable board control without becoming another MaxEconomy mirror. | `TST_BalancedControl_MaxEconomy` | goal-order adjacent swap; goal-order promotion; economy-bias sweep; high-tier toggle | A raw characterization build that differs from every retained Hard economy/control peer, plus a readable opening-order or resource-policy difference. |
+| H2 | Hard surge tempo | Apply pressure through a timed surge line rather than reclamation or static economy control. | `Best_MaxEcon_Surge10_HyphalSurge` or the strongest surviving surge-tempo parent after the retained panel is frozen | surge-attempt-frequency sweep; goal-order swap/promotion; high-tier toggle | A raw build and observed surge timing distinct from every retained Hard peer; it must not be called a counter without a matched matchup result. |
+| E1 | Elite large-board scaler | Convert a strong generalist into a robust late-board scaler without duplicating either AnabolicFirst mirror. | `Anabolic>Grow>CatabR>PutreRegen` | goal-order swap/promotion; economy-bias sweep; high-tier toggle; max-tier sweep | A raw build distinct from every retained Elite peer and an explicit large-board performance hypothesis. |
+
+The parent choices come from measured P7 evidence, not authored labels:
+BalancedControl MaxEconomy measured Hard overall; the surge parent is deliberately
+only a source family because it currently measures Easy; and
+`Anabolic>Grow>CatabR>PutreRegen` measured Elite overall with large-board Elite
+contexts. The parent never confers its band to its child.
+
+## Frozen candidate-screen rules
+
+Before generation, each concrete plan must record:
+
+1. Its `CandidateGenerationPlan` JSON, including the parent stable ID, operator
+   list, value lists, and maximum proposal count.
+2. The retained-fifteen reference list and the exact behavior-report version
+   used for static diversity screening.
+3. One named lane from the table, one primary player-facing job, and one
+   observable differentiator. “Higher difficulty,” an authored archetype tag, or
+   a parameter change alone is not a differentiator.
+4. A preregistered staged evaluation plan: smoke, calibration, 50-game paired
+   comparison, then a 100-game holdout whose seed and geometry both differ from
+   the screen. The comparison/holdout question must state a primary metric,
+   direction, and margin before execution.
+5. For E1, at least one large-board context in screening and a different
+   large-board holdout. For H2, record observed surge attempts as well as final
+   board-share metrics. For H1, record the observed opening purchases and
+   economy policy.
+
+Generation rejects known registry duplicates, but P8 static screening must also
+reject a candidate whose characterized raw mutation build is identical to a
+retained peer. Near matches require a written distinction and the same
+calibration/holdout evidence as any other candidate. No fixed cosine cutoff is
+introduced here: the existing report makes raw distance an investigative signal,
+not a promotion verdict.
+
+## Promotion boundary
+
+A lane remains open until a candidate both clears the staged evidence ladder and
+has a recorded player-comprehensible identity. Passing against its parent alone
+does not establish a Hard or Elite placement; P7-style contextual calibration
+must place it in the requested band. The three Easy excess slots remain unchanged
+until a separately evidenced replacement or contextual role makes a roster action
+appropriate.
+
+## Immediate handoff
+
+The next implementation action is to record P8.3's retained-fifteen reference
+panel (or explicitly defer its unresolved slots), then check in one bounded JSON
+generation plan for each lane. At that point the existing generator, catalog,
+and staged evaluation emitter can run the plans without any player-facing
+registration.
+

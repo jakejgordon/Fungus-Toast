@@ -1158,6 +1158,19 @@ measurement model, phase gates, and open product decisions are in
     holdout evidence for an actual merge/retire hypothesis, or P8.4 work on the two
     Hard and one Elite gaps identified by P8.2.
 
+77. P8.4's candidate-search protocol is now recorded in
+    `AI_P8_CANDIDATE_SEARCH_PROTOCOL_V1.md`. It defines three non-player-facing
+    lanes: Hard economy/control, Hard surge tempo, and Elite large-board scaler.
+    Each names a parent family, bounded generator operators, an observable
+    distinction, and the staged evaluation evidence required before a band or
+    promotion claim. The protocol also records a real dependency: P8.2 requires
+    diversity against the retained fifteen, while P8.3 intentionally made no
+    retain/merge/retire decision from exploratory screens. Until that reference
+    panel is recorded, generated builds may be static observations but cannot
+    truthfully fill a matrix gap. Next: establish the retained-panel reference
+    list (including any explicitly unresolved P8.3 slots), then commit bounded
+    JSON generation plans for the three lanes.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
