@@ -28,14 +28,16 @@ namespace FungusToast.Unity.UI.PlayerInspector
     /// </summary>
     public sealed class PlayerInspectorPanel : MonoBehaviour
     {
-        private const float PanelWidth = 380f;
+        // Sized to read like the hover tooltip it replaces: the tooltip prefab uses a 20pt body
+        // and a 480-unit max width, so the same content should not reflow into a narrow column.
+        private const float PanelWidth = 460f;
         private const float PanelPadding = 14f;
         private const float SectionSpacing = 8f;
-        private const float HeaderHeight = 30f;
-        private const float CloseButtonSize = 26f;
-        private const float TitleFontSize = 20f;
-        private const float SectionHeaderFontSize = 17f;
-        private const float BodyFontSize = UIStyleTokens.Typography.CaptionMinimum;
+        private const float HeaderHeight = 32f;
+        private const float CloseButtonSize = 28f;
+        private const float TitleFontSize = 22f;
+        private const float SectionHeaderFontSize = 18f;
+        private const float BodyFontSize = 20f;
 
         /// <summary>Gap between the anchor and the panel edge, matching the tooltip's own gap.</summary>
         private const float AnchorGap = 12f;
@@ -164,6 +166,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
             rootRect.anchorMax = new Vector2(0.5f, 0.5f);
             rootRect.pivot = new Vector2(1f, 1f);
             rootRect.anchoredPosition = Vector2.zero;
+            // Width must be set on the rect itself: a LayoutElement on a root object has no parent
+            // layout to honour it, and the ContentSizeFitter below only drives height. Without this
+            // the panel kept Unity's 100-unit default and wrapped every line.
+            rootRect.sizeDelta = new Vector2(PanelWidth, 0f);
 
             // The panel sits above the board and must be clickable, unlike the shared tooltip.
             var panelCanvas = gameObject.AddComponent<Canvas>();
@@ -199,10 +205,6 @@ namespace FungusToast.Unity.UI.PlayerInspector
             var fitter = gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var widthElement = gameObject.AddComponent<LayoutElement>();
-            widthElement.preferredWidth = PanelWidth;
-            widthElement.minWidth = PanelWidth;
 
             BuildHeader();
             bodyText = CreateLabel("Body", BodyFontSize, FontStyles.Normal, UIStyleTokens.Text.Primary);
