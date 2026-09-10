@@ -75,6 +75,21 @@ Allowed paths use the camel-case causal snapshot rooted at `code`, `condition`,
 entire subtree. The command exits unsuccessfully when it finds an undeclared
 difference or when a declared treatment path did not actually change.
 
+Render deterministic observed behavior for a roster before proposing a Phase 8
+roster change:
+
+```bash
+dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+  --write-roster-behavior-report /path/roster-behavior.md \
+  --behavior-strategy-set Proven
+```
+
+The report stamps the current commit, Core/Simulation binary hashes, stable
+strategy identities, and definition fingerprints. It compares raw mutation
+builds as the redundancy-review signal and category profiles as a coarser
+explanation. Similarity is not a retirement or counter verdict; use contextual
+matchup evidence before making either claim.
+
 Resume an experiment matrix without rerunning matching completed conditions:
 
 ```bash

@@ -33,6 +33,13 @@ namespace FungusToast.Simulation
                 return;
             }
 
+            var rosterBehaviorReportPath = GetOptionValue(args, "--write-roster-behavior-report");
+            if (rosterBehaviorReportPath != null)
+            {
+                RunRosterBehaviorReportCommand(args, rosterBehaviorReportPath);
+                return;
+            }
+
             var compareIndex = Array.FindIndex(args, argument =>
                 string.Equals(argument, "--compare-manifests", StringComparison.OrdinalIgnoreCase));
             if (compareIndex >= 0)
@@ -203,6 +210,38 @@ namespace FungusToast.Simulation
             catch (Exception exception)
             {
                 Console.Error.WriteLine($"Regression snapshot failed: {exception.Message}");
+                Environment.ExitCode = 1;
+            }
+        }
+
+        private static void RunRosterBehaviorReportCommand(string[] args, string reportPath)
+        {
+            try
+            {
+                var setText = GetOptionValue(args, "--behavior-strategy-set") ?? nameof(StrategySetEnum.Proven);
+                if (!Enum.TryParse<StrategySetEnum>(setText, ignoreCase: true, out var strategySet))
+                    throw new ArgumentException($"Invalid --behavior-strategy-set value '{setText}'.");
+
+                // Enter through AIRoster so its static registration has completed before reading
+                // the registry-backed definitions the report stamps for provenance.
+                var strategies = AIRoster.GetStrategiesByFilter(strategySet, filter: null);
+                if (strategies.Count == 0)
+                    throw new InvalidOperationException($"Strategy set '{strategySet}' has no registered strategies.");
+
+                var settings = new CandidateCharacterizationSettings();
+                var profiles = RosterBehaviorComparison.ObserveProfiles(strategies, settings);
+                var pairs = RosterBehaviorComparison.Compare(profiles);
+                var report = RosterBehaviorReport.Render(
+                    strategySet, profiles, pairs, settings, CodeIdentityResolver.Resolve());
+                var fullReportPath = Path.GetFullPath(reportPath);
+                var directory = Path.GetDirectoryName(fullReportPath);
+                if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+                File.WriteAllText(fullReportPath, report);
+                Console.WriteLine($"Wrote roster behavior report: {fullReportPath} ({profiles.Count} strategies, {pairs.Count} pairs).");
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Roster behavior report failed: {exception.Message}");
                 Environment.ExitCode = 1;
             }
         }
@@ -1405,6 +1444,8 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --regenerate-examples    Rewrite the checked-in candidate genome examples from the live registry");
             Console.WriteLine("  --examples-directory <path> Override where --regenerate-examples writes (default: resolved from the repo)");
             Console.WriteLine("  --write-regression-snapshot <path> Build a calibration snapshot from analyzed artifacts");
+            Console.WriteLine("  --write-roster-behavior-report <path> Render deterministic observed roster behavior to Markdown");
+            Console.WriteLine("  --behavior-strategy-set <set> Strategy set for the behavior report (default: Proven)");
             Console.WriteLine("  --verify-calibration-replays Replay completed calibration artifacts and persist parity results");
             Console.WriteLine("  --calibration-state <path> Durable calibration run-state JSON (required with --write-regression-snapshot)");
             Console.WriteLine("  --calibration-export-root <path> Root containing one analyzed folder per calibration experiment");
