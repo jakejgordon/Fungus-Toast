@@ -1113,6 +1113,18 @@ measurement model, phase gates, and open product decisions are in
     All 272 Simulation tests pass. Next: P8.2 target-matrix policy, with the static
     review candidates and matchup-evidence gap explicit rather than hidden.
 
+73. P8.2's policy proposal is recorded in
+    `AI_P8_TARGET_MATRIX_PROPOSAL_V1.md`; it makes no gameplay or roster change.
+    The proposed solo ceiling is 15 behaviorally distinct strategies, distributed
+    4 Easy / 4 Normal / 4 Hard / 3 Elite. The current 15 distinct observed builds
+    are bottom-heavy (7/4/2/2), so the future action surface is three excess Easy
+    slots and gaps of two Hard plus one Elite — not a justification to relabel any
+    current strategy. Exact-build matches need controlled reactive/draft/surge or
+    real-game evidence before being merged, and a counter claim now has an explicit
+    50-game matched comparison plus 100-game holdout gate. Next: P8.3 inventory
+    the review candidates and decide retain/merge/retire/replace only on that
+    evidence.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

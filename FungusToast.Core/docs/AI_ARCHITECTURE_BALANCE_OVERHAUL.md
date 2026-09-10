@@ -1374,7 +1374,11 @@ rather than guessed. Overall bands are unaffected.
   action, not a reason to infer counters from labels.
 - **P8.2:** Define target counts by difficulty, archetype, role, and contextual
   niche, with a maximum roster size justified by player value and maintenance
-  cost.
+  cost. **Proposed (2026-09-10):**
+  [AI_P8_TARGET_MATRIX_PROPOSAL_V1.md](second-level/AI_P8_TARGET_MATRIX_PROPOSAL_V1.md)
+  sets a 15-slot solo target: four Easy, four Normal, four Hard, and three Elite
+  behaviorally distinct strategies. It does not change the roster and explicitly
+  withholds counter claims pending matched matchup evidence.
 - **P8.3:** Retire redundant/opaque strategies, complete the standardized-name
   cutover, migrate campaign references, and record replacements.
 - **P8.4:** Search for candidates in each gap, with archetype constraints and

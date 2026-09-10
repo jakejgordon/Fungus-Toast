@@ -55,6 +55,9 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/AI_P3_5_REFERENCE_BASELINE_V2.md` — corrected post-review reference corpus with version, checksum, replay, and evidence-limit records
 - `second-level/AI_P3_5_REFERENCE_BASELINE_V3.md` — post-Phase-5 reference corpus with mandatory mold-matched AI starting Adaptations
 - `second-level/AI_PHASE4_ARCHITECTURE_DECISION.md` — preregistered bake-off evidence and decision to retain the revised parameterized AI design
+- `second-level/AI_P7_REFERENCE_BANDS_V1.md` — frozen solo-panel contextual performance bands
+- `second-level/AI_P8_ROSTER_BEHAVIOR_V1.md` — provenance-stamped observed build comparison for the Proven roster
+- `second-level/AI_P8_TARGET_MATRIX_PROPOSAL_V1.md` — proposed solo roster shape and evidence gates for Phase 8 actions
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems
