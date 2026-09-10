@@ -1146,6 +1146,18 @@ measurement model, phase gates, and open product decisions are in
     holdout-review candidate rather than a roster action. Two of the four exact-build
     pairs are now screened; the two Balanced Control/CampaignMirror pairs remain.
 
+76. All four exact-build pairs have now received the same 50-game exploratory
+    direct-match screen. With seed `2026091003`, CampaignMirror AnabolicFirst beat
+    BalancedControl AnabolicFirst 29/21 (58%/42%; mean normalized board share
+    1.083/0.917). With seed `2026091004`, BalancedControl MaxEconomy beat its
+    CampaignMirror 27/23 (54%/46%; 1.084/0.916). Alongside the earlier Filament
+    58%/42% split and Reclaim's 52%/48% near-even result, identical scripted builds
+    clearly do not license an automatic merge. These are screens, not holdouts: no
+    pair may be retained, merged, or retired from these point estimates alone. P8.3
+    now has a complete review inventory; the next valid action is preregistered
+    holdout evidence for an actual merge/retire hypothesis, or P8.4 work on the two
+    Hard and one Elite gaps identified by P8.2.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
