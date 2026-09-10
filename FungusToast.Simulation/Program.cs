@@ -20,6 +20,12 @@ namespace FungusToast.Simulation
 
         static void Main(string[] args)
         {
+            if (Array.Exists(args, argument => string.Equals(argument, "--verify-calibration-replays", StringComparison.OrdinalIgnoreCase)))
+            {
+                RunCalibrationReplayVerification(args);
+                return;
+            }
+
             var snapshotPath = GetOptionValue(args, "--write-regression-snapshot");
             if (snapshotPath != null)
             {
@@ -197,6 +203,22 @@ namespace FungusToast.Simulation
             catch (Exception exception)
             {
                 Console.Error.WriteLine($"Regression snapshot failed: {exception.Message}");
+                Environment.ExitCode = 1;
+            }
+        }
+
+        private static void RunCalibrationReplayVerification(string[] args)
+        {
+            try
+            {
+                var state = CalibrationRunStateJson.Load(GetRequiredOptionValue(args, "--calibration-state"));
+                var exportRoot = GetRequiredOptionValue(args, "--calibration-export-root");
+                var results = CalibrationReplayVerifier.Verify(state, exportRoot, ResolvedExperimentReplayRunner.Run);
+                Console.WriteLine($"Calibration replay verification finished: {results.Count(result => result.Passed)}/{results.Count} passed.");
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Calibration replay verification failed: {exception.Message}");
                 Environment.ExitCode = 1;
             }
         }
@@ -1383,6 +1405,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --regenerate-examples    Rewrite the checked-in candidate genome examples from the live registry");
             Console.WriteLine("  --examples-directory <path> Override where --regenerate-examples writes (default: resolved from the repo)");
             Console.WriteLine("  --write-regression-snapshot <path> Build a calibration snapshot from analyzed artifacts");
+            Console.WriteLine("  --verify-calibration-replays Replay completed calibration artifacts and persist parity results");
             Console.WriteLine("  --calibration-state <path> Durable calibration run-state JSON (required with --write-regression-snapshot)");
             Console.WriteLine("  --calibration-export-root <path> Root containing one analyzed folder per calibration experiment");
             Console.WriteLine("  --regression-snapshot-id <id> Durable ID for the new regression snapshot");

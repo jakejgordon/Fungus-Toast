@@ -1057,6 +1057,16 @@ measurement model, phase gates, and open product decisions are in
     the planned parity verifier unable to inspect the frozen calibration matrix.
     267 Simulation tests and the Simulation build pass.
 
+68. The bounded calibration replay verifier is in. Running
+    `--verify-calibration-replays` with the saved state and artifact root
+    replays only completed conditions and writes
+    `calibration-replay-parity.json` after each attempt. A failed or missing
+    condition is recorded without abandoning later evidence, making the command
+    safe to resume after a code-fingerprint mismatch or an outcome mismatch.
+    268 Simulation tests and the Simulation build pass. Next: join this durable
+    result into snapshots so per-strategy parity failures replace the current
+    evidence gap.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
