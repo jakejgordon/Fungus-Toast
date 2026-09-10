@@ -1067,6 +1067,13 @@ measurement model, phase gates, and open product decisions are in
     result into snapshots so per-strategy parity failures replace the current
     evidence gap.
 
+69. Replay-parity results now flow into `StrategyRegressionSnapshot`: every
+    strategy appearing in a verified condition receives the number of failed
+    condition replays, while an absent or incomplete result file remains null
+    and therefore alerts as an evidence gap. The snapshot-builder test proves a
+    successful persisted replay result resolves to zero failures. 268 Simulation
+    tests pass.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

@@ -111,6 +111,7 @@ public static class CalibrationMeasurementReader
     {
         ArgumentNullException.ThrowIfNull(state);
         var totals = new Dictionary<string, (int Decisions, int FallbackDecisions)>(StringComparer.Ordinal);
+        var strategiesByExperiment = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var problems = new List<string>();
 
         foreach (var record in state.Conditions)
@@ -135,12 +136,31 @@ public static class CalibrationMeasurementReader
                     total.Decisions + health.Decisions,
                     total.FallbackDecisions + health.FallbackDecisions);
             }
+            strategiesByExperiment[record.ExperimentId] = ReadExecutionHealthSummary(path)
+                .Select(health => health.StrategyName)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
         }
 
         warnings = problems;
+        var replayResultsPath = Path.Combine(exportRoot, CalibrationReplayVerifier.ResultsFileName);
+        var replayResults = File.Exists(replayResultsPath)
+            ? CalibrationReplayVerifier.Load(replayResultsPath).ToDictionary(result => result.ExperimentId, StringComparer.Ordinal)
+            : null;
+        var replayFailures = new Dictionary<string, int?>();
+        foreach (var strategy in totals.Keys)
+        {
+            var relevantConditions = strategiesByExperiment
+                .Where(entry => entry.Value.Contains(strategy, StringComparer.Ordinal))
+                .Select(entry => entry.Key)
+                .ToList();
+            replayFailures[strategy] = replayResults == null || relevantConditions.Any(id => !replayResults.ContainsKey(id))
+                ? null
+                : relevantConditions.Sum(id => replayResults[id].Passed ? 0 : 1);
+        }
         return totals.ToDictionary(
             entry => entry.Key,
-            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, null, null),
+            entry => new StrategyExecutionHealth(entry.Key, entry.Value.Decisions, entry.Value.FallbackDecisions, null, replayFailures[entry.Key]),
             StringComparer.Ordinal);
     }
 

@@ -24,6 +24,7 @@ public sealed class StrategyRegressionSnapshotBuilderTests
                     Completed("condition-b", "duel.medium.square")
                 }
             };
+            _ = CalibrationReplayVerifier.Verify(state, root, (_, _) => { });
 
             var snapshot = StrategyRegressionSnapshotBuilder.Build(
                 state, root, "snapshot.test", new DateTime(2026, 9, 8, 12, 0, 0, DateTimeKind.Utc), out var warnings);
@@ -32,6 +33,7 @@ public sealed class StrategyRegressionSnapshotBuilderTests
             Assert.Equal("Alpha", health.Key);
             Assert.Equal(20, health.Value.Decisions);
             Assert.Equal(3, health.Value.FallbackDecisions);
+            Assert.Equal(0, health.Value.ReplayParityFailures);
             Assert.Empty(warnings);
             Assert.Equal("matrix.test", snapshot.MatrixId);
             Assert.Single(snapshot.Bands);
@@ -94,5 +96,6 @@ public sealed class StrategyRegressionSnapshotBuilderTests
             $"strategy_name,decisions,fallback_decisions\nAlpha,{decisions},{fallbackDecisions}\n");
         File.WriteAllText(Path.Combine(artifact, CalibrationMeasurementReader.CategoryProfileFileName),
             "strategy_name,mutation_category,total_levels\nAlpha,Growth,2\nAlpha,Growth,3\n");
+        File.WriteAllText(Path.Combine(artifact, "resolved-manifest.json"), "{}");
     }
 }
