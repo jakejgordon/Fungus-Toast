@@ -42,5 +42,7 @@ namespace FungusToast.Core.Config
         public const float PutrefactiveResilienceKillChanceReduction = 0.03f;
         public const int CompoundReserveBankingThreshold = 5;
         public const int CompoundReserveBonusPoints = 1;
+        public const int ThanatrophicReboundReclaimCount = 2;
+        public const int SignalEconomyTier2SurgeCostReduction = 1;
     }
 }

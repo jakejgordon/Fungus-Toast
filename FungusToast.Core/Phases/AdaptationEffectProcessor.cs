@@ -118,13 +118,21 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             List<Player> players)
         {
-            // Thanatrophic Rebound: reclaim the first cell this player ever loses, making it resistant
+            // Thanatrophic Rebound: reclaim the first configured number of cells this player loses, making them resistant.
             var owner = players.FirstOrDefault(p => p.PlayerId == eventArgs.OwnerPlayerId);
             if (owner == null)
                 return;
 
             var adaptation = owner.GetAdaptation(AdaptationIds.ThanatrophicRebound);
-            if (adaptation == null || adaptation.HasTriggered)
+            if (adaptation == null)
+                return;
+
+            // Pre-change snapshots recorded the first reclaim only as HasTriggered. Treat that
+            // state as one reclaim so in-progress games receive the expanded second reclaim.
+            int reclaimCount = adaptation.HasRuntimeValue
+                ? adaptation.RuntimeValue
+                : adaptation.HasTriggered ? 1 : 0;
+            if (reclaimCount >= AdaptationGameBalance.ThanatrophicReboundReclaimCount)
                 return;
 
             var deadCell = eventArgs.Cell;
@@ -139,7 +147,12 @@ namespace FungusToast.Core.Phases
 
             if (success)
             {
-                adaptation.MarkTriggered();
+                reclaimCount++;
+                adaptation.SetRuntimeValue(reclaimCount);
+                if (reclaimCount >= AdaptationGameBalance.ThanatrophicReboundReclaimCount)
+                {
+                    adaptation.MarkTriggered();
+                }
                 var reclaimedCell = board.GetCell(eventArgs.TileId);
                 if (reclaimedCell != null
                     && reclaimedCell.IsAlive
