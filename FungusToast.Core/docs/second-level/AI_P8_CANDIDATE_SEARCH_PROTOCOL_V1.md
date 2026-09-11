@@ -143,3 +143,20 @@ with the standard paired normalized-board-share increase margin of `0.05`.
 The candidate must clear each stage in order. This evaluation tests an
 opening-order candidate against its parent; it does not by itself award a Hard
 band or promote the candidate into any player-facing pool.
+
+## H1 preregistered evaluation — resource-policy candidate `f2ae5a58`
+
+After the opening-order candidate stopped at calibration, the only remaining H1
+proposal with an observed raw build distinct from the parent is
+`candidate.tst-balancedcontrol-maxeconomy.f2ae5a58b951`
+(`CAND_p8-hard-econ-control-v1_EconomyBiasSweep_f2ae5a58`). It changes the
+parent's economy policy to `IgnoreEconomy`; that is an explicit resource-policy
+distinction, not a claim that the candidate is already Hard or desirable.
+
+This independent paired swap uses the same parent and fixed opponent as the
+first H1 treatment. Screening uses 160x160, rotating slots, seed `2026091102`,
+and nutrients, Mycovariants, and starting Adaptations disabled. Its holdout is
+180x140 with seed `2026091202`. The gate remains 5-game smoke, 20-game
+calibration, 50-game comparison, then 100-game holdout, with paired normalized
+board-share increase margin `0.05`. A calibration interval whose upper bound is
+below `-0.05` stops this candidate without comparison or holdout.
