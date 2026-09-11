@@ -1110,25 +1110,41 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float ChemobeaconIdleScale = 1.0f;
         /// <summary>
-        /// Minimum active Chemobeacon scale, corresponding to 75% tile area.
+        /// Minimum scale of the pulsing Chemobeacon glow (fully contained within its own tile).
         /// </summary>
-        public const float ChemobeaconPulseMinScale = 0.8660254f;
+        public const float ChemobeaconPulseMinScale = 1.0f;
         /// <summary>
-        /// Maximum active Chemobeacon scale, corresponding to 200% tile area.
+        /// Maximum scale of the pulsing Chemobeacon glow. At 2.0 the glow reaches half a tile into every neighbor.
         /// </summary>
-        public const float ChemobeaconPulseMaxScale = 1.4142135f;
+        public const float ChemobeaconPulseMaxScale = 2.0f;
         /// <summary>
         /// Duration of a full Chemobeacon pulse cycle.
         /// </summary>
-        public const float ChemobeaconPulseDurationSeconds = 1.15f;
-            /// <summary>
-            /// Minimum alpha for the pulsing Chemobeacon owner icon.
-            /// </summary>
-            public const float ChemobeaconPulseMinAlpha = 0f;
-            /// <summary>
-            /// Maximum alpha for the pulsing Chemobeacon owner icon.
-            /// </summary>
-            public const float ChemobeaconPulseMaxAlpha = 1f;
+        public const float ChemobeaconPulseDurationSeconds = 1.4f;
+        /// <summary>
+        /// Minimum alpha for the pulsing Chemobeacon glow. Kept above zero so the beacon never vanishes mid-cycle.
+        /// </summary>
+        public const float ChemobeaconPulseMinAlpha = 0.55f;
+        /// <summary>
+        /// Maximum alpha for the pulsing Chemobeacon glow.
+        /// </summary>
+        public const float ChemobeaconPulseMaxAlpha = 1f;
+        /// <summary>
+        /// Tint applied to the Chemobeacon glow and lighthouse beams. Warm white reads as a lamp regardless of owner color.
+        /// </summary>
+        public static readonly Color ChemobeaconGlowColor = new Color(1f, 0.96f, 0.82f, 1f);
+        /// <summary>
+        /// Rotation speed of the Chemobeacon lighthouse beams, in degrees per second.
+        /// </summary>
+        public const float ChemobeaconBeamRotationDegreesPerSecond = 110f;
+        /// <summary>
+        /// Scale of the static lighthouse emblem drawn over the Chemobeacon tile.
+        /// </summary>
+        public const float ChemobeaconEmblemScale = 0.9f;
+        /// <summary>
+        /// Local z offset (toward the camera) of the runtime glow tilemap so it draws above mold cells that share its sorting order.
+        /// </summary>
+        public const float ChemobeaconGlowTilemapZOffset = -0.05f;
         /// <summary>
         /// Total duration for the Chemobeacon evaporation animation.
         /// </summary>

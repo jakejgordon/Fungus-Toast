@@ -33,6 +33,10 @@ namespace FungusToast.Unity.Grid.Helpers
 		private Tile _generatedChemobeaconEmblemTile;
 		private Sprite _generatedChemobeaconEmblemSprite;
 		private Texture2D _generatedChemobeaconEmblemTexture;
+		private Tile _generatedChemobeaconGlowTile;
+		private Sprite _generatedChemobeaconGlowSprite;
+		private Texture2D _generatedChemobeaconGlowTexture;
+		private Tilemap _chemobeaconGlowTilemap;
 
 		public GridOverlayRenderer(
 			Func<GameBoard> getBoard,
@@ -95,13 +99,28 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			EnsureGeneratedChemobeaconEmblemTile();
+			EnsureGeneratedChemobeaconGlowTile();
 
+			// Owner identity: the player's mold sprite, static and fully opaque.
 			moldTilemap.SetTile(pos, chemobeaconTile);
 			moldTilemap.SetTileFlags(pos, TileFlags.None);
-			moldTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId));
-			moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
+			moldTilemap.SetColor(pos, Color.white);
+			moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(UIEffectConstants.ChemobeaconIdleScale, UIEffectConstants.ChemobeaconIdleScale, 1f)));
 			moldTilemap.RefreshTile(pos);
 
+			// Glow + sweeping beams live on a dedicated tilemap above the mold layer so the
+			// overflow into neighboring cells is never covered by adjacent mold sprites.
+			var glowTilemap = EnsureChemobeaconGlowTilemap();
+			if (glowTilemap != null && _generatedChemobeaconGlowTile != null)
+			{
+				glowTilemap.SetTile(pos, _generatedChemobeaconGlowTile);
+				glowTilemap.SetTileFlags(pos, TileFlags.None);
+				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId));
+				glowTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
+				glowTilemap.RefreshTile(pos);
+			}
+
+			// Static lighthouse emblem on top.
 			overlayTilemap.SetTile(pos, _generatedChemobeaconEmblemTile != null ? _generatedChemobeaconEmblemTile : _getSolidHighlightTile());
 			overlayTilemap.SetTileFlags(pos, TileFlags.None);
 			overlayTilemap.SetColor(pos, Color.white);
@@ -125,6 +144,12 @@ namespace FungusToast.Unity.Grid.Helpers
 			overlayTilemap.SetTile(pos, null);
 			overlayTilemap.SetColor(pos, Color.white);
 			overlayTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			if (_chemobeaconGlowTilemap != null)
+			{
+				_chemobeaconGlowTilemap.SetTile(pos, null);
+				_chemobeaconGlowTilemap.SetColor(pos, Color.white);
+				_chemobeaconGlowTilemap.SetTransformMatrix(pos, Matrix4x4.identity);
+			}
 		}
 
 		public void ClearChemobeaconTransientOverlay(int tileId)
@@ -144,9 +169,8 @@ namespace FungusToast.Unity.Grid.Helpers
 		public void UpdateChemobeaconPulseVisuals()
 		{
 			var board = _getBoard();
-			var overlayTilemap = _getOverlayTilemap();
-			var moldTilemap = _getMoldTilemap();
-			if (board == null || overlayTilemap == null || moldTilemap == null)
+			var glowTilemap = _chemobeaconGlowTilemap;
+			if (board == null || glowTilemap == null)
 			{
 				return;
 			}
@@ -154,18 +178,13 @@ namespace FungusToast.Unity.Grid.Helpers
 			foreach (var marker in board.GetActiveChemobeacons())
 			{
 				Vector3Int pos = _getPositionForTileId(marker.TileId);
-				if (!moldTilemap.HasTile(pos))
+				if (!glowTilemap.HasTile(pos))
 				{
 					continue;
 				}
 
-				moldTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId));
-				moldTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
-				if (overlayTilemap.HasTile(pos))
-				{
-					overlayTilemap.SetColor(pos, Color.white);
-					overlayTilemap.SetTransformMatrix(pos, GetChemobeaconEmblemMatrix());
-				}
+				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId));
+				glowTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
 			}
 		}
 
@@ -240,6 +259,10 @@ namespace FungusToast.Unity.Grid.Helpers
 		public void ResetRuntimeState()
 		{
 			_nutrientPulseTileIds.Clear();
+			if (_chemobeaconGlowTilemap != null)
+			{
+				_chemobeaconGlowTilemap.ClearAllTiles();
+			}
 		}
 
 		public void Dispose()
@@ -249,18 +272,68 @@ namespace FungusToast.Unity.Grid.Helpers
 			_nutrientPulseTileIds.Clear();
 		}
 
-		private Matrix4x4 GetChemobeaconPulseMatrix(int tileId)
+		/// <summary>
+		/// Lazily creates a runtime tilemap for the Chemobeacon glow, parented alongside the mold tilemap so it inherits
+		/// the grid's cell layout. It shares the mold layer's sorting order and sits slightly closer to the camera, which
+		/// draws it above every mold cell but below the status overlay that carries the lighthouse emblem.
+		/// </summary>
+		private Tilemap EnsureChemobeaconGlowTilemap()
+		{
+			if (_chemobeaconGlowTilemap != null)
+			{
+				return _chemobeaconGlowTilemap;
+			}
+
+			var moldTilemap = _getMoldTilemap();
+			if (moldTilemap == null)
+			{
+				return null;
+			}
+
+			var glowObject = new GameObject("ChemobeaconGlowTileMap");
+			glowObject.transform.SetParent(moldTilemap.transform.parent, false);
+			glowObject.transform.localPosition = moldTilemap.transform.localPosition + new Vector3(0f, 0f, UIEffectConstants.ChemobeaconGlowTilemapZOffset);
+			glowObject.transform.localRotation = moldTilemap.transform.localRotation;
+			glowObject.transform.localScale = moldTilemap.transform.localScale;
+
+			var glowTilemap = glowObject.AddComponent<Tilemap>();
+			glowTilemap.tileAnchor = moldTilemap.tileAnchor;
+			glowTilemap.orientation = moldTilemap.orientation;
+
+			var glowRenderer = glowObject.AddComponent<TilemapRenderer>();
+			var moldRenderer = moldTilemap.GetComponent<TilemapRenderer>();
+			if (moldRenderer != null)
+			{
+				glowRenderer.sortingLayerID = moldRenderer.sortingLayerID;
+				glowRenderer.sortingOrder = moldRenderer.sortingOrder;
+				glowRenderer.sharedMaterial = moldRenderer.sharedMaterial;
+				glowRenderer.mode = moldRenderer.mode;
+				glowRenderer.sortOrder = moldRenderer.sortOrder;
+			}
+
+			// The glow overflows its cell by up to one tile at peak scale; pad chunk culling so an edge-of-screen beacon isn't clipped.
+			glowRenderer.detectChunkCullingBounds = TilemapRenderer.DetectChunkCullingBounds.Manual;
+			glowRenderer.chunkCullingBounds = new Vector3(UIEffectConstants.ChemobeaconPulseMaxScale, UIEffectConstants.ChemobeaconPulseMaxScale, 0f);
+
+			_chemobeaconGlowTilemap = glowTilemap;
+			return glowTilemap;
+		}
+
+		private static Matrix4x4 GetChemobeaconPulseMatrix(int tileId)
 		{
 			float wave = GetChemobeaconPulseFactor(tileId);
 			float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinScale, UIEffectConstants.ChemobeaconPulseMaxScale, wave);
-			return Matrix4x4.TRS(Vector3.zero, Quaternion.identity, new Vector3(scale, scale, 1f));
+			float beamAngle = Mathf.Repeat((Time.time + tileId * 0.137f) * UIEffectConstants.ChemobeaconBeamRotationDegreesPerSecond, 360f);
+			return Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 0f, beamAngle), new Vector3(scale, scale, 1f));
 		}
 
 		private static Color GetChemobeaconPulseColor(int tileId)
 		{
 			float wave = GetChemobeaconPulseFactor(tileId);
 			float alpha = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinAlpha, UIEffectConstants.ChemobeaconPulseMaxAlpha, wave);
-			return new Color(1f, 1f, 1f, alpha);
+			Color color = UIEffectConstants.ChemobeaconGlowColor;
+			color.a *= alpha;
+			return color;
 		}
 
 		private static float GetChemobeaconPulseFactor(int tileId)
@@ -272,7 +345,76 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		private static Matrix4x4 GetChemobeaconEmblemMatrix()
 		{
-			return Matrix4x4.TRS(new Vector3(0f, 0.02f, 0f), Quaternion.identity, new Vector3(0.78f, 0.78f, 1f));
+			float scale = UIEffectConstants.ChemobeaconEmblemScale;
+			return Matrix4x4.TRS(new Vector3(0f, 0.02f, 0f), Quaternion.identity, new Vector3(scale, scale, 1f));
+		}
+
+		private void EnsureGeneratedChemobeaconGlowTile()
+		{
+			if (_generatedChemobeaconGlowTile != null && _generatedChemobeaconGlowSprite != null && _generatedChemobeaconGlowTexture != null)
+			{
+				return;
+			}
+
+			const int textureSize = 96;
+			_generatedChemobeaconGlowTexture = new Texture2D(textureSize, textureSize, TextureFormat.RGBA32, false)
+			{
+				filterMode = FilterMode.Bilinear,
+				wrapMode = TextureWrapMode.Clamp
+			};
+
+			var pixels = new Color32[textureSize * textureSize];
+			for (int py = 0; py < textureSize; py++)
+			{
+				for (int px = 0; px < textureSize; px++)
+				{
+					pixels[(py * textureSize) + px] = EvaluateChemobeaconGlowPixel(textureSize, px, py);
+				}
+			}
+
+			_generatedChemobeaconGlowTexture.SetPixels32(pixels);
+			_generatedChemobeaconGlowTexture.Apply(false, false);
+			_generatedChemobeaconGlowSprite = Sprite.Create(
+				_generatedChemobeaconGlowTexture,
+				new Rect(0f, 0f, textureSize, textureSize),
+				new Vector2(0.5f, 0.5f),
+				textureSize,
+				0,
+				SpriteMeshType.FullRect);
+
+			_generatedChemobeaconGlowTile = ScriptableObject.CreateInstance<Tile>();
+			_generatedChemobeaconGlowTile.sprite = _generatedChemobeaconGlowSprite;
+			_generatedChemobeaconGlowTile.color = Color.white;
+			_generatedChemobeaconGlowTile.colliderType = Tile.ColliderType.None;
+		}
+
+		/// <summary>
+		/// Soft radial glow plus two opposed lighthouse beam cones. The glow is rotationally symmetric, so spinning the
+		/// tile only animates the beams. The sprite is drawn edge-to-edge, so at pulse scale 2.0 the beams reach one full
+		/// tile out from the beacon center.
+		/// </summary>
+		private static Color32 EvaluateChemobeaconGlowPixel(int textureSize, int px, int py)
+		{
+			float x = (((px + 0.5f) / textureSize) * 2f) - 1f;
+			float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
+			float radius = Mathf.Sqrt((x * x) + (y * y));
+
+			// Central lamp: bright core that fades out around the edge of the beacon's own cell.
+			float core = 1f - Mathf.SmoothStep(0.1f, 0.6f, radius);
+
+			// Two opposed cones along the local x axis; angular softness scales with radius so the cone edges stay smooth.
+			float sinAngle = radius > 0.001f ? Mathf.Abs(y) / radius : 0f;
+			float cone = 1f - Mathf.SmoothStep(0.24f, 0.4f, sinAngle);
+			float reach = 1f - Mathf.SmoothStep(0.35f, 1f, radius);
+			float beam = cone * reach * 0.85f;
+
+			float alpha = Mathf.Clamp01(Mathf.Max(core, beam));
+			if (alpha <= 0.01f)
+			{
+				return new Color32(255, 255, 255, 0);
+			}
+
+			return new Color32(255, 255, 255, (byte)Mathf.Clamp(Mathf.RoundToInt(alpha * 255f), 0, 255));
 		}
 
 		private void EnsureGeneratedChemobeaconEmblemTile()
@@ -625,6 +767,30 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				UnityEngine.Object.Destroy(_generatedChemobeaconEmblemTexture);
 				_generatedChemobeaconEmblemTexture = null;
+			}
+
+			if (_generatedChemobeaconGlowTile != null)
+			{
+				UnityEngine.Object.Destroy(_generatedChemobeaconGlowTile);
+				_generatedChemobeaconGlowTile = null;
+			}
+
+			if (_generatedChemobeaconGlowSprite != null)
+			{
+				UnityEngine.Object.Destroy(_generatedChemobeaconGlowSprite);
+				_generatedChemobeaconGlowSprite = null;
+			}
+
+			if (_generatedChemobeaconGlowTexture != null)
+			{
+				UnityEngine.Object.Destroy(_generatedChemobeaconGlowTexture);
+				_generatedChemobeaconGlowTexture = null;
+			}
+
+			if (_chemobeaconGlowTilemap != null)
+			{
+				UnityEngine.Object.Destroy(_chemobeaconGlowTilemap.gameObject);
+				_chemobeaconGlowTilemap = null;
 			}
 		}
 	}
