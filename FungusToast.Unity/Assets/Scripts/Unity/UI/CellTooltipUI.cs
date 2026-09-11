@@ -125,7 +125,7 @@ namespace FungusToast.Unity.UI
             AppendResistance(cell);
             AppendAnimationFlags(cell);
 
-            CommitRenderedContent(cell);
+            CommitRenderedContent(cell.OwnerPlayerId, cell.LastOwnerPlayerId);
         }
 
         public void UpdateTooltip(
@@ -173,24 +173,16 @@ namespace FungusToast.Unity.UI
                 AppendNutrientPatch(tile.NutrientPatch);
             }
 
-            CommitRenderedContent(null);
+            CommitRenderedContent(chemobeacon?.PlayerId, null);
         }
 
-        private void CommitRenderedContent(FungalCell cell)
+        private void CommitRenderedContent(int? ownerPlayerId, int? lastOwnerPlayerId)
         {
             bodyText.text = sb.ToString().TrimEnd('\n', '\r');
             bodyText.ForceMeshUpdate();
             SizeToContent();
             bodyText.ForceMeshUpdate();
-
-            if (cell != null)
-            {
-                UpdateOwnershipIcons(cell);
-            }
-            else
-            {
-                HideOwnershipIcons();
-            }
+            UpdateOwnershipIcons(ownerPlayerId, lastOwnerPlayerId);
 
             LayoutChanged?.Invoke();
         }
@@ -529,7 +521,7 @@ namespace FungusToast.Unity.UI
         private void AppendChemobeaconInfo(BoardTile tile, GameBoard board, GameBoard.ChemobeaconMarker chemobeacon)
         {
             sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
-            sb.AppendLine(DetailLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
+            sb.AppendLine(EmphasizedLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Rounds Remaining", chemobeacon.TurnsRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Warning));
             sb.AppendLine(DetailLine("Effect", $"Projects {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
             sb.AppendLine(DetailLine("Effect", "Replaces toxins, dead cells, enemy cells, and empty tiles in its path", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
@@ -558,23 +550,10 @@ namespace FungusToast.Unity.UI
             return $"<size={DetailSectionFontSize}><color=#{Hex(Contrast(color))}>• {text}</color></size>";
         }
 
-        private void UpdateOwnershipIcons(FungalCell cell)
+        private void UpdateOwnershipIcons(int? ownerPlayerId, int? lastOwnerPlayerId)
         {
-            UpdateOwnershipBadge(ownerBadgeImage, cell.OwnerPlayerId, "Owner:");
-            UpdateOwnershipBadge(lastOwnerBadgeImage, cell.LastOwnerPlayerId, "Last Owner:");
-        }
-
-        private void HideOwnershipIcons()
-        {
-            if (ownerBadgeImage != null)
-            {
-                ownerBadgeImage.gameObject.SetActive(false);
-            }
-
-            if (lastOwnerBadgeImage != null)
-            {
-                lastOwnerBadgeImage.gameObject.SetActive(false);
-            }
+            UpdateOwnershipBadge(ownerBadgeImage, ownerPlayerId, "Owner:");
+            UpdateOwnershipBadge(lastOwnerBadgeImage, lastOwnerPlayerId, "Last Owner:");
         }
 
         private void UpdateOwnershipBadge(Image badge, int? playerId, string linePrefix)

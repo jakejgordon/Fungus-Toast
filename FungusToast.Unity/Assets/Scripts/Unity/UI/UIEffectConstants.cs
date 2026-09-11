@@ -1130,9 +1130,14 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float ChemobeaconPulseMaxAlpha = 1f;
         /// <summary>
-        /// Tint applied to the Chemobeacon glow and lighthouse beams. Warm white reads as a lamp regardless of owner color.
+        /// Tint applied to the Chemobeacon glow and lighthouse beams. Fallback when the owner's mold sprite cannot be sampled.
         /// </summary>
         public static readonly Color ChemobeaconGlowColor = new Color(1f, 0.96f, 0.82f, 1f);
+        /// <summary>
+        /// Saturation band for the owner-derived Chemobeacon glow: low enough to still read as a light, high enough to read as the owner's hue.
+        /// </summary>
+        public const float ChemobeaconOwnerGlowMinSaturation = 0.55f;
+        public const float ChemobeaconOwnerGlowMaxSaturation = 0.8f;
         /// <summary>
         /// Rotation speed of the Chemobeacon lighthouse beams, in degrees per second.
         /// </summary>

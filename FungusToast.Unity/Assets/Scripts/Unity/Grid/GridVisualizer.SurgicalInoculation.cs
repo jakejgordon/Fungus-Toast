@@ -37,6 +37,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private Sprite _generatedChemobeaconGlowSprite;
 		private Texture2D _generatedChemobeaconGlowTexture;
 		private Tilemap _chemobeaconGlowTilemap;
+		private readonly Dictionary<int, Color> _chemobeaconOwnerGlowColors = new();
 
 		public GridOverlayRenderer(
 			Func<GameBoard> getBoard,
@@ -115,7 +116,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			{
 				glowTilemap.SetTile(pos, _generatedChemobeaconGlowTile);
 				glowTilemap.SetTileFlags(pos, TileFlags.None);
-				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId));
+				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(tileId, marker.PlayerId));
 				glowTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(tileId));
 				glowTilemap.RefreshTile(pos);
 			}
@@ -183,7 +184,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					continue;
 				}
 
-				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId));
+				glowTilemap.SetColor(pos, GetChemobeaconPulseColor(marker.TileId, marker.PlayerId));
 				glowTilemap.SetTransformMatrix(pos, GetChemobeaconPulseMatrix(marker.TileId));
 			}
 		}
@@ -259,6 +260,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		public void ResetRuntimeState()
 		{
 			_nutrientPulseTileIds.Clear();
+			_chemobeaconOwnerGlowColors.Clear();
 			if (_chemobeaconGlowTilemap != null)
 			{
 				_chemobeaconGlowTilemap.ClearAllTiles();
@@ -327,13 +329,110 @@ namespace FungusToast.Unity.Grid.Helpers
 			return Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(0f, 0f, beamAngle), new Vector3(scale, scale, 1f));
 		}
 
-		private static Color GetChemobeaconPulseColor(int tileId)
+		private Color GetChemobeaconPulseColor(int tileId, int playerId)
 		{
 			float wave = GetChemobeaconPulseFactor(tileId);
 			float alpha = Mathf.Lerp(UIEffectConstants.ChemobeaconPulseMinAlpha, UIEffectConstants.ChemobeaconPulseMaxAlpha, wave);
-			Color color = UIEffectConstants.ChemobeaconGlowColor;
+			Color color = GetChemobeaconOwnerGlowColor(playerId);
 			color.a *= alpha;
 			return color;
+		}
+
+		/// <summary>
+		/// Glow tint derived from the owner's mold sprite so the beacon reads as that player's. The sampled hue is kept,
+		/// saturation is clamped to a readable band and value is pushed to full so the glow still looks like a light.
+		/// Falls back to the neutral warm white when the sprite cannot be sampled.
+		/// </summary>
+		private Color GetChemobeaconOwnerGlowColor(int playerId)
+		{
+			if (_chemobeaconOwnerGlowColors.TryGetValue(playerId, out Color cached))
+			{
+				return cached;
+			}
+
+			Color glow = UIEffectConstants.ChemobeaconGlowColor;
+			Sprite ownerSprite = _getTileForPlayer(playerId)?.sprite;
+			if (TrySampleSpriteDominantColor(ownerSprite, out Color sampled))
+			{
+				Color.RGBToHSV(sampled, out float hue, out float saturation, out _);
+				saturation = Mathf.Clamp(saturation, UIEffectConstants.ChemobeaconOwnerGlowMinSaturation, UIEffectConstants.ChemobeaconOwnerGlowMaxSaturation);
+				glow = Color.HSVToRGB(hue, saturation, 1f);
+				glow.a = UIEffectConstants.ChemobeaconGlowColor.a;
+			}
+
+			_chemobeaconOwnerGlowColors[playerId] = glow;
+			return glow;
+		}
+
+		/// <summary>
+		/// Alpha- and saturation-weighted average of a sprite's pixels. Goes through a temporary RenderTexture so it works
+		/// for textures that are not CPU-readable.
+		/// </summary>
+		private static bool TrySampleSpriteDominantColor(Sprite sprite, out Color color)
+		{
+			color = default;
+			if (sprite == null || sprite.texture == null)
+			{
+				return false;
+			}
+
+			const int sampleSize = 16;
+			RenderTexture previousActive = RenderTexture.active;
+			RenderTexture sampleTarget = RenderTexture.GetTemporary(sampleSize, sampleSize, 0, RenderTextureFormat.ARGB32);
+			Texture2D readback = null;
+			try
+			{
+				Texture texture = sprite.texture;
+				Rect rect = sprite.packed ? sprite.textureRect : sprite.rect;
+				var scale = new Vector2(rect.width / texture.width, rect.height / texture.height);
+				var offset = new Vector2(rect.x / texture.width, rect.y / texture.height);
+				Graphics.Blit(texture, sampleTarget, scale, offset);
+
+				RenderTexture.active = sampleTarget;
+				readback = new Texture2D(sampleSize, sampleSize, TextureFormat.RGBA32, false);
+				readback.ReadPixels(new Rect(0f, 0f, sampleSize, sampleSize), 0, 0);
+				readback.Apply(false, false);
+
+				Color32[] pixels = readback.GetPixels32();
+				float weightTotal = 0f;
+				Vector3 accumulated = Vector3.zero;
+				foreach (Color32 pixel in pixels)
+				{
+					if (pixel.a < 32)
+					{
+						continue;
+					}
+
+					Color c = pixel;
+					Color.RGBToHSV(c, out _, out float saturation, out float value);
+					float weight = c.a * (0.15f + saturation) * (0.25f + value);
+					accumulated += new Vector3(c.r, c.g, c.b) * weight;
+					weightTotal += weight;
+				}
+
+				if (weightTotal <= 0.0001f)
+				{
+					return false;
+				}
+
+				accumulated /= weightTotal;
+				color = new Color(accumulated.x, accumulated.y, accumulated.z, 1f);
+				return true;
+			}
+			catch (Exception exception)
+			{
+				Debug.LogWarning($"Could not sample Chemobeacon owner color from sprite '{sprite.name}': {exception.Message}");
+				return false;
+			}
+			finally
+			{
+				RenderTexture.active = previousActive;
+				RenderTexture.ReleaseTemporary(sampleTarget);
+				if (readback != null)
+				{
+					UnityEngine.Object.Destroy(readback);
+				}
+			}
 		}
 
 		private static float GetChemobeaconPulseFactor(int tileId)
