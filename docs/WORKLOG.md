@@ -1223,6 +1223,16 @@ measurement model, phase gates, and open product decisions are in
     bound is not below the frozen `-0.05` regression boundary, so it advances to
     the 50-game comparison. This does not support a promotion or band claim.
 
+82. The remaining H1 candidate stopped at its preregistered 50-game comparison.
+    The matched, checksum-valid swap emitted `not_supported`: candidate-minus-
+    parent normalized board share was `-0.1613` (95% CI `-0.2726..-0.0500`),
+    with 50 complete pairs and combined runtime 635.866 seconds against a
+    900-second budget. The 95% interval is entirely below zero and does not
+    clear the frozen `+0.05` increase margin. The candidate is stopped on
+    evidence, not retried, and its holdout must not run. The H1 lane has no
+    remaining distinct proposal under its current bounded plan; next: screen
+    the H2 surge-tempo or E1 large-board lane after static diversity review.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

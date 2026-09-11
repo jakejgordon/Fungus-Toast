@@ -167,3 +167,9 @@ candidate's paired normalized-board-share difference was `-0.1075` (95% CI
 `-0.2727..+0.0577`). Its upper interval bound is not below the frozen `-0.05`
 regression boundary, so it clears calibration and advances to the 50-game
 comparison. This is not a promotion, band, or efficacy result.
+
+The 50-game comparison completed with checksum-valid artifacts and emitted the
+preregistered verdict `not_supported`: candidate-minus-parent normalized board
+share was `-0.1613` (95% CI `-0.2726..-0.0500`) across 50 pairs. The combined
+runtime was 635.866 seconds within the 900-second budget. This stops the
+candidate on evidence; no holdout may run.
