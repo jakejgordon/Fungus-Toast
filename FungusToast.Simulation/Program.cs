@@ -290,6 +290,11 @@ namespace FungusToast.Simulation
         {
             try
             {
+                // Generated candidates exist only after their catalog is published. Load it before
+                // resolving the requested set so P8 can screen a generated evaluation cast with
+                // the same provenance-stamped behavior report used for authored rosters.
+                if (!TryLoadCandidateCatalog(args)) return;
+
                 var setText = GetOptionValue(args, "--behavior-strategy-set") ?? nameof(StrategySetEnum.Proven);
                 if (!Enum.TryParse<StrategySetEnum>(setText, ignoreCase: true, out var strategySet))
                     throw new ArgumentException($"Invalid --behavior-strategy-set value '{setText}'.");
