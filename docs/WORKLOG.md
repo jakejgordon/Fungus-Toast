@@ -1211,6 +1211,18 @@ measurement model, phase gates, and open product decisions are in
     preregistration; next: screen the remaining H1 candidate whose observed
     build differs from the parent, then continue only if it clears calibration.
 
+81. The remaining H1 resource-policy candidate cleared its preregistered
+    calibration gate. Its five-game smoke and 20-game calibration used the
+    frozen 160x160, rotating-slot, seed-`2026091102` paired swap against
+    `TST_BalancedControl_MaxEconomy`, with
+    `Grow>Kill>Reclaim(Econ/Reclaim)` fixed as opponent and nutrient patches,
+    Mycovariants, and starting Adaptations disabled. The calibration treatment
+    had been interrupted by the prior session and was resumed from durable state;
+    both completed artifacts have valid manifest checksums. Candidate-minus-parent
+    normalized board share was `-0.1075` (95% CI `-0.2727..+0.0577`). The upper
+    bound is not below the frozen `-0.05` regression boundary, so it advances to
+    the 50-game comparison. This does not support a promotion or band claim.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

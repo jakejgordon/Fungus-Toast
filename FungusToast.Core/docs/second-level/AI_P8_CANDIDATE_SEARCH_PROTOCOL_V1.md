@@ -160,3 +160,10 @@ and nutrients, Mycovariants, and starting Adaptations disabled. Its holdout is
 calibration, 50-game comparison, then 100-game holdout, with paired normalized
 board-share increase margin `0.05`. A calibration interval whose upper bound is
 below `-0.05` stops this candidate without comparison or holdout.
+
+The five-game smoke completed with zero parity mismatches. The 20-game
+calibration completed with checksum-valid control and treatment artifacts. The
+candidate's paired normalized-board-share difference was `-0.1075` (95% CI
+`-0.2727..+0.0577`). Its upper interval bound is not below the frozen `-0.05`
+regression boundary, so it clears calibration and advances to the 50-game
+comparison. This is not a promotion, band, or efficacy result.
