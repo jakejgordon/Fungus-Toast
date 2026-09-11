@@ -173,3 +173,27 @@ preregistered verdict `not_supported`: candidate-minus-parent normalized board
 share was `-0.1613` (95% CI `-0.2726..-0.0500`) across 50 pairs. The combined
 runtime was 635.866 seconds within the 900-second budget. This stops the
 candidate on evidence; no holdout may run.
+
+## H2 preregistered evaluation — surge-window candidate `dcb18b64`
+
+The H2 plan generated seven valid candidates from
+`TST_Arch06_SurgeGrowth` after two duplicate rejections. The generated-catalog
+behavior report confirms that its timing-sweep candidates share the parent's
+deterministic mutation build but do not duplicate either retained Hard
+representative; this is expected because the bounded treatment changes a
+timing gene, not its acquisition plan. Candidate
+`candidate.tst-arch06-surgegrowth.dcb18b642321`
+(`CAND_p8-hard-surge-tempo-v1_SurgeAttemptTurnFrequencySweep_dcb18b64`) is
+selected because it changes the parent from a five-round to a three-round
+surge-attempt cadence: the required player-readable distinction is earlier,
+more frequent surge windows. The screen records surge upgrade-event rounds as
+well as outcome metrics.
+
+The paired swap uses the candidate against parent `TST_Arch06_SurgeGrowth`,
+with retained Hard `TST_BalancedControl_MaxEconomy` fixed as opponent. Screening
+uses 160x160, rotating slots, seed `2026091103`, and nutrients, Mycovariants,
+and starting Adaptations disabled. Its holdout is 180x140 with seed
+`2026091203`. The gate is 5-game smoke, 20-game calibration, 50-game
+comparison, then 100-game holdout, with the standard paired normalized-board-
+share increase margin of `0.05`. A calibration interval whose upper bound is
+below `-0.05` stops this candidate without comparison or holdout.
