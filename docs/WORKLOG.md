@@ -1194,6 +1194,23 @@ measurement model, phase gates, and open product decisions are in
     reference, and completed with zero parity mismatches. This is tooling only;
     no generated candidate enters an authored pool.
 
+80. The first P8 H1 candidate was screened and stopped at calibration. The
+    generated-catalog behavior-report command now loads its catalog before
+    resolving the requested set, allowing a static report over generated
+    candidates plus the provisional retained panel. Of five novel H1 candidates,
+    three reproduced the parent build and were screened out. The selected
+    opening-order candidate `candidate.tst-balancedcontrol-maxeconomy.959c542898cc`
+    completed the 5-game smoke and the preregistered 20-game paired calibration
+    against `TST_BalancedControl_MaxEconomy`, with
+    `Grow>Kill>Reclaim(Econ/Reclaim)` fixed as opponent (160x160, rotating slots,
+    seed `2026091101`, nutrients/Mycovariants/starting Adaptations off). Its
+    calibration normalized-board-share difference was `-0.2387` (95% CI
+    `-0.3833..-0.0941`); the entire interval is below the frozen `-0.05`
+    regression boundary. It is stopped on evidence, not retried, and neither the
+    50-game comparison nor holdout was run. The protocol now contains the
+    preregistration; next: screen the remaining H1 candidate whose observed
+    build differs from the parent, then continue only if it clears calibration.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
