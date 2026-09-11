@@ -1171,6 +1171,19 @@ measurement model, phase gates, and open product decisions are in
     list (including any explicitly unresolved P8.3 slots), then commit bounded
     JSON generation plans for the three lanes.
 
+78. Jake authorized an evidence-backed provisional retained-panel reference for
+    P8.4. It keeps the four strongest measured Easy identities, uses the
+    higher-share member of each exact-build pair only for diversity screening,
+    and opens exactly H1 Hard economy/control, H2 Hard surge tempo, and E1 Elite
+    large-board slots. The three lowest Easy lines remain in the repository but
+    leave active-progression planning: AnabolicBeacon (0.366),
+    Growth/Resilience (0.333), and Best_MaxEcon_Surge10_HyphalSurge (0.153).
+    The last is explicitly not an H2 source because P7's causal checks already
+    rejected its Tier-cap and timing genes as its remedy. Three bounded,
+    checked-in candidate-generation plans now seed the open lanes; tests prove
+    each plan validates and emits at least one structurally valid candidate.
+    No candidate has been promoted or assigned a difficulty band.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

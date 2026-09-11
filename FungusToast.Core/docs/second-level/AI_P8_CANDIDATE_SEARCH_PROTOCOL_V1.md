@@ -76,11 +76,32 @@ must place it in the requested band. The three Easy excess slots remain unchange
 until a separately evidenced replacement or contextual role makes a roster action
 appropriate.
 
+## Provisional retained-panel reference (2026-09-10)
+
+The panel below is an evidence-backed **search reference**, not a player-facing
+pool change. It retains the strongest four Easy measured identities and one
+representative for each exact-build group. Their unresolved counterparts stay in
+the roster and remain eligible for P8.3 holdout review; this only prevents a
+candidate search from treating them as independent diversity targets.
+
+| Measured band | Reference identities | Rationale |
+|---|---|---|
+| Easy | 'TST_AnabolicCreepingNecroRegressionCascade', 'TST_CampaignPlayer_SafeBaseline', 'Grow>Mutate>Kill(Max Econ)', 'TST_CreepingNecroRegressionCascade' | These are the four highest pooled Easy shares: 0.705, 0.620, 0.492, and 0.490. |
+| Normal | 'Grow>Defend>Kill', 'Filament Regrowth', 'Mutate>Grow>Kill(Max Econ)', 'Power Mutations Max Econ' | Filament Regrowth (1.058) is the provisional representative of its exact-build pair over Creeping>Necrosporulation (0.965). |
+| Hard | 'Grow>Kill>Reclaim(Econ/Reclaim)', 'TST_BalancedControl_MaxEconomy' | Reclaim(Econ/Reclaim) (1.373) and BalancedControl MaxEconomy (1.347) provisionally represent their near-even exact-build pairs. |
+| Elite | 'TST_CampaignMirror_AI13_AnabolicFirst', 'Anabolic>Grow>CatabR>PutreRegen' | CampaignMirror AnabolicFirst (1.915) is the provisional representative of the AnabolicFirst pair; the latter is the independent measured Elite line. |
+| Open slots | H1, H2, E1 | These two Hard and one Elite slots are the only targets for new candidate search. |
+
+The three Easy identities excluded from active-progression planning are
+'TST_AnabolicBeaconNecroRegressionCascade' (0.366),
+'Growth/Resilience' (0.333), and 'Best_MaxEcon_Surge10_HyphalSurge' (0.153).
+They are not deleted or relabeled by this decision. The last line is specifically
+not an H2 parent: P7's causal checks show its Tier-cap and timing changes did not
+repair its structural lack of growth, so using it as the surge-tempo seed would
+repeat a disproven branch.
+
 ## Immediate handoff
 
-The next implementation action is to record P8.3's retained-fifteen reference
-panel (or explicitly defer its unresolved slots), then check in one bounded JSON
-generation plan for each lane. At that point the existing generator, catalog,
-and staged evaluation emitter can run the plans without any player-facing
-registration.
-
+Three bounded plans now seed H1, H2, and E1. They produce candidates only in the
+generated testing catalog; all remain outside player-facing pools until they
+clear the evidence gates above.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-elite-large-board-v1",
+  "purpose": "P8 E1: bounded large-board Elite search around the independent retained Elite line. Candidates must differ from both retained Elite builds and later pass large-board calibration plus a different large-board holdout.",
+  "parentStrategyId": "legacy.proven.anabolic-grow-catabr-putreregen.v1",
+  "parentStrategySet": "proven",
+  "operators": [
+    "goalOrderAdjacentSwap",
+    "economyBiasSweep",
+    "prioritizeHighTierToggle",
+    "maxTierSweep"
+  ],
+  "maximumCandidates": 16,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": [
+    "tier7",
+    "tier10"
+  ]
+}

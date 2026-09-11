@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-hard-econ-control-v1",
+  "purpose": "P8 H1: bounded economy/control search around the retained Hard representative. Candidates must differ from the provisional retained panel under characterization and later earn a Hard band; generation alone does not fill the slot.",
+  "parentStrategyId": "legacy.proven.tst-balancedcontrol-maxeconomy.v1",
+  "parentStrategySet": "proven",
+  "operators": [
+    "goalOrderAdjacentSwap",
+    "economyBiasSweep",
+    "prioritizeHighTierToggle"
+  ],
+  "maximumCandidates": 12,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": []
+}

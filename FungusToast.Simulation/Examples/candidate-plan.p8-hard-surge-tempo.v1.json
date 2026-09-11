@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-hard-surge-tempo-v1",
+  "purpose": "P8 H2: bounded surge-tempo search around a maintained Testing surge family, not the disproven weak Proven surge line. Candidates require distinct observed surge timing and later Hard-band evidence.",
+  "parentStrategyId": "legacy.testing.tst-arch06-surgegrowth.v1",
+  "parentStrategySet": "testing",
+  "operators": [
+    "surgeAttemptTurnFrequencySweep",
+    "economyBiasSweep"
+  ],
+  "maximumCandidates": 12,
+  "surgeAttemptTurnFrequencyValues": [
+    3,
+    5,
+    7,
+    9
+  ],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": []
+}
