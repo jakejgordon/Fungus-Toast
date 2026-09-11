@@ -119,3 +119,27 @@ The parent is always included as a reference. Repeat `--candidate-reference`
 for each authored opponent required by a later paired evaluation. The command
 prints every rejected proposal and writes only the accepted candidates plus the
 declared references; it does not change any authored strategy set or pool.
+
+## H1 preregistered evaluation — opening-order candidate `959c5428`
+
+The first H1 static screen is frozen before game execution. It generated five
+novel candidates from `TST_BalancedControl_MaxEconomy`; three reproduce the
+parent's deterministic observed build and are not evaluated. Candidate
+`candidate.tst-balancedcontrol-maxeconomy.959c542898cc` (`CAND_p8-hard-econ-control-v1_GoalOrderAdjacentSwap_959c5428`)
+is the selected screen candidate. It swaps one adjacent build-goal pair,
+produces an observed build distinct from both retained Hard representatives,
+and supplies the required readable opening-order distinction. Its near match to
+the retained Normal `Power Mutations Max Econ` is a review signal, not a
+duplicate: its raw distance is `0.003`, while its build is not identical.
+
+The paired swap uses the candidate against parent
+`TST_BalancedControl_MaxEconomy`, with fixed opponent
+`Grow>Kill>Reclaim(Econ/Reclaim)`. Nutrient patches, Mycovariants, and starting
+Adaptations are disabled; slots rotate. The screening context is 160x160 with
+base seed `2026091101`; the holdout is 180x140 with base seed `2026091201`.
+The holdout changes both geometry and seed as required. The stages are 5-game
+smoke, 20-game calibration, a 50-game comparison, and a 100-game holdout,
+with the standard paired normalized-board-share increase margin of `0.05`.
+The candidate must clear each stage in order. This evaluation tests an
+opening-order candidate against its parent; it does not by itself award a Hard
+band or promote the candidate into any player-facing pool.
