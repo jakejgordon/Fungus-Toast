@@ -1184,6 +1184,16 @@ measurement model, phase gates, and open product decisions are in
     each plan validates and emits at least one structurally valid candidate.
     No candidate has been promoted or assigned a difficulty band.
 
+79. Candidate plans can now be materialized without hand-editing an evaluation
+    catalog: `--generate-candidate-catalog <plan>` plus
+    `--write-candidate-catalog <path>` creates a generated-only catalog, includes
+    the parent automatically, and accepts repeatable `--candidate-reference
+    StrategySet:name-or-id` options for authored opponents. The command reports
+    all deterministic duplicate/validation rejections. An end-to-end H1 smoke
+    loaded the emitted catalog, ran a generated candidate against its authored
+    reference, and completed with zero parity mismatches. This is tooling only;
+    no generated candidate enters an authored pool.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

@@ -49,6 +49,13 @@ namespace FungusToast.Simulation
                 return;
             }
 
+            var candidateGenerationPlanPath = GetOptionValue(args, "--generate-candidate-catalog");
+            if (candidateGenerationPlanPath != null)
+            {
+                RunCandidateCatalogGenerationCommand(args, candidateGenerationPlanPath);
+                return;
+            }
+
             var compareIndex = Array.FindIndex(args, argument =>
                 string.Equals(argument, "--compare-manifests", StringComparison.OrdinalIgnoreCase));
             if (compareIndex >= 0)
@@ -185,6 +192,62 @@ namespace FungusToast.Simulation
                     return args[index + 1];
             }
             return null;
+        }
+
+        private static IReadOnlyList<string> GetOptionValues(string[] args, string option)
+        {
+            var values = new List<string>();
+            for (var index = 0; index + 1 < args.Length; index++)
+            {
+                if (string.Equals(args[index], option, StringComparison.OrdinalIgnoreCase))
+                    values.Add(args[++index]);
+            }
+            return values;
+        }
+
+        private static void RunCandidateCatalogGenerationCommand(string[] args, string planPath)
+        {
+            try
+            {
+                var outputPath = GetOptionValue(args, "--write-candidate-catalog")
+                    ?? throw new ArgumentException("--write-candidate-catalog is required with --generate-candidate-catalog.");
+                var references = GetOptionValues(args, "--candidate-reference")
+                    .Select(ParseCandidateReference)
+                    .ToList();
+                var plan = CandidateGenerationPlanJson.Deserialize(File.ReadAllText(planPath));
+                var result = CandidateCatalogGeneration.Build(plan, references);
+
+                var fullOutputPath = Path.GetFullPath(outputPath);
+                var directory = Path.GetDirectoryName(fullOutputPath);
+                if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
+                File.WriteAllText(fullOutputPath, CandidateCatalogFileJson.Serialize(result.Catalog));
+                Console.WriteLine(
+                    $"Wrote candidate catalog: {fullOutputPath} ({result.Generation.Accepted.Count} accepted, {result.Generation.Rejected.Count} rejected).");
+                foreach (var rejection in result.Generation.Rejected)
+                    Console.WriteLine($"[REJECTED] {rejection.Operator}/{rejection.OperatorIndex}: {rejection.Reason} — {rejection.Detail}");
+            }
+            catch (Exception exception)
+            {
+                Console.Error.WriteLine($"Candidate catalog generation failed: {exception.Message}");
+                Environment.ExitCode = 1;
+            }
+        }
+
+        private static CandidateCatalogReference ParseCandidateReference(string value)
+        {
+            var separator = value.IndexOf(':');
+            if (separator <= 0 || separator == value.Length - 1
+                || !Enum.TryParse<StrategySetEnum>(value[..separator], ignoreCase: true, out var strategySet))
+            {
+                throw new ArgumentException(
+                    $"--candidate-reference must be StrategySet:strategy-name-or-id; received '{value}'.");
+            }
+
+            return new CandidateCatalogReference
+            {
+                StrategySet = strategySet,
+                StrategyName = value[(separator + 1)..]
+            };
         }
 
         private static void RunRegressionSnapshotCommand(string[] args, string snapshotPath)

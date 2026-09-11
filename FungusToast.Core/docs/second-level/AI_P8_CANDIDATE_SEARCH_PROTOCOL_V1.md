@@ -105,3 +105,17 @@ repeat a disproven branch.
 Three bounded plans now seed H1, H2, and E1. They produce candidates only in the
 generated testing catalog; all remain outside player-facing pools until they
 clear the evidence gates above.
+
+Materialize a plan without hand-editing a catalog:
+
+```bash
+dotnet run --project FungusToast.Simulation -- \
+  --generate-candidate-catalog FungusToast.Simulation/Examples/candidate-plan.p8-hard-economy-control.v1.json \
+  --write-candidate-catalog /tmp/p8-h1.catalog.json \
+  --candidate-reference 'Proven:Grow>Kill>Reclaim(Econ/Reclaim)'
+```
+
+The parent is always included as a reference. Repeat `--candidate-reference`
+for each authored opponent required by a later paired evaluation. The command
+prints every rejected proposal and writes only the accepted candidates plus the
+declared references; it does not change any authored strategy set or pool.
