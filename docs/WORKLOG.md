@@ -1233,6 +1233,19 @@ measurement model, phase gates, and open product decisions are in
     remaining distinct proposal under its current bounded plan; next: screen
     the H2 surge-tempo or E1 large-board lane after static diversity review.
 
+83. The H2 surge-window candidate is through calibration. Static screening of
+    the `TST_Arch06_SurgeGrowth` plan produced seven valid candidates; the
+    selected every-three-round timing variant preserves the parent's observed
+    mutation build but differs from both retained Hard representatives and
+    exposes the intended earlier, more frequent surge windows. In five matched
+    smoke games, exported surge events show activations at rounds 23 and 27 in
+    the candidate where the five-round parent defers comparable attempts. The
+    checksum-valid 20-game calibration against the parent, with
+    `TST_BalancedControl_MaxEconomy` fixed as opponent, estimated
+    candidate-minus-parent normalized board share at `-0.0160` (95% CI
+    `-0.0564..+0.0244`). It clears the `-0.05` regression stop and advances to
+    the 50-game comparison; no promotion or band claim follows from calibration.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

@@ -197,3 +197,12 @@ and starting Adaptations disabled. Its holdout is 180x140 with seed
 comparison, then 100-game holdout, with the standard paired normalized-board-
 share increase margin of `0.05`. A calibration interval whose upper bound is
 below `-0.05` stops this candidate without comparison or holdout.
+
+The five-game smoke completed with zero parity mismatches. Its surge event rows
+confirm the intended timing distinction: the three-round candidate activates
+surges in earlier windows than the five-round parent (including rounds 23 and
+27 in matched games). The checksum-valid 20-game calibration estimated
+candidate-minus-parent normalized board share at `-0.0160` (95% CI
+`-0.0564..+0.0244`). Its upper interval bound is not below `-0.05`, so it
+clears calibration and advances to the 50-game comparison; this is not a
+promotion, band, or efficacy result.
