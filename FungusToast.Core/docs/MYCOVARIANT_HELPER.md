@@ -26,8 +26,9 @@ Mycovariants are drafted abilities that either:
 7. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
 8. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
 9. Implement changes in category factories and processors.
-10. Validate with Core and Simulation builds when shared gameplay behavior changed.
-11. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
+10. Run the content-to-profile coverage review in `AI_STRATEGY_AUTHORING.md` whenever the Mycovariant is added or materially changed. Record an explicit disposition for every suggested non-Testing AI match; do not silently change an existing strategy's preference order.
+11. Validate with Core and Simulation builds when shared gameplay behavior changed.
+12. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
 
 ## Common Tasks
 
