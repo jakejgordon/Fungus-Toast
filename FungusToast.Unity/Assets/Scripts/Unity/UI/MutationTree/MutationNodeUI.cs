@@ -76,6 +76,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
         private Outline searchMatchOutline;
+        private Image surgeGlyph;                         // Surge identity glyph in the status slot while no status overlay is up
         private Outline purchasablePrerequisitePulseOutline;
         private TextMeshProUGUI purchasedGrowthMark;
 
@@ -139,6 +140,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureStatusIndicator(lockOverlay);
             ConfigureStatusIndicator(pendingUnlockOverlay);
             ConfigureStatusIndicator(surgeActiveOverlay);
+            EnsureSurgeGlyph();
             mutationNameText.text = mutation.Name;
 
             // ── Tier stripe — disabled; visual hierarchy handled by progress fill ──
@@ -261,18 +263,32 @@ namespace FungusToast.Unity.UI.MutationTree
             if (canvasGroup != null)
                 canvasGroup.alpha = baseCanvasAlpha;
 
-            // Surge overlay (shows when surge is active)
+            // Surge overlay (shows when surge is active). The prefab's hourglass is swapped for
+            // the surge's own glyph plus a rounds badge so the card matches the sidebar and the
+            // player inspector tile for the same surge.
             if (surgeActiveOverlay != null)
             {
                 surgeActiveOverlay.SetActive(isSurgeActive);
                 if (isSurgeActive)
                 {
                     if (surgeActiveIcon != null)
+                    {
                         surgeActiveIcon.enabled = true;
+                        surgeActiveIcon.sprite = SurgeArtRepository.GetIcon(mutation);
+                        surgeActiveIcon.preserveAspect = true;
+                    }
                     if (surgeActiveText != null)
-                        surgeActiveText.text = surgeTurns.ToString();
+                        surgeActiveText.gameObject.SetActive(false);
+                    CompactIconTileFactory.SetCornerBadge(
+                        surgeActiveOverlay,
+                        surgeTurns.ToString(),
+                        UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0.9f));
                 }
             }
+
+            // Idle surge glyph: same slot, shown only while no status overlay claims it.
+            if (surgeGlyph != null)
+                surgeGlyph.gameObject.SetActive(isSurge && !isSurgeActive && !lockOverlay.activeSelf && !showPendingUnlock);
 
             // Show cost (top right) — hide when maxed
             if (upgradeCostGroup != null && upgradeCostText != null)
@@ -1880,6 +1896,37 @@ namespace FungusToast.Unity.UI.MutationTree
 
             maxBadge = badgeGO;
             maxBadge.SetActive(false);
+        }
+
+        /// <summary>
+        /// Surge cards carry their glyph in the top-left status slot so a player can match the
+        /// card to the same icon on the sidebar countdown and in an opponent's inspector. Other
+        /// mutations have no glyph; the slot stays empty for them.
+        /// </summary>
+        private void EnsureSurgeGlyph()
+        {
+            if (surgeGlyph != null || mutation == null || !mutation.IsSurge)
+                return;
+
+            Transform slotParent = lockOverlay != null ? lockOverlay.transform.parent
+                : upgradeButton != null ? upgradeButton.transform : transform;
+
+            var glyphObject = new GameObject("SurgeGlyph", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            glyphObject.layer = gameObject.layer;
+            glyphObject.transform.SetParent(slotParent, false);
+
+            RectTransform glyphRect = glyphObject.GetComponent<RectTransform>();
+            glyphRect.anchorMin = new Vector2(0.5f, 1f);
+            glyphRect.anchorMax = new Vector2(0.5f, 1f);
+            glyphRect.pivot = new Vector2(0.5f, 0.5f);
+            glyphRect.anchoredPosition = StatusIndicatorOffset;
+            glyphRect.sizeDelta = Vector2.one * CompactIconTileFactory.VisualSize;
+
+            surgeGlyph = glyphObject.GetComponent<Image>();
+            surgeGlyph.sprite = SurgeArtRepository.GetIcon(mutation);
+            surgeGlyph.preserveAspect = true;
+            surgeGlyph.raycastTarget = false;
+            surgeGlyph.gameObject.SetActive(false);
         }
 
         private void EnsurePurchasedGrowthMark()

@@ -1443,7 +1443,12 @@ independently shippable commit.
    `Player.MutationsChanged` and after `TickDownActiveSurges`.
 5. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
    the name — the corners are taken by the tier glyph and the active-surge
-   hourglass) and beside the title in `MutationInspectorPanel`.
+   hourglass) and beside the title in `MutationInspectorPanel`. Done
+   2026-09-11, pulled ahead of steps 3–4: the glyph took the top-left status
+   slot instead of the body (idle surge shows the glyph there; an active surge
+   swaps the hourglass for the glyph plus a rounds badge, so the card matches
+   the inspector tile). `SurgePresentation` now reads
+   `Mutation.DescriptionSections.Summary` rather than re-parsing.
 6. **Activity log pop-out (last).** Replace the in-place expand with a floating
    panel anchored to the left sidebar that overlays the board, so the sidebar
    keeps its compact height whether the log is open or closed. Touches the

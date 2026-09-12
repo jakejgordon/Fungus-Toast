@@ -32,10 +32,13 @@ namespace FungusToast.Unity.UI.MutationTree
         // TMP reports a fractional preferred height. Rounding it down during layout can
         // clip the final baseline at some Canvas scale factors.
         private const float TextHeightSafetyPadding = 1f;
+        private const float TitleSurgeGlyphSize = 28f;
+        private const float TitleSurgeGlyphGap = 8f;
 
         private RectTransform rootRect = null!;
         private RectTransform contentRect = null!;
         private TextMeshProUGUI titleText = null!;
+        private Image titleSurgeGlyph = null!;
         private TextMeshProUGUI metadataText = null!;
         private TextMeshProUGUI summaryText = null!;
         private TextMeshProUGUI technicalDetailsText = null!;
@@ -105,6 +108,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             titleText.text = mutation.Name;
             titleText.color = MutationTreeColors.GetReadableCategoryAccent(mutation.Category);
+            SetTitleSurgeGlyph(mutation);
             metadataText.text = $"Tier {mutation.TierNumber}  •  {GetCategoryDisplayName(mutation.Category)}";
             summaryText.text = sections.Summary;
             technicalDetailsText.text = $"<b>Technical details</b>\n{sections.TechnicalDetails}";
@@ -148,6 +152,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             titleText.text = "Inspect a mutation";
             titleText.color = UIStyleTokens.Text.Primary;
+            SetTitleSurgeGlyph(null);
             metadataText.text = "Hover a node to compare its next level.";
             summaryText.text = "Requirements and direct unlocks stay here while you move around the tree.";
             technicalDetailsText.text = string.Empty;
@@ -265,6 +270,7 @@ namespace FungusToast.Unity.UI.MutationTree
             scrollRect.scrollSensitivity = 24f;
 
             titleText = CreateText("Title", 26f, 32f, FontStyles.Bold, UIStyleTokens.Text.Primary);
+            titleSurgeGlyph = CreateTitleSurgeGlyph(titleText);
             metadataText = CreateText("Metadata", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
             summaryText = CreateText("Summary", 18f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
             technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
@@ -694,6 +700,43 @@ namespace FungusToast.Unity.UI.MutationTree
             element.preferredHeight = preferredHeight;
             element.minHeight = preferredHeight;
             return label;
+        }
+
+        /// <summary>
+        /// The surge glyph sits inside the title row, to the left of the name, so the inspector
+        /// shows the same icon as the card, the sidebar countdown, and the player inspector.
+        /// </summary>
+        private static Image CreateTitleSurgeGlyph(TextMeshProUGUI title)
+        {
+            var glyphObject = new GameObject("SurgeGlyph", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            glyphObject.transform.SetParent(title.transform, false);
+
+            RectTransform glyphRect = glyphObject.GetComponent<RectTransform>();
+            glyphRect.anchorMin = new Vector2(0f, 0.5f);
+            glyphRect.anchorMax = new Vector2(0f, 0.5f);
+            glyphRect.pivot = new Vector2(0f, 0.5f);
+            glyphRect.anchoredPosition = Vector2.zero;
+            glyphRect.sizeDelta = Vector2.one * TitleSurgeGlyphSize;
+
+            Image glyph = glyphObject.GetComponent<Image>();
+            glyph.preserveAspect = true;
+            glyph.raycastTarget = false;
+            glyphObject.SetActive(false);
+            return glyph;
+        }
+
+        private void SetTitleSurgeGlyph(Mutation? mutation)
+        {
+            bool show = mutation != null && mutation.IsSurge;
+            titleSurgeGlyph.gameObject.SetActive(show);
+            if (show)
+            {
+                titleSurgeGlyph.sprite = SurgeArtRepository.GetIcon(mutation!);
+            }
+
+            titleText.margin = show
+                ? new Vector4(TitleSurgeGlyphSize + TitleSurgeGlyphGap, 0f, 0f, 0f)
+                : Vector4.zero;
         }
 
         private void RefreshTextHeights()
