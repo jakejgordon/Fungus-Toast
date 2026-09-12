@@ -212,3 +212,25 @@ parent normalized board share was `-0.0180` (95% CI `-0.0443..+0.0083`) across
 50 pairs. Combined runtime was 727.656 seconds within the 900-second budget.
 It does not meet the frozen `+0.05` increase margin, so the candidate stops on
 evidence and no holdout may run.
+
+## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
+
+The E1 plan generated eight valid candidates from
+`Anabolic>Grow>CatabR>PutreRegen` after three duplicate rejections. Candidate
+`candidate.anabolic-grow-catabr-putreregen.ca22a36d26d7`
+(`CAND_p8-elite-large-board-v1_GoalOrderAdjacentSwap_ca22a36d`) swaps the
+Catabolic Rebirth and Putrefactive Regeneration goal positions. Its
+characterized raw build differs from both retained Elite representatives. The
+player-readable hypothesis is that reaching the regeneration line earlier
+improves resilient late-board recovery after large exchanges; it is not a claim
+that the candidate is already Elite.
+
+The paired swap uses the candidate against its parent, with retained Elite
+`TST_CampaignMirror_AI13_AnabolicFirst` fixed as opponent. Screening uses the
+required large-board 180x140 context, rotating slots, seed `2026091104`, and
+nutrients, Mycovariants, and starting Adaptations disabled. Its holdout is a
+different large-board 200x160 context with seed `2026091204`. The gate is
+5-game smoke, 20-game calibration, 50-game comparison, then 100-game holdout,
+with the standard paired normalized-board-share increase margin of `0.05`. A
+calibration interval whose upper bound is below `-0.05` stops this candidate
+without comparison or holdout.
