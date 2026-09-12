@@ -44,11 +44,13 @@ namespace FungusToast.Core.AI
             Random rnd, ISimulationObserver observer)
         {
             var pointsBefore = player.MutationPoints;
+            player.WantsToBankPointsThisTurn = false;
             while (player.MutationPoints > 0)
             {
                 if (!MutationSpendingHelper.TrySpendRandomly(player, allMutations, board, rnd, observer, board.CurrentRound))
                     break;
             }
+            MutationSpendingHelper.BankLatentPolymorphismReserveIfNeeded(player, board.CurrentRound, observer);
             if (pointsBefore > 0)
             {
                 observer.RecordAiMutationFallbackSpend(player.PlayerId);

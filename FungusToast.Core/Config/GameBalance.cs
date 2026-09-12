@@ -65,6 +65,11 @@ namespace FungusToast.Core.Config
         }
 
         // ==================== MUTATION-SPECIFIC CONSTANTS ====================
+
+        // Latent Polymorphism (Tier 4 Genetic Drift)
+        // AI keeps this reserve to make banked interest meaningful, except when the game is about to end.
+        public const int LatentPolymorphismAiMinimumBankedPoints = 5;
+        public const int LatentPolymorphismAiReserveDisabledFinalRounds = 3;
         
         // Mycelial Bloom (Tier 1 Growth)
         public const float MycelialBloomEffectPerLevel = 0.0025f;

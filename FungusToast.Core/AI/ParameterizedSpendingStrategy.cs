@@ -790,7 +790,8 @@ namespace FungusToast.Core.AI
                 var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound, board)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
-                MutationSpendingHelper.TryUpgradeWithTargeting(player, anyUpgradable[0], board, simulationObserver, board.CurrentRound);
+                if (!MutationSpendingHelper.TryUpgradeWithTargeting(player, anyUpgradable[0], board, simulationObserver, board.CurrentRound))
+                    break;
             }
         }
 

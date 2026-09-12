@@ -34,6 +34,7 @@ namespace FungusToast.Core.AI
             // Delegate actual spending logic to child
             // Individual TryUpgradeMutation calls will handle point tracking correctly
             PerformSpendingLogic(player, allMutations, board, rnd, simulationObserver);
+            MutationSpendingHelper.BankLatentPolymorphismReserveIfNeeded(player, board.CurrentRound, simulationObserver);
             if (pointsBefore > 0)
             {
                 simulationObserver.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);

@@ -221,6 +221,50 @@ public class ParameterizedSpendingStrategyCharacterizationTests
     }
 
     [Fact]
+    public void Latent_polymorphism_preserves_a_five_point_reserve_before_the_final_three_rounds()
+    {
+        var ordinary = CreateMutation(903, points: 2);
+        var strategy = CreateStrategy(priorityCategories: new List<MutationCategory> { MutationCategory.Growth });
+        var (board, player) = CreateBoardAndPlayer(mutationPoints: 7, round: 71);
+        player.SetMutationLevel(MutationIds.LatentPolymorphism, 1, currentRound: 1);
+        var observer = new TestSimulationObserver();
+
+        strategy.SpendMutationPoints(
+            player,
+            new List<Mutation> { ordinary },
+            board,
+            new Random(1),
+            observer);
+
+        Assert.Equal(1, player.GetMutationLevel(ordinary.Id));
+        Assert.Equal(5, player.MutationPoints);
+        Assert.Equal(5, observer.LastBankedPoints);
+        Assert.True(player.WantsToBankPointsThisTurn, "Latent Polymorphism should mark the preserved reserve as banked.");
+    }
+
+    [Fact]
+    public void Latent_polymorphism_spends_the_reserve_during_the_final_three_rounds()
+    {
+        var ordinary = CreateMutation(904, points: 2);
+        var strategy = CreateStrategy(priorityCategories: new List<MutationCategory> { MutationCategory.Growth });
+        var (board, player) = CreateBoardAndPlayer(mutationPoints: 7, round: 72);
+        player.SetMutationLevel(MutationIds.LatentPolymorphism, 1, currentRound: 1);
+        var observer = new TestSimulationObserver();
+
+        strategy.SpendMutationPoints(
+            player,
+            new List<Mutation> { ordinary },
+            board,
+            new Random(1),
+            observer);
+
+        Assert.Equal(3, player.GetMutationLevel(ordinary.Id));
+        Assert.Equal(1, player.MutationPoints);
+        Assert.Null(observer.LastBankedPoints);
+        Assert.False(player.WantsToBankPointsThisTurn, "The late-game exception should spend through the Latent Polymorphism reserve.");
+    }
+
+    [Fact]
     public void Excluded_mutation_is_not_bought_even_when_it_is_the_only_option()
     {
         var excluded = CreateMutation(903, points: 1);

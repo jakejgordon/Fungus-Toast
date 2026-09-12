@@ -20,6 +20,30 @@ public class RandomMutationSpendingStrategyTests
         Assert.False(first.MutationLevels.SequenceEqual(differentSeed.MutationLevels));
     }
 
+    [Fact]
+    public void SpendMutationPoints_preserves_the_latent_polymorphism_reserve()
+    {
+        var board = new GameBoard(width: 5, height: 5, playerCount: 1);
+        var player = new Player(0, "Random AI", PlayerTypeEnum.AI)
+        {
+            MutationPoints = 7
+        };
+        player.SetMutationLevel(MutationIds.LatentPolymorphism, 1, currentRound: 1);
+        board.Players.Add(player);
+        var observer = new TestSimulationObserver();
+
+        new RandomMutationSpendingStrategy().SpendMutationPoints(
+            player,
+            new List<Mutation> { MutationRegistry.GetById(MutationIds.MycelialBloom)! },
+            board,
+            new Random(1),
+            observer);
+
+        Assert.Equal(5, player.MutationPoints);
+        Assert.Equal(5, observer.LastBankedPoints);
+        Assert.True(player.WantsToBankPointsThisTurn, "The random AI should mark the Latent Polymorphism reserve as banked.");
+    }
+
     private static (int RemainingPoints, (int MutationId, int Level)[] MutationLevels) SpendWithSeed(int seed)
     {
         var board = new GameBoard(width: 5, height: 5, playerCount: 1);
