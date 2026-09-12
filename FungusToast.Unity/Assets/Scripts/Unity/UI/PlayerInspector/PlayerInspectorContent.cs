@@ -84,6 +84,24 @@ namespace FungusToast.Unity.UI.PlayerInspector
         }
 
         /// <summary>
+        /// The player's currently active surges, for a surface that renders them as icons. Sorted
+        /// by mutation name so tiles do not reorder as one surge expires; entries whose mutation
+        /// is unknown to the repository are dropped.
+        /// </summary>
+        public static IReadOnlyList<Player.ActiveSurgeInfo> GetActiveSurges(Player? player)
+        {
+            if (player?.ActiveSurges == null || player.ActiveSurges.Count == 0)
+            {
+                return System.Array.Empty<Player.ActiveSurgeInfo>();
+            }
+
+            return player.ActiveSurges.Values
+                .Where(s => s != null && s.TurnsRemaining > 0 && MutationRepository.All.ContainsKey(s.MutationId))
+                .OrderBy(s => GetMutationName(s.MutationId))
+                .ToList();
+        }
+
+        /// <summary>
         /// The player's owned mycovariants, for a surface that renders them as icons. Entries with a
         /// missing definition are dropped so a caller can assume <c>Mycovariant</c> is non-null.
         /// </summary>

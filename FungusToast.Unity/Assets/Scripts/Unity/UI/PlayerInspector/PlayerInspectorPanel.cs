@@ -6,6 +6,7 @@ using System.Text;
 using FungusToast.Core.Players;
 using FungusToast.Unity.UI.Campaign;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
+using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using TMPro;
@@ -69,12 +70,15 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private Canvas rootCanvas = null!;
         private TextMeshProUGUI titleText = null!;
         private TextMeshProUGUI bodyText = null!;
+        private TextMeshProUGUI surgeHeaderText = null!;
         private TextMeshProUGUI adaptationHeaderText = null!;
         private TextMeshProUGUI mycovariantHeaderText = null!;
         private TextMeshProUGUI hintText = null!;
+        private RectTransform surgeGrid = null!;
         private RectTransform adaptationGrid = null!;
         private RectTransform mycovariantGrid = null!;
 
+        private readonly List<GameObject> surgeTiles = new();
         private readonly List<GameObject> adaptationTiles = new();
         private readonly List<GameObject> mycovariantTiles = new();
 
@@ -85,6 +89,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
         // Null means "never built", which an empty trait list must not match: otherwise the first
         // refresh for a player with no adaptations skips the rebuild that collapses the empty grid.
+        private string? surgeSignature;
         private string? adaptationSignature;
         private string? mycovariantSignature;
 
@@ -245,6 +250,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             BuildHeader();
             bodyText = CreateLabel("Body", BodyFontSize, FontStyles.Normal, UIStyleTokens.Text.Primary);
+            // Surges lead the icon sections: they are the only transient state in the panel and
+            // the thing a player opens an opponent's inspector to check.
+            surgeHeaderText = CreateLabel("ActiveSurgesHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
+            surgeGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorSurgeGrid", IconColumns);
             adaptationHeaderText = CreateLabel("AdaptationsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
             adaptationGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorAdaptationGrid", IconColumns);
             mycovariantHeaderText = CreateLabel("MycovariantsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
@@ -352,6 +361,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
             isPinned = pinned;
             if (!sameSubject)
             {
+                surgeSignature = null;
                 adaptationSignature = null;
                 mycovariantSignature = null;
             }
@@ -377,8 +387,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
             trackedPlayer = null;
             anchor = null;
             isPinned = false;
+            ClearTiles(surgeTiles);
             ClearTiles(adaptationTiles);
             ClearTiles(mycovariantTiles);
+            surgeSignature = null;
             adaptationSignature = null;
             mycovariantSignature = null;
 
@@ -429,13 +441,16 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             bodyText.text = PlayerInspectorMarkup.Render(sections);
 
+            IReadOnlyList<Player.ActiveSurgeInfo> surges = PlayerInspectorContent.GetActiveSurges(trackedPlayer);
             IReadOnlyList<PlayerAdaptation> adaptations = PlayerInspectorContent.GetOwnedAdaptations(trackedPlayer);
             IReadOnlyList<PlayerMycovariant> mycovariants = PlayerInspectorContent.GetOwnedMycovariants(trackedPlayer);
 
+            surgeHeaderText.text = FormatSectionHeader(SurgePresentation.SectionLabel, surges.Count);
             adaptationHeaderText.text = FormatSectionHeader("Adaptations", adaptations.Count);
             mycovariantHeaderText.text = FormatSectionHeader("Mycovariants", mycovariants.Count);
             hintText.text = isPinned ? PinnedHint : PreviewHint;
 
+            RebuildSurgeTiles(surges);
             RebuildAdaptationTiles(adaptations);
             RebuildMycovariantTiles(mycovariants);
 
@@ -444,6 +459,39 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
         private static string FormatSectionHeader(string label, int count) =>
             count > 0 ? $"{label} ({count})" : $"{label}: None";
+
+        private void RebuildSurgeTiles(IReadOnlyList<Player.ActiveSurgeInfo> surges)
+        {
+            // Rounds remaining is part of the signature so a pinned panel keeps counting down
+            // instead of freezing on the badge it was opened with.
+            string signature = BuildSignature(surges, s => $"{s.MutationId}:{s.Level}:{s.TurnsRemaining}");
+            if (signature == surgeSignature)
+            {
+                return;
+            }
+
+            surgeSignature = signature;
+            ClearTiles(surgeTiles);
+
+            foreach (Player.ActiveSurgeInfo surge in surges)
+            {
+                GameObject tile = CompactIconTileFactory.CreateTile(
+                    $"UI_InspectorSurge_{surge.MutationId}",
+                    surgeGrid,
+                    SurgeArtRepository.GetIcon(surge.MutationId));
+                CompactIconTileFactory.SetCornerBadge(
+                    tile,
+                    surge.TurnsRemaining.ToString(),
+                    UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0.9f));
+                surgeTiles.Add(tile);
+
+                var provider = tile.AddComponent<SurgeTooltipProvider>();
+                provider.Initialize(surge);
+                AttachTileTooltip(tile, provider);
+            }
+
+            ApplyGridHeight(surgeGrid, surges.Count);
+        }
 
         private void RebuildAdaptationTiles(IReadOnlyList<PlayerAdaptation> adaptations)
         {

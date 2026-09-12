@@ -1415,6 +1415,42 @@ before/after question meant hand-assembling a table from eighteen separate
 - Campaign and single-player validation artifacts support the final pool and
   difficulty assignments.
 
+## Active Initiative — Surge Visibility
+
+Active Mycelial Surges are invisible outside the mutation tree: the human
+player has no in-board countdown, and there is no way to see what an opponent
+has running. `Player.ActiveSurges` already carries mutation id, level, and
+rounds remaining, so this is presentation work only. Each step is an
+independently shippable commit.
+
+1. **Shared surge presentation.** Procedural per-surge icons in a
+   `SurgeArtRepository` (same pattern as `AdaptationArtRepository`, tinted with
+   the Mycelial Surges category colour) and a `SurgeTooltipProvider` that shows
+   name, level, rounds remaining, and the plain first paragraph of the
+   mutation description. Done 2026-09-11; the rounds badge is a shared
+   `CompactIconTileFactory.SetCornerBadge` so the sidebar can reuse it.
+2. **Player inspector.** "Active Surges (N)" icon section above Adaptations in
+   `PlayerInspectorPanel`, each tile carrying a rounds-remaining badge; hover
+   for the tooltip. The tile-rebuild signature must include rounds remaining so
+   a pinned panel keeps counting down. Done 2026-09-11; awaiting Unity Editor
+   visual check of the six procedural glyphs.
+3. **Activity log collapsed by default.** `UI_GameLogPanel` already has
+   Hide/Show; default it to collapsed and add an unread count to the collapsed
+   header so Lucky/Unlucky events are not silently buried.
+4. **Left panel surge rows.** For the human player, a row per active surge
+   (`[icon] Name · Lv N · R rounds`) directly under the Random Decay row in
+   `UI_MoldProfileRoot`, hidden when nothing is active. Refresh on
+   `Player.MutationsChanged` and after `TickDownActiveSurges`.
+5. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
+   the name — the corners are taken by the tier glyph and the active-surge
+   hourglass) and beside the title in `MutationInspectorPanel`.
+6. **Activity log pop-out (last).** Replace the in-place expand with a floating
+   panel anchored to the left sidebar that overlays the board, so the sidebar
+   keeps its compact height whether the log is open or closed. Touches the
+   sidebar layout reservation, `topActionRowRoot` show/hide, and the
+   follow-latest auto-scroll; do it only after steps 3 and 4 have shown how
+   much space the collapsed log actually buys.
+
 ## Working Rules
 
 - Keep new work as a small, independently validated and committed slice.

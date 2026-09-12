@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,6 +19,10 @@ namespace FungusToast.Unity.UI
         public const float VisualSize = 28f;
 
         public const float Spacing = 4f;
+
+        private const string BadgeObjectName = "CornerBadge";
+        private const float BadgeWidth = 18f;
+        private const float BadgeHeight = 16f;
 
         /// <summary>
         /// Creates one icon tile parented to <paramref name="parent"/>. The returned object is the
@@ -67,6 +72,72 @@ namespace FungusToast.Unity.UI
             hoverFeedback.Initialize(background, outline);
 
             return iconObject;
+        }
+
+        /// <summary>
+        /// Sets the small bottom-right number on a tile (rounds remaining on a surge, a stack
+        /// count), creating it on first use. Returns the label so a caller that keeps its tiles
+        /// across refreshes can update the text without rebuilding.
+        /// </summary>
+        public static TextMeshProUGUI SetCornerBadge(GameObject tile, string text, Color background)
+        {
+            Transform existing = tile.transform.Find(BadgeObjectName);
+            TextMeshProUGUI label;
+
+            if (existing != null)
+            {
+                label = existing.GetComponentInChildren<TextMeshProUGUI>(true);
+                var existingImage = existing.GetComponent<Image>();
+                if (existingImage != null)
+                {
+                    existingImage.color = background;
+                }
+            }
+            else
+            {
+                var badgeObject = new GameObject(BadgeObjectName, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                badgeObject.transform.SetParent(tile.transform, false);
+
+                var badgeRect = badgeObject.GetComponent<RectTransform>();
+                badgeRect.anchorMin = new Vector2(1f, 0f);
+                badgeRect.anchorMax = new Vector2(1f, 0f);
+                badgeRect.pivot = new Vector2(1f, 0f);
+                badgeRect.anchoredPosition = new Vector2(-1f, 1f);
+                badgeRect.sizeDelta = new Vector2(BadgeWidth, BadgeHeight);
+
+                var badgeImage = badgeObject.GetComponent<Image>();
+                badgeImage.color = background;
+                badgeImage.raycastTarget = false;
+
+                var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+                labelObject.transform.SetParent(badgeObject.transform, false);
+
+                var labelRect = labelObject.GetComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+
+                label = labelObject.GetComponent<TextMeshProUGUI>();
+                label.fontSize = UIStyleTokens.Typography.MicroMinimum;
+                label.fontStyle = FontStyles.Bold;
+                label.color = UIStyleTokens.Text.Primary;
+                label.alignment = TextAlignmentOptions.Center;
+                label.textWrappingMode = TextWrappingModes.NoWrap;
+                label.overflowMode = TextOverflowModes.Overflow;
+                label.raycastTarget = false;
+                if (TMP_Settings.defaultFontAsset != null)
+                {
+                    label.font = TMP_Settings.defaultFontAsset;
+                }
+            }
+
+            if (label != null)
+            {
+                label.text = text;
+            }
+
+            return label;
         }
 
         /// <summary>
