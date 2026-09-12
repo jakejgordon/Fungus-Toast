@@ -759,14 +759,14 @@ namespace FungusToast.Unity.UI.MutationTree
                     return;
                 }
 
-                var previewTileIds = ChemotacticBeaconHelper.GetProjectedGrowthTileIds(humanPlayer, board, tileId, projectedLevel);
-                if (previewTileIds.Count == 0)
+                var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(humanPlayer, board, tileId, projectedLevel);
+                if (projection.OriginTileId < 0)
                 {
                     gridVisualizer.ClearChemotacticBeaconPreview();
                     return;
                 }
 
-                gridVisualizer.ShowChemotacticBeaconPreview(previewTileIds);
+                gridVisualizer.ShowChemotacticBeaconPreview(projection.TraversedTileIds, projection.OriginTileId, projection.GrowthTileIds);
             });
 
             while (!resolved)

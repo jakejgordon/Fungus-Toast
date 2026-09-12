@@ -2262,7 +2262,12 @@ namespace FungusToast.Unity.Grid
         /// </summary>
         public void ClearJettingMyceliumPreview() => hoverHelper?.ClearPreviewTiles();
 
-        public void ShowChemotacticBeaconPreview(IEnumerable<int> tileIds)
+        /// <summary>
+        /// Shows the Chemotactic Beacon placement preview: the line tiles growth skips over are shaded gray,
+        /// the tile growth begins from pulses with the selectable-tile magenta, and the tiles growth will
+        /// claim are shaded black. Call <see cref="ClearChemotacticBeaconPreview"/> to remove the overlay.
+        /// </summary>
+        public void ShowChemotacticBeaconPreview(IEnumerable<int> traversedTileIds, int originTileId, IEnumerable<int> growthTileIds)
         {
             if (hoverHelper == null)
             {
@@ -2275,8 +2280,10 @@ namespace FungusToast.Unity.Grid
                 return;
             }
 
-            var positions = tileIds.Select(id => GetPositionForTileId(id));
-            hoverHelper.ShowSolidPreviewTiles(positions, Color.black);
+            var traversedPositions = traversedTileIds.Select(id => GetPositionForTileId(id));
+            var growthPositions = growthTileIds.Select(id => GetPositionForTileId(id));
+            Vector3Int? originPosition = originTileId >= 0 ? GetPositionForTileId(originTileId) : null;
+            hoverHelper.ShowChemotacticBeaconPreview(traversedPositions, originPosition, growthPositions);
         }
 
         public void ClearChemotacticBeaconPreview() => hoverHelper?.ClearPreviewTiles();
@@ -2301,9 +2308,9 @@ namespace FungusToast.Unity.Grid
             if (pulseHighlightCoroutine != null) StopCoroutine(pulseHighlightCoroutine);
             pulseHighlightCoroutine = StartCoroutine(selectionHelper.PulseHighlightTiles(
                 highlightedPositions,
-                new Color(1f, 0f, 0.9f, 0f),
-                new Color(1f, 0f, 0.9f, 1f),
-                0.4f));
+                UIEffectConstants.SelectableTilePulseDimColor,
+                UIEffectConstants.SelectableTilePulseBrightColor,
+                UIEffectConstants.SelectableTilePulseDurationSeconds));
         }
 
         public void HighlightTiles(IDictionary<int, (Color colorA, Color colorB)> tileHighlights)

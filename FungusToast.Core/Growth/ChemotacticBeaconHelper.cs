@@ -55,13 +55,20 @@ namespace FungusToast.Core.Growth
             => TrySelectAITargetTile(player, board, player?.GetMutationLevel(MutationIds.ChemotacticBeacon) ?? 0, GameBalance.ChemotacticBeaconSurgeDuration);
 
         public static IReadOnlyList<int> GetProjectedGrowthTileIds(Player player, GameBoard board, int targetTileId, int projectedLevel)
+            => GetProjectedGrowthPath(player, board, targetTileId, projectedLevel).GrowthTileIds;
+
+        /// <summary>
+        /// Full preview of the beacon line for a candidate marker tile: the tiles the line crosses before growth
+        /// begins, the tile growth begins from, and every tile growth would eventually be assigned to.
+        /// </summary>
+        public static DirectedVectorHelper.ChemotacticBeaconPathProjection GetProjectedGrowthPath(Player player, GameBoard board, int targetTileId, int projectedLevel)
         {
             if (player == null || board == null || !player.StartingTileId.HasValue)
             {
-                return Array.Empty<int>();
+                return DirectedVectorHelper.ChemotacticBeaconPathProjection.Empty;
             }
 
-            return DirectedVectorHelper.GetChemotacticBeaconPathTargetTileIds(
+            return DirectedVectorHelper.GetChemotacticBeaconPathProjection(
                 player,
                 board,
                 player.StartingTileId.Value,
@@ -144,12 +151,21 @@ namespace FungusToast.Core.Growth
                 return null;
             }
 
-            int expectedPlacements = Math.Min(pathLength, maxPlacements);
+            // Growth begins just past the furthest friendly living cell on the line, so only the remainder counts.
+            // The path's final step is the marker tile itself, which never receives growth.
+            int firstGrowthIndex = DirectedVectorHelper.FindChemotacticBeaconGrowthOriginIndex(path, board, playerId, candidateTile.TileId) + 1;
+            int remainingPathLength = pathLength - firstGrowthIndex;
+            if (remainingPathLength <= 1)
+            {
+                return null;
+            }
+
+            int expectedPlacements = Math.Min(remainingPathLength, maxPlacements);
             int nutrientValue = 0;
             int enemyLivingTilesCrossed = 0;
             int enemyToxinsCrossed = 0;
-            int stepsToEvaluate = Math.Min(expectedPlacements, Math.Max(0, path.Count - 1));
-            for (int index = 0; index < stepsToEvaluate; index++)
+            int lastIndexToEvaluate = Math.Min(firstGrowthIndex + expectedPlacements, Math.Max(0, path.Count - 1));
+            for (int index = firstGrowthIndex; index < lastIndexToEvaluate; index++)
             {
                 var (x, y) = path[index];
                 var pathTile = board.GetTile(x, y);
@@ -178,12 +194,12 @@ namespace FungusToast.Core.Growth
 
             return new BeaconPlacementCandidate(
                 candidateTile,
-                pathLength,
+                remainingPathLength,
                 expectedPlacements,
                 nutrientValue,
                 enemyLivingTilesCrossed,
                 enemyToxinsCrossed,
-                Math.Abs(pathLength - idealDistance));
+                Math.Abs(remainingPathLength - idealDistance));
         }
 
         private static BoardTile? GetAnchorTile(Player player, GameBoard board)

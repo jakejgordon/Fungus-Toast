@@ -1,5 +1,6 @@
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -190,7 +191,6 @@ public class ChemotacticBeaconHelperTests
         Assert.Equal(
             new[]
             {
-                board.GetTile(2, 2)!.TileId,
                 board.GetTile(4, 2)!.TileId,
                 board.GetTile(5, 2)!.TileId,
                 board.GetTile(6, 2)!.TileId,
@@ -198,10 +198,104 @@ public class ChemotacticBeaconHelperTests
                 board.GetTile(8, 2)!.TileId,
             },
             previewTileIds);
+        Assert.DoesNotContain(board.GetTile(2, 2)!.TileId, previewTileIds);
         Assert.DoesNotContain(board.GetTile(3, 2)!.TileId, previewTileIds);
         Assert.DoesNotContain(targetTileId, previewTileIds);
     }
 
+    [Fact]
+    public void GetProjectedGrowthPath_splits_the_line_into_traversed_origin_and_growth_tiles()
+    {
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+        board.PlaceFungalCell(new FungalCell(ownerPlayerId: 99, tileId: board.GetTile(3, 2)!.TileId, source: GrowthSource.Manual, lastOwnerPlayerId: null));
+        board.PlaceFungalCell(new FungalCell(player.PlayerId, board.GetTile(4, 2)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        board.PlaceFungalCell(new FungalCell(ownerPlayerId: 99, tileId: board.GetTile(6, 2)!.TileId, source: GrowthSource.Manual, lastOwnerPlayerId: null));
+
+        int targetTileId = board.GetTile(9, 2)!.TileId;
+
+        var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(player, board, targetTileId, projectedLevel: 1);
+
+        Assert.Equal(
+            new[] { board.GetTile(1, 2)!.TileId, board.GetTile(2, 2)!.TileId, board.GetTile(3, 2)!.TileId },
+            projection.TraversedTileIds);
+        Assert.Equal(board.GetTile(4, 2)!.TileId, projection.OriginTileId);
+        Assert.Equal(
+            new[]
+            {
+                board.GetTile(5, 2)!.TileId,
+                board.GetTile(6, 2)!.TileId,
+                board.GetTile(7, 2)!.TileId,
+                board.GetTile(8, 2)!.TileId,
+            },
+            projection.GrowthTileIds);
+    }
+
+    [Fact]
+    public void GetProjectedGrowthPath_uses_the_starting_spore_as_origin_with_nothing_traversed_when_no_friendly_cell_is_ahead()
+    {
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+
+        int targetTileId = board.GetTile(5, 2)!.TileId;
+
+        var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(player, board, targetTileId, projectedLevel: 1);
+
+        Assert.Empty(projection.TraversedTileIds);
+        Assert.Equal(board.GetTile(1, 2)!.TileId, projection.OriginTileId);
+        Assert.Equal(
+            new[] { board.GetTile(2, 2)!.TileId, board.GetTile(3, 2)!.TileId, board.GetTile(4, 2)!.TileId },
+            projection.GrowthTileIds);
+    }
+
+    [Fact]
+    public void TrySelectAITargetTile_measures_distance_from_the_growth_origin_rather_than_the_spore()
+    {
+        var board = new GameBoard(width: 50, height: 1, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 0);
+
+        // Friendly living cells extend the frontier to x=10; growth toward either candidate starts at x=11.
+        for (int x = 2; x <= 10; x++)
+        {
+            board.PlaceFungalCell(new FungalCell(player.PlayerId, board.GetTile(x, 0)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        }
+
+        int nearTargetTileId = board.GetTile(12, 0)!.TileId;
+        int farTargetTileId = board.GetTile(40, 0)!.TileId;
+        BlockAllOpenTilesExcept(board, player.PlayerId, nearTargetTileId, farTargetTileId);
+
+        int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
+
+        Assert.Equal(farTargetTileId, tileId);
+    }
+
+    [Fact]
+    public void TrySelectAITargetTile_skips_candidates_with_no_room_to_grow_past_the_frontier()
+    {
+        var board = new GameBoard(width: 10, height: 1, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 0, y: 0);
+        for (int x = 1; x <= 8; x++)
+        {
+            board.PlaceFungalCell(new FungalCell(player.PlayerId, board.GetTile(x, 0)!.TileId, GrowthSource.HyphalSurge, lastOwnerPlayerId: null));
+        }
+
+        int? tileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel: 1, GameBalance.ChemotacticBeaconSurgeDuration);
+
+        Assert.Null(tileId);
+    }
+
+    /// <summary>
+    /// Fills every remaining open tile with a friendly <em>dead</em> cell so only the named tiles accept a beacon.
+    /// Dead cells keep the growth origin at the spore; living ones would move it up the line.
+    /// </summary>
     private static void BlockAllOpenTilesExcept(GameBoard board, int ownerPlayerId, params int[] openTileIds)
     {
         var openTileIdSet = openTileIds.ToHashSet();
@@ -212,7 +306,9 @@ public class ChemotacticBeaconHelperTests
                 continue;
             }
 
-            board.PlaceFungalCell(new FungalCell(ownerPlayerId, tile.TileId, GrowthSource.Manual, lastOwnerPlayerId: null));
+            var blockingCell = new FungalCell(ownerPlayerId, tile.TileId, GrowthSource.Manual, lastOwnerPlayerId: null);
+            board.PlaceFungalCell(blockingCell);
+            board.KillFungalCell(blockingCell, DeathReason.Unknown);
         }
     }
 

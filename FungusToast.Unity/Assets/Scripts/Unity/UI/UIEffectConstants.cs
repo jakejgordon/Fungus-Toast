@@ -1281,5 +1281,32 @@ namespace FungusToast.Unity.UI
         /// Bright color for the toxin-cone preview (orange/amber, high alpha).
         /// </summary>
         public static readonly Color JettingMyceliumPreviewToxinBrightColor  = new Color(1f,   0.7f, 0.1f, 0.8f);
+
+        // ==================== SELECTABLE TILE HIGHLIGHT PULSE ====================
+        /// <summary>
+        /// Duration of one ping-pong leg of the magenta pulse applied to selectable tiles while a board selection is open.
+        /// </summary>
+        public const float SelectableTilePulseDurationSeconds = 0.4f;
+
+        /// <summary>
+        /// Fully transparent end of the selectable-tile magenta pulse.
+        /// </summary>
+        public static readonly Color SelectableTilePulseDimColor = new Color(1f, 0f, 0.9f, 0f);
+
+        /// <summary>
+        /// Fully opaque end of the selectable-tile magenta pulse.
+        /// </summary>
+        public static readonly Color SelectableTilePulseBrightColor = new Color(1f, 0f, 0.9f, 1f);
+
+        // ==================== CHEMOTACTIC BEACON HOVER PREVIEW ====================
+        /// <summary>
+        /// Shade for the part of the beacon line that growth skips over (from the starting spore up to the growth origin).
+        /// </summary>
+        public static readonly Color ChemobeaconPreviewTraversedColor = new Color(0.55f, 0.55f, 0.55f, 0.75f);
+
+        /// <summary>
+        /// Shade for the tiles the beacon line will grow toward and through.
+        /// </summary>
+        public static readonly Color ChemobeaconPreviewGrowthColor = Color.black;
     }
 }

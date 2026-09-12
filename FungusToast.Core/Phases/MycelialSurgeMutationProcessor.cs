@@ -105,6 +105,11 @@ namespace FungusToast.Core.Phases
                 if (!player.StartingTileId.HasValue)
                     continue;
 
+                // Resolve the origin before growth runs; afterwards the newly grown cells would shift it.
+                int originTileId = DirectedVectorHelper.GetChemotacticBeaconGrowthOriginTileId(player, board, player.StartingTileId.Value, marker.TileId);
+                if (originTileId < 0)
+                    originTileId = player.StartingTileId.Value;
+
                 var outcome = DirectedVectorHelper.ApplyChemotacticBeaconPathGrowth(
                     player,
                     board,
@@ -119,7 +124,7 @@ namespace FungusToast.Core.Phases
                 ReportDirectedVectorOutcome(observer, player.PlayerId, outcome);
 
                 if (outcome.AffectedTileIds.Count > 0)
-                    board.OnDirectedVectorSurge(player.PlayerId, player.StartingTileId.Value, outcome.AffectedTileIds);
+                    board.OnDirectedVectorSurge(player.PlayerId, originTileId, outcome.AffectedTileIds);
             }
         }
 

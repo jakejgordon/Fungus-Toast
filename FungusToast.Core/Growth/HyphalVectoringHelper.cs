@@ -315,7 +315,33 @@ namespace FungusToast.Core.Growth
         }
 
         /// <summary>
-        /// Projects Chemotactic Beacon growth from the player's starting spore toward the beacon marker.
+        /// The pieces of a Chemotactic Beacon line: the tiles the line passes over before growth begins,
+        /// the tile growth begins from, and the tiles growth will be assigned to.
+        /// </summary>
+        public sealed class ChemotacticBeaconPathProjection
+        {
+            public static readonly ChemotacticBeaconPathProjection Empty = new(-1, Array.Empty<int>(), Array.Empty<int>());
+
+            public ChemotacticBeaconPathProjection(int originTileId, IReadOnlyList<int> traversedTileIds, IReadOnlyList<int> growthTileIds)
+            {
+                OriginTileId = originTileId;
+                TraversedTileIds = traversedTileIds;
+                GrowthTileIds = growthTileIds;
+            }
+
+            /// <summary>Tile growth begins from: the furthest friendly living cell on the line, or the starting spore.</summary>
+            public int OriginTileId { get; }
+
+            /// <summary>Line tiles from the starting spore up to (but excluding) the origin. Empty when the origin is the spore.</summary>
+            public IReadOnlyList<int> TraversedTileIds { get; }
+
+            /// <summary>Tiles past the origin that growth will be assigned to, in path order.</summary>
+            public IReadOnlyList<int> GrowthTileIds { get; }
+        }
+
+        /// <summary>
+        /// Projects Chemotactic Beacon growth along the line from the player's starting spore toward the beacon marker.
+        /// Growth begins just past the furthest friendly living cell on that line (or the spore when there is none).
         /// Only valid growth targets consume quota, and those targets are assigned in earliest-to-latest path order.
         /// </summary>
         public static VectorLineOutcome ApplyChemotacticBeaconPathGrowth(
@@ -330,29 +356,20 @@ namespace FungusToast.Core.Growth
             DeathReason deathReason)
         {
             var outcome = new VectorLineOutcome();
-            if (totalTiles <= 0 || startTileId < 0 || targetTileId < 0)
-            {
-                return outcome;
-            }
-
-            var startTile = board.GetTileById(startTileId);
-            var targetTile = board.GetTileById(targetTileId);
-            if (startTile == null || targetTile == null)
+            if (totalTiles <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out _, out var path, out int originIndex))
             {
                 return outcome;
             }
 
             int selectedGrowthTargets = 0;
-            int maxPathLength = board.Width * board.Height;
-            var path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
-
-            foreach (var (x, y) in path)
+            for (int index = originIndex + 1; index < path.Count; index++)
             {
                 if (selectedGrowthTargets >= totalTiles)
                 {
                     break;
                 }
 
+                var (x, y) = path[index];
                 var tile = board.GetTile(x, y);
                 if (tile == null)
                 {
@@ -385,37 +402,62 @@ namespace FungusToast.Core.Growth
             return outcome;
         }
 
+        /// <summary>
+        /// Returns the tile Chemotactic Beacon growth begins from for the given start and marker, or -1 when no line exists.
+        /// </summary>
+        public static int GetChemotacticBeaconGrowthOriginTileId(Player player, GameBoard board, int startTileId, int targetTileId)
+        {
+            if (!TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var path, out int originIndex))
+            {
+                return -1;
+            }
+
+            return originIndex < 0 ? startTile.TileId : board.GetTile(path[originIndex].x, path[originIndex].y)!.TileId;
+        }
+
         public static IReadOnlyList<int> GetChemotacticBeaconPathTargetTileIds(
             Player player,
             GameBoard board,
             int startTileId,
             int targetTileId,
             int totalTiles)
+            => GetChemotacticBeaconPathProjection(player, board, startTileId, targetTileId, totalTiles).GrowthTileIds;
+
+        public static ChemotacticBeaconPathProjection GetChemotacticBeaconPathProjection(
+            Player player,
+            GameBoard board,
+            int startTileId,
+            int targetTileId,
+            int totalTiles)
         {
-            if (player == null || board == null || totalTiles <= 0 || startTileId < 0 || targetTileId < 0)
+            if (totalTiles <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var path, out int originIndex))
             {
-                return Array.Empty<int>();
+                return ChemotacticBeaconPathProjection.Empty;
             }
 
-            var startTile = board.GetTileById(startTileId);
-            var targetTile = board.GetTileById(targetTileId);
-            if (startTile == null || targetTile == null)
+            var traversedTileIds = new List<int>();
+            int originTileId = startTile.TileId;
+            if (originIndex >= 0)
             {
-                return Array.Empty<int>();
+                traversedTileIds.Add(startTile.TileId);
+                for (int index = 0; index < originIndex; index++)
+                {
+                    traversedTileIds.Add(board.GetTile(path[index].x, path[index].y)!.TileId);
+                }
+
+                originTileId = board.GetTile(path[originIndex].x, path[originIndex].y)!.TileId;
             }
 
             int selectedGrowthTargets = 0;
-            int maxPathLength = board.Width * board.Height;
-            var path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
-            var affectedTileIds = new List<int>();
-
-            foreach (var (x, y) in path)
+            var growthTileIds = new List<int>();
+            for (int index = originIndex + 1; index < path.Count; index++)
             {
                 if (selectedGrowthTargets >= totalTiles)
                 {
                     break;
                 }
 
+                var (x, y) = path[index];
                 var tile = board.GetTile(x, y);
                 if (tile == null)
                 {
@@ -433,10 +475,69 @@ namespace FungusToast.Core.Growth
                 }
 
                 selectedGrowthTargets++;
-                affectedTileIds.Add(tile.TileId);
+                growthTileIds.Add(tile.TileId);
             }
 
-            return affectedTileIds;
+            return new ChemotacticBeaconPathProjection(originTileId, traversedTileIds, growthTileIds);
+        }
+
+        /// <summary>
+        /// Traces the beacon line from the starting spore toward the marker and locates the growth origin:
+        /// the index on <paramref name="path"/> of the furthest friendly living cell before the marker, or -1
+        /// when growth should begin from the starting spore itself.
+        /// </summary>
+        private static bool TryTraceChemotacticBeaconPath(
+            Player player,
+            GameBoard board,
+            int startTileId,
+            int targetTileId,
+            out BoardTile startTile,
+            out List<(int x, int y)> path,
+            out int originIndex)
+        {
+            startTile = null!;
+            path = new List<(int x, int y)>();
+            originIndex = -1;
+            if (player == null || board == null || startTileId < 0 || targetTileId < 0)
+            {
+                return false;
+            }
+
+            var resolvedStartTile = board.GetTileById(startTileId);
+            var targetTile = board.GetTileById(targetTileId);
+            if (resolvedStartTile == null || targetTile == null)
+            {
+                return false;
+            }
+
+            startTile = resolvedStartTile;
+            int maxPathLength = board.Width * board.Height;
+            path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
+            originIndex = FindChemotacticBeaconGrowthOriginIndex(path, board, player.PlayerId, targetTileId);
+            return true;
+        }
+
+        /// <summary>
+        /// Index on <paramref name="path"/> of the furthest friendly living cell before the marker, or -1 when there is none.
+        /// </summary>
+        public static int FindChemotacticBeaconGrowthOriginIndex(IReadOnlyList<(int x, int y)> path, GameBoard board, int playerId, int targetTileId)
+        {
+            int originIndex = -1;
+            for (int index = 0; index < path.Count; index++)
+            {
+                var tile = board.GetTile(path[index].x, path[index].y);
+                if (tile == null || tile.TileId == targetTileId)
+                {
+                    break;
+                }
+
+                if (tile.FungalCell is { IsAlive: true } cell && cell.OwnerPlayerId == playerId)
+                {
+                    originIndex = index;
+                }
+            }
+
+            return originIndex;
         }
 
         private static bool IsChemotacticBeaconGrowthTarget(BoardTile tile, GameBoard board, int playerId, out bool alreadyOwned)
