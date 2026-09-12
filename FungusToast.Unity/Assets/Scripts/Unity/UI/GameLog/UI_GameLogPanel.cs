@@ -10,16 +10,16 @@ namespace FungusToast.Unity.UI.GameLog
 {
     /// <summary>
     /// Activity feed in two parts. A compact strip stays in the sidebar (title,
-    /// Show/Hide toggle with an unread count, and the optional top action row)
-    /// and never grows, so the sidebar keeps its height for gameplay controls.
-    /// The entries live in a pop-out panel anchored to the sidebar that overlays
-    /// half of the playable board area; it is closed by default.
+    /// Show/Hide toggle with an unread count, and the optional top action row);
+    /// it takes whatever height the sidebar has left and hugs the bottom edge,
+    /// so gameplay controls above keep their footprint. The entries live in a
+    /// pop-out panel anchored to the sidebar that overlays half of the playable
+    /// board area; it is closed by default.
     /// </summary>
     public class UI_GameLogPanel : MonoBehaviour
     {
         private const float TopActionRowHeight = 40f;
-        private const float TopActionRowVerticalOffset = 8f;
-        private const float TopActionReservedHeight = 45f;
+        private const float TopActionRowSpacing = 5f;
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
         private const float HeaderActionInset = 8f;
@@ -37,9 +37,8 @@ namespace FungusToast.Unity.UI.GameLog
         // activity feed uses the same control as the global feed.
         private const float LatestButtonWidth = 88f;
         private const float ActivityButtonHeight = 32f;
-        // The sidebar strip only ever shows the header band.
-        private const float SidebarStripHeight = 48f;
-        private const float PopoutHeaderHeight = 40f;
+        // Shared by the sidebar strip's header band and the pop-out header.
+        private const float HeaderHeight = 40f;
         private const float PopoutContentInset = 8f;
         // Matches the sidebar layout padding so the pop-out lines up with the
         // sidebar's content rather than its outer edge.
@@ -74,7 +73,6 @@ namespace FungusToast.Unity.UI.GameLog
         private TextMeshProUGUI topActionButtonLabel;
         private RectTransform headerRoot;
         private RectTransform scrollViewRoot;
-        private Vector2 headerOriginalAnchoredPosition;
         private bool topActionAttentionActive;
         private float topActionAttentionUntilUnscaledTime;
         private Button collapseButton;
@@ -288,7 +286,6 @@ namespace FungusToast.Unity.UI.GameLog
             topActionRequestedVisible = isVisible && onClick != null;
             topActionButton.interactable = topActionRequestedVisible;
             topActionRowRoot.gameObject.SetActive(topActionRequestedVisible);
-            ApplyTopActionLayout(topActionRequestedVisible);
             ApplySidebarStripLayout();
             ForceLayoutRefreshImmediate();
         }
@@ -607,18 +604,27 @@ namespace FungusToast.Unity.UI.GameLog
                 return;
             }
 
-            headerOriginalAnchoredPosition = headerRoot.anchoredPosition;
+            // The prefab centres the header on the strip's top edge, so half of
+            // it pokes into whatever sits above. Pin it to the bottom instead:
+            // the strip is flexible, so this is what keeps the band clear of the
+            // sidebar content when there is slack, and flush when there is not.
+            headerRoot.anchorMin = new Vector2(0f, 0f);
+            headerRoot.anchorMax = new Vector2(1f, 0f);
+            headerRoot.pivot = new Vector2(0.5f, 0f);
+            headerRoot.anchoredPosition = Vector2.zero;
+            headerRoot.sizeDelta = new Vector2(0f, HeaderHeight);
 
             var rowObject = new GameObject("UI_GameLogPanelTopActionRow", typeof(RectTransform), typeof(Image));
             rowObject.transform.SetParent(transform, false);
             rowObject.transform.SetSiblingIndex(0);
 
+            // Sits directly above the header band.
             topActionRowRoot = rowObject.GetComponent<RectTransform>();
-            topActionRowRoot.anchorMin = new Vector2(0f, 1f);
-            topActionRowRoot.anchorMax = new Vector2(1f, 1f);
-            topActionRowRoot.pivot = new Vector2(0.5f, 1f);
-            topActionRowRoot.offsetMin = new Vector2(0f, -(TopActionRowHeight - TopActionRowVerticalOffset));
-            topActionRowRoot.offsetMax = new Vector2(0f, TopActionRowVerticalOffset);
+            topActionRowRoot.anchorMin = new Vector2(0f, 0f);
+            topActionRowRoot.anchorMax = new Vector2(1f, 0f);
+            topActionRowRoot.pivot = new Vector2(0.5f, 0f);
+            topActionRowRoot.anchoredPosition = new Vector2(0f, HeaderHeight + TopActionRowSpacing);
+            topActionRowRoot.sizeDelta = new Vector2(0f, TopActionRowHeight);
 
             var rowBackground = rowObject.GetComponent<Image>();
             rowBackground.color = UIStyleTokens.Surface.PanelPrimary;
@@ -658,7 +664,6 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             topActionRowRoot.gameObject.SetActive(false);
-            ApplyTopActionLayout(false);
         }
 
         private void EnsureActivityControlsUi()
@@ -740,7 +745,7 @@ namespace FungusToast.Unity.UI.GameLog
             popoutHeaderRoot.anchorMax = new Vector2(1f, 1f);
             popoutHeaderRoot.pivot = new Vector2(0.5f, 1f);
             popoutHeaderRoot.anchoredPosition = Vector2.zero;
-            popoutHeaderRoot.sizeDelta = new Vector2(0f, PopoutHeaderHeight);
+            popoutHeaderRoot.sizeDelta = new Vector2(0f, HeaderHeight);
             var headerBackground = headerObject.GetComponent<Image>();
             headerBackground.color = UIStyleTokens.Surface.PanelSecondary;
             headerBackground.raycastTarget = false;
@@ -807,7 +812,7 @@ namespace FungusToast.Unity.UI.GameLog
             scrollViewRoot.anchorMax = Vector2.one;
             scrollViewRoot.pivot = new Vector2(0.5f, 0.5f);
             scrollViewRoot.offsetMin = new Vector2(PopoutContentInset, PopoutContentInset);
-            scrollViewRoot.offsetMax = new Vector2(-PopoutContentInset, -(PopoutHeaderHeight + PopoutContentInset));
+            scrollViewRoot.offsetMax = new Vector2(-PopoutContentInset, -(HeaderHeight + PopoutContentInset));
             scrollViewRoot.gameObject.SetActive(true);
 
             popoutRoot.gameObject.SetActive(false);
@@ -1038,7 +1043,6 @@ namespace FungusToast.Unity.UI.GameLog
             if (topActionRowRoot != null)
                 topActionRowRoot.gameObject.SetActive(topActionRequestedVisible);
 
-            ApplyTopActionLayout(topActionRequestedVisible);
             ApplySidebarStripLayout();
             UpdateUnseenIndicators();
         }
@@ -1051,10 +1055,13 @@ namespace FungusToast.Unity.UI.GameLog
                 layoutElement = gameObject.AddComponent<LayoutElement>();
             }
 
-            float height = SidebarStripHeight + (topActionRequestedVisible ? TopActionReservedHeight : 0f);
+            // The strip is the sidebar's flexible child: it absorbs the slack so
+            // the header sits at the bottom edge, and its surface matches the
+            // sidebar so the empty stretch above the band is invisible.
+            float height = HeaderHeight + (topActionRequestedVisible ? TopActionRowHeight + TopActionRowSpacing : 0f);
             layoutElement.minHeight = height;
             layoutElement.preferredHeight = height;
-            layoutElement.flexibleHeight = 0f;
+            layoutElement.flexibleHeight = 1f;
         }
 
         private bool ShouldFollowLatest()
@@ -1164,19 +1171,6 @@ namespace FungusToast.Unity.UI.GameLog
 
             float scale = 1f + (pulse * TopActionAttentionScaleStrength);
             topActionButton.transform.localScale = new Vector3(scale, scale, 1f);
-        }
-
-        // The top action row occupies the top of the strip, pushing the header
-        // band down by its reserved height.
-        private void ApplyTopActionLayout(bool showTopAction)
-        {
-            if (headerRoot == null)
-            {
-                return;
-            }
-
-            float verticalOffset = showTopAction ? TopActionReservedHeight : 0f;
-            headerRoot.anchoredPosition = headerOriginalAnchoredPosition + new Vector2(0f, -verticalOffset);
         }
     }
 }

@@ -83,15 +83,16 @@ namespace FungusToast.Unity.UI
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
 
-            // The activity logs size their own sidebar strips (UI_GameLogPanel);
-            // the sidebar only needs to honour children's preferred heights.
+            // The activity logs size their own sidebar strips (UI_GameLogPanel)
+            // and claim the sidebar's slack; the sidebar only needs to honour
+            // children's preferred heights.
             private void ApplySidebarLogLayoutBehavior()
             {
                 if (leftSidebar != null)
                 {
-                    // The collapsed activity log no longer covers the bottom of the
-                    // sidebar, so its scene background (translucent white) would show
-                    // as a grey block; give it the same surface as the log pop-out.
+                    // The scene background is translucent white and shows as a grey
+                    // block wherever the layout leaves a gap; give it the same surface
+                    // as the log strip and pop-out.
                     UIStyleTokens.ApplyPanelSurface(leftSidebar, UIStyleTokens.Surface.PanelPrimary);
 
                     var sidebarLayout = leftSidebar.GetComponent<VerticalLayoutGroup>();
