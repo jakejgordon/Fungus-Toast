@@ -183,8 +183,6 @@ Authoring implication:
 
 - If you add `surgePriorityIds`, also include supporting non-surge goals in Growth/Resilience/Fungicide/GeneticDrift as appropriate.
 
-## Authoring Checklist
-
 ## Player-Facing Strategy Profile Contract
 
 Every new player-facing strategy, and every existing strategy when it is next
@@ -208,6 +206,36 @@ The profile comes before a generated candidate plan. It supplies the named job
 and the mutation/Mycovariant palette that make the plan a designed experiment
 rather than a parameter sweep.
 
+## Content-to-Profile Coverage Review
+
+Adding a mutation or Mycovariant must trigger an automated **coverage review**
+of the active strategy profiles. Its purpose is to find builds whose stated
+Mutation Plan or Mycovariant Plan suggests that the new content belongs in the
+build; it is not permission to silently alter a player-facing strategy.
+
+The review should use explicit authoring metadata on the new content (for
+example, capability and interaction tags) and the profile-derived strategy
+metadata. It should emit an auditable candidate list with one disposition per
+plausible match:
+
+- **Add for evaluation** — create a specifically reviewed Testing candidate or
+  patch for the strategy.
+- **Consider later** — retain the match and its reason without changing a
+  build.
+- **Not applicable** — record why the apparent thematic match does not fit.
+
+The tool must report missing or stale profiles as well as matches. A reviewed
+decision is required for every candidate before the new content's authoring
+work is complete. Only an explicit, separately reviewed strategy change may
+update executable mutation goals or Mycovariant preference order; normal
+strategy validation and evidence gates still apply.
+
+Keep the profile representation derived from executable strategy configuration
+where possible. The coverage report is a maintenance aid and must not create a
+second, independently maintained ordered build list in documentation.
+
+## Authoring Checklist
+
 1. Add a uniquely named strategy in the appropriate roster list.
 2. Add/adjust theme mapping in `ExplicitStrategyThemesByName` when needed.
 3. Keep mutation-goal chains coherent: early economy, mid stabilization, late finish.
@@ -218,6 +246,9 @@ rather than a parameter sweep.
 8. For canonical balance experiments, prefer explicit `--strategy-names` instead of sampled rosters so roster composition does not drift with future roster edits.
 9. Explicit strategy-name experiments are single-roster by design: all names must come from the chosen `--strategy-set`, so do not mix `Proven`/`Testing`/`Campaign`/`Mycovariants` names in one run.
 10. If a design doc says a mutation name without `Max` or `Level N`, treat that as ambiguous and resolve it before implementation; for the current archetype harness, unlabeled steps were encoded as one upgrade.
+11. When introducing a mutation or Mycovariant, run the content-to-profile
+    coverage review, record a disposition for each candidate, and implement
+    only explicitly approved strategy changes.
 
 ## Recommended Simulation Pattern
 

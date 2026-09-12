@@ -1458,17 +1458,50 @@ ladder before it can join a player-facing pool.
 | **Substrate Spore Drop** | A colony that turns its own territory into a launch site for nearby toxin placement. | Substrate Ecology toxin-drop path plus Sporicidal Bloom. | Jetting Mycelium first, then exact compatible toxin-placement picks. |
 | **Death and Reclamation** | A colony that turns contested loss into renewed growth. | Filament Overdrive, tendrils/Mycotropic Induction, Necrophytic Bloom, then Regenerative Hyphae. | An exact Reclamation/Growth list that supports the loop. |
 
+### Proposed content-to-profile coverage review
+
+New mutations and Mycovariants should automatically be checked against the
+roster's declared Mutation Plans and Mycovariant Plans. This is a review aid,
+not an automatic live-build rewrite: it finds where new content plausibly
+belongs, requires an author to record a disposition, and routes approved
+changes through the normal Testing/evidence path.
+
+1. Define compact, explicit compatibility metadata for mutations and
+   Mycovariants (capabilities, interactions, and exclusions), alongside a
+   profile-derived representation of each strategy's stated plans. The
+   executable `ParameterizedAIStrategy` remains the source of truth for exact
+   mutation goals and ordered Mycovariant preferences.
+2. Build a deterministic coverage-report command/test that runs whenever a
+   mutation or Mycovariant is added or materially changed. It identifies
+   plausible strategy matches, explains each match, and flags missing or stale
+   profiles instead of guessing silently.
+3. Require an explicit disposition for every reported candidate: **Add for
+   evaluation**, **Consider later**, or **Not applicable**, with a short
+   rationale. The command should fail its authoring/CI check while a candidate
+   lacks a disposition.
+4. For an approved match, create a narrowly scoped Testing candidate or
+   strategy patch with the exact mutation goal/order or Mycovariant preference
+   change. Run its behavior tests, diversity screen, and staged simulation
+   evidence before any promotion decision.
+5. Add fixtures covering these four briefs plus deliberately related and
+   unrelated new content, proving that the review finds intended candidates,
+   avoids broad category-only matches, and never modifies roster configuration
+   by itself.
+
 ### Proposed execution order
 
-1. Convert each brief into a mutation-level backbone and a fully ordered
+1. Establish the profile-derived metadata and coverage-report/disposition
+   format before introducing the first themed builds, so future content has a
+   consistent review path.
+2. Convert each brief into a mutation-level backbone and a fully ordered
    Mycovariant preference list, auditing every proposed pick for actual
    compatibility, availability, and category score.
-2. Implement each as a Testing-only strategy, with profile-specific behavior
+3. Implement each as a Testing-only strategy, with profile-specific behavior
    tests and a deterministic characterization report.
-3. Run static diversity, smoke, calibration, comparison, holdout, then P7-style
+4. Run static diversity, smoke, calibration, comparison, holdout, then P7-style
    contextual classification. Promotion, band, campaign placement, and any
    balance adjustment remain separate evidence-backed decisions.
-4. Backfill concise profiles for the existing Proven roster, beginning with the
+5. Backfill concise profiles for the existing Proven roster, beginning with the
    retained fifteen reference panel; retain an explicit `EvidenceGap` state
    wherever current behavior or counterplay is not yet measured.
 
