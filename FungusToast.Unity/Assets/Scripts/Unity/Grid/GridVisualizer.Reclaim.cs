@@ -1278,6 +1278,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Tilemap> _getTransientTilemap;
 		private readonly Func<int, Vector3Int> _getPositionForTileId;
 		private readonly Func<int, TileBase> _getTileForPlayer;
+		private readonly Func<int, TileBase> _getMoldIconTileForPlayer;
 		private readonly Func<TileBase> _getToxinOverlayTile;
 		private readonly Func<IEnumerator, Coroutine> _startCoroutine;
 		private readonly Action<Coroutine> _stopCoroutine;
@@ -1318,6 +1319,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<Tilemap> getTransientTilemap,
 			Func<int, Vector3Int> getPositionForTileId,
 			Func<int, TileBase> getTileForPlayer,
+			Func<int, TileBase> getMoldIconTileForPlayer,
 			Func<TileBase> getToxinOverlayTile,
 			Func<IEnumerator, Coroutine> startCoroutine,
 			Action<Coroutine> stopCoroutine,
@@ -1336,6 +1338,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getTransientTilemap = getTransientTilemap;
 			_getPositionForTileId = getPositionForTileId;
 			_getTileForPlayer = getTileForPlayer;
+			_getMoldIconTileForPlayer = getMoldIconTileForPlayer;
 			_getToxinOverlayTile = getToxinOverlayTile;
 			_startCoroutine = startCoroutine;
 			_stopCoroutine = stopCoroutine;
@@ -2992,7 +2995,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		{
 			var board = _getBoard();
 			var targetTilemap = _getTransientTilemap();
-			TileBase chemobeaconTile = _getTileForPlayer(playerId);
+			TileBase chemobeaconTile = _getMoldIconTileForPlayer(playerId) ?? _getTileForPlayer(playerId);
 			if (board == null || targetTilemap == null || chemobeaconTile == null)
 			{
 				_chemobeaconExpiryCoroutines.Remove(tileId);
@@ -3015,7 +3018,7 @@ namespace FungusToast.Unity.Grid.Helpers
 					float eased = 1f - Mathf.Pow(1f - t, 3f);
 					float scale = Mathf.Lerp(UIEffectConstants.ChemobeaconIdleScale, UIEffectConstants.ChemobeaconEvaporationFinalScale, eased);
 					float lift = Mathf.Lerp(0f, UIEffectConstants.ChemobeaconEvaporationLiftWorld, eased);
-					Color color = Color.Lerp(Color.white, new Color(1f, 1f, 1f, 0f), eased);
+					Color color = new Color(1f, 1f, 1f, Mathf.Lerp(UIEffectConstants.ChemobeaconOwnerIconAlpha, 0f, eased));
 
 					targetTilemap.SetColor(pos, color);
 					targetTilemap.SetTransformMatrix(pos, Matrix4x4.TRS(new Vector3(0f, lift, 0f), Quaternion.identity, new Vector3(scale, scale, 1f)));

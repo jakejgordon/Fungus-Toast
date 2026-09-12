@@ -1110,6 +1110,14 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public const float ChemobeaconIdleScale = 1.0f;
         /// <summary>
+        /// Alpha of the owner's mold icon drawn under the Chemobeacon emblem, kept translucent so the emblem stays legible.
+        /// </summary>
+        public const float ChemobeaconOwnerIconAlpha = 0.72f;
+        /// <summary>
+        /// Scale of the owner's mold icon drawn under the Chemobeacon emblem.
+        /// </summary>
+        public const float ChemobeaconOwnerIconScale = 0.94f;
+        /// <summary>
         /// Minimum scale of the pulsing Chemobeacon glow (fully contained within its own tile).
         /// </summary>
         public const float ChemobeaconPulseMinScale = 1.0f;

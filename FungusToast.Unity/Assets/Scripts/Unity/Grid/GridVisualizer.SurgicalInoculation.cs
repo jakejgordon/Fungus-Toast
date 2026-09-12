@@ -23,6 +23,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Tilemap> _getTransientTilemap;
 		private readonly Func<int, Vector3Int> _getPositionForTileId;
 		private readonly Func<int, Tile> _getTileForPlayer;
+		private readonly Func<int, Tile> _getMoldIconTileForPlayer;
 		private readonly Func<Tile> _getSolidHighlightTile;
 		private readonly Func<Tile> _getBaseTile;
 
@@ -46,6 +47,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<Tilemap> getTransientTilemap,
 			Func<int, Vector3Int> getPositionForTileId,
 			Func<int, Tile> getTileForPlayer,
+			Func<int, Tile> getMoldIconTileForPlayer,
 			Func<Tile> getSolidHighlightTile,
 			Func<Tile> getBaseTile,
 			Func<Tile> getToxinOverlayTile)
@@ -56,6 +58,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getTransientTilemap = getTransientTilemap;
 			_getPositionForTileId = getPositionForTileId;
 			_getTileForPlayer = getTileForPlayer;
+			_getMoldIconTileForPlayer = getMoldIconTileForPlayer;
 			_getSolidHighlightTile = getSolidHighlightTile;
 			_getBaseTile = getBaseTile;
 		}
@@ -93,7 +96,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			var marker = board.GetChemobeaconAtTile(tileId);
-			TileBase chemobeaconTile = marker != null ? _getTileForPlayer(marker.PlayerId) : null;
+			TileBase chemobeaconTile = marker != null ? (_getMoldIconTileForPlayer(marker.PlayerId) ?? _getTileForPlayer(marker.PlayerId)) : null;
 			if (marker == null || chemobeaconTile == null)
 			{
 				return;
@@ -102,11 +105,11 @@ namespace FungusToast.Unity.Grid.Helpers
 			EnsureGeneratedChemobeaconEmblemTile();
 			EnsureGeneratedChemobeaconGlowTile();
 
-			// Owner identity: the player's mold sprite, static and fully opaque.
+			// Owner identity: the player's mold icon, static and translucent so the emblem on top stays legible.
 			moldTilemap.SetTile(pos, chemobeaconTile);
 			moldTilemap.SetTileFlags(pos, TileFlags.None);
-			moldTilemap.SetColor(pos, Color.white);
-			moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(UIEffectConstants.ChemobeaconIdleScale, UIEffectConstants.ChemobeaconIdleScale, 1f)));
+			moldTilemap.SetColor(pos, new Color(1f, 1f, 1f, UIEffectConstants.ChemobeaconOwnerIconAlpha));
+			moldTilemap.SetTransformMatrix(pos, Matrix4x4.Scale(new Vector3(UIEffectConstants.ChemobeaconOwnerIconScale, UIEffectConstants.ChemobeaconOwnerIconScale, 1f)));
 			moldTilemap.RefreshTile(pos);
 
 			// Glow + sweeping beams live on a dedicated tilemap above the mold layer so the
@@ -498,16 +501,18 @@ namespace FungusToast.Unity.Grid.Helpers
 			float y = (((py + 0.5f) / textureSize) * 2f) - 1f;
 			float radius = Mathf.Sqrt((x * x) + (y * y));
 
-			// Central lamp: bright core that fades out around the edge of the beacon's own cell.
-			float core = 1f - Mathf.SmoothStep(0.1f, 0.6f, radius);
+			// Halo ring peaking at the edge of the beacon's own cell, with a faint center so the owner icon underneath stays visible.
+			float ring = 1f - Mathf.SmoothStep(0f, 0.24f, Mathf.Abs(radius - 0.55f));
+			float center = 0.22f * (1f - Mathf.SmoothStep(0.2f, 0.5f, radius));
+			float halo = Mathf.Max(ring, center);
 
-			// Two opposed cones along the local x axis; angular softness scales with radius so the cone edges stay smooth.
+			// Two opposed cones along the local x axis that start outside the icon and fade toward the sprite edge.
 			float sinAngle = radius > 0.001f ? Mathf.Abs(y) / radius : 0f;
 			float cone = 1f - Mathf.SmoothStep(0.24f, 0.4f, sinAngle);
-			float reach = 1f - Mathf.SmoothStep(0.35f, 1f, radius);
+			float reach = Mathf.SmoothStep(0.3f, 0.5f, radius) * (1f - Mathf.SmoothStep(0.5f, 1f, radius));
 			float beam = cone * reach * 0.85f;
 
-			float alpha = Mathf.Clamp01(Mathf.Max(core, beam));
+			float alpha = Mathf.Clamp01(Mathf.Max(halo, beam));
 			if (alpha <= 0.01f)
 			{
 				return new Color32(255, 255, 255, 0);

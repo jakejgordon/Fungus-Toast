@@ -260,6 +260,7 @@ namespace FungusToast.Unity.Grid
                 () => PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap,
                 GetPositionForTileId,
                 GetTileForPlayer,
+                GetMoldIconTileForPlayer,
                 () => solidHighlightTile,
                 () => baseTile,
                 () => toxinOverlayTile);
@@ -270,6 +271,7 @@ namespace FungusToast.Unity.Grid
                 () => PingOverlayTileMap != null ? PingOverlayTileMap : HoverOverlayTileMap,
                 GetPositionForTileId,
                 playerId => GetTileForPlayer(playerId),
+                playerId => GetMoldIconTileForPlayer(playerId),
                 () => toxinOverlayTile,
                 coroutine => StartCoroutine(coroutine),
                 coroutine =>
