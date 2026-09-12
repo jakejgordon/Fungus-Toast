@@ -16,6 +16,12 @@ namespace FungusToast.Unity.UI.MutationTree
     public static class SurgeArtRepository
     {
         private const int IconSize = ProceduralIconUtility.DefaultIconSize;
+
+        // Surge glyphs are drawn at 28 units on cards and tiles under a ScaleWithScreenSize
+        // canvas, so the 40px texture is always downscaled by a non-integer factor. Bilinear
+        // sampling plus a two-texel frame keeps the border intact on every edge; point
+        // sampling dropped the right and bottom edges at most window sizes.
+        private const int BorderThickness = 2;
         private static readonly Dictionary<int, Sprite> Cache = new();
 
         public static Sprite GetIcon(Mutation mutation)
@@ -71,7 +77,9 @@ namespace FungusToast.Unity.UI.MutationTree
                             break;
                     }
                 },
-                IconSize);
+                IconSize,
+                FilterMode.Bilinear,
+                BorderThickness);
         }
 
         private static Color ResolveAccent(int mutationId)
@@ -136,8 +144,8 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             ProceduralIconUtility.FillCircle(texture, 25, 17, 7, accent);
             ProceduralIconUtility.DrawRing(texture, 25, 17, 10, 1, highlight);
-            ProceduralIconUtility.DrawLine(texture, 25, 4, 25, 30, highlight, 1);
-            ProceduralIconUtility.DrawLine(texture, 12, 17, 38, 17, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 25, 5, 25, 29, highlight, 1);
+            ProceduralIconUtility.DrawLine(texture, 13, 17, 36, 17, highlight, 1);
             ProceduralIconUtility.FillCircle(texture, 10, 30, 3, Color.Lerp(accent, UIStyleTokens.Surface.Canvas, 0.35f));
         }
 

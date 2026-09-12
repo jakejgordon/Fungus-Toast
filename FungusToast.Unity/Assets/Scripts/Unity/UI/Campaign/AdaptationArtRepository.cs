@@ -675,22 +675,34 @@ namespace FungusToast.Unity.UI
     {
         public const int DefaultIconSize = 40;
 
+        /// <param name="filterMode">
+        /// Point keeps the pixel look but, under a ScaleWithScreenSize canvas, nearest sampling
+        /// can skip whole texel columns when the icon is drawn smaller than its texture — the
+        /// far-edge border is the first casualty. Pass Bilinear for icons that must keep a
+        /// complete frame at every canvas scale.
+        /// </param>
+        /// <param name="borderThickness">Frame width in texels; 1 matches the original icons.</param>
         public static Sprite CreateSprite(
             string textureName,
             Color background,
             Color accent,
             Action<Texture2D, Color, Color> drawAction,
-            int size = DefaultIconSize)
+            int size = DefaultIconSize,
+            FilterMode filterMode = FilterMode.Point,
+            int borderThickness = 1)
         {
             var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
             {
-                filterMode = FilterMode.Point,
+                filterMode = filterMode,
                 wrapMode = TextureWrapMode.Clamp,
                 name = textureName
             };
 
             Fill(texture, background);
-            DrawBorder(texture, accent);
+            for (int inset = 0; inset < borderThickness; inset++)
+            {
+                DrawBorder(texture, accent, inset);
+            }
 
             var highlight = Color.Lerp(accent, Color.white, 0.32f);
             drawAction?.Invoke(texture, accent, highlight);
@@ -726,19 +738,21 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        public static void DrawBorder(Texture2D texture, Color color)
+        public static void DrawBorder(Texture2D texture, Color color, int inset = 0)
         {
-            int maxX = texture.width - 1;
-            int maxY = texture.height - 1;
-            for (int i = 0; i < texture.width; i++)
+            int minX = inset;
+            int minY = inset;
+            int maxX = texture.width - 1 - inset;
+            int maxY = texture.height - 1 - inset;
+            for (int i = minX; i <= maxX; i++)
             {
-                texture.SetPixel(i, 0, color);
+                texture.SetPixel(i, minY, color);
                 texture.SetPixel(i, maxY, color);
             }
 
-            for (int i = 0; i < texture.height; i++)
+            for (int i = minY; i <= maxY; i++)
             {
-                texture.SetPixel(0, i, color);
+                texture.SetPixel(minX, i, color);
                 texture.SetPixel(maxX, i, color);
             }
         }

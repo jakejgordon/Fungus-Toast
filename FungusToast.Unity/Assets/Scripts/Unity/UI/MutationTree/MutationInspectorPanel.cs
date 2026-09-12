@@ -273,8 +273,11 @@ namespace FungusToast.Unity.UI.MutationTree
             titleSurgeGlyph = CreateTitleSurgeGlyph(titleText);
             metadataText = CreateText("Metadata", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
             summaryText = CreateText("Summary", 18f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
-            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
+            // State ("ACTIVE — 2 rounds remain", "LOCKED — requirements unmet") sits above the
+            // technical block: it is the line a player checks most, and the technical text is
+            // long enough to push anything below it off the first screen.
             stateText = CreateText("State", 16f, 22f, FontStyles.Bold, UIStyleTokens.State.Info);
+            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             costText = CreateText("Cost", 16f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
             currentLevelText = CreateText("CurrentLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             nextLevelText = CreateText("NextLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
