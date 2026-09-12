@@ -60,7 +60,7 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Chemotactic Beacon",
                 description:
                     $"Lets you place a target marker and grow a straight line toward it.\n\n" +
-                    $"<b>Technical:</b> On activation, mark one empty non-nutrient tile. At Growth Phase end while the surge is active, grow a line of {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells along the line from your starting spore toward that marker, starting just past your furthest living cell on that line. This line overgrows toxins, reclaims dead cells, infests enemy living cells, and colonizes empty tiles in its path.\n" +
+                    $"<b>Technical:</b> On activation, mark one empty non-nutrient tile. At Growth Phase end while the surge is active, grow a line of {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells along the line from your starting spore toward that marker, starting just past your furthest living cell on that line. Once the line reaches the marker, remaining growth spirals clockwise around it. This growth overgrows toxins, reclaims dead cells, infests enemy living cells, and colonizes empty tiles in its path.\n" +
                     $"Buffed by: Putrefactive Mycotoxin.",
                 flavorText: "A volatile lure condenses over bare toast, exhaling a phantom food trail that bends the colony's advance while the beacon itself slowly evaporates.",
                 type: MutationType.ChemotacticBeacon,

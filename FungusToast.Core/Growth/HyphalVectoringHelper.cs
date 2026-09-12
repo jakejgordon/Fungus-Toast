@@ -316,17 +316,20 @@ namespace FungusToast.Core.Growth
 
         /// <summary>
         /// The pieces of a Chemotactic Beacon line: the tiles the line passes over before growth begins,
-        /// the tile growth begins from, and the tiles growth will be assigned to.
+        /// the tile growth begins from, and the tiles growth will be assigned to (along the line, then
+        /// spiralling clockwise around the marker once the line reaches it).
         /// </summary>
         public sealed class ChemotacticBeaconPathProjection
         {
-            public static readonly ChemotacticBeaconPathProjection Empty = new(-1, Array.Empty<int>(), Array.Empty<int>());
+            public static readonly ChemotacticBeaconPathProjection Empty = new(-1, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
 
-            public ChemotacticBeaconPathProjection(int originTileId, IReadOnlyList<int> traversedTileIds, IReadOnlyList<int> growthTileIds)
+            public ChemotacticBeaconPathProjection(int originTileId, IReadOnlyList<int> traversedTileIds, IReadOnlyList<int> lineGrowthTileIds, IReadOnlyList<int> spiralTileIds)
             {
                 OriginTileId = originTileId;
                 TraversedTileIds = traversedTileIds;
-                GrowthTileIds = growthTileIds;
+                LineGrowthTileIds = lineGrowthTileIds;
+                SpiralTileIds = spiralTileIds;
+                GrowthTileIds = lineGrowthTileIds.Concat(spiralTileIds).ToList();
             }
 
             /// <summary>Tile growth begins from: the furthest friendly living cell on the line, or the starting spore.</summary>
@@ -335,13 +338,20 @@ namespace FungusToast.Core.Growth
             /// <summary>Line tiles from the starting spore up to (but excluding) the origin. Empty when the origin is the spore.</summary>
             public IReadOnlyList<int> TraversedTileIds { get; }
 
-            /// <summary>Tiles past the origin that growth will be assigned to, in path order.</summary>
+            /// <summary>Tiles past the origin, before the marker, that growth will be assigned to, in path order.</summary>
+            public IReadOnlyList<int> LineGrowthTileIds { get; }
+
+            /// <summary>Tiles around the marker that growth continues into once the line reaches it, in clockwise spiral order.</summary>
+            public IReadOnlyList<int> SpiralTileIds { get; }
+
+            /// <summary>Every tile growth will be assigned to: <see cref="LineGrowthTileIds"/> followed by <see cref="SpiralTileIds"/>.</summary>
             public IReadOnlyList<int> GrowthTileIds { get; }
         }
 
         /// <summary>
         /// Projects Chemotactic Beacon growth along the line from the player's starting spore toward the beacon marker.
         /// Growth begins just past the furthest friendly living cell on that line (or the spore when there is none).
+        /// If the line reaches the marker with quota left, growth continues in a clockwise spiral around the marker.
         /// Only valid growth targets consume quota, and those targets are assigned in earliest-to-latest path order.
         /// </summary>
         public static VectorLineOutcome ApplyChemotacticBeaconPathGrowth(
@@ -356,27 +366,15 @@ namespace FungusToast.Core.Growth
             DeathReason deathReason)
         {
             var outcome = new VectorLineOutcome();
-            if (totalTiles <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out _, out var path, out int originIndex))
+            if (totalTiles <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var targetTile, out var path, out int originIndex))
             {
                 return outcome;
             }
 
             int selectedGrowthTargets = 0;
-            for (int index = originIndex + 1; index < path.Count; index++)
+            foreach (var (tile, _) in EnumerateChemotacticBeaconGrowthCandidates(board, startTile, targetTile, path, originIndex))
             {
                 if (selectedGrowthTargets >= totalTiles)
-                {
-                    break;
-                }
-
-                var (x, y) = path[index];
-                var tile = board.GetTile(x, y);
-                if (tile == null)
-                {
-                    break;
-                }
-
-                if (tile.TileId == targetTileId)
                 {
                     break;
                 }
@@ -407,7 +405,7 @@ namespace FungusToast.Core.Growth
         /// </summary>
         public static int GetChemotacticBeaconGrowthOriginTileId(Player player, GameBoard board, int startTileId, int targetTileId)
         {
-            if (!TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var path, out int originIndex))
+            if (!TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out _, out var path, out int originIndex))
             {
                 return -1;
             }
@@ -421,16 +419,23 @@ namespace FungusToast.Core.Growth
             int startTileId,
             int targetTileId,
             int totalTiles)
-            => GetChemotacticBeaconPathProjection(player, board, startTileId, targetTileId, totalTiles).GrowthTileIds;
+            => GetChemotacticBeaconPathProjection(player, board, startTileId, targetTileId, totalTiles, totalTiles).GrowthTileIds;
 
+        /// <summary>
+        /// Projects which tiles the beacon line would claim without touching the board.
+        /// <paramref name="lineTileLimit"/> caps growth overall; <paramref name="spiralBudget"/> additionally caps the
+        /// total once the spiral begins (pass the same value for both to mirror a single growth pass, or an unbounded
+        /// line limit with a whole-surge budget to preview the full route).
+        /// </summary>
         public static ChemotacticBeaconPathProjection GetChemotacticBeaconPathProjection(
             Player player,
             GameBoard board,
             int startTileId,
             int targetTileId,
-            int totalTiles)
+            int lineTileLimit,
+            int spiralBudget)
         {
-            if (totalTiles <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var path, out int originIndex))
+            if (lineTileLimit <= 0 || !TryTraceChemotacticBeaconPath(player, board, startTileId, targetTileId, out var startTile, out var targetTile, out var path, out int originIndex))
             {
                 return ChemotacticBeaconPathProjection.Empty;
             }
@@ -448,37 +453,122 @@ namespace FungusToast.Core.Growth
                 originTileId = board.GetTile(path[originIndex].x, path[originIndex].y)!.TileId;
             }
 
+            int spiralLimit = Math.Min(lineTileLimit, spiralBudget);
             int selectedGrowthTargets = 0;
-            var growthTileIds = new List<int>();
-            for (int index = originIndex + 1; index < path.Count; index++)
+            var lineGrowthTileIds = new List<int>();
+            var spiralTileIds = new List<int>();
+            var selectedTileIds = new HashSet<int>();
+            foreach (var (tile, fromSpiral) in EnumerateChemotacticBeaconGrowthCandidates(board, startTile, targetTile, path, originIndex))
             {
-                if (selectedGrowthTargets >= totalTiles)
+                if (selectedGrowthTargets >= (fromSpiral ? spiralLimit : lineTileLimit))
                 {
                     break;
                 }
 
-                var (x, y) = path[index];
-                var tile = board.GetTile(x, y);
-                if (tile == null)
-                {
-                    break;
-                }
-
-                if (tile.TileId == targetTileId)
-                {
-                    break;
-                }
-
-                if (!IsChemotacticBeaconGrowthTarget(tile, board, player.PlayerId, out _))
+                // A ring tile the line already claimed would read as friendly by the time the spiral reaches it.
+                if (!IsChemotacticBeaconGrowthTarget(tile, board, player.PlayerId, out _) || !selectedTileIds.Add(tile.TileId))
                 {
                     continue;
                 }
 
                 selectedGrowthTargets++;
-                growthTileIds.Add(tile.TileId);
+                (fromSpiral ? spiralTileIds : lineGrowthTileIds).Add(tile.TileId);
             }
 
-            return new ChemotacticBeaconPathProjection(originTileId, traversedTileIds, growthTileIds);
+            return new ChemotacticBeaconPathProjection(originTileId, traversedTileIds, lineGrowthTileIds, spiralTileIds);
+        }
+
+        /// <summary>
+        /// Yields every tile the beacon may assign growth to, in order: the line tiles past the origin up to (excluding)
+        /// the marker, then - only if the line actually reaches the marker - a clockwise spiral around it.
+        /// </summary>
+        private static IEnumerable<(BoardTile tile, bool fromSpiral)> EnumerateChemotacticBeaconGrowthCandidates(
+            GameBoard board,
+            BoardTile startTile,
+            BoardTile targetTile,
+            List<(int x, int y)> path,
+            int originIndex)
+        {
+            bool reachedTarget = false;
+            for (int index = originIndex + 1; index < path.Count; index++)
+            {
+                var tile = board.GetTile(path[index].x, path[index].y);
+                if (tile == null)
+                {
+                    yield break;
+                }
+
+                if (tile.TileId == targetTile.TileId)
+                {
+                    reachedTarget = true;
+                    break;
+                }
+
+                yield return (tile, false);
+            }
+
+            if (!reachedTarget)
+            {
+                yield break;
+            }
+
+            foreach (var tile in EnumerateClockwiseSpiral(board, targetTile, startTile))
+            {
+                yield return (tile, true);
+            }
+        }
+
+        /// <summary>
+        /// Enumerates the square rings around <paramref name="center"/> from the innermost outward. Each ring starts at the
+        /// tile continuing the direction of travel from <paramref name="approachFrom"/> and proceeds clockwise (board Y is up).
+        /// The center tile itself is never yielded.
+        /// </summary>
+        public static IEnumerable<BoardTile> EnumerateClockwiseSpiral(GameBoard board, BoardTile center, BoardTile approachFrom)
+        {
+            const double TwoPi = 2 * Math.PI;
+            const double WrapEpsilon = 1e-6;
+            double travelAngle = Math.Atan2(center.Y - approachFrom.Y, center.X - approachFrom.X);
+            int maxRing = Math.Max(board.Width, board.Height);
+
+            for (int ring = 1; ring <= maxRing; ring++)
+            {
+                var ringTiles = new List<(double clockwiseOffset, BoardTile tile)>();
+                for (int dx = -ring; dx <= ring; dx++)
+                {
+                    for (int dy = -ring; dy <= ring; dy++)
+                    {
+                        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) != ring)
+                        {
+                            continue;
+                        }
+
+                        var tile = board.GetTile(center.X + dx, center.Y + dy);
+                        if (tile == null)
+                        {
+                            continue;
+                        }
+
+                        // Clockwise with Y up means decreasing mathematical angle from the travel direction.
+                        double clockwiseOffset = ((travelAngle - Math.Atan2(dy, dx)) % TwoPi + TwoPi) % TwoPi;
+                        if (clockwiseOffset > TwoPi - WrapEpsilon)
+                        {
+                            clockwiseOffset = 0;
+                        }
+
+                        ringTiles.Add((clockwiseOffset, tile));
+                    }
+                }
+
+                if (ringTiles.Count == 0)
+                {
+                    yield break;
+                }
+
+                foreach (var entry in ringTiles.OrderBy(entry => entry.clockwiseOffset).ThenBy(entry => entry.tile.TileId))
+                {
+                    yield return entry.tile;
+                }
+            }
         }
 
         /// <summary>
@@ -492,10 +582,12 @@ namespace FungusToast.Core.Growth
             int startTileId,
             int targetTileId,
             out BoardTile startTile,
+            out BoardTile targetTile,
             out List<(int x, int y)> path,
             out int originIndex)
         {
             startTile = null!;
+            targetTile = null!;
             path = new List<(int x, int y)>();
             originIndex = -1;
             if (player == null || board == null || startTileId < 0 || targetTileId < 0)
@@ -504,13 +596,14 @@ namespace FungusToast.Core.Growth
             }
 
             var resolvedStartTile = board.GetTileById(startTileId);
-            var targetTile = board.GetTileById(targetTileId);
-            if (resolvedStartTile == null || targetTile == null)
+            var resolvedTargetTile = board.GetTileById(targetTileId);
+            if (resolvedStartTile == null || resolvedTargetTile == null)
             {
                 return false;
             }
 
             startTile = resolvedStartTile;
+            targetTile = resolvedTargetTile;
             int maxPathLength = board.Width * board.Height;
             path = GetLineToTarget(startTile.X, startTile.Y, targetTile.X, targetTile.Y, maxPathLength);
             originIndex = FindChemotacticBeaconGrowthOriginIndex(path, board, player.PlayerId, targetTileId);

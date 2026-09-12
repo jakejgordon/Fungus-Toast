@@ -77,6 +77,61 @@ public class ChemotacticBeaconGrowthEngineTests
     }
 
     [Fact]
+    public void ProcessChemotacticBeacon_spirals_clockwise_around_the_marker_once_the_line_reaches_it()
+    {
+        // Spore (1,2) -> marker (3,2): the line claims (2,2), then the spiral starts east of the marker and turns clockwise.
+        var setup = CreateBeaconBoard(level: 5, beaconTileId: 3 + (2 * 10));
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2); // E
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 1); // SE
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 1); // S
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 1); // SW
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 3); // NW (W is the line tile, already owned)
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 3); // N
+        Assert.Null(setup.board.GetTile(4, 3)?.FungalCell);           // NE would be the 8th placement
+        Assert.Null(setup.board.GetTile(3, 2)?.FungalCell);           // the marker itself is never grown into
+        Assert.Equal(GrowthSource.ChemotacticBeacon, setup.board.GetTile(3, 3)?.FungalCell?.SourceOfGrowth);
+    }
+
+    [Fact]
+    public void ProcessChemotacticBeacon_spiral_continues_the_direction_of_travel_on_diagonal_approaches()
+    {
+        var board = new GameBoard(width: 10, height: 6, playerCount: 1);
+        var player = new Player(playerId: 0, playerName: "Beacon Tester", playerType: PlayerTypeEnum.AI) { MutationPoints = 99 };
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 1);
+        player.SetMutationLevel(MutationIds.ChemotacticBeacon, newLevel: 5, currentRound: 1);
+        player.ActiveSurges[MutationIds.ChemotacticBeacon] = new Player.ActiveSurgeInfo(MutationIds.ChemotacticBeacon, level: 5, duration: FungusToast.Core.Config.GameBalance.ChemotacticBeaconSurgeDuration);
+        Assert.True(board.TryPlaceChemobeacon(player.PlayerId, tileId: board.GetTile(3, 3)!.TileId, mutationId: MutationIds.ChemotacticBeacon, turnsRemaining: 4));
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(board, new List<Player> { player }, new Random(1), new TestSimulationObserver());
+
+        AssertOwnedByPlayer(board, player.PlayerId, 2, 2); // line
+        AssertOwnedByPlayer(board, player.PlayerId, 4, 4); // NE continues the diagonal
+        AssertOwnedByPlayer(board, player.PlayerId, 4, 3); // E
+        AssertOwnedByPlayer(board, player.PlayerId, 4, 2); // SE
+        AssertOwnedByPlayer(board, player.PlayerId, 3, 2); // S
+        AssertOwnedByPlayer(board, player.PlayerId, 2, 3); // W (SW is the line tile)
+        AssertOwnedByPlayer(board, player.PlayerId, 2, 4); // NW
+        Assert.Null(board.GetTile(3, 4)?.FungalCell);     // N would be the 8th placement
+    }
+
+    [Fact]
+    public void ProcessChemotacticBeacon_does_not_spiral_when_the_line_runs_out_before_the_marker()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+
+        Assert.Equal(3, setup.board.GetAllCellsOwnedBy(setup.player.PlayerId).Count(cell => cell.SourceOfGrowth == GrowthSource.ChemotacticBeacon));
+        Assert.Null(setup.board.GetTile(8, 1)?.FungalCell);
+        Assert.Null(setup.board.GetTile(8, 3)?.FungalCell);
+    }
+
+    [Fact]
     public void ProcessChemotacticBeacon_reports_the_growth_origin_to_the_surge_presentation()
     {
         var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);

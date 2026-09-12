@@ -129,7 +129,7 @@ namespace FungusToast.Core.Phases
         }
 
         private static int GetChemotacticBeaconTileCount(int level)
-            => GameBalance.ChemotacticBeaconBaseTiles + level * GameBalance.ChemotacticBeaconTilesPerLevel;
+            => ChemotacticBeaconHelper.GetTilesPerRound(level);
 
         private static void ReportDirectedVectorOutcome(
             ISimulationObserver observer,

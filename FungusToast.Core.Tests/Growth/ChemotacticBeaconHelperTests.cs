@@ -186,7 +186,7 @@ public class ChemotacticBeaconHelperTests
 
         int targetTileId = board.GetTile(9, 2)!.TileId;
 
-        var previewTileIds = ChemotacticBeaconHelper.GetProjectedGrowthTileIds(player, board, targetTileId, projectedLevel: 1);
+        var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(player, board, targetTileId, projectedLevel: 1);
 
         Assert.Equal(
             new[]
@@ -197,10 +197,58 @@ public class ChemotacticBeaconHelperTests
                 board.GetTile(7, 2)!.TileId,
                 board.GetTile(8, 2)!.TileId,
             },
-            previewTileIds);
-        Assert.DoesNotContain(board.GetTile(2, 2)!.TileId, previewTileIds);
-        Assert.DoesNotContain(board.GetTile(3, 2)!.TileId, previewTileIds);
-        Assert.DoesNotContain(targetTileId, previewTileIds);
+            projection.LineGrowthTileIds);
+        Assert.DoesNotContain(board.GetTile(2, 2)!.TileId, projection.GrowthTileIds);
+        Assert.DoesNotContain(board.GetTile(3, 2)!.TileId, projection.GrowthTileIds);
+        Assert.DoesNotContain(targetTileId, projection.GrowthTileIds);
+    }
+
+    [Fact]
+    public void GetProjectedGrowthPath_previews_the_spiral_up_to_the_whole_surge_budget()
+    {
+        var board = new GameBoard(width: 10, height: 5, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+        int targetTileId = board.GetTile(3, 2)!.TileId;
+
+        // Level 1 = 3 tiles/round; 4 rounds = 12 tiles total: 1 on the line, 11 in the spiral.
+        var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(player, board, targetTileId, projectedLevel: 1, surgeDuration: 4);
+
+        Assert.Equal(new[] { board.GetTile(2, 2)!.TileId }, projection.LineGrowthTileIds);
+        Assert.Equal(
+            new[]
+            {
+                board.GetTile(4, 2)!.TileId, // ring 1, east then clockwise
+                board.GetTile(4, 1)!.TileId,
+                board.GetTile(3, 1)!.TileId,
+                board.GetTile(2, 1)!.TileId,
+                board.GetTile(2, 3)!.TileId, // (2,2) is the line tile, skipped
+                board.GetTile(3, 3)!.TileId,
+                board.GetTile(4, 3)!.TileId,
+                board.GetTile(5, 2)!.TileId, // ring 2
+                board.GetTile(5, 1)!.TileId,
+                board.GetTile(5, 0)!.TileId,
+                board.GetTile(4, 0)!.TileId,
+            },
+            projection.SpiralTileIds);
+        Assert.Equal(12, projection.GrowthTileIds.Count);
+        Assert.DoesNotContain(targetTileId, projection.GrowthTileIds);
+    }
+
+    [Fact]
+    public void GetProjectedGrowthPath_shows_the_whole_line_even_when_it_exceeds_the_surge_budget()
+    {
+        var board = new GameBoard(width: 40, height: 5, playerCount: 1);
+        var player = CreatePlayer();
+        board.Players.Add(player);
+        board.PlaceInitialSpore(player.PlayerId, x: 1, y: 2);
+        int targetTileId = board.GetTile(30, 2)!.TileId;
+
+        var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(player, board, targetTileId, projectedLevel: 1, surgeDuration: 4);
+
+        Assert.Equal(28, projection.LineGrowthTileIds.Count);
+        Assert.Empty(projection.SpiralTileIds);
     }
 
     [Fact]
@@ -230,7 +278,7 @@ public class ChemotacticBeaconHelperTests
                 board.GetTile(7, 2)!.TileId,
                 board.GetTile(8, 2)!.TileId,
             },
-            projection.GrowthTileIds);
+            projection.LineGrowthTileIds);
     }
 
     [Fact]
@@ -249,7 +297,7 @@ public class ChemotacticBeaconHelperTests
         Assert.Equal(board.GetTile(1, 2)!.TileId, projection.OriginTileId);
         Assert.Equal(
             new[] { board.GetTile(2, 2)!.TileId, board.GetTile(3, 2)!.TileId, board.GetTile(4, 2)!.TileId },
-            projection.GrowthTileIds);
+            projection.LineGrowthTileIds);
     }
 
     [Fact]

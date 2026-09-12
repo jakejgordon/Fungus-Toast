@@ -759,7 +759,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     return;
                 }
 
-                var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(humanPlayer, board, tileId, projectedLevel);
+                var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(humanPlayer, board, tileId, projectedLevel, humanPlayer.GetSurgeDuration(mutation));
                 if (projection.OriginTileId < 0)
                 {
                     gridVisualizer.ClearChemotacticBeaconPreview();
