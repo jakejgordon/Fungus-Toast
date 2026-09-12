@@ -1415,6 +1415,65 @@ before/after question meant hand-assembling a table from eighteen separate
 - Campaign and single-player validation artifacts support the final pool and
   difficulty assignments.
 
+## Proposed — Thematic AI Strategy Profiles
+
+### Why this is needed
+
+The roster currently records implementation parameters, measured bands, and
+some broad themes, but it does not consistently state what a player should
+recognize about an opponent or what a future author is trying to preserve. That
+gap makes candidate search drift toward small parameter variations rather than
+new colony identities. The canonical profile requirements now live in
+`FungusToast.Core/docs/AI_STRATEGY_AUTHORING.md` under *Player-Facing Strategy
+Profile Contract*.
+
+Profiles must describe passive board-development plans accurately. Do not use
+generic RTS language such as "attack", "blitz", or "scheduled pulses" for an
+ordinary mutation purchase. Reserve active-ability descriptions for observable
+targeted effects and Mycelial Surges such as Chemotactic Beacon.
+
+### Required fields for every active solo AI
+
+1. Stable identity and display name.
+2. Fantasy: one sentence about the colony's biological/ecological character.
+3. Primary plan: ordered mutation backbone in gameplay terms.
+4. Active-ability plan, explicitly saying "primarily passive" when applicable.
+5. Curated, ordered Mycovariant preferences and an explicit fallback; categories
+   alone are not a sufficient player-facing draft identity.
+6. Adaptation plan where relevant.
+7. Two or three player-visible tells on the board or mutation tree.
+8. Counterplay hypotheses, context/variance intent, and current evidence status.
+
+### Initial authored strategy briefs
+
+These are design briefs, not approved balance changes or complete code
+specifications. Each needs a precise mutation-level build, named ordered
+Mycovariant list, static diversity screen, and the normal staged evidence
+ladder before it can join a player-facing pool.
+
+| Working identity | Fantasy and primary plan | Visible tells | Draft direction / intended counterplay |
+|---|---|---|---|
+| **Steady Growth, Iron Shell** | A colony that takes moderate reliable growth, then makes that territory exceptionally difficult to dislodge by maximizing resistance capabilities such as Chitin Fortification. Primarily passive, with defensive surges only when they reinforce the established colony. | Resistant cells persist; fortified frontier; resistance upgrades accumulate rather than sudden expansion. | Explicitly rank Resistance Mycovariants that reinforce durable cells and frontier survival, then named complementary Growth/Reclamation fallbacks. Test whether early spread/territory denial can restrain its slow payoff. |
+| **Murderous Necrosporulation** | Rush Necrosporulation, then combine toxin pressure with enough Substrate Ecology to maintain growth while the board becomes hostile. | Repeated spore drops/toxin creation; toxin-adjacent growth; visible progression down the Necrosporulation line. | Curate toxin-oriented picks first, followed by ecology picks that help toxin pressure remain near the colony. Test resistance, cleansing, and denying available toxin targets as counterplay hypotheses. |
+| **Substrate Spore Drop** | Build the Substrate Ecology toxin-drop line, then pair it with abilities that place toxins near friendly territory: Sporicidal Bloom and Jetting Mycelium Mycovariants are named anchors. | Toxins repeatedly appear near owned territory; Sporicidal Bloom events; Jetting relocation/drops when drafted. | Use an exact ordered list headed by Jetting Mycelium and other toxin-placement Mycovariants compatible with the final mutation backbone; do not rely on a broad category. Test open-territory denial and pressure before the ecology path develops. |
+| **Death and Reclamation** | Establish Filament Overdrive, maximize tendrils and Mycotropic Induction, then take Necrophytic Bloom and fully develop Regenerative Hyphae. The identity is recycling contested loss into regrowth, not generic aggression. | Dense tendril development; Filament Overdrive triggers; corpses/necrophytic patches feeding durable regeneration. | Rank Reclamation and Growth Mycovariants that improve this conversion, with explicit exclusions for picks that pull it into an unrelated toxin or economy identity. Test whether early clean expansion and corpse denial blunt the engine. |
+
+### Proposed execution order
+
+1. Convert each brief into a mutation-level backbone and a fully ordered
+   Mycovariant preference list, auditing every proposed pick for actual
+   compatibility, availability, and category score.
+2. Add the profile metadata to the strategy-definition registry so human
+   surfaces and tools consume one source of truth instead of scattered comments.
+3. Implement each as a Testing-only strategy, with profile-specific behavior
+   tests and a deterministic characterization report.
+4. Run static diversity, smoke, calibration, comparison, holdout, then P7-style
+   contextual classification. Promotion, band, campaign placement, and any
+   balance adjustment remain separate evidence-backed decisions.
+5. Backfill concise profiles for the existing Proven roster, beginning with the
+   retained fifteen reference panel; retain an explicit `EvidenceGap` state
+   wherever current behavior or counterplay is not yet measured.
+
 ## Active Initiative — Surge Visibility
 
 Active Mycelial Surges are invisible outside the mutation tree: the human
