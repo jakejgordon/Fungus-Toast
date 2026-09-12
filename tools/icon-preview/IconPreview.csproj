@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unity-free renderer for the ability icons (Adaptations, Mycovariants, Surges).
+    It compiles the pure-drawing icon sources straight out of the Unity project against
+    UnityEngine.CoreModule.dll (managed structs only: Color, Vector2) and a generated
+    UIStyleTokens stub, then writes PNGs plus an HTML review sheet. Run:
+
+        dotnet run (from tools/icon-preview), optionally followed by the output dir argument
+
+    Set UNITY_EDITOR_DIR if the editor is not under the default Hub path.
+  -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>10.0</LangVersion>
+    <RootNamespace>FungusToast.Tools.IconPreview</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);CS1701;CS1702;CS8632</NoWarn>
+    <RepoRoot>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..', '..'))</RepoRoot>
+    <UnityIconsDir>$(RepoRoot)FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/</UnityIconsDir>
+    <UnityStyleTokens>$(RepoRoot)FungusToast.Unity/Assets/Scripts/Unity/UI/UIStyleTokens.cs</UnityStyleTokens>
+    <GeneratedStub>$(MSBuildThisFileDirectory)Generated/UIStyleTokens.Stub.cs</GeneratedStub>
+    <UnityEditorDir Condition="'$(UNITY_EDITOR_DIR)' != ''">$(UNITY_EDITOR_DIR)</UnityEditorDir>
+    <UnityEditorDir Condition="'$(UnityEditorDir)' == ''">C:\Program Files\Unity\Hub\Editor\6000.5.1f1\Editor</UnityEditorDir>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="PngWriter.cs" />
+    <Compile Include="$(UnityIconsDir)*.cs" Link="Icons/%(Filename)%(Extension)" />
+    <Compile Include="$(GeneratedStub)" Link="Generated/UIStyleTokens.Stub.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The committed plugin DLL is what Unity runs against; referencing it (rather than the
+         Core csproj) also keeps this harness from triggering Core's copy-into-Unity post-build. -->
+    <Reference Include="FungusToast.Core">
+      <HintPath>$(RepoRoot)FungusToast.Unity/Assets/Plugins/FungusToast.Core.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(UnityEditorDir)\Data\Managed\UnityEngine\UnityEngine.CoreModule.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="GenerateStyleStub" BeforeTargets="BeforeBuild" Inputs="$(UnityStyleTokens)" Outputs="$(GeneratedStub)">
+    <Exec Command="python &quot;$(MSBuildThisFileDirectory)generate_style_stub.py&quot; &quot;$(UnityStyleTokens)&quot; &quot;$(GeneratedStub)&quot;" />
+  </Target>
+
+</Project>
