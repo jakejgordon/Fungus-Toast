@@ -188,27 +188,25 @@ Authoring implication:
 ## Player-Facing Strategy Profile Contract
 
 Every new player-facing strategy, and every existing strategy when it is next
-meaningfully revised, must have a concise profile. This is the design contract
-that connects the authored configuration to a player-readable identity; it is
-not a substitute for measured balance evidence.
+meaningfully revised, must have a concise four-field profile. This is a design
+card for authors and players, not a release dossier or a substitute for measured
+balance evidence.
 
 | Element | Requirement |
 |---|---|
-| **Stable identity and display name** | A stable machine ID plus a short player-facing name. The name states an identity, never an unproven difficulty or superlative. |
+| **Name** | A short player-facing identity. Existing stable IDs and measured-band evidence remain elsewhere. |
 | **Fantasy** | One sentence describing the colony's biological or ecological character. |
-| **Primary plan** | The ordered mutation backbone in gameplay terms: which capabilities it establishes first and what it develops later. |
-| **Active-ability plan** | The intended use of targeted or surge abilities, or an explicit statement that the strategy is primarily passive. Do not describe ordinary passive upgrades as attacks, bursts, or blitzes. |
-| **Curated draft plan** | An ordered list of intended Mycovariants, plus an explicit fallback rule. Whole-category preferences alone are insufficient for a player-facing identity because they delegate too much of the draft to `AIScore`. |
-| **Adaptation plan** | The intended mold-matched and authored Adaptation choices, where relevant to the identity. |
-| **Player-visible tells** | Two or three board-visible effects a player can notice: recurring toxins near friendly territory, a hardened frontier, reclaimed corpses, active Beacons, and so on. These are observations, not generic combat language. |
-| **Counterplay** | Concrete choices that should restrain it, stated as hypotheses until matchup evidence proves them. |
-| **Context and variance** | Intended board/player-count niche, desired consistency versus volatility, and whether it is a generalist or a specialist. |
-| **Evidence status** | The intended band, the artifact-backed measured band when available, and links or IDs for the latest calibration/holdout. Promotion remains evidence-gated. |
+| **Mutation plan** | The ordered mutation backbone in gameplay terms: which capabilities it establishes first and what it develops later. |
+| **Mycovariant plan** | A curated, ordered list of intended Mycovariants. Whole-category preferences alone are insufficient because they delegate too much of the draft to `AIScore`. |
 
-The profile comes before a generated candidate plan. It supplies the named job,
-allowed mutation and Mycovariant palette, observable distinction, and success
-criteria that make the plan a designed experiment rather than a parameter
-sweep.
+Active-ability use, Adaptations, visible tells, counterplay, context, and
+evidence belong in the implementation and evaluation records when needed; they
+are not required to write the profile. Do not describe ordinary passive
+upgrades as attacks, bursts, or blitzes.
+
+The profile comes before a generated candidate plan. It supplies the named job
+and the mutation/Mycovariant palette that make the plan a designed experiment
+rather than a parameter sweep.
 
 1. Add a uniquely named strategy in the appropriate roster list.
 2. Add/adjust theme mapping in `ExplicitStrategyThemesByName` when needed.
