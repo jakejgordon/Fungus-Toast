@@ -206,3 +206,9 @@ candidate-minus-parent normalized board share at `-0.0160` (95% CI
 `-0.0564..+0.0244`). Its upper interval bound is not below `-0.05`, so it
 clears calibration and advances to the 50-game comparison; this is not a
 promotion, band, or efficacy result.
+
+The checksum-valid 50-game comparison emitted `not_supported`: candidate-minus-
+parent normalized board share was `-0.0180` (95% CI `-0.0443..+0.0083`) across
+50 pairs. Combined runtime was 727.656 seconds within the 900-second budget.
+It does not meet the frozen `+0.05` increase margin, so the candidate stops on
+evidence and no holdout may run.

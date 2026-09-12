@@ -1246,6 +1246,14 @@ measurement model, phase gates, and open product decisions are in
     `-0.0564..+0.0244`). It clears the `-0.05` regression stop and advances to
     the 50-game comparison; no promotion or band claim follows from calibration.
 
+84. The H2 every-three-round surge-window candidate stopped at its
+    preregistered 50-game comparison. The checksum-valid paired verdict was
+    `not_supported`: candidate-minus-parent normalized board share was `-0.0180`
+    (95% CI `-0.0443..+0.0083`) across 50 pairs, with combined runtime 727.656
+    seconds within the 900-second budget. It does not meet the frozen `+0.05`
+    increase margin, so no holdout may run. The H2 timing branch is stopped on
+    evidence; next: static-review and screen the E1 large-board-scaler lane.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
