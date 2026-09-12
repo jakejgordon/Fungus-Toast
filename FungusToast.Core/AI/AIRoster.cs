@@ -2227,9 +2227,37 @@ namespace FungusToast.Core.AI
             )
         };
 
-        private static readonly IReadOnlyDictionary<string, CampaignAiTooltipProfile> _campaignAiTooltipProfilesByStrategyName =
+        private static readonly IReadOnlyDictionary<string, CampaignAiTooltipProfile> _strategyPresentationProfilesByStrategyName =
             new Dictionary<string, CampaignAiTooltipProfile>(StringComparer.OrdinalIgnoreCase)
             {
+                // Proven roster: these player-facing profiles intentionally describe the
+                // authored build, not the strategy's historical/technical identifier.
+                ["Grow>Kill>Reclaim(Econ)"] = new("Spore Ledger", "A colony that turns steady expansion and decay into a dependable resource engine."),
+                ["Grow>Kill>Reclaim(Econ/Reclaim)"] = new("Reclaimer's Ledger", "A colony that treats dead ground as capital, reclaiming it to fuel its next spread."),
+                ["Mutate>Grow>Kill(Max Econ)"] = new("Mutagen Bloom", "A colony that invests heavily in adaptation before converting its enlarged growth into decay."),
+                ["Creeping>Necrosporulation"] = new("Creeping Reclaimer", "A persistent colony that spreads first, then makes collapse feed its renewal."),
+                ["Filament Regrowth"] = new("Regrowth Lattice", "A resilient filament network that rebuilds through loss and becomes harder to exhaust over time."),
+                ["Power Mutations Max Econ"] = new("Rejuvenation Engine", "A colony that develops a deep economy before repeatedly renewing its territory."),
+                ["Growth/Resilience"] = new("Rooted Canopy", "A simple, sturdy colony that grows safely within a limited mutation toolkit."),
+                ["TST_BalancedControl_AnabolicFirst"] = new("Anabolic Steward", "A colony that establishes a strong metabolic base before balancing spread, decay, and recovery."),
+                ["TST_BalancedControl_MaxEconomy"] = new("Hoarded Bloom", "A patient colony that accumulates mutation potential before expanding into a full control plan."),
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = new("Anabolic Regent", "A metabolic-first control colony that converts early efficiency into durable board presence."),
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new("Hoardspore Regent", "A resource-rich control colony that lets a deep stockpile support its whole lifecycle."),
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = new("Beacon of Rot", "A colony that builds a bloom, establishes a Chemotactic Beacon, then intensifies decay around its reach."),
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = new("Anabolic Gravebloom", "A colony that uses an early metabolic boost to sustain spreading decay and regression."),
+                ["TST_CreepingNecroRegressionCascade"] = new("Gravebloom", "A colony that grows a broad creeping base, then turns it into a field of collapse and renewal."),
+                ["Anabolic>Grow>CatabR>PutreRegen"] = new("Rebirth Furnace", "A colony that uses metabolic growth to keep its death-and-regrowth cycle burning."),
+                ["Grow>Defend>Kill"] = new("Putrid Tendrils", "A tendril-driven colony that establishes multiple growth lanes before converting them into decay."),
+                ["Grow>Mutate>Kill(Max Econ)"] = new("Adaptive Blight", "A colony that grows, mutates aggressively, then develops into a high-investment decay plan."),
+                ["Best_MaxEcon_Surge10_HyphalSurge"] = new("Hyphal Pulse", "A colony that builds an economy and prepares Hyphal Surge as its defining active event."),
+
+                // Legacy campaign IDs that predate the campaign presentation catalog.
+                ["AI4"] = new("Creeping Reclaimer", "A persistent colony that spreads first, then makes collapse feed its renewal."),
+                ["AI5"] = new("Rejuvenation Engine", "A colony that develops a deep economy before repeatedly renewing its territory."),
+                ["AI6"] = new("Rooted Canopy", "A simple, sturdy colony that grows safely within a limited mutation toolkit."),
+                ["AI12"] = new("Voltaic Bloom", "A colony that accelerates its metabolism first, then maintains flexible growth, decay, and recovery."),
+                ["AI13"] = new("Hoardspore Regent", "A resource-rich colony that builds its metabolic base before sustaining a full control lifecycle."),
+
                 ["CMP_Economy_Economancer_Elite"] = new("The Economancer", "Builds up safely, hoards mutation economy, and turns that stockpile into a brutal late swing."),
                 ["CMP_Economy_HoardsporeRegent_Elite"] = new("Hoardspore Regent", "Stays patient early, values long-term setup, and becomes much scarier once its engine is running."),
                 ["CMP_Defense_IronShell_Elite"] = new("Iron Shell", "Expands carefully and becomes hard to dislodge once its defenses finish taking root."),
@@ -2267,7 +2295,7 @@ namespace FungusToast.Core.AI
                 ["CMP_Economy_LateSpike_Hard"] = new("The Economancer", "Plays a patient economy game, then turns saved resources into a nasty late spike."),
                 ["CMP_Bloom_CreepingRegression_Elite"] = new("The Necrotoxin Gauntlet", "Pushes creeping decay from every angle and lets the board collapse behind it."),
                 ["CMP_AnabolicBeaconRhizolith_Elite"] = new("Rhizolith Crown", "Builds a stubborn core, then projects pressure outward from carefully held anchors."),
-                ["TST_CampaignPlayer_SafeBaseline"] = new("Safe Baseline", "Plays a measured, low-drama game that prefers reliable value over flashy swings."),
+                ["TST_CampaignPlayer_SafeBaseline"] = new("Measured Mycelium", "A reliable, low-volatility colony built around steady mutation value and durable growth."),
                 ["CMP_Mobility_Overextender_Training"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
                 ["CMP_Mobility_Overextender_Training_Offset1"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
                 ["CMP_Mobility_Overextender_Training_Offset2"] = new("Overextender", "Spends itself thin chasing space and can be baited into reaching too far."),
@@ -3518,8 +3546,7 @@ namespace FungusToast.Core.AI
 
         private static string GetFriendlyName(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            if (strategySet == StrategySetEnum.Campaign
-                && _campaignAiTooltipProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
+            if (_strategyPresentationProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
                 && !string.IsNullOrWhiteSpace(profile.FriendlyName))
             {
                 return profile.FriendlyName;
@@ -3548,6 +3575,12 @@ namespace FungusToast.Core.AI
 
         private static string GetAiPlayerIntentions(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
+            if (_strategyPresentationProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
+                && !string.IsNullOrWhiteSpace(profile.AIPlayerIntentions))
+            {
+                return profile.AIPlayerIntentions;
+            }
+
             if (strategySet == StrategySetEnum.Campaign)
             {
                 var generated = BuildCampaignAiPlayerIntentions(strategy);
@@ -3556,11 +3589,6 @@ namespace FungusToast.Core.AI
                     return generated;
                 }
 
-                if (_campaignAiTooltipProfilesByStrategyName.TryGetValue(strategy.StrategyName, out var profile)
-                    && !string.IsNullOrWhiteSpace(profile.AIPlayerIntentions))
-                {
-                    return profile.AIPlayerIntentions;
-                }
             }
 
             return BuildIntentLabel(strategy);

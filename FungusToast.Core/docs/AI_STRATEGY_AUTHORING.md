@@ -185,10 +185,13 @@ Authoring implication:
 
 ## Player-Facing Strategy Profile Contract
 
-Every new player-facing strategy, and every existing strategy when it is next
-meaningfully revised, must have a concise four-field profile. This is a design
-card for authors and players, not a release dossier or a substitute for measured
-balance evidence.
+Every new player-facing strategy, and every existing non-Testing strategy, must
+have a concise four-field profile. The roster exposes the first two fields
+through its explicit presentation metadata: `FriendlyName` is the **Name** and
+`AIPlayerIntentions` is the one-sentence **Fantasy**. Testing-only controls may
+retain technical names while they are being evaluated. This is a design card for
+authors and players, not a release dossier or a substitute for measured balance
+evidence.
 
 | Element | Requirement |
 |---|---|

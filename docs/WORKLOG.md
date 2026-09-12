@@ -1504,6 +1504,11 @@ changes through the normal Testing/evidence path.
 5. Backfill concise profiles for the existing Proven roster, beginning with the
    retained fifteen reference panel; retain an explicit `EvidenceGap` state
    wherever current behavior or counterplay is not yet measured.
+   **Name/Fantasy complete 2026-09-12:** every non-Testing Proven and Campaign
+   entry now resolves to explicit player-facing presentation metadata, protected
+   by a catalog regression test. Mutation and Mycovariant plan backfill remains
+   the next profile-specific step; Testing controls intentionally retain
+   technical identities while they are evaluated.
 
 ## Active Initiative — Surge Visibility
 

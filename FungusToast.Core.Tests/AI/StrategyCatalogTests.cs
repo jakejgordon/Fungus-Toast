@@ -490,15 +490,22 @@ public class StrategyCatalogTests
     }
 
     [Fact]
-    public void Campaign_catalog_entries_expose_friendly_name_and_intentions()
+    public void Non_testing_catalog_entries_expose_player_facing_name_and_fantasy()
     {
-        var entries = AIRoster.GetStrategyCatalogEntries(StrategySetEnum.Campaign);
+        var entries = AIRoster.GetStrategyCatalogEntries(StrategySetEnum.Proven)
+            .Concat(AIRoster.GetStrategyCatalogEntries(StrategySetEnum.Campaign))
+            .Where(entry => entry.Status != StrategyStatus.Testing)
+            .ToList();
 
         Assert.NotEmpty(entries);
         foreach (var entry in entries)
         {
-            Assert.False(string.IsNullOrWhiteSpace(entry.FriendlyName), $"Expected FriendlyName for {entry.StrategyName}");
-            Assert.False(string.IsNullOrWhiteSpace(entry.AIPlayerIntentions), $"Expected AIPlayerIntentions for {entry.StrategyName}");
+            Assert.False(string.IsNullOrWhiteSpace(entry.FriendlyName), $"Expected player-facing name for {entry.StrategyName}");
+            Assert.False(string.IsNullOrWhiteSpace(entry.AIPlayerIntentions), $"Expected fantasy for {entry.StrategyName}");
+            Assert.DoesNotContain("TST_", entry.FriendlyName, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain("CMP_", entry.FriendlyName, StringComparison.OrdinalIgnoreCase);
+            Assert.DoesNotContain(">", entry.FriendlyName, StringComparison.Ordinal);
+            Assert.EndsWith(".", entry.AIPlayerIntentions);
         }
     }
 
@@ -534,13 +541,13 @@ public class StrategyCatalogTests
     }
 
     [Fact]
-    public void Campaign_training_profiles_use_generated_intentions()
+    public void Campaign_training_profiles_use_curated_fantasy()
     {
         var trainingEntry = AIRoster.GetStrategyCatalogEntry(StrategySetEnum.Campaign, "CMP_Mobility_Overextender_Training");
 
         Assert.NotNull(trainingEntry);
         Assert.Equal("Overextender", trainingEntry!.FriendlyName);
-        Assert.Contains("growth", trainingEntry.AIPlayerIntentions, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("chasing space", trainingEntry.AIPlayerIntentions, StringComparison.OrdinalIgnoreCase);
         Assert.EndsWith(".", trainingEntry.AIPlayerIntentions);
     }
 
