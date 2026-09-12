@@ -502,14 +502,14 @@ namespace FungusToast.Unity.Grid.Helpers
 			float radius = Mathf.Sqrt((x * x) + (y * y));
 
 			// Halo ring peaking at the edge of the beacon's own cell, with a faint center so the owner icon underneath stays visible.
-			float ring = 1f - Mathf.SmoothStep(0f, 0.24f, Mathf.Abs(radius - 0.55f));
-			float center = 0.22f * (1f - Mathf.SmoothStep(0.2f, 0.5f, radius));
+			float ring = 1f - SmoothEdge(0f, 0.24f, Mathf.Abs(radius - 0.55f));
+			float center = 0.22f * (1f - SmoothEdge(0.2f, 0.5f, radius));
 			float halo = Mathf.Max(ring, center);
 
 			// Two opposed cones along the local x axis that start outside the icon and fade toward the sprite edge.
 			float sinAngle = radius > 0.001f ? Mathf.Abs(y) / radius : 0f;
-			float cone = 1f - Mathf.SmoothStep(0.24f, 0.4f, sinAngle);
-			float reach = Mathf.SmoothStep(0.3f, 0.5f, radius) * (1f - Mathf.SmoothStep(0.5f, 1f, radius));
+			float cone = 1f - SmoothEdge(0.24f, 0.4f, sinAngle);
+			float reach = SmoothEdge(0.3f, 0.5f, radius) * (1f - SmoothEdge(0.5f, 1f, radius));
 			float beam = cone * reach * 0.85f;
 
 			float alpha = Mathf.Clamp01(Mathf.Max(halo, beam));
@@ -519,6 +519,16 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			return new Color32(255, 255, 255, (byte)Mathf.Clamp(Mathf.RoundToInt(alpha * 255f), 0, 255));
+		}
+
+		/// <summary>
+		/// GLSL-style smoothstep: 0 at or below <paramref name="edge0"/>, 1 at or above <paramref name="edge1"/>, Hermite-eased between.
+		/// Not to be confused with <see cref="Mathf.SmoothStep"/>, which is a smoothed lerp between two values.
+		/// </summary>
+		private static float SmoothEdge(float edge0, float edge1, float x)
+		{
+			float t = Mathf.Clamp01((x - edge0) / (edge1 - edge0));
+			return t * t * (3f - (2f * t));
 		}
 
 		private void EnsureGeneratedChemobeaconEmblemTile()
