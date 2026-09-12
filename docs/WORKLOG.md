@@ -1254,6 +1254,18 @@ measurement model, phase gates, and open product decisions are in
     increase margin, so no holdout may run. The H2 timing branch is stopped on
     evidence; next: static-review and screen the E1 large-board-scaler lane.
 
+85. The first E1 large-board regeneration-order candidate stopped at
+    calibration. The 180x140, seed-`2026091104`, rotating-slot paired screen
+    used `TST_CampaignMirror_AI13_AnabolicFirst` as the fixed retained-Elite
+    opponent, with nutrient patches, Mycovariants, and starting Adaptations
+    disabled. Smoke had zero parity mismatches; the checksum-valid 20-game
+    calibration estimated candidate-minus-parent normalized board share at
+    `-0.3404` (95% CI `-0.5505..-0.1303`). The entire interval is below the
+    frozen `-0.05` regression boundary, so it is stopped on evidence and may
+    not run comparison or holdout. Next: decide whether another already-
+    generated E1 candidate has a sufficiently distinct large-board hypothesis
+    to preregister, or widen the bounded search plan.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

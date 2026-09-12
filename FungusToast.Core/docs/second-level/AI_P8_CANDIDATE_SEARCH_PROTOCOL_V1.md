@@ -234,3 +234,9 @@ different large-board 200x160 context with seed `2026091204`. The gate is
 with the standard paired normalized-board-share increase margin of `0.05`. A
 calibration interval whose upper bound is below `-0.05` stops this candidate
 without comparison or holdout.
+
+The five-game smoke completed with zero parity mismatches. The checksum-valid
+20-game large-board calibration estimated candidate-minus-parent normalized
+board share at `-0.3404` (95% CI `-0.5505..-0.1303`). Its upper interval bound
+is below the frozen `-0.05` regression boundary, so it stops on evidence;
+comparison and holdout must not run.
