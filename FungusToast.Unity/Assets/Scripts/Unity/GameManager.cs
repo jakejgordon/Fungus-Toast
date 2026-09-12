@@ -540,6 +540,30 @@ namespace FungusToast.Unity
             ScopedPlayerPrefs.SetInt(RoundPresentationSpeedModeKey, (int)mode);
             ScopedPlayerPrefs.Save();
             gameUIManager?.MutationUIManager?.RefreshPresentationSpeedModeUI();
+            ApplyGameplayTimeScale();
+        }
+
+        /// <summary>
+        /// Time.timeScale gameplay should run at right now. The mycovariant draft is paced entirely by
+        /// coroutine waits and deltaTime-driven animations, so Time Lapse doubles the clock for the whole
+        /// draft phase instead of threading a multiplier through every effect animator.
+        /// </summary>
+        public float GetGameplayTimeScale()
+        {
+            return isInDraftPhase && IsFastRoundPresentationMode
+                ? UIEffectConstants.TimeLapseDraftTimeScale
+                : 1f;
+        }
+
+        private void ApplyGameplayTimeScale()
+        {
+            // The pause menu owns Time.timeScale while it is open; it restores the gameplay scale on resume.
+            if (pauseMenuService != null && pauseMenuService.IsOpen)
+            {
+                return;
+            }
+
+            Time.timeScale = GetGameplayTimeScale();
         }
 
         private void LoadPersistedRoundPresentationSpeedMode()
@@ -680,7 +704,8 @@ namespace FungusToast.Unity
                 SkipToNextTrack,
                 ResetDismissedTutorialTips,
                 GetCurrentGameplayTrackName,
-                GetNextGameplayTrackName);
+                GetNextGameplayTrackName,
+                GetGameplayTimeScale);
             pauseMenuService.Initialize();
             selectionPromptService = new SelectionPromptService(
                 SelectionPromptPanel,
@@ -1651,6 +1676,7 @@ namespace FungusToast.Unity
 
             isInDraftPhase = true;
             activeDraftCountsTowardRoundCompletion = countsTowardRoundCompletion;
+            ApplyGameplayTimeScale();
             RefreshRightSidebarTopStats();
             TooltipManager.Instance?.CancelAll();
             // Mark draft phase segment boundary so prior aggregation (e.g., decay phase) is queued
@@ -1709,6 +1735,7 @@ namespace FungusToast.Unity
         public void OnMycovariantDraftComplete()
         {
             isInDraftPhase = false;
+            ApplyGameplayTimeScale();
             if (activeDraftCountsTowardRoundCompletion)
             {
                 lastCompletedMycovariantDraftRound = Board?.CurrentRound ?? -1;
@@ -1920,6 +1947,7 @@ namespace FungusToast.Unity
         {
             gameEnded = false;
             isInDraftPhase = false;
+            ApplyGameplayTimeScale();
             isFastForwarding = false;
             _fastForwardStarted = false;
             DisableTestingMode();
@@ -2319,6 +2347,7 @@ namespace FungusToast.Unity
             ui.LoadingScreen?.Show(loadingMessage);
             gameEnded = false;
             isInDraftPhase = false;
+            ApplyGameplayTimeScale();
             activeDraftCountsTowardRoundCompletion = false;
             isMycovariantDraftChainActive = false;
             humanDraftedMycovariantThisDraftChain = false;

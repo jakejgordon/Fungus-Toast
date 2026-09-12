@@ -341,6 +341,12 @@ namespace FungusToast.Unity.UI
         public const float FastRoundPresentationDelayMultiplier = 0.16f;
 
         /// <summary>
+        /// Time.timeScale applied for the whole mycovariant draft phase while Time Lapse is on, so the AI pick
+        /// pacing, pick feedback, completion hold, and every effect animation resolve twice as fast.
+        /// </summary>
+        public const float TimeLapseDraftTimeScale = 2f;
+
+        /// <summary>
         /// Hold duration passed to the phase banner so the total Conidial Relay overlay reads for roughly 1.5 seconds including fade in/out.
         /// </summary>
         public const float ConidialRelayBannerHoldSeconds = 0.5f;

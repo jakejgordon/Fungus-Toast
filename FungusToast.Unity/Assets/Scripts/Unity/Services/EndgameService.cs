@@ -333,6 +333,7 @@ namespace FungusToast.Unity
         private readonly Action onReplayTutorialTipsRequested;
         private readonly Func<string> getCurrentTrackName;
         private readonly Func<string> getNextTrackName;
+        private readonly Func<float> getResumeTimeScale;
 
         private UI_PauseMenuPanel panel;
 
@@ -348,7 +349,8 @@ namespace FungusToast.Unity
             Action onNextTrackRequested,
             Action onReplayTutorialTipsRequested,
             Func<string> getCurrentTrackName,
-            Func<string> getNextTrackName)
+            Func<string> getNextTrackName,
+            Func<float> getResumeTimeScale = null)
         {
             this.hostObject = hostObject;
             this.gameUIManager = gameUIManager;
@@ -362,6 +364,7 @@ namespace FungusToast.Unity
             this.onReplayTutorialTipsRequested = onReplayTutorialTipsRequested;
             this.getCurrentTrackName = getCurrentTrackName;
             this.getNextTrackName = getNextTrackName;
+            this.getResumeTimeScale = getResumeTimeScale;
         }
 
         public bool IsOpen { get; private set; }
@@ -448,7 +451,8 @@ namespace FungusToast.Unity
         public void ForceClose()
         {
             IsOpen = false;
-            Time.timeScale = 1f;
+            // Resume at whatever scale gameplay wants (e.g. the Time Lapse draft runs at 2x), not a flat 1x.
+            Time.timeScale = getResumeTimeScale?.Invoke() ?? 1f;
             panel?.Hide();
         }
     }
