@@ -89,6 +89,11 @@ namespace FungusToast.Unity.UI
             {
                 if (leftSidebar != null)
                 {
+                    // The collapsed activity log no longer covers the bottom of the
+                    // sidebar, so its scene background (translucent white) would show
+                    // as a grey block; give it the same surface as the log pop-out.
+                    UIStyleTokens.ApplyPanelSurface(leftSidebar, UIStyleTokens.Surface.PanelPrimary);
+
                     var sidebarLayout = leftSidebar.GetComponent<VerticalLayoutGroup>();
                     if (sidebarLayout != null)
                     {

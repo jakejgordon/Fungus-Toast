@@ -23,14 +23,14 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
         private const float HeaderActionInset = 8f;
-        // The visible log-header band is 25 units tall. Keep the title's
-        // raycastable tooltip area inside that band so it cannot steal hover
-        // input from the profile icons immediately above the activity log.
+        // Keep the title's raycastable tooltip area well inside the header band
+        // so it cannot steal hover input from the profile icons immediately
+        // above the activity log.
         private const float HeaderTitleHitHeight = 25f;
-        // "Show (99)" must fit at the normal micro-text size while the control
-        // stays inside the header gutter at every supported sidebar width.
-        private const float ToggleButtonWidth = 84f;
-        private const float PopoutActionButtonWidth = 64f;
+        // "Show (99) ›" must fit at the normal micro-text size while the
+        // control stays inside the header gutter at every supported sidebar width.
+        private const float ToggleButtonWidth = 96f;
+        private const float PopoutActionButtonWidth = 72f;
         private const float HeaderActionSpacing = 4f;
         private const float PopoutHeaderActionsWidth = (PopoutActionButtonWidth * 2f) + HeaderActionSpacing;
         // "Latest (30)" must fit at the normal micro-text size.  The human
@@ -176,12 +176,15 @@ namespace FungusToast.Unity.UI.GameLog
 
             SetTitle(isPlayerSpecificPanel ? "Human Log" : "Global Log");
 
+            // Clear sits beside Close in the pop-out header, so it takes the same
+            // dark panel style rather than the light default button surface.
             if (clearButton != null)
             {
-                UIStyleTokens.Button.ApplyStyle(clearButton);
+                UIStyleTokens.Button.ApplyPanelSecondaryStyle(clearButton);
                 ConfigureActionButtonLabels(clearButton);
             }
 
+            ConfigureSidebarHeaderBand();
             ConfigureSidebarHeaderTitleLayout();
 
             if (topActionButton != null)
@@ -194,11 +197,35 @@ namespace FungusToast.Unity.UI.GameLog
                 topActionButtonLabel.color = UIStyleTokens.Text.Primary;
             }
 
+            // Only the sidebar strip gets the generic palette pass. The pop-out is
+            // inactive here, and the pass cannot tell an inactive button's label
+            // from body text, so it would paint the action labels near-white.
+            // Every pop-out label is styled explicitly instead.
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
-            if (popoutRoot != null)
+        }
+
+        // The prefab's header band is shorter than the header and the toggle
+        // button spilled past it; stretch it to the full header height and give
+        // it the same surface as the pop-out header.
+        private void ConfigureSidebarHeaderBand()
+        {
+            if (headerRoot == null)
             {
-                UIStyleTokens.ApplyNonButtonTextPalette(popoutRoot.gameObject, headingSizeThreshold: 22f);
+                return;
             }
+
+            var band = headerRoot.Find("UI_GameLogPanelHeaderBackground") as RectTransform;
+            if (band == null)
+            {
+                return;
+            }
+
+            band.anchorMin = Vector2.zero;
+            band.anchorMax = Vector2.one;
+            band.pivot = new Vector2(0.5f, 0.5f);
+            band.offsetMin = Vector2.zero;
+            band.offsetMax = Vector2.zero;
+            ApplyImageColor(band.GetComponent<Image>(), UIStyleTokens.Surface.PanelSecondary);
         }
 
         // Both activity feeds share this header contract. Explicitly reserve
@@ -769,7 +796,6 @@ namespace FungusToast.Unity.UI.GameLog
                 Vector2.zero,
                 new Vector2(PopoutActionButtonWidth, ActivityButtonHeight),
                 out popoutCloseButtonLabel);
-            popoutCloseButtonLabel.text = "Close";
             ConfigureHeaderActionLayout(popoutCloseButton, PopoutActionButtonWidth);
             popoutCloseButton.transform.SetAsLastSibling();
             popoutCloseButton.onClick.AddListener(() => SetCollapsed(true));
@@ -850,6 +876,26 @@ namespace FungusToast.Unity.UI.GameLog
             }
         }
 
+        // Which way the pop-out opens. Positions are only trustworthy once the
+        // canvas has been driven, so before its first layout (Awake-time label
+        // setup) fall back to the sidebar's own anchors.
+        private bool IsAnchoredToLeftSidebar()
+        {
+            if (!ResolvePopoutContext())
+            {
+                return true;
+            }
+
+            float canvasWidth = hostCanvasRect.rect.width;
+            if (canvasWidth > 0f)
+            {
+                GetCanvasSpan(sidebarRect, out Vector2 sidebarMin, out Vector2 sidebarMax);
+                return (sidebarMin.x + sidebarMax.x) * 0.5f <= canvasWidth * 0.5f;
+            }
+
+            return sidebarRect.anchorMin.x + sidebarRect.anchorMax.x <= 1f;
+        }
+
         private void UpdatePopoutRect()
         {
             if (popoutRoot == null || !ResolvePopoutContext())
@@ -868,10 +914,7 @@ namespace FungusToast.Unity.UI.GameLog
                 oppositeWidth = oppositeMax.x - oppositeMin.x;
             }
 
-            // Decided here rather than cached at Awake: the canvas rect is not
-            // driven until its first layout, so positions are only trustworthy
-            // once the pop-out is actually being shown.
-            bool anchorsToLeftSidebar = (sidebarMin.x + sidebarMax.x) * 0.5f <= canvasSize.x * 0.5f;
+            bool anchorsToLeftSidebar = IsAnchoredToLeftSidebar();
 
             float playableWidth = Mathf.Max(0f, canvasSize.x - sidebarWidth - oppositeWidth);
             float width = Mathf.Max(PopoutMinimumWidth, playableWidth * PopoutPlayableWidthFraction);
@@ -1031,14 +1074,25 @@ namespace FungusToast.Unity.UI.GameLog
 
         // The unread count surfaces on whichever control can reveal it: the
         // sidebar toggle while the pop-out is closed, the Latest button while
-        // it is open but scrolled away from the bottom.
+        // it is open but scrolled away from the bottom. Chevrons point the way
+        // the pop-out opens (away from its sidebar) and back again to close.
         private void UpdateUnseenIndicators()
         {
-            if (collapseButtonLabel != null)
+            if (collapseButtonLabel != null || popoutCloseButtonLabel != null)
             {
-                collapseButtonLabel.text = isCollapsed
-                    ? (unseenEntryCount > 0 ? $"Show ({unseenEntryCount})" : "Show")
-                    : "Hide";
+                bool opensRightward = IsAnchoredToLeftSidebar();
+                string show = unseenEntryCount > 0 ? $"Show ({unseenEntryCount})" : "Show";
+                if (collapseButtonLabel != null)
+                {
+                    collapseButtonLabel.text = isCollapsed
+                        ? (opensRightward ? $"{show} ›" : $"‹ {show}")
+                        : (opensRightward ? "‹ Hide" : "Hide ›");
+                }
+
+                if (popoutCloseButtonLabel != null)
+                {
+                    popoutCloseButtonLabel.text = opensRightward ? "‹ Close" : "Close ›";
+                }
             }
 
             if (latestButton == null)
