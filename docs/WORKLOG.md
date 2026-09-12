@@ -1457,6 +1457,7 @@ ladder before it can join a player-facing pool.
 | **Murderous Necrosporulation** | A colony that spreads death through Necrosporulation while keeping its own growth alive. | Rush Necrosporulation, then toxins plus supporting Substrate Ecology. | An exact toxin-first list followed by ecology picks that sustain the plan. |
 | **Substrate Spore Drop** | A colony that turns its own territory into a launch site for nearby toxin placement. | Substrate Ecology toxin-drop path plus Sporicidal Bloom. | Jetting Mycelium first, then exact compatible toxin-placement picks. |
 | **Death and Reclamation** | A colony that turns contested loss into renewed growth. | Filament Overdrive, tendrils/Mycotropic Induction, Necrophytic Bloom, then Regenerative Hyphae. | An exact Reclamation/Growth list that supports the loop. |
+| **Economy at All Costs** | A colony that exhausts its mutation economy before allowing itself a broader development plan. | Max Tier 1-2 Genetic Drift, bridge only as required into Ontogenic Regression, max Ontogenic Regression, then finish the remaining economy ladder. | Economy category set; future curated ordering remains a separate review. |
 
 ### Proposed content-to-profile coverage review
 

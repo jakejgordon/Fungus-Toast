@@ -177,6 +177,29 @@ public class StrategyCatalogTests
         Assert.Equal(treatment.PrioritizeHighTier, control.PrioritizeHighTier);
     }
 
+    [Fact]
+    public void Economy_at_all_costs_completes_the_economy_ladder_around_ontogenic_regression()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_EconomyAtAllCosts"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                (MutationIds.AdaptiveExpression, GameBalance.AdaptiveExpressionMaxLevel),
+                (MutationIds.MycotoxinCatabolism, GameBalance.MycotoxinCatabolismMaxLevel),
+                (MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                (MutationIds.ChitinFortification, 1),
+                (MutationIds.HyperadaptiveDrift, 2),
+                (MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                (MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                (MutationIds.LatentPolymorphism, GameBalance.LatentPolymorphismMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(EconomyBias.MaxEconomy, strategy.EconomyProfile);
+    }
+
     [Theory]
     [InlineData("TST_EcologyFrontierExpansion")]
     [InlineData("TST_EcologyFrontierResilience")]

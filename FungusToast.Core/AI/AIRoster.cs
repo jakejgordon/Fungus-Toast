@@ -1781,6 +1781,27 @@ namespace FungusToast.Core.AI
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
             ),
 
+            // Economy at All Costs: complete the low-tier economy foundation, rush
+            // Ontogenic Regression, then finish the remaining economy ladder.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_EconomyAtAllCosts",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, GameBalance.AdaptiveExpressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism, GameBalance.MycotoxinCatabolismMaxLevel),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 1),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, 2),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.LatentPolymorphism, GameBalance.LatentPolymorphismMaxLevel)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+
             // 2) Early reclamation swarm and territory retake
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EarlyReclaimerSwarm",
@@ -2256,6 +2277,7 @@ namespace FungusToast.Core.AI
                 ["Grow>Defend>Kill"] = new("Putrid Tendrils", "A tendril-driven colony that establishes multiple growth lanes before converting them into decay."),
                 ["Grow>Mutate>Kill(Max Econ)"] = new("Adaptive Blight", "A colony that grows, mutates aggressively, then develops into a high-investment decay plan."),
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = new("Hyphal Pulse", "A colony that builds an economy and prepares Hyphal Surge as its defining active event."),
+                ["TST_EconomyAtAllCosts"] = new("Economy at All Costs", "A colony that exhausts its mutation economy before allowing itself a broader development plan."),
 
                 // Legacy campaign IDs that predate the campaign presentation catalog.
                 ["AI4"] = new("Creeping Reclaimer", "A persistent colony that spreads first, then makes collapse feed its renewal."),
@@ -2361,6 +2383,7 @@ namespace FungusToast.Core.AI
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
+                ["TST_EconomyAtAllCosts"] = StrategyTheme.EconomyRamp,
                 ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyTheme.EconomyRamp,
                 ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
                 ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
