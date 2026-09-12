@@ -1434,27 +1434,18 @@ independently shippable commit.
    for the tooltip. The tile-rebuild signature must include rounds remaining so
    a pinned panel keeps counting down. Done 2026-09-11; awaiting Unity Editor
    visual check of the six procedural glyphs.
-3. **Activity log collapsed by default.** `UI_GameLogPanel` already has
-   Hide/Show; default it to collapsed and add an unread count to the collapsed
-   header so Lucky/Unlucky events are not silently buried.
-4. **Left panel surge rows.** For the human player, a row per active surge
+3. **Left panel surge rows.** For the human player, a row per active surge
    (`[icon] Name · Lv N · R rounds`) directly under the Random Decay row in
    `UI_MoldProfileRoot`, hidden when nothing is active. Refresh on
    `Player.MutationsChanged` and after `TickDownActiveSurges`.
-5. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
+4. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
    the name — the corners are taken by the tier glyph and the active-surge
    hourglass) and beside the title in `MutationInspectorPanel`. Done
-   2026-09-11, pulled ahead of steps 3–4: the glyph took the top-left status
+   2026-09-11, pulled ahead of step 3: the glyph took the top-left status
    slot instead of the body (idle surge shows the glyph there; an active surge
    swaps the hourglass for the glyph plus a rounds badge, so the card matches
    the inspector tile). `SurgePresentation` now reads
    `Mutation.DescriptionSections.Summary` rather than re-parsing.
-6. **Activity log pop-out (last).** Replace the in-place expand with a floating
-   panel anchored to the left sidebar that overlays the board, so the sidebar
-   keeps its compact height whether the log is open or closed. Touches the
-   sidebar layout reservation, `topActionRowRoot` show/hide, and the
-   follow-latest auto-scroll; do it only after steps 3 and 4 have shown how
-   much space the collapsed log actually buys.
 
 ## Working Rules
 

@@ -8,10 +8,6 @@ namespace FungusToast.Unity.UI
 {
     public class GameUIManager : MonoBehaviour
     {
-        // The activity log is deliberately the sidebar's pressure-release area.
-        // Gameplay controls above it must retain their complete footprint.
-        private const float HumanActivityLogMinHeight = 0f;
-        private const float GlobalActivityLogMinHeight = 180f;
         private const float SpendPointsRowHeight = 82f;
         private const string SpendPointsRowName = "UI_SpendPointsRow";
 
@@ -87,6 +83,8 @@ namespace FungusToast.Unity.UI
 
         public UI_PhaseProgressTracker PhaseProgressTracker => phaseProgressTracker;
 
+            // The activity logs size their own sidebar strips (UI_GameLogPanel);
+            // the sidebar only needs to honour children's preferred heights.
             private void ApplySidebarLogLayoutBehavior()
             {
                 if (leftSidebar != null)
@@ -100,14 +98,6 @@ namespace FungusToast.Unity.UI
 
                     ApplyFixedSpendPointsLayout(leftSidebar.transform);
                 }
-
-                if (playerActivityLogPanel == null)
-                {
-                        return;
-                }
-
-                    ApplyFlexibleLogLayout(playerActivityLogPanel, HumanActivityLogMinHeight);
-                    ApplyFlexibleLogLayout(globalEventsLogPanel, GlobalActivityLogMinHeight);
             }
 
         private static void ApplyFixedSpendPointsLayout(Transform sidebarTransform)
@@ -127,24 +117,6 @@ namespace FungusToast.Unity.UI
             layoutElement.minHeight = SpendPointsRowHeight;
             layoutElement.preferredHeight = SpendPointsRowHeight;
             layoutElement.flexibleHeight = 0f;
-        }
-
-        private static void ApplyFlexibleLogLayout(UI_GameLogPanel logPanel, float minimumHeight)
-        {
-            if (logPanel == null)
-            {
-                return;
-            }
-
-            var layoutElement = logPanel.GetComponent<LayoutElement>();
-            if (layoutElement == null)
-            {
-                layoutElement = logPanel.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layoutElement.minHeight = minimumHeight;
-            layoutElement.preferredHeight = -1f;
-            layoutElement.flexibleHeight = 1f;
         }
 
         // ── Core accessors ──

@@ -95,6 +95,18 @@ namespace FungusToast.Unity.UI.GameLog
             UpdateDynamicHeightImmediate();
         }
 
+        /// <summary>
+        /// Re-measures the entry against its current width. The panel calls this when
+        /// its pop-out opens, because entries added while it was hidden measured
+        /// against a stale width and never scheduled the deferred pass.
+        /// </summary>
+        public void RecalculateHeight()
+        {
+            UpdateDynamicHeightImmediate();
+            if (!deferredScheduled && gameObject.activeInHierarchy)
+                StartCoroutine(DeferredHeightRecalc());
+        }
+
         private void ApplyRoundGroupPresentation()
         {
             if (timestampText != null)

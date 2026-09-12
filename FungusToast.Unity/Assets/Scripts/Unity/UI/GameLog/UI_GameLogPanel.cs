@@ -8,6 +8,13 @@ using TMPro;
 
 namespace FungusToast.Unity.UI.GameLog
 {
+    /// <summary>
+    /// Activity feed in two parts. A compact strip stays in the sidebar (title,
+    /// Show/Hide toggle with an unread count, and the optional top action row)
+    /// and never grows, so the sidebar keeps its height for gameplay controls.
+    /// The entries live in a pop-out panel anchored to the sidebar that overlays
+    /// half of the playable board area; it is closed by default.
+    /// </summary>
     public class UI_GameLogPanel : MonoBehaviour
     {
         private const float TopActionRowHeight = 40f;
@@ -15,25 +22,30 @@ namespace FungusToast.Unity.UI.GameLog
         private const float TopActionReservedHeight = 45f;
         private const float TopActionAttentionPulseSpeed = 6f;
         private const float TopActionAttentionScaleStrength = 0.035f;
-        // Keep the two header controls inside the narrowest sidebar while still
-        // exceeding the desktop minimum hit target.
-        private const float ClearButtonMinimumWidth = 64f;
         private const float HeaderActionInset = 8f;
         // The visible log-header band is 25 units tall. Keep the title's
         // raycastable tooltip area inside that band so it cannot steal hover
         // input from the profile icons immediately above the activity log.
         private const float HeaderTitleHitHeight = 25f;
-        // Keep the visibility control compact enough to stay inside the header
-        // gutter at every supported sidebar width.
-        private const float CollapseButtonWidth = 56f;
+        // "Show (99)" must fit at the normal micro-text size while the control
+        // stays inside the header gutter at every supported sidebar width.
+        private const float ToggleButtonWidth = 84f;
+        private const float PopoutActionButtonWidth = 64f;
         private const float HeaderActionSpacing = 4f;
-        private const float HeaderActionsWidth = ClearButtonMinimumWidth + CollapseButtonWidth + HeaderActionSpacing;
+        private const float PopoutHeaderActionsWidth = (PopoutActionButtonWidth * 2f) + HeaderActionSpacing;
         // "Latest (30)" must fit at the normal micro-text size.  The human
         // activity feed uses the same control as the global feed.
         private const float LatestButtonWidth = 88f;
         private const float ActivityButtonHeight = 32f;
-        private const float CollapsedHeight = 48f;
-        private const float ExpandedMinimumHeight = 180f;
+        // The sidebar strip only ever shows the header band.
+        private const float SidebarStripHeight = 48f;
+        private const float PopoutHeaderHeight = 40f;
+        private const float PopoutContentInset = 8f;
+        // Matches the sidebar layout padding so the pop-out lines up with the
+        // sidebar's content rather than its outer edge.
+        private const float PopoutVerticalMargin = 10f;
+        private const float PopoutPlayableWidthFraction = 0.5f;
+        private const float PopoutMinimumWidth = 320f;
         private const float BottomFollowThreshold = 0.025f;
 
         [Header("UI References")]
@@ -50,6 +62,7 @@ namespace FungusToast.Unity.UI.GameLog
         [SerializeField] private bool isPlayerSpecificPanel = false; // set true for per-player log (can be forced at runtime)
 
         private readonly List<UI_GameLogEntry> entryUIs = new();
+        private readonly Vector3[] cornerBuffer = new Vector3[4];
         private ObjectPool<UI_GameLogEntry> entryPool;
         private IGameLogManager logManager;
         private int activePlayerId = -1; // for player-specific filtering
@@ -60,17 +73,23 @@ namespace FungusToast.Unity.UI.GameLog
         private Button topActionButton;
         private TextMeshProUGUI topActionButtonLabel;
         private RectTransform headerRoot;
-        private RectTransform headerActionsRoot;
         private RectTransform scrollViewRoot;
         private Vector2 headerOriginalAnchoredPosition;
-        private Vector2 scrollViewOriginalOffsetMax;
         private bool topActionAttentionActive;
         private float topActionAttentionUntilUnscaledTime;
         private Button collapseButton;
         private TextMeshProUGUI collapseButtonLabel;
         private Button latestButton;
         private TextMeshProUGUI latestButtonLabel;
-        private bool isCollapsed;
+        private RectTransform popoutRoot;
+        private TextMeshProUGUI popoutHeaderText;
+        private RectTransform popoutActionsRoot;
+        private Button popoutCloseButton;
+        private TextMeshProUGUI popoutCloseButtonLabel;
+        private RectTransform hostCanvasRect;
+        private RectTransform sidebarRect;
+        private RectTransform oppositeSidebarRect;
+        private bool isCollapsed = true;
         private int unseenEntryCount;
         private bool topActionRequestedVisible;
 
@@ -84,7 +103,7 @@ namespace FungusToast.Unity.UI.GameLog
                 clearButton.onClick.AddListener(ClearLog);
 
             if (headerText != null && string.IsNullOrEmpty(headerText.text))
-                headerText.text = defaultHeaderText;
+                SetTitle(defaultHeaderText);
 
             if (scrollRect != null)
                 scrollRect.onValueChanged.AddListener(OnScrollPositionChanged);
@@ -121,6 +140,11 @@ namespace FungusToast.Unity.UI.GameLog
         {
             UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.PanelPrimary);
 
+            if (popoutRoot != null)
+            {
+                UIStyleTokens.ApplyPanelSurface(popoutRoot.gameObject, UIStyleTokens.Surface.PanelPrimary);
+            }
+
             if (contentParent != null)
             {
                 UIStyleTokens.ApplyPanelSurface(contentParent.gameObject, UIStyleTokens.Surface.PanelSecondary);
@@ -143,7 +167,6 @@ namespace FungusToast.Unity.UI.GameLog
             if (headerText != null)
             {
                 headerText.color = UIStyleTokens.Text.Primary;
-                headerText.text = isPlayerSpecificPanel ? "Human Log" : "Global Log";
                 headerText.fontSize = UIStyleTokens.Typography.MicroMinimum;
                 headerText.enableAutoSizing = false;
                 headerText.textWrappingMode = TextWrappingModes.NoWrap;
@@ -151,11 +174,15 @@ namespace FungusToast.Unity.UI.GameLog
                 headerText.alignment = TextAlignmentOptions.MidlineLeft;
             }
 
+            SetTitle(isPlayerSpecificPanel ? "Human Log" : "Global Log");
+
             if (clearButton != null)
             {
                 UIStyleTokens.Button.ApplyStyle(clearButton);
-                ConfigureClearButtonReadability();
+                ConfigureActionButtonLabels(clearButton);
             }
+
+            ConfigureSidebarHeaderTitleLayout();
 
             if (topActionButton != null)
             {
@@ -168,47 +195,40 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject, headingSizeThreshold: 22f);
+            if (popoutRoot != null)
+            {
+                UIStyleTokens.ApplyNonButtonTextPalette(popoutRoot.gameObject, headingSizeThreshold: 22f);
+            }
         }
 
-        private void ConfigureClearButtonReadability()
+        // Both activity feeds share this header contract. Explicitly reserve
+        // the same title lane so per-instance prefab layout does not push the
+        // Global Log title left or allow the toggle to escape the panel.
+        private void ConfigureSidebarHeaderTitleLayout()
         {
-            if (clearButton != null && clearButton.transform is RectTransform buttonRect)
-            {
-                if (headerActionsRoot == null)
-                {
-                    buttonRect.sizeDelta = new Vector2(
-                        Mathf.Max(buttonRect.sizeDelta.x, ClearButtonMinimumWidth),
-                        ActivityButtonHeight);
-                    buttonRect.anchorMin = new Vector2(1f, 1f);
-                    buttonRect.anchorMax = new Vector2(1f, 1f);
-                    buttonRect.pivot = new Vector2(1f, 0.5f);
-                    buttonRect.anchoredPosition = new Vector2(-HeaderActionInset, -20f);
-                }
-
-                ConfigureHeaderActionLayout(clearButton, ClearButtonMinimumWidth);
-            }
-
-            // Both activity feeds share this header contract. Explicitly reserve
-            // the same title lane so per-instance prefab layout does not push the
-            // Global Log title left or allow its actions to escape the panel.
-            if (headerText != null)
-            {
-                var headerTextRect = headerText.rectTransform;
-                headerTextRect.anchorMin = new Vector2(0f, 0.5f);
-                headerTextRect.anchorMax = new Vector2(1f, 0.5f);
-                headerTextRect.pivot = new Vector2(0.5f, 0.5f);
-                headerTextRect.offsetMin = new Vector2(HeaderActionInset, -HeaderTitleHitHeight * 0.5f);
-                headerTextRect.offsetMax = new Vector2(
-                    -(HeaderActionsWidth + HeaderActionInset),
-                    HeaderTitleHitHeight * 0.5f);
-            }
-
-            if (clearButton == null)
+            if (headerText == null)
             {
                 return;
             }
 
-            var labels = clearButton.GetComponentsInChildren<TextMeshProUGUI>(true);
+            var headerTextRect = headerText.rectTransform;
+            headerTextRect.anchorMin = new Vector2(0f, 0.5f);
+            headerTextRect.anchorMax = new Vector2(1f, 0.5f);
+            headerTextRect.pivot = new Vector2(0.5f, 0.5f);
+            headerTextRect.offsetMin = new Vector2(HeaderActionInset, -HeaderTitleHitHeight * 0.5f);
+            headerTextRect.offsetMax = new Vector2(
+                -(ToggleButtonWidth + (HeaderActionInset * 2f)),
+                HeaderTitleHitHeight * 0.5f);
+        }
+
+        private static void ConfigureActionButtonLabels(Button button)
+        {
+            if (button == null)
+            {
+                return;
+            }
+
+            var labels = button.GetComponentsInChildren<TextMeshProUGUI>(true);
             for (int i = 0; i < labels.Length; i++)
             {
                 labels[i].fontSize = UIStyleTokens.Typography.CaptionMinimum;
@@ -236,11 +256,13 @@ namespace FungusToast.Unity.UI.GameLog
 
             topActionButtonLabel.text = label ?? string.Empty;
 
+            // The top action is a sidebar control that happens to sit above the
+            // log header; it stays available whether or not the pop-out is open.
             topActionRequestedVisible = isVisible && onClick != null;
-            bool shouldShow = topActionRequestedVisible && !isCollapsed;
-            topActionButton.interactable = shouldShow;
-            topActionRowRoot.gameObject.SetActive(shouldShow);
-            ApplyTopActionLayout(shouldShow);
+            topActionButton.interactable = topActionRequestedVisible;
+            topActionRowRoot.gameObject.SetActive(topActionRequestedVisible);
+            ApplyTopActionLayout(topActionRequestedVisible);
+            ApplySidebarStripLayout();
             ForceLayoutRefreshImmediate();
         }
 
@@ -268,6 +290,13 @@ namespace FungusToast.Unity.UI.GameLog
         private void LateUpdate()
         {
             UpdateTopActionAttentionState();
+
+            if (!isCollapsed)
+            {
+                // Sidebar widths follow the window size, so keep the pop-out glued
+                // to its sidebar rather than caching a rect at open time.
+                UpdatePopoutRect();
+            }
 
             if (pendingLayoutRebuild)
             {
@@ -321,7 +350,7 @@ namespace FungusToast.Unity.UI.GameLog
                 QueueLayoutRefresh();
                 unseenEntryCount = 0;
                 QueueBottomScrollFollowup();
-                UpdateLatestButton();
+                UpdateUnseenIndicators();
             }
         }
 
@@ -341,24 +370,27 @@ namespace FungusToast.Unity.UI.GameLog
             }
         }
 
-        public void SetHeaderText(string text)
-        {
-            if (headerText != null)
-                headerText.text = text;
-        }
+        public void SetHeaderText(string text) => SetTitle(text);
 
         public void SetActivePlayer(int playerId, string playerName)
         {
             bool playerChanged = activePlayerId != playerId;
             activePlayerId = playerId;
-            if (headerText != null)
-                headerText.text = $"{playerName} Activity Log";
+            SetTitle($"{playerName} Activity Log");
             if (isPlayerSpecificPanel)
             {
                 RebuildForPlayerEntries(
                     logManager?.GetRecentEntries(maxVisibleEntries) ?? Enumerable.Empty<GameLogEntry>(),
                     resetUnseenCount: playerChanged);
             }
+        }
+
+        private void SetTitle(string text)
+        {
+            if (headerText != null)
+                headerText.text = text;
+            if (popoutHeaderText != null)
+                popoutHeaderText.text = text;
         }
 
         private void OnDestroy()
@@ -371,6 +403,10 @@ namespace FungusToast.Unity.UI.GameLog
 
             if (scrollRect != null)
                 scrollRect.onValueChanged.RemoveListener(OnScrollPositionChanged);
+
+            // The pop-out lives under the canvas, not under this panel.
+            if (popoutRoot != null)
+                Destroy(popoutRoot.gameObject);
         }
 
         public void AddLogEntry(GameLogEntry entry)
@@ -399,7 +435,7 @@ namespace FungusToast.Unity.UI.GameLog
             else
             {
                 unseenEntryCount++;
-                UpdateLatestButton();
+                UpdateUnseenIndicators();
             }
         }
 
@@ -441,7 +477,7 @@ namespace FungusToast.Unity.UI.GameLog
             QueueLayoutRefresh();
             QueueBottomScrollFollowup();
             unseenEntryCount = 0;
-            UpdateLatestButton();
+            UpdateUnseenIndicators();
         }
 
         private void RebuildForPlayerEntries(IEnumerable<GameLogEntry> entries, bool resetUnseenCount = true)
@@ -458,7 +494,7 @@ namespace FungusToast.Unity.UI.GameLog
             {
                 unseenEntryCount = 0;
             }
-            UpdateLatestButton();
+            UpdateUnseenIndicators();
         }
 
         private void QueueLayoutRefresh() => pendingLayoutRebuild = true;
@@ -478,6 +514,11 @@ namespace FungusToast.Unity.UI.GameLog
             if (transform is RectTransform rootRect)
             {
                 LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            }
+
+            if (popoutRoot != null && popoutRoot.gameObject.activeInHierarchy)
+            {
+                LayoutRebuilder.ForceRebuildLayoutImmediate(popoutRoot);
             }
 
             if (contentParent == null) return;
@@ -513,7 +554,7 @@ namespace FungusToast.Unity.UI.GameLog
                 scrollRect.verticalNormalizedPosition = 0f;
                 scrollRect.velocity = Vector2.zero;
                 unseenEntryCount = 0;
-                UpdateLatestButton();
+                UpdateUnseenIndicators();
             }
         }
         public void ScrollToTop()
@@ -540,7 +581,6 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             headerOriginalAnchoredPosition = headerRoot.anchoredPosition;
-            scrollViewOriginalOffsetMax = scrollViewRoot.offsetMax;
 
             var rowObject = new GameObject("UI_GameLogPanelTopActionRow", typeof(RectTransform), typeof(Image));
             rowObject.transform.SetParent(transform, false);
@@ -606,9 +646,9 @@ namespace FungusToast.Unity.UI.GameLog
                 return;
             }
 
-            EnsureHeaderActionControls();
-
-            ConfigureClearButtonReadability();
+            EnsureSidebarToggleButton();
+            EnsurePopoutUi();
+            ConfigureSidebarHeaderTitleLayout();
 
             if (latestButton == null)
             {
@@ -617,32 +657,93 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             UpdateCollapsedVisuals();
-            UpdateLatestButton();
         }
 
-        private void EnsureHeaderActionControls()
+        private void EnsureSidebarToggleButton()
         {
-            if (headerRoot == null || headerActionsRoot != null)
+            if (headerRoot == null || collapseButton != null)
             {
                 return;
             }
 
-            var actionsObject = new GameObject("ActivityHeaderActions", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-            actionsObject.transform.SetParent(headerRoot, false);
-            actionsObject.transform.SetAsLastSibling();
+            collapseButton = CreateButton(
+                headerRoot,
+                "ActivityVisibilityButton",
+                new Vector2(1f, 0.5f),
+                new Vector2(-(HeaderActionInset + (ToggleButtonWidth * 0.5f)), 0f),
+                new Vector2(ToggleButtonWidth, ActivityButtonHeight),
+                out collapseButtonLabel);
+            collapseButton.transform.SetAsLastSibling();
+            collapseButton.onClick.AddListener(ToggleCollapsed);
+        }
 
-            headerActionsRoot = actionsObject.GetComponent<RectTransform>();
-            headerActionsRoot.anchorMin = new Vector2(1f, 0f);
-            headerActionsRoot.anchorMax = new Vector2(1f, 1f);
-            headerActionsRoot.pivot = new Vector2(1f, 0.5f);
-            headerActionsRoot.anchoredPosition = new Vector2(-HeaderActionInset, 0f);
-            headerActionsRoot.sizeDelta = new Vector2(HeaderActionsWidth, 0f);
+        private void EnsurePopoutUi()
+        {
+            if (popoutRoot != null || scrollViewRoot == null)
+            {
+                return;
+            }
 
-            // This is an anchored overlay within the header, not a header-row
-            // child.  Prevent any prefab/layout variation from reflowing it
-            // beyond the Global Log edge.
-            var headerActionsLayoutElement = actionsObject.AddComponent<LayoutElement>();
-            headerActionsLayoutElement.ignoreLayout = true;
+            ResolvePopoutContext();
+
+            var popoutObject = new GameObject("UI_GameLogPopout", typeof(RectTransform), typeof(Image), typeof(Outline));
+            popoutObject.transform.SetParent(hostCanvasRect != null ? hostCanvasRect : transform, false);
+            // The pop-out never overlaps a sidebar, and every transient overlay
+            // (phase banner, prompts, draft and tree panels) must stay on top of
+            // it, so it sits beneath all of its canvas siblings.
+            popoutObject.transform.SetAsFirstSibling();
+
+            popoutRoot = popoutObject.GetComponent<RectTransform>();
+            popoutRoot.anchorMin = Vector2.zero;
+            popoutRoot.anchorMax = Vector2.zero;
+            popoutRoot.pivot = Vector2.zero;
+
+            var background = popoutObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelPrimary;
+            background.raycastTarget = true;
+
+            var outline = popoutObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.AccentOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var headerObject = new GameObject("Header", typeof(RectTransform), typeof(Image));
+            headerObject.transform.SetParent(popoutRoot, false);
+            var popoutHeaderRoot = headerObject.GetComponent<RectTransform>();
+            popoutHeaderRoot.anchorMin = new Vector2(0f, 1f);
+            popoutHeaderRoot.anchorMax = new Vector2(1f, 1f);
+            popoutHeaderRoot.pivot = new Vector2(0.5f, 1f);
+            popoutHeaderRoot.anchoredPosition = Vector2.zero;
+            popoutHeaderRoot.sizeDelta = new Vector2(0f, PopoutHeaderHeight);
+            var headerBackground = headerObject.GetComponent<Image>();
+            headerBackground.color = UIStyleTokens.Surface.PanelSecondary;
+            headerBackground.raycastTarget = false;
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(popoutHeaderRoot, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = Vector2.zero;
+            titleRect.anchorMax = Vector2.one;
+            titleRect.offsetMin = new Vector2(HeaderActionInset, 0f);
+            titleRect.offsetMax = new Vector2(-(PopoutHeaderActionsWidth + (HeaderActionInset * 2f)), 0f);
+            popoutHeaderText = titleObject.GetComponent<TextMeshProUGUI>();
+            popoutHeaderText.font = headerText != null && headerText.font != null ? headerText.font : TMP_Settings.defaultFontAsset;
+            popoutHeaderText.fontSize = UIStyleTokens.Typography.CaptionMinimum;
+            popoutHeaderText.fontStyle = FontStyles.Bold;
+            popoutHeaderText.enableAutoSizing = false;
+            popoutHeaderText.alignment = TextAlignmentOptions.MidlineLeft;
+            popoutHeaderText.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(popoutHeaderText);
+            popoutHeaderText.color = UIStyleTokens.Text.Primary;
+            popoutHeaderText.raycastTarget = false;
+
+            var actionsObject = new GameObject("Actions", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            actionsObject.transform.SetParent(popoutHeaderRoot, false);
+            popoutActionsRoot = actionsObject.GetComponent<RectTransform>();
+            popoutActionsRoot.anchorMin = new Vector2(1f, 0f);
+            popoutActionsRoot.anchorMax = new Vector2(1f, 1f);
+            popoutActionsRoot.pivot = new Vector2(1f, 0.5f);
+            popoutActionsRoot.anchoredPosition = new Vector2(-HeaderActionInset, 0f);
+            popoutActionsRoot.sizeDelta = new Vector2(PopoutHeaderActionsWidth, 0f);
 
             var actionsLayout = actionsObject.GetComponent<HorizontalLayoutGroup>();
             actionsLayout.padding = new RectOffset(0, 0, 0, 0);
@@ -653,22 +754,137 @@ namespace FungusToast.Unity.UI.GameLog
             actionsLayout.childForceExpandWidth = false;
             actionsLayout.childForceExpandHeight = false;
 
-            collapseButton = CreateButton(
-                headerActionsRoot,
-                "ActivityVisibilityButton",
-                new Vector2(0.5f, 0.5f),
-                Vector2.zero,
-                new Vector2(CollapseButtonWidth, ActivityButtonHeight),
-                out collapseButtonLabel);
-            ConfigureHeaderActionLayout(collapseButton, CollapseButtonWidth);
-            collapseButton.onClick.AddListener(ToggleCollapsed);
-
+            // Clearing a log you cannot see is odd, so the prefab's Clear button
+            // moves out of the sidebar strip and into the pop-out header.
             if (clearButton != null)
             {
-                clearButton.transform.SetParent(headerActionsRoot, false);
-                clearButton.transform.SetAsLastSibling();
-                ConfigureHeaderActionLayout(clearButton, ClearButtonMinimumWidth);
+                clearButton.transform.SetParent(popoutActionsRoot, false);
+                ConfigureHeaderActionLayout(clearButton, PopoutActionButtonWidth);
             }
+
+            popoutCloseButton = CreateButton(
+                popoutActionsRoot,
+                "CloseButton",
+                new Vector2(0.5f, 0.5f),
+                Vector2.zero,
+                new Vector2(PopoutActionButtonWidth, ActivityButtonHeight),
+                out popoutCloseButtonLabel);
+            popoutCloseButtonLabel.text = "Close";
+            ConfigureHeaderActionLayout(popoutCloseButton, PopoutActionButtonWidth);
+            popoutCloseButton.transform.SetAsLastSibling();
+            popoutCloseButton.onClick.AddListener(() => SetCollapsed(true));
+
+            // The scroll view lives in the pop-out for good; the sidebar strip
+            // only ever shows the header band.
+            scrollViewRoot.SetParent(popoutRoot, false);
+            scrollViewRoot.anchorMin = Vector2.zero;
+            scrollViewRoot.anchorMax = Vector2.one;
+            scrollViewRoot.pivot = new Vector2(0.5f, 0.5f);
+            scrollViewRoot.offsetMin = new Vector2(PopoutContentInset, PopoutContentInset);
+            scrollViewRoot.offsetMax = new Vector2(-PopoutContentInset, -(PopoutHeaderHeight + PopoutContentInset));
+            scrollViewRoot.gameObject.SetActive(true);
+
+            popoutRoot.gameObject.SetActive(false);
+        }
+
+        private bool ResolvePopoutContext()
+        {
+            if (hostCanvasRect != null && sidebarRect != null)
+            {
+                return true;
+            }
+
+            var canvas = GetComponentInParent<Canvas>(true);
+            if (canvas == null)
+            {
+                return false;
+            }
+
+            hostCanvasRect = canvas.rootCanvas.transform as RectTransform;
+            if (hostCanvasRect == null)
+            {
+                return false;
+            }
+
+            // The sidebar is whichever ancestor sits directly under the canvas.
+            Transform sidebar = transform;
+            while (sidebar.parent != null && sidebar.parent != hostCanvasRect)
+            {
+                sidebar = sidebar.parent;
+            }
+
+            sidebarRect = sidebar as RectTransform;
+            if (sidebarRect == null || sidebar.parent != hostCanvasRect)
+            {
+                sidebarRect = null;
+                return false;
+            }
+
+            oppositeSidebarRect = null;
+            for (int i = 0; i < hostCanvasRect.childCount; i++)
+            {
+                var sibling = hostCanvasRect.GetChild(i) as RectTransform;
+                if (sibling != null && sibling != sidebarRect && sibling.GetComponent<SidebarResizer>() != null)
+                {
+                    oppositeSidebarRect = sibling;
+                    break;
+                }
+            }
+
+            return true;
+        }
+
+        // Corner extents of a canvas descendant, measured from the canvas's
+        // bottom-left corner in canvas units.
+        private void GetCanvasSpan(RectTransform target, out Vector2 min, out Vector2 max)
+        {
+            target.GetWorldCorners(cornerBuffer);
+            Vector2 origin = hostCanvasRect.rect.min;
+            min = new Vector2(float.MaxValue, float.MaxValue);
+            max = new Vector2(float.MinValue, float.MinValue);
+            for (int i = 0; i < cornerBuffer.Length; i++)
+            {
+                Vector2 local = (Vector2)hostCanvasRect.InverseTransformPoint(cornerBuffer[i]) - origin;
+                min = Vector2.Min(min, local);
+                max = Vector2.Max(max, local);
+            }
+        }
+
+        private void UpdatePopoutRect()
+        {
+            if (popoutRoot == null || !ResolvePopoutContext())
+            {
+                return;
+            }
+
+            Vector2 canvasSize = hostCanvasRect.rect.size;
+            GetCanvasSpan(sidebarRect, out Vector2 sidebarMin, out Vector2 sidebarMax);
+            float sidebarWidth = sidebarMax.x - sidebarMin.x;
+
+            float oppositeWidth = sidebarWidth;
+            if (oppositeSidebarRect != null)
+            {
+                GetCanvasSpan(oppositeSidebarRect, out Vector2 oppositeMin, out Vector2 oppositeMax);
+                oppositeWidth = oppositeMax.x - oppositeMin.x;
+            }
+
+            // Decided here rather than cached at Awake: the canvas rect is not
+            // driven until its first layout, so positions are only trustworthy
+            // once the pop-out is actually being shown.
+            bool anchorsToLeftSidebar = (sidebarMin.x + sidebarMax.x) * 0.5f <= canvasSize.x * 0.5f;
+
+            float playableWidth = Mathf.Max(0f, canvasSize.x - sidebarWidth - oppositeWidth);
+            float width = Mathf.Max(PopoutMinimumWidth, playableWidth * PopoutPlayableWidthFraction);
+            float x = anchorsToLeftSidebar ? sidebarMax.x : sidebarMin.x - width;
+            float bottom = Mathf.Max(0f, sidebarMin.y) + PopoutVerticalMargin;
+            float top = Mathf.Min(canvasSize.y, sidebarMax.y) - PopoutVerticalMargin;
+
+            var position = new Vector2(x, bottom);
+            var size = new Vector2(width, Mathf.Max(0f, top - bottom));
+            if (popoutRoot.anchoredPosition != position)
+                popoutRoot.anchoredPosition = position;
+            if (popoutRoot.sizeDelta != size)
+                popoutRoot.sizeDelta = size;
         }
 
         private static void ConfigureHeaderActionLayout(Button button, float width)
@@ -739,40 +955,63 @@ namespace FungusToast.Unity.UI.GameLog
             }
 
             isCollapsed = collapsed;
+            UpdateCollapsedVisuals();
+
             if (!isCollapsed)
             {
                 unseenEntryCount = 0;
+                UpdatePopoutRect();
+                RefreshEntryHeights();
                 QueueBottomScrollFollowup();
             }
 
-            UpdateCollapsedVisuals();
             QueueLayoutRefresh();
+            UpdateUnseenIndicators();
+        }
+
+        // Entries added while the pop-out was hidden measured their wrapped
+        // height against a stale width, so re-measure them once it is on screen.
+        private void RefreshEntryHeights()
+        {
+            if (popoutRoot == null || !popoutRoot.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(popoutRoot);
+            for (int i = 0; i < entryUIs.Count; i++)
+            {
+                if (entryUIs[i] != null)
+                    entryUIs[i].RecalculateHeight();
+            }
         }
 
         private void UpdateCollapsedVisuals()
         {
-            if (collapseButtonLabel != null)
-                collapseButtonLabel.text = isCollapsed ? "Show" : "Hide";
+            if (popoutRoot != null)
+                popoutRoot.gameObject.SetActive(!isCollapsed);
 
-            if (scrollViewRoot != null)
-                scrollViewRoot.gameObject.SetActive(!isCollapsed);
-
-            if (topActionRowRoot != null && isCollapsed)
-                topActionRowRoot.gameObject.SetActive(false);
-            else if (topActionRowRoot != null)
+            if (topActionRowRoot != null)
                 topActionRowRoot.gameObject.SetActive(topActionRequestedVisible);
 
-            ApplyTopActionLayout(!isCollapsed && topActionRequestedVisible);
+            ApplyTopActionLayout(topActionRequestedVisible);
+            ApplySidebarStripLayout();
+            UpdateUnseenIndicators();
+        }
 
+        private void ApplySidebarStripLayout()
+        {
             var layoutElement = GetComponent<LayoutElement>();
-            if (layoutElement != null)
+            if (layoutElement == null)
             {
-                layoutElement.minHeight = isCollapsed ? CollapsedHeight : ExpandedMinimumHeight;
-                layoutElement.preferredHeight = isCollapsed ? CollapsedHeight : -1f;
-                layoutElement.flexibleHeight = isCollapsed ? 0f : 1f;
+                layoutElement = gameObject.AddComponent<LayoutElement>();
             }
 
-            UpdateLatestButton();
+            float height = SidebarStripHeight + (topActionRequestedVisible ? TopActionReservedHeight : 0f);
+            layoutElement.minHeight = height;
+            layoutElement.preferredHeight = height;
+            layoutElement.flexibleHeight = 0f;
         }
 
         private bool ShouldFollowLatest()
@@ -787,11 +1026,21 @@ namespace FungusToast.Unity.UI.GameLog
                 unseenEntryCount = 0;
             }
 
-            UpdateLatestButton();
+            UpdateUnseenIndicators();
         }
 
-        private void UpdateLatestButton()
+        // The unread count surfaces on whichever control can reveal it: the
+        // sidebar toggle while the pop-out is closed, the Latest button while
+        // it is open but scrolled away from the bottom.
+        private void UpdateUnseenIndicators()
         {
+            if (collapseButtonLabel != null)
+            {
+                collapseButtonLabel.text = isCollapsed
+                    ? (unseenEntryCount > 0 ? $"Show ({unseenEntryCount})" : "Show")
+                    : "Hide";
+            }
+
             if (latestButton == null)
             {
                 return;
@@ -863,16 +1112,17 @@ namespace FungusToast.Unity.UI.GameLog
             topActionButton.transform.localScale = new Vector3(scale, scale, 1f);
         }
 
+        // The top action row occupies the top of the strip, pushing the header
+        // band down by its reserved height.
         private void ApplyTopActionLayout(bool showTopAction)
         {
-            if (headerRoot == null || scrollViewRoot == null)
+            if (headerRoot == null)
             {
                 return;
             }
 
             float verticalOffset = showTopAction ? TopActionReservedHeight : 0f;
             headerRoot.anchoredPosition = headerOriginalAnchoredPosition + new Vector2(0f, -verticalOffset);
-            scrollViewRoot.offsetMax = scrollViewOriginalOffsetMax + new Vector2(0f, -verticalOffset);
         }
     }
 }
