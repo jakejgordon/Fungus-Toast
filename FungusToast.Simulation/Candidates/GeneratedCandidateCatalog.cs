@@ -127,7 +127,9 @@ public static class GeneratedCandidateCatalog
             notes: authored.Notes,
             favoredAgainst: authored.FavoredAgainst,
             weakAgainst: authored.WeakAgainst,
-            suggestedAdaptationSets: authored.SuggestedAdaptationSets);
+            suggestedAdaptationSets: authored.SuggestedAdaptationSets,
+            mutationPlan: authored.MutationPlan,
+            mycovariantPlan: authored.MycovariantPlan);
     }
 
     /// <summary>Empties the generated set, leaving every authored strategy set untouched.</summary>

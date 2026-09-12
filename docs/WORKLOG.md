@@ -1506,9 +1506,10 @@ changes through the normal Testing/evidence path.
    wherever current behavior or counterplay is not yet measured.
    **Name/Fantasy complete 2026-09-12:** every non-Testing Proven and Campaign
    entry now resolves to explicit player-facing presentation metadata, protected
-   by a catalog regression test. Mutation and Mycovariant plan backfill remains
-   the next profile-specific step; Testing controls intentionally retain
-   technical identities while they are evaluated.
+   by a catalog regression test. **Mutation/Mycovariant plans complete
+   2026-09-12:** catalog entries derive both fields from executable strategy
+   configuration, avoiding a duplicate build list. Testing controls
+   intentionally retain technical identities while they are evaluated.
 
 ## Active Initiative — Surge Visibility
 

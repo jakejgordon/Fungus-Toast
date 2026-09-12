@@ -209,6 +209,13 @@ The profile comes before a generated candidate plan. It supplies the named job
 and the mutation/Mycovariant palette that make the plan a designed experiment
 rather than a parameter sweep.
 
+`StrategyCatalogEntry` derives **Mutation plan** from the ordered
+`targetMutationGoals`, and **Mycovariant plan** from the executable preference
+records. It names category-derived preference sets explicitly as equal-score
+sets rather than misrepresenting them as an ordered draft. These derived fields
+are the canonical roster summary: do not duplicate the lists in a separate
+profile document.
+
 ## Content-to-Profile Coverage Review
 
 Adding a mutation or Mycovariant must trigger an automated **coverage review**

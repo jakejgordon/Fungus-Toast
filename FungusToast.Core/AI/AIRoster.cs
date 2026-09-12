@@ -84,6 +84,8 @@ namespace FungusToast.Core.AI
             StrategyStatus status,
             string friendlyName,
             string aiPlayerIntentions,
+            string mutationPlan,
+            string mycovariantPlan,
             string intent,
             StrategyPowerTier powerTier,
             StrategyRole role,
@@ -101,6 +103,8 @@ namespace FungusToast.Core.AI
             Status = status;
             FriendlyName = friendlyName;
             AIPlayerIntentions = aiPlayerIntentions;
+            MutationPlan = mutationPlan;
+            MycovariantPlan = mycovariantPlan;
             Intent = intent;
             PowerTier = powerTier;
             Role = role;
@@ -119,6 +123,8 @@ namespace FungusToast.Core.AI
         public StrategyStatus Status { get; }
         public string FriendlyName { get; }
         public string AIPlayerIntentions { get; }
+        public string MutationPlan { get; }
+        public string MycovariantPlan { get; }
         public string Intent { get; }
         public StrategyPowerTier PowerTier { get; }
         public StrategyRole Role { get; }
@@ -3112,6 +3118,8 @@ namespace FungusToast.Core.AI
                 status,
                 GetFriendlyName(strategy, strategySet),
                 GetAiPlayerIntentions(strategy, strategySet),
+                BuildMutationPlan(strategy),
+                BuildMycovariantPlan(strategy),
                 BuildIntentLabel(strategy),
                 powerTier,
                 role,
@@ -3133,6 +3141,8 @@ namespace FungusToast.Core.AI
                 entry.Status,
                 entry.FriendlyName,
                 entry.AIPlayerIntentions,
+                entry.MutationPlan,
+                entry.MycovariantPlan,
                 entry.Intent,
                 entry.PowerTier,
                 entry.Role,
@@ -3280,7 +3290,9 @@ namespace FungusToast.Core.AI
                 profile.Notes,
                 profile.FavoredAgainst,
                 profile.WeakAgainst,
-                suggestedAdaptationSets);
+                suggestedAdaptationSets,
+                profile.MutationPlan,
+                profile.MycovariantPlan);
         }
 
         public static StrategyTheme GetThemeForStrategy(IMutationSpendingStrategy strategy)
@@ -3542,6 +3554,57 @@ namespace FungusToast.Core.AI
                 StrategyTheme.TierCap => "Concentrate value in constrained tier bands",
                 _ => "Balanced all-purpose mutation progression"
             };
+        }
+
+        private static string BuildMutationPlan(IMutationSpendingStrategy strategy)
+        {
+            if (strategy is not ParameterizedSpendingStrategy parameterized)
+            {
+                return "No parameterized mutation plan.";
+            }
+
+            var goals = parameterized.TargetMutationGoals
+                .Select(goal =>
+                {
+                    var mutation = MutationRepository.All.TryGetValue(goal.MutationId, out var resolved)
+                        ? resolved
+                        : null;
+                    var name = mutation?.Name ?? $"Unknown mutation {goal.MutationId}";
+                    return goal.TargetLevel.HasValue ? $"{name} Lv {goal.TargetLevel.Value}" : name;
+                })
+                .ToList();
+
+            if (goals.Count == 0)
+            {
+                return "No ordered mutation goals; uses the authored fallback policy.";
+            }
+
+            return string.Join(" → ", goals);
+        }
+
+        private static string BuildMycovariantPlan(IMutationSpendingStrategy strategy)
+        {
+            if (strategy is not ParameterizedSpendingStrategy parameterized)
+            {
+                return "No authored Mycovariant preference.";
+            }
+
+            var preferences = parameterized.GetMycovariantPreferences();
+            if (preferences.Count == 0)
+            {
+                return "No authored Mycovariant preference.";
+            }
+
+            return string.Join(" → ", preferences.Select(preference =>
+            {
+                var names = preference.MycovariantIds
+                    .Select(id => MycovariantRepository.All.FirstOrDefault(mycovariant => mycovariant.Id == id)?.Name ?? $"Unknown Mycovariant {id}")
+                    .ToList();
+                var plan = string.Join(", ", names);
+                return preference.IsCategoryDerived
+                    ? $"{plan} (equal category set; AI score chooses offered member)"
+                    : plan;
+            }));
         }
 
         private static string GetFriendlyName(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)

@@ -129,7 +129,9 @@ namespace FungusToast.Core.AI
             string notes,
             IReadOnlyCollection<CounterTag>? favoredAgainst = null,
             IReadOnlyCollection<CounterTag>? weakAgainst = null,
-            IReadOnlyCollection<AdaptationSynergySet>? suggestedAdaptationSets = null)
+            IReadOnlyCollection<AdaptationSynergySet>? suggestedAdaptationSets = null,
+            string mutationPlan = "",
+            string mycovariantPlan = "")
         {
             StrategyName = strategyName;
             StrategySet = strategySet;
@@ -148,6 +150,8 @@ namespace FungusToast.Core.AI
             FavoredAgainst = favoredAgainst ?? Array.Empty<CounterTag>();
             WeakAgainst = weakAgainst ?? Array.Empty<CounterTag>();
             SuggestedAdaptationSets = suggestedAdaptationSets ?? Array.Empty<AdaptationSynergySet>();
+            MutationPlan = mutationPlan ?? string.Empty;
+            MycovariantPlan = mycovariantPlan ?? string.Empty;
         }
 
         public string StrategyName { get; }
@@ -167,6 +171,8 @@ namespace FungusToast.Core.AI
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
         public IReadOnlyCollection<CounterTag> WeakAgainst { get; }
         public IReadOnlyCollection<AdaptationSynergySet> SuggestedAdaptationSets { get; }
+        public string MutationPlan { get; }
+        public string MycovariantPlan { get; }
     }
 
     public sealed class StrategyCatalogFilter

@@ -506,6 +506,8 @@ public class StrategyCatalogTests
             Assert.DoesNotContain("CMP_", entry.FriendlyName, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain(">", entry.FriendlyName, StringComparison.Ordinal);
             Assert.EndsWith(".", entry.AIPlayerIntentions);
+            Assert.False(string.IsNullOrWhiteSpace(entry.MutationPlan), $"Expected mutation plan for {entry.StrategyName}");
+            Assert.False(string.IsNullOrWhiteSpace(entry.MycovariantPlan), $"Expected Mycovariant plan for {entry.StrategyName}");
         }
     }
 
