@@ -8,7 +8,7 @@ This guide covers technical implementation and integration for Mycovariants in C
 2. Add/confirm ID in `MycovariantIds.cs`.
 3. Add/confirm tunables in `MycovariantGameBalance.cs`.
 4. Define/update Mycovariant in the correct category factory under `Mycovariants/Factories/`.
-5. Generate and wire a unique icon through the centralized art lookup path using the Mycovariant's `IconId`.
+5. Draw the icon: add a case for the new id in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` and review it with the `tools/icon-preview` harness.
 6. Implement/update effect logic in core processors/helpers.
 7. Wire draft behavior correctly for simulation and Unity paths.
 8. Add simulation tracking/reporting if needed.
@@ -46,10 +46,10 @@ Use Id-based lookups from the aggregated set; avoid creating new ad hoc aggregat
 - Set fields coherently (`Type`, `Category`, `IsUniversal`, `AutoMarkTriggered`, `SynergyWith`, `AIScore`, `IconId`).
 
 ### 3) Icon and Presentation Wiring
-- Generate a unique icon for every new Mycovariant, even if the first pass is provisional.
-- Use the Mycovariant's `IconId` as the stable lookup key; do not rely on generic fallback art for shipped content.
-- Reuse centralized art lookup and loading paths instead of binding one-off sprites directly in UI code.
-- Verify the same icon appears consistently in draft cards, tooltips, and any persistent UI surfaces that expose Mycovariants.
+- Icons are drawn in code, not loaded from files. Add a `Draw*` case for the new id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (also list it in `HasDedicatedIcon`): a small diagram of what the Mycovariant does, composed from `IconGlyphs` (cells, shields, toxins, spores, arrows, crust). Background follows `Category`, accent follows `Type`; tiered I/II/III names share one drawing and get pips automatically. Rules are in `UI_STYLE_GUIDE.md` section 5.9.
+- `IconId` is only the sprite cache key; drawings are selected by `Id`. Leave `IconId` at its default unless two definitions must share a sprite.
+- Review with `dotnet run` in `tools/icon-preview`, which writes `TEMP/icon-sheets/icon-review.html` at the real slot sizes and fails while any Mycovariant lacks a case. In the editor, `Fungus Toast > Icons > Validate Icon Coverage` runs the same check; the fallback ring also logs a warning.
+- UI surfaces get sprites from `MycovariantArtRepository.GetIcon`, never by binding one-off sprites; the same sprite then appears on draft cards, tooltips, the player inspector and the end-game panel.
 
 ### 4) Core Effect Logic
 - Implement logic in `MycovariantEffectProcessor.cs` and/or helper classes.
@@ -154,7 +154,7 @@ If effect output should appear in simulation results:
 ## Common Pitfalls
 
 - Skipping the candidate-name step and locking in a name before checking clarity against the mechanic.
-- Reusing generic fallback art instead of assigning a distinct `IconId` and generated icon.
+- Shipping without a `MycovariantIcons` case, so the Mycovariant draws the generic fallback ring (the harness coverage check catches this).
 - Treating Unity draft execution as identical to silent simulation execution.
 - Implementing active logic for human draft only and missing Unity AI draft behavior.
 - Forgetting simulation reporting hooks for effects intended to be analyzed.

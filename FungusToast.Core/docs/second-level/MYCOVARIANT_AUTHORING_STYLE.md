@@ -9,7 +9,7 @@ Mycovariants are drafted abilities that either:
 - create a **passive effect that can trigger repeatedly for the rest of the game**.
 
 Description copy must let a player understand timing and mechanics without external references.
-Each Mycovariant should also ship with distinct iconography that reinforces the mechanic instead of relying on generic fallback art.
+Each Mycovariant also ships with an icon that diagrams the mechanic (a `Draw*` case in `MycovariantIcons.cs`, see `UI_STYLE_GUIDE.md` section 5.9), so the name, description and picture all point at the same behaviour.
 
 ---
 
@@ -87,4 +87,4 @@ Before finalizing a Mycovariant description:
 - [ ] Can this be understood without reading another card?
 - [ ] Are key numbers included?
 - [ ] Is flavor thematic but optional to mechanics?
-- [ ] Does the name/icon pairing reinforce the mechanic clearly in draft UI?
+- [ ] Does the name/icon pairing reinforce the mechanic clearly in draft UI? (Check the icon on the `tools/icon-preview` sheet at the 40px draft-card size, not just at 128px.)
