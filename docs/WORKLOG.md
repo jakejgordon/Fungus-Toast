@@ -1266,6 +1266,16 @@ measurement model, phase gates, and open product decisions are in
     generated E1 candidate has a sufficiently distinct large-board hypothesis
     to preregister, or widen the bounded search plan.
 
+86. E1's remaining generated field stopped at static review, without consuming
+    another game batch. Three economy/max-tier variants reproduce the parent's
+    observed build; the most distant goal-order variant collapses Mycelial Bloom
+    from 10 to 1; and the remaining economy/priority changes do not state a
+    credible large-board-scaling mechanism. None meets the P8 requirement for a
+    distinct, player-readable large-board hypothesis, so none is preregistered.
+    The current single-gene E1 plan is exhausted. Next: add a bounded,
+    testable goal-level or goal-inclusion generation operator tied to an
+    explicit large-board mechanism, then repeat static diversity screening.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

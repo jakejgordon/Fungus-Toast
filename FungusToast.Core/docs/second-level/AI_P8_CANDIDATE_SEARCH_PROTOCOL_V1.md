@@ -240,3 +240,21 @@ The five-game smoke completed with zero parity mismatches. The checksum-valid
 board share at `-0.3404` (95% CI `-0.5505..-0.1303`). Its upper interval bound
 is below the frozen `-0.05` regression boundary, so it stops on evidence;
 comparison and holdout must not run.
+
+### E1 remaining-field static review (2026-09-13)
+
+The remaining seven generated E1 candidates were re-characterized against the
+parent and retained Elite opponent before spending another smoke batch. Three
+economy/max-tier variants exactly reproduce the parent's observed build. The
+only goal-order variant with materially larger raw distance changes Mycelial
+Bloom from 10 to 1 under characterization, contradicting the large-board-scaler
+job. The remaining small economy/priority variants either reduce the observed
+Genetic Drift total or have no named large-board mechanism beyond their changed
+parameter. None supplies the required player-readable, large-board-specific
+hypothesis, so none is preregistered for games.
+
+E1's bounded single-gene plan is exhausted without a viable candidate. The next
+safe action is to widen generation with an explicit, testable large-board
+mechanism (for example a bounded goal-level or goal-inclusion operator), then
+repeat static diversity screening before any smoke run. This is a search-space
+finding, not evidence that the parent or failed candidate should be promoted.
