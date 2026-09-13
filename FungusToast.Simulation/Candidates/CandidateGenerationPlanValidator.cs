@@ -34,8 +34,30 @@ public static partial class CandidateGenerationPlanValidator
 
         ValidateOperators(plan, errors);
         ValidateValueLists(plan, errors);
+        ValidateGoalInsertions(plan, errors);
         ValidateParent(plan, errors);
         return errors;
+    }
+
+    private static void ValidateGoalInsertions(CandidateGenerationPlan plan, ICollection<string> errors)
+    {
+        var declared = plan.GoalInsertions ?? Array.Empty<CandidateGoalInsertion>();
+        var enabled = plan.Operators.Contains(CandidateOperator.GoalInsertion);
+        if (enabled && declared.Count == 0) errors.Add("goalInsertions is required when operators includes GoalInsertion.");
+        if (!enabled && declared.Count > 0) errors.Add("goalInsertions must be empty unless operators includes GoalInsertion.");
+        var parent = StrategyRegistry.GetDefinitions(plan.ParentStrategySet)
+            .FirstOrDefault(definition => string.Equals(definition.StrategyId, plan.ParentStrategyId, StringComparison.Ordinal))?.Strategy as ParameterizedSpendingStrategy;
+        if (parent == null) return;
+        var goalCount = CandidateGenomeFactory.ExtractGenes(parent).TargetMutationGoals.Count;
+        foreach (var insertion in declared)
+        {
+            var mutation = MutationRegistry.GetById(insertion.MutationId);
+            if (mutation == null) errors.Add($"goalInsertions references unknown mutation ID {insertion.MutationId}.");
+            else if (insertion.TargetLevel is { } level && (level < 1 || level > mutation.MaxLevel))
+                errors.Add($"goalInsertions targetLevel {level} is outside 1-{mutation.MaxLevel} for '{mutation.Name}'.");
+            if (insertion.Position < 0 || insertion.Position > goalCount)
+                errors.Add($"goalInsertions position {insertion.Position} is outside 0-{goalCount}.");
+        }
     }
 
     private static void ValidateOperators(CandidateGenerationPlan plan, ICollection<string> errors)

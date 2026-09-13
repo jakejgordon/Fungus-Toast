@@ -8,7 +8,8 @@
     "goalOrderAdjacentSwap",
     "economyBiasSweep",
     "prioritizeHighTierToggle",
-    "maxTierSweep"
+    "maxTierSweep",
+    "goalInsertion"
   ],
   "maximumCandidates": 16,
   "surgeAttemptTurnFrequencyValues": [],
@@ -16,5 +17,12 @@
   "maxTierValues": [
     "tier7",
     "tier10"
+  ],
+  "goalInsertions": [
+    {
+      "mutationId": 0,
+      "targetLevel": 20,
+      "position": 1
+    }
   ]
 }

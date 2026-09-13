@@ -32,6 +32,9 @@ public enum CandidateOperator
     /// <summary>Every value in the plan's maxTierValues.</summary>
     MaxTierSweep,
 
+    /// <summary>Adds one explicitly declared goal to the parent's build plan at a fixed position.</summary>
+    GoalInsertion,
+
     /// <summary>
     /// One candidate per distinct mutation in the parent's build plan, with that mutation removed
     /// from the plan and blocked outright.
@@ -93,6 +96,16 @@ public sealed class CandidateGenerationPlan
     public IReadOnlyList<int> StartingSporeEdgeOffsetValues { get; init; } = Array.Empty<int>();
 
     public IReadOnlyList<MutationTier> MaxTierValues { get; init; } = Array.Empty<MutationTier>();
+
+    public IReadOnlyList<CandidateGoalInsertion> GoalInsertions { get; init; } = Array.Empty<CandidateGoalInsertion>();
+}
+
+/// <summary>One bounded goal-insertion proposal. Position is zero-based and may equal the parent goal count.</summary>
+public sealed class CandidateGoalInsertion
+{
+    public required int MutationId { get; init; }
+    public int? TargetLevel { get; init; }
+    public required int Position { get; init; }
 }
 
 /// <summary>

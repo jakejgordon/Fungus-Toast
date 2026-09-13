@@ -175,6 +175,7 @@ public static class CandidateGenerator
                 CandidateOperator.SurgeAttemptTurnFrequencySweep => EnumerateSurgeFrequencySweep(parentGenes, plan.SurgeAttemptTurnFrequencyValues),
                 CandidateOperator.StartingSporeEdgeOffsetSweep => EnumerateEdgeOffsetSweep(parentGenes, plan.StartingSporeEdgeOffsetValues),
                 CandidateOperator.MaxTierSweep => EnumerateMaxTierSweep(parentGenes, plan.MaxTierValues),
+                CandidateOperator.GoalInsertion => EnumerateGoalInsertions(parentGenes, plan.GoalInsertions),
                 CandidateOperator.AblateTargetGoal => EnumerateGoalAblations(parentGenes),
                 CandidateOperator.AblateObservedPurchase => EnumerateObservedAblations(parentGenes, observedBuild
                     ?? throw new InvalidOperationException("AblateObservedPurchase needs the parent's observed build.")),
@@ -361,6 +362,22 @@ public static class CandidateGenerator
     {
         foreach (var value in values)
             yield return (Clone(parentGenes, maxTier: value), $"Set max tier to {value}.");
+    }
+
+    private static IEnumerable<(CandidateGeneSet Genes, string Note)> EnumerateGoalInsertions(
+        CandidateGeneSet parentGenes, IReadOnlyList<CandidateGoalInsertion> insertions)
+    {
+        foreach (var insertion in insertions)
+        {
+            var goals = parentGenes.TargetMutationGoals.ToList();
+            goals.Insert(insertion.Position, new CandidateMutationGoal
+            {
+                MutationId = insertion.MutationId,
+                TargetLevel = insertion.TargetLevel
+            });
+            var name = MutationRegistry.GetById(insertion.MutationId)?.Name ?? insertion.MutationId.ToString(CultureInfo.InvariantCulture);
+            yield return (WithGoals(parentGenes, goals), $"Inserted {name} at goal position {insertion.Position} with target level {insertion.TargetLevel?.ToString() ?? "max"}.");
+        }
     }
 
     private static CandidateGeneSet WithGoals(CandidateGeneSet parentGenes, IReadOnlyList<CandidateMutationGoal> goals)
