@@ -29,11 +29,17 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float RequirementStatusBadgeSize = 22f;
         private const float RequirementStatusBadgeLeftInset = 8f;
         private const float RequirementStatusBadgeToLabelGap = 8f;
+        // Chip labels use Ellipsis overflow, which also truncates when the line height does
+        // not fit vertically, so the label slot stays comfortably taller than one 16pt line.
+        private const float ChipLabelVerticalInset = 4f;
         // TMP reports a fractional preferred height. Rounding it down during layout can
         // clip the final baseline at some Canvas scale factors.
         private const float TextHeightSafetyPadding = 1f;
         private const float TitleSurgeGlyphSize = 28f;
         private const float TitleSurgeGlyphGap = 8f;
+        // Smallest size used anywhere in the panel. Players found the old 14/15pt supporting
+        // text hard to read at typical play distances, so it sits at the caption floor now.
+        private const float SupportingTextSize = UIStyleTokens.Typography.CaptionMinimum;
 
         private RectTransform rootRect = null!;
         private RectTransform contentRect = null!;
@@ -51,6 +57,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private TextMeshProUGUI emptyRequirementsText = null!;
         private TextMeshProUGUI requirementsLabelText = null!;
         private TextMeshProUGUI emptyDependentsText = null!;
+        private TextMeshProUGUI hintText = null!;
         private RectTransform requirementsRoot = null!;
         private RectTransform groupedRequirementsRoot = null!;
         private RectTransform dependentsRoot = null!;
@@ -271,13 +278,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
             titleText = CreateText("Title", 26f, 32f, FontStyles.Bold, UIStyleTokens.Text.Primary);
             titleSurgeGlyph = CreateTitleSurgeGlyph(titleText);
-            metadataText = CreateText("Metadata", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
+            metadataText = CreateText("Metadata", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Secondary);
             summaryText = CreateText("Summary", 18f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
             // State ("ACTIVE — 2 rounds remain", "LOCKED — requirements unmet") sits above the
             // technical block: it is the line a player checks most, and the technical text is
             // long enough to push anything below it off the first screen.
             stateText = CreateText("State", 16f, 22f, FontStyles.Bold, UIStyleTokens.State.Info);
-            technicalDetailsText = CreateText("TechnicalDetails", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
+            technicalDetailsText = CreateText("TechnicalDetails", SupportingTextSize, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             costText = CreateText("Cost", 16f, 22f, FontStyles.Normal, UIStyleTokens.Text.Primary);
             currentLevelText = CreateText("CurrentLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             nextLevelText = CreateText("NextLevel", 16f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelElevated);
@@ -286,16 +293,16 @@ namespace FungusToast.Unity.UI.MutationTree
             requirementsLabelText = CreateText("RequirementsLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Requirements", parent: requirementsSection);
             groupedRequirementsRoot = CreateChipRoot("GroupedRequirements", requirementsSection);
             requirementsRoot = CreateChipRoot("Requirements", requirementsSection);
-            emptyRequirementsText = CreateText("NoRequirements", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites", parent: requirementsSection);
+            emptyRequirementsText = CreateText("NoRequirements", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites", parent: requirementsSection);
 
             RectTransform dependentsSection = CreateSectionRoot("DependentsSection");
             _ = CreateText("UnlocksLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Direct unlocks", parent: dependentsSection);
             dependentsRoot = CreateChipRoot("Dependents", dependentsSection);
-            emptyDependentsText = CreateText("NoDependents", 14f, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents", parent: dependentsSection);
+            emptyDependentsText = CreateText("NoDependents", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents", parent: dependentsSection);
 
-            maxLevelBonusText = CreateText("MaxLevelBonus", 15f, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
-            synergyText = CreateText("Synergy", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
-            _ = CreateText("Hint", 14f, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
+            maxLevelBonusText = CreateText("MaxLevelBonus", SupportingTextSize, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
+            synergyText = CreateText("Synergy", SupportingTextSize, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
+            hintText = CreateText("Hint", SupportingTextSize, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
 
             Clear();
         }
@@ -333,7 +340,7 @@ namespace FungusToast.Unity.UI.MutationTree
             Stretch(textObject.GetComponent<RectTransform>(), 8f);
             TextMeshProUGUI inputText = textObject.GetComponent<TextMeshProUGUI>();
             if (font != null) inputText.font = font;
-            inputText.fontSize = 14f;
+            inputText.fontSize = SupportingTextSize;
             inputText.color = UIStyleTokens.Text.Primary;
             inputText.alignment = TextAlignmentOptions.MidlineLeft;
             inputText.textWrappingMode = TextWrappingModes.NoWrap;
@@ -344,7 +351,7 @@ namespace FungusToast.Unity.UI.MutationTree
             TextMeshProUGUI placeholder = placeholderObject.GetComponent<TextMeshProUGUI>();
             if (font != null) placeholder.font = font;
             placeholder.text = "Search (Ctrl+F)";
-            placeholder.fontSize = 14f;
+            placeholder.fontSize = SupportingTextSize;
             placeholder.fontStyle = FontStyles.Italic;
             placeholder.color = UIStyleTokens.Text.Muted;
             placeholder.alignment = TextAlignmentOptions.MidlineLeft;
@@ -370,7 +377,7 @@ namespace FungusToast.Unity.UI.MutationTree
             Stretch(pinLabelObject.GetComponent<RectTransform>(), 6f);
             pinButtonLabel = pinLabelObject.GetComponent<TextMeshProUGUI>();
             if (font != null) pinButtonLabel.font = font;
-            pinButtonLabel.fontSize = 14f;
+            pinButtonLabel.fontSize = SupportingTextSize;
             pinButtonLabel.fontStyle = FontStyles.Bold;
             pinButtonLabel.color = UIStyleTokens.Text.Primary;
             pinButtonLabel.alignment = TextAlignmentOptions.Center;
@@ -540,7 +547,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     chip.Status == RequirementStatus.None
                         ? 8f
                         : RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset,
-                    8f);
+                    ChipLabelVerticalInset);
                 SetRequirementStatusBadge(button.GetComponentInChildren<RequirementStatusBadge>(true), chip.Status);
                 Image image = button.GetComponent<Image>();
                 image.color = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, chip.Accent, 0.16f);
@@ -563,11 +570,12 @@ namespace FungusToast.Unity.UI.MutationTree
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
             labelObject.transform.SetParent(buttonObject.transform, false);
             RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-            Stretch(labelRect, 8f);
-            labelRect.offsetMin = new Vector2(RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset, 8f);
+            Stretch(labelRect, ChipLabelVerticalInset);
+            labelRect.offsetMin = new Vector2(RequirementStatusBadgeSize + RequirementStatusBadgeToLabelGap + RequirementStatusBadgeLeftInset, ChipLabelVerticalInset);
+            labelRect.offsetMax = new Vector2(-8f, -ChipLabelVerticalInset);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             if (font != null) label.font = font;
-            label.fontSize = 14f;
+            label.fontSize = SupportingTextSize;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.overflowMode = TextOverflowModes.Ellipsis;
             label.alignment = TextAlignmentOptions.MidlineLeft;
@@ -597,7 +605,7 @@ namespace FungusToast.Unity.UI.MutationTree
             labelRect.offsetMax = new Vector2(-10f, -8f);
             TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
             if (font != null) label.font = font;
-            label.fontSize = 14f;
+            label.fontSize = SupportingTextSize;
             label.color = UIStyleTokens.Text.Primary;
             label.textWrappingMode = TextWrappingModes.Normal;
             label.overflowMode = TextOverflowModes.Overflow;
@@ -754,6 +762,9 @@ namespace FungusToast.Unity.UI.MutationTree
             FitTextHeight(nextLevelText, 32f);
             FitTextHeight(maxLevelBonusText, 32f);
             FitTextHeight(synergyText, 32f);
+            FitTextHeight(emptyRequirementsText, 18f);
+            FitTextHeight(emptyDependentsText, 18f);
+            FitTextHeight(hintText, 36f);
         }
 
         private void FitTextHeight(TextMeshProUGUI label, float minimumHeight)
