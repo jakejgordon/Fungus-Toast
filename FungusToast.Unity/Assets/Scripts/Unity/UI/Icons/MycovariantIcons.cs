@@ -227,13 +227,6 @@ namespace FungusToast.Unity.UI.Icons
             IconGlyphs.Pips(canvas, centerX, PipY, tier, PipRadius, PipSpacing, accent);
         }
 
-        /// <summary>Mark colour that stays legible on a cell of the given fill.</summary>
-        private static Color MarkOn(Color fill, Color background)
-        {
-            float luminance = 0.299f * fill.r + 0.587f * fill.g + 0.114f * fill.b;
-            return luminance > 0.6f ? Color.Lerp(background, UIStyleTokens.Surface.Canvas, 0.6f) : IconGlyphs.Palette.Mark;
-        }
-
         /// <summary>Source cell, a straight jet of cells, then the widening toxin fan past its tip.</summary>
         private static void DrawJettingMycelium(IconCanvas canvas, Color accent)
         {
@@ -455,7 +448,7 @@ namespace FungusToast.Unity.UI.Icons
         /// <summary>A cluster of your cells with the chosen ones shielded.</summary>
         private static void DrawMycelialBastion(IconCanvas canvas, Color accent, Color background)
         {
-            Color mark = MarkOn(accent, background);
+            Color mark = IconGlyphs.MarkFor(accent);
             IconGlyphs.LivingCell(canvas, 36f, 40f, 14f, accent);
             IconGlyphs.ResistantCell(canvas, 52f, 40f, 14f, accent, mark);
             IconGlyphs.ResistantCell(canvas, 44f, 56f, 14f, accent, mark);
@@ -470,13 +463,13 @@ namespace FungusToast.Unity.UI.Icons
             IconGlyphs.EmptyTile(canvas, 74f, 52f, 12f, IconGlyphs.Palette.Faint);
             IconGlyphs.EmptyTile(canvas, 56f, 30f, 12f, IconGlyphs.Palette.Faint);
             IconGlyphs.FlightArc(canvas, 32f, 66f, 70f, 34f, 12f, 2.5f, highlight);
-            IconGlyphs.ResistantCell(canvas, 74f, 30f, 14f, accent, MarkOn(accent, background));
+            IconGlyphs.ResistantCell(canvas, 74f, 30f, 14f, accent, IconGlyphs.MarkFor(accent));
         }
 
         /// <summary>Resistance spreading from a shielded centre to its neighbours, diagonals included.</summary>
         private static void DrawHyphalResistanceTransfer(IconCanvas canvas, Color accent, Color background)
         {
-            Color mark = MarkOn(accent, background);
+            Color mark = IconGlyphs.MarkFor(accent);
             for (int row = -1; row <= 1; row++)
             {
                 for (int col = -1; col <= 1; col++)
@@ -499,7 +492,7 @@ namespace FungusToast.Unity.UI.Icons
         /// <summary>A dying cell raising the alarm; its orthogonal neighbours shield up.</summary>
         private static void DrawSeptalAlarm(IconCanvas canvas, Color accent, Color highlight, Color background)
         {
-            Color mark = MarkOn(accent, background);
+            Color mark = IconGlyphs.MarkFor(accent);
             IconGlyphs.LivingCell(canvas, 50f, 52f, 16f, accent);
             IconGlyphs.KillMark(canvas, 50f, 52f, 5.5f, 3f, IconGlyphs.Palette.Enemy);
             foreach (var (dx, dy) in new[] { (-1f, -1f), (1f, -1f), (1f, 1f), (-1f, 1f) })
@@ -516,7 +509,7 @@ namespace FungusToast.Unity.UI.Icons
         /// <summary>A scattered colony with a random share of cells stamped resistant.</summary>
         private static void DrawSeptalSeal(IconCanvas canvas, Color accent, Color highlight, Color background)
         {
-            Color mark = MarkOn(accent, background);
+            Color mark = IconGlyphs.MarkFor(accent);
             foreach (var (x, y, isSealed) in new[] { (28f, 34f, false), (48f, 30f, true), (68f, 38f, false), (32f, 58f, false), (58f, 58f, true), (46f, 78f, false), (72f, 74f, false) })
             {
                 if (isSealed)

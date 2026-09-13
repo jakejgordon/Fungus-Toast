@@ -1,4 +1,5 @@
 using System.Text;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Icons;
@@ -30,6 +31,7 @@ namespace FungusToast.Tools.IconPreview
             var rows = new List<ReviewRow>();
             rows.AddRange(RenderSurges(Path.Combine(outDir, "surges")));
             rows.AddRange(RenderMycovariants(Path.Combine(outDir, "mycovariants")));
+            rows.AddRange(RenderAdaptations(Path.Combine(outDir, "adaptations")));
 
             string html = BuildHtml(rows);
             string htmlPath = Path.Combine(outDir, "icon-review.html");
@@ -62,6 +64,18 @@ namespace FungusToast.Tools.IconPreview
                 MycovariantIcons.Draw(canvas, mycovariant);
                 string fileStem = Path.Combine(dir, Slug(mycovariant.Name));
                 yield return WriteRow("Mycovariant", mycovariant.Name, FirstSentence(mycovariant.Description), canvas, fileStem);
+            }
+        }
+
+        private static IEnumerable<ReviewRow> RenderAdaptations(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            foreach (AdaptationDefinition adaptation in AdaptationRepository.All)
+            {
+                var canvas = new IconCanvas();
+                AdaptationIcons.Draw(canvas, adaptation.IconId);
+                string fileStem = Path.Combine(dir, Slug(adaptation.Name));
+                yield return WriteRow("Adaptation", adaptation.Name, FirstSentence(adaptation.Description), canvas, fileStem);
             }
         }
 

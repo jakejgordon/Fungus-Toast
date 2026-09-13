@@ -27,6 +27,36 @@ namespace FungusToast.Unity.UI.Icons
 
         public const float CellCornerRatio = 0.18f;
 
+        /// <summary>Mark colour (shield, X) that stays legible on a cell of the given fill.</summary>
+        public static Color MarkFor(Color fill)
+        {
+            float luminance = 0.299f * fill.r + 0.587f * fill.g + 0.114f * fill.b;
+            return luminance > 0.6f ? UIStyleTokens.Surface.Canvas : Palette.Mark;
+        }
+
+        /// <summary>A four-point sparkle.</summary>
+        public static void Sparkle(IconCanvas canvas, float cx, float cy, float radius, float thickness, Color color)
+        {
+            canvas.Line(cx - radius, cy, cx + radius, cy, thickness, color);
+            canvas.Line(cx, cy - radius, cx, cy + radius, thickness, color);
+            float d = radius * 0.45f;
+            canvas.Line(cx - d, cy - d, cx + d, cy + d, thickness * 0.8f, color);
+            canvas.Line(cx - d, cy + d, cx + d, cy - d, thickness * 0.8f, color);
+        }
+
+        /// <summary>A mutation-tier ladder: two rails with count rungs, bottom rung first.</summary>
+        public static void Ladder(IconCanvas canvas, float left, float right, float bottom, float rungSpacing, int count, Color rail)
+        {
+            float top = bottom - rungSpacing * (count - 1);
+            canvas.Line(left, top - 4f, left, bottom + 4f, 3f, rail);
+            canvas.Line(right, top - 4f, right, bottom + 4f, 3f, rail);
+            for (int i = 0; i < count; i++)
+            {
+                float y = bottom - rungSpacing * i;
+                canvas.Line(left, y, right, y, 3f, rail);
+            }
+        }
+
         /// <summary>A living cell belonging to the icon's owner.</summary>
         public static void LivingCell(IconCanvas canvas, float cx, float cy, float size, Color fill)
         {
