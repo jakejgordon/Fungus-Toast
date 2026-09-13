@@ -13,6 +13,34 @@ namespace FungusToast.Core.AI
 {
     public static class MutationSpendingHelper
     {
+        public static bool CanAttemptUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, int currentRound)
+        {
+            if (!player.CanUpgrade(mutation, currentRound, board))
+            {
+                return false;
+            }
+
+            int cost = player.GetMutationPointCost(mutation);
+            if (ShouldReserveLatentPolymorphismPoints(player, currentRound)
+                && player.MutationPoints - cost < GameBalance.LatentPolymorphismAiMinimumBankedPoints)
+            {
+                return false;
+            }
+
+            if (mutation.Id == MutationIds.NecroticClearance)
+            {
+                return MycelialSurgeMutationProcessor.HasNecroticClearanceEligibleTargets(player, board);
+            }
+
+            if (mutation.Id == MutationIds.ChemotacticBeacon)
+            {
+                int projectedLevel = Math.Min(player.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);
+                return ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, mutation.SurgeDuration).HasValue;
+            }
+
+            return true;
+        }
+
         public static bool ShouldReserveLatentPolymorphismPoints(Player player, int currentRound)
         {
             // The round cap is exclusive: with a cap of 75, playable rounds 72-74 are the final three.
@@ -66,15 +94,7 @@ namespace FungusToast.Core.AI
 
         public static bool TryUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
         {
-            int cost = player.GetMutationPointCost(mutation);
-            if (ShouldReserveLatentPolymorphismPoints(player, currentRound)
-                && player.MutationPoints - cost < GameBalance.LatentPolymorphismAiMinimumBankedPoints)
-            {
-                return false;
-            }
-
-            if (mutation.Id == MutationIds.NecroticClearance
-                && !MycelialSurgeMutationProcessor.HasNecroticClearanceEligibleTargets(player, board))
+            if (!CanAttemptUpgradeWithTargeting(player, mutation, board, currentRound))
             {
                 return false;
             }

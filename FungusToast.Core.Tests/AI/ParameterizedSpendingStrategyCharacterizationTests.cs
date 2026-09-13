@@ -265,6 +265,30 @@ public class ParameterizedSpendingStrategyCharacterizationTests
     }
 
     [Fact]
+    public void Unplaceable_targeted_surge_does_not_block_fallback_spending()
+    {
+        var beacon = MutationRegistry.GetById(MutationIds.ChemotacticBeacon)!;
+        var ordinary = CreateMutation(905, points: 2);
+        var strategy = CreateStrategy(
+            priorityCategories: new List<MutationCategory> { MutationCategory.Growth },
+            targetMutationGoals: new List<TargetMutationGoal> { new(beacon.Id, 1) });
+        var (board, player) = CreateBoardAndPlayer(width: 1, height: 1, mutationPoints: 10, round: 2);
+        board.PlaceInitialSpore(player.PlayerId, x: 0, y: 0);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 7, currentRound: 1);
+
+        strategy.SpendMutationPoints(
+            player,
+            new List<Mutation> { beacon, ordinary },
+            board,
+            new Random(1),
+            new TestSimulationObserver());
+
+        Assert.Equal(0, player.GetMutationLevel(beacon.Id));
+        Assert.Equal(5, player.GetMutationLevel(ordinary.Id));
+        Assert.Equal(0, player.MutationPoints);
+    }
+
+    [Fact]
     public void Excluded_mutation_is_not_bought_even_when_it_is_the_only_option()
     {
         var excluded = CreateMutation(903, points: 1);
@@ -349,7 +373,8 @@ public class ParameterizedSpendingStrategyCharacterizationTests
         int surgeFrequency = GameBalance.DefaultSurgeAIAttemptTurnFrequency,
         List<MycovariantPreference>? mycovariantPreferences = null,
         List<int>? preferredMycovariantIds = null,
-        IEnumerable<int>? excludedMutationIds = null)
+        IEnumerable<int>? excludedMutationIds = null,
+        List<TargetMutationGoal>? targetMutationGoals = null)
     {
         return new ParameterizedSpendingStrategy(
             strategyName: "Characterization",
@@ -360,7 +385,8 @@ public class ParameterizedSpendingStrategyCharacterizationTests
             economyBias: EconomyBias.IgnoreEconomy,
             mycovariantPreferences: mycovariantPreferences,
             preferredMycovariantIds: preferredMycovariantIds,
-            excludedMutationIds: excludedMutationIds);
+            excludedMutationIds: excludedMutationIds,
+            targetMutationGoals: targetMutationGoals);
     }
 
     /// <summary>

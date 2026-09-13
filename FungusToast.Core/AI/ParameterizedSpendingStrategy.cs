@@ -597,7 +597,12 @@ namespace FungusToast.Core.AI
                         }
                     }
                     
-                    if (prereqsMet)
+                    if (prereqsMet
+                        && MutationSpendingHelper.CanAttemptUpgradeWithTargeting(
+                            player,
+                            targetMutation,
+                            board,
+                            board.CurrentRound))
                     {
                         hasIncompleteTarget = true;
                         break;
