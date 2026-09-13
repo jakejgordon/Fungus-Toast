@@ -784,8 +784,14 @@ namespace FungusToast.Unity.UI.MutationTree
             float contentWidth = contentRect != null && contentRect.rect.width > 0f
                 ? contentRect.rect.width
                 : Mathf.Max(120f, rootRect.rect.width - (PanelPadding * 2f));
-            float horizontalMargins = label.margin.x + label.margin.z;
-            float verticalMargins = label.margin.y + label.margin.w;
+            // Labels created by CreateText inset via TMP margins; the requirement rows inset
+            // via RectTransform offsets instead (badge on the left, padding top/bottom). Both
+            // shrink the wrap width and add to the height, so count both.
+            RectTransform labelRect = label.rectTransform;
+            float offsetInsetX = labelRect.gameObject == element.gameObject ? 0f : labelRect.offsetMin.x - labelRect.offsetMax.x;
+            float offsetInsetY = labelRect.gameObject == element.gameObject ? 0f : labelRect.offsetMin.y - labelRect.offsetMax.y;
+            float horizontalMargins = label.margin.x + label.margin.z + offsetInsetX;
+            float verticalMargins = label.margin.y + label.margin.w + offsetInsetY;
             float textWidth = Mathf.Max(80f, contentWidth - horizontalMargins);
             float requiredHeight = Mathf.Ceil(label.GetPreferredValues(label.text, textWidth, 0f).y + verticalMargins)
                 + TextHeightSafetyPadding;
