@@ -210,6 +210,9 @@ new MutationPrerequisite(MutationIds.PrereqMutation2, 3)); // Cross-category rec
 { MutationIds.NewMutationName, new MutationLayoutMetadata(4, 3, MutationCategory.MycelialSurges) },
 ```
 
+#### **B. Surge Icon (surge mutations only)**
+Surges are the one mutation kind with an icon, because they must be recognisable outside the tree (sidebar countdown, player inspector). Add the id to `SurgeMutationIds`, an accent to `Accent`, and a `Draw*` case to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/SurgeIcons.cs`: a small diagram of what the surge does, built from `IconGlyphs`. Then run `dotnet run` in `tools/icon-preview` and check `TEMP/icon-sheets/icon-review.html`; the harness fails while any surge lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
+
 ### **4. Effect Processing Logic**
 
 #### **A. Add Processing Method**

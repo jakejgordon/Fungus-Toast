@@ -28,7 +28,7 @@ Adaptations commonly do one of two things:
 7. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
 8. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
 9. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
-10. Generate a unique icon for the Adaptation so the campaign draft, tooltips, and profile UI do not fall back to generic art. The first pass can be provisional and replaced later, but every new Adaptation should ship with distinct iconography.
+10. Draw the Adaptation's icon: add a drawer keyed by its `IconId` to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/AdaptationIcons.cs` (a small diagram of the effect built from `IconGlyphs`, plus its background/accent entries in the colour tables), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any adaptation lacks a drawer. See `UI_STYLE_GUIDE.md` section 5.9.
 11. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
 12. Validate with Core and Simulation builds for core behavior changes, and validate campaign flow in Unity because campaign simulation is not supported yet.
 
@@ -40,13 +40,13 @@ Adaptations commonly do one of two things:
 3. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
 4. Confirm the chosen name is unique across Mutations, Mycovariants, and Adaptations with a repo search.
 5. Write concise description text using the same cadence-first standards used for Mycovariants.
-6. Generate a unique icon keyed off the Adaptation's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Adaptation.
+6. Add a drawer for the Adaptation's `IconId` in `AdaptationIcons.cs` and review it with the `tools/icon-preview` harness. It should depict the effect and be distinct from every other Adaptation.
 7. If the Adaptation has gameplay behavior, wire it through the campaign startup seam and any required passive phase/event hooks.
 
 ### Add Adaptation UI presence
 1. Reuse the existing Unity tooltip system with `ITooltipContentProvider` and `TooltipTrigger`.
-2. Reuse a centralized art lookup path for icons rather than binding sprites ad hoc.
-3. Ensure the centralized art repository has a unique generated icon for the Adaptation even if it is only a first-pass placeholder.
+2. Get sprites from `AdaptationArtRepository.GetIcon` rather than binding sprites ad hoc.
+3. Ensure `AdaptationIcons` has a drawer for the Adaptation; the fallback ring logs an editor warning and fails the harness coverage check.
 4. Keep in-game Adaptation display consistent with the campaign reward draft and sidebar presentation.
 
 ### Validate Adaptation behavior

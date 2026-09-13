@@ -24,7 +24,7 @@ Mycovariants are drafted abilities that either:
 5. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
 6. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions or flavor text.
 7. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
-8. Generate a unique icon for the Mycovariant so draft cards, tooltips, and any sidebar/profile surfaces do not fall back to generic art. The first pass can be provisional and replaced later, but every new Mycovariant should ship with distinct iconography.
+8. Draw the Mycovariant's icon: add a case for its id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a small diagram of the effect built from `IconGlyphs`; tiered I/II/III variants share one drawing and get pips automatically), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any mycovariant lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
 9. Implement changes in category factories and processors.
 10. Run the content-to-profile coverage review in `AI_STRATEGY_AUTHORING.md` whenever the Mycovariant is added or materially changed. Record an explicit disposition for every suggested non-Testing AI match; do not silently change an existing strategy's preference order.
 11. Validate with Core and Simulation builds when shared gameplay behavior changed.
@@ -37,13 +37,13 @@ Mycovariants are drafted abilities that either:
 2. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
 3. Confirm the chosen name is unique across Mutations, Mycovariants, and Adaptations with a repo search.
 4. Write concise description and optional flavor text using `second-level/MYCOVARIANT_AUTHORING_STYLE.md`.
-5. Generate a unique icon keyed off the Mycovariant's `IconId`. It can be temporary and replaced later, but it should be distinct from every other Mycovariant.
+5. Add a drawing case for the Mycovariant's id in `MycovariantIcons.cs` and review it with the `tools/icon-preview` harness. It should depict the effect and be distinct from every other Mycovariant.
 6. Define the Mycovariant in the correct category factory and wire any gameplay behavior through the appropriate processors, observers, and Unity draft hooks.
 
 ### Add Mycovariant UI presence
 1. Reuse the existing Unity tooltip system with `ITooltipContentProvider` and `TooltipTrigger`.
-2. Reuse a centralized art lookup path for icons rather than binding sprites ad hoc.
-3. Ensure the centralized art repository has a unique generated icon for the Mycovariant even if it is only a first-pass placeholder.
+2. Get sprites from `MycovariantArtRepository.GetIcon` rather than binding sprites ad hoc.
+3. Ensure `MycovariantIcons` has a case for the Mycovariant; the fallback ring logs an editor warning and fails the harness coverage check.
 4. Keep draft, tooltip, and any persistent UI presentation consistent.
 
 ### Validate Mycovariant behavior
@@ -55,5 +55,5 @@ Mycovariants are drafted abilities that either:
 ## Notes
 
 - Keep Mycovariant logic deterministic and Unity-free in Core.
-- Treat the Mycovariant definition plus its `IconId` as the source of truth for card metadata.
+- Treat the Mycovariant definition as the source of truth for card metadata; `IconId` is only the sprite cache key, drawings are selected by id.
 - Reuse Adaptation guidance for icon distinctness and centralized art lookup patterns where helpful, but do not assume the same runtime flow.

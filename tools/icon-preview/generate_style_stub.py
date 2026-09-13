@@ -13,7 +13,7 @@ import sys
 from pathlib import Path
 
 CLASS_RE = re.compile(r"^\s*public static class (\w+)\s*$")
-COLOR_RE = re.compile(r'^\s*public static readonly Color (\w+) = Hex\("(#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?)"\);\s*$')
+COLOR_RE = re.compile(r'^\s*public static readonly Color (\w+) = Hex\("(#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?)"\);\s*(?://.*)?$')
 
 
 def main(source: Path, target: Path) -> int:

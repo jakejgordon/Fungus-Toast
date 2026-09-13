@@ -26,6 +26,7 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
 5. Wire gameplay behavior through the correct processor and coordinator path in `FungusToast.Core`.
 6. Add simulation-tracking hooks when the mutation creates meaningful analytics-visible behavior.
 7. Update Unity mutation-tree placement in `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/UI_MutationLayoutProvider.cs` when the new mutation needs a node.
+7a. For surge mutations, add a `Draw*` case in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/SurgeIcons.cs` (a diagram of the effect built from `IconGlyphs`), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any surge lacks a case.
 8. Reuse existing patterns before inventing new mutation-specific seams.
 
 ## Validation

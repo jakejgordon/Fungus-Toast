@@ -11,6 +11,10 @@ namespace FungusToast.Tools.IconPreview
     /// Renders every ability icon with the same drawing code Unity uses and writes PNGs plus an
     /// HTML review sheet showing each icon at the sizes the game displays it. Downscaling here is
     /// a plain area average, a close stand-in for Unity's trilinear mip sampling.
+    ///
+    /// The run also checks icon coverage: every adaptation, mycovariant and surge mutation must
+    /// resolve to a dedicated drawing. Missing ones are listed and the exit code is 1, so the
+    /// harness doubles as the guard rail for new content.
     /// </summary>
     internal static class Program
     {
@@ -37,21 +41,64 @@ namespace FungusToast.Tools.IconPreview
             string htmlPath = Path.Combine(outDir, "icon-review.html");
             File.WriteAllText(htmlPath, html, Encoding.UTF8);
             Console.WriteLine($"Rendered {rows.Count} icons. Review sheet: {Path.GetFullPath(htmlPath)}");
+
+            List<string> missing = FindMissingIcons();
+            if (missing.Count > 0)
+            {
+                Console.Error.WriteLine($"{missing.Count} item(s) have no dedicated icon and would draw the fallback:");
+                foreach (string item in missing)
+                {
+                    Console.Error.WriteLine("  - " + item);
+                }
+
+                return 1;
+            }
+
+            Console.WriteLine("Icon coverage: every adaptation, mycovariant and surge has a dedicated drawing.");
             return 0;
         }
+
+        private static List<string> FindMissingIcons()
+        {
+            var missing = new List<string>();
+            foreach (AdaptationDefinition adaptation in AdaptationRepository.All)
+            {
+                if (!AdaptationIcons.HasDedicatedIcon(adaptation.IconId))
+                {
+                    missing.Add($"Adaptation '{adaptation.Name}' (IconId {adaptation.IconId}) -> add a drawer to AdaptationIcons");
+                }
+            }
+
+            foreach (Mycovariant mycovariant in MycovariantRepository.All)
+            {
+                if (!MycovariantIcons.HasDedicatedIcon(mycovariant.Id))
+                {
+                    missing.Add($"Mycovariant '{mycovariant.Name}' (Id {mycovariant.Id}) -> add a case to MycovariantIcons");
+                }
+            }
+
+            foreach (Mutation mutation in SurgeMutations())
+            {
+                if (!SurgeIcons.HasDedicatedIcon(mutation.Id))
+                {
+                    missing.Add($"Surge '{mutation.Name}' (Id {mutation.Id}) -> add a case to SurgeIcons");
+                }
+            }
+
+            return missing;
+        }
+
+        private static IEnumerable<Mutation> SurgeMutations() => MutationRegistry.GetAll().Where(m => m.IsSurge).OrderBy(m => m.Id);
 
         private static IEnumerable<ReviewRow> RenderSurges(string dir)
         {
             Directory.CreateDirectory(dir);
-            foreach (int id in SurgeIcons.SurgeMutationIds)
+            foreach (Mutation mutation in SurgeMutations())
             {
-                Mutation? mutation = MutationRegistry.GetById(id);
-                string name = mutation?.Name ?? $"Mutation {id}";
-                string summary = FirstSentence(mutation?.Description);
                 var canvas = new IconCanvas();
-                SurgeIcons.Draw(canvas, id);
-                string fileStem = Path.Combine(dir, Slug(name));
-                yield return WriteRow("Surge", name, summary, canvas, fileStem);
+                SurgeIcons.Draw(canvas, mutation.Id);
+                string fileStem = Path.Combine(dir, Slug(mutation.Name));
+                yield return WriteRow("Surge", mutation.Name, FirstSentence(mutation.Description), canvas, fileStem);
             }
         }
 

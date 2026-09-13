@@ -48,7 +48,7 @@
     </Reference>
   </ItemGroup>
 
-  <Target Name="GenerateStyleStub" BeforeTargets="BeforeBuild" Inputs="$(UnityStyleTokens)" Outputs="$(GeneratedStub)">
+  <Target Name="GenerateStyleStub" BeforeTargets="BeforeBuild" Inputs="$(UnityStyleTokens);$(MSBuildThisFileDirectory)generate_style_stub.py" Outputs="$(GeneratedStub)">
     <Exec Command="python &quot;$(MSBuildThisFileDirectory)generate_style_stub.py&quot; &quot;$(UnityStyleTokens)&quot; &quot;$(GeneratedStub)&quot;" />
   </Target>
 

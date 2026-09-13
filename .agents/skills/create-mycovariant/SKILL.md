@@ -24,7 +24,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
    - the appropriate category factory
    - the relevant processors, observers, and Unity draft hooks
 5. Follow the style guide for concise player-facing copy.
-6. Ensure the mycovariant has a distinct `IconId` and corresponding icon path instead of falling back to generic art.
+6. Add a drawing case for the mycovariant's id in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a diagram of the effect built from `IconGlyphs`; tiers share a drawing), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any mycovariant lacks a case.
 7. Reuse existing draft, tooltip, and centralized art-lookup patterns before introducing new UI seams.
 
 ## Validation

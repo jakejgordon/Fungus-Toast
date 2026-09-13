@@ -26,7 +26,7 @@ Read `FungusToast.Core/docs/SAVE_COMPATIBILITY.md` before changing persistence o
    - `AdaptationIds`, `AdaptationGameBalance`, and related helpers when needed
    - `MoldCatalog` when the change affects starting adaptations
 6. Follow the concise copy rules exactly.
-7. Ensure the adaptation has a distinct icon keyed from its `IconId`.
+7. Add a drawer for the adaptation's `IconId` in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/AdaptationIcons.cs` (a diagram of the effect built from `IconGlyphs`, plus colour-table entries), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any adaptation lacks a drawer.
 8. Wire gameplay behavior through the correct campaign startup seam and passive/runtime hooks in Core.
 9. Treat save/resume compatibility as part of the implementation, not an afterthought.
 

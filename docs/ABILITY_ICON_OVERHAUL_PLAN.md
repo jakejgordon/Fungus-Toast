@@ -3,8 +3,10 @@
 Scope: the icons for Adaptations, Mycovariants, and Mycelial Surge mutations.
 Goal: higher resolution, and every icon depicts what the ability does.
 
-Status: proposed 2026-09-12. Recommended direction is Option A below; nothing
-is implemented yet.
+Status: implemented (Option A), 2026-09-12. Phases 0-4 are done: renderer,
+glyph vocabulary, all 72 icons redrawn, editor export/validation menu, harness
+coverage check, and the helper docs/skills updated. Kept for the rationale and
+the per-icon briefs; the living rules are in `UI_STYLE_GUIDE.md` section 5.9.
 
 ## 1. Where things stand
 

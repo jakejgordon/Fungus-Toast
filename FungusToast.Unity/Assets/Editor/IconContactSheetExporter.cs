@@ -1,37 +1,119 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using FungusToast.Core.Campaign;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Icons;
 using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Writes every ability icon to TEMP/icon-sheets/unity/ as individual PNGs plus one grid sheet
-/// per family, so icon changes can be reviewed without clicking through game flows. The
-/// tools/icon-preview harness renders the same drawings outside Unity; this exporter is the
-/// check that the in-editor path (texture creation, mipmaps) matches it.
+/// Ability icon tooling under the Fungus Toast/Icons menu: exports every icon to
+/// TEMP/icon-sheets/unity/ as PNGs plus a grid sheet per family, and validates that every
+/// adaptation, mycovariant and surge mutation has a dedicated drawing. The tools/icon-preview
+/// harness renders the same drawings outside Unity (and runs the same coverage check); this is
+/// the in-editor confirmation that the texture path matches.
 /// </summary>
 public static class IconContactSheetExporter
 {
     private const string OutputRoot = "../../TEMP/icon-sheets/unity";
-    private const int SheetColumns = 6;
+    private const int SheetColumns = 8;
     private const int SheetPadding = 8;
+
+    [MenuItem("Fungus Toast/Icons/Export All Icons")]
+    public static void ExportAllIcons()
+    {
+        ExportSurgeIcons();
+        ExportMycovariantIcons();
+        ExportAdaptationIcons();
+    }
 
     [MenuItem("Fungus Toast/Icons/Export Surge Icons")]
     public static void ExportSurgeIcons()
     {
         var entries = new List<(string name, IconCanvas canvas)>();
-        foreach (int id in SurgeIcons.SurgeMutationIds)
+        foreach (Mutation mutation in SurgeMutations())
         {
             var canvas = new IconCanvas();
-            SurgeIcons.Draw(canvas, id);
-            string name = MutationRegistry.GetById(id)?.Name ?? $"mutation_{id}";
-            entries.Add((name, canvas));
+            SurgeIcons.Draw(canvas, mutation.Id);
+            entries.Add((mutation.Name, canvas));
         }
 
         Export("surges", entries);
     }
+
+    [MenuItem("Fungus Toast/Icons/Export Mycovariant Icons")]
+    public static void ExportMycovariantIcons()
+    {
+        var entries = new List<(string name, IconCanvas canvas)>();
+        foreach (Mycovariant mycovariant in MycovariantRepository.All)
+        {
+            var canvas = new IconCanvas();
+            MycovariantIcons.Draw(canvas, mycovariant);
+            entries.Add((mycovariant.Name, canvas));
+        }
+
+        Export("mycovariants", entries);
+    }
+
+    [MenuItem("Fungus Toast/Icons/Export Adaptation Icons")]
+    public static void ExportAdaptationIcons()
+    {
+        var entries = new List<(string name, IconCanvas canvas)>();
+        foreach (AdaptationDefinition adaptation in AdaptationRepository.All)
+        {
+            var canvas = new IconCanvas();
+            AdaptationIcons.Draw(canvas, adaptation.IconId);
+            entries.Add((adaptation.Name, canvas));
+        }
+
+        Export("adaptations", entries);
+    }
+
+    /// <summary>Logs an error for every item that would draw the fallback icon.</summary>
+    [MenuItem("Fungus Toast/Icons/Validate Icon Coverage")]
+    public static void ValidateIconCoverage()
+    {
+        var missing = new List<string>();
+        foreach (AdaptationDefinition adaptation in AdaptationRepository.All)
+        {
+            if (!AdaptationIcons.HasDedicatedIcon(adaptation.IconId))
+            {
+                missing.Add($"Adaptation '{adaptation.Name}' (IconId {adaptation.IconId}): add a drawer to AdaptationIcons");
+            }
+        }
+
+        foreach (Mycovariant mycovariant in MycovariantRepository.All)
+        {
+            if (!MycovariantIcons.HasDedicatedIcon(mycovariant.Id))
+            {
+                missing.Add($"Mycovariant '{mycovariant.Name}' (Id {mycovariant.Id}): add a case to MycovariantIcons");
+            }
+        }
+
+        foreach (Mutation mutation in SurgeMutations())
+        {
+            if (!SurgeIcons.HasDedicatedIcon(mutation.Id))
+            {
+                missing.Add($"Surge '{mutation.Name}' (Id {mutation.Id}): add a case to SurgeIcons");
+            }
+        }
+
+        if (missing.Count == 0)
+        {
+            Debug.Log("Icon coverage: every adaptation, mycovariant and surge has a dedicated drawing.");
+            return;
+        }
+
+        foreach (string item in missing)
+        {
+            Debug.LogError("Icon coverage: " + item);
+        }
+    }
+
+    private static IEnumerable<Mutation> SurgeMutations() => MutationRegistry.GetAll().Where(m => m.IsSurge).OrderBy(m => m.Id);
 
     private static void Export(string family, List<(string name, IconCanvas canvas)> entries)
     {

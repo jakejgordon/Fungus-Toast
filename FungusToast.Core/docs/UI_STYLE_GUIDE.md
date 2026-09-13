@@ -274,6 +274,17 @@ Notes:
 - Use dismissible modals for first-run onboarding, must-read instructional copy, or any message longer than a short sentence. Do not rely on auto-fading toasts for core gameplay teaching.
 - If a first-run modal is shown from within a panel such as the mutation tree, it should remain visible until explicit dismissal and should not reappear again after the player dismisses it.
 
+### 5.9 Ability Icons (Adaptations, Mycovariants, Surges)
+Ability icons are drawn in code, not loaded from image files. `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/` holds the renderer (`IconCanvas`, anti-aliased, 128px with mipmaps), the shared board vocabulary (`IconGlyphs`), and one drawing file per family (`SurgeIcons`, `MycovariantIcons`, `AdaptationIcons`). The `*ArtRepository` classes only cache sprites.
+
+- Every icon is a diagram of what the ability does on the board, composed from the glyph vocabulary: living cell, resistant cell (cell + shield), dead cell (hollow + X), toxin (trefoil), enemy cell (outline), empty tile (dotted), starting spore (dot + ring), crust band, nutrient patch, surge bolt, arrows, dashed flight arcs, dashed radius rings.
+- State reads through shape as well as colour: shield = resistant, X = dead, trefoil = toxin, outline = enemy. Never rely on hue alone.
+- Colours come from `UIStyleTokens` only. Adaptations keep per-adaptation background/accent tables; mycovariants tint by category and accent by type; surges use the Mycelial Surges tint with a per-surge accent. Accents are lifted 28% toward `Text.Primary` so strokes stay legible on every tint.
+- Family tell, independent of hue: adaptations have rounded frame corners; mycovariants square corners with tier pips (I/II/III) top-right; surges square corners with a bolt notched into the top of the frame.
+- Budget: at most three "things" per icon and strokes no thinner than ~4 units of the 100-unit canvas, so the 28px mutation-tree slot still reads. Never draw text; use pips for counts.
+- Review loop: `dotnet run` in `tools/icon-preview` renders every icon outside Unity to `TEMP/icon-sheets/icon-review.html` at the real slot sizes and fails if any adaptation, mycovariant or surge lacks a dedicated drawing. In the editor, `Fungus Toast > Icons` exports the same PNGs and runs the same coverage check.
+- New content: add a drawer to the family's icon file (keyed by `IconId` for adaptations, by id for mycovariants and surges), run the harness, and look at the sheet. A missing drawer falls back to a generic ring and logs a warning in the editor.
+
 ---
 
 ## 6) Screen-by-Screen Rules (Full UI Pass)
