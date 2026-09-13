@@ -160,6 +160,9 @@ namespace FungusToast.Unity.UI.MutationTree
                         ConfigureHeaderTitleRect(headerText.rectTransform);
                     }
                     headerText.color = MutationTreeColors.HeaderText;
+                    // Bold: the regular-weight label auto-shrinks on long names and reads thin
+                    // against the saturated accent fill.
+                    headerText.fontStyle = FontStyles.Bold;
                 }
 
                 var headerLayout = headerGO.GetComponent<LayoutElement>();

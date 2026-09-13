@@ -80,9 +80,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public static Color GetCategoryHeaderBG(Color accent, float alpha = 1f)
         {
-            accent.a = alpha;
-            return accent;
+            // Lifted slightly toward the light text colour: keeps the hue matched to the card
+            // rails while giving the dark header label more contrast headroom.
+            Color fill = Color.Lerp(accent, UIStyleTokens.Text.Primary, HeaderFillLift);
+            fill.a = alpha;
+            return fill;
         }
+
+        private const float HeaderFillLift = 0.14f;
 
         /// <summary>Text color for the solid category headers.</summary>
         public static readonly Color HeaderText = UIStyleTokens.Text.OnAccent;
