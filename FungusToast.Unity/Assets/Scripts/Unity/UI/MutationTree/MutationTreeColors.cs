@@ -5,22 +5,30 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     /// <summary>
     /// Central color palette for the mutation tree panel.
-    /// Provides per-category accent colors, tier-based intensity scaling,
+    /// Provides per-category card fills and rails, header colors,
     /// and common state colors (maxed, affordable, locked).
     /// </summary>
     public static class MutationTreeColors
     {
-        // ── Category accent colors (lighter pastels for dark-background readability) ──
-        private static readonly Color FungicideAccent          = UIStyleTokens.Category.Fungicide;
+        // ── Blend amounts ───────────────────────────────────────────────
+        // The card reads on three channels: hue = category (always present),
+        // fill brightness + border strength = purchasable right now, and
+        // border color + badge = special state (maxed / next round / surge).
+        // Every fill below keeps Text.Primary at >= 5:1 against the six accents.
+        public const float AvailableFillBlend = 0.26f;
+        public const float OwnedFillBlend     = 0.16f;
+        public const float HoverFillBlend     = 0.12f;
+        public const float MaxedFillBlend     = 0.25f;
+        public const float LockedRailBlend    = 0.50f;
 
         // ── Universal state colors ──────────────────────────────────────
         public static readonly Color MaxedGold      = UIStyleTokens.Accent.Spore;
         public static readonly Color AffordableGlow  = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.08f);
         public static readonly Color LockedTint      = UIStyleTokens.Text.Disabled;
         public static readonly Color WarningOutline  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.95f);
-        public static readonly Color DefaultNodeBG   = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, FungicideAccent, 0.18f);
+        public static readonly Color DefaultNodeBG   = new Color32(0x3A, 0x3E, 0x33, 0xFF); // category-neutral card base
         public static readonly Color LockedNodeBG    = Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Surface.PanelPrimary, 0.58f);
-        public static readonly Color WarningNodeBG   = Color.Lerp(DefaultNodeBG, UIStyleTokens.State.Warning, 0.18f);
+        public static readonly Color MaxedNodeBG     = Color.Lerp(DefaultNodeBG, MaxedGold, MaxedFillBlend);
         public static readonly Color DependentHover  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.6f);
         public static readonly Color DependentBorder = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.State.Focus, UIStyleTokens.Text.Primary, 0.35f), 0.95f);
         public static readonly Color PrerequisiteBorder = UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.95f);
@@ -58,60 +66,51 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         public static Color GetReadableCategoryAccent(MutationCategory category)
         {
-            return Color.Lerp(GetCategoryAccent(category), UIStyleTokens.Text.Primary, 0.52f);
+            return Color.Lerp(GetCategoryAccent(category), UIStyleTokens.Text.Primary, 0.30f);
         }
 
         /// <summary>
-        /// Returns the category accent at reduced alpha, suitable for header backgrounds.
+        /// Column header fill: the raw accent, paired with <see cref="HeaderText"/> so the
+        /// header row doubles as the legend for the category rails on the cards below it.
         /// </summary>
-        public static Color GetCategoryHeaderBG(MutationCategory category, float alpha = 0.95f)
+        public static Color GetCategoryHeaderBG(MutationCategory category, float alpha = 1f)
         {
             return GetCategoryHeaderBG(GetCategoryAccent(category), alpha);
         }
 
-        public static Color GetCategoryHeaderBG(Color accent, float alpha = 0.95f)
+        public static Color GetCategoryHeaderBG(Color accent, float alpha = 1f)
         {
-            Color blended = Color.Lerp(TopBarBG, accent, 0.18f);
-            blended.a = alpha;
-            return blended;
+            accent.a = alpha;
+            return accent;
+        }
+
+        /// <summary>Text color for the solid category headers.</summary>
+        public static readonly Color HeaderText = UIStyleTokens.Text.OnAccent;
+
+        /// <summary>
+        /// Card fill for a mutation the player can buy right now: the brightest
+        /// category tint a card ever shows at rest.
+        /// </summary>
+        public static Color GetAffordableNodeBG(MutationCategory category)
+        {
+            return Color.Lerp(DefaultNodeBG, GetCategoryAccent(category), AvailableFillBlend);
         }
 
         /// <summary>
-        /// Returns a tier-scaled color: lower tiers are lighter/desaturated, higher
-        /// tiers are more vivid. Uses the category accent as base hue.
-        /// tierNumber: 1–10  (clamped).
+        /// Card fill for a mutation the player has invested in but cannot buy this turn.
+        /// Still clearly in its column, visibly quieter than an affordable card.
         /// </summary>
-        public static Color GetTierColor(MutationCategory category, int tierNumber)
-        {
-            Color accent = GetCategoryAccent(category);
-            // Intensity ramps from 0.35 (Tier 1) to 1.0 (Tier 7+)
-            float t = Mathf.Clamp01((tierNumber - 1) / 6f);
-            float intensity = Mathf.Lerp(0.35f, 1f, t);
-
-            // Desaturate at low tiers by lerping toward gray
-            Color gray = new Color(0.5f, 0.5f, 0.5f, 1f);
-            Color result = Color.Lerp(gray, accent, intensity);
-            result.a = 1f;
-            return result;
-        }
-
-        /// <summary>
-        /// Returns a category-tinted "affordable" background color at low alpha.
-        /// </summary>
-        /// <summary>
-        /// Returns the node background color with a subtle category tint blended in.
-        /// Uses proper lerp instead of additive to avoid oversaturation.
-        /// </summary>
-        public static Color GetAffordableNodeBG(MutationCategory category, float blendAmount = 0.12f)
-        {
-            Color accent = GetCategoryAccent(category);
-            Color bg = DefaultNodeBG;
-            return Color.Lerp(bg, accent, blendAmount);
-        }
-
         public static Color GetOwnedNodeBG(MutationCategory category)
         {
-            return Color.Lerp(DefaultNodeBG, GetCategoryAccent(category), 0.10f);
+            return Color.Lerp(DefaultNodeBG, GetCategoryAccent(category), OwnedFillBlend);
+        }
+
+        /// <summary>
+        /// Category rail color for a locked card: the hue survives, dimmed toward the panel.
+        /// </summary>
+        public static Color GetLockedRailColor(MutationCategory category)
+        {
+            return Color.Lerp(GetCategoryAccent(category), UIStyleTokens.Surface.PanelPrimary, LockedRailBlend);
         }
 
         /// <summary>

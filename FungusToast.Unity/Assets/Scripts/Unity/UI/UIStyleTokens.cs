@@ -85,14 +85,20 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Mutation category accents. Each is a pigment found in a real fungus so the
+        /// palette stays on-theme while spreading the six lanes at least 39 degrees
+        /// apart on the hue wheel. Category hue is a stable identity signal: the
+        /// mutation tree never swaps it for a state color, only dims it.
+        /// </summary>
         public static class Category
         {
-            public static readonly Color Growth = Hex("#5F8F61");
-            public static readonly Color CellularResilience = Hex("#5A7289");
-            public static readonly Color Fungicide = Hex("#6E5A86");
-            public static readonly Color GeneticDrift = Hex("#7D6B4E");
-            public static readonly Color MycelialSurges = Hex("#80607A");
-            public static readonly Color SubstrateEcology = Hex("#6C7F4A");
+            public static readonly Color Growth = Hex("#6FCB5E");             // moss
+            public static readonly Color CellularResilience = Hex("#5EAEF5"); // indigo milk cap
+            public static readonly Color Fungicide = Hex("#B27DF2");          // amethyst deceiver
+            public static readonly Color GeneticDrift = Hex("#F5A343");       // orange peel fungus
+            public static readonly Color MycelialSurges = Hex("#F26FB5");     // coral fungus
+            public static readonly Color SubstrateEcology = Hex("#3DC9B0");   // turquoise elf cup
         }
 
         /// <summary>

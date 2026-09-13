@@ -33,6 +33,9 @@ namespace FungusToast.Unity.UI.MutationTree
         // clip the final baseline at some Canvas scale factors.
         private const float TextHeightSafetyPadding = 1f;
         private const float TitleSurgeGlyphSize = 28f;
+        private const float LegendRowHeight = 24f;
+        private const float LegendSwatchSize = 20f;
+        private const float LegendSwatchGap = 10f;
         private const float TitleSurgeGlyphGap = 8f;
 
         private RectTransform rootRect = null!;
@@ -296,8 +299,118 @@ namespace FungusToast.Unity.UI.MutationTree
             maxLevelBonusText = CreateText("MaxLevelBonus", 15f, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
             synergyText = CreateText("Synergy", 15f, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
             _ = CreateText("Hint", 14f, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
+            BuildLegendSection();
 
             Clear();
+        }
+
+        /// <summary>
+        /// Static key for the card colors. Every swatch is drawn from the same
+        /// MutationTreeColors calls the cards use, so the legend cannot drift from the tree.
+        /// </summary>
+        private void BuildLegendSection()
+        {
+            RectTransform legendSection = CreateSectionRoot("LegendSection");
+            _ = CreateText("LegendLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "How to read the tree", parent: legendSection);
+
+            Color growth = MutationTreeColors.GetCategoryAccent(MutationCategory.Growth);
+
+            CreateLegendRow(legendSection, "Color = category. Cards match their column header.", swatch =>
+            {
+                swatch.color = Color.clear;
+                var strip = swatch.gameObject.AddComponent<HorizontalLayoutGroup>();
+                strip.spacing = 1f;
+                strip.childControlWidth = true;
+                strip.childControlHeight = true;
+                strip.childForceExpandWidth = true;
+                strip.childForceExpandHeight = true;
+                foreach (MutationCategoryPresentation presentation in MutationCategoryPresentationCatalog.Ordered)
+                {
+                    var slice = new GameObject(presentation.Key, typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+                    slice.transform.SetParent(swatch.transform, false);
+                    Image sliceImage = slice.GetComponent<Image>();
+                    sliceImage.color = presentation.Accent;
+                    sliceImage.raycastTarget = false;
+                }
+            });
+
+            CreateLegendRow(legendSection, "Bright card, solid border: you can buy it now.", swatch =>
+            {
+                swatch.color = MutationTreeColors.GetAffordableNodeBG(MutationCategory.Growth);
+                AddLegendOutline(swatch, UIStyleTokens.WithAlpha(growth, 1f), 2f);
+            });
+
+            CreateLegendRow(legendSection, "Dim card: yours to buy once you have the points.", swatch =>
+            {
+                swatch.color = MutationTreeColors.DefaultNodeBG;
+                AddLegendOutline(swatch, UIStyleTokens.WithAlpha(growth, 0.45f), 1.2f);
+            });
+
+            CreateLegendRow(legendSection, "Grey card with a lock: requirements not met yet.", swatch =>
+            {
+                swatch.color = MutationTreeColors.LockedNodeBG;
+                AddLegendOutline(swatch, UIStyleTokens.WithAlpha(UIStyleTokens.Text.Secondary, 0.30f), 1.2f);
+            });
+
+            CreateLegendRow(legendSection, "Gold border and MAX: fully upgraded.", swatch =>
+            {
+                swatch.color = MutationTreeColors.MaxedNodeBG;
+                AddLegendOutline(swatch, UIStyleTokens.WithAlpha(MutationTreeColors.MaxedGold, 0.95f), 2f);
+            });
+
+            CreateLegendRow(legendSection, "Amber border and hourglass: unlocks next round.", swatch =>
+            {
+                swatch.color = MutationTreeColors.GetOwnedNodeBG(MutationCategory.Growth);
+                AddLegendOutline(swatch, UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.95f), 2f);
+            });
+        }
+
+        private void CreateLegendRow(RectTransform parent, string text, Action<Image> styleSwatch)
+        {
+            var rowObject = new GameObject("LegendRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            rowObject.transform.SetParent(parent, false);
+            HorizontalLayoutGroup row = rowObject.GetComponent<HorizontalLayoutGroup>();
+            row.spacing = LegendSwatchGap;
+            row.childAlignment = TextAnchor.MiddleLeft;
+            row.childControlWidth = true;
+            row.childControlHeight = true;
+            row.childForceExpandWidth = false;
+            row.childForceExpandHeight = false;
+            LayoutElement rowElement = rowObject.GetComponent<LayoutElement>();
+            rowElement.minHeight = LegendRowHeight;
+            rowElement.preferredHeight = LegendRowHeight;
+
+            var swatchObject = new GameObject("Swatch", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+            swatchObject.transform.SetParent(rowObject.transform, false);
+            LayoutElement swatchElement = swatchObject.GetComponent<LayoutElement>();
+            swatchElement.minWidth = LegendSwatchSize;
+            swatchElement.preferredWidth = LegendSwatchSize;
+            swatchElement.minHeight = LegendSwatchSize;
+            swatchElement.preferredHeight = LegendSwatchSize;
+            Image swatch = swatchObject.GetComponent<Image>();
+            swatch.raycastTarget = false;
+            styleSwatch(swatch);
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI), typeof(LayoutElement));
+            labelObject.transform.SetParent(rowObject.transform, false);
+            TextMeshProUGUI label = labelObject.GetComponent<TextMeshProUGUI>();
+            if (font != null) label.font = font;
+            label.text = text;
+            label.fontSize = 14f;
+            label.color = UIStyleTokens.Text.Secondary;
+            label.textWrappingMode = TextWrappingModes.Normal;
+            label.overflowMode = TextOverflowModes.Overflow;
+            label.alignment = TextAlignmentOptions.MidlineLeft;
+            label.raycastTarget = false;
+            LayoutElement labelElement = labelObject.GetComponent<LayoutElement>();
+            labelElement.flexibleWidth = 1f;
+        }
+
+        private static void AddLegendOutline(Image swatch, Color color, float distance)
+        {
+            Outline outline = swatch.gameObject.AddComponent<Outline>();
+            outline.effectColor = color;
+            outline.effectDistance = new Vector2(distance, -distance);
         }
 
         private void BuildWorkspaceToolbar()

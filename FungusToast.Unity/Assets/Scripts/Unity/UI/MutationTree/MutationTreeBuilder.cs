@@ -148,7 +148,8 @@ namespace FungusToast.Unity.UI.MutationTree
                     labelRect.offsetMax = Vector2.zero;
                 }
 
-                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(presentation.Accent, 0.95f);
+                // Solid accent header: the header row is the legend for the category rails below it.
+                headerBG.color = MutationTreeColors.GetCategoryHeaderBG(presentation.Accent);
                 ConfigureHeaderTitleRect(headerBG.rectTransform);
 
                 if (headerText != null)
@@ -158,7 +159,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     {
                         ConfigureHeaderTitleRect(headerText.rectTransform);
                     }
-                    headerText.color = Color.white;
+                    headerText.color = MutationTreeColors.HeaderText;
                 }
 
                 var headerLayout = headerGO.GetComponent<LayoutElement>();

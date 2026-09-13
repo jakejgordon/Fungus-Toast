@@ -64,12 +64,14 @@ Do not introduce ad hoc color names in new UI work.
 - `Button.Text.Default`: `#2F3628`
 - `Button.Text.Disabled`: `#6F7466`
 
-### 2.6 Mutation Category Accents (Map Existing Categories)
-- `Category.Growth`: `#5F8F61`
-- `Category.CellularResilience`: `#5A7289`
-- `Category.Fungicide`: `#6E5A86`
-- `Category.GeneticDrift`: `#7D6B4E`
-- `Category.MycelialSurges`: `#80607A`
+### 2.6 Mutation Category Accents
+Each accent is a pigment found in a real fungus, and the six sit at least 39 degrees apart on the hue wheel so they read as distinct lanes at a glance.
+- `Category.Growth`: `#6FCB5E` (moss)
+- `Category.CellularResilience`: `#5EAEF5` (indigo milk cap)
+- `Category.Fungicide`: `#B27DF2` (amethyst deceiver)
+- `Category.GeneticDrift`: `#F5A343` (orange peel fungus)
+- `Category.MycelialSurges`: `#F26FB5` (coral fungus)
+- `Category.SubstrateEcology`: `#3DC9B0` (turquoise elf cup)
 
 ### 2.7 Player Mold Icon Palette (Color-vision-safe)
 - `Player.Blue`: `#0072D1`
@@ -92,8 +94,9 @@ Current sprite mapping (64x64 mold set):
 - `mold_dead_64x64.png` -> `Player.NeutralDead`
 
 Notes:
-- Category accents are for headers, chips, and small emphasis areas.
-- Do not use category colors for body text contrast-critical content.
+- Category accents are for headers, rails, chips, and small emphasis areas. Blended into a dark card fill they should stay at or below 0.26 so `Text.Primary` keeps at least 5:1.
+- Do not use raw category colors for body text. `MutationTreeColors.GetReadableCategoryAccent` lifts an accent toward `Text.Primary` for the one place (the inspector title) that sets text in a category hue.
+- Category hue is an identity signal, never a state signal: dim it for locked content, but do not swap it for gold, amber, or grey.
 
 ---
 
@@ -317,6 +320,11 @@ Board layers must communicate state in this order, from lowest to highest priori
 
 ### 6.3 Mutation Tree
 - Keep category accents and dark tree baseline; align text/button states with global tokens.
+- A mutation card reads on three channels, each with one job:
+  - **Hue = category.** Solid accent column header with `Text.OnAccent`, a 4px accent rail on every card (dimmed toward `Surface.PanelPrimary` when locked), and the card fill tinted toward the accent.
+  - **Fill brightness + border strength = purchasable now.** Affordable cards use the brightest tint (`AvailableFillBlend`) and a full-strength 2px accent border; owned-but-unaffordable cards use `OwnedFillBlend` and a 60% border; unowned-and-unaffordable cards use the neutral base and a 45% border; locked cards use `LockedNodeBG` with a faint neutral border.
+  - **Border color + badge = special state.** Gold border + MAX badge for maxed, `State.Warning` border + hourglass for next-round unlocks and no-target, full-strength accent border + surge glyph and rounds badge for an active surge. These ride on top of the category fill rather than replacing it.
+- The inspector carries a static "How to read the tree" legend built from the same `MutationTreeColors` calls the cards use, so it cannot drift from the tree.
 - Store/bank actions use primary action style; less critical actions use secondary.
 - Compact mutation-tree header actions such as `Store Mutation Points` and `Time-Lapse` should auto-size to their icon-plus-label content instead of clipping or relying on ellipsis when the header has room.
 - These compact mutation-tree header actions should use the same dark raised secondary treatment as other dark-panel utility controls, with a visible but still subtle hover highlight that clearly reads as interactive.

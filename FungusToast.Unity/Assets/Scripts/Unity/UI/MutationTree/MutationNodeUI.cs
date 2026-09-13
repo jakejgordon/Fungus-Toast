@@ -31,6 +31,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
         private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
+        private const float CategoryRailWidth = 4f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
         private const float UpgradeCostIconWidth = 28f;
@@ -76,6 +77,7 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private GameObject maxBadge;     // Small "MAX" label, top-right
         private Outline nodeStateBorder;
         private Outline searchMatchOutline;
+        private Image categoryRail;                       // Left-edge strip in the category hue; the one signal every card keeps
         private Image surgeGlyph;                         // Surge identity glyph in the status slot while no status overlay is up
         private Outline purchasablePrerequisitePulseOutline;
         private TextMeshProUGUI purchasedGrowthMark;
@@ -156,6 +158,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             // ── Subtle border outline for visual node separation ──
             EnsureNodeBorder();
+            EnsureCategoryRail();
             EnsureSearchMatchOutline();
             ConfigureNodeButtonPresentation();
 
@@ -380,25 +383,22 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             if (nodeBackground == null) return;
 
+            // The fill carries category hue plus "can I buy this now" brightness.
+            // Special states (pending, no target, surge) keep their category fill and
+            // signal through the border and status badge instead of going grey.
             if (isMaxed)
             {
-                // Gold-tinted background for maxed nodes
-                Color gold = MutationTreeColors.MaxedGold;
-                nodeBackground.color = new Color(gold.r * 0.3f, gold.g * 0.3f, gold.b * 0.15f, 1f);
+                nodeBackground.color = MutationTreeColors.MaxedNodeBG;
             }
-            else if (isDisabledBecauseNoEffect)
-            {
-                nodeBackground.color = MutationTreeColors.WarningNodeBG;
-            }
-            else if (isLocked || isSurgeActive || showPendingUnlock)
+            else if (isLocked)
             {
                 nodeBackground.color = MutationTreeColors.LockedNodeBG;
             }
-            else if (canAfford)
+            else if (isSurgeActive || canAfford)
             {
-                nodeBackground.color = MutationTreeColors.GetAffordableNodeBG(mutation.Category, currentLevel > 0 ? 0.25f : 0.20f);
+                nodeBackground.color = MutationTreeColors.GetAffordableNodeBG(mutation.Category);
             }
-            else if (currentLevel > 0)
+            else if (currentLevel > 0 || showPendingUnlock || isDisabledBecauseNoEffect)
             {
                 nodeBackground.color = MutationTreeColors.GetOwnedNodeBG(mutation.Category);
             }
@@ -406,6 +406,21 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 nodeBackground.color = MutationTreeColors.DefaultNodeBG;
             }
+
+            ApplyCategoryRail(isLocked);
+        }
+
+        /// <summary>
+        /// Locked cards dim the rail rather than dropping it, so a card scrolled away
+        /// from its header still says which column it belongs to.
+        /// </summary>
+        private void ApplyCategoryRail(bool isLocked)
+        {
+            if (categoryRail == null) return;
+
+            categoryRail.color = isLocked
+                ? MutationTreeColors.GetLockedRailColor(mutation.Category)
+                : MutationTreeColors.GetCategoryAccent(mutation.Category);
         }
 
         private string BuildNodeStateText(
@@ -450,30 +465,34 @@ namespace FungusToast.Unity.UI.MutationTree
             Color borderColor;
             Vector2 borderDistance = DefaultHighlightEffectDistance;
 
+            Color accent = MutationTreeColors.GetCategoryAccent(mutation.Category);
+
             if (isMaxed)
             {
-                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.MaxedGold, 0.85f);
+                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.MaxedGold, 0.95f);
+                borderDistance = new Vector2(2f, -2f);
             }
             else if (showPendingUnlock || isDisabledBecauseNoEffect)
             {
-                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.78f);
+                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.95f);
+                borderDistance = new Vector2(2f, -2f);
             }
-            else if (isLocked || isSurgeActive)
+            else if (isLocked)
             {
-                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Secondary, 0.78f);
+                borderColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Secondary, 0.30f);
             }
-            else if (canAfford)
+            else if (isSurgeActive || canAfford)
             {
-                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.GetCategoryAccent(mutation.Category), 0.88f);
+                borderColor = UIStyleTokens.WithAlpha(accent, 1f);
                 borderDistance = new Vector2(2f, -2f);
             }
             else if (currentLevel > 0)
             {
-                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.GetCategoryAccent(mutation.Category), 0.52f);
+                borderColor = UIStyleTokens.WithAlpha(accent, 0.60f);
             }
             else
             {
-                borderColor = UIStyleTokens.WithAlpha(MutationTreeColors.SecondaryText, 0.38f);
+                borderColor = UIStyleTokens.WithAlpha(accent, 0.45f);
             }
 
             nodeStateBorder.effectColor = borderColor;
@@ -490,7 +509,7 @@ namespace FungusToast.Unity.UI.MutationTree
             nodeBackground.color = Color.Lerp(
                 nodeBackground.color,
                 MutationTreeColors.GetCategoryAccent(mutation.Category),
-                0.24f);
+                MutationTreeColors.HoverFillBlend);
             ApplyTextContrast(useDarkText: false);
         }
 
@@ -1724,6 +1743,34 @@ namespace FungusToast.Unity.UI.MutationTree
             nodeStateBorder.effectDistance = DefaultHighlightEffectDistance;
         }
 
+        /// <summary>
+        /// Runtime-creates the left-edge category rail as the first child of the card
+        /// so it draws above the background image and below every label and badge.
+        /// </summary>
+        private void EnsureCategoryRail()
+        {
+            if (categoryRail != null) return;
+
+            Transform railParent = upgradeButton != null ? upgradeButton.transform : transform;
+
+            var railGO = new GameObject("CategoryRail");
+            railGO.transform.SetParent(railParent, false);
+            railGO.transform.SetAsFirstSibling();
+
+            categoryRail = railGO.AddComponent<Image>();
+            categoryRail.raycastTarget = false;
+
+            var layoutElem = railGO.AddComponent<LayoutElement>();
+            layoutElem.ignoreLayout = true;
+
+            var railRect = railGO.GetComponent<RectTransform>();
+            railRect.anchorMin = Vector2.zero;
+            railRect.anchorMax = new Vector2(0f, 1f);
+            railRect.pivot = new Vector2(0f, 0.5f);
+            railRect.anchoredPosition = Vector2.zero;
+            railRect.sizeDelta = new Vector2(CategoryRailWidth, 0f);
+        }
+
         private void EnsureSearchMatchOutline()
         {
             if (searchMatchOutline != null)
@@ -1841,7 +1888,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 Color highlightedBackground = Color.Lerp(
                     MutationTreeColors.GetOwnedNodeBG(mutation.Category),
                     MutationTreeColors.GetCategoryAccent(mutation.Category),
-                    0.28f);
+                    0.18f);
                 highlightedBackground.a = 1f;
                 nodeBackground.color = highlightedBackground;
             }
