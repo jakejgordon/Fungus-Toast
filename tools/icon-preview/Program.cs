@@ -1,5 +1,6 @@
 using System.Text;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Unity.UI.Icons;
 using UnityEngine;
 
@@ -28,6 +29,7 @@ namespace FungusToast.Tools.IconPreview
             Directory.CreateDirectory(outDir);
             var rows = new List<ReviewRow>();
             rows.AddRange(RenderSurges(Path.Combine(outDir, "surges")));
+            rows.AddRange(RenderMycovariants(Path.Combine(outDir, "mycovariants")));
 
             string html = BuildHtml(rows);
             string htmlPath = Path.Combine(outDir, "icon-review.html");
@@ -48,6 +50,18 @@ namespace FungusToast.Tools.IconPreview
                 SurgeIcons.Draw(canvas, id);
                 string fileStem = Path.Combine(dir, Slug(name));
                 yield return WriteRow("Surge", name, summary, canvas, fileStem);
+            }
+        }
+
+        private static IEnumerable<ReviewRow> RenderMycovariants(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            foreach (Mycovariant mycovariant in MycovariantRepository.All)
+            {
+                var canvas = new IconCanvas();
+                MycovariantIcons.Draw(canvas, mycovariant);
+                string fileStem = Path.Combine(dir, Slug(mycovariant.Name));
+                yield return WriteRow("Mycovariant", mycovariant.Name, FirstSentence(mycovariant.Description), canvas, fileStem);
             }
         }
 

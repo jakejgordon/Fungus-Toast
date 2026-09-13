@@ -203,27 +203,28 @@ namespace FungusToast.Unity.UI.Icons
                     continue;
                 }
 
-                float cursor = 0f;
-                while (cursor < length)
+                // Dashes are indexed along the whole path so no floating-point phase accumulates.
+                float segmentEnd = travelled + length;
+                int firstDash = (int)Math.Floor(travelled / period);
+                int lastDash = (int)Math.Floor(segmentEnd / period);
+                for (int k = firstDash; k <= lastDash; k++)
                 {
-                    float phase = (travelled + cursor) % period;
-                    bool on = phase < dash;
-                    float span = on ? dash - phase : period - phase;
-                    float end = Math.Min(length, cursor + span);
-                    if (on)
+                    float dashStart = Math.Max(travelled, k * period);
+                    float dashEnd = Math.Min(segmentEnd, k * period + dash);
+                    if (dashEnd <= dashStart)
                     {
-                        float t0 = cursor / length;
-                        float t1 = end / length;
-                        Line(
-                            a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0,
-                            a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1,
-                            thickness, color);
+                        continue;
                     }
 
-                    cursor = end;
+                    float t0 = (dashStart - travelled) / length;
+                    float t1 = (dashEnd - travelled) / length;
+                    Line(
+                        a.x + (b.x - a.x) * t0, a.y + (b.y - a.y) * t0,
+                        a.x + (b.x - a.x) * t1, a.y + (b.y - a.y) * t1,
+                        thickness, color);
                 }
 
-                travelled += length;
+                travelled = segmentEnd;
             }
         }
 
