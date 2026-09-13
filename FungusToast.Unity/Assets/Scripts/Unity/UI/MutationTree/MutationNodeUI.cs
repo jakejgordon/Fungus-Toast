@@ -31,7 +31,12 @@ namespace FungusToast.Unity.UI.MutationTree
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
         private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
-        private const float CategoryRailWidth = 4f;
+        private const float CategoryRailWidth = 3f;
+        // Inset from the card edge so the rail reads as a stripe inside the card, not as a
+        // thicker or differently coloured left border; flush against the 2px state outline it
+        // looked like a frame defect on maxed (green) and available (same-hue) cards.
+        private const float CategoryRailEdgeInset = 5f;
+        private const float CategoryRailVerticalInset = 8f;
 
         // Upgrade-cost badge layout constants (must match prefab values)
         private const float UpgradeCostIconWidth = 28f;
@@ -1744,8 +1749,9 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         /// <summary>
-        /// Runtime-creates the left-edge category rail as the first child of the card
-        /// so it draws above the background image and below every label and badge.
+        /// Runtime-creates the category rail, a short stripe inset from the card's left edge,
+        /// as the first child of the card so it draws above the background image and below
+        /// every label and badge.
         /// </summary>
         private void EnsureCategoryRail()
         {
@@ -1767,8 +1773,8 @@ namespace FungusToast.Unity.UI.MutationTree
             railRect.anchorMin = Vector2.zero;
             railRect.anchorMax = new Vector2(0f, 1f);
             railRect.pivot = new Vector2(0f, 0.5f);
-            railRect.anchoredPosition = Vector2.zero;
-            railRect.sizeDelta = new Vector2(CategoryRailWidth, 0f);
+            railRect.anchoredPosition = new Vector2(CategoryRailEdgeInset, 0f);
+            railRect.sizeDelta = new Vector2(CategoryRailWidth, -CategoryRailVerticalInset * 2f);
         }
 
         private void EnsureSearchMatchOutline()
