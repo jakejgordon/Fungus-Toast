@@ -2,6 +2,7 @@ using System.Text;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Icons;
 using UnityEngine;
 
@@ -36,6 +37,7 @@ namespace FungusToast.Tools.IconPreview
             rows.AddRange(RenderSurges(Path.Combine(outDir, "surges")));
             rows.AddRange(RenderMycovariants(Path.Combine(outDir, "mycovariants")));
             rows.AddRange(RenderAdaptations(Path.Combine(outDir, "adaptations")));
+            rows.Add(RenderLock(Path.Combine(outDir, "status")));
 
             string html = BuildHtml(rows);
             string htmlPath = Path.Combine(outDir, "icon-review.html");
@@ -124,6 +126,14 @@ namespace FungusToast.Tools.IconPreview
                 string fileStem = Path.Combine(dir, Slug(adaptation.Name));
                 yield return WriteRow("Adaptation", adaptation.Name, FirstSentence(adaptation.Description), canvas, fileStem);
             }
+        }
+
+        private static ReviewRow RenderLock(string dir)
+        {
+            Directory.CreateDirectory(dir);
+            var canvas = new IconCanvas(64);
+            StatusGlyphs.DrawLock(canvas, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.Canvas);
+            return WriteRow("Status glyph", "Lock", "Locked mutation-tree card overlay (transparent background).", canvas, Path.Combine(dir, "lock"));
         }
 
         private static ReviewRow WriteRow(string family, string name, string summary, IconCanvas canvas, string fileStem)

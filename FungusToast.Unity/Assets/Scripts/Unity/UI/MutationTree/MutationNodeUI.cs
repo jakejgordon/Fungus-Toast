@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using FungusToast.Unity.UI.Icons;
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using FungusToast.Core.Mutations;
@@ -145,6 +146,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureMutationNameFit();
             ConfigureStateTextFit();
             ConfigureStatusIndicator(lockOverlay);
+            ApplyLockGlyph();
             ConfigureStatusIndicator(pendingUnlockOverlay);
             ConfigureStatusIndicator(surgeActiveOverlay);
             EnsureSurgeGlyph();
@@ -2180,6 +2182,24 @@ namespace FungusToast.Unity.UI.MutationTree
             stateLayout.minHeight = NodeStateTextHeight;
             stateLayout.preferredHeight = NodeStateTextHeight;
             stateLayout.flexibleHeight = 0f;
+        }
+
+        /// <summary>
+        /// Swap the prefab's near-black lock PNG for the drawn light lock so it reads on the
+        /// dark locked-card fill.
+        /// </summary>
+        private void ApplyLockGlyph()
+        {
+            if (lockOverlay == null)
+                return;
+
+            var lockImage = lockOverlay.GetComponent<Image>();
+            if (lockImage == null)
+                return;
+
+            lockImage.sprite = StatusGlyphs.Lock;
+            lockImage.color = Color.white;
+            lockImage.preserveAspect = true;
         }
 
         private static void ConfigureStatusIndicator(GameObject indicator)
