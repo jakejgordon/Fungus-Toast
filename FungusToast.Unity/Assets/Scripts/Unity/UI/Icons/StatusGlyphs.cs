@@ -14,7 +14,7 @@ namespace FungusToast.Unity.UI.Icons
 
         private static Sprite lockSprite;
 
-        /// <summary>Padlock in <c>Text.Secondary</c>; cached.</summary>
+        /// <summary>Padlock in <c>Text.Muted</c>: legible on the dark locked fill without outshining the card name; cached.</summary>
         public static Sprite Lock
         {
             get
@@ -22,7 +22,7 @@ namespace FungusToast.Unity.UI.Icons
                 if (lockSprite == null)
                 {
                     var canvas = new IconCanvas(Size);
-                    DrawLock(canvas, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.Canvas);
+                    DrawLock(canvas, UIStyleTokens.Text.Muted, UIStyleTokens.Surface.Canvas);
                     lockSprite = canvas.ToSprite("StatusGlyph_Lock");
                 }
 

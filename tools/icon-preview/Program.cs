@@ -132,7 +132,7 @@ namespace FungusToast.Tools.IconPreview
         {
             Directory.CreateDirectory(dir);
             var canvas = new IconCanvas(64);
-            StatusGlyphs.DrawLock(canvas, UIStyleTokens.Text.Secondary, UIStyleTokens.Surface.Canvas);
+            StatusGlyphs.DrawLock(canvas, UIStyleTokens.Text.Muted, UIStyleTokens.Surface.Canvas);
             return WriteRow("Status glyph", "Lock", "Locked mutation-tree card overlay (transparent background).", canvas, Path.Combine(dir, "lock"));
         }
 
