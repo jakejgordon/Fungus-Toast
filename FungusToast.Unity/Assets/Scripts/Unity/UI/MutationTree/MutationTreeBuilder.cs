@@ -12,6 +12,7 @@ namespace FungusToast.Unity.UI.MutationTree
     public class MutationTreeBuilder : MonoBehaviour
     {
         private const float HeaderTitleHeight = 40f;
+        private const float HeaderLabelPadding = 10f;
         private const float MutationNodeWidth = 132f;
         private const float MutationNodeHeight = 120f;
 
@@ -163,6 +164,9 @@ namespace FungusToast.Unity.UI.MutationTree
                     // Bold: the regular-weight label auto-shrinks on long names and reads thin
                     // against the saturated accent fill.
                     headerText.fontStyle = FontStyles.Bold;
+                    // Auto-sizing fits the label to the rect exactly, so without a margin long
+                    // names sit flush against the header edges.
+                    headerText.margin = new Vector4(HeaderLabelPadding, 0f, HeaderLabelPadding, 0f);
                 }
 
                 var headerLayout = headerGO.GetComponent<LayoutElement>();
