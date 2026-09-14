@@ -263,7 +263,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: StrainProfilingRewardId,
                         displayName: "Strain Profiling",
-                        description: "During campaign games, enemy campaign AI tooltips reveal a friendly name and a short note about that opponent's style.",
+                        description: "During campaign games, inspecting an enemy campaign AI reveals a short note about that opponent's style.",
                         type: MoldinessUnlockType.UnlockCampaignIntel,
                         requiredUnlockLevel: 3,
                         categoryLabel: "Permanent Campaign Upgrade",

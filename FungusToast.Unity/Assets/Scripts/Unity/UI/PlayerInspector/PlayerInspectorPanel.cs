@@ -429,7 +429,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             var manager = GameManager.Instance;
 
-            titleText.text = trackedPlayer.PlayerName;
+            titleText.text = PlayerInspectorContent.GetDisplayName(trackedPlayer, manager);
 
             var sections = new List<PlayerInspectorSection>(
                 PlayerInspectorContent.BuildSummarySections(trackedPlayer, manager, includeTraitLines: false));

@@ -22,7 +22,30 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private const int MaxListedItems = 6;
 
         /// <summary>
-        /// The always-visible player summary: identity, highest mutation, mycovariants, adaptations.
+        /// The name the inspector shows for a player. AI players are constructed with a slot
+        /// name ("AI Player 2") that means nothing to the person playing, so an AI is shown under
+        /// its roster fantasy name whenever its strategy has one. Humans keep their given name.
+        /// </summary>
+        public static string GetDisplayName(Player? player, GameManager? manager)
+        {
+            if (player == null)
+            {
+                return "(unset)";
+            }
+
+            if (player.PlayerType == PlayerTypeEnum.Human)
+            {
+                return player.PlayerName;
+            }
+
+            string? friendlyName = GetStrategyCatalogEntry(player, manager)?.FriendlyName;
+            return string.IsNullOrWhiteSpace(friendlyName) ? player.PlayerName : friendlyName!;
+        }
+
+        /// <summary>
+        /// The always-visible player summary: highest mutation, mycovariants, adaptations, plus
+        /// the opponent's style note once Strain Profiling is unlocked. The player's name is not
+        /// a line here; the surface shows <see cref="GetDisplayName"/> as its title.
         /// Set <paramref name="includeTraitLines"/> to false on a surface that renders the owned
         /// mycovariants and adaptations as icon grids instead, so the same names are not listed twice.
         /// </summary>
@@ -44,18 +67,12 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             if (campaignAiProfile != null)
             {
-                lines.Add(new PlayerInspectorLine("Opponent", campaignAiProfile.FriendlyName));
                 lines.Add(new PlayerInspectorLine("Strategy", campaignAiProfile.AIPlayerIntentions));
                 lines.Add(new PlayerInspectorLine("Campaign Unlock", "Strain Profiling"));
             }
-            else
+            else if (IsDevelopmentTestingEnabled(manager))
             {
-                lines.Add(new PlayerInspectorLine("Player Name", player.PlayerName));
-
-                if (IsDevelopmentTestingEnabled(manager))
-                {
-                    lines.Add(new PlayerInspectorLine("Strategy", GetStrategyDisplayText(player)));
-                }
+                lines.Add(new PlayerInspectorLine("Strategy", GetStrategyDisplayText(player)));
             }
 
             lines.Add(new PlayerInspectorLine("Highest Mutation", GetHighestMutationText(player)));
@@ -308,6 +325,49 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 : player.MutationStrategy!.StrategyName;
         }
 
+        /// <summary>
+        /// The catalog entry behind an AI player's strategy. The active mode's roster is checked
+        /// first; the other sets are fallbacks so a proven strategy dropped into a campaign preset
+        /// (or a campaign strategy in a quick game) still resolves its presentation.
+        /// </summary>
+        private static StrategyCatalogEntry? GetStrategyCatalogEntry(Player player, GameManager? manager)
+        {
+            string? strategyName = player.MutationStrategy?.StrategyName;
+            if (string.IsNullOrWhiteSpace(strategyName))
+            {
+                return null;
+            }
+
+            bool isCampaign = manager != null && manager.CurrentGameMode == GameMode.Campaign;
+            StrategySetEnum preferredSet = isCampaign ? StrategySetEnum.Campaign : StrategySetEnum.Proven;
+
+            StrategyCatalogEntry? entry = AIRoster.GetStrategyCatalogEntry(preferredSet, strategyName!);
+            if (entry != null)
+            {
+                return entry;
+            }
+
+            foreach (StrategySetEnum set in (StrategySetEnum[])System.Enum.GetValues(typeof(StrategySetEnum)))
+            {
+                if (set == preferredSet)
+                {
+                    continue;
+                }
+
+                entry = AIRoster.GetStrategyCatalogEntry(set, strategyName!);
+                if (entry != null)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// The opponent's style note, shown only in campaign games once Strain Profiling is
+        /// unlocked. The fantasy name itself is not gated; see <see cref="GetDisplayName"/>.
+        /// </summary>
         private static StrategyCatalogEntry? GetVisibleCampaignAiProfile(Player player, GameManager? manager)
         {
             if (manager == null || manager.CurrentGameMode != GameMode.Campaign)
@@ -327,16 +387,8 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 return null;
             }
 
-            string? strategyName = player.MutationStrategy?.StrategyName;
-            if (string.IsNullOrWhiteSpace(strategyName))
-            {
-                return null;
-            }
-
-            var entry = AIRoster.GetStrategyCatalogEntry(StrategySetEnum.Campaign, strategyName);
-            if (entry == null
-                || string.IsNullOrWhiteSpace(entry.FriendlyName)
-                || string.IsNullOrWhiteSpace(entry.AIPlayerIntentions))
+            var entry = GetStrategyCatalogEntry(player, manager);
+            if (entry == null || string.IsNullOrWhiteSpace(entry.AIPlayerIntentions))
             {
                 return null;
             }
