@@ -258,3 +258,81 @@ safe action is to widen generation with an explicit, testable large-board
 mechanism (for example a bounded goal-level or goal-inclusion operator), then
 repeat static diversity screening before any smoke run. This is a search-space
 finding, not evidence that the parent or failed candidate should be promoted.
+
+## E1 preregistered evaluation — Bloom-20 insertion candidate `9c5157e4`
+
+Candidate `candidate.anabolic-grow-catabr-putreregen.9c5157e4e166`
+(`CAND_p8-elite-large-board-v1_GoalInsertion_9c5157e4`) inserts a Mycelial Bloom
+level-20 goal directly after the Anabolic opener. Static characterization shows
+Bloom 21 and Growth 26, versus the parent's Bloom 10 and Growth 16; it differs
+from both retained Elite representatives. The hypothesis is explicit: early
+scalable growth improves late-board territory recovery, not merely the parent's
+overall score.
+
+The paired parent/candidate swap fixes `TST_CampaignMirror_AI13_AnabolicFirst`
+as opponent. Screening is 180x140, rotating slots, seed `2026091301`, with
+nutrients, Mycovariants, and starting Adaptations disabled; holdout, if earned,
+is 200x160 with seed `2026091401`. Gates are 5-game smoke, 20-game calibration,
+50-game comparison, then 100-game holdout, with a preregistered normalized-board-
+share increase margin of 0.05. Smoke control and treatment both completed with
+valid resolved-manifest checksums and no integrity failure, so calibration is
+now authorized.
+
+The first manually launched calibration pair omitted `--pairing-group-id`; its
+artifacts therefore contain blank pair IDs and are excluded as an integrity
+failure, not used as evidence. The corrected 20-game calibration control and
+treatment both completed with checksum-valid resolved manifests and shared
+pairing group `p8-e1-bloom20-calibration`. Candidate-minus-parent normalized
+board share is `+0.3771` (95% CI `+0.0979..+0.6564`) across 20 pairs. Its upper
+bound is not below the frozen `-0.05` calibration boundary, so it clears
+calibration; this is not a promotion, band, or efficacy verdict.
+
+### E1 Bloom-20 comparison preregistration
+
+The next stage is a 50-game-per-arm paired comparison in the unchanged frozen
+screening context (180x140, seed `2026091301`, rotating slots, and nutrients,
+Mycovariants, and starting Adaptations disabled), with pairing group
+`p8-e1-bloom20-comparison`. The treatment target is
+`candidate.anabolic-grow-catabr-putreregen.9c5157e4e166`; its control
+counterpart is `legacy.proven.anabolic-grow-catabr-putreregen.v1`; the fixed
+opponent remains `TST_CampaignMirror_AI13_AnabolicFirst`. The preregistered
+hypothesis ID is `p8-e1-bloom20-comparison`: paired mean difference in
+normalized board share, direction Increase, margin `+0.05`. A checksum-valid
+`supported` verdict is required to earn the distinct-seed, 200x160 holdout;
+any other verdict stops this candidate without holdout.
+
+The comparison control and treatment completed with checksum-valid manifests.
+Its preregistered verdict is `supported`: candidate-minus-parent paired
+normalized board share is `+0.3513` (95% CI `+0.1634..+0.5391`) across 50
+pairs. Combined runtime is 647.956 seconds within the 900-second budget. This
+earns the holdout; it is still not a player-facing promotion or measured Elite
+band.
+
+### E1 Bloom-20 holdout preregistration
+
+The final test is a 100-game-per-arm paired holdout on the already declared
+different large-board context: 200x160, seed `2026091401`, rotating slots,
+and nutrients, Mycovariants, and starting Adaptations disabled. Its pairing
+group and hypothesis ID are both `p8-e1-bloom20-holdout`; target, control,
+fixed opponent, primary metric, Increase direction, and `+0.05` margin remain
+unchanged. Only a checksum-valid `supported` verdict can advance this candidate
+to contextual classification; otherwise it stops without promotion.
+
+That first holdout control is checksum-valid but incomplete: it reached 97 of
+100 games and the runner recorded `interrupted` at its 900-second cap. It is
+an integrity artifact only; no treatment or outcome analysis is permitted.
+The observed execution pace therefore invalidates the original runtime ceiling,
+not the candidate. A fresh replacement holdout is preregistered with the same
+200x160 context but unused seed `2026091501`, pairing group and hypothesis ID
+`p8-e1-bloom20-holdout2`, and a 2100-second combined-stage runtime budget. The
+increased budget is set solely from the incomplete control's 97 games in 900
+seconds plus a conservative paired-run allowance; it is not based on outcomes.
+All other target, control, opponent, metric, direction, and margin fields are
+unchanged. The incomplete artifact remains excluded.
+
+The replacement control and treatment both completed with checksum-valid
+manifests. The holdout verdict is `supported`: candidate-minus-parent paired
+normalized board share is `+0.5494` (95% CI `+0.4484..+0.6503`) across 100
+pairs. Combined runtime is 1757.365 seconds within the preregistered
+2100-second budget. The candidate has earned contextual classification; this
+does not itself assign a player-facing pool or difficulty band.

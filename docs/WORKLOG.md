@@ -1276,6 +1276,45 @@ measurement model, phase gates, and open product decisions are in
     testable goal-level or goal-inclusion generation operator tied to an
     explicit large-board mechanism, then repeat static diversity screening.
 
+87. E1 now has one expanded, mechanism-specific candidate: Bloom-20 insertion
+    `9c5157e4`, which raises observed Bloom from 10 to 21 and Growth from 16 to
+    26. It passed static diversity review and its matched five-game smoke pair
+    on the frozen 180x140 context: both artifacts are complete and checksum-
+    valid. Its 20-game paired calibration is preregistered with a +0.05
+    normalized-board-share increase margin; no band or promotion claim follows
+    from smoke.
+
+88. Bloom-20's first calibration pair was excluded because the manually launched
+    arms omitted their pairing-group ID, leaving blank pair IDs. The corrected
+    checksum-valid 20-game pair estimated candidate-minus-parent normalized
+    board share at `+0.3771` (95% CI `+0.0979..+0.6564`). That clears the frozen
+    calibration stop rule (upper bound is not below `-0.05`), so a 50-game
+    paired comparison has been preregistered before execution. This remains
+    neither a promotion nor a measured Elite band.
+
+89. Bloom-20's checksum-valid 50-game comparison emitted the preregistered
+    `supported` verdict: candidate-minus-parent normalized board share was
+    `+0.3513` (95% CI `+0.1634..+0.5391`) across 50 pairs, with 647.956 seconds
+    combined runtime against a 900-second budget. The distinct-seed 200x160
+    100-game-per-arm holdout is now preregistered; passing it is required before
+    contextual classification and still does not itself place the candidate in a
+    player-facing pool.
+
+90. The first 200x160 holdout control stopped cleanly but incomplete at the
+    frozen 900-second cap (97/100 games). Its checksum is valid, but it is an
+    integrity-only artifact: treatment and outcome analysis are forbidden. A
+    fresh replacement holdout is preregistered with unused seed `2026091501`
+    and a 2100-second combined-stage budget, derived only from the observed
+    97-games-in-900-seconds execution pace; its pairing group is
+    `p8-e1-bloom20-holdout2`. No partial result will be reused.
+
+91. The replacement holdout completed checksum-valid control and treatment
+    artifacts and emitted `supported`: candidate-minus-parent normalized board
+    share was `+0.5494` (95% CI `+0.4484..+0.6503`) across 100 pairs. Combined
+    runtime was 1757.365 seconds within the preregistered 2100-second budget.
+    Bloom-20 now advances to contextual classification; it has not been
+    promoted to a player-facing pool or assigned a difficulty band.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
