@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "fungus-toast.ai-calibration-matrix.v1",
+  "matrixId": "p8-bloom20-contextual-v1",
+  "purpose": "P8 E1 contextual classification for generated Bloom-20 candidate against the frozen P7 Proven reference panel. The candidate alone is classified; reference-opponent rows are not a P7 remeasurement.",
+  "strategySet": "generated",
+  "strategyNames": [
+    "CAND_p8-elite-large-board-v1_GoalInsertion_9c5157e4",
+    "TST_CampaignMirror_AI13_AnabolicFirst",
+    "TST_BalancedControl_AnabolicFirst",
+    "Anabolic>Grow>CatabR>PutreRegen",
+    "Grow>Kill>Reclaim(Econ/Reclaim)",
+    "Grow>Kill>Reclaim(Econ)",
+    "TST_BalancedControl_MaxEconomy",
+    "TST_CampaignMirror_AI13_BalancedControl_MaxEconomy",
+    "Grow>Defend>Kill",
+    "Filament Regrowth",
+    "Mutate>Grow>Kill(Max Econ)",
+    "Creeping>Necrosporulation",
+    "Power Mutations Max Econ",
+    "TST_AnabolicCreepingNecroRegressionCascade",
+    "TST_CampaignPlayer_SafeBaseline",
+    "Grow>Mutate>Kill(Max Econ)",
+    "TST_CreepingNecroRegressionCascade",
+    "TST_AnabolicBeaconNecroRegressionCascade",
+    "Growth/Resilience",
+    "Best_MaxEcon_Surge10_HyphalSurge"
+  ],
+  "selectionPolicy": "randomUnique",
+  "minimumGamesPerStrategy": 25,
+  "calibrationContexts": [
+    { "contextId": "duel.small.square.rectangle.generated.80x80", "playerCount": 2, "boardWidth": 80, "boardHeight": 80, "baseSeed": 2026090700, "gamesPerCondition": 300, "repeats": 1 },
+    { "contextId": "duel.medium.square.rectangle.generated.120x120", "playerCount": 2, "boardWidth": 120, "boardHeight": 120, "baseSeed": 2026091000, "gamesPerCondition": 300, "repeats": 1 },
+    { "contextId": "smalltable.medium.square.rectangle.generated.120x120", "playerCount": 4, "boardWidth": 120, "boardHeight": 120, "baseSeed": 2026091300, "gamesPerCondition": 200, "repeats": 1 },
+    { "contextId": "smalltable.large.square.rectangle.generated.180x180", "playerCount": 4, "boardWidth": 180, "boardHeight": 180, "baseSeed": 2026091500, "gamesPerCondition": 200, "repeats": 1 },
+    { "contextId": "crowded.large.square.rectangle.generated.180x180", "playerCount": 6, "boardWidth": 180, "boardHeight": 180, "baseSeed": 2026091700, "gamesPerCondition": 100, "repeats": 1 }
+  ],
+  "holdoutContexts": [
+    { "contextId": "duel.medium.wide.rectangle.generated.140x100", "playerCount": 2, "boardWidth": 140, "boardHeight": 100, "baseSeed": 2026092000, "gamesPerCondition": 300, "repeats": 1 },
+    { "contextId": "smalltable.small.tall.rectangle.generated.60x100", "playerCount": 4, "boardWidth": 60, "boardHeight": 100, "baseSeed": 2026092300, "gamesPerCondition": 200, "repeats": 1 }
+  ],
+  "totalGameBudget": 1600,
+  "runtimeBudgetSeconds": 21600
+}
