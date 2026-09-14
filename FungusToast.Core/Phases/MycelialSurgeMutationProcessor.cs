@@ -231,7 +231,7 @@ namespace FungusToast.Core.Phases
                 if (level <= 0 || !player.IsSurgeActive(MutationIds.MimeticResilience))
                     continue;
 
-                var targetPlayers = FindMimeticResilienceTargets_New(player, players, board);
+                var targetPlayers = GetMimeticResilienceTargets(player, players, board);
                 if (targetPlayers.Count == 0)
                     continue;
 
@@ -371,10 +371,10 @@ namespace FungusToast.Core.Phases
             GameBoard board,
             IReadOnlyDictionary<int, PlayerBoardSummary>? boardSummaries = null)
         {
-            return FindMimeticResilienceTargets_New(actingPlayer, players, board, boardSummaries).Count > 0;
+            return GetMimeticResilienceTargets(actingPlayer, players, board, boardSummaries).Count > 0;
         }
 
-        private static List<Player> FindMimeticResilienceTargets_New(
+        public static List<Player> GetMimeticResilienceTargets(
             Player actingPlayer,
             List<Player> players,
             GameBoard board,

@@ -67,6 +67,8 @@ internal class TestSimulationObserver : ISimulationObserver
         LastPrimePulseMutationPointsAwarded = mutationPointsAwarded;
     }
     public virtual void RecordBankedPoints(int playerId, int pointsBanked) => LastBankedPoints = pointsBanked;
+    public int SurgeOpportunitiesDeclined { get; private set; }
+    public void RecordAiSurgeOpportunityDeclined(int playerId, int mutationId) => SurgeOpportunitiesDeclined++;
     public void RecordHyphalSurgeGrowth(int playerId) { }
     public void RecordDirectedVectorGrowth(int playerId, int cellsPlaced) { }
     public void ReportJettingMyceliumInfested(int playerId, int infested) { }

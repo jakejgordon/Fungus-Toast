@@ -38,8 +38,10 @@ namespace FungusToast.Core.AI
             if (pointsBefore > 0)
             {
                 simulationObserver.RecordAiMutationSpendingDecision(player.PlayerId, pointsBefore, pointsBefore - player.MutationPoints);
+                // A legal upgrade the AI deliberately declined (an unplaceable beacon, a surge the board
+                // does not reward yet, a Latent Polymorphism reserve) is a decision, not a failure.
                 var hasAffordableLegalUpgrade = allMutations.Any(mutation =>
-                    player.CanUpgrade(mutation, board.CurrentRound, board)
+                    MutationSpendingHelper.CanAttemptUpgradeWithTargeting(player, mutation, board, board.CurrentRound)
                     && player.GetMutationPointCost(mutation) <= player.MutationPoints);
                 if (player.MutationPoints > 0 && !player.WantsToBankPointsThisTurn && hasAffordableLegalUpgrade)
                     simulationObserver.RecordAiMutationDecisionFailure(player.PlayerId);

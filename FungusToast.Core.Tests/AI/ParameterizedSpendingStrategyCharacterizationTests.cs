@@ -1,6 +1,7 @@
 ﻿using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Config;
+using FungusToast.Core.Growth;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
@@ -198,7 +199,7 @@ public class ParameterizedSpendingStrategyCharacterizationTests
     [Fact]
     public void Surge_banking_preserves_points_when_activation_is_affordable_by_the_next_window()
     {
-        var surge = MutationRegistry.GetById(MutationIds.HyphalSurge)!;
+        var surge = CreateMutation(902, points: 3, isSurge: true);
         var strategy = CreateStrategy(
             surgePriorityIds: new List<int> { surge.Id },
             surgeFrequency: 4);
@@ -417,6 +418,152 @@ public class ParameterizedSpendingStrategyCharacterizationTests
             player.PlayerMutations.Count > 0,
             "The strategy should still have spent its points on something.");
         _ = allowed;
+    }
+
+    [Fact]
+    public void Planned_surge_is_declined_and_recorded_when_the_board_does_not_reward_it()
+    {
+        var chitin = MutationRegistry.GetById(MutationIds.ChitinFortification)!;
+        var ordinary = CreateMutation(906, points: 2);
+        var strategy = CreateStrategy(
+            priorityCategories: new List<MutationCategory> { MutationCategory.Growth },
+            surgePriorityIds: new List<int> { chitin.Id },
+            surgeFrequency: 1);
+        var (board, player) = CreateBoardAndPlayer(width: 10, height: 10, mutationPoints: 4, round: 5);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 1);
+        SeedRow(board, player, cellCount: 3); // Far too small to absorb two rounds of fortification
+        var observer = new TestSimulationObserver();
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { chitin, ordinary }, board, new Random(1), observer);
+
+        Assert.False(player.IsSurgeActive(chitin.Id));
+        Assert.Equal(1, observer.SurgeOpportunitiesDeclined);
+        Assert.Equal(2, player.GetMutationLevel(ordinary.Id));
+    }
+
+    [Fact]
+    public void Off_schedule_planned_surge_fires_before_fallback_when_the_opportunity_is_strong()
+    {
+        var chitin = MutationRegistry.GetById(MutationIds.ChitinFortification)!;
+        var ordinary = CreateMutation(907, points: 3);
+        var strategy = CreateStrategy(
+            priorityCategories: new List<MutationCategory> { MutationCategory.Growth },
+            surgePriorityIds: new List<int> { chitin.Id },
+            surgeFrequency: 5);
+        var (board, player) = CreateBoardAndPlayer(width: 10, height: 10, mutationPoints: 3, round: 3);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 1);
+        SeedRow(board, player, cellCount: 40);
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { chitin, ordinary }, board, new Random(1), new TestSimulationObserver());
+
+        Assert.True(player.IsSurgeActive(chitin.Id), "A strong Chitin opportunity should not wait for the cadence round.");
+        Assert.Equal(0, player.GetMutationLevel(ordinary.Id));
+    }
+
+    [Fact]
+    public void Scheduled_pass_picks_the_planned_surge_with_the_largest_margin_not_the_first_listed()
+    {
+        var autolytic = MutationRegistry.GetById(MutationIds.HyphalSurge)!;
+        var chitin = MutationRegistry.GetById(MutationIds.ChitinFortification)!;
+        var strategy = CreateStrategy(
+            surgePriorityIds: new List<int> { chitin.Id, autolytic.Id },
+            surgeFrequency: 5);
+        var (board, player) = CreateBoardAndPlayer(width: 12, height: 12, mutationPoints: 7, round: 10);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 5, currentRound: 1);
+        SeedCheckerboard(board, player, cellCount: 20); // Every cell has four open targets: the best case for Autolytic
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { chitin, autolytic }, board, new Random(1), new TestSimulationObserver());
+
+        Assert.True(player.IsSurgeActive(autolytic.Id));
+        Assert.False(player.IsSurgeActive(chitin.Id));
+    }
+
+
+    [Fact]
+    public void Unplanned_surge_is_never_bought_even_when_the_board_strongly_rewards_it()
+    {
+        var autolytic = MutationRegistry.GetById(MutationIds.HyphalSurge)!;
+        var ordinary = CreateMutation(908, points: 2); // Max level 5: 10 points of ordinary spending available
+        var strategy = CreateStrategy();
+        var (board, player) = CreateBoardAndPlayer(width: 12, height: 12, mutationPoints: 20, round: 10);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 5, currentRound: 1);
+        SeedCheckerboard(board, player, cellCount: 20);
+        Assert.True(SurgeOpportunityEvaluator.Evaluate(player, autolytic, board).IsStrong);
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { autolytic, ordinary }, board, new Random(1), new TestSimulationObserver());
+
+        Assert.Equal(5, player.GetMutationLevel(ordinary.Id));
+        Assert.False(player.IsSurgeActive(autolytic.Id), "Leftover points belong to the build order, not to a surge the author did not plan.");
+        Assert.Equal(10, player.MutationPoints);
+    }
+
+    [Fact]
+    public void Surge_banking_requires_the_surge_to_be_rewarded_by_the_board()
+    {
+        var chitin = MutationRegistry.GetById(MutationIds.ChitinFortification)!;
+        var strategy = CreateStrategy(
+            surgePriorityIds: new List<int> { chitin.Id },
+            surgeFrequency: 4);
+        var (board, player) = CreateBoardAndPlayer(width: 10, height: 10, mutationPoints: 1, round: 2);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 1);
+        SeedRow(board, player, cellCount: 3);
+        var observer = new TestSimulationObserver();
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { chitin }, board, new Random(1), observer);
+
+        Assert.Null(observer.LastBankedPoints);
+        Assert.False(player.WantsToBankPointsThisTurn);
+    }
+
+    [Fact]
+    public void Surge_banking_covers_a_first_activation_once_prerequisites_are_met()
+    {
+        var chitin = MutationRegistry.GetById(MutationIds.ChitinFortification)!;
+        var strategy = CreateStrategy(
+            surgePriorityIds: new List<int> { chitin.Id },
+            surgeFrequency: 4);
+        var (board, player) = CreateBoardAndPlayer(width: 10, height: 10, mutationPoints: 1, round: 2);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 5, currentRound: 1);
+        SeedRow(board, player, cellCount: 40);
+        var observer = new TestSimulationObserver();
+
+        strategy.SpendMutationPoints(player, new List<Mutation> { chitin }, board, new Random(1), observer);
+
+        Assert.Equal(1, observer.LastBankedPoints);
+        Assert.True(player.WantsToBankPointsThisTurn);
+    }
+
+    private static void SeedRow(GameBoard board, Player player, int cellCount)
+    {
+        for (int i = 0; i < cellCount; i++)
+            SeedLiving(board, player, i % board.Width, i / board.Width);
+    }
+
+    private static void SeedBlock(GameBoard board, Player player, int size)
+    {
+        int offset = (board.Width - size) / 2;
+        for (int x = 0; x < size; x++)
+        for (int y = 0; y < size; y++)
+            SeedLiving(board, player, offset + x, offset + y);
+    }
+
+    private static void SeedCheckerboard(GameBoard board, Player player, int cellCount)
+    {
+        int placed = 0;
+        for (int x = 1; x < board.Width - 1 && placed < cellCount; x += 2)
+        for (int y = 1; y < board.Height - 1 && placed < cellCount; y += 2)
+        {
+            SeedLiving(board, player, x, y);
+            placed++;
+        }
+    }
+
+    private static void SeedLiving(GameBoard board, Player player, int x, int y)
+    {
+        int tileId = board.GetTile(x, y)!.TileId;
+        board.PlaceFungalCell(new FungalCell(player.PlayerId, tileId, GrowthSource.InitialSpore, lastOwnerPlayerId: null));
+        player.AddControlledTile(tileId);
     }
 
     private static (GameBoard Board, Player Player) CreateBoardAndPlayer(

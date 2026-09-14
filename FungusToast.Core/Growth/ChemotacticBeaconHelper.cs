@@ -10,7 +10,7 @@ namespace FungusToast.Core.Growth
 {
     public static class ChemotacticBeaconHelper
     {
-        private sealed class BeaconPlacementCandidate
+        public sealed class BeaconPlacementCandidate
         {
             public BeaconPlacementCandidate(
                 BoardTile tile,
@@ -83,6 +83,13 @@ namespace FungusToast.Core.Growth
             => GameBalance.ChemotacticBeaconBaseTiles + Math.Max(0, level) * GameBalance.ChemotacticBeaconTilesPerLevel;
 
         public static int? TrySelectAITargetTile(Player player, GameBoard board, int projectedLevel, int surgeDuration)
+            => TrySelectAITargetCandidate(player, board, projectedLevel, surgeDuration)?.Tile.TileId;
+
+        /// <summary>
+        /// The marker the AI would place right now, with the path statistics that ranked it, so callers
+        /// can judge whether the activation is worth its cost before committing.
+        /// </summary>
+        public static BeaconPlacementCandidate? TrySelectAITargetCandidate(Player player, GameBoard board, int projectedLevel, int surgeDuration)
         {
             if (player == null || board == null)
             {
@@ -100,17 +107,17 @@ namespace FungusToast.Core.Growth
             var anchor = GetAnchorTile(player, board);
             if (anchor == null)
             {
-                return validTiles
-                    .OrderBy(tile => tile.TileId)
-                    .ThenBy(tile => tile.TileId)
-                    .Select(tile => (int?)tile.TileId)
-                    .FirstOrDefault();
+                // No colony to project from: any legal marker is as good as another and grows nothing.
+                var fallbackTile = validTiles.OrderBy(tile => tile.TileId).First();
+                return new BeaconPlacementCandidate(fallbackTile, 0, 0, 0, 0, 0, 0);
             }
 
             int idealDistance = CalculateIdealDistance(projectedLevel, surgeDuration);
             int maxPlacements = Math.Max(0, idealDistance);
+            int colonyReach = GetColonyReach(player, board, anchor);
+            var pathBuffer = new (int x, int y)[Math.Max(board.Width, board.Height)];
             var candidates = validTiles
-                .Select(tile => EvaluateCandidateTile(tile, anchor, player.PlayerId, board, idealDistance, maxPlacements))
+                .Select(tile => EvaluateCandidateTile(tile, anchor, player.PlayerId, board, idealDistance, maxPlacements, colonyReach, pathBuffer))
                 .Where(candidate => candidate != null)
                 .ToList();
 
@@ -124,7 +131,7 @@ namespace FungusToast.Core.Growth
                 .ThenBy(candidate => candidate!.Tile.TileId)
                 .FirstOrDefault();
 
-            return bestCandidate?.Tile.TileId;
+            return bestCandidate;
         }
 
         private static int CalculateIdealDistance(int projectedLevel, int surgeDuration)
@@ -141,7 +148,9 @@ namespace FungusToast.Core.Growth
             int playerId,
             GameBoard board,
             int idealDistance,
-            int maxPlacements)
+            int maxPlacements,
+            int colonyReach,
+            (int x, int y)[] pathBuffer)
         {
             int dx = candidateTile.X - anchor.X;
             int dy = candidateTile.Y - anchor.Y;
@@ -151,15 +160,37 @@ namespace FungusToast.Core.Growth
                 return null;
             }
 
-            var path = DirectedVectorHelper.GetLineToTarget(anchor.X, anchor.Y, candidateTile.X, candidateTile.Y, pathLength);
-            if (path.Count == 0)
+            // Same stepping as DirectedVectorHelper.GetLineToTarget, generated lazily: step i sits at
+            // Chebyshev distance i + 1 from the anchor, so the growth origin (the furthest friendly
+            // living cell on the line, never the marker itself) cannot lie past the colony's reach and
+            // the scored window never needs the rest of the line. Scanning every board tile this way
+            // is what keeps AI marker selection affordable on a 160x160 board.
+            float stepX = dx / (float)pathLength;
+            float stepY = dy / (float)pathLength;
+            float cx = anchor.X + 0.5f;
+            float cy = anchor.Y + 0.5f;
+            int generated = 0;
+
+            int originScanEnd = Math.Min(pathLength - 1, colonyReach);
+            int originIndex = -1;
+            for (int index = 0; index < originScanEnd; index++)
             {
-                return null;
+                var (x, y) = NextPathStep(pathBuffer, ref generated, ref cx, ref cy, stepX, stepY);
+                var tile = board.GetTile(x, y);
+                if (tile == null)
+                {
+                    break;
+                }
+
+                if (tile.FungalCell is { IsAlive: true } cell && cell.OwnerPlayerId == playerId)
+                {
+                    originIndex = index;
+                }
             }
 
             // Growth begins just past the furthest friendly living cell on the line, so only the remainder counts.
             // The path's final step is the marker tile itself, which never receives growth.
-            int firstGrowthIndex = DirectedVectorHelper.FindChemotacticBeaconGrowthOriginIndex(path, board, playerId, candidateTile.TileId) + 1;
+            int firstGrowthIndex = originIndex + 1;
             int remainingPathLength = pathLength - firstGrowthIndex;
             if (remainingPathLength <= 1)
             {
@@ -170,10 +201,12 @@ namespace FungusToast.Core.Growth
             int nutrientValue = 0;
             int enemyLivingTilesCrossed = 0;
             int enemyToxinsCrossed = 0;
-            int lastIndexToEvaluate = Math.Min(firstGrowthIndex + expectedPlacements, Math.Max(0, path.Count - 1));
+            int lastIndexToEvaluate = Math.Min(firstGrowthIndex + expectedPlacements, Math.Max(0, pathLength - 1));
             for (int index = firstGrowthIndex; index < lastIndexToEvaluate; index++)
             {
-                var (x, y) = path[index];
+                var (x, y) = index < generated
+                    ? pathBuffer[index]
+                    : NextPathStep(pathBuffer, ref generated, ref cx, ref cy, stepX, stepY);
                 var pathTile = board.GetTile(x, y);
                 if (pathTile == null)
                 {
@@ -206,6 +239,44 @@ namespace FungusToast.Core.Growth
                 enemyLivingTilesCrossed,
                 enemyToxinsCrossed,
                 Math.Abs(remainingPathLength - idealDistance));
+        }
+
+        private static (int x, int y) NextPathStep(
+            (int x, int y)[] pathBuffer,
+            ref int generated,
+            ref float cx,
+            ref float cy,
+            float stepX,
+            float stepY)
+        {
+            cx += stepX;
+            cy += stepY;
+            var step = ((int)Math.Floor(cx), (int)Math.Floor(cy));
+            pathBuffer[generated++] = step;
+            return step;
+        }
+
+        /// <summary>Chebyshev distance from the anchor to the player's furthest living cell.</summary>
+        private static int GetColonyReach(Player player, GameBoard board, BoardTile anchor)
+        {
+            int reach = 0;
+            foreach (var cell in board.GetAllCellsOwnedBy(player.PlayerId))
+            {
+                if (!cell.IsAlive)
+                {
+                    continue;
+                }
+
+                var tile = board.GetTileById(cell.TileId);
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                reach = Math.Max(reach, Math.Max(Math.Abs(tile.X - anchor.X), Math.Abs(tile.Y - anchor.Y)));
+            }
+
+            return reach;
         }
 
         private static BoardTile? GetAnchorTile(Player player, GameBoard board)

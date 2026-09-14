@@ -112,6 +112,7 @@ namespace FungusToast.Simulation.Models
         public int AiMutationSpendingDecisions { get; set; }
         public int AiMutationFallbackSpends { get; set; }
         public int AiMutationDecisionFailures { get; set; }
+        public int AiSurgeOpportunitiesDeclined { get; set; }
 
         public int CatabolicRebirthAgedToxins { get; set; }
 

@@ -40,6 +40,8 @@ namespace FungusToast.Core.Metrics
         void RecordAiMutationFallbackSpend(int playerId) { }
         /// <summary>Funded AI turn left spendable points despite an affordable legal upgrade and no declared banking intent.</summary>
         void RecordAiMutationDecisionFailure(int playerId) { }
+        /// <summary>A planned, affordable, unlocked surge was left unfired because the board did not reward it yet.</summary>
+        void RecordAiSurgeOpportunityDeclined(int playerId, int mutationId) { }
         void RecordPrimePulseTriggered(int playerId, int triggerRound, int mutationPointsAwarded);
         void RecordMutationPointsSpent(int playerId, MutationTier mutationTier, int pointsPerUpgrade);
         void RecordBankedPoints(int playerId, int pointsBanked);

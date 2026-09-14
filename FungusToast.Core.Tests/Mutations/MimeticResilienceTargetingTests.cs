@@ -2,7 +2,6 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
-using System.Reflection;
 
 namespace FungusToast.Core.Tests.Mutations;
 
@@ -108,12 +107,7 @@ public class MimeticResilienceTargetingTests
     }
 
     private static List<Player> InvokeFindTargets(Player actingPlayer, List<Player> players, GameBoard board)
-    {
-        var method = typeof(MycelialSurgeMutationProcessor).GetMethod("FindMimeticResilienceTargets_New", BindingFlags.Static | BindingFlags.NonPublic);
-        Assert.NotNull(method);
-        var result = method!.Invoke(null, new object?[] { actingPlayer, players, board, null });
-        return Assert.IsType<List<Player>>(result);
-    }
+        => MycelialSurgeMutationProcessor.GetMimeticResilienceTargets(actingPlayer, players, board);
 
     private static void SeedLivingCells(GameBoard board, Player player, IEnumerable<int> tileIds)
     {

@@ -191,6 +191,7 @@ namespace FungusToast.Simulation.Models
                     AiMutationSpendingDecisions = tracking.GetAiMutationSpendingDecisions(player.PlayerId),
                     AiMutationFallbackSpends = tracking.GetAiMutationFallbackSpends(player.PlayerId),
                     AiMutationDecisionFailures = tracking.GetAiMutationDecisionFailures(player.PlayerId),
+                    AiSurgeOpportunitiesDeclined = tracking.GetAiSurgeOpportunitiesDeclined(player.PlayerId),
 
                     // Mycovariant summary
                     Mycovariants = BuildMycovariantResults(player, tracking),

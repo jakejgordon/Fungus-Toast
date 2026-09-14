@@ -491,7 +491,7 @@ namespace FungusToast.Core.AI
 
                     while (curLvl < needed && player.MutationPoints > 0 && player.CanUpgrade(mutation, board.CurrentRound, board))
                     {
-                        if (MutationSpendingHelper.TryUpgradeWithTargeting(player, mutation, board, simulationObserver, board.CurrentRound))
+                        if (MutationSpendingHelper.TryUpgradeWithTargeting(player, mutation, board, simulationObserver, board.CurrentRound, isPrerequisitePurchase: true))
                         {
                             curLvl++;
                             upgraded = true;
@@ -549,9 +549,9 @@ namespace FungusToast.Core.AI
                 }
             }
 
-            // If spent points on a target, or all targets are complete, try surges then fallback
-            // Try to activate surges on the Nth round before fallback spending
-            if (TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: true))
+            // If spent points on a target, or all targets are complete, try surges then fallback.
+            // Planned surges fire on their cadence, or off-cadence when the board strongly rewards one.
+            if (TrySpendOnSurges(player, allMutations, board, simulationObserver, beforeFallback: true))
                 return; // If a surge is triggered, stop spending for this turn
 
             // Opportunistic catch-up surges: only if already unlockable and the player is in last place.
@@ -617,8 +617,8 @@ namespace FungusToast.Core.AI
                 SpendFallbackPoints(player, allMutations, board, rnd, simulationObserver);
             }
 
-            // After ALL other spending, always try to activate surges as last resort (any turn)
-            TrySpendOnSurges(player, allMutations, board, simulationObserver, onlyOnNthRound: false);
+            // After ALL other spending, spend leftovers on a planned surge the board rewards (any turn)
+            TrySpendOnSurges(player, allMutations, board, simulationObserver, beforeFallback: false);
 
             // Also try catch-up surges after fallback in case points became available this turn.
             TrySpendCatchupSurgeIfBehind(player, allMutations, board, simulationObserver);
@@ -680,6 +680,11 @@ namespace FungusToast.Core.AI
             return currentSummary.LivingCells == minLivingCells;
         }
 
+        private bool IsScheduledSurgeRound(int currentRound)
+            => surgeAttemptTurnFrequency > 0
+               && currentRound > 0
+               && currentRound % surgeAttemptTurnFrequency == 0;
+
         private bool ShouldBankForSurges(Player player, List<Mutation> allMutations, GameBoard board)
         {
             // Only bank for surges if we have surge priority IDs and it's close to surge turn
@@ -690,83 +695,79 @@ namespace FungusToast.Core.AI
             int nextSurgeRound = ((currentRound / surgeAttemptTurnFrequency) + 1) * surgeAttemptTurnFrequency;
             int roundsUntilSurge = nextSurgeRound - currentRound;
 
-            // Bank if surge is coming soon (within 2 rounds) and we have a surge mutation
+            // Bank if surge is coming soon (within 2 rounds) and a planned surge is unlocked, nearly
+            // affordable, and something the board currently rewards.
             if (roundsUntilSurge <= 2)
             {
                 foreach (var surgeId in surgePriorityIds)
                 {
                     var surge = allMutations.FirstOrDefault(m => m.Id == surgeId && m.IsSurge);
-                    if (surge != null && player.GetMutationLevel(surge.Id) > 0)
+                    if (surge == null
+                        || player.IsSurgeActive(surge.Id)
+                        || player.GetMutationLevel(surge.Id) >= surge.MaxLevel
+                        || !MutationPrerequisiteEvaluator.AreAllMet(surge, player))
                     {
-                        int cost = player.GetMutationPointCost(surge);
-                        
-                        // Bank if we're close to affording the surge
-                        if (player.MutationPoints + roundsUntilSurge * player.GetMutationPointIncome() >= cost &&
-                            player.MutationPoints < cost)
-                        {
-                            return true;
-                        }
+                        continue;
+                    }
+
+                    int cost = player.GetMutationPointCost(surge);
+                    if (player.MutationPoints < cost
+                        && player.MutationPoints + roundsUntilSurge * player.GetMutationPointIncome() >= cost
+                        && SurgeOpportunityEvaluator.IsWorthActivating(player, surge, board))
+                    {
+                        return true;
                     }
                 }
             }
             return false;
         }
 
+        /// <summary>
+        /// Fires the planned surge the board rewards most. Ahead of fallback, an activation outside the
+        /// cadence must be a strong opportunity so the schedule still shapes tempo; the last-resort pass
+        /// after fallback spends leftovers at the ordinary bar. Only planned surges are considered: an
+        /// unplanned surge would compete with points the goal chain is carrying to its next purchase,
+        /// so the authored plan (or a prerequisite purchase) is the only way a surge gets bought.
+        /// </summary>
         private bool TrySpendOnSurges(
             Player player,
             List<Mutation> allMutations,
             GameBoard board,
             ISimulationObserver simulationObserver,
-            bool onlyOnNthRound)
+            bool beforeFallback)
         {
-            int currentRound = board.CurrentRound;
-            bool nthRound = surgeAttemptTurnFrequency > 0 &&
-                            (currentRound > 0) &&
-                            (currentRound % surgeAttemptTurnFrequency == 0);
+            if (surgePriorityIds.Count == 0)
+                return false;
 
-            var availableSurges = surgePriorityIds
-                .Select(id => allMutations.FirstOrDefault(m => m.Id == id && m.IsSurge))
-                .Where(m => m != null)
-                .ToList();
-
-            if (onlyOnNthRound)
+            bool scheduledRound = IsScheduledSurgeRound(board.CurrentRound);
+            var ranked = new List<(Mutation Surge, SurgeOpportunity Opportunity, int Order)>();
+            for (int order = 0; order < surgePriorityIds.Count; order++)
             {
-                if (!nthRound)
-                    return false;
+                var surge = allMutations.FirstOrDefault(m => m.Id == surgePriorityIds[order] && m.IsSurge);
+                if (surge == null || player.IsSurgeActive(surge.Id) || !player.CanUpgrade(surge, board.CurrentRound, board))
+                    continue;
 
-                foreach (var surge in availableSurges)
+                var opportunity = SurgeOpportunityEvaluator.Evaluate(player, surge, board);
+                if (!opportunity.IsWorthActivating)
                 {
-                    if (!player.IsSurgeActive(surge.Id))
-                    {
-                        int cost = player.GetMutationPointCost(surge);
-
-                        if (player.MutationPoints >= cost)
-                        {
-                            if (MutationSpendingHelper.TryUpgradeWithTargeting(player, surge, board, simulationObserver, board.CurrentRound))
-                            {
-                                return true;
-                            }
-                        }
-                    }
+                    if (beforeFallback)
+                        simulationObserver.RecordAiSurgeOpportunityDeclined(player.PlayerId, surge.Id);
+                    continue;
                 }
-            }
-            else
-            {
-                // Always try to activate surges as last resort, regardless of other options
-                foreach (var surge in availableSurges)
-                {
-                    if (!player.IsSurgeActive(surge.Id))
-                    {
-                        int cost = player.GetMutationPointCost(surge);
 
-                        if (player.MutationPoints >= cost)
-                        {
-                            if (MutationSpendingHelper.TryUpgradeWithTargeting(player, surge, board, simulationObserver, board.CurrentRound))
-                            {
-                                return true;
-                            }
-                        }
-                    }
+                if (beforeFallback && !scheduledRound && !opportunity.IsStrong)
+                    continue;
+
+                ranked.Add((surge, opportunity, order));
+            }
+
+            foreach (var candidate in ranked
+                .OrderByDescending(c => c.Opportunity.Margin)
+                .ThenBy(c => c.Order))
+            {
+                if (MutationSpendingHelper.TryUpgradeWithTargeting(player, candidate.Surge, board, simulationObserver, board.CurrentRound))
+                {
+                    return true;
                 }
             }
 
@@ -792,7 +793,7 @@ namespace FungusToast.Core.AI
             // Burn off leftovers if any upgradable mutations remain (should almost never be necessary)
             while (player.MutationPoints > 0)
             {
-                var anyUpgradable = allMutations.Where(m => player.CanUpgrade(m, board.CurrentRound, board)).ToList();
+                var anyUpgradable = allMutations.Where(m => !m.IsSurge && player.CanUpgrade(m, board.CurrentRound, board)).ToList();
                 if (anyUpgradable.Count == 0)
                     break;
                 if (!MutationSpendingHelper.TryUpgradeWithTargeting(player, anyUpgradable[0], board, simulationObserver, board.CurrentRound))
@@ -807,10 +808,14 @@ namespace FungusToast.Core.AI
             Random rnd,
             ISimulationObserver simulationObserver)
         {
+            // Surges only join category spending when the author listed their category on purpose;
+            // the "all categories" default must not turn fallback into random surge activations.
+            bool wantsSurgeCategory = priorityMutationCategories?.Contains(MutationCategory.MycelialSurges) == true;
             foreach (var category in GetShuffledCategories(rnd))
             {
                 var candidates = allMutations
                     .Where(m => m.Category == category
+                                && (!m.IsSurge || wantsSurgeCategory)
                                 && (int)m.Tier <= (int)maxTier
                                 && player.CanUpgrade(m, board.CurrentRound, board))
                     .ToList();
@@ -829,7 +834,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver simulationObserver)
         {
             var fallbackCandidates = allMutations
-                .Where(m => (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound, board))
+                .Where(m => !m.IsSurge && (int)m.Tier <= (int)maxTier && player.CanUpgrade(m, board.CurrentRound, board))
                 .ToList();
 
             return TrySpendWithinCategory(player, board, fallbackCandidates, simulationObserver);
@@ -847,7 +852,7 @@ namespace FungusToast.Core.AI
             ISimulationObserver simulationObserver)
         {
             var upgradable = allMutations
-                .Where(m => player.CanUpgrade(m, board.CurrentRound, board) && (int)m.Tier <= (int)maxTier)
+                .Where(m => !m.IsSurge && player.CanUpgrade(m, board.CurrentRound, board) && (int)m.Tier <= (int)maxTier)
                 .ToList();
 
             if (upgradable.Count == 0)

@@ -483,7 +483,12 @@ public class StrategyCatalogTests
             },
             economyBias: EconomyBias.IgnoreEconomy);
         var board = new GameBoard(width: 3, height: 3, playerCount: 1);
-        var player = new Player(0, "Ontogenic AI", PlayerTypeEnum.AI) { MutationPoints = 20 };
+        // Exactly the two Tier-1 levels the chain needs, so fallback spending cannot blur which
+        // foundations the goal chose.
+        var player = new Player(0, "Ontogenic AI", PlayerTypeEnum.AI)
+        {
+            MutationPoints = 2 * GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1)
+        };
         board.Players.Add(player);
 
         player.SetMutationLevel(MutationIds.MutatorPhenotype, 10, currentRound: 0);

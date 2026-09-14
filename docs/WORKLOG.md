@@ -86,6 +86,48 @@ are considered complete. The current Aerated Frontier calibration uses
   ladder is reliable for its large shape and not for small differences between
   adjacent rungs.
 
+### 2026-09-13 Board-state surge opportunity evaluation
+
+- AI surge activation used to be purely calendar-driven: `surgePriorityIds` in
+  list order on every `surgeAttemptTurnFrequency` round, a last-resort pass with
+  leftovers on any round, and surges sitting in the generic fallback and random
+  pools like ordinary mutations. Board-state gating was binary and thin: Mimetic
+  Resilience needed only a larger rival (it does nothing when that rival has no
+  resistant cells), Necrotic Clearance needed a single corpse, and Autolytic
+  Surge and Chitin Fortification had no gate at all. Each activation also
+  spends one of a finite budget (max level) and raises the next price.
+- `SurgeOpportunityEvaluator` now estimates each activation's payoff in cells
+  from the current board, mirroring the processor it models (frontier growth
+  minus decay for Autolytic with a dead-cell-synergy discount, absorbable
+  fortification under enemy contact for Chitin, contested corpse clears for
+  Necrotic, the ranked marker's real placements for Beacon, rival resistant
+  counts for Mimetic, redirectable toxin output for Antagonism), clips the
+  window to the rounds left before the cap, and thresholds by activation cost.
+  Every spending path defers to it except prerequisite purchases, which are
+  bought for the unlock. Planned surges are ranked by margin instead of list
+  order, fire off-cadence only on strong opportunities, are banked for on a
+  first activation, and never enter the fallback or random pools. Unplanned
+  surges are never bought: a trial that let the last-resort pass fire them
+  diverted points the goal chain carries between turns (Arch04 lost ~110
+  living cells per game), so the authored plan stays the only route.
+- Beacon marker selection was the dominant per-game cost even before this
+  change (6 harness games: 3:03 with the whole-board scan, 0:57 without). The
+  scan is now bounded to the colony's reach plus the scored window with the same
+  DDA stepping, bit-identical across 384 player-games, and the 8-archetype
+  harness runs ~15 s/game against ~23 s/game before.
+- 48 matched games, seed `12345`, rotating slots, archetype lineup Arch01-08:
+  total surge spend rose 13670 -> 15011 MP, mostly Beacon (611 -> 743
+  activations) and Chitin (810 -> 959) firing off-cadence, while Autolytic fell
+  (442 -> 418) and Necrotic (280 -> 258) as weak activations were declined.
+  Surviving cells per activation held or improved (Beacon 2.7 -> 3.3, Mimetic
+  162 -> 165, Autolytic 49 -> 45). Paired living-cell deltas: Arch07 +269,
+  Arch05 -157, Arch02 -90, others within +/-45; the already dominant Arch07
+  benefits most from smarter surges. `players.parquet` gains
+  `AiSurgeOpportunitiesDeclined`; `DefinitionSchemaVersion` is now v2.
+- Open follow-up: the Autolytic decay penalty is discounted by owned dead-cell
+  mutations, but strategies built around Necrophytic Bloom or Substrate Ecology
+  corpse payoffs should be able to prefer it explicitly.
+
 ### 2026-09-07 Necrotic Clearance
 
 - Implemented `Necrotic Clearance`, a Tier-2 Mycelial Surge requiring

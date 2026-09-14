@@ -126,7 +126,7 @@ For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand i
 2. **Surge plan**
    - `surgePriorityIds`
    - `surgeAttemptTurnFrequency`
-   - Preferred surges are attempted on scheduled rounds before normal fallback spending, with optional short-term banking if a preferred surge is close.
+   - Planned surges are the ones the AI will fire ahead of fallback spending. Every activation is still gated by `SurgeOpportunityEvaluator`, which estimates what the surge is worth on the current board (see below), so a planned surge only fires when the board rewards it.
 3. **Fallback personality**
    - `priorityMutationCategories`
    - `prioritizeHighTier`
@@ -139,22 +139,45 @@ For `ParameterizedSpendingStrategy`, authoring intent is easiest to understand i
 Actual spending flow, simplified:
 
 1. Early-game economy mutation pass (`MutatorPhenotype`, `AdaptiveExpression`, `HyperadaptiveDrift`)
-2. Work through `targetMutationGoals` in order
-3. Try scheduled surges (`surgePriorityIds` on `surgeAttemptTurnFrequency` rounds)
+2. Work through `targetMutationGoals` in order (a surge bought as a prerequisite bypasses the opportunity gate: it is bought for the unlock)
+3. Try planned surges: on `surgeAttemptTurnFrequency` rounds any rewarded surge qualifies; off-cadence only a strong opportunity does. The best-scoring surge fires, not the first listed.
 4. Try catch-up surge if behind
-5. Bank for a near-term preferred surge if appropriate
-6. Fallback spending:
+5. Bank for a near-term planned surge that is unlocked, nearly affordable, and currently rewarded
+6. Fallback spending (never touches surges unless `MycelialSurges` is explicitly in `priorityMutationCategories`):
    - preferred categories first
    - then any upgradable mutation
    - then economy-biased random weighting
-7. Last-resort surge attempt again
+7. Last-resort surge pass with leftover points, again over planned surges only. An unplanned surge is never bought outside a prerequisite purchase: leftover points belong to the goal chain
+
+## Surge Opportunity Evaluation
+
+A surge's max level is its activation budget and every activation raises the next price, so
+`SurgeOpportunityEvaluator` (`FungusToast.Core/AI/SurgeOpportunityEvaluator.cs`) estimates each
+activation's payoff in cells before any spending path commits to it. The estimate mirrors the
+processor it models:
+
+| Surge | Value estimate |
+|---|---|
+| Autolytic Surge | Extra growth over every open orthogonal target minus the decay penalty on every unprotected living cell. Dead-cell payoffs (Necrosporulation, Regenerative Hyphae, Necrophytic Bloom, Detrital Enzymes) discount the loss. |
+| Chitin Fortification | Cells fortified over the window, worth more while cells touch enemy living cells or toxins; declined until the colony can absorb `AiChitinMinimumFullRoundsOfCapacity` rounds of fortification. |
+| Necrotic Clearance | Expected corpses cleared, weighting contested corpses (next to enemy living cells) far above uncontested ones. |
+| Chemotactic Beacon | Placements the best marker actually delivers, plus enemy cells, toxins, and nutrient tiles on its line. |
+| Mimetic Resilience | Expected resistant placements, which scale with the eligible rivals' resistant cell counts; zero when there is nothing to copy. |
+| Competitive Antagonism | Toxin output it can redirect (Mycotoxin Tracer and Sporicidal Bloom levels) while a larger rival exists. |
+
+The value must clear `max(AiSurgeMinimumAbsoluteValue, cost * AiSurgeMinimumValuePerMutationPoint)`;
+off-cadence planned activations need `AiSurgeOffScheduleValueMultiplier` times that. Windows are
+clipped to the rounds left before the round cap. All weights live in `GameBalance` under the
+`AiSurge*` / `AiAutolytic*` / `AiChitin*` / `AiNecrotic*` / `AiBeacon*` / `AiMimetic*` /
+`AiAntagonism*` constants. `players.parquet` exports `AiSurgeOpportunitiesDeclined`, the number of
+times a planned, affordable, unlocked surge was left unfired.
 
 Practical interpretation of the main knobs:
 
 - `targetMutationGoals`
   - Primary build order. Strongest authoring control.
 - `surgeAttemptTurnFrequency`
-  - Timing gate for preferred surge activation attempts.
+  - Cadence for planned surge activations. Off-cadence rounds still fire a planned surge when the board makes it a strong opportunity.
 - `priorityMutationCategories`
   - Category preference during fallback spending.
 - `prioritizeHighTier`

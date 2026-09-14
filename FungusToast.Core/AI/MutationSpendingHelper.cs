@@ -13,7 +13,16 @@ namespace FungusToast.Core.AI
 {
     public static class MutationSpendingHelper
     {
-        public static bool CanAttemptUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, int currentRound)
+        /// <summary>
+        /// Whether the AI would buy this upgrade right now. <paramref name="isPrerequisitePurchase"/> marks a
+        /// surge bought to unlock something else, which is worth its price regardless of the board.
+        /// </summary>
+        public static bool CanAttemptUpgradeWithTargeting(
+            Player player,
+            Mutation mutation,
+            GameBoard board,
+            int currentRound,
+            bool isPrerequisitePurchase = false)
         {
             if (!player.CanUpgrade(mutation, currentRound, board))
             {
@@ -27,15 +36,13 @@ namespace FungusToast.Core.AI
                 return false;
             }
 
-            if (mutation.Id == MutationIds.NecroticClearance)
+            // A surge activation is one of a finite budget and raises the next price, so every spending
+            // path (goals, schedule, catch-up, fallback, random) defers to the board-state evaluator.
+            if (mutation.IsSurge
+                && !isPrerequisitePurchase
+                && !SurgeOpportunityEvaluator.IsWorthActivating(player, mutation, board))
             {
-                return MycelialSurgeMutationProcessor.HasNecroticClearanceEligibleTargets(player, board);
-            }
-
-            if (mutation.Id == MutationIds.ChemotacticBeacon)
-            {
-                int projectedLevel = Math.Min(player.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);
-                return ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, mutation.SurgeDuration).HasValue;
+                return false;
             }
 
             return true;
@@ -92,9 +99,15 @@ namespace FungusToast.Core.AI
             return false;
         }
 
-        public static bool TryUpgradeWithTargeting(Player player, Mutation mutation, GameBoard board, ISimulationObserver simulationObserver, int currentRound)
+        public static bool TryUpgradeWithTargeting(
+            Player player,
+            Mutation mutation,
+            GameBoard board,
+            ISimulationObserver simulationObserver,
+            int currentRound,
+            bool isPrerequisitePurchase = false)
         {
-            if (!CanAttemptUpgradeWithTargeting(player, mutation, board, currentRound))
+            if (!CanAttemptUpgradeWithTargeting(player, mutation, board, currentRound, isPrerequisitePurchase))
             {
                 return false;
             }
@@ -102,7 +115,7 @@ namespace FungusToast.Core.AI
             if (mutation.Id == MutationIds.ChemotacticBeacon)
             {
                 int projectedLevel = Math.Min(player.GetMutationLevel(mutation.Id) + 1, mutation.MaxLevel);
-                int? targetTileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, mutation.SurgeDuration);
+                int? targetTileId = ChemotacticBeaconHelper.TrySelectAITargetTile(player, board, projectedLevel, player.GetSurgeDuration(mutation));
                 return targetTileId.HasValue
                     && player.TryActivateTargetedSurge(mutation, board, targetTileId.Value, simulationObserver, currentRound);
             }

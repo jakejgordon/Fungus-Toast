@@ -412,6 +412,8 @@ namespace FungusToast.Core.Board
         #endregion
 
         #region Occupancy Helpers
+        /// <summary>Number of tiles holding any cell; a cheap signal that the board changed.</summary>
+        public int OccupiedTileCount => tileIdToCell.Count;
         private IEnumerable<FungalCell> OccupiedCells() => tileIdToCell.Values;
         private BoardTile GetTileForCell(FungalCell cell) { var (x, y) = GetXYFromTileId(cell.TileId); return Grid[x, y]; }
         public IEnumerable<BoardTile> AllToxinTiles()

@@ -4,7 +4,7 @@
   "displayName": "CAND_OpenerOrderAnabolicFirst",
   "lineage": {
     "parentStrategyId": "legacy.testing.tst-balancedgeneralistcontrol.v1",
-    "parentDefinitionFingerprint": "9ab25f75cce15b004bc3645a180fa534b6635712f70a33d3f297e665f87769c8",
+    "parentDefinitionFingerprint": "a11bda0f79a824758feacf22a1840851bad85e7301776ae941aff97ca8f9cada",
     "parentStrategySet": "testing",
     "notes": "Balanced Control with Anabolic Inversion moved ahead of Creeping Mold; the contrast confirmed by the frozen Phase 6 opener-order holdout."
   },

@@ -8,7 +8,7 @@ namespace FungusToast.Core.AI
 {
     public static class StrategyIdentity
     {
-        public const string DefinitionSchemaVersion = "fungus-toast.ai-definition.v1";
+        public const string DefinitionSchemaVersion = "fungus-toast.ai-definition.v2"; // v2: board-state surge opportunity evaluation
         public const string CorpusVersion = "fungus-toast.ai-corpus.phase5-starting-adaptations.v2";
 
         public static string GetStableId(StrategySetEnum strategySet, IMutationSpendingStrategy strategy)

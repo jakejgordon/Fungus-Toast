@@ -228,6 +228,27 @@ namespace FungusToast.Core.Config
         public const float CompetitiveAntagonismSporicidalBloomSmallerColonyReduction = 0.75f; // 75% smaller colony tile reduction
         public const float CompetitiveAntagonismNecrophyticBloomSmallerColonyReduction = 0.75f; // 75% smaller colony dead cell reduction
 
+        // AI surge opportunity evaluation (see SurgeOpportunityEvaluator). Values are in "cells":
+        // expected cells gained, saved, fortified, or denied over the surge window.
+        public const float AiSurgeMinimumValuePerMutationPoint = 0.6f;
+        public const float AiSurgeMinimumAbsoluteValue = 2f;
+        public const float AiSurgeOffScheduleValueMultiplier = 2f; // Off-schedule planned surges need this much margin over the floor
+        public const float AiAutolyticDecayLossWeight = 1.5f; // Corpses are reclaimable holes, so a death costs more than a growth gains
+        public const float AiAutolyticMaxDeathSynergyDiscount = 0.75f; // Dead-cell payoffs can discount at most this share of the loss
+        public const float AiAutolyticNecrophyticBloomDeathDiscount = 0.25f;
+        public const float AiAutolyticDetritalEnzymesDeathDiscount = 0.15f;
+        public const float AiChitinValuePerFortifiedCell = 0.5f;
+        public const int AiChitinMinimumFullRoundsOfCapacity = 2; // Need enough unfortified cells to fill this many rounds
+        public const float AiNecroticContestedClearValue = 1f;
+        public const float AiNecroticUncontestedClearValue = 0.35f;
+        public const float AiBeaconValuePerPlacement = 1f;
+        public const float AiBeaconValuePerEnemyLivingCrossed = 1f; // On top of the placement itself
+        public const float AiBeaconValuePerEnemyToxinCrossed = 0.5f;
+        public const float AiBeaconValuePerNutrientTile = 1f;
+        public const float AiMimeticValuePerPlacement = 1f;
+        public const float AiAntagonismValuePerTracerLevelRound = 0.05f;
+        public const float AiAntagonismValuePerSporicidalLevelRound = 0.5f;
+
         // Regenerative Hyphae (Tier 3 CellularResilience)
         public const float RegenerativeHyphaeReclaimChance = 0.03f;
         public const int RegenerativeHyphaeMaxLevel = 5;
