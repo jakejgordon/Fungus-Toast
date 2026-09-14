@@ -12,7 +12,7 @@ namespace FungusToast.Unity.UI.MutationTree
     /// </summary>
     public static class SurgePresentation
     {
-        public static string SectionLabel => "Active Surges";
+        public static string SectionLabel => "Active Mycelial Surges";
 
         public static string FormatRoundsRemaining(int rounds) =>
             rounds == 1 ? "1 round left" : $"{rounds} rounds left";

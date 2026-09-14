@@ -1525,6 +1525,8 @@ namespace FungusToast.Unity
                 ui.MoldProfileRoot?.TryShowAdaptationCoachmark(board.CurrentRound);
             }
             ui.MoldProfileRoot?.RefreshRandomDecayChance();
+            // Surges ticked down at the end of the previous round without a mutation event.
+            ui.MoldProfileRoot?.RefreshActiveSurges();
             ui.GameLogRouter?.OnPhaseStart("Mutation");
             bool suppressIntroFeedback = isFastForwarding || ConsumeSuppressedPhaseIntroFeedback();
             if (!suppressIntroFeedback)

@@ -1580,10 +1580,14 @@ independently shippable commit.
    for the tooltip. The tile-rebuild signature must include rounds remaining so
    a pinned panel keeps counting down. Done 2026-09-11; awaiting Unity Editor
    visual check of the six procedural glyphs.
-3. **Left panel surge rows.** For the human player, a row per active surge
-   (`[icon] Name · Lv N · R rounds`) directly under the Random Decay row in
-   `UI_MoldProfileRoot`, hidden when nothing is active. Refresh on
-   `Player.MutationsChanged` and after `TickDownActiveSurges`.
+3. **Left panel surge section.** "Active Mycelial Surges" for the human
+   player in `UI_MoldProfileRoot`, directly under the Random Decay row and
+   hidden when nothing is active. Done 2026-09-13 as an icon-tile grid (same
+   as Adaptations/Mycovariants, per Jake) rather than rows: each tile carries
+   the rounds-remaining badge and the shared surge tooltip. Refreshes on
+   `Player.MutationsChanged` (activation) and via a new
+   `RefreshActiveSurges()` at round start, since the tick-down at round end
+   raises no mutation event. The inspector section was renamed to match.
 4. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
    the name — the corners are taken by the tier glyph and the active-surge
    hourglass) and beside the title in `MutationInspectorPanel`. Done

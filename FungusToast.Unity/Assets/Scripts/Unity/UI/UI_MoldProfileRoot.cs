@@ -7,7 +7,9 @@ using FungusToast.Core.Phases; // GrowthMutationProcessor lives here
 using FungusToast.Core.Players;
 using Assets.Scripts.Unity.UI.MycovariantDraft;
 using FungusToast.Unity.UI.Campaign;
+using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.Onboarding;
+using FungusToast.Unity.UI.PlayerInspector;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using System;
@@ -36,6 +38,12 @@ namespace FungusToast.Unity.UI
         // mold beneath the dead-cell tile makes the row describe this player's
         // decay state instead of reading as a generic global warning.
         private Image randomDecayChancePlayerIcon;
+
+        [Header("Active Mycelial Surges")]
+        [SerializeField] private RectTransform surgeSectionRoot;
+        [SerializeField] private TextMeshProUGUI surgeHeaderText;
+        [SerializeField] private RectTransform surgeIconGridRoot;
+        [SerializeField, TextArea] private string surgeHeaderTooltip = "Mycelial Surges you have activated. The number on each icon is how many rounds it has left; hover an icon to read what it does.";
 
         [Header("Adaptations")]
         [SerializeField] private RectTransform adaptationSectionRoot;
@@ -98,6 +106,7 @@ namespace FungusToast.Unity.UI
         private const string RandomDecayChanceRootName = "UI_RandomDecayChanceRoot";
         private const string RandomDecayChanceTextName = "UI_RandomDecayChanceText";
 
+        private readonly List<GameObject> surgeIconObjects = new();
         private readonly List<GameObject> adaptationIconObjects = new();
         private readonly List<GameObject> mycovariantIconObjects = new();
         private readonly List<GameObject> boardOverlayLegendObjects = new();
@@ -157,11 +166,13 @@ namespace FungusToast.Unity.UI
             ApplyGrowthPreviewHeaderText();
             ApplyGrowthPreviewSurface();
             EnsureRandomDecayChanceSectionExists();
+            EnsureSurgeSectionExists();
             EnsureBoardOverlayLegendSectionExists();
             EnsureAdaptationSectionExists();
             EnsureMycovariantSectionExists();
             UpdateSectionSiblingOrder();
             ApplyRandomDecayChanceStyle();
+            ApplySurgeSectionStyle();
             ApplyBoardOverlayLegendSectionStyle();
             ApplyAdaptationSectionStyle();
             ApplyMycovariantSectionStyle();
@@ -377,6 +388,7 @@ namespace FungusToast.Unity.UI
             EnsureCellsResolved();
             UpdateGrowthChances();
             RefreshRandomDecayChance();
+            RefreshActiveSurges();
             RefreshBoardOverlayLegend();
             RefreshAdaptations();
             RefreshMycovariants();
@@ -555,6 +567,28 @@ namespace FungusToast.Unity.UI
             RefreshIconSection(adaptationSectionRoot, adaptationIconGridRoot, adaptationIconObjects, adaptationHeaderText, adaptationHeaderLabel, trackedPlayer?.PlayerAdaptations, CreateAdaptationIcon);
         }
 
+        /// <summary>
+        /// Rebuilds the active-surge tiles. Public because the countdown changes at round end,
+        /// after <c>TickDownActiveSurges</c>, where no mutation event fires to trigger a full
+        /// <see cref="Refresh"/>.
+        /// </summary>
+        public void RefreshActiveSurges()
+        {
+            if (trackedPlayer == null) return;
+
+            if (GameManager.Instance != null && GameManager.Instance.IsFastForwarding)
+            {
+                deferredRefreshRequested = true;
+                return;
+            }
+
+            EnsureSurgeSectionExists();
+
+            var surges = new List<Player.ActiveSurgeInfo>(PlayerInspectorContent.GetActiveSurges(trackedPlayer));
+            RefreshIconSection(surgeSectionRoot, surgeIconGridRoot, surgeIconObjects, surgeHeaderText, SurgePresentation.SectionLabel, surges, CreateSurgeIcon);
+            RefreshProfileLayoutReservation();
+        }
+
         private void RefreshBoardOverlayLegend()
         {
             EnsureBoardOverlayLegendSectionExists();
@@ -731,6 +765,26 @@ namespace FungusToast.Unity.UI
             ApplyAdaptationSectionStyle();
         }
 
+        private void EnsureSurgeSectionExists()
+        {
+            if (surgeSectionRoot != null && surgeIconGridRoot != null && surgeHeaderText != null)
+            {
+                return;
+            }
+
+            var rootTransform = transform as RectTransform;
+            if (rootTransform == null)
+            {
+                return;
+            }
+
+            surgeSectionRoot = CreateSectionRoot(rootTransform, "UI_ActiveSurgeSection");
+            surgeHeaderText = CreateSectionHeader(surgeSectionRoot, "UI_ActiveSurgeHeaderText", SurgePresentation.SectionLabel, surgeHeaderTooltip);
+            surgeIconGridRoot = CreateIconGrid(surgeSectionRoot, "UI_ActiveSurgeIconGrid");
+
+            ApplySurgeSectionStyle();
+        }
+
         private void EnsureBoardOverlayLegendSectionExists()
         {
             if (boardOverlayLegendSectionRoot != null && boardOverlayLegendIconGridRoot != null && boardOverlayLegendHeaderText != null)
@@ -789,6 +843,12 @@ namespace FungusToast.Unity.UI
             if (statsRoot != null)
             {
                 statsRoot.SetSiblingIndex(nextIndex++);
+            }
+
+            // Surges lead the icon sections: they are the only ones with a countdown.
+            if (surgeSectionRoot != null)
+            {
+                surgeSectionRoot.SetSiblingIndex(nextIndex++);
             }
 
             if (boardOverlayLegendSectionRoot != null)
@@ -996,6 +1056,11 @@ namespace FungusToast.Unity.UI
             ApplySectionStyle(adaptationSectionRoot, adaptationHeaderText, adaptationIconGridRoot, adaptationHeaderLabel);
         }
 
+        private void ApplySurgeSectionStyle()
+        {
+            ApplySectionStyle(surgeSectionRoot, surgeHeaderText, surgeIconGridRoot, SurgePresentation.SectionLabel);
+        }
+
         private void ApplyBoardOverlayLegendSectionStyle()
         {
             ApplySectionStyle(boardOverlayLegendSectionRoot, boardOverlayLegendHeaderText, boardOverlayLegendIconGridRoot, boardOverlayLegendHeaderLabel);
@@ -1115,6 +1180,27 @@ namespace FungusToast.Unity.UI
             var hoverHandler = iconObject.AddComponent<BoardOverlayLegendHoverHandler>();
             hoverHandler.Initialize(overlayType, grid);
             hoverHandler.enabled = grid != null;
+
+            var trigger = iconObject.AddComponent<TooltipTrigger>();
+            trigger.SetDynamicProvider(provider);
+            trigger.SetAutoPlacementOffsetX(20f);
+        }
+
+        private void CreateSurgeIcon(Player.ActiveSurgeInfo surge)
+        {
+            if (surgeIconGridRoot == null || surge == null)
+            {
+                return;
+            }
+
+            var iconObject = CreateIconObject($"UI_ActiveSurge_{surge.MutationId}", surgeIconGridRoot, surgeIconObjects, SurgeArtRepository.GetIcon(surge.MutationId));
+            CompactIconTileFactory.SetCornerBadge(
+                iconObject,
+                surge.TurnsRemaining.ToString(),
+                UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Canvas, 0.9f));
+
+            var provider = iconObject.AddComponent<SurgeTooltipProvider>();
+            provider.Initialize(surge);
 
             var trigger = iconObject.AddComponent<TooltipTrigger>();
             trigger.SetDynamicProvider(provider);
