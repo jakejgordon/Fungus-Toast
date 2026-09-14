@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-bloom20-contextual-v1",
+  "purpose": "Materialize only the Bloom-20 E1 candidate and declared P7 reference opponents for contextual classification.",
+  "parentStrategyId": "legacy.proven.anabolic-grow-catabr-putreregen.v1",
+  "parentStrategySet": "proven",
+  "operators": ["goalInsertion"],
+  "maximumCandidates": 1,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": [],
+  "goalInsertions": [
+    { "mutationId": 0, "targetLevel": 20, "position": 1 }
+  ]
+}
