@@ -336,3 +336,25 @@ normalized board share is `+0.5494` (95% CI `+0.4484..+0.6503`) across 100
 pairs. Combined runtime is 1757.365 seconds within the preregistered
 2100-second budget. The candidate has earned contextual classification; this
 does not itself assign a player-facing pool or difficulty band.
+
+### E1 Bloom-20 P7-compatible contextual classification
+
+The candidate was measured alone against the frozen 19-strategy P7 Proven
+panel; this is not a recalibration or reclassification of the references. The
+first manually launched duel-small artifact omitted `--per-game-lineups` and
+therefore sampled only a fixed two-strategy lineup. It is preserved but excluded
+from classification. All seven corrected contexts used `RandomUnique`, rotating
+slots, per-game lineups, systems off, checksum-valid manifests, and the frozen
+P7 seeds/geometries.
+
+Across the five calibration contexts, Bloom-20 measured normalized-board-share
+intervals of 1.361–1.573 (30 games), 1.538–1.779 (24), 1.860–2.163 (53),
+2.162–2.636 (47), and 1.929–2.605 (29). The 24-game duel-medium cell is
+reported as `TooFewGames` by the frozen 25-game floor, consistent with P7;
+it remains in the conservative pooled evidence. The pooled conservative lower
+bound clears the frozen Elite threshold of 1.25, so
+`CAND_p8-bloom20-contextual-v1_GoalInsertion_9c5157e4` classifies **Elite**
+under `fungus-toast.ai-bands.v1`. Both untouched holdouts also clear Elite:
+duel-wide 1.573–1.790 (26 games) and smalltable-tall 1.574–1.813 (44 games).
+This is a measured contextual band, not a player-facing roster or campaign
+promotion decision.

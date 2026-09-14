@@ -1357,6 +1357,14 @@ measurement model, phase gates, and open product decisions are in
     Bloom-20 now advances to contextual classification; it has not been
     promoted to a player-facing pool or assigned a difficulty band.
 
+92. Bloom-20 completed candidate-only contextual classification against the
+    frozen P7 Proven panel. One fixed-lineup manual artifact was excluded; all
+    seven corrected contexts used per-game panel draws and checksum-valid
+    manifests. The five calibration contexts conservatively clear the frozen
+    Elite threshold, and both untouched holdouts do too. Bloom-20 is therefore
+    measured **Elite** under `fungus-toast.ai-bands.v1`; this is not yet a
+    player-facing roster, campaign, or promotion decision.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
