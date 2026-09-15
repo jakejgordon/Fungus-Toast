@@ -21,7 +21,7 @@ An itch.io devlog can also improve project discovery: itch.io says devlog posts 
 4. Rank changes by player value: new or improved play first; then major clarity/usability, visuals, accessibility, performance/stability; finally notable fixes.
 5. Draft the post with the template below. Verify every claim against the commits, release validation, or supplied evidence.
 6. Pick one strong screenshot, GIF, or short clip if it makes the lead change easier to understand. Do not add media merely to decorate the post.
-7. Present the draft for review. Never publish it or claim a feature is live without explicit approval.
+7. Present the draft for review as **raw Markdown source inside a fenced code block** (```markdown ... ```), not as rendered chat text. itch.io's devlog editor takes Markdown, and rendered output loses the heading and bold markers when copied. Also write the draft to a `.md` file so it can be copied from disk. Never publish it or claim a feature is live without explicit approval.
 
 `FungusToast.Unity/last-deployed-version.txt` stores a version number, not the associated Git commit. Use a release tag, an explicit recorded commit, or ask for the baseline when it is unknown. Future releases should record a tag or commit SHA with the release so this remains deterministic.
 
@@ -86,6 +86,7 @@ I'd especially love feedback on <one specific thing a player can try or observe>
 - Is the feedback ask narrow enough to answer?
 - Is every detail supported, with no speculative claims?
 - Is the post pure ASCII with no em-dashes?
+- Is the draft delivered as raw Markdown in a fenced code block (and saved as a `.md` file)?
 
 ## Sources and rationale
 
