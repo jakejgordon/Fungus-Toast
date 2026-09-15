@@ -44,8 +44,8 @@ public class AscusBaitMycovariantTests
         Assert.True(mycovariant.IsLocked);
         Assert.Equal(6, mycovariant.RequiredMoldinessUnlockLevel);
         Assert.False(mycovariant.AutoMarkTriggered);
-        Assert.Contains("up to 8 cells", mycovariant.Description);
-        Assert.Contains("grants 10 mutation points", mycovariant.Description);
+        Assert.Contains("up to 8 tiles", mycovariant.Description);
+        Assert.Contains("gain 10 mutation points", mycovariant.Description);
         Assert.NotNull(mycovariant.ApplyEffect);
     }
 
@@ -82,7 +82,7 @@ public class AscusBaitMycovariantTests
         Assert.Equal(3, mycovariant.RequiredMoldinessUnlockLevel);
         Assert.True(mycovariant.IsBait);
         Assert.False(mycovariant.AutoMarkTriggered);
-        Assert.Contains("circular burst", mycovariant.Description);
+        Assert.Contains("erupt in a circle", mycovariant.Description);
         Assert.Contains("gain 10 mutation points", mycovariant.Description);
         Assert.NotNull(mycovariant.ApplyEffect);
     }

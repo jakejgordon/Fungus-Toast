@@ -85,7 +85,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.HyphalDrawId,
             Name = "Hyphal Draw",
-            Description = "One-time on draft: trace from your starting spore toward the enemy start with the most living cells, pick up your non-Resistant living cells on that path, then redeploy them from the enemy side back toward you, skipping Resistant tiles.",
+            Description = "One-time on draft: trace from your starting spore toward the enemy start with the most living cells, pick up your non-Resistant living cells on that path, then move them to the enemy end of the path and refill it back toward you, skipping Resistant cells.",
             FlavorText = "The colony cinches its vascular strand taut, hauling living biomass forward into a tighter assault lane.",
             IconId = "myco_hyphal_draw",
             Type = MycovariantType.Active,

@@ -10,6 +10,8 @@ Read these docs first:
 1. `FungusToast.Core/docs/MYCOVARIANT_HELPER.md`
 2. `FungusToast.Core/docs/second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 3. `FungusToast.Core/docs/second-level/MYCOVARIANT_AUTHORING_STYLE.md`
+3a. `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
+3b. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 4. `FungusToast.Core/docs/second-level/MYCOVARIANT_TECHNICAL_FLOW.md`
 
 Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before final review.
@@ -23,7 +25,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
    - `FungusToast.Core/Mycovariants/MycovariantIds.cs`
    - the appropriate category factory
    - the relevant processors, observers, and Unity draft hooks
-5. Follow the style guide for concise player-facing copy.
+5. Follow the style guide for concise player-facing copy and run `CONTENT_COPY_CHECKLIST.md` before finishing.
 6. Add a drawing case for the mycovariant's id in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a diagram of the effect built from `IconGlyphs`; tiers share a drawing), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any mycovariant lacks a case.
 7. Reuse existing draft, tooltip, and centralized art-lookup patterns before introducing new UI seams.
 

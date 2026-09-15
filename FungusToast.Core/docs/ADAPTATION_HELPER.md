@@ -14,7 +14,9 @@ Adaptations commonly do one of two things:
 
 - **Naming rules:** [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
 - **Campaign flow and persistence:** [CAMPAIGN_HELPER.md](CAMPAIGN_HELPER.md)
-- **Authoring standards for concise mechanics copy:** [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md)
+- **Authoring standards for concise mechanics copy:** [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md), plus the Adaptation-specific rules below
+- **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
+- **Shared pre-PR copy checklist:** [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md)
 - **Technical implementation flow:** [second-level/ADAPTATION_TECHNICAL_FLOW.md](second-level/ADAPTATION_TECHNICAL_FLOW.md)
 
 ## Suggested Agent Workflow
@@ -26,11 +28,31 @@ Adaptations commonly do one of two things:
 5. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
 6. Proactively list the proposed test cases for the new Adaptation, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and campaign-specific validation points.
 7. Read `CAMPAIGN_HELPER.md` before changing reward flow, persistence, or campaign state.
-8. Read `MYCOVARIANT_AUTHORING_STYLE.md` before writing or revising Adaptation descriptions.
+8. Read `MYCOVARIANT_AUTHORING_STYLE.md`, `GAMEPLAY_TERMINOLOGY.md`, and the Adaptation Copy Rules below before writing or revising Adaptation descriptions.
 9. Read `ADAPTATION_TECHNICAL_FLOW.md` before wiring gameplay behavior.
 10. Draw the Adaptation's icon: add a drawer keyed by its `IconId` to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/AdaptationIcons.cs` (a small diagram of the effect built from `IconGlyphs`, plus its background/accent entries in the colour tables), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any adaptation lacks a drawer. See `UI_STYLE_GUIDE.md` section 5.9.
 11. Implement metadata in the Adaptation catalog and wire gameplay behavior through the appropriate campaign and core runtime hooks.
 12. Validate with Core and Simulation builds for core behavior changes, and validate campaign flow in Unity because campaign simulation is not supported yet.
+
+## Adaptation Copy Rules
+
+Adaptations reuse the cadence-first standards in `MYCOVARIANT_AUTHORING_STYLE.md` and every vocabulary rule in `GAMEPLAY_TERMINOLOGY.md`, with three differences that come from how Adaptations are built:
+
+1. **Scope is the campaign, not the game.** Draftable passives open with `For the rest of the campaign, ...`. Round-triggered effects open with `At the start of round N, ...`, `At the end of round N, ...`, or `At the start of round N's Mutation Phase, ...`. Game-start effects open with `At the start of the game, ...`. Starting Adaptations (assigned by mold selection) are always on and may omit the scope phrase, but every draftable passive must include it.
+2. **There is no `FlavorText` field.** `AdaptationDefinition` only carries a description, and the campaign reward UI shows nothing else. The description must therefore be pure mechanics: no scene-setting sentence, no evocative verbs standing in for canonical ones. Put the fantasy in the name.
+3. **Descriptions are built with string interpolation, not the `MutationBuilderHelper`.** Format every number from an `AdaptationGameBalance` constant, and pluralize any value that could be 1 with the same `(value == 1 ? "point" : "points")` pattern the existing entries use. Never hard-code a count or percentage in the string.
+
+Template:
+
+```
+<Scope or trigger phrase>, <target> <canonical verb> <effect> <limits/exclusions>.
+```
+
+Examples that follow the rules:
+- `For the rest of the campaign, whenever one of your mutations reaches max level, gain N free mutation points.`
+- `At the start of round N, a Resistant cell arches from your starting spore into the corner of the toast most distant from it, replacing any non-Resistant occupant.`
+
+Before opening a PR, run [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md).
 
 ## Common Tasks
 
@@ -39,7 +61,7 @@ Adaptations commonly do one of two things:
 2. Keep the ID stable and unique.
 3. Name it using `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`, starting with 5 candidate names before finalizing.
 4. Confirm the chosen name is unique across Mutations, Mycovariants, and Adaptations with a repo search.
-5. Write concise description text using the same cadence-first standards used for Mycovariants.
+5. Write concise description text following the Adaptation Copy Rules above.
 6. Add a drawer for the Adaptation's `IconId` in `AdaptationIcons.cs` and review it with the `tools/icon-preview` harness. It should depict the effect and be distinct from every other Adaptation.
 7. If the Adaptation has gameplay behavior, wire it through the campaign startup seam and any required passive phase/event hooks.
 

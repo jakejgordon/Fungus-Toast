@@ -66,7 +66,7 @@ namespace FungusToast.Core.Mycovariants
                 Id = MycovariantIds.PlasmidBountyIIIId,
                 Name = "Plasmid Bounty III",
                 Description = $"One-time on draft: absorb foreign plasmids and gain {MycovariantGameBalance.PlasmidBountyIIIMutationPointAward} mutation points.",
-                FlavorText = "Massive genetic influx overwhelms cellular repair mechanisms, creating unprecedented mutation rates throughout the colony.",
+                FlavorText = "A third influx outpaces the colony's repair machinery, and the mutation rate climbs past anything on record.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
                 IsUniversal = false,
@@ -131,7 +131,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.SporophoreDecoyId,
                 Name = "Sporophore Decoy",
-                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.SporophoreDecoyMutationPointAward} mutation points. If AI, all of your non-starting Resistant cells immediately lose Resistance.",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.SporophoreDecoyMutationPointAward} mutation points. If AI, all of your Resistant cells except your starting spore immediately lose Resistance.",
                 FlavorText = "A counterfeit fruiting flare promises easy advantage, only to leave the taker's outer hyphae stripped bare.",
                 IconId = "myco_sporophore_decoy",
                 Type = MycovariantType.Economy,
@@ -156,7 +156,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.SporalSnareId,
                 Name = "Sporal Snare",
-                Description = $"The leading AI player always prefers drafting this Mycovariant, causing up to {MycovariantGameBalance.SporalSnareMaximumAffectedCells} cells along the line from the Human player's starting spore to the AI player's starting spore to become Human-owned living cells by colonizing empty tiles, reclaiming dead cells, infesting non-resistant living cells, and overgrowing toxins. If drafted by the Human player, grants {MycovariantGameBalance.SporalSnareMutationPointAward} mutation points.",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.SporalSnareMutationPointAward} mutation points. If AI, up to {MycovariantGameBalance.SporalSnareMaximumAffectedCells} tiles along the line from the Human player's starting spore to your starting spore become Human living cells, colonizing empty tiles, reclaiming dead cells, infesting non-Resistant living cells, and overgrowing toxins.",
                 FlavorText = "A baited pore-mouth yawns open, inviting rival growth to thread a breach straight back through the taker's own lane.",
             IconId = "myco_sporal_snare",
                 Type = MycovariantType.Economy,
@@ -181,7 +181,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.PerisporeCrownId,
                 Name = "Perispore Crown",
-                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.PerisporeCrownMutationPointAward} mutation points. If AI, Human-owned toxins erupt in a circular burst around the AI starting spore, poisoning non-human non-Resistant living cells and toxifying empty plus non-living enemy tiles.",
+                Description = $"One-time on draft: if Human, gain {MycovariantGameBalance.PerisporeCrownMutationPointAward} mutation points. If AI, Human toxins erupt in a circle around your starting spore, poisoning every non-Human, non-Resistant living cell and spreading Human toxin over every empty tile, dead cell, and non-Human toxin in range.",
                 FlavorText = "A hardened perispore flowers into a toxin crown, baiting rivals into wreathing their own foothold in decay.",
                 IconId = "myco_perispore_crown",
                 Type = MycovariantType.Economy,

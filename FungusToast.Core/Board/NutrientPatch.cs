@@ -53,14 +53,14 @@ namespace FungusToast.Core.Board
 
     public static NutrientPatch CreateAdaptogenCluster(int clusterId, int clusterTileCount, NutrientPatchSource source = NutrientPatchSource.StartingBoard)
         {
-            string pointLabel = clusterTileCount == 1 ? "Point" : "Points";
+            string pointLabel = clusterTileCount == 1 ? "point" : "points";
             return new NutrientPatch(
                 clusterId,
                 clusterTileCount,
         source,
                 NutrientPatchType.Adaptogen,
                 "Adaptogen Patch",
-                $"A mutagen-rich fungal feast. The first living mold cell to grow onto any tile in this cluster claims the whole patch for +{clusterTileCount} Mutation {pointLabel}.",
+                $"A mutagen-rich fungal feast. The first living mold cell to grow onto any tile in this cluster claims the whole patch for +{clusterTileCount} mutation {pointLabel}.",
                 NutrientRewardType.MutationPoints,
                 clusterTileCount);
         }
@@ -88,7 +88,7 @@ namespace FungusToast.Core.Board
         source,
                 NutrientPatchType.Hypervariation,
                 "Hypervariation Patch",
-                "A volatile knot of runaway fungal potential. The first living mold cell to claim any tile in this cluster secures a Hypervariation draft at the next normal draft timing, letting only that colony choose a mycovariant.",
+                "A volatile knot of runaway fungal potential. The first living mold cell to claim any tile in this cluster secures a Hypervariation draft at the next normal draft timing, letting only that colony draft a Mycovariant.",
                 NutrientRewardType.MycovariantDraft,
                 1);
         }

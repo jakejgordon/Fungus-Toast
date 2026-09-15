@@ -17,8 +17,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeRoot(new Mutation(
                 id: MutationIds.MycelialBloom,
                 name: "Mycelial Bloom",
-                description: $"Expands your colony faster in the four cardinal directions (up / down / left / right), but makes it more vulnerable during the Decay Phase.\n\n" +
-                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.MycelialBloomEffectPerLevel)} cardinal growth chance (up / down / left / right) and {helper.FormatPercent(GameBalance.MycelialBloomRandomDecayPenaltyPerLevel)} random decay chance.",
+                description: $"Expands your colony faster in the four orthogonal directions (up / down / left / right), but makes it more vulnerable during the Decay Phase.\n\n" +
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.MycelialBloomEffectPerLevel)} orthogonal growth chance and {helper.FormatPercent(GameBalance.MycelialBloomRandomDecayPenaltyPerLevel)} random decay chance.",
                 flavorText: "Hyphal strands thicken and surge outward, driven by nutrient cues and quorum signals.",
                 type: MutationType.GrowthChance,
                 effectPerLevel: GameBalance.MycelialBloomEffectPerLevel,
@@ -58,8 +58,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.CreepingMold,
                 name: "Creeping Mold",
                 description: $"Failed growth can become repositioning, letting a cell crawl into the tile it missed.\n\n" +
-                             $"<b>Technical:</b> When a growth attempt fails, each level gives a {helper.FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into that target tile instead if it is at least as open as the source and has at least two open sides. Resistant cells are fixed anchors and never crawl.\n" +
-                             $"<b>Max Level Bonus:</b> Can jump over one blocking toxin in a cardinal direction (up / down / left / right) to land on the next open tile beyond it.",
+                             $"<b>Technical:</b> When a growth attempt fails, each level gives a {helper.FormatPercent(GameBalance.CreepingMoldMoveChancePerLevel)} chance to move into that target tile instead if it is at least as open as the source and has at least two open sides. Resistant cells are fixed anchors and never move.\n" +
+                             $"<b>Max Level Bonus:</b> Can jump over one blocking toxin orthogonally (up / down / left / right) to land on the next open tile beyond it.",
                 flavorText: "Hyphal strands abandon anchor points to invade fresh substrate through pseudopodial crawling.",
                 type: MutationType.CreepingMovementOnFailedGrowth,
                 effectPerLevel: GameBalance.CreepingMoldMoveChancePerLevel,
@@ -74,8 +74,8 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.FilamentOverdrive,
                 name: "Filament Overdrive",
-                description: "Successful Tendril growth can consume its source cell to drive a longer diagonal runner.\n\n" +
-                             $"<b>Technical:</b> Each successful Tendril growth whose source is living, non-resistant, has not already triggered this Growth Cycle, and has an open next tile rolls {helper.FormatPercent(GameBalance.FilamentOverdriveTriggerChancePerLevel)} per level. On success, colonize up to {GameBalance.FilamentOverdriveBonusCells} additional contiguous empty tiles in the same diagonal direction, stopping before the first occupied, blocked, or off-board tile, then kill the source cell.\n" +
+                description: "Successful Tendril growth can sacrifice its source cell to drive a longer diagonal runner.\n\n" +
+                             $"<b>Technical:</b> Each successful Tendril growth whose source is living, non-Resistant, has not already triggered this Growth Cycle, and has an open next tile rolls {helper.FormatPercent(GameBalance.FilamentOverdriveTriggerChancePerLevel)} per level. On success, colonize up to {GameBalance.FilamentOverdriveBonusCells} additional contiguous empty tiles in the same diagonal direction, stopping before the first occupied, blocked, or off-board tile, then kill the source cell.\n" +
                              $"<b>Max Level Bonus:</b> Can colonize up to {GameBalance.FilamentOverdriveMaxLevelBonusCells} additional tiles instead.",
                 flavorText: "The launching filament liquefies its own mature anchor, forcing a final pulse of cytoplasm through the advancing tip.",
                 type: MutationType.FilamentOverdrive,
@@ -105,7 +105,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: id,
                 name: $"Tendril {direction}",
                 description: $"Pushes growth toward the {directionWithHint}, trading away some normal spread.\n\n" +
-                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.TendrilDiagonalGrowthEffectPerLevel)} diagonal growth chance to the {directionWithHint} and subtracts {helper.FormatPercent(GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel)} cardinal growth chance (up / down / left / right), to a {helper.FormatPercent(GameBalance.TendrilOrthogonalGrowthMinimumChance)} floor.",
+                             $"<b>Technical:</b> Each level adds {helper.FormatPercent(GameBalance.TendrilDiagonalGrowthEffectPerLevel)} diagonal growth chance to the {directionWithHint} and subtracts {helper.FormatPercent(GameBalance.TendrilOrthogonalGrowthPenaltyPerLevel)} orthogonal growth chance (up / down / left / right), to a {helper.FormatPercent(GameBalance.TendrilOrthogonalGrowthMinimumChance)} floor.",
                 flavorText: $"Polarity vectors align hyphal tip extension toward {direction.ToLower()} moisture gradients.",
                 type: type,
                 effectPerLevel: GameBalance.TendrilDiagonalGrowthEffectPerLevel,

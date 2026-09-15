@@ -11,6 +11,8 @@ Read these docs first:
 2. `FungusToast.Core/docs/CAMPAIGN_HELPER.md`
 3. `FungusToast.Core/docs/second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 4. `FungusToast.Core/docs/second-level/MYCOVARIANT_AUTHORING_STYLE.md`
+4a. `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
+4b. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 5. `FungusToast.Core/docs/second-level/ADAPTATION_TECHNICAL_FLOW.md`
 
 Read `FungusToast.Core/docs/SAVE_COMPATIBILITY.md` before changing persistence or resume behavior.
@@ -25,7 +27,7 @@ Read `FungusToast.Core/docs/SAVE_COMPATIBILITY.md` before changing persistence o
    - `FungusToast.Core/Campaign/AdaptationRepository.cs`
    - `AdaptationIds`, `AdaptationGameBalance`, and related helpers when needed
    - `MoldCatalog` when the change affects starting adaptations
-6. Follow the concise copy rules exactly.
+6. Follow the Adaptation Copy Rules in `ADAPTATION_HELPER.md` exactly (campaign scope phrase, no flavor prose, constants only) and run `CONTENT_COPY_CHECKLIST.md` before finishing.
 7. Add a drawer for the adaptation's `IconId` in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/AdaptationIcons.cs` (a diagram of the effect built from `IconGlyphs`, plus colour-table entries), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any adaptation lacks a drawer.
 8. Wire gameplay behavior through the correct campaign startup seam and passive/runtime hooks in Core.
 9. Treat save/resume compatibility as part of the implementation, not an afterthought.

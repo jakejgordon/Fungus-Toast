@@ -22,7 +22,7 @@ public class SeptalSealMycovariantTests
         Assert.False(mycovariant.IsUniversal);
         Assert.True(mycovariant.IsLocked);
         Assert.Equal(1, mycovariant.RequiredMoldinessUnlockLevel);
-        Assert.Contains("30% divided by your existing Mycovariant count", mycovariant.Description);
+        Assert.Contains("30% divided by the number of Mycovariants you already own", mycovariant.Description);
         Assert.NotNull(mycovariant.ApplyEffect);
 
         var board = new GameBoard(width: 5, height: 5, playerCount: 1);

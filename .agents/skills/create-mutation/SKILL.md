@@ -10,6 +10,8 @@ Read these docs first:
 1. `FungusToast.Core/docs/NEW_MUTATION_HELPER.md`
 2. `FungusToast.Core/docs/second-level/MUTATION_PREREQUISITE_GUIDELINES.md`
 3. `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
+4. `FungusToast.Core/docs/second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
+5. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 
 Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` before adding new analytics seams.
 
@@ -22,7 +24,7 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
    - `FungusToast.Core/Mutations/MutationTypeEnum.cs` when a new type is actually needed
    - `FungusToast.Core/Config/GameBalance.cs`
    - the appropriate factory under `FungusToast.Core/Mutations/Factories/`
-4. Follow the helper's naming workflow and description rules exactly. Keep tooltip copy readable first, implementation-accurate second.
+4. Follow the shared naming doc and the helper's description template exactly. Keep tooltip copy readable first, implementation-accurate second, and run `CONTENT_COPY_CHECKLIST.md` before finishing.
 5. Wire gameplay behavior through the correct processor and coordinator path in `FungusToast.Core`.
 6. Add simulation-tracking hooks when the mutation creates meaningful analytics-visible behavior.
 7. Update Unity mutation-tree placement in `FungusToast.Unity/Assets/Scripts/Unity/UI/MutationTree/UI_MutationLayoutProvider.cs` when the new mutation needs a node.

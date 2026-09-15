@@ -41,6 +41,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 
 ### Mycovariants
 - `second-level/MYCOVARIANT_AUTHORING_STYLE.md` — concise mechanics/copy style rules
+- `second-level/CONTENT_COPY_CHECKLIST.md` — shared pre-PR checklist for all Mutation, Mycovariant, and Adaptation copy
 - `second-level/MYCOVARIANT_TECHNICAL_FLOW.md` — end-to-end technical implementation flow
 - `second-level/MYCOVARIANT_PR_CHECKLIST.md` — pre-review completion checklist
 

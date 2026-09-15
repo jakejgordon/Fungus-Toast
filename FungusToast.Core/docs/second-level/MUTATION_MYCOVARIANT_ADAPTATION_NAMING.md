@@ -1,10 +1,14 @@
 # Mutation, Mycovariant, and Adaptation Naming
 
-Use this guide when naming Mutations, Mycovariants, and Adaptations.
+Use this guide when naming Mutations, Mycovariants, and Adaptations. It is the single source of naming rules for all three systems; `NEW_MUTATION_HELPER.md`, `MYCOVARIANT_HELPER.md`, and `ADAPTATION_HELPER.md` link here rather than restating them.
 
 ## Purpose
 
 Names should feel scientifically grounded, readable in UI, and tightly linked to gameplay behavior.
+
+## Legacy Names
+
+These rules apply to **new and renamed** content. Many shipped names predate them (25 use a word longer than 11 characters, such as `Chronoresilient Cytoplasm` and `Necrosporulation`; the ranked Mycovariant families are three tokens because of their Roman numeral). Do not rename shipped content to satisfy this guide, and do not cite a legacy name as precedent for breaking a rule.
 
 ## Core Naming Rules
 
@@ -27,11 +31,16 @@ Names should feel scientifically grounded, readable in UI, and tightly linked to
 - Every individual word must be 11 characters or fewer.
 - Check scientific terms carefully before finalizing them.
 
-### 5) Favor clarity over obscurity
+### 5) At most one advanced biological term per name
+- Pair a specialist term with a plain word: `Perispore Crown`, `Hyphal Economy`, `Septal Seal`.
+- Two specialist terms in one name (`Thanatrophic Rebound`, `Aggressotropic Conduit`) are legacy patterns, not targets.
+- A new player should be able to say the name out loud without stumbling.
+
+### 6) Favor clarity over obscurity
 - A slightly plainer fungal term is better than a highly obscure term that hides the mechanic.
 - If two scientifically grounded names are viable, prefer the one a player can parse faster in a draft card, tooltip, or sidebar.
 
-### 6) Require cross-system uniqueness
+### 7) Require cross-system uniqueness
 - Every proposed Mutation, Mycovariant, and Adaptation name must be unique across all three content systems.
 - Before finalizing a name, run a repo search to confirm the exact name is not already used by any Mutation, Mycovariant, Adaptation, unlock, or closely paired player-facing reward label.
 - Do not reuse a name that already exists in another content type, even if the mechanics are different.
@@ -76,11 +85,16 @@ When creating a new Adaptation instance, generate **5 candidate names** and pres
 This gives the user enough context to make an informed choice without having to research the terms independently. Apply all naming rules above before proposing any candidate — only offer names that pass every checklist item.
 Check repo uniqueness before presenting the final shortlist.
 
+## New Mutation Naming Workflow
+
+When creating a new Mutation, generate **5 candidate names** and present them to the user before finalizing, using the same three-part format as the Mycovariant and Adaptation workflows above. Check repo uniqueness before presenting the final shortlist.
+
 ## Checklist
 
 Before finalizing a name:
-- [ ] Is it one or two words only?
+- [ ] Is it one or two words only (plus a Roman numeral for ranked Mycovariants)?
 - [ ] Is every word 11 characters or fewer?
+- [ ] Does it use at most one advanced biological term, and can a new player pronounce it?
 - [ ] Is it scientifically or biologically grounded?
 - [ ] Does it suggest what the effect actually does?
 - [ ] Is it readable at a glance in UI?

@@ -15,7 +15,7 @@ public class NutrientPatchFactoryTests
         Assert.Equal(NutrientRewardType.MutationPoints, patch.RewardType);
         Assert.Equal(3, patch.RewardAmount);
         Assert.Equal("Adaptogen Patch", patch.DisplayName);
-        Assert.Contains("+3 Mutation Points", patch.Description);
+        Assert.Contains("+3 mutation points", patch.Description);
     }
 
     [Fact]

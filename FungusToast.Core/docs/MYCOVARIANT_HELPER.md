@@ -12,6 +12,8 @@ Mycovariants are drafted abilities that either:
 
 - **Naming rules and candidate-name workflow:** [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
 - **Authoring standards (copy/UX text):** [second-level/MYCOVARIANT_AUTHORING_STYLE.md](second-level/MYCOVARIANT_AUTHORING_STYLE.md)
+- **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
+- **Shared pre-PR copy checklist:** [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md)
 - **Technical implementation flow:** [second-level/MYCOVARIANT_TECHNICAL_FLOW.md](second-level/MYCOVARIANT_TECHNICAL_FLOW.md)
 - **Review checklist for PRs:** [second-level/MYCOVARIANT_PR_CHECKLIST.md](second-level/MYCOVARIANT_PR_CHECKLIST.md)
 
@@ -22,7 +24,7 @@ Mycovariants are drafted abilities that either:
 3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
 4. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
 5. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
-6. Read `MYCOVARIANT_AUTHORING_STYLE.md` before editing descriptions or flavor text.
+6. Read `MYCOVARIANT_AUTHORING_STYLE.md` and `GAMEPLAY_TERMINOLOGY.md` before editing descriptions or flavor text; run `CONTENT_COPY_CHECKLIST.md` before opening a PR.
 7. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
 8. Draw the Mycovariant's icon: add a case for its id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a small diagram of the effect built from `IconGlyphs`; tiered I/II/III variants share one drawing and get pips automatically), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any mycovariant lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
 9. Implement changes in category factories and processors.

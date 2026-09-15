@@ -23,7 +23,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.NeutralizingMantleId,
             Name = "Neutralizing Mantle",
-            Description = $"For the rest of the game, whenever an enemy toxin appears orthogonally adjacent to your living cell, neutralize it immediately with {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance.",
+            Description = $"For the rest of the game, whenever an enemy toxin appears orthogonally adjacent (up / down / left / right) to one of your living cells, clear it immediately with {MycovariantGameBalance.NeutralizingMantleNeutralizeChance * 100f:0}% chance.",
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Defense,
@@ -36,7 +36,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.EnduringToxaphoresId,
             Name = "Enduring Toxaphores",
-            Description = $"One-time on draft: extend all current toxins by {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} cycles. For the rest of the game, new toxins you place persist {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} extra cycles.",
+            Description = $"One-time on draft: extend all of your current toxins by {MycovariantGameBalance.EnduringToxaphoresExistingToxinExtension} Growth Cycles. For the rest of the game, new toxins you place last {MycovariantGameBalance.EnduringToxaphoresNewToxinExtension} extra Growth Cycles.",
             FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,
@@ -80,7 +80,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIId,
             Name = "Ballistospore Discharge I",
-            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeISpores} empty tiles (fewer if not enough valid tiles exist).",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeISpores} empty tiles.",
             FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
@@ -102,8 +102,8 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIId,
             Name = "Ballistospore Discharge II",
-            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIISpores} empty tiles (fewer if not enough valid tiles exist).",
-            FlavorText = "A thunderous burst of spores erupts, blanketing the battlefield in a toxic haze.",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIISpores} empty tiles.",
+            FlavorText = "A second, heavier burst follows, blanketing the crumb in a toxic haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
             IsUniversal = false,
@@ -124,8 +124,8 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.BallistosporeDischargeIIIId,
             Name = "Ballistospore Discharge III",
-            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} empty tiles (fewer if not enough valid tiles exist).",
-            FlavorText = "The ultimate actinic volley: a storm of spores rains down, saturating the terrain with lethal intent.",
+            Description = $"One-time on draft: launch toxin spores to toxify up to {MycovariantGameBalance.BallistosporeDischargeIIISpores} empty tiles.",
+            FlavorText = "The colony empties its fruiting bodies at once, and the whole crust falls silent under the settling haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
             IsUniversal = false,
@@ -146,8 +146,8 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.CytolyticBurstId,
             Name = "Cytolytic Burst",
-            Description = $"One-time on draft: choose one of your toxins to burst in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in range has {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to poison a non-Resistant living cell or toxify an empty or dead tile.",
-            FlavorText = "The toxin's cellular membrane ruptures catastrophically, releasing cytolytic enzymes in a violent cascade that spreads destruction through the surrounding substrate.",
+            Description = $"One-time on draft: choose one of your toxins to burst in a {MycovariantGameBalance.CytolyticBurstRadius}-tile radius. Each tile in range has {MycovariantGameBalance.CytolyticBurstToxinChance * 100f:0}% chance to poison a non-Resistant living cell or toxify an empty tile or dead cell.",
+            FlavorText = "The toxin's membrane ruptures, and cytolytic enzymes spread outward through the surrounding substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
             IsUniversal = false,
@@ -182,7 +182,7 @@ namespace FungusToast.Core.Mycovariants
         {
             Id = MycovariantIds.ChemotacticMycotoxinsId,
             Name = "Chemotactic Mycotoxins",
-            Description = $"For the rest of the game, at the end of each Decay Phase, each isolated toxin may drift to a living enemy with X% chance (X = {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier} × Mycotoxin Tracer level; standard targeting rules).",
+            Description = $"For the rest of the game, at the end of each Decay Phase, each of your toxins with no orthogonally adjacent (up / down / left / right) enemy living cell has a {MycovariantGameBalance.ChemotacticMycotoxinsMycotoxinTracerMultiplier:0.#}% chance per Mycotoxin Tracer level to move to a random empty tile next to an enemy living cell.",
             FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,

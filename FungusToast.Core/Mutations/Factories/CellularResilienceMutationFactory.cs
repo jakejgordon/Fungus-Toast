@@ -48,7 +48,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.RegenerativeHyphae,
                 name: "Regenerative Hyphae",
                 description: $"Reclaims your own dead cells near your living colony.\n\n" +
-                             $"<b>Technical:</b> After the Growth Phase and before the Decay Phase, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned adjacent in a cardinal direction (up / down / left / right). Each dead cell is checked at most once per round.",
+                             $"<b>Technical:</b> After the Growth Phase and before the Decay Phase, each living cell rolls {helper.FormatPercent(GameBalance.RegenerativeHyphaeReclaimChance)} per level to reclaim one dead cell you previously owned orthogonally adjacent (up / down / left / right). Each dead cell is checked at most once per round.",
                 flavorText: "Regrowth cascades from necrotic margins, guided by residual cytoplasmic signaling.",
                 type: MutationType.ReclaimOwnDeadCells,
                 effectPerLevel: GameBalance.RegenerativeHyphaeReclaimChance,
@@ -81,8 +81,8 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Necrohyphal Infiltration",
                 description:
                     $"Failed expansion can reclaim enemy cells that have been dead long enough.\n\n" +
-                    $"<b>Technical:</b> After a living cell fails to expand normally, each level gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance to reclaim an adjacent enemy cell that has been dead for at least {GameBalance.NecrohyphalInfiltrationMinimumCorpseAgeGrowthCycles} completed Growth Cycles in a cardinal direction (up / down / left / right). On success, each level also gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to reclaim another eligible adjacent dead enemy cell.",
-                flavorText: "Necrohyphae tunnel through decaying rivals, infiltrating their remains and reawakening them as loyal extensions of the colony. On rare occasions, this necrotic surge propagates, consuming entire graveyards in a wave of resurrection.",
+                    $"<b>Technical:</b> After a living cell fails to expand normally, each level gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationChancePerLevel)} chance to reclaim an adjacent enemy cell that has been dead for at least {GameBalance.NecrohyphalInfiltrationMinimumCorpseAgeGrowthCycles} completed Growth Cycles orthogonally (up / down / left / right). On success, each level also gives a {helper.FormatPercent(GameBalance.NecrohyphalInfiltrationCascadeChancePerLevel)} chance to reclaim another eligible adjacent dead enemy cell.",
+                flavorText: "Necrohyphae thread through the remains of rivals and wake them as extensions of the colony. Occasionally the wave keeps going, and a whole graveyard changes allegiance.",
                 type: MutationType.NecrohyphalInfiltration,
                 effectPerLevel: GameBalance.NecrohyphalInfiltrationChancePerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
@@ -98,9 +98,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.CatabolicRebirth,
                 name: "Catabolic Rebirth",
                 description: $"Expired toxins can reclaim your dead cells instead of simply fading out.\n\n" +
-                             $"<b>Technical:</b> When a toxin expires next to one of your dead cells in a cardinal direction (up / down / left / right), each level gives a {helper.FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance to reclaim it as a living cell.\n" +
+                             $"<b>Technical:</b> When a toxin expires next to one of your dead cells orthogonally (up / down / left / right), each level gives a {helper.FormatPercent(GameBalance.CatabolicRebirthResurrectionChancePerLevel)} chance to reclaim it as a living cell.\n" +
                              $"<b>Max Level Bonus:</b> Enemy toxins next to your dead cells age twice as fast.",
-                flavorText: "The breakdown of toxic compounds releases catalytic energy that triggers dormant cellular machinery, resurrecting fallen cells through the metabolic alchemy of catabolic processes. At full power, the colony's presence accelerates the decay of enemy toxins, purifying the battlefield for a final resurgence.",
+                flavorText: "Catabolized toxin residue feeds dormant cellular machinery in the dead cells beside it. At full expression, the colony's presence hurries enemy toxins toward the same breakdown.",
                 type: MutationType.ToxinExpirationResurrection,
                 effectPerLevel: GameBalance.CatabolicRebirthResurrectionChancePerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
@@ -115,10 +115,10 @@ namespace FungusToast.Core.Mutations.Factories
             helper.MakeChild(new Mutation(
                 id: MutationIds.HypersystemicRegeneration,
                 name: "Hypersystemic Regeneration",
-                description: $"Makes Regenerative Hyphae stronger and gives reclaimed cells a chance to come back resistant.\n\n" +
-                             $"<b>Technical:</b> Each level increases Regenerative Hyphae effectiveness by {helper.FormatPercent(GameBalance.HypersystemicRegenerationEffectivenessBonus)} and gives reclaimed cells a {helper.FormatPercent(GameBalance.HypersystemicRegenerationResistanceChance)} chance to become resistant.\n" +
+                description: $"Makes Regenerative Hyphae stronger and gives reclaimed cells a chance to come back Resistant.\n\n" +
+                             $"<b>Technical:</b> Each level increases Regenerative Hyphae effectiveness by {helper.FormatPercent(GameBalance.HypersystemicRegenerationEffectivenessBonus)} and gives reclaimed cells a {helper.FormatPercent(GameBalance.HypersystemicRegenerationResistanceChance)} chance to become Resistant.\n" +
                              $"<b>Max Level Bonus:</b> Regenerative Hyphae can also reclaim diagonally adjacent cells.",
-                flavorText: "The mycelium achieves ultimate regenerative mastery, orchestrating systemic cellular resurrection with enhanced defensive capabilities and expanded reach across the substrate matrix.",
+                flavorText: "Regeneration becomes systemic: reclaimed tissue comes back hardened, and the recovery front reaches further into the substrate than the hyphae that started it.",
                 type: MutationType.HypersystemicRegeneration,
                 effectPerLevel: GameBalance.HypersystemicRegenerationEffectivenessBonus,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier7),

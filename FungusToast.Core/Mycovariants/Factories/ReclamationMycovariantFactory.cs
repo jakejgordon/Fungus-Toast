@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.NecrophoricAdaptation,
                 Name = "Necrophoric Adaptation",
-                Description = $"For the rest of the game, whenever one of your living cells dies, reclaim one orthogonally adjacent dead tile with {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance.",
+                Description = $"For the rest of the game, whenever one of your living cells dies, reclaim one orthogonally adjacent (up / down / left / right) dead cell with {MycovariantGameBalance.NecrophoricAdaptationReclamationChance * 100f:0}% chance.",
                 FlavorText = "Even in death, the colony endures.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Reclamation,

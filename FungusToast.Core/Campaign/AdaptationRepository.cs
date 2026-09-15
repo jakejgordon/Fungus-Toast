@@ -55,12 +55,12 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         "adaptation_3",
                         "Mycotoxic Halo",
-                        $"For the rest of the campaign, your toxins gain +{mycotoxicHaloPercent}% chance to kill orthogonally adjacent living cells during decay. This stacks with Mycotoxin Potentiation.",
+                        $"For the rest of the campaign, your toxins gain +{mycotoxicHaloPercent}% chance to kill orthogonally adjacent (up / down / left / right) enemy living cells during the Decay Phase. This stacks with Mycotoxin Potentiation.",
                         "mycotoxic_halo"),
                     new AdaptationDefinition(
                         "adaptation_4",
                         "Mycotoxic Lash",
-                        $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first orthogonally adjacent enemy living cell.",
+                        $"For the rest of the campaign, each new toxin drop has a {mycotoxicLashPercent}% chance to instantly kill the first orthogonally adjacent (up / down / left / right) enemy living cell.",
                         "mycotoxic_lash"),
                     new AdaptationDefinition(
                         AdaptationIds.RetrogradeBloom,
@@ -70,17 +70,17 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.AegisHyphae,
                         "Aegis Hyphae",
-                        $"Each round, the first {AdaptationGameBalance.AegisHyphaeCellsPerRound} {(AdaptationGameBalance.AegisHyphaeCellsPerRound == 1 ? "cell" : "cells")} you grow gain Resistance.",
+                        $"Each round, the first {AdaptationGameBalance.AegisHyphaeCellsPerRound} {(AdaptationGameBalance.AegisHyphaeCellsPerRound == 1 ? "cell" : "cells")} you grow become Resistant.",
                         "aegis_hyphae"),
                     new AdaptationDefinition(
                         AdaptationIds.SaprophageRing,
                         "Saprophage Ring",
-                        "Your cells that die beside one of your resistant cells are consumed, leaving the tile empty instead of a dead cell.",
+                        "For the rest of the campaign, whenever one of your cells dies orthogonally adjacent (up / down / left / right) to one of your Resistant cells, it is cleared, leaving the tile empty instead of a dead cell.",
                         "saprophage_ring"),
                     new AdaptationDefinition(
                         AdaptationIds.MarginalClamp,
                         "Marginal Clamp",
-                        "For the rest of the campaign, whenever one of your living cells grows beside an enemy living cell or any toxin on the crust, those border threats are cleared immediately. Resistant enemy cells still survive.",
+                        "For the rest of the campaign, whenever one of your living cells grows orthogonally adjacent (up / down / left / right) to an enemy living cell or any toxin sitting on the board edge (the crust), those crust neighbors are cleared immediately. Enemy Resistant cells are unaffected.",
                         "marginal_clamp"),
                     new AdaptationDefinition(
                         AdaptationIds.ApicalYield,
@@ -90,12 +90,12 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.CrustalCallus,
                         "Crustal Callus",
-                        "For the rest of the campaign, whenever one of your living cells establishes itself on the board edge (the crust), it gains Resistance.",
+                        "For the rest of the campaign, whenever one of your living cells establishes itself on the board edge (the crust), it becomes Resistant.",
                         "crustal_callus"),
                     new AdaptationDefinition(
                         AdaptationIds.DistalSpore,
                         "Distal Spore",
-                        $"At the start of round {AdaptationGameBalance.DistalSporeTriggerRound}, a resistant cell arches from your starting spore into the corner of the toast most distant from it. It replaces any non-resistant occupant. If that corner holds a resistant cell, it roots in the nearest non-resistant tile to that corner instead.",
+                        $"At the start of round {AdaptationGameBalance.DistalSporeTriggerRound}, a Resistant cell arches from your starting spore into the corner of the toast most distant from it, replacing any non-Resistant occupant. If that corner holds a Resistant cell, it roots in the nearest non-Resistant tile to that corner instead.",
                         "distal_spore"),
                     new AdaptationDefinition(
                         AdaptationIds.AscusPrimacy,
@@ -105,43 +105,43 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.SporeSalvo,
                         "Spore Salvo",
-                        "At the start of the game, your starting spore launches one toxin to toxify the nearest open tile beside each enemy starting spore.",
+                        "At the start of the game, your starting spore launches one toxin to toxify the nearest empty tile beside each enemy starting spore.",
                         "spore_salvo",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
                     new AdaptationDefinition(
                         AdaptationIds.HyphalBridge,
                         "Hyphal Bridge",
-                        $"At the end of round {AdaptationGameBalance.HyphalBridgeTriggerRound}, 4 living cells drop in a straight line at equal intervals between your starting cell and the nearest enemy starting cell. They replace any non-resistant occupant and skip resistant cells.",
+                        $"At the end of round {AdaptationGameBalance.HyphalBridgeTriggerRound}, {AdaptationGameBalance.HyphalBridgeCellCount} living cells drop in a straight line at equal intervals between your starting spore and the nearest enemy starting spore, replacing any non-Resistant occupant and skipping Resistant cells.",
                         "hyphal_bridge",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
                     new AdaptationDefinition(
                         AdaptationIds.VesicleBurst,
                         "Vesicle Burst",
-                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop, poisoning adjacent non-Resistant enemy living cells and spreading toxin to adjacent empty, dead, or enemy toxin tiles.",
+                        $"For the rest of the campaign, each of your expired toxins has a {vesicleBurstPercent}% chance to pop, poisoning orthogonally adjacent (up / down / left / right) non-Resistant enemy living cells and spreading your toxin to adjacent empty tiles, dead cells, and enemy toxins.",
                         "vesicle_burst",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
                     new AdaptationDefinition(
                         AdaptationIds.RhizomorphicHunger,
                         "Rhizomorphic Hunger",
-                        $"Your colony hunts nutrients with predatory efficiency. Orthogonal growth attempts targeting a nutrient patch tile gain +{(int)(AdaptationGameBalance.RhizomorphicHungerGrowthBonus * 100)}% growth chance. When you claim a nutrient patch, its reward is calculated as if the patch were one tile larger than it actually is.",
+                        $"For the rest of the campaign, orthogonal (up / down / left / right) growth attempts targeting a nutrient patch tile gain +{(int)(AdaptationGameBalance.RhizomorphicHungerGrowthBonus * 100)}% growth chance. When you claim a nutrient patch, its reward is calculated as if the patch were one tile larger than it actually is.",
                         "rhizomorphic_hunger"),
                     new AdaptationDefinition(
                         AdaptationIds.MycelialCrescendo,
                         "Mycelial Crescendo",
-                        $"At round {AdaptationGameBalance.MycelialCrescendoFirstTriggerRound} and round {AdaptationGameBalance.MycelialCrescendoSecondTriggerRound}, your colony erupts with unsolicited evolutionary pressure — a random inactive Mycelial Surge activates for free.",
+                        $"At the start of round {AdaptationGameBalance.MycelialCrescendoFirstTriggerRound}'s and round {AdaptationGameBalance.MycelialCrescendoSecondTriggerRound}'s Mutation Phase, a random inactive Mycelial Surge activates for free.",
                         "mycelial_crescendo"),
                     new AdaptationDefinition(
                         AdaptationIds.OssifiedAdvance,
                         "Ossified Advance",
-                        $"For the rest of the campaign, each of your resistant cells gains +{(int)(AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus * 100)}% orthogonal growth chance.",
+                        $"For the rest of the campaign, each of your Resistant cells gains +{(int)(AdaptationGameBalance.OssifiedAdvanceOrthogonalBonus * 100)}% orthogonal growth chance (up / down / left / right).",
                         "ossified_advance"),
                     new AdaptationDefinition(
                         AdaptationIds.ConidiaAscent,
                         "Conidia Ascent",
-                        $"At the start of round {AdaptationGameBalance.ConidiaAscentTriggerRound}, if you have a full 3x3 block of killable living cells and any completely empty 2x2 opening, that colony fragment blasts away. The 3x3 source block dies and a new 2x2 colony roots in a random open patch.",
+                        $"At the start of round {AdaptationGameBalance.ConidiaAscentTriggerRound}, if you have a full 3x3 block of non-Resistant living cells and any completely empty 2x2 opening, that fragment breaks away: the 3x3 source block dies and a new 2x2 colony colonizes a random empty 2x2 opening.",
                         "conidia_ascent"),
                     new AdaptationDefinition(
                         AdaptationIds.HyphalPriming,
@@ -153,7 +153,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.TropicLysis,
                         "Tropic Lysis",
-                        $"Whenever a Mycovariant draft ends and you drafted a Mycovariant, clear all enemy cells, dead cells, and toxins within {tropicLysisRadius} tiles of your starting spore and active Chemotactic Beacon, leaving those tiles empty. If no beacon is active, clear only around your starting spore; resistant enemy living cells survive.",
+                        $"Whenever a Mycovariant draft ends and you drafted a Mycovariant, clear all enemy cells, dead cells, and toxins within {tropicLysisRadius} tiles (including diagonals) of your starting spore and your active Chemotactic Beacon marker, leaving those tiles empty. If no marker is active, clear only around your starting spore. Enemy Resistant cells are unaffected.",
                         "tropic_lysis",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 1),
@@ -171,17 +171,17 @@ namespace FungusToast.Core.Campaign
                         "hyphal_echo",
                         isLocked: true,
                         requiredMoldinessUnlockLevel: 32),
-                    // Starting adaptations — assigned by mold selection, never offered in mid-run drafts
+                    // Starting adaptations - assigned by mold selection, never offered in mid-run drafts
                     new AdaptationDefinition(
                         AdaptationIds.ObliqueFilament,
                         "Oblique Filament",
-                        $"Your hyphae trade -{obliqueFilamentOrthogonalPercent}% orthogonal growth chance for +{obliqueFilamentDiagonalPercent}% diagonal growth chance in each direction.",
+                        $"Your hyphae trade -{obliqueFilamentOrthogonalPercent}% orthogonal growth chance (up / down / left / right) for +{obliqueFilamentDiagonalPercent}% diagonal growth chance in each direction.",
                         "oblique_filament",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
                         AdaptationIds.ThanatrophicRebound,
                         "Thanatrophic Rebound",
-                        $"The first {AdaptationGameBalance.ThanatrophicReboundReclaimCount} times one of your living cells dies, it immediately reclaims itself as a resistant cell.",
+                        $"The first {AdaptationGameBalance.ThanatrophicReboundReclaimCount} times one of your living cells dies, it immediately reclaims itself as a Resistant cell.",
                         "thanatrophic_rebound",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
@@ -199,25 +199,25 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.SignalEconomy,
                         "Signal Economy",
-                        $"Your Tier 2 Surge Mutations (Autolytic Surge, Necrotic Clearance, Chemotactic Beacon, and Chitin Fortification) cost {AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction} fewer mutation point to activate.",
+                        $"Your Tier 2 Mycelial Surges (Autolytic Surge, Necrotic Clearance, Chemotactic Beacon, and Chitin Fortification) cost {AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction} fewer mutation {(AdaptationGameBalance.SignalEconomyTier2SurgeCostReduction == 1 ? "point" : "points")} to activate.",
                         "signal_economy",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
                         AdaptationIds.LiminalSporemeal,
-                        $"Liminal Sporemeal",
-                        $"At the start of the game, a {AdaptationGameBalance.LiminalSporemealPatchSize}-tile Sporemeal nutrient patch is placed near the board edge closest to your starting spore.",
+                        "Liminal Sporemeal",
+                        $"At the start of the game, a {AdaptationGameBalance.LiminalSporemealPatchSize}-tile Sporemeal Patch is placed near the board edge (the crust) closest to your starting spore.",
                         "liminal_sporemeal",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
                         AdaptationIds.PutrefactiveResilience,
                         "Putrefactive Resilience",
-                        $"Your cells have -{putrefactiveResiliencePercent}% reduced chance of being killed by Putrefactive Mycotoxins and Mycotoxin Potentiation.",
+                        $"Your cells are {putrefactiveResiliencePercent}% less likely to be killed by Putrefactive Mycotoxin and Mycotoxin Potentiation.",
                         "putrefactive_resilience",
                         isStartingAdaptation: true),
                     new AdaptationDefinition(
                         AdaptationIds.CompoundReserve,
                         "Compound Reserve",
-                        $"When you store {AdaptationGameBalance.CompoundReserveBankingThreshold} or more mutation points in a turn, gain {AdaptationGameBalance.CompoundReserveBonusPoints} additional mutation point.",
+                        $"When you store {AdaptationGameBalance.CompoundReserveBankingThreshold} or more mutation points in a turn, gain {AdaptationGameBalance.CompoundReserveBonusPoints} additional mutation {(AdaptationGameBalance.CompoundReserveBonusPoints == 1 ? "point" : "points")}.",
                         "compound_reserve",
                         isStartingAdaptation: true),
                 });

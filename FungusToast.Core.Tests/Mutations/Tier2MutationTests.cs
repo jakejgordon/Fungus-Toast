@@ -82,7 +82,7 @@ public class Tier2MutationTests
         Assert.Equal(MutationIds.MycelialBloom, prereq.MutationId);
         Assert.Equal(10, prereq.RequiredLevel);
         Assert.Contains("diagonal growth chance to the northwest", mutation.Description);
-        Assert.Contains("cardinal growth chance", mutation.Description);
+        Assert.Contains("orthogonal growth chance", mutation.Description);
     }
 
     [Fact]

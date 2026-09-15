@@ -47,7 +47,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MycotoxinCatabolism,
                 name: "Mycotoxin Catabolism",
                 description: $"Lets living cells break down nearby toxins for cleanup and occasional mutation points.\n\n" +
-                             $"<b>Technical:</b> At growth start, each living cell rolls {helper.FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel, 1)} per level to consume each adjacent toxin in a cardinal direction (up / down / left / right). Each toxin consumed this way has a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to award 1 bonus mutation point, up to {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound} per round.",
+                             $"<b>Technical:</b> Before each Growth Phase, each living cell rolls {helper.FormatPercent(GameBalance.MycotoxinCatabolismCleanupChancePerLevel, 1)} per level to clear each orthogonally adjacent (up / down / left / right) toxin. Each toxin cleared this way has a {helper.FormatPercent(GameBalance.MycotoxinCatabolismMutationPointChancePerLevel, 1)} chance to award 1 bonus mutation point, up to {GameBalance.MycotoxinCatabolismMaxMutationPointsPerRound} per round.",
                 flavorText: "Evolved metabolic pathways enable the breakdown of toxic compounds, reclaiming nutrients from chemical hazards and occasionally triggering adaptive bursts of mutation.",
                 type: MutationType.ToxinCleanupAndMPBonus,
                 effectPerLevel: GameBalance.MycotoxinCatabolismCleanupChancePerLevel,
@@ -117,7 +117,7 @@ namespace FungusToast.Core.Mutations.Factories
                 description: $"Can trade away early mutations to steer evolution toward stronger late-game mutations.\n\n" +
                              $"<b>Technical:</b> At Mutation Phase start, each level gives a {helper.FormatPercent(GameBalance.OntogenicRegressionChancePerLevel, 1)} chance to remove {GameBalance.OntogenicRegressionTier1LevelsToConsume} levels from a random Tier 1 mutation and add 1 level to a random Tier 5 or 6 mutation, ignoring prerequisites. If the roll fails or no valid source or target exists, gain {GameBalance.OntogenicRegressionFailureConsolationPoints} mutation points instead.\n" +
                              $"<b>Max Level Bonus:</b> Rolls twice, and when both tiers are available each successful swap has a {helper.FormatPercent(GameBalance.OntogenicRegressionMaxLevelTier6Bias, 0)} chance to target a Tier 6 mutation instead of Tier 5.",
-                flavorText: "Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence through ontogenic reversal.",
+                flavorText: "The genome unwinds its own early chapters to pay for a later one. What it loses, it does not miss.",
                 type: MutationType.OntogenicRegression,
                 effectPerLevel: GameBalance.OntogenicRegressionChancePerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),

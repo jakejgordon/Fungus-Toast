@@ -18,7 +18,7 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.HyphalSurge,
                 name: "Autolytic Surge",
                 description: $"Accelerates your colony's growth at the cost of making its cells more likely to die.\n\n" +
-                             $"<b>Technical:</b> While active, each level adds {helper.FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} cardinal growth chance per Growth Cycle and {helper.FormatPercent(GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel)} random decay chance per Decay Phase for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per current level.",
+                             $"<b>Technical:</b> While active, each level adds {helper.FormatPercent(GameBalance.HyphalSurgeEffectPerLevel)} orthogonal growth chance (up / down / left / right) per Growth Cycle and {helper.FormatPercent(GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel)} random decay chance per Decay Phase for {GameBalance.HyphalSurgeDurationRounds} rounds. Each activation costs {GameBalance.HyphalSurgePointsPerActivation} mutation points plus {GameBalance.HyphalSurgePointIncreasePerLevel} per current level.",
                 flavorText: "The colony drives rapid outward growth by dissolving part of its own living network into fresh substrate.",
                 type: MutationType.HyphalSurge,
                 effectPerLevel: GameBalance.HyphalSurgeEffectPerLevel,
@@ -38,8 +38,8 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.NecroticClearance,
                 name: "Necrotic Clearance",
                 description:
-                    "Lets your living cells clear nearby dead cells before rivals can reclaim them.\n\n" +
-                    $"<b>Technical:</b> While active, before each Growth Phase, each living cell has a {helper.FormatPercent(GameBalance.NecroticClearanceChancePerLevel)} chance per level to remove one adjacent dead cell you own, preferring corpses next to enemy living cells. Attempts against those contested corpses have double chance. Removed corpses cannot be reclaimed. Each activation costs {GameBalance.NecroticClearancePointsPerActivation} mutation points plus {GameBalance.NecroticClearancePointIncreasePerLevel} per current level.",
+                    "Lets your living cells clear nearby dead cells before enemies can reclaim them.\n\n" +
+                    $"<b>Technical:</b> While active, before each Growth Phase, each living cell has a {helper.FormatPercent(GameBalance.NecroticClearanceChancePerLevel)} chance per level to clear one orthogonally adjacent (up / down / left / right) dead cell you own, preferring dead cells next to enemy living cells. Attempts against those contested dead cells have double chance. Cleared dead cells cannot be reclaimed. Each activation costs {GameBalance.NecroticClearancePointsPerActivation} mutation points plus {GameBalance.NecroticClearancePointIncreasePerLevel} per current level.",
                 flavorText: "The colony dissolves compromised tissue before rival hyphae can turn it into a foothold.",
                 type: MutationType.NecroticClearance,
                 effectPerLevel: GameBalance.NecroticClearanceChancePerLevel,
@@ -82,9 +82,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.MimeticResilience,
                 name: "Mimetic Resilience",
                 description:
-                    $"Lets you try to copy resistant footholds from stronger rivals.\n\n" +
-                    $"<b>Technical:</b> While active, target rival players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their resistant living cells, attempt to place one of your own resistant cells within level + 1 tiles, preferring to infest enemy living cells, then overgrow enemy toxins, colonize empty tiles, or reclaim dead cells. Each success makes later attempts against that same rival 5% less likely, and the effect stops after 20 successes against one rival in the same Growth Phase. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
-                flavorText: "The colony analyzes and replicates the defensive adaptations of more successful rivals, establishing resistant footholds in their territories through biomimetic infiltration.",
+                    $"Lets you try to copy Resistant footholds from stronger enemies.\n\n" +
+                    $"<b>Technical:</b> While active, target enemy players with {helper.FormatPercent(GameBalance.MimeticResilienceMinimumCellAdvantageThreshold, 1)}+ more living cells and {helper.FormatPercent(GameBalance.MimeticResilienceMinimumBoardControlThreshold, 1)}+ board control. Around each of their Resistant living cells, attempt to place one of your own Resistant cells within level + 1 tiles (including diagonals), preferring to infest enemy living cells, then overgrow enemy toxins, colonize empty tiles, or reclaim dead cells. Each success makes later attempts against that same enemy 5% less likely, and the effect stops after 20 successes against one enemy in the same Growth Phase. Each activation costs {GameBalance.MimeticResiliencePointsPerActivation} mutation points plus {GameBalance.MimeticResiliencePointIncreasePerLevel} per level.",
+                flavorText: "The colony copies the hardened tissue of whichever rival is winning, and plants it in their territory.",
                 type: MutationType.MimeticResilience,
                 effectPerLevel: 1.0f, // Static effect: always 1 placement per qualifying target player
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
@@ -106,8 +106,8 @@ namespace FungusToast.Core.Mutations.Factories
                 name: "Competitive Antagonism",
                 description:
                     $"Makes your toxin pressure focus more on stronger colonies.\n\n" +
-                    $"<b>Technical:</b> While active, Mycotoxin Tracer targets tiles next to larger colonies first. Sporicidal Bloom also removes extra empty tiles and most tiles belonging to smaller colonies from its target pool, so stronger rivals are hit more often. Each activation costs {GameBalance.CompetitiveAntagonismPointsPerActivation} mutation points plus {GameBalance.CompetitiveAntagonismPointIncreasePerLevel} per level.",
-                flavorText: "Evolved chemoreceptors identify and aggressively target thriving competitors, directing toxin production and necrophytic expansion toward the most successful rival colonies with lethal precision.",
+                    $"<b>Technical:</b> While active, Mycotoxin Tracer targets tiles next to larger colonies first. Sporicidal Bloom also removes extra empty tiles and most tiles belonging to smaller colonies from its target pool, so stronger enemies are hit more often. Each activation costs {GameBalance.CompetitiveAntagonismPointsPerActivation} mutation points plus {GameBalance.CompetitiveAntagonismPointIncreasePerLevel} per level.",
+                flavorText: "Chemoreceptors tune to the scent of the largest rival colony, and the toxin output follows.",
                 type: MutationType.CompetitiveAntagonism,
                 effectPerLevel: 1.0f, // Effect strength per level
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
@@ -127,9 +127,9 @@ namespace FungusToast.Core.Mutations.Factories
                 id: MutationIds.ChitinFortification,
                 name: "Chitin Fortification",
                 description:
-                    $"While the surge is active, it permanently gives resistance to part of your colony each Growth Phase.\n\n" +
-                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-resistant living cells per level permanently gain Resistant. Resistant living cells cannot be killed or infested, and they stay resistant after the surge ends. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
-                flavorText: "Rapid chitin synthesis creates an impenetrable exoskeleton around select cells, rendering them invulnerable to all forms of destruction for a limited time.",
+                    $"While active, permanently makes part of your colony Resistant before each Growth Phase.\n\n" +
+                    $"<b>Technical:</b> While active, before each Growth Phase, {GameBalance.ChitinFortificationCellsPerLevel} random non-Resistant living cells per level become Resistant. Resistant cells cannot be killed, infested, or poisoned, and they stay Resistant after the surge ends. Each activation costs {GameBalance.ChitinFortificationPointsPerActivation} mutation points plus {GameBalance.ChitinFortificationPointIncreasePerLevel} per level.",
+                flavorText: "Rapid chitin synthesis sheathes a few cells in armor that outlasts the surge that made it.",
                 type: MutationType.ChitinFortification,
                 effectPerLevel: GameBalance.ChitinFortificationCellsPerLevel,
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),

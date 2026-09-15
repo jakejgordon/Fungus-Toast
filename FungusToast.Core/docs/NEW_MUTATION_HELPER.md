@@ -12,7 +12,9 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 
 ## Primary Docs
 
-- **Naming and mutation-copy rules:** `NEW_MUTATION_HELPER.md` section below
+- **Naming rules (shared):** [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md)
+- **Mutation-copy template rules:** `NEW_MUTATION_HELPER.md` section below
+- **Shared pre-PR copy checklist:** [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md)
 - **Mutation-category philosophy and prerequisite design rules:** [second-level/MUTATION_PREREQUISITE_GUIDELINES.md](second-level/MUTATION_PREREQUISITE_GUIDELINES.md)
 - **Substrate Ecology roster proposal:** [second-level/SUBSTRATE_ECOLOGY_ROSTER.md](second-level/SUBSTRATE_ECOLOGY_ROSTER.md)
 - **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
@@ -41,13 +43,7 @@ Before finalizing a new Mutation name, first propose **5 candidate names** that 
 
 ### **Name Rules**
 
-| Rule | Detail |
-|------|--------|
-| **Length** | 2–3 words, **≤ 28 characters** |
-| **Uniqueness** | First word should be unique within its category; avoid reusing a keyword for unrelated mechanics across categories |
-| **Tone** | Balanced scientific flavor + plain language — at most **one** advanced biological term per name |
-| **Pronounceability** | A new player should be able to say it out loud without stumbling |
-| **Structure** | Noun phrase that hints at the mechanic (e.g., *Regenerative Hyphae*, *Adaptive Expression*) |
+Naming rules are shared across all three content systems and live in [second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md](second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md): one or two words, each 11 characters or fewer, at most one advanced biological term, pronounceable, fungal, mechanic-linked, unique across the repo. Do not restate or override them here.
 
 ### **Description Rules**
 
@@ -58,7 +54,7 @@ Before finalizing a new Mutation name, first propose **5 candidate names** that 
 | **Technical block** | After `\n\n`, explain the real trigger/timing, target restrictions, scaling, and important limits using implementation-accurate terms |
 | **Max-level clause** | Use `<b>Max Level Bonus:</b>` on its own new line only when the max-level effect is mechanically distinct |
 | **Synergy clause** | Use `Buffed by: Mutation Name.` only for important implemented cross-mutation synergies that materially change the effect |
-| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Summary sentence. Use the canonical state-transition verbs from `GAMEPLAY_TERMINOLOGY.md`; explain a term briefly on its first meaningful use, rather than replacing it with a near-synonym or defining it repeatedly. |
+| **Jargon** | No unexplained scientific terms — if a bio word appears in the Name, restate the mechanic in plain language in the Summary sentence. Every vocabulary rule in `GAMEPLAY_TERMINOLOGY.md` applies: canonical state-transition verbs, `Resistant` casing, `orthogonal`/`diagonal` (never *cardinal*), Title Case phase names, lowercase `mutation points`, full ability names (never *chemobeacon*). Explain a term briefly on its first meaningful use rather than replacing it with a near-synonym or defining it repeatedly. |
 | **Formatting** | Use ASCII punctuation, `\n\n` before `Technical`, and `\n` before optional follow-up lines. Avoid bullet lists inside descriptions |
 | **Encoding** | No special Unicode bullets or en-dashes that can corrupt — use plain hyphens and standard ASCII punctuation |
 
@@ -83,19 +79,21 @@ Notes:
 | Rule | Detail |
 |------|--------|
 | **Purpose** | Thematic / lore-only — evoke the mutation's fantasy, not restate mechanics |
-| **Tone** | Can be more technical and expressive than Description |
+| **Tone** | Lab-notebook register per `UI_STYLE_GUIDE.md` section 1 (Flavor Voice): wry, precise, one sentence; no *ultimate*/*impossible*/*unstoppable*, no *battlefield* |
 | **Constraint** | Must not contradict the Description mechanics |
 | **Length** | No hard cap, but aim for 1–2 sentences |
 
 ### **Copy Review Checklist** *(run before every PR that adds or changes mutation text)*
 
-1. Name ≤ 28 chars and 2–3 words?
-2. Description starts with a plain-language summary sentence?
-3. Description uses `\n\n<b>Technical:</b>` for the implementation-accurate detail block?
-4. Technical copy matches the real trigger/timing, target rules, scaling, and limits in code?
-5. `<b>Max Level Bonus:</b>` appears only when there is a distinct max-level effect?
-6. `Buffed by:` appears only for real implemented synergy notes worth surfacing?
-7. No unexplained jargon, encoding artifacts, or contradictory flavor text?
+Run the shared [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md), plus these mutation-template checks:
+
+1. Description starts with a plain-language summary sentence?
+2. Description uses `
+
+<b>Technical:</b>` for the implementation-accurate detail block?
+3. Technical copy matches the real trigger/timing, target rules, scaling, and limits in code?
+4. `<b>Max Level Bonus:</b>` appears only when there is a distinct max-level effect?
+5. `Buffed by:` appears only for real implemented synergy notes worth surfacing?
 
 ---
 

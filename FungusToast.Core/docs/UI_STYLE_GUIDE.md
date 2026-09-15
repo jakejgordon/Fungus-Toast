@@ -13,6 +13,18 @@
 - **Mood**: earthy, damp, spore-laden, strategic.
 - **Readability priority**: gameplay data must remain immediately legible.
 
+### Flavor Voice
+Applies to every `FlavorText` string (Mutations, Mycovariants) and to any evocative line elsewhere in the UI. Mechanics copy is governed by [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md) instead.
+
+- **Register: lab notebook, not epic fantasy.** The narrator is a mycologist writing a terse field note about a mold that happens to be at war on a slice of toast. Precise, a little wry, faintly unsettling. One sentence; two only when the second earns it.
+  - On-brand: `Oscillatory homeostasis stabilizes intracellular pressure and toxin accumulation.` / `Even in death, the colony endures.` / `Compressed hyphae redirect their force into the few pores that remain.`
+  - Off-brand: `Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence.`
+- **Setting is the toast.** When the line needs a place, use the loaf: `crust`, `loaf`, `pores`, `substrate`, `crumb`, `toast`. Never `battlefield`, `terrain`, `arena`, `warzone`, or other martial-setting words.
+- **Banned intensifiers.** `ultimate`, `impossible`, `unstoppable`, `unassailable`, `impenetrable`, `unprecedented`, `catastrophic`, `lethal precision`, `dominoes of death`, and similar superlatives. If the tier is high, let the mechanism sound stranger, not louder.
+- **Vocabulary.** Real mycology and cell biology (`hyphae`, `septa`, `conidia`, `ascus`, `plasmid`, `chitin`, `autolysis`, `quorum`) is encouraged; one specialist term per sentence is plenty. Check that the term means what the mechanic does (`actinic` is about light, not spores).
+- **Voice, not mechanics.** Flavor never restates or contradicts the description. It may hint at the mechanism poetically, but the numbers, timing, and targeting live only in the description.
+- **Tone across tiers.** Higher tiers get colder and more clinical, not more heroic. A Tier 6 line reads like the observation the mycologist did not want to make.
+
 ### Core UX Principles
 1. **Clarity over decoration**: gameplay state is always more important than style flourish.
 2. **Semantic consistency**: same meaning must use same colors/states everywhere.
