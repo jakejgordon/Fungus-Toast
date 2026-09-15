@@ -11,8 +11,6 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
     {
         private const float TitleFontSizeMin = 16f;
         private const float TitleFontSizeMax = 20f;
-        private const string BaitBadgeLabel = "Bait";
-        private const string BaitTooltipText = "Bait Mycovariant: tuned to favor the Human player, or to be a poor draft for AI opponents. These can be unlocked in the campaign as moldiness rewards.";
 
         public Image iconImage;
         public TextMeshProUGUI nameText;
@@ -152,7 +150,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             background.raycastTarget = true;
 
             var trigger = baitBadgeRoot.GetComponent<TooltipTrigger>();
-            trigger.SetStaticText(BaitTooltipText);
+            trigger.SetStaticText(MycovariantTagCopy.BaitTooltip);
 
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             labelObject.transform.SetParent(baitBadgeRoot.transform, false);
@@ -163,7 +161,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             labelRect.offsetMax = new Vector2(-6f, -2f);
 
             var label = labelObject.GetComponent<TextMeshProUGUI>();
-            label.text = BaitBadgeLabel;
+            label.text = MycovariantTagCopy.BaitLabel;
             label.alignment = TextAlignmentOptions.Center;
             label.fontSize = 13f;
             label.enableAutoSizing = true;

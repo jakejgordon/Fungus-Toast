@@ -26,7 +26,7 @@ Every Mycovariant description opens with one of these exact phrases:
 - `One-time on draft:` for effects resolved during the draft.
 - `For the rest of the game, <timing>, ...` for passives, where `<timing>` is one of the phrases in the Time and Phases section of the terminology doc (`before each Growth Phase`, `after each Growth Phase`, `at the end of each Decay Phase`, `whenever ...`).
 
-Bait-family cards (Ascus Bait, Sporophore Decoy, Perispore Crown, Sporal Snare) use the pattern `One-time on draft: if Human, <reward>. If AI, <penalty>.` and never describe AI draft preferences in the description; that is AI-roster behaviour, not a card effect.
+Bait-family cards (Ascus Bait, Sporophore Decoy, Perispore Crown, Sporal Snare) use the pattern `One-time on draft: if Human, <reward>. If AI, <penalty>.` and never describe AI draft preferences in the description. That rule is shared by every Bait card and lives in the `Bait` tag tooltip (`MycovariantTagCopy.BaitTooltip`; see the Tags section of the terminology doc), which the player reads by hovering the badge.
 
 ### 3) Mechanics before flavor
 Description should include, in compact form:

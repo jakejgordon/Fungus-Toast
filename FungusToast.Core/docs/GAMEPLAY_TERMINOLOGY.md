@@ -150,6 +150,16 @@ Fungus Toast uses precise verbs for board-state changes so gameplay logic, analy
 - Nutrient patch labels match the in-game names exactly: `Adaptogen Patch`, `Sporemeal Patch`, `Hypervariation Patch`. Never *Hypervariation Development patch*.
 - `Human` and `AI` are capitalized when they name a player type in bait-family Mycovariant copy ("if Human, ...; if AI, ...").
 
+## Tags
+
+A tag is a badge on a draft card that carries a rule shared by every card with that tag. The rule is stated once, in the tag's tooltip, and never repeated in individual card descriptions (the same way a card game puts reminder text on the keyword, not on each card). Tag copy lives in `FungusToast.Core/Mycovariants/MycovariantTagCopy.cs` so Unity and docs read one source.
+
+| Tag | Rule (summarized; the tooltip is canonical) |
+|-----|---------------------------------------------|
+| `Bait` | Only the Human and the last AI in draft order (the AI with the most living cells) are offered a Bait card, and that AI always takes one when it can. Bait cards unlock through campaign Moldiness rewards. |
+
+Card descriptions for tagged cards describe only the card's own effect (for Bait: `One-time on draft: if Human, <reward>. If AI, <penalty>.`).
+
 ## Opponents
 
 - `enemy` is the word for rival players and their cells in mechanics copy: "enemy living cell", "enemy toxin", "enemy starting spore", "the enemy with the most living cells".

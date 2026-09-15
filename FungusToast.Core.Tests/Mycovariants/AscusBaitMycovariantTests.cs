@@ -14,6 +14,25 @@ namespace FungusToast.Core.Tests.Mycovariants;
 public class AscusBaitMycovariantTests
 {
     [Fact]
+    public void Every_bait_mycovariant_follows_the_bait_copy_pattern_and_leaves_the_draft_rule_to_the_tag()
+    {
+        var baitCards = MycovariantFactory.GetAll().Where(m => m.IsBait).ToList();
+
+        Assert.NotEmpty(baitCards);
+        foreach (var card in baitCards)
+        {
+            Assert.True(card.IsUniversal, $"{card.Name} must be universal so the pool can reserve it for the last AI drafter.");
+            Assert.StartsWith("One-time on draft: if Human, ", card.Description);
+            Assert.Contains("If AI, ", card.Description);
+            Assert.DoesNotContain("AI player always", card.Description);
+            Assert.DoesNotContain("prefers drafting", card.Description);
+        }
+
+        Assert.Contains("drafts last", MycovariantTagCopy.BaitTooltip);
+        Assert.Contains("always takes one", MycovariantTagCopy.BaitTooltip);
+    }
+
+    [Fact]
     public void Factory_exposes_ascus_bait_with_expected_metadata()
     {
         var mycovariant = MycovariantFactory.GetAll().Single(myco => myco.Id == MycovariantIds.AscusBaitId);
