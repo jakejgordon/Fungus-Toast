@@ -46,12 +46,13 @@ Keep `last-deployed-version.txt`. It remains the deployment guard used by the re
 
 ## Writing rules
 
-- Keep the usual post to **120–250 words**. A small patch can be shorter.
-- Title the player benefit, not the internal work: `Fungus Toast 0.8.0 — Clearer colony controls` rather than `HUD refactor complete`.
+- Keep the usual post to **120-250 words**. A small patch can be shorter.
+- Use **ASCII characters only**, and **never an em-dash**. Em-dashes, curly quotes, and typographic ellipses are a dead giveaway that the text was AI-generated. Use a colon, comma, period, or parentheses instead of an em-dash, plain `-` for ranges and hyphens, straight `'` and `"` quotes, and three periods for an ellipsis. Check the draft before presenting it: `LC_ALL=C grep -n '[^ -~]' <draft>` must return nothing.
+- Title the player benefit, not the internal work: `Fungus Toast 0.8.0: Clearer colony controls` rather than `HUD refactor complete`.
 - Open with the update being live and the biggest outcome for players.
-- Use 2–5 bullets, descending by player value. Each says **what changed + why it matters**.
-- Translate implementation into experience: “The activity feeds now stay readable while new events arrive,” not “preserved ScrollRect state.”
-- Name specific fixes only when players are likely to have noticed them; group low-impact fixes as “plus smaller fixes and polish.”
+- Use 2-5 bullets, descending by player value. Each says **what changed + why it matters**.
+- Translate implementation into experience: "The activity feeds now stay readable while new events arrive," not "preserved ScrollRect state."
+- Name specific fixes only when players are likely to have noticed them; group low-impact fixes as "plus smaller fixes and polish."
 - Use short paragraphs and ordinary words. Avoid a commit-by-commit dump, unverifiable superlatives, roadmap promises, and engine/code jargon.
 - Mention a known issue only if it materially affects the released player experience, and state the practical workaround if one exists.
 - End with one answerable question that relates to the release, then invite readers to follow the page for the next update.
@@ -59,11 +60,11 @@ Keep `last-deployed-version.txt`. It remains the deployment guard used by the re
 ## Template
 
 ```markdown
-# Fungus Toast <version> — <strongest player benefit>
+# Fungus Toast <version>: <strongest player benefit>
 
 <Version> is live on itch.io. <One sentence describing the most meaningful player-facing result.>
 
-## What’s new
+## What's new
 
 - **<Player-visible improvement>:** <what changed and the practical benefit.>
 - **<Second meaningful change>:** <what changed and the practical benefit.>
@@ -73,7 +74,7 @@ Keep `last-deployed-version.txt`. It remains the deployment guard used by the re
 
 <Optional known issue and workaround, only when needed.>
 
-I’d especially love feedback on <one specific thing a player can try or observe>. If you’re enjoying Fungus Toast, follow the page to catch the next update.
+I'd especially love feedback on <one specific thing a player can try or observe>. If you're enjoying Fungus Toast, follow the page to catch the next update.
 ```
 
 ## Final check
@@ -84,6 +85,7 @@ I’d especially love feedback on <one specific thing a player can try or observ
 - Is there one real visual when the release has a visual feature worth showing?
 - Is the feedback ask narrow enough to answer?
 - Is every detail supported, with no speculative claims?
+- Is the post pure ASCII with no em-dashes?
 
 ## Sources and rationale
 
