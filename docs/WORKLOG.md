@@ -1365,6 +1365,17 @@ measurement model, phase gates, and open product decisions are in
     measured **Elite** under `fungus-toast.ai-bands.v1`; this is not yet a
     player-facing roster, campaign, or promotion decision.
 
+93. P8.5 review preparation is complete. The artifact-backed
+    `AI_P8_BLOOM20_REVIEW_DOSSIER_V1.md` consolidates Bloom-20's readable
+    large-board-scaler identity, smoke/calibration/comparison/holdout results,
+    excluded integrity artifact, and Elite contextual classification. No
+    mechanical evidence gate remains, but promotion remains a human product
+    decision: approve or decline E1 promotion, choose a player-facing durable
+    identity under the still-unapproved naming standard, and decide whether to
+    limit initial entry to Proven solo play or separately consider campaign
+    placement. The repository has no player-facing change until those decisions
+    are made.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
