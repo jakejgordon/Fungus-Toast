@@ -13,10 +13,15 @@ namespace FungusToast.Unity.UI.Onboarding
     /// </summary>
     public sealed class NewPlayerWelcomeCoachmark
     {
-        private const float Width = 460f;
-        private const float MinHeight = 120f;
-        private const float BodyHorizontalPadding = 16f;
-        private const float BodyBottomPadding = 16f;
+        // Larger than the anchored coachmarks: it sits alone in the middle of the board.
+        private const float Width = 560f;
+        private const float MinHeight = 150f;
+        private const float TitleFontSize = 28f;
+        private const float BodyFontSize = 21f;
+        private const float TitleRowHeight = 56f;
+        private const float BodyTopInset = TitleRowHeight + 6f;
+        private const float BodyHorizontalPadding = 20f;
+        private const float BodyBottomPadding = 20f;
 
         private readonly Func<Canvas> resolveRootCanvas;
         private readonly Func<bool> getForceFirstGameExperience;
@@ -49,7 +54,7 @@ namespace FungusToast.Unity.UI.Onboarding
         /// Runs the catalog rule and, if it passes, reserves the round-1 coachmark slot. The
         /// caller then shows it after the game-start title card has cleared.
         /// </summary>
-        public bool TryArm(int currentRound, int humanPlayerCount, bool isFastForwarding, bool testingModeEnabled)
+        public bool TryArm(int currentRound, int humanPlayerCount, bool isFastForwarding)
         {
             if (IsActive)
             {
@@ -61,8 +66,7 @@ namespace FungusToast.Unity.UI.Onboarding
                     currentRound,
                     humanPlayerCount,
                     hasDismissedThisGame,
-                    isFastForwarding,
-                    testingModeEnabled))
+                    isFastForwarding))
             {
                 return false;
             }
@@ -153,6 +157,14 @@ namespace FungusToast.Unity.UI.Onboarding
             Canvas rootCanvas = resolveRootCanvas?.Invoke();
             if (rootCanvas == null)
             {
+                // Same fallback as the camera coachmark: any canvas beats not showing at all.
+                Canvas anyCanvas = UnityEngine.Object.FindAnyObjectByType<Canvas>();
+                rootCanvas = anyCanvas != null ? anyCanvas.rootCanvas : null;
+            }
+
+            if (rootCanvas == null)
+            {
+                Debug.LogWarning("[NewPlayerWelcomeCoachmark] No canvas found; skipping the welcome coachmark.");
                 return;
             }
 
@@ -188,14 +200,14 @@ namespace FungusToast.Unity.UI.Onboarding
             titleRect.anchorMin = new Vector2(0f, 1f);
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(BodyHorizontalPadding, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
+            titleRect.offsetMin = new Vector2(BodyHorizontalPadding, -TitleRowHeight);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -14f);
 
             titleLabel = titleObject.GetComponent<TextMeshProUGUI>();
             titleLabel.text = string.Empty;
             titleLabel.color = UIStyleTokens.Text.Primary;
             titleLabel.fontStyle = FontStyles.Bold;
-            titleLabel.fontSize = 22f;
+            titleLabel.fontSize = TitleFontSize;
             titleLabel.alignment = TextAlignmentOptions.Left;
             titleLabel.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(titleLabel);
@@ -208,11 +220,11 @@ namespace FungusToast.Unity.UI.Onboarding
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(BodyHorizontalPadding, BodyBottomPadding);
-            bodyRect.offsetMax = new Vector2(-BodyHorizontalPadding, -CoachmarkLayoutUtility.BodyTopInset);
+            bodyRect.offsetMax = new Vector2(-BodyHorizontalPadding, -BodyTopInset);
 
             bodyLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             bodyLabel.color = UIStyleTokens.Text.Primary;
-            bodyLabel.fontSize = 18f;
+            bodyLabel.fontSize = BodyFontSize;
             bodyLabel.alignment = TextAlignmentOptions.TopLeft;
             bodyLabel.textWrappingMode = TextWrappingModes.Normal;
             bodyLabel.overflowMode = TextOverflowModes.Overflow;
@@ -272,7 +284,7 @@ namespace FungusToast.Unity.UI.Onboarding
 
             float availableBodyWidth = Mathf.Max(1f, Width - (2f * BodyHorizontalPadding));
             Vector2 bodyPreferredSize = bodyLabel.GetPreferredValues(bodyLabel.text, availableBodyWidth, 0f);
-            float requiredHeight = CoachmarkLayoutUtility.BodyTopInset + bodyPreferredSize.y + BodyBottomPadding;
+            float requiredHeight = BodyTopInset + bodyPreferredSize.y + BodyBottomPadding;
 
             root.sizeDelta = new Vector2(Width, Mathf.Max(MinHeight, requiredHeight));
 

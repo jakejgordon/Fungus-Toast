@@ -70,7 +70,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Welcome to Fungus Toast",
                 "Your mold grows automatically. Your job is to spend mutation points and shape how it behaves.",
                 NewPlayerTooltipSurface.ScreenCenterCoachmark,
-                "Show centered on screen shortly after round 1 begins for a human player, once the game-start title card has cleared. The round-1 Spend Points and camera coachmarks wait until this one is closed; clicking Spend Points also closes it. Suppress while fast-forwarding, skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
+                "Show centered on screen shortly after round 1 begins for a human player, once the game-start title card has cleared. The round-1 Spend Points and camera coachmarks wait until this one is closed; clicking Spend Points also closes it. Suppress while fast-forwarding, skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.SpendMutationPointsIntro,
                 "Onboarding.SpendMutationPointsIntroSeen",
@@ -206,25 +206,23 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
+        /// <summary>
+        /// Same gating as <see cref="ShouldShowCameraPanIntro"/>: unlike the Spend Points intro this
+        /// is not suppressed by plain testing mode, so the first-game flow can be exercised there.
+        /// </summary>
         public static bool ShouldShowWelcomeIntro(
             bool forceFirstGameExperience,
             int currentRound,
             int humanPlayerCount,
             bool hasDismissedThisGame,
-            bool isFastForwarding,
-            bool testingModeEnabled)
+            bool isFastForwarding)
         {
             if (currentRound != 1 || humanPlayerCount <= 0 || hasDismissedThisGame || isFastForwarding)
             {
                 return false;
             }
 
-            if (forceFirstGameExperience)
-            {
-                return true;
-            }
-
-            return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.WelcomeIntro);
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.WelcomeIntro);
         }
 
         public static bool ShouldShowSpendMutationPointsIntro(

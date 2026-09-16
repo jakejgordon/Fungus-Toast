@@ -1516,7 +1516,7 @@ namespace FungusToast.Unity
 
             // Armed before the Spend Points button is revealed so that coachmark defers to this one.
             if (humanPlayers.Count > 0
-                && welcomeCoachmark.TryArm(board.CurrentRound, humanPlayers.Count, isFastForwarding, testingModeEnabled))
+                && welcomeCoachmark.TryArm(board.CurrentRound, humanPlayers.Count, isFastForwarding))
             {
                 StartCoroutine(ShowWelcomeCoachmarkAfterDelay());
             }
