@@ -96,6 +96,14 @@ so real edits pass straight through.
 Rules:
 
 - Never `git add -A` / `git add .`. Stage files by path.
+- **Prefer writing code over editing the scene.** If the change you need is a
+  value or reference that lives in `SampleScene.unity` as a `[SerializeField]`,
+  move it into code (a `const`, the relevant constants file, or code-built
+  wiring) and remove the serialized field, instead of editing the YAML value.
+  The scene's serialized value overrides the C# default, so changing only the
+  default does nothing; removing the field makes Unity ignore the stale line and
+  drop it on the next scene save, with no scene edit from you. Edit the scene
+  directly only when no code-side change can achieve the result.
 - An agent may edit `FungusToast.Unity/Assets/Scenes/SampleScene.unity` when a
   task genuinely requires a new component, GameObject, or GUID reference; these
   changes can be made directly in YAML without Unity. Prefer self-wiring code

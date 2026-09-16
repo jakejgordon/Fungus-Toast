@@ -67,6 +67,7 @@ Main projects:
 - When adding new docs, link them into the documentation hierarchy so they are discoverable.
 - Never commit scratch/debug output (bakeoff results, diagnostic dumps, one-off patch files, temp asset exports, etc.) at the repo root or anywhere else tracked. Put it in the repo-root `TEMP/` folder instead — it is gitignored (matches the existing `[Tt]emp/` rule) and safe to leave untracked.
 - Never use `git add -A` or `git add .`; stage files by explicit path. For any Unity scene or prefab change, follow `docs/UNITY_CONCURRENT_WORKFLOW.md`, including its rules for unintended diffs, minimal YAML edits, churn-guard verification, and merge conflicts.
+- Prefer writing code over editing `SampleScene.unity` (or any `.prefab`). When a change needs a value or wiring that currently lives in the scene as a `[SerializeField]`, move it into code (a constant, a constants file, or code-built wiring) and drop the serialized field, rather than editing the YAML value. A serialized value in the scene overrides the C# default, so changing only the default silently does nothing. Edit the scene file directly only when no code-side change can achieve the result.
 
 ## Build and Validation Expectations
 
