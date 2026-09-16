@@ -115,6 +115,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private Vector3 originalCounterScale;
         private bool isTreeOpen = false;
         private bool isSliding = false;
+        // PopulateAllMutations can run while this object is still inactive (game start builds the
+        // tree before the HUD is shown), and coroutines can't start there, so the next-frame
+        // dependency-graph refresh is parked until OnEnable.
+        private bool pendingDependencyGraphRefresh;
         private bool hasDismissedSpendMutationPointsIntroThisGame;
         private bool hasDismissedMutationWorkspaceIntroThisGame;
         private TooltipTrigger spendPointsTooltipTrigger = null!;
@@ -247,6 +251,10 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshPresentationSpeedModeUI();
             RefreshResponsiveMutationPanelLayout();
             StartCoroutine(RefreshResponsiveMutationPanelLayoutNextFrame());
+            if (pendingDependencyGraphRefresh)
+            {
+                ScheduleDependencyGraphRefresh();
+            }
         }
 
         private void OnDisable()
@@ -615,7 +623,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationButtons = mutationTreeBuilder.BuildTree(mutations, layout, humanPlayer, this);
             EnsureMutationDependencyGraph();
             mutationDependencyGraph?.Configure(mutationButtons, mutations);
-            StartCoroutine(RefreshMutationDependencyGraphNextFrame());
+            ScheduleDependencyGraphRefresh();
             Mutation? initialMutation = selectedMutation != null
                 ? mutations.FirstOrDefault(candidate => candidate.Id == selectedMutation.Id)
                 : mutations.FirstOrDefault(candidate => candidate.Id == MutationIds.MycelialBloom) ?? mutations.FirstOrDefault();
@@ -1906,6 +1914,18 @@ namespace FungusToast.Unity.UI.MutationTree
             graphRect.pivot = new Vector2(0.5f, 0.5f);
             graphRect.anchoredPosition = Vector2.zero;
             graphRect.sizeDelta = Vector2.zero;
+        }
+
+        private void ScheduleDependencyGraphRefresh()
+        {
+            if (!isActiveAndEnabled)
+            {
+                pendingDependencyGraphRefresh = true;
+                return;
+            }
+
+            pendingDependencyGraphRefresh = false;
+            StartCoroutine(RefreshMutationDependencyGraphNextFrame());
         }
 
         private IEnumerator RefreshMutationDependencyGraphNextFrame()
