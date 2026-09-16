@@ -579,8 +579,10 @@ namespace FungusToast.Unity.UI.MutationTree
         /// </summary>
         private void AcknowledgeWelcomeCoachmarkOnSpendPoints()
         {
+            // Only counts as "found the button on their own" once the welcome is pending or up;
+            // before round 1 evaluates it, the gate is just the game-start intro.
             GameManager? gameManager = GameManager.Instance;
-            if (gameManager == null || !gameManager.IsWelcomeCoachmarkActive)
+            if (gameManager == null || !gameManager.IsWelcomeCoachmarkPendingOrVisible)
             {
                 return;
             }

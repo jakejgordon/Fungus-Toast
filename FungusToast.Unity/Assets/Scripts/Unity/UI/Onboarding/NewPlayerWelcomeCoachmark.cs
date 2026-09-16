@@ -32,6 +32,7 @@ namespace FungusToast.Unity.UI.Onboarding
         private TextMeshProUGUI bodyLabel;
         private bool isArmed;
         private bool hasDismissedThisGame;
+        private bool hasEvaluatedThisGame;
 
         public NewPlayerWelcomeCoachmark(Func<Canvas> resolveRootCanvas, Func<bool> getForceFirstGameExperience)
         {
@@ -43,12 +44,16 @@ namespace FungusToast.Unity.UI.Onboarding
         public event Action ClosedByPlayer;
 
         /// <summary>
-        /// True from the moment the round-1 check passes until the coachmark is acknowledged,
-        /// so dependent coachmarks stay hidden through the show delay as well as while visible.
+        /// True until the coachmark is acknowledged, or until the round-1 check has run and
+        /// declined it. Dependent coachmarks stay hidden through the whole window, including
+        /// the game-start intro that plays before round 1 evaluates this one, and the show delay.
         /// </summary>
-        public bool IsActive => isArmed || IsVisible;
+        public bool IsActive => !hasEvaluatedThisGame || isArmed || IsVisible;
 
         public bool IsVisible => root != null && root.gameObject.activeSelf;
+
+        /// <summary>True from the round-1 check passing until acknowledged: the show delay plus on-screen time.</summary>
+        public bool IsPendingOrVisible => isArmed || IsVisible;
 
         /// <summary>
         /// Runs the catalog rule and, if it passes, reserves the round-1 coachmark slot. The
@@ -56,11 +61,12 @@ namespace FungusToast.Unity.UI.Onboarding
         /// </summary>
         public bool TryArm(int currentRound, int humanPlayerCount, bool isFastForwarding)
         {
-            if (IsActive)
+            if (IsPendingOrVisible)
             {
                 return false;
             }
 
+            hasEvaluatedThisGame = true;
             if (!NewPlayerTooltipRules.ShouldShowWelcomeIntro(
                     getForceFirstGameExperience(),
                     currentRound,
@@ -107,11 +113,12 @@ namespace FungusToast.Unity.UI.Onboarding
         /// </summary>
         public void Acknowledge()
         {
-            bool wasActive = IsActive;
+            bool wasShowing = IsPendingOrVisible;
             isArmed = false;
             hasDismissedThisGame = true;
+            hasEvaluatedThisGame = true;
 
-            if (wasActive && !getForceFirstGameExperience())
+            if (wasShowing && !getForceFirstGameExperience())
             {
                 NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.WelcomeIntro);
             }
@@ -123,6 +130,7 @@ namespace FungusToast.Unity.UI.Onboarding
         {
             isArmed = false;
             hasDismissedThisGame = false;
+            hasEvaluatedThisGame = false;
             HideImmediate();
         }
 

@@ -444,8 +444,9 @@ namespace FungusToast.Unity
 
         private bool isFastForwarding = false;
         public bool IsFastForwarding => isFastForwarding;
-        /// <summary>True while the round-1 welcome coachmark is pending or on screen; the other round-1 coachmarks wait on it.</summary>
+        /// <summary>True until the round-1 welcome coachmark has been closed or declined; the other round-1 coachmarks wait on it, including through the game-start intro.</summary>
         public bool IsWelcomeCoachmarkActive => welcomeCoachmark != null && welcomeCoachmark.IsActive;
+        public bool IsWelcomeCoachmarkPendingOrVisible => welcomeCoachmark != null && welcomeCoachmark.IsPendingOrVisible;
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
         public bool IsFastRoundPresentationMode => roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
