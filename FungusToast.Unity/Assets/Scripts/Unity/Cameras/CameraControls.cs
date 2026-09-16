@@ -19,6 +19,9 @@ namespace FungusToast.Unity.Cameras
         private const float CameraPanCoachmarkBodyBottomPadding = 14f;
         private const float CameraPanCoachmarkBodyTopReservedHeight = CoachmarkLayoutUtility.BodyTopInset;
         private const float CameraPanDragThreshold = 0.01f;
+        // Short beat after the welcome coachmark closes. The old 3s (scene-serialized) delay was
+        // there to clear the game-start title card, which the welcome gate now covers.
+        private const float CameraPanCoachmarkDelaySeconds = 0.5f;
 
         public float zoomSpeed = 12.5f;
         public float moveSpeed = 7.5f;
@@ -56,10 +59,6 @@ namespace FungusToast.Unity.Cameras
         [SerializeField] private float maxZoomOutRelativeToInitialFraming = 1.12f;
         [Tooltip("For boards smaller than the viewport, keep at least this fraction of the board visible on each axis while panning.")]
         [SerializeField] [Range(0.5f, 1f)] private float minVisibleSmallBoardFraction = 0.85f;
-
-        [Header("Onboarding")]
-        [Tooltip("Delay before the first-game camera movement coachmark appears if the player has not panned yet.")]
-        [SerializeField] private float cameraPanCoachmarkDelaySeconds = 3f;
 
         private RectTransform cameraPanCoachmarkRoot;
         private CanvasGroup cameraPanCoachmarkCanvasGroup;
@@ -215,7 +214,7 @@ namespace FungusToast.Unity.Cameras
             }
 
             cameraPanCoachmarkElapsed += Time.unscaledDeltaTime;
-            if (cameraPanCoachmarkElapsed < cameraPanCoachmarkDelaySeconds)
+            if (cameraPanCoachmarkElapsed < CameraPanCoachmarkDelaySeconds)
             {
                 return;
             }
