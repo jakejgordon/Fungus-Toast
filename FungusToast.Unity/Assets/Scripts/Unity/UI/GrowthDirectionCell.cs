@@ -33,6 +33,9 @@ namespace FungusToast.Unity.UI
         private Color originalArrowColor;
 
         private const float SurgeDisplayEpsilon = 1e-6f;
+        private const float SurgeOutlineWidth = 0.35f;
+        private static readonly Color SurgeTextColor = UIStyleTokens.State.Success;
+        private static readonly Color SurgeOutlineColor = new(0.05f, 0.08f, 0.02f, 1f);
 
         public void ResolveChildren(string arrowName, string percentName, string surgeName)
         {
@@ -52,9 +55,6 @@ namespace FungusToast.Unity.UI
             surgeRect = surgeT as RectTransform;
             originalArrowColor = arrowImage.color; // capture starting color so we leave it unchanged
 
-            // Ensure rich text for surge
-            surgeText.richText = true;
-
             ApplyTextScale(percentText, PercentTextScale);
             percentText.fontStyle = FontStyles.Bold;
             percentText.color = UIStyleTokens.Text.Primary;
@@ -62,8 +62,11 @@ namespace FungusToast.Unity.UI
 
             ApplyTextScale(surgeText, SurgeTextScale);
             surgeText.fontStyle = FontStyles.Bold;
-            surgeText.color = UIStyleTokens.Accent.Moss;
+            surgeText.color = SurgeTextColor;
             surgeText.alignment = TextAlignmentOptions.Center;
+            // Bright green plus a dark outline so the bonus reads against the light toast background.
+            surgeText.outlineWidth = SurgeOutlineWidth;
+            surgeText.outlineColor = SurgeOutlineColor;
 
             ApplyTextLayout();
             resolved = true;
@@ -83,8 +86,7 @@ namespace FungusToast.Unity.UI
                 if (surgeBonus > SurgeDisplayEpsilon)
                 {
                     if (!surgeText.gameObject.activeSelf) surgeText.gameObject.SetActive(true);
-                    string successHex = ColorUtility.ToHtmlStringRGB(UIStyleTokens.Accent.Moss);
-                    surgeText.text = $"<b><color=#{successHex}>+{(surgeBonus * 100f):F3}%</color></b>";
+                    surgeText.text = $"+{(surgeBonus * 100f):F2}%";
                 }
                 else if (surgeText.gameObject.activeSelf)
                     surgeText.gameObject.SetActive(false);
