@@ -2,6 +2,18 @@
 
 Use this guide to turn each Fungus Toast release into a short, player-facing itch.io post. It complements the build and upload procedure in [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md); it does not replace release validation or publishing approval.
 
+## Positioning and public voice
+
+These rules apply to every outward-facing surface: devlogs, the itch.io page, screenshots captions, and any feedback outreach. In-game copy is governed by [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md) and [UI_STYLE_GUIDE.md](UI_STYLE_GUIDE.md) section 1 instead.
+
+- **Hook:** `A turn-based strategy roguelite where rival molds compete for every last crumb.` Use this line, or a close paraphrase, whenever the game needs a one-sentence introduction.
+- **What it is:** a systems-driven, deliberately quirky simulation. The appeal is watching emergent colony behavior, spending mutation points, adapting a build, and reacting to probabilistic growth, decay, toxins, and territorial pressure.
+- **Audience:** players who enjoy roguelikes/roguelites, strategy, simulations, unusual systems, and experimenting with builds. Write to them, not to a general audience.
+- **Status:** Fungus Toast is a **beta**. Call it that. Never `demo`, `Early Access`, or `alpha`.
+- **Price:** the game is free and is expected to stay free. Do not write copy that hints at a paid release, DLC, or a wishlist-for-launch funnel.
+- **Tone:** genuine and feedback-focused, not polished or marketing-ish. No hype adjectives, no unverifiable superlatives, no urgency. It is a long-running personal passion project and should sound like one.
+- **Language:** prefer fungal and ecological framing (rival molds competing for territory or scarce carbohydrates) over generic combat framing. Avoid `battle`, `attack`, `fight`, `war`, and `enemy army` when `compete`, `spread`, `colonize`, `overrun`, or `poison` say it better. `Enemy` on its own is fine; it is the in-game term for rivals.
+
 ## Goal
 
 Help a returning player answer, in the first few seconds: **what changed, why should I care, and what should I try now?**
@@ -56,6 +68,18 @@ Keep `last-deployed-version.txt`. It remains the deployment guard used by the re
 - Use short paragraphs and ordinary words. Avoid a commit-by-commit dump, unverifiable superlatives, roadmap promises, and engine/code jargon.
 - Mention a known issue only if it materially affects the released player experience, and state the practical workaround if one exists.
 - End with one answerable question that relates to the release, then invite readers to follow the page for the next update.
+
+### What feedback is worth asking for
+
+The closing question should target one of the things the beta is trying to learn. Pick the one the release most affects:
+
+- Is it fun? What was not fun?
+- What was fun and worth expanding?
+- What was confusing?
+- Did any mutation, Mycovariant, or Adaptation feel weak, unfair, or hard to understand?
+- Were the opening turns clear? Was there a reason to play again?
+
+Ask about one of these concretely ("Did the new Substrate Ecology tree give you a reason to try a second run?"), not in the abstract ("Any feedback welcome").
 
 ## Template
 

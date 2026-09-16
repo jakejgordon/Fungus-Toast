@@ -43,6 +43,15 @@ Use these guardrails up front:
 3. Keep `backgroundScaleMultiplier` at `1.0` unless a validated shape still needs a render-only framing adjustment after the footprint is already correct.
 4. Prefer changing the shape model over stacking compensating tweaks. Repeated inset/scale/clip adjustments usually mean the chosen model is wrong.
 
+## Source Art Expectations
+
+The workflow below assumes the bread/bun image itself is already fit for a game board. Check these before measuring anything:
+
+- The sprite has a real alpha channel with fully transparent surroundings, not a rendered checkerboard or a flat color that gets keyed later. Everything outside the loaf is `0%` opacity.
+- Surface shading is controlled enough to read cleanly under mold tiles. Harsh dark pockets, deep crevices, and burnt patches compete with cell sprites and have repeatedly been softened during iteration; prefer even, gently textured crumb.
+- The silhouette has no unnaturally sharp border points or thin spikes. Those become one-tile peninsulas after masking and look like clipping bugs.
+- The loaf is the only subject. No plate, table, kitchen, crumbs scattered outside the silhouette, or drop shadow.
+
 ## Owning Files
 
 - Runtime/background metadata owner: `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`

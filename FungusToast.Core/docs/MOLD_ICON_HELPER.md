@@ -41,6 +41,23 @@ Current lesson from rollout:
 - yellow passed gameplay readability, but it stayed somewhat close to the red mold in silhouette language
 - future prompts should push harder on species-specific structure so each mold reads as its own organism family at a glance
 
+### Species Identity Roster
+
+One line per mold slot, verified against the shipped `64x64` sprites in `FungusToast.Unity/Assets/Sprites/Tiles/Mold/`. Reuse these when prompting a new variant so it stays the same organism, and cite the neighbors it must differ from. Slot order matches `SampleScene.unity` (`playerMoldAliveVariantTiles`).
+
+| Slot | Mold | Species identity | Palette |
+|---|---|---|---|
+| 0 | red | Fleshy lobed rosette; velvety biomass with fissures and an irregular living perimeter. The pilot family and quality baseline. | Vermilion red, maroon-brown shadowed cores, lighter desaturated red highlights |
+| 1 | yellow | Clusters of rounded globules, each with a dark pore center, packed like frogspawn or blister beads. Silhouette language sits close to red; push structure harder in future variants. | Golden yellow to olive-gold, dark olive pore centers |
+| 2 | cyan | Branching coral-lace fronds with fine forked tendril tips and open negative space between branches. Despite the slot name, the shipped art reads as medium blue, not turquoise; keep it distinct from both aqua (lighter, porous) and dark blue (near-black, folded). | Cornflower to medium blue, occasional pale speckles |
+| 3 | aqua | Low, wet, porous membrane pads: sponge-like openings, rounded cavities, blistered translucent ridges. Not a rosette, fern, or coral sprig. | Pale turquoise/mint, darker teal cavity shadows |
+| 4 | green | Pebbly nodular mat of many small rounded lumps fused into a granular crust, like moss or broccoli seen from above. | Mid to olive green, darker green crevices |
+| 5 | dark blue | Low ink-velvet biomass with matted folds, ragged or torn edges, and crater-like hollows. | Navy to near-black blue, faint lighter fold highlights |
+| 6 | purple | Powdery microcolony: soft fuzzy lobes with a pale dusty fringe and darker pockets, translucent at the edges, microscope-inspired rather than fleshy. | Lavender to violet, deep violet pockets, pale lilac fringe |
+| 7 | orange-red | Shaggy woolly aerial hyphae: hairlike filaments, fuzzy fringe, and denser ember-colored cores. Looser and messier than a pom-pom. | Rusty apricot-orange, ember red cores, cream to ivory fringe |
+
+If a future regeneration deliberately changes one of these identities, update this table in the same change.
+
 ## Current Eight-Mold Status
 
 The red mold in mold slot 0 was the original pilot. All eight mold slots now have the same five-image alive-state set, and the red set remains the baseline quality reference.
