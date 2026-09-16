@@ -6,6 +6,7 @@ namespace FungusToast.Unity.UI.Onboarding
 {
     public enum NewPlayerTooltipId
     {
+        WelcomeIntro,
         SpendMutationPointsIntro,
         MutationWorkspaceIntro,
         TimeLapseModeIntro,
@@ -28,6 +29,7 @@ namespace FungusToast.Unity.UI.Onboarding
         SidebarCoachmark,
         MoldProfileCoachmark,
         BoardCoachmark,
+        ScreenCenterCoachmark,
         DraftCoachmark,
         SelectionPromptCoachmark,
     }
@@ -63,12 +65,19 @@ namespace FungusToast.Unity.UI.Onboarding
         private static readonly IReadOnlyList<NewPlayerTooltipDefinition> Definitions = new[]
         {
             new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.WelcomeIntro,
+                "Onboarding.WelcomeIntroSeen",
+                "Welcome to Fungus Toast",
+                "Your mold grows automatically. Your job is to spend mutation points and shape how it behaves.",
+                NewPlayerTooltipSurface.ScreenCenterCoachmark,
+                "Show centered on screen shortly after round 1 begins for a human player, once the game-start title card has cleared. The round-1 Spend Points and camera coachmarks wait until this one is closed; clicking Spend Points also closes it. Suppress while fast-forwarding, skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
+            new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.SpendMutationPointsIntro,
                 "Onboarding.SpendMutationPointsIntroSeen",
                 "Spend Mutation Points",
                 "Click Spend Points to open the Mutation Workshop and upgrade your mold.",
                 NewPlayerTooltipSurface.SidebarCoachmark,
-                "Show beside the Spend Points button during round 1 for a human player unless the game is fast-forwarding; skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
+                "Show beside the Spend Points button during round 1 for a human player unless the game is fast-forwarding or the welcome coachmark is still open (it follows as soon as that closes); skip persisted seen-state checks only during forced first-game experience, and otherwise suppress in testing mode or after it has already been seen."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.MutationWorkspaceIntro,
                 "Onboarding.MutationWorkspaceIntroSeen",
@@ -121,10 +130,10 @@ namespace FungusToast.Unity.UI.Onboarding
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.CameraPanIntro,
                 "Onboarding.CameraPanIntroSeen",
-                "Move Around the Toast",
+                "Pan and Zoom the Board",
                 "Move around the toast with WASD or by holding right mouse and dragging.\nZoom with the mouse wheel.\n\nThis hint closes as soon as you move or zoom the camera.",
                 NewPlayerTooltipSurface.BoardCoachmark,
-                "Show during round 1 after a short delay if a human player has not already dismissed it this game and has not moved or zoomed the camera; suppress while fast-forwarding, skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+                "Show during round 1 a short delay after the welcome coachmark closes, if a human player has not already dismissed it this game and has not moved or zoomed the camera; suppress while fast-forwarding, skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.MycovariantDraftIntro,
                 "Onboarding.MycovariantDraftIntroSeen",
@@ -197,6 +206,27 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
+        public static bool ShouldShowWelcomeIntro(
+            bool forceFirstGameExperience,
+            int currentRound,
+            int humanPlayerCount,
+            bool hasDismissedThisGame,
+            bool isFastForwarding,
+            bool testingModeEnabled)
+        {
+            if (currentRound != 1 || humanPlayerCount <= 0 || hasDismissedThisGame || isFastForwarding)
+            {
+                return false;
+            }
+
+            if (forceFirstGameExperience)
+            {
+                return true;
+            }
+
+            return !testingModeEnabled && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.WelcomeIntro);
+        }
+
         public static bool ShouldShowSpendMutationPointsIntro(
             bool forceFirstGameExperience,
             int currentRound,

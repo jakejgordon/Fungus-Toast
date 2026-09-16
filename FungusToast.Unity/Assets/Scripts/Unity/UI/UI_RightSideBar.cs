@@ -601,7 +601,7 @@ namespace FungusToast.Unity.UI
             inspectPlayersCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             inspectPlayersCoachmarkRoot.pivot = new Vector2(1f, 1f);
             inspectPlayersCoachmarkRoot.anchoredPosition = Vector2.zero;
-            inspectPlayersCoachmarkRoot.sizeDelta = new Vector2(360f, 210f);
+            inspectPlayersCoachmarkRoot.sizeDelta = new Vector2(360f, 214f);
 
             inspectPlayersCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
             inspectPlayersCoachmarkCanvasGroup.alpha = 0f;
@@ -626,7 +626,7 @@ namespace FungusToast.Unity.UI
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             inspectPlayersCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             inspectPlayersCoachmarkTitleTextLabel.text = string.Empty;
@@ -645,7 +645,7 @@ namespace FungusToast.Unity.UI
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             inspectPlayersCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             inspectPlayersCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -662,8 +662,8 @@ namespace FungusToast.Unity.UI
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -686,7 +686,7 @@ namespace FungusToast.Unity.UI
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 
@@ -800,7 +800,7 @@ namespace FungusToast.Unity.UI
             scoreboardCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             scoreboardCoachmarkRoot.pivot = new Vector2(1f, 1f);
             scoreboardCoachmarkRoot.anchoredPosition = Vector2.zero;
-            scoreboardCoachmarkRoot.sizeDelta = new Vector2(360f, 190f);
+            scoreboardCoachmarkRoot.sizeDelta = new Vector2(360f, 194f);
 
             scoreboardCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
             scoreboardCoachmarkCanvasGroup.alpha = 0f;
@@ -825,7 +825,7 @@ namespace FungusToast.Unity.UI
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             scoreboardCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             scoreboardCoachmarkTitleTextLabel.text = string.Empty;
@@ -844,7 +844,7 @@ namespace FungusToast.Unity.UI
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             scoreboardCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             scoreboardCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -861,8 +861,8 @@ namespace FungusToast.Unity.UI
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -885,7 +885,7 @@ namespace FungusToast.Unity.UI
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 
@@ -952,7 +952,7 @@ namespace FungusToast.Unity.UI
             endgameCountdownCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             endgameCountdownCoachmarkRoot.pivot = new Vector2(1f, 1f);
             endgameCountdownCoachmarkRoot.anchoredPosition = Vector2.zero;
-            endgameCountdownCoachmarkRoot.sizeDelta = new Vector2(380f, 205f);
+            endgameCountdownCoachmarkRoot.sizeDelta = new Vector2(380f, 209f);
 
             endgameCountdownCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
             endgameCountdownCoachmarkCanvasGroup.alpha = 0f;
@@ -976,7 +976,7 @@ namespace FungusToast.Unity.UI
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             endgameCountdownCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             endgameCountdownCoachmarkTitleTextLabel.text = string.Empty;
@@ -994,7 +994,7 @@ namespace FungusToast.Unity.UI
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             endgameCountdownCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             endgameCountdownCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -1010,8 +1010,8 @@ namespace FungusToast.Unity.UI
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -1033,7 +1033,7 @@ namespace FungusToast.Unity.UI
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 

@@ -48,11 +48,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string ReturnButtonTooltipText = "Close the mutation workspace and return to the toast. Your unspent points remain available this turn.";
         private const float MutationPanelTopInsetPadding = 6f;
         private const float TimeLapseCoachmarkWidth = 340f;
-        private const float TimeLapseCoachmarkHeight = 168f;
+        private const float TimeLapseCoachmarkHeight = 172f;
         private const float TimeLapseCoachmarkHorizontalOffset = 5f;
         private const float TimeLapseCoachmarkVerticalOffset = -12f;
         private const float StorePointsCoachmarkWidth = 360f;
-        private const float StorePointsCoachmarkHeight = 190f;
+        private const float StorePointsCoachmarkHeight = 194f;
         private const float StorePointsCoachmarkHorizontalOffset = 5f;
         private const float StorePointsCoachmarkVerticalOffset = -12f;
 
@@ -562,6 +562,23 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(SlideOutTree());
 
             AcknowledgeSpendMutationPointsIntro();
+            AcknowledgeWelcomeCoachmarkOnSpendPoints();
+        }
+
+        /// <summary>
+        /// A player who clicks Spend Points while the welcome coachmark is still up has found the
+        /// button on their own, so neither that coachmark nor the Spend Points one needs to follow.
+        /// </summary>
+        private void AcknowledgeWelcomeCoachmarkOnSpendPoints()
+        {
+            GameManager? gameManager = GameManager.Instance;
+            if (gameManager == null || !gameManager.IsWelcomeCoachmarkActive)
+            {
+                return;
+            }
+
+            gameManager.AcknowledgeWelcomeCoachmark();
+            hasDismissedSpendMutationPointsIntroThisGame = true;
         }
 
         public void SetSpendPointsButtonVisible(bool visible)
@@ -2672,7 +2689,11 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void TryShowSpendMutationPointsCoachmark()
+        /// <summary>
+        /// Called whenever the Spend Points button is revealed, and again by GameManager once the
+        /// round-1 welcome coachmark closes, since this one defers to it.
+        /// </summary>
+        public void TryShowSpendMutationPointsCoachmark()
         {
             if (isTreeOpen || spendPointsButton == null || !spendPointsButton.gameObject.activeInHierarchy)
             {
@@ -2689,7 +2710,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 humanPlayer != null ? 1 : 0,
                 isFastForwarding,
                 gameManager != null && gameManager.IsTestingModeEnabled)
-                || hasDismissedSpendMutationPointsIntroThisGame)
+                || hasDismissedSpendMutationPointsIntroThisGame
+                || (gameManager != null && gameManager.IsWelcomeCoachmarkActive))
             {
                 return;
             }
@@ -2910,7 +2932,7 @@ namespace FungusToast.Unity.UI.MutationTree
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             timeLapseCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             timeLapseCoachmarkTitleTextLabel.text = string.Empty;
@@ -2928,7 +2950,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             timeLapseCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             timeLapseCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -2944,8 +2966,8 @@ namespace FungusToast.Unity.UI.MutationTree
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -2967,7 +2989,7 @@ namespace FungusToast.Unity.UI.MutationTree
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 
@@ -3027,7 +3049,7 @@ namespace FungusToast.Unity.UI.MutationTree
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             storePointsCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             storePointsCoachmarkTitleTextLabel.text = string.Empty;
@@ -3045,7 +3067,7 @@ namespace FungusToast.Unity.UI.MutationTree
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             storePointsCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             storePointsCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -3061,8 +3083,8 @@ namespace FungusToast.Unity.UI.MutationTree
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -3084,7 +3106,7 @@ namespace FungusToast.Unity.UI.MutationTree
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 

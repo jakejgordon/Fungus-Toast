@@ -8,6 +8,15 @@ namespace FungusToast.Unity.UI
     {
         internal static readonly Vector2 DefaultScreenPadding = new Vector2(8f, 8f);
 
+        // Dismiss control shared by every onboarding coachmark. Sized up 30% from the
+        // original 34px square so the X is an easy click target.
+        internal const float CloseButtonSize = 44f;
+        internal const float CloseButtonFontSize = 26f;
+        internal const float CloseButtonInset = 8f;
+        // Title text stops short of the close button; body text starts below it.
+        internal const float TitleRightInset = CloseButtonInset + CloseButtonSize + 10f;
+        internal const float BodyTopInset = CloseButtonInset + CloseButtonSize + 2f;
+
         internal static void PlayAttention(RectTransform coachmarkRect)
         {
             if (coachmarkRect == null)

@@ -439,9 +439,13 @@ namespace FungusToast.Unity
         public bool ShouldForceFirstGameExperience => testingModeEnabled && testingTreatAsFirstGame;
 
         private const string RoundPresentationSpeedModeKey = "Settings.RoundPresentationSpeedMode";
+        // Long enough for the game-start title card (up to ~3.7s) to clear before the welcome coachmark takes the center of the screen.
+        private const float WelcomeCoachmarkDelaySeconds = 4f;
 
         private bool isFastForwarding = false;
         public bool IsFastForwarding => isFastForwarding;
+        /// <summary>True while the round-1 welcome coachmark is pending or on screen; the other round-1 coachmarks wait on it.</summary>
+        public bool IsWelcomeCoachmarkActive => welcomeCoachmark != null && welcomeCoachmark.IsActive;
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
         public bool IsFastRoundPresentationMode => roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
@@ -464,6 +468,7 @@ namespace FungusToast.Unity
         private FastForwardService fastForwardService = null!; 
         private PostGrowthVisualSequence postGrowthVisualSequence = null!;
         private EndgameService endgameService = null!;
+        private NewPlayerWelcomeCoachmark welcomeCoachmark = null!;
         private EndgamePlayerStatisticsTracker endgamePlayerStatisticsTracker = null!;
         private MutationPointService mutationPointService = null!;
         private SpecialEventPresentationService specialEventPresentationService = null!;
@@ -830,6 +835,8 @@ namespace FungusToast.Unity
                 () => testingForcedGameResult,
                 () => testingForceMoldinessRewards,
                 () => testingForcedMoldinessRewardId);
+            welcomeCoachmark = new NewPlayerWelcomeCoachmark(ResolveRootUiCanvas, () => ShouldForceFirstGameExperience);
+            welcomeCoachmark.ClosedByPlayer += () => gameUIManager?.MutationUIManager?.TryShowSpendMutationPointsCoachmark();
             mutationPointService = new MutationPointService(
                 gameUIManager,
                 () => Board,
@@ -1507,6 +1514,13 @@ namespace FungusToast.Unity
                 ui.GameLogManager?.EmitPendingSegmentSummariesFor(activeHuman.PlayerId);
             }
 
+            // Armed before the Spend Points button is revealed so that coachmark defers to this one.
+            if (humanPlayers.Count > 0
+                && welcomeCoachmark.TryArm(board.CurrentRound, humanPlayers.Count, isFastForwarding, testingModeEnabled))
+            {
+                StartCoroutine(ShowWelcomeCoachmarkAfterDelay());
+            }
+
             hotseatTurnManager.BeginHumanMutationPhase();
 
             // Fail-safe: campaign continuation can traverse custom UI steps; ensure mutation controls are re-armed.
@@ -1782,6 +1796,24 @@ namespace FungusToast.Unity
             StartNextRound();
         }
 
+        private IEnumerator ShowWelcomeCoachmarkAfterDelay()
+        {
+            yield return new WaitForSecondsRealtime(WelcomeCoachmarkDelaySeconds);
+            welcomeCoachmark?.ShowIfArmed();
+        }
+
+        /// <summary>Closes the welcome coachmark without chaining the Spend Points coachmark, because the player already found the button.</summary>
+        public void AcknowledgeWelcomeCoachmark()
+        {
+            welcomeCoachmark?.Acknowledge();
+        }
+
+        private Canvas? ResolveRootUiCanvas()
+        {
+            Canvas? uiCanvas = gameUIManager != null ? gameUIManager.GetComponentInParent<Canvas>() : null;
+            return uiCanvas != null ? uiCanvas.rootCanvas : null;
+        }
+
         private IEnumerator DelayedStartDraft()
         {
             yield return new WaitForSeconds(2.5f);
@@ -1958,6 +1990,7 @@ namespace FungusToast.Unity
             currentLevelGameplaySeed = 0;
             pendingGameplaySeed = null;
             endgameService?.Reset();
+            welcomeCoachmark?.ResetForNewGame();
 
             FirstUpgradeRounds?.Clear();
             players.Clear();
@@ -2343,6 +2376,7 @@ namespace FungusToast.Unity
             gameTransitionService?.ResetRuntimeStateForGameTransition();
             ConfigureBackgroundMusicService();
             ui.MutationUIManager?.ResetForNewGameState();
+            welcomeCoachmark?.ResetForNewGame();
             ui.EndGamePanel?.gameObject.SetActive(false);
             pauseMenuService?.ForceClose();
 

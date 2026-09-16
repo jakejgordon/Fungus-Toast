@@ -17,7 +17,7 @@ namespace FungusToast.Unity.Cameras
         private const float CameraPanCoachmarkBottomOffset = 22f;
         private const float CameraPanCoachmarkBodyHorizontalPadding = 14f;
         private const float CameraPanCoachmarkBodyBottomPadding = 14f;
-        private const float CameraPanCoachmarkBodyTopReservedHeight = 46f;
+        private const float CameraPanCoachmarkBodyTopReservedHeight = CoachmarkLayoutUtility.BodyTopInset;
         private const float CameraPanDragThreshold = 0.01f;
 
         public float zoomSpeed = 12.5f;
@@ -208,6 +208,12 @@ namespace FungusToast.Unity.Cameras
                 return;
             }
 
+            // Wait for the welcome coachmark to close first; the delay starts counting from then.
+            if (gameManager.IsWelcomeCoachmarkActive)
+            {
+                return;
+            }
+
             cameraPanCoachmarkElapsed += Time.unscaledDeltaTime;
             if (cameraPanCoachmarkElapsed < cameraPanCoachmarkDelaySeconds)
             {
@@ -305,7 +311,7 @@ namespace FungusToast.Unity.Cameras
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -42f);
-            titleRect.offsetMax = new Vector2(-52f, -10f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -10f);
 
             cameraPanCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             cameraPanCoachmarkTitleTextLabel.text = string.Empty;
@@ -341,8 +347,8 @@ namespace FungusToast.Unity.Cameras
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -365,7 +371,7 @@ namespace FungusToast.Unity.Cameras
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 

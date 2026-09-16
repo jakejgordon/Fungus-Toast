@@ -465,7 +465,7 @@ namespace FungusToast.Unity
         private const float PromptButtonInset = 18f;
         private const float PromptButtonGap = 12f;
         private const float AutoPlacementCoachmarkWidth = 340f;
-        private const float AutoPlacementCoachmarkHeight = 142f;
+        private const float AutoPlacementCoachmarkHeight = 148f;
 
         private readonly GameObject selectionPromptPanel;
         private readonly TextMeshProUGUI selectionPromptText;
@@ -822,11 +822,11 @@ namespace FungusToast.Unity
             outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
             outline.effectDistance = new Vector2(1f, -1f);
 
-            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.TopLeft, new Vector2(14f, -46f), new Vector2(-52f, -10f));
+            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.TopLeft, new Vector2(14f, -46f), new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -10f));
             autoPlacementCoachmarkTitleText.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(autoPlacementCoachmarkTitleText);
 
-            autoPlacementCoachmarkBodyText = CreateCoachmarkText(rootObject.transform, "Body", 18f, FontStyles.Normal, TextAlignmentOptions.TopLeft, new Vector2(14f, 12f), new Vector2(-14f, -48f));
+            autoPlacementCoachmarkBodyText = CreateCoachmarkText(rootObject.transform, "Body", 18f, FontStyles.Normal, TextAlignmentOptions.TopLeft, new Vector2(14f, 12f), new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset));
             autoPlacementCoachmarkBodyText.textWrappingMode = TextWrappingModes.Normal;
             autoPlacementCoachmarkBodyText.overflowMode = TextOverflowModes.Overflow;
 
@@ -837,13 +837,13 @@ namespace FungusToast.Unity
             closeRect.anchorMin = Vector2.one;
             closeRect.anchorMax = Vector2.one;
             closeRect.pivot = Vector2.one;
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
             closeObject.GetComponent<Image>().color = UIStyleTokens.Surface.PanelElevated;
             var closeButton = closeObject.GetComponent<Button>();
             UIStyleTokens.Button.ApplyStyle(closeButton);
             closeButton.onClick.AddListener(HideAutoPlacementCoachmark);
-            var closeLabel = CreateCoachmarkText(closeObject.transform, "Label", 20f, FontStyles.Bold, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero);
+            var closeLabel = CreateCoachmarkText(closeObject.transform, "Label", CoachmarkLayoutUtility.CloseButtonFontSize, FontStyles.Bold, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero);
             closeLabel.text = "X";
             closeLabel.rectTransform.anchorMin = Vector2.zero;
             closeLabel.rectTransform.anchorMax = Vector2.one;

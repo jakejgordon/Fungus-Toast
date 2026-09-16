@@ -10,6 +10,7 @@ For general Unity UI architecture, also see `../../FungusToast.Core/docs/UI_ARCH
 **Purpose:** teach first-time or returning players something important about the game flow.
 
 **Examples:**
+- welcome coachmark (centered, round 1)
 - Spend Points coachmark
 - mutation-workspace guidance modal
 - scoreboard win-condition coachmark
@@ -200,6 +201,7 @@ When adding explanatory UI, use this decision order:
 ## 3. Current New-player Onboarding Inventory
 
 These currently live in `NewPlayerTooltipCatalog.cs`:
+- `WelcomeIntro`
 - `SpendMutationPointsIntro`
 - `MutationWorkspaceIntro`
 - `TimeLapseModeIntro`
@@ -226,7 +228,8 @@ Use this section when you want a quick description of what already exists withou
 
 | Tooltip | Surface | When it appears |
 | --- | --- | --- |
-| `SpendMutationPointsIntro` | sidebar coachmark | Shown beside the Spend Points button during round 1 for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. Clicking Spend Points acknowledges and closes it. |
+| `WelcomeIntro` | screen-center coachmark | Shown centered on screen about four seconds into round 1 (after the game-start title card clears) for a human player, unless the game is fast-forwarding. Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. It is the first thing a new player reads: the round-1 `SpendMutationPointsIntro` and `CameraPanIntro` coachmarks wait until it is closed, then follow in sequence. Clicking Spend Points while it is open closes it and skips the Spend Points coachmark for that game. Presented by `NewPlayerWelcomeCoachmark.cs`, owned by `GameManager`. |
+| `SpendMutationPointsIntro` | sidebar coachmark | Shown beside the Spend Points button during round 1 for a human player, unless the game is fast-forwarding or `WelcomeIntro` is still open (it appears as soon as that closes). Outside forced first-game experience, it is also suppressed in testing mode and after being seen before. Clicking Spend Points acknowledges and closes it. |
 | `MutationWorkspaceIntro` | mutation tree modal | Shown the first time the player opens the mutation tree by clicking Spend Points. It combines spending and inspector guidance in one modal positioned toward the inspector side of the workspace. It is suppressed while fast-forwarding, then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
 | `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
@@ -234,7 +237,7 @@ Use this section when you want a quick description of what already exists withou
 | `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `InspectPlayersIntro` | sidebar coachmark | Shown from round 8 onward — deliberately the last of the fixed-round hints, after the round 1–3 sidebar/mold-profile coachmarks and the round 5–6 mutation tree ones, and before the round-15 draft intro, so it never shares a round with another. Suppressed while fast-forwarding, after dismissal this game, and for a player who already pinned the inspector this game. Pinning the inspector marks it seen for good. Outside forced first-game experience, it only shows once per profile. |
 | `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
-| `CameraPanIntro` | board coachmark | Shown during round 1 after a short delay for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
+| `CameraPanIntro` | board coachmark | Titled "Pan and Zoom the Board". Shown during round 1 a short delay after `WelcomeIntro` closes, for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
 | `MycovariantDraftIntro` | draft coachmark | Shown the first time the Mycovariant draft panel opens, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `AutoPlacementIntro` | selection-prompt coachmark | Shown the first time an active Mycovariant offers the Auto Placement button (for example, Mycelial Bastion), unless the game is fast-forwarding. It is marked seen when displayed, so it may first appear several games into a profile but never repeats automatically. |
 | `EndgameCountdownIntro` | sidebar coachmark | Shown the first time the endgame countdown begins, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

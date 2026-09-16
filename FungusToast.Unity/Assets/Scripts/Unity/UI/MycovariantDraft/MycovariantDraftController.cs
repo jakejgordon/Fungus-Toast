@@ -1180,7 +1180,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             mycovariantDraftCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
             mycovariantDraftCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
             mycovariantDraftCoachmarkRoot.pivot = new Vector2(1f, 0.5f);
-            mycovariantDraftCoachmarkRoot.sizeDelta = new Vector2(320f, 200f);
+            mycovariantDraftCoachmarkRoot.sizeDelta = new Vector2(320f, 204f);
 
             mycovariantDraftCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
             mycovariantDraftCoachmarkCanvasGroup.alpha = 0f;
@@ -1204,7 +1204,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
             titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-52f, -12f);
+            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
             mycovariantDraftCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
             mycovariantDraftCoachmarkTitleTextLabel.text = string.Empty;
@@ -1222,7 +1222,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
             bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -50f);
+            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
             mycovariantDraftCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
             mycovariantDraftCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
@@ -1238,8 +1238,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             closeRect.anchorMin = new Vector2(1f, 1f);
             closeRect.anchorMax = new Vector2(1f, 1f);
             closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(34f, 34f);
-            closeRect.anchoredPosition = new Vector2(-8f, -8f);
+            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
 
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
@@ -1261,7 +1261,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             closeLabel.text = "X";
             closeLabel.color = UIStyleTokens.Text.Primary;
             closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = 20f;
+            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
             closeLabel.alignment = TextAlignmentOptions.Center;
             closeLabel.raycastTarget = false;
 
