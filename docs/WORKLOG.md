@@ -1376,6 +1376,15 @@ measurement model, phase gates, and open product decisions are in
     placement. The repository has no player-facing change until those decisions
     are made.
 
+94. Jake approved Bloom-20 for E1 promotion as **Verdant Reclaimer**. The
+    promoted Proven-solo definition preserves candidate `9c5157e4` exactly,
+    uses durable strategy ID `ai.growth.verdant-reclaimer.v1`, and carries its
+    measured Elite classification. Campaign placement remains deliberately
+    deferred as a separate pacing evaluation. Core passed 705/705 tests,
+    Simulation passed 280/280, both projects build with zero warnings/errors,
+    and the five-game rotating-slot promotion smoke completed with zero parity
+    mismatches while exercising Verdant Reclaimer.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

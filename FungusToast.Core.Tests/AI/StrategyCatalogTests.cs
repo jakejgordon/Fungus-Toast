@@ -116,6 +116,43 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Verdant_reclaimer_promotion_preserves_bloom20_behavior_and_player_facing_identity()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.ProvenStrategiesByName["Verdant Reclaimer"]);
+
+        Assert.Equal(
+            new (int MutationId, int? TargetLevel)[]
+            {
+                (MutationIds.AnabolicInversion, null),
+                (MutationIds.MycelialBloom, 20),
+                (MutationIds.MycotropicInduction, 1),
+                (MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                (MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+            },
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(EconomyBias.ModerateEconomy, strategy.EconomyProfile);
+
+        var definition = Assert.IsType<StrategyDefinition>(
+            StrategyRegistry.GetDefinition(StrategySetEnum.Proven, strategy.StrategyName));
+        Assert.Equal("ai.growth.verdant-reclaimer.v1", definition.StrategyId);
+        Assert.Equal("Verdant Reclaimer", definition.Metadata.FriendlyName);
+        Assert.Equal(
+            "Builds a deep growth engine, then reclaims territory after the board breaks open.",
+            definition.Metadata.AIPlayerIntentions);
+        Assert.Equal(StrategyArchetype.Reclamation, definition.Metadata.Archetype);
+        Assert.Equal(StrategyStatus.Proven, definition.Metadata.Status);
+        Assert.Equal(StrategyPowerTier.Strong, definition.Metadata.PowerTier);
+        Assert.Equal(StrategyLifecycle.Active, definition.Metadata.Lifecycle);
+        Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
+        Assert.True(definition.Metadata.Pools.HasFlag(StrategyPool.SimulationBaseline));
+        Assert.False(definition.Metadata.Pools.HasFlag(StrategyPool.Campaign));
+        Assert.DoesNotContain(
+            AIRoster.CampaignStrategies,
+            candidate => string.Equals(candidate.StrategyName, strategy.StrategyName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public void Filament_overdrive_is_sequenced_after_the_strategy_engine()
     {
         var expectedPredecessors = new Dictionary<string, int>

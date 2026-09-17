@@ -366,6 +366,21 @@ namespace FungusToast.Core.AI
                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
                 }
             ),
+            // P8 E1 promotion: Bloom-20 insertion candidate 9c5157e4.
+            // Campaign placement is intentionally deferred, so this exists only in Proven.
+            new ParameterizedSpendingStrategy(
+                strategyName: "Verdant Reclaimer",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                   new TargetMutationGoal(MutationIds.AnabolicInversion),
+                   new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                   new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                   new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                   new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                }
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "Grow>Defend>Kill",
                 prioritizeHighTier: true,
@@ -2274,6 +2289,7 @@ namespace FungusToast.Core.AI
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new("Anabolic Gravebloom", "A colony that uses an early metabolic boost to sustain spreading decay and regression."),
                 ["TST_CreepingNecroRegressionCascade"] = new("Gravebloom", "A colony that grows a broad creeping base, then turns it into a field of collapse and renewal."),
                 ["Anabolic>Grow>CatabR>PutreRegen"] = new("Rebirth Furnace", "A colony that uses metabolic growth to keep its death-and-regrowth cycle burning."),
+                ["Verdant Reclaimer"] = new("Verdant Reclaimer", "Builds a deep growth engine, then reclaims territory after the board breaks open."),
                 ["Grow>Defend>Kill"] = new("Putrid Tendrils", "A tendril-driven colony that establishes multiple growth lanes before converting them into decay."),
                 ["Grow>Mutate>Kill(Max Econ)"] = new("Adaptive Blight", "A colony that grows, mutates aggressively, then develops into a high-investment decay plan."),
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = new("Hyphal Pulse", "A colony that builds an economy and prepares Hyphal Surge as its defining active event."),
@@ -2456,6 +2472,7 @@ namespace FungusToast.Core.AI
                 ["Grow>Defend>Kill"] = StrategyTheme.Defense,
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
+                ["Verdant Reclaimer"] = StrategyTheme.Reclamation,
                 ["Filament Regrowth"] = StrategyTheme.Defense,
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyTheme.SurgeTempo,
                 ["Power Mutations Max Econ"] = StrategyTheme.LateGameSpike,
@@ -2509,6 +2526,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Spike, // P7 measured Elite (1.915)
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
+                ["Verdant Reclaimer"] = StrategyPowerTier.Strong, // P8 measured Elite in every classification context
                 ["Filament Regrowth"] = StrategyPowerTier.Standard, // P7 measured Normal (1.058)
                 ["TST_FortressResilience"] = StrategyPowerTier.Weak,
                 ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
@@ -2658,6 +2676,7 @@ namespace FungusToast.Core.AI
                 ["TST_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
+                ["Verdant Reclaimer"] = StrategyLifecycle.Active,
                 ["Filament Regrowth"] = StrategyLifecycle.Active,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
@@ -2736,6 +2755,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["Verdant Reclaimer"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["Filament Regrowth"] = new[] { DifficultyBand.Hard },
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },

@@ -1,7 +1,8 @@
 # AI P8 Bloom-20 Review Dossier V1
 
-**Status:** ready for human promotion review. This dossier makes no strategy,
-pool, campaign, or balance-value change.
+**Status:** promotion approved 2026-09-16. The reviewed candidate is promoted
+to the Proven solo roster as **Verdant Reclaimer** under durable strategy ID
+`ai.growth.verdant-reclaimer.v1`. Campaign placement remains deferred.
 
 ## Candidate and player-facing hypothesis
 
@@ -55,23 +56,18 @@ Elite:
 One fixed-lineup manual duel-small artifact is retained as an integrity record
 but excluded from classification because it omitted `--per-game-lineups`.
 
-## Review conclusion and open decisions
+## Review conclusion and promotion decision
 
-No mechanical evidence gate remains: the candidate cleared staged performance,
+No mechanical evidence gate remained: the candidate cleared staged performance,
 distinct-seed/geometry holdout, identity, and contextual Elite classification.
-This is not an automatic promotion. A player-facing promotion still needs the
-following decisions:
+Jake approved the following product decisions on 2026-09-16:
 
-1. Approve or decline promotion into the intended solo roster slot E1.
-2. Choose a player-facing display name and durable strategy identity. The
-   proposed naming-standard grammar remains unapproved, so this dossier does
-   not invent a temporary technical name for players.
-3. Decide whether it should initially enter only the Proven solo pool or also
-   be evaluated for campaign preset placement. Existing evidence supports the
-   first choice; campaign placement is a separate pacing decision.
-
-The current repository remains unchanged in player-facing behavior until those
-decisions are made.
+1. Promote the candidate into the intended solo roster slot E1.
+2. Use player-facing name **Verdant Reclaimer**, durable strategy ID
+   `ai.growth.verdant-reclaimer.v1`, and the fantasy: "Builds a deep growth
+   engine, then reclaims territory after the board breaks open."
+3. Enter the Proven solo pool only. Campaign placement remains a separate,
+   deferred pacing evaluation.
 
 ## Provenance
 

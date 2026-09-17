@@ -11,9 +11,20 @@ namespace FungusToast.Core.AI
         public const string DefinitionSchemaVersion = "fungus-toast.ai-definition.v2"; // v2: board-state surge opportunity evaluation
         public const string CorpusVersion = "fungus-toast.ai-corpus.phase5-starting-adaptations.v2";
 
+        private static readonly System.Collections.Generic.IReadOnlyDictionary<string, string> PromotedStableIdsByStrategyName =
+            new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Verdant Reclaimer"] = "ai.growth.verdant-reclaimer.v1"
+            };
+
         public static string GetStableId(StrategySetEnum strategySet, IMutationSpendingStrategy strategy)
         {
             if (strategy == null) throw new ArgumentNullException(nameof(strategy));
+            if (PromotedStableIdsByStrategyName.TryGetValue(strategy.StrategyName, out var promotedId))
+            {
+                return promotedId;
+            }
+
             var slug = new string(strategy.StrategyName
                 .ToLowerInvariant()
                 .Select(character => char.IsLetterOrDigit(character) ? character : '-')

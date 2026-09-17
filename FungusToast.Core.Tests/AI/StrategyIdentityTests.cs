@@ -33,6 +33,15 @@ public sealed class StrategyIdentityTests
     }
 
     [Fact]
+    public void Promoted_strategy_uses_its_durable_non_roster_identity()
+    {
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.ProvenStrategiesByName["Verdant Reclaimer"]);
+
+        Assert.Equal("ai.growth.verdant-reclaimer.v1", StrategyIdentity.GetStableId(StrategySetEnum.Proven, strategy));
+    }
+
+    [Fact]
     public void Registered_strategy_ids_are_unique_across_all_rosters()
     {
         // Generated is excluded: the simulation's candidate catalog populates it at run time with
