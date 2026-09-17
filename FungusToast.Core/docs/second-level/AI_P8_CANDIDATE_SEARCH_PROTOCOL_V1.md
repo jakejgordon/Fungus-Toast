@@ -261,6 +261,30 @@ parent normalized board share was `-0.0180` (95% CI `-0.0443..+0.0083`) across
 It does not meet the frozen `+0.05` increase margin, so the candidate stops on
 evidence and no holdout may run.
 
+### H2 current-behavior re-evaluation
+
+The result above remains valid for the behavior version it tested, but it no
+longer settles the current H2 strategy. Board-aware surge opportunity gating
+subsequently changed when planned surges fire, rank, bank, and defer, advancing
+the AI definition schema to v2. The old parent definition fingerprint is
+`93964c...`; the current parent fingerprint is `970e39...`. Because the changed
+code directly owns the cadence treatment's mechanism, carrying the old outcome
+forward would conflate two materially different surge policies.
+
+Plan `p8-hard-surge-tempo-v2` therefore regenerates only the existing
+three-round cadence treatment under the current parent. It is not a retry under
+unchanged conditions and does not reuse any old outcome. The paired swap uses
+current `TST_Arch06_SurgeGrowth` as control and retained Hard
+`TST_BalancedControl_MaxEconomy` as fixed opponent. Screening is 160x160,
+rotating slots, seed `2026091603`, with nutrient patches, Mycovariants, and
+starting Adaptations disabled. Its holdout, if earned, is 180x140 with unused
+seed `2026091703`. The gate remains five-game smoke, 20-game calibration,
+50-game comparison, and 100-game holdout. The comparison hypothesis is paired
+candidate-minus-parent normalized board share, direction Increase, margin
+`+0.05`; the calibration regression stop is an interval wholly below `-0.05`.
+Smoke must also reproduce a distinct observed surge-timing pattern before
+calibration is authorized.
+
 ## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
 
 The E1 plan generated eight valid candidates from

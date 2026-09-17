@@ -1407,6 +1407,13 @@ measurement model, phase gates, and open product decisions are in
     `-0.05` regression boundary. Comparison and holdout are forbidden. This
     rejects the specific Harmony-20 insertion, not Homeostatic Harmony's balance.
 
+98. H2's earlier cadence result cannot settle the current surge policy. It
+    measured parent definition `93964c...`; board-aware surge opportunity gating
+    later changed the directly relevant activation/banking behavior and the
+    current parent is `970e39...`. A checked-in v2 plan now regenerates only the
+    three-round cadence candidate under current behavior, with unused seeds and
+    the full staged gate preregistered. No old outcome will be reused.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
