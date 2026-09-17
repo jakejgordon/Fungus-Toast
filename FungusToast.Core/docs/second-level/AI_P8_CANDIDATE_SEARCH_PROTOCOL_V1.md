@@ -174,6 +174,39 @@ share was `-0.1613` (95% CI `-0.2726..-0.0500`) across 50 pairs. The combined
 runtime was 635.866 seconds within the 900-second budget. This stops the
 candidate on evidence; no holdout may run.
 
+### H1 bounded expansion — durability insertion
+
+The original H1 plan is exhausted, so the next search remains on its frozen
+parent and adds one mechanism-specific candidate rather than reopening the
+failed order and economy sweeps. Plan `p8-hard-econ-control-v2` inserts
+Homeostatic Harmony level 20 after the parent's Creeping Mold and Anabolic
+Inversion goals. The player-readable hypothesis is that the MaxEconomy opening
+can convert into durable board control by deliberately reducing ongoing decay
+before completing its Necrosporulation and Catabolic Rebirth line. The bounded
+plan emits exactly one candidate. It must still differ from the retained panel
+under deterministic characterization before any smoke run is preregistered;
+generation alone establishes no performance or band claim.
+
+Static characterization accepted
+`candidate.tst-balancedcontrol-maxeconomy.757f2707fe2e`
+(`CAND_p8-hard-econ-control-v2_GoalInsertion_757f2707`). It raises observed
+Homeostatic Harmony from 5 to 10 while retaining the parent's MaxEconomy
+opening, and it has no exact raw-build match in the declared reference set.
+Its nearest declared reference is the parent at raw distance `0.136`; the
+candidate is therefore distinct enough to enter the staged screen.
+
+The paired swap uses the candidate against parent
+`TST_BalancedControl_MaxEconomy`, with retained Hard
+`Grow>Kill>Reclaim(Econ/Reclaim)` fixed as opponent. Screening uses 160x160,
+rotating slots, seed `2026091602`, and nutrient patches, Mycovariants, and
+starting Adaptations disabled. Its holdout, if earned, is 180x140 with unused
+seed `2026091702`. The gate is a five-game smoke, 20-game calibration, 50-game
+comparison, then 100-game holdout. The comparison hypothesis is candidate-minus-
+parent paired normalized board share, direction Increase, margin `+0.05`; the
+calibration regression stop remains an interval whose upper bound is below
+`-0.05`. Each stage must clear in order, and the later stages are forbidden
+unless earned.
+
 ## H2 preregistered evaluation — surge-window candidate `dcb18b64`
 
 The H2 plan generated seven valid candidates from

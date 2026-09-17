@@ -8,6 +8,7 @@ public sealed class P8CandidateGenerationPlanTests
 {
     [Theory]
     [InlineData("candidate-plan.p8-hard-economy-control.v1.json")]
+    [InlineData("candidate-plan.p8-hard-economy-control-v2.json")]
     [InlineData("candidate-plan.p8-hard-surge-tempo.v1.json")]
     [InlineData("candidate-plan.p8-elite-large-board.v1.json")]
     public void CheckedInPlan_ValidatesAndProducesCandidates(string fileName)

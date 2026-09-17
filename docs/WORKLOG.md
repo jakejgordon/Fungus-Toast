@@ -1385,6 +1385,15 @@ measurement model, phase gates, and open product decisions are in
     and the five-game rotating-slot promotion smoke completed with zero parity
     mismatches while exercising Verdant Reclaimer.
 
+95. P8 H1 reopened with one bounded durability mechanism after its original
+    order/resource-policy plan exhausted. The checked-in v2 plan inserts
+    Homeostatic Harmony 20 after the MaxEconomy parent's Creeping Mold and
+    Anabolic Inversion goals. Static characterization accepted candidate
+    `757f2707`: observed Harmony rises from 5 to 10, no declared reference is an
+    exact build match, and parent distance is `0.136`. Its staged screen is now
+    preregistered before execution; no performance or Hard-band claim follows
+    from generation or characterization.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
