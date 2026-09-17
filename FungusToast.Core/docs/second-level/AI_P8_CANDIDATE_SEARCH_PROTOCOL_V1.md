@@ -207,6 +207,13 @@ calibration regression stop remains an interval whose upper bound is below
 `-0.05`. Each stage must clear in order, and the later stages are forbidden
 unless earned.
 
+Both five-game smoke arms completed with checksum-valid manifests and zero
+parity mismatches. Manifest comparison passed with only the declared treatment
+strategy name and definition changes. The 20-game calibration is therefore
+authorized in the unchanged 160x160 screening context, seed `2026091602`, with
+pairing group `p8-h1-757-calibration`; comparison and holdout remain forbidden
+until calibration clears its regression stop.
+
 ## H2 preregistered evaluation — surge-window candidate `dcb18b64`
 
 The H2 plan generated seven valid candidates from

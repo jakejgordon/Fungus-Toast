@@ -1394,6 +1394,12 @@ measurement model, phase gates, and open product decisions are in
     preregistered before execution; no performance or Hard-band claim follows
     from generation or characterization.
 
+96. H1 durability candidate `757f2707` cleared smoke integrity. Both five-game
+    arms completed with checksum-valid manifests and zero parity mismatches;
+    causal-input comparison passed with only the declared candidate definition
+    change. Its preregistered 20-game calibration is now authorized in the same
+    frozen screen. Comparison and holdout remain forbidden until earned.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
