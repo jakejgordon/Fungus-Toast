@@ -33,7 +33,10 @@ namespace FungusToast.Unity.UI
         private Color originalArrowColor;
 
         private const float SurgeDisplayEpsilon = 1e-6f;
+        // Applied via a rich-text <color> tag: UI_MoldProfileRoot.ApplyStyle() repaints every label's
+        // vertex color to Text.Secondary on each OnEnable, which would wash out a plain .color assignment.
         private static readonly Color SurgeTextColor = new(0.07f, 0.20f, 0.04f, 1f);
+        private static readonly string SurgeTextHex = ColorUtility.ToHtmlStringRGB(SurgeTextColor);
 
         public void ResolveChildren(string arrowName, string percentName, string surgeName)
         {
@@ -59,10 +62,10 @@ namespace FungusToast.Unity.UI
             percentText.alignment = TextAlignmentOptions.Center;
 
             ApplyTextScale(surgeText, SurgeTextScale);
+            surgeText.richText = true;
             surgeText.fontStyle = FontStyles.Bold;
-            surgeText.color = SurgeTextColor;
             surgeText.alignment = TextAlignmentOptions.Center;
-            // Very dark green, no outline: at this size an SDF outline eats the glyph fill.
+            // No outline: at this size an SDF outline eats the glyph fill.
             surgeText.outlineWidth = 0f;
 
             ApplyTextLayout();
@@ -83,7 +86,7 @@ namespace FungusToast.Unity.UI
                 if (surgeBonus > SurgeDisplayEpsilon)
                 {
                     if (!surgeText.gameObject.activeSelf) surgeText.gameObject.SetActive(true);
-                    surgeText.text = $"+{(surgeBonus * 100f):F2}%";
+                    surgeText.text = $"<color=#{SurgeTextHex}>+{(surgeBonus * 100f):F2}%</color>";
                 }
                 else if (surgeText.gameObject.activeSelf)
                     surgeText.gameObject.SetActive(false);
