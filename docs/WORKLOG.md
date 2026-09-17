@@ -1524,8 +1524,11 @@ None of these were done in that session; they are the loose ends it exposed.
    never read — the Bastion `AIScore` lambdas return their flat base score, and
    only `ReclamationRhizomorphsBonusAIScore` has a live synergy path. Decide
    whether Bastion was meant to gain a synergy bonus or the constant should go.
-   `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` is public with
-   no callers anywhere in the solution.
+   Resolved 2026-09-17: the unused public
+   `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` helper was
+   removed; live draft selection continues through
+   `SelectMycovariantFromChoices`. The Bastion score question remains open
+   because removing or applying that constant is a balance decision.
 
 5. **`Player.AIType` is dead state.** All three construction sites pass
    `AITypeEnum.Random` and nothing varies it, so the field reads as a setting
