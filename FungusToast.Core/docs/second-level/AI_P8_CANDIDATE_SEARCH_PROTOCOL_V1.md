@@ -295,6 +295,18 @@ an observable timing/volume distinction. Its 20-game calibration is authorized
 in the unchanged screening context with pairing group
 `p8-h2-v2-calibration`; comparison and holdout remain forbidden until earned.
 
+Both current-version 20-game calibration arms completed with checksum-valid
+manifests, zero parity mismatches, and only the declared strategy-definition
+differences. Candidate-minus-parent paired normalized board share was `-0.0132`
+(95% CI `-0.0731..+0.0468`). The upper interval bound is not below the frozen
+`-0.05` regression boundary, so candidate `dcb18b64` clears calibration. A
+50-game paired comparison is now preregistered in the same 160x160 context with
+seed `2026091603`, pairing group `p8-h2-v2-comparison`, target
+`candidate.tst-arch06-surgegrowth.dcb18b642321`, control
+`legacy.testing.tst-arch06-surgegrowth.v1`, primary metric normalized board
+share, direction Increase, and margin `+0.05`. Holdout remains forbidden unless
+that comparison emits `supported`.
+
 ## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
 
 The E1 plan generated eight valid candidates from

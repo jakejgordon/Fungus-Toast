@@ -1421,6 +1421,15 @@ measurement model, phase gates, and open product decisions are in
     round 8 in all five games, preserving a visible timing/volume distinction
     under board-aware gating. Its 20-game calibration is now authorized.
 
+100. Current-version H2 candidate `dcb18b64` cleared its 20-game calibration.
+     Both arms were checksum-valid with zero parity mismatches and only the
+     declared treatment difference. Candidate-minus-parent normalized board
+     share was `-0.0132` (95% CI `-0.0731..+0.0468`), so the interval is not
+     wholly below the frozen `-0.05` regression stop. Its 50-game paired
+     comparison is now preregistered in the unchanged 160x160 screen with
+     hypothesis direction Increase and margin `+0.05`; holdout remains
+     forbidden unless that comparison emits `supported`.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
