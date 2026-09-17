@@ -33,9 +33,7 @@ namespace FungusToast.Unity.UI
         private Color originalArrowColor;
 
         private const float SurgeDisplayEpsilon = 1e-6f;
-        private const float SurgeOutlineWidth = 0.15f;
-        private static readonly Color SurgeTextColor = new(0.09f, 0.22f, 0.05f, 1f);
-        private static readonly Color SurgeOutlineColor = new(0.93f, 0.95f, 0.88f, 0.85f);
+        private static readonly Color SurgeTextColor = new(0.07f, 0.20f, 0.04f, 1f);
 
         public void ResolveChildren(string arrowName, string percentName, string surgeName)
         {
@@ -64,9 +62,8 @@ namespace FungusToast.Unity.UI
             surgeText.fontStyle = FontStyles.Bold;
             surgeText.color = SurgeTextColor;
             surgeText.alignment = TextAlignmentOptions.Center;
-            // Very dark green with a thin pale halo so the bonus reads against the busy toast texture.
-            surgeText.outlineWidth = SurgeOutlineWidth;
-            surgeText.outlineColor = SurgeOutlineColor;
+            // Very dark green, no outline: at this size an SDF outline eats the glyph fill.
+            surgeText.outlineWidth = 0f;
 
             ApplyTextLayout();
             resolved = true;
