@@ -1430,6 +1430,15 @@ measurement model, phase gates, and open product decisions are in
      hypothesis direction Increase and margin `+0.05`; holdout remains
      forbidden unless that comparison emits `supported`.
 
+101. Current-version H2 candidate `dcb18b64` stopped at its preregistered
+     50-game comparison. Both arms were checksum-valid with zero parity
+     mismatches and only the declared treatment difference. Candidate-minus-
+     parent normalized board share was `-0.0075` (95% CI
+     `-0.0374..+0.0224`), and the verdict was `not_supported` against the frozen
+     `+0.05` increase margin. Combined runtime was 679.489 seconds inside the
+     900-second budget. Holdout is forbidden; the bounded three-round cadence
+     treatment is exhausted under current board-aware surge gating.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

@@ -307,6 +307,14 @@ seed `2026091603`, pairing group `p8-h2-v2-comparison`, target
 share, direction Increase, and margin `+0.05`. Holdout remains forbidden unless
 that comparison emits `supported`.
 
+The checksum-valid 50-game current-version comparison emitted `not_supported`.
+Candidate-minus-parent normalized board share was `-0.0075` (95% CI
+`-0.0374..+0.0224`) across 50 pairs, with 679.489 seconds combined runtime
+inside the 900-second budget. It does not meet the frozen `+0.05` increase
+margin, so candidate `dcb18b64` stops and no holdout may run. Together with the
+earlier behavior-version result, this exhausts the bounded three-round cadence
+treatment without claiming that all possible surge-tempo mechanisms are weak.
+
 ## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
 
 The E1 plan generated eight valid candidates from
