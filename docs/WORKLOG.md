@@ -1450,7 +1450,11 @@ measurement model, phase gates, and open product decisions are in
      the no-Autolytic control remains excluded and unprioritized. Opportunity
      thresholds still gate every activation. Core passed 705/705 tests,
      Simulation passed 282/282, and both projects build with zero warnings or
-     errors.
+     errors. A five-game 160x160 implementation smoke completed with zero
+     parity mismatches: both strategies activated Autolytic in all five games,
+     and Detrital took rewarded post-goal activations above level three in three
+     games (reaching level five twice), proving the explicit priority path is
+     live without making a balance claim.
 
 ### Proposed — AI strategy naming and metadata standard
 
