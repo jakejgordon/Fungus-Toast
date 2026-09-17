@@ -1400,6 +1400,13 @@ measurement model, phase gates, and open product decisions are in
     change. Its preregistered 20-game calibration is now authorized in the same
     frozen screen. Comparison and holdout remain forbidden until earned.
 
+97. H1 durability candidate `757f2707` stopped decisively at calibration. Both
+    20-game arms completed checksum-valid with zero parity mismatches and only
+    the declared treatment difference. Candidate-minus-parent normalized board
+    share was `-0.4666` (95% CI `-0.5980..-0.3352`), wholly below the frozen
+    `-0.05` regression boundary. Comparison and holdout are forbidden. This
+    rejects the specific Harmony-20 insertion, not Homeostatic Harmony's balance.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:

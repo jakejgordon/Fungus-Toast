@@ -214,6 +214,14 @@ authorized in the unchanged 160x160 screening context, seed `2026091602`, with
 pairing group `p8-h1-757-calibration`; comparison and holdout remain forbidden
 until calibration clears its regression stop.
 
+The 20-game calibration arms completed with checksum-valid manifests, zero
+parity mismatches, and only the declared treatment differences. Candidate-minus-
+parent paired normalized board share was `-0.4666` (95% CI
+`-0.5980..-0.3352`). The entire interval is below the frozen `-0.05` regression
+boundary, so candidate `757f2707` stops on evidence. Comparison and holdout must
+not run. The result also rejects this specific Harmony-20 insertion as H1's
+durability mechanism; it does not justify weakening Homeostatic Harmony itself.
+
 ## H2 preregistered evaluation — surge-window candidate `dcb18b64`
 
 The H2 plan generated seven valid candidates from
