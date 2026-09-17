@@ -1551,12 +1551,11 @@ None of these were done in that session; they are the loose ends it exposed.
    experiment contract caps a condition at 100 games. Agree a standard game
    count for balance confirmations rather than deciding per run.
 
-8. **The analytics virtual environment does not exist where it is documented.**
-   `FungusToast.Analytics/README.md` and the `validate-campaign-balance` skill
-   both point at `FungusToast.Analytics/.venv`; on the current machine only the
-   repository-root `.venv` exists, and it happens to carry pandas and pyarrow.
-   Create the documented environment or change both documents to name the real
-   one, so a validation run does not have to rediscover this.
+8. **Analytics virtual environment resolved 2026-09-17.** The documented
+   `FungusToast.Analytics/.venv` now exists on the current machine and imports
+   both pandas (`3.0.1`) and pyarrow (`23.0.1`) through its own Python binary.
+   The README's commands are therefore accurate when run from the Analytics
+   directory; no repository-path rewrite is needed.
 
 ### Proposed — Interactive HTML simulation results page
 
