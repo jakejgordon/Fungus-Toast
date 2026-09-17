@@ -33,9 +33,9 @@ namespace FungusToast.Unity.UI
         private Color originalArrowColor;
 
         private const float SurgeDisplayEpsilon = 1e-6f;
-        private const float SurgeOutlineWidth = 0.35f;
-        private static readonly Color SurgeTextColor = UIStyleTokens.State.Success;
-        private static readonly Color SurgeOutlineColor = new(0.05f, 0.08f, 0.02f, 1f);
+        private const float SurgeOutlineWidth = 0.15f;
+        private static readonly Color SurgeTextColor = new(0.09f, 0.22f, 0.05f, 1f);
+        private static readonly Color SurgeOutlineColor = new(0.93f, 0.95f, 0.88f, 0.85f);
 
         public void ResolveChildren(string arrowName, string percentName, string surgeName)
         {
@@ -64,7 +64,7 @@ namespace FungusToast.Unity.UI
             surgeText.fontStyle = FontStyles.Bold;
             surgeText.color = SurgeTextColor;
             surgeText.alignment = TextAlignmentOptions.Center;
-            // Bright green plus a dark outline so the bonus reads against the light toast background.
+            // Very dark green with a thin pale halo so the bonus reads against the busy toast texture.
             surgeText.outlineWidth = SurgeOutlineWidth;
             surgeText.outlineColor = SurgeOutlineColor;
 
