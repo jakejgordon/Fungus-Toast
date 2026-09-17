@@ -285,6 +285,16 @@ candidate-minus-parent normalized board share, direction Increase, margin
 Smoke must also reproduce a distinct observed surge-timing pattern before
 calibration is authorized.
 
+Both current-version smoke arms completed with checksum-valid manifests, zero
+parity mismatches, and only the declared strategy-definition differences. The
+three-round candidate recorded 70 surge activations across the five games
+(`13,15,16,13,13`) versus the five-round parent's 59
+(`13,11,13,11,11`); its first activation occurred on round 8 in every game,
+versus parent first rounds `8,8,10,8,8`. The current policy therefore preserves
+an observable timing/volume distinction. Its 20-game calibration is authorized
+in the unchanged screening context with pairing group
+`p8-h2-v2-calibration`; comparison and holdout remain forbidden until earned.
+
 ## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
 
 The E1 plan generated eight valid candidates from

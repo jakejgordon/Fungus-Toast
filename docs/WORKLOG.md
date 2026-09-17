@@ -1414,6 +1414,13 @@ measurement model, phase gates, and open product decisions are in
     three-round cadence candidate under current behavior, with unused seeds and
     the full staged gate preregistered. No old outcome will be reused.
 
+99. Current-version H2 candidate `dcb18b64` cleared smoke integrity and the
+    required behavior check. Both five-game arms were checksum-valid with zero
+    parity mismatches and only the declared treatment difference. The
+    three-round candidate fired 70 surges versus the parent's 59 and began by
+    round 8 in all five games, preserving a visible timing/volume distinction
+    under board-aware gating. Its 20-game calibration is now authorized.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
