@@ -1357,7 +1357,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
-                }
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyAutolyticReclaimer",
@@ -1381,7 +1382,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.DetritalEnzymes, GameBalance.DetritalEnzymesMaxLevel),
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
-                }
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge }
             ),
             // Controlled dominance-diagnosis variants for TST_EcologyAutolyticReclaimer.
             // Each keeps the baseline's economy/category profile and route where possible,
@@ -1408,6 +1410,7 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
                 },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 excludedMutationIds: new[] { MutationIds.Necrosporulation }
             ),
             new ParameterizedSpendingStrategy(
@@ -1454,7 +1457,8 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.Necrosporulation, GameBalance.NecrosporulationMaxLevel),
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae, GameBalance.RegenerativeHyphaeMaxLevel),
                     new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
-                }
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge }
             ),
             // Bare Necrosporulation probe: isolates the death-to-remote-colonization route
             // from both Autolytic Surge and the entire Substrate Ecology category.

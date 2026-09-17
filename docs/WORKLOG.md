@@ -124,9 +124,12 @@ are considered complete. The current Aerated Frontier calibration uses
   Arch05 -157, Arch02 -90, others within +/-45; the already dominant Arch07
   benefits most from smarter surges. `players.parquet` gains
   `AiSurgeOpportunitiesDeclined`; `DefinitionSchemaVersion` is now v2.
-- Open follow-up: the Autolytic decay penalty is discounted by owned dead-cell
-  mutations, but strategies built around Necrophytic Bloom or Substrate Ecology
-  corpse payoffs should be able to prefer it explicitly.
+- Resolved follow-up: the Autolytic decay penalty remains discounted only by
+  owned dead-cell mutations, while the two ecology/corpse-payoff strategies now
+  explicitly prioritize Autolytic Surge. Their controlled no-necro and delayed-
+  necro variants preserve that preference; the no-Autolytic control does not.
+  The board evaluator still gates every activation, so intent cannot force a
+  wasteful surge.
 
 ### 2026-09-07 Necrotic Clearance
 
@@ -1438,6 +1441,16 @@ measurement model, phase gates, and open product decisions are in
      `+0.05` increase margin. Combined runtime was 679.489 seconds inside the
      900-second budget. Holdout is forbidden; the bounded three-round cadence
      treatment is exhausted under current board-aware surge gating.
+
+102. The board-aware surge follow-up is implemented. `TST_EcologyAutolyticDetrital`
+     and `TST_EcologyAutolyticReclaimer` now declare Autolytic Surge as an
+     explicit surge priority, allowing their corpse-payoff identity to continue
+     seeking rewarded activations after the staged level-three goals. The
+     no-necro and delayed-necro diagnosis variants retain the same preference;
+     the no-Autolytic control remains excluded and unprioritized. Opportunity
+     thresholds still gate every activation. Core passed 705/705 tests,
+     Simulation passed 282/282, and both projects build with zero warnings or
+     errors.
 
 ### Proposed — AI strategy naming and metadata standard
 
