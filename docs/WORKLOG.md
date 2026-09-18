@@ -1514,10 +1514,18 @@ None of these were done in that session; they are the loose ends it exposed.
    almost no draft intent. Decide whether campaign strategies should declare
    narrower, authored preferences instead of whole categories.
 
-3. **`AIScore` calibration now carries weight it did not before.** Category sets
-   are resolved entirely by score, so a mis-scored mycovariant now directly
-   causes a wrong pick where list position used to mask it. Worth an audit pass
-   over the score constants, particularly across tiered families.
+3. **`AIScore` tier-family audit resolved 2026-09-18.** Category sets are
+   resolved entirely by score, so the tiered families were checked against
+   their declared score progressions. The audit found one mapping defect:
+   Ballistospore Discharge II used the tier-III score constant, tying tiers II
+   and III at 6 instead of the declared 3/4/6 progression. Tier II now uses its
+   intended score of 4, protected by a regression test covering all three
+   definitions. The unused `HyphalResistanceTransferBaseAIScoreLate` constant,
+   left behind when that score was deliberately made round-independent, was
+   also removed. No other objective tier-ordering defect was found; further
+   score changes would be balance tuning and require measured evidence. Core
+   passes 708/708 tests, Simulation passes 282/282, and both projects build
+   with zero warnings/errors.
 
 4. **Dead code found while tracing the draft path.**
    Resolved 2026-09-18: history confirms

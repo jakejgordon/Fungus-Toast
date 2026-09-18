@@ -127,7 +127,6 @@ namespace FungusToast.Core.Config
 
         public const float AIDraftModeratePriority = 6f;
         public const float HyphalResistanceTransferBaseAIScoreEarly = 5f;
-        public const float HyphalResistanceTransferBaseAIScoreLate = 3f;
         public const float SeptalAlarmBaseAIScore = 5f;
         public const float MycovariantSynergyBonus = 3f;
     }

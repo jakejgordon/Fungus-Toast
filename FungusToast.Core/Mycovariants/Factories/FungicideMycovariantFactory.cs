@@ -117,7 +117,7 @@ namespace FungusToast.Core.Mycovariants
                     rng,
                     observer);
             },
-            AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIIAIScore
+            AIScore = (player, board) => MycovariantGameBalance.BallistosporeDischargeIIAIScore
         };
 
         private static Mycovariant BallistosporeDischargeIII() => new Mycovariant
