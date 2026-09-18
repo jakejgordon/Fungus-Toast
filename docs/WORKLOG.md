@@ -1541,13 +1541,17 @@ None of these were done in that session; they are the loose ends it exposed.
    have zero warnings/errors, and the checked-in Unity Core DLL/PDB are
    refreshed. Unity Editor compile validation remains manual.
 
-6. **The player inspector was only built to step one.** The hover tooltip now
-   renders shared sections from `PlayerInspectorContent`, but the docked
-   `PlayerInspectorPanel` those sections were designed for does not exist yet.
-   The dev block also carries only the strategy tuning parameters; the fields
-   that actually catch AI misbehavior — unspent mutation points and banking
-   intent, target-goal progress, the mutation ledger with first-acquired round,
-   active surges, and effective growth/self-death rates — were deferred with it.
+6. **Player inspector diagnostics are partially complete.** The docked
+   `PlayerInspectorPanel` and active-surge tiles now exist. On 2026-09-18 its
+   Development Testing block gained live mutation points, income, banking
+   intent, and executable target-goal progress; the first incomplete goal is
+   visibly marked as current intent. It also gained a mutation ledger ordered
+   by first-acquired round, plus live orthogonal-growth and random-decay rates.
+   The random-decay value comes from the same new Core helper used by the decay
+   engine, avoiding a Unity-side rules copy. The panel already refreshes these
+   values on its bounded content interval. Core tests pass 707/707, Simulation
+   tests pass 282/282, and both projects build with zero warnings/errors. This
+   follow-up is code-complete and awaits Unity Editor compile/visual validation.
 
 7. **Twenty games per level cannot resolve a small balance effect.** That is the
    `run_campaign_balance.py` default and what the mycovariant confirmation ran

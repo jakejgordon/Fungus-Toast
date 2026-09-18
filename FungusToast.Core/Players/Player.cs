@@ -152,11 +152,35 @@ namespace FungusToast.Core.Players
             return chance;
         }
 
+        /// <summary>
+        /// Current random-decay chance before cell-age risk. This is the same value used by the
+        /// decay engine and includes round scaling plus active growth/fragility tradeoffs.
+        /// </summary>
+        public float GetEffectiveRandomDecayChance(int currentRound)
+        {
+            float harmonyReduction = GetMutationEffect(MutationType.DefenseSurvival);
+            float mycelialBloomPenalty = GetMutationLevel(MutationIds.MycelialBloom)
+                * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
+            float autolyticSurgePenalty = IsSurgeActive(MutationIds.HyphalSurge)
+                ? GetMutationLevel(MutationIds.HyphalSurge) * GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel
+                : 0f;
+
+            return Math.Max(
+                0f,
+                GameBalance.BaseRandomDecayChance
+                + GameBalance.GetAdditionalRandomDecayChance(currentRound)
+                + mycelialBloomPenalty
+                + autolyticSurgePenalty
+                - harmonyReduction);
+        }
+
+        /// <summary>
+        /// Homeostatic Harmony's random/age decay reduction. Retained as the exported simulation
+        /// metric even though the full random-decay chance is available separately.
+        /// </summary>
         public float GetEffectiveSelfDeathChance()
         {
-            float bonusPerLevel = GameBalance.HomeostaticHarmonyEffectPerLevel;
-            int level = GetMutationLevel(MutationIds.HomeostaticHarmony);
-            return level * bonusPerLevel;
+            return GetMutationEffect(MutationType.DefenseSurvival);
         }
 
         /* ---------------- Diagonal growth helpers ------------- */

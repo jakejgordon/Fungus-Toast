@@ -136,7 +136,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
         /// Development Testing only. Exposes the tuning parameters an AI strategy was declared
         /// with, so a tester can tell which roster slot they are facing and how it was configured.
         /// </summary>
-        public static IReadOnlyList<PlayerInspectorSection> BuildDevelopmentSections(Player? player)
+        public static IReadOnlyList<PlayerInspectorSection> BuildDevelopmentSections(Player? player, int currentRound)
         {
             if (player == null)
             {
@@ -157,6 +157,21 @@ namespace FungusToast.Unity.UI.PlayerInspector
                     player.StartingTileId.HasValue ? $"#{player.StartingTileId.Value}" : "None")
             };
             sections.Add(new PlayerInspectorSection("Dev — Identity", identity));
+
+            sections.Add(new PlayerInspectorSection(
+                "Dev — Decision State",
+                new[]
+                {
+                    new PlayerInspectorLine("Mutation Points", player.MutationPoints.ToString()),
+                    new PlayerInspectorLine("Mutation Income", player.GetMutationPointIncome().ToString()),
+                    new PlayerInspectorLine("Orthogonal Growth", $"{player.GetEffectiveGrowthChance():P2}"),
+                    new PlayerInspectorLine("Random Decay", $"{player.GetEffectiveRandomDecayChance(currentRound):P2}"),
+                    new PlayerInspectorLine(
+                        "Banking Intent",
+                        player.WantsToBankPointsThisTurn
+                            ? $"Yes ({player.MutationPoints} stored)"
+                            : "No")
+                }));
 
             if (strategy == null)
             {
@@ -188,8 +203,20 @@ namespace FungusToast.Unity.UI.PlayerInspector
             tuning.Add(new PlayerInspectorLine("Excluded Mutations", FormatMutationIds(strategy.ExcludedMutationIds)));
             sections.Add(new PlayerInspectorSection("Dev — Strategy Tuning", tuning));
 
+            var ledgerLines = BuildMutationLedgerLines(player);
+            if (ledgerLines.Count > 0)
+            {
+                sections.Add(new PlayerInspectorSection("Dev — Mutation Ledger", ledgerLines));
+            }
+
             if (strategy is ParameterizedSpendingStrategy withPreferences)
             {
+                var goalLines = BuildTargetGoalLines(player, withPreferences);
+                if (goalLines.Count > 0)
+                {
+                    sections.Add(new PlayerInspectorSection("Dev — Mutation Plan", goalLines));
+                }
+
                 var preferenceLines = BuildMycovariantPreferenceLines(player, withPreferences);
                 if (preferenceLines.Count > 0)
                 {
@@ -198,6 +225,82 @@ namespace FungusToast.Unity.UI.PlayerInspector
             }
 
             return sections;
+        }
+
+        /// <summary>
+        /// Shows the executable goal list rather than re-authoring an inspector-only plan. The first
+        /// incomplete goal is marked as active so a tester can distinguish current intent from later
+        /// goals without changing AI behavior.
+        /// </summary>
+        private static List<PlayerInspectorLine> BuildTargetGoalLines(
+            Player player,
+            ParameterizedSpendingStrategy strategy)
+        {
+            var goals = strategy.TargetMutationGoals;
+            var lines = new List<PlayerInspectorLine>();
+            bool markedActiveGoal = false;
+
+            for (int i = 0; i < goals.Count && i < MaxListedItems; i++)
+            {
+                TargetMutationGoal goal = goals[i];
+                int currentLevel = player.GetMutationLevel(goal.MutationId);
+                int targetLevel = MutationRepository.All.TryGetValue(goal.MutationId, out Mutation mutation)
+                    ? System.Math.Min(goal.TargetLevel ?? mutation.MaxLevel, mutation.MaxLevel)
+                    : goal.TargetLevel ?? 1;
+                bool complete = currentLevel >= targetLevel;
+                string marker;
+
+                if (complete)
+                {
+                    marker = "[x]";
+                }
+                else if (!markedActiveGoal)
+                {
+                    marker = "[>]";
+                    markedActiveGoal = true;
+                }
+                else
+                {
+                    marker = "[ ]";
+                }
+
+                lines.Add(PlayerInspectorLine.Plain(
+                    $"{marker} {GetMutationName(goal.MutationId)}: {currentLevel}/{targetLevel}"));
+            }
+
+            if (goals.Count > MaxListedItems)
+            {
+                lines.Add(PlayerInspectorLine.Plain($"…and {goals.Count - MaxListedItems} more"));
+            }
+
+            return lines;
+        }
+
+        private static List<PlayerInspectorLine> BuildMutationLedgerLines(Player player)
+        {
+            var acquired = player.PlayerMutations.Values
+                .Where(pm => pm.CurrentLevel > 0)
+                .OrderBy(pm => pm.FirstUpgradeRound ?? int.MaxValue)
+                .ThenBy(pm => pm.Mutation.TierNumber)
+                .ThenBy(pm => pm.Mutation.Name)
+                .ToList();
+            var lines = new List<PlayerInspectorLine>();
+
+            foreach (var playerMutation in acquired.Take(MaxListedItems))
+            {
+                string acquiredRound = playerMutation.FirstUpgradeRound.HasValue
+                    ? $"round {playerMutation.FirstUpgradeRound.Value}"
+                    : "round unknown";
+                lines.Add(PlayerInspectorLine.Plain(
+                    $"{playerMutation.Mutation.Name}: Lv {playerMutation.CurrentLevel}, {acquiredRound}"));
+            }
+
+            if (acquired.Count > MaxListedItems)
+            {
+                lines.Add(PlayerInspectorLine.Plain($"…and {acquired.Count - MaxListedItems} more"));
+            }
+
+            return lines;
         }
 
         public static bool IsDevelopmentTestingEnabled(GameManager? manager) =>

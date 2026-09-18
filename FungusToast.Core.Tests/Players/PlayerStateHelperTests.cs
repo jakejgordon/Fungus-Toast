@@ -1,5 +1,6 @@
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
@@ -80,6 +81,27 @@ public class PlayerStateHelperTests
         player.WantsToBankPointsThisTurn = true;
 
         Assert.True(player.WantsToBankPointsThisTurn);
+    }
+
+    [Fact]
+    public void Effective_random_decay_chance_matches_decay_engine_inputs()
+    {
+        var player = new Player(playerId: 0, playerName: "Test Player", playerType: PlayerTypeEnum.AI);
+        player.SetMutationLevel(MutationIds.HomeostaticHarmony, 2, currentRound: 1);
+        player.SetMutationLevel(MutationIds.MycelialBloom, 3, currentRound: 1);
+        player.SetMutationLevel(MutationIds.HyphalSurge, 2, currentRound: 1);
+        player.ActiveSurges[MutationIds.HyphalSurge] = new Player.ActiveSurgeInfo(
+            MutationIds.HyphalSurge,
+            level: 2,
+            duration: 3);
+
+        float expected = GameBalance.BaseRandomDecayChance
+            + GameBalance.GetAdditionalRandomDecayChance(currentRound: 10)
+            + 3 * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel
+            + 2 * GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel
+            - player.GetMutationEffect(MutationType.DefenseSurvival);
+
+        Assert.Equal(expected, player.GetEffectiveRandomDecayChance(currentRound: 10), precision: 6);
     }
 
     private sealed class StubMutationSpendingStrategy : IMutationSpendingStrategy

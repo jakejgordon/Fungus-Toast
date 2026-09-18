@@ -436,7 +436,9 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             if (PlayerInspectorContent.IsDevelopmentTestingEnabled(manager))
             {
-                sections.AddRange(PlayerInspectorContent.BuildDevelopmentSections(trackedPlayer));
+                sections.AddRange(PlayerInspectorContent.BuildDevelopmentSections(
+                    trackedPlayer,
+                    manager.Board?.CurrentRound ?? 0));
             }
 
             bodyText.text = PlayerInspectorMarkup.Render(sections);
