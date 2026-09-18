@@ -1520,15 +1520,14 @@ None of these were done in that session; they are the loose ends it exposed.
    over the score constants, particularly across tiered families.
 
 4. **Dead code found while tracing the draft path.**
-   `MycovariantGameBalance.MycelialBastionSynergyBonusAIScore` is declared and
-   never read — the Bastion `AIScore` lambdas return their flat base score, and
-   only `ReclamationRhizomorphsBonusAIScore` has a live synergy path. Decide
-   whether Bastion was meant to gain a synergy bonus or the constant should go.
+   Resolved 2026-09-18: history confirms
+   `MycelialBastionSynergyBonusAIScore` was introduced beside the implemented
+   one-way Reclamation Rhizomorphs bonus but was never consumed by a Bastion
+   score. The inert constant is removed without changing draft behavior.
    Resolved 2026-09-17: the unused public
    `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` helper was
    removed; live draft selection continues through
-   `SelectMycovariantFromChoices`. The Bastion score question remains open
-   because removing or applying that constant is a balance decision.
+   `SelectMycovariantFromChoices`.
 
 5. **`Player.AIType` is dead state.** All three construction sites pass
    `AITypeEnum.Random` and nothing varies it, so the field reads as a setting
