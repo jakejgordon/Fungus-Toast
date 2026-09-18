@@ -318,6 +318,12 @@ Fallback if older output files do not include per-player end-toxin values:
 
 For campaign-balance validation, `scripts/run_campaign_balance.py` is the preferred entry point rather than hand-assembling raw `dotnet run` commands.
 
+The harness defaults to **100 games per level**, matching the experiment
+contract's holdout stage and the repository's standard for a balance
+confirmation. Smaller samples remain useful for explicitly exploratory
+screening, but they must be requested with `--games` and must not support a
+final campaign tuning claim.
+
 Important reporting rule: the harness summary is still not the final source of truth. Use it to monitor the run, then read the exported artifacts before making a campaign tuning call.
 
 Important behavior: the harness now applies the campaign player's starting Adaptations automatically.

@@ -12,6 +12,7 @@ PROGRESSION = ROOT / "FungusToast.Unity/Assets/Configs/Campaign/CampaignProgress
 BOARD_PRESETS_DIR = ROOT / "FungusToast.Unity/Assets/Configs/Board Presets"
 SIM_PROJECT = ROOT / "FungusToast.Simulation/FungusToast.Simulation.csproj"
 PLAYER_PROXY = "TST_CampaignPlayer_SafeBaseline"
+DEFAULT_CONFIRMATION_GAMES = 100
 
 
 def parse_progression(path: Path) -> List[dict]:
@@ -259,6 +260,8 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
         "--",
         "--games",
         str(games),
+        "--evidence-stage",
+        "Holdout" if games == DEFAULT_CONFIRMATION_GAMES else "Exploratory",
         "--width",
         str(preset["boardWidth"]),
         "--height",
@@ -304,7 +307,15 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
 def main() -> int:
     parser = argparse.ArgumentParser(description="Run campaign-balance simulations using the safe player proxy against exact campaign level AI lineups.")
     parser.add_argument("--level", type=int, help="Run only a single campaign level index.")
-    parser.add_argument("--games", type=int, default=20)
+    parser.add_argument(
+        "--games",
+        type=int,
+        default=DEFAULT_CONFIRMATION_GAMES,
+        help=(
+            "Games per campaign level. Defaults to the 100-game confirmation/holdout "
+            "standard; pass a smaller value explicitly for exploratory screening."
+        ),
+    )
     parser.add_argument("--seed", type=int, default=20260327)
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()

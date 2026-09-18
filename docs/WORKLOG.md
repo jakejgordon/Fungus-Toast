@@ -1539,9 +1539,9 @@ None of these were done in that session; they are the loose ends it exposed.
    restores an `Aggressive` legacy value and verifies a safe normalized
    re-export. Core passed 706/706 tests, Simulation passed 282/282, both builds
    have zero warnings/errors, and the checked-in Unity Core DLL/PDB are
-   refreshed. Unity Editor compile validation remains manual.
+   refreshed. Unity Editor compile validation passed on 2026-09-18.
 
-6. **Player inspector diagnostics are partially complete.** The docked
+6. **Player inspector diagnostics completed 2026-09-18.** The docked
    `PlayerInspectorPanel` and active-surge tiles now exist. On 2026-09-18 its
    Development Testing block gained live mutation points, income, banking
    intent, and executable target-goal progress; the first incomplete goal is
@@ -1551,14 +1551,16 @@ None of these were done in that session; they are the loose ends it exposed.
    engine, avoiding a Unity-side rules copy. The panel already refreshes these
    values on its bounded content interval. Core tests pass 707/707, Simulation
    tests pass 282/282, and both projects build with zero warnings/errors. This
-   follow-up is code-complete and awaits Unity Editor compile/visual validation.
+   follow-up passed Unity Editor compile and visual validation.
 
-7. **Twenty games per level cannot resolve a small balance effect.** That is the
-   `run_campaign_balance.py` default and what the mycovariant confirmation ran
-   at; one game moves a level by five points, and the interval on a
-   before/after difference is far wider than any effect worth shipping. The
-   experiment contract caps a condition at 100 games. Agree a standard game
-   count for balance confirmations rather than deciding per run.
+7. **Balance-confirmation sample size resolved 2026-09-18.** Campaign balance
+   confirmations use 100 games per level, matching the experiment contract's
+   holdout stage and per-condition cap. `run_campaign_balance.py` now defaults
+   to 100. Smaller samples require an explicit `--games` override and remain
+   exploratory; they cannot support a final campaign tuning claim. An end-to-end
+   Campaign 0 harness run completed all 100 games with zero parity mismatches;
+   its resolved manifest records `holdout`, 100 requested games, and `complete`,
+   and the manifest checksum verifies.
 
 8. **Analytics virtual environment resolved 2026-09-17.** The documented
    `FungusToast.Analytics/.venv` now exists on the current machine and imports
@@ -1730,8 +1732,8 @@ independently shippable commit.
 2. **Player inspector.** "Active Surges (N)" icon section above Adaptations in
    `PlayerInspectorPanel`, each tile carrying a rounds-remaining badge; hover
    for the tooltip. The tile-rebuild signature must include rounds remaining so
-   a pinned panel keeps counting down. Done 2026-09-11; awaiting Unity Editor
-   visual check of the six procedural glyphs.
+   a pinned panel keeps counting down. Done 2026-09-11; Unity Editor visual
+   validation of the six procedural glyphs passed on 2026-09-18.
 3. **Left panel surge section.** "Active Mycelial Surges" for the human
    player in `UI_MoldProfileRoot`, directly under the Random Decay row and
    hidden when nothing is active. Done 2026-09-13 as an icon-tile grid (same
@@ -1739,7 +1741,8 @@ independently shippable commit.
    the rounds-remaining badge and the shared surge tooltip. Refreshes on
    `Player.MutationsChanged` (activation) and via a new
    `RefreshActiveSurges()` at round start, since the tick-down at round end
-   raises no mutation event. The inspector section was renamed to match.
+   raises no mutation event. The inspector section was renamed to match. Unity
+   Editor visual validation passed on 2026-09-18.
 4. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
    the name — the corners are taken by the tier glyph and the active-surge
    hourglass) and beside the title in `MutationInspectorPanel`. Done
@@ -1747,7 +1750,8 @@ independently shippable commit.
    slot instead of the body (idle surge shows the glyph there; an active surge
    swaps the hourglass for the glyph plus a rounds badge, so the card matches
    the inspector tile). `SurgePresentation` now reads
-   `Mutation.DescriptionSections.Summary` rather than re-parsing.
+   `Mutation.DescriptionSections.Summary` rather than re-parsing. Unity Editor
+   visual validation passed on 2026-09-18.
 
 ## Working Rules
 
