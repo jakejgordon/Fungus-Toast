@@ -1529,11 +1529,17 @@ None of these were done in that session; they are the loose ends it exposed.
    removed; live draft selection continues through
    `SelectMycovariantFromChoices`.
 
-5. **`Player.AIType` is dead state.** All three construction sites pass
-   `AITypeEnum.Random` and nothing varies it, so the field reads as a setting
-   that does not exist. Either wire it to something real or remove it and the
-   enum. It was dropped from the development-testing inspector block for exactly
-   this reason.
+5. **`Player.AIType` dead state resolved 2026-09-18.** The live property and
+   constructor parameter are removed; `MutationStrategy` remains the sole AI
+   behavior selector. Save compatibility is preserved by retaining the legacy
+   `AITypeEnum` and `PlayerRuntimeSnapshot.AIType` field with stable numeric
+   values. Restore ignores that historically inert value, while new snapshots
+   normalize it to `Random`, so old checkpoints remain readable without
+   advertising a runtime setting that does not exist. The compatibility test
+   restores an `Aggressive` legacy value and verifies a safe normalized
+   re-export. Core passed 706/706 tests, Simulation passed 282/282, both builds
+   have zero warnings/errors, and the checked-in Unity Core DLL/PDB are
+   refreshed. Unity Editor compile validation remains manual.
 
 6. **The player inspector was only built to step one.** The hover tooltip now
    renders shared sections from `PlayerInspectorContent`, but the docked

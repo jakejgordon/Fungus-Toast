@@ -315,8 +315,7 @@ namespace FungusToast.Simulation.GameSimulation
                 var player = new Player(
                     playerId: i,
                     playerName: $"AI {i + 1}",
-                    playerType: PlayerTypeEnum.AI,
-                    aiType: AITypeEnum.Random
+                    playerType: PlayerTypeEnum.AI
                 );
                 player.SetMutationStrategy(strategies[i]);
                 players.Add(player);

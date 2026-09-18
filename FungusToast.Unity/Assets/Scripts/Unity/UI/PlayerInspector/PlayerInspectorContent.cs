@@ -148,9 +148,6 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             var identity = new List<PlayerInspectorLine>
             {
-                // Player.AIType is deliberately omitted: every construction site passes
-                // AITypeEnum.Random, so the line would always read "Random" and imply a setting
-                // that does not exist. MutationStrategy is what actually drives AI behavior.
                 new PlayerInspectorLine("Player Type", player.PlayerType.ToString()),
                 new PlayerInspectorLine("Strategy", GetStrategyDisplayText(player)),
                 new PlayerInspectorLine("Score", player.Score.ToString()),

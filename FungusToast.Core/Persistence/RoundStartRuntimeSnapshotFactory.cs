@@ -144,7 +144,9 @@ public static class RoundStartRuntimeSnapshotFactory
             PlayerId = player.PlayerId,
             PlayerName = player.PlayerName,
             PlayerType = player.PlayerType,
-            AIType = player.AIType,
+            // Compatibility-only field retained for older Unity JSON snapshots. AIType never
+            // selected behavior; MutationStrategyName is the actual persisted AI identity.
+            AIType = AITypeEnum.Random,
             MutationPoints = player.MutationPoints,
             IsActive = player.IsActive,
             Score = player.Score,
@@ -249,7 +251,9 @@ public static class RoundStartRuntimeSnapshotFactory
         PlayerRuntimeSnapshot snapshot,
         Func<PlayerRuntimeSnapshot, IMutationSpendingStrategy?>? mutationStrategyResolver)
     {
-        var player = new Player(snapshot.PlayerId, snapshot.PlayerName, snapshot.PlayerType, snapshot.AIType)
+        // snapshot.AIType is intentionally ignored. It was never connected to behavior, but the
+        // serialized field remains on the DTO so older checkpoints still deserialize safely.
+        var player = new Player(snapshot.PlayerId, snapshot.PlayerName, snapshot.PlayerType)
         {
             MutationPoints = snapshot.MutationPoints,
             IsActive = snapshot.IsActive,

@@ -26,7 +26,6 @@ namespace FungusToast.Core.Players
         private PlayerTypeEnum playerType;
         public PlayerTypeEnum PlayerType { get => playerType; }
         public void SetPlayerType(PlayerTypeEnum type) => playerType = type;
-        public AITypeEnum AIType { get; }
         public int MutationPoints { get; set; }
 
         public Dictionary<int, PlayerMutation> PlayerMutations { get; } = new();
@@ -129,12 +128,11 @@ namespace FungusToast.Core.Players
 
         // -----------------------------------------------------------------------
 
-        public Player(int playerId, string playerName, PlayerTypeEnum playerType, AITypeEnum aiType = AITypeEnum.Random)
+        public Player(int playerId, string playerName, PlayerTypeEnum playerType)
         {
             PlayerId = playerId;
             PlayerName = playerName;
             this.playerType = playerType;
-            AIType = aiType;
         }
 
         /* ---------------- Mutation-point helpers ---------------- */

@@ -58,11 +58,29 @@ public class RoundStartRuntimeSnapshotFactoryTests
     }
 
     [Fact]
+    public void Restore_accepts_and_normalizes_legacy_ai_type_values()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        board.Players.Add(new Player(0, "Legacy AI", PlayerTypeEnum.AI));
+
+        var legacySnapshot = RoundStartRuntimeSnapshotFactory.Export(board);
+        Assert.Single(legacySnapshot.Players).AIType = AITypeEnum.Aggressive;
+
+        var (restoredBoard, _) = RoundStartRuntimeSnapshotFactory.Restore(legacySnapshot);
+        var restoredPlayer = Assert.Single(restoredBoard.Players);
+        Assert.Equal(PlayerTypeEnum.AI, restoredPlayer.PlayerType);
+        Assert.Equal("Legacy AI", restoredPlayer.PlayerName);
+
+        var normalizedSnapshot = RoundStartRuntimeSnapshotFactory.Export(restoredBoard);
+        Assert.Equal(AITypeEnum.Random, Assert.Single(normalizedSnapshot.Players).AIType);
+    }
+
+    [Fact]
     public void Export_and_restore_round_trips_representative_round_start_state()
     {
         var board = new GameBoard(width: 6, height: 6, playerCount: 2);
 
-        var human = new Player(playerId: 0, playerName: "Human", playerType: PlayerTypeEnum.Human, aiType: AITypeEnum.Random)
+        var human = new Player(playerId: 0, playerName: "Human", playerType: PlayerTypeEnum.Human)
         {
             MutationPoints = 7,
             IsActive = true,
@@ -72,7 +90,7 @@ public class RoundStartRuntimeSnapshotFactoryTests
         human.SetBaseMutationPoints(5);
 
         var strategy = new SnapshotTestMutationStrategy("snapshot-strategy");
-        var ai = new Player(playerId: 1, playerName: "AI", playerType: PlayerTypeEnum.AI, aiType: AITypeEnum.Random)
+        var ai = new Player(playerId: 1, playerName: "AI", playerType: PlayerTypeEnum.AI)
         {
             MutationPoints = 11,
             IsActive = true,
