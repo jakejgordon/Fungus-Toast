@@ -116,6 +116,9 @@ FungusToast.Unity/Assets/_Recovery/
 **/__Backupscenes/
 FungusToast.Simulation/simulation_output.txt
 FungusToast.Simulation/SimulationOutput/
+# Local simulation evidence/artifact staging. Canonical conclusions and
+# provenance belong in tracked docs; raw Parquet/log analysis stays local.
+/SimulationParquet/
 # Generated Unity bridge artifacts from Core post-build copy/touch step
 FungusToast.Unity/Assets/Scripts/Unity/ForceRecompile.cs
 _xxx
