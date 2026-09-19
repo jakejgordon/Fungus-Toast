@@ -272,8 +272,8 @@ namespace FungusToast.Core.Campaign
             int triggerRound = playerAdaptation.RuntimeValue;
             string pointLabel = triggerRound == 1 ? "point" : "points";
             return playerAdaptation.HasTriggered
-                ? $"This level's pulse triggered on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase."
-                : $"This level's pulse will trigger on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase. The trigger round and mutation points awarded are assigned at the start of each new campaign level.";
+                ? $"This stage's pulse triggered on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase."
+                : $"This stage's pulse will trigger on round {triggerRound}, granting {triggerRound} mutation {pointLabel} at the start of that Mutation Phase. The trigger round and mutation points awarded are assigned at the start of each new campaign stage.";
         }
 
         public static bool TryGetById(string id, out AdaptationDefinition adaptation)

@@ -2,6 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using FungusToast.Unity.Campaign;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
@@ -411,9 +412,10 @@ namespace FungusToast.Unity.UI
             resumeButton.onClick.AddListener(() => onResumeRequested?.Invoke());
             EnsureTooltip(resumeButton, "Close the pause menu and return to the current game.");
 
-            Button restartButton = CreateActionButton(primaryActionsRoot.transform, "Restart Level", width: PauseMenuPrimaryButtonWidth);
+            string runUnit = GetCurrentRunUnitName();
+            Button restartButton = CreateActionButton(primaryActionsRoot.transform, $"Restart {runUnit}", width: PauseMenuPrimaryButtonWidth);
             restartButton.onClick.AddListener(RequestRestartConfirmation);
-            EnsureTooltip(restartButton, "Restart the current level from its original seed after confirmation.");
+            EnsureTooltip(restartButton, $"Restart the current {runUnit.ToLowerInvariant()} from its original seed after confirmation.");
 
             Button mainMenuButton = CreateActionButton(primaryActionsRoot.transform, "Main Menu", gameUI != null ? gameUI.PauseMenuButtonIcon : null, PauseMenuPrimaryButtonWidth);
             mainMenuButton.onClick.AddListener(RequestMainMenuConfirmation);
@@ -520,8 +522,9 @@ namespace FungusToast.Unity.UI
             switch (pendingAction)
             {
                 case PendingAction.RestartLevel:
-                    subtitleLabel.text = "Restart this level?";
-                    confirmationLabel.text = "Restart the current level from its original seed and setup? Progress since the level began will be discarded.";
+                    string runUnit = GetCurrentRunUnitName().ToLowerInvariant();
+                    subtitleLabel.text = $"Restart this {runUnit}?";
+                    confirmationLabel.text = $"Restart the current {runUnit} from its original seed and setup? Progress since the {runUnit} began will be discarded.";
                     break;
                 case PendingAction.ReturnToMainMenu:
                     subtitleLabel.text = "Leave the current run?";
@@ -675,11 +678,18 @@ namespace FungusToast.Unity.UI
         {
             return pendingAction switch
             {
-                PendingAction.RestartLevel => "Confirm restarting this level from its original seed.",
+                PendingAction.RestartLevel => $"Confirm restarting this {GetCurrentRunUnitName().ToLowerInvariant()} from its original seed.",
                 PendingAction.ReturnToMainMenu => "Confirm returning to the main menu and saving this run.",
                 PendingAction.ExitGame => "Confirm exiting the game and saving this run.",
                 _ => "Confirm the current pause menu action."
             };
+        }
+
+        private static string GetCurrentRunUnitName()
+        {
+            return GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign
+                ? "Stage"
+                : "Game";
         }
 
         private static void SetButtonLabel(Button button, string labelText)

@@ -51,4 +51,17 @@ public class MoldinessProgressionTests
         Assert.Equal(38, MoldinessProgression.GetThresholdForTier(10));
         Assert.Equal(42, MoldinessProgression.GetThresholdForTier(11));
     }
+
+    [Theory]
+    [InlineData(0, 1)]
+    [InlineData(1, 2)]
+    [InlineData(3, 4)]
+    public void Reward_unlock_level_maps_to_the_level_reached_after_crossing_the_threshold(
+        int unlockLevel,
+        int expectedMoldinessLevelDisplay)
+    {
+        Assert.Equal(
+            expectedMoldinessLevelDisplay,
+            MoldinessProgression.GetMoldinessLevelDisplayForUnlockLevel(unlockLevel));
+    }
 }

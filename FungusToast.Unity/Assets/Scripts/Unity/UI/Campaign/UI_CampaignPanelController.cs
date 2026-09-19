@@ -24,17 +24,18 @@ namespace FungusToast.Unity.UI.Campaign
     /// </summary>
     public class UI_CampaignPanelController : MonoBehaviour
     {
-        private const string MoldinessSummaryTooltipText = "Earn moldiness for completing campaign levels. Higher levels award more moldiness. Whenever a moldiness threshold is reached, you can pick between permanent rewards to enhance future campaign runs.";
+        private const string MoldinessSummaryTooltipText = "Earn moldiness for completing campaign stages. Later stages award more moldiness. Whenever a moldiness threshold is reached, you can pick between permanent rewards to enhance future campaign runs.";
         private const float PrimaryColumnWidth = 500f;
         private const float DevelopmentRailWidth = 400f;
         private const float LayoutShellWidth = 500f;
         private const float DevelopmentRailOffsetX = 440f;
         private const float DevelopmentRailTopOffsetY = -18f;
-        private const float MoldinessSummaryPanelMinWidth = 440f;
-        private const float MoldinessSummaryPanelPreferredWidth = 460f;
-        private const float MoldinessSummaryTextWidth = 400f;
-        private const float MoldinessProgressBarWidth = 400f;
-        private const float MoldinessUnlockedRewardsGridWidth = 400f;
+        private const float MoldinessSummaryPanelMinWidth = 500f;
+        private const float MoldinessSummaryPanelPreferredWidth = 500f;
+        private const float MoldinessSummaryTextWidth = 440f;
+        private const float MoldinessProgressBarWidth = 440f;
+        private const float MoldinessUnlockedRewardsGridWidth = 440f;
+        private const float CampaignHubActionWidth = 460f;
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
         private const float ActionButtonHorizontalPadding = 12f;
@@ -794,7 +795,11 @@ namespace FungusToast.Unity.UI.Campaign
             moldinessSummaryLifetimeLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryNextRewardLabel?.transform.SetSiblingIndex(siblingIndex++);
             moldinessSummaryPendingLabel?.transform.SetSiblingIndex(siblingIndex++);
-            moldinessUnlockedRewardsStrip?.RootTransform?.SetSiblingIndex(siblingIndex);
+            moldinessUnlockedRewardsStrip?.RootTransform?.SetSiblingIndex(siblingIndex++);
+            if (actionStack != null && actionStack.transform.parent == moldinessSummarySectionRoot)
+            {
+                actionStack.transform.SetSiblingIndex(siblingIndex);
+            }
         }
 
         private void RefreshMoldinessUnlockedRewardsGrid(List<MoldinessUnlockDefinition> unlockedRewards)
@@ -1238,16 +1243,16 @@ namespace FungusToast.Unity.UI.Campaign
             bool pendingSporePreservation = campaignController.IsAwaitingDefeatCarryoverSelection;
             bool pendingMoldinessReward = campaignController.HasPendingMoldinessUnlockChoice;
             int nextLevelDisplay = GetNextCampaignLevelDisplay(campaignController);
-            string resumableLevelLabel = BuildResumableLevelLabel(campaignController, nextLevelDisplay);
+            string resumableStageLabel = BuildResumableStageLabel(campaignController, nextLevelDisplay);
             if (resumeButton != null)
             {
                 SetButtonText(
                     resumeButton,
                     pendingSporePreservation
-                        ? $"Resume Campaign (Pending Spore Preservation, Level {nextLevelDisplay})"
+                        ? $"Resume Campaign — Stage {nextLevelDisplay} (Spore Preservation Pending)"
                         : pendingMoldinessReward
-                            ? $"Resume Campaign (Pending Reward, Level {nextLevelDisplay})"
-                            : $"Resume Campaign ({resumableLevelLabel})");
+                            ? $"Resume Campaign — Stage {nextLevelDisplay} (Reward Pending)"
+                            : $"Resume Campaign — {resumableStageLabel}");
             }
         }
 
@@ -1265,25 +1270,27 @@ namespace FungusToast.Unity.UI.Campaign
                 return "All catalog reward tiers unlocked.";
             }
 
-            int nextLevel = nextRewards[0].RequiredUnlockLevel;
+            int nextUnlockLevel = nextRewards[0].RequiredUnlockLevel;
             var rewardsAtLevel = nextRewards
-                .Where(definition => definition.RequiredUnlockLevel == nextLevel)
+                .Where(definition => definition.RequiredUnlockLevel == nextUnlockLevel)
                 .ToList();
             string additionalRewards = rewardsAtLevel.Count > 1
                 ? $" + {rewardsAtLevel.Count - 1} more"
                 : string.Empty;
-            return $"Next reward tier: Level {nextLevel} adds {rewardsAtLevel[0].DisplayName}{additionalRewards}.";
+            int moldinessLevelDisplay = FungusToast.Unity.Campaign.MoldinessProgression
+                .GetMoldinessLevelDisplayForUnlockLevel(nextUnlockLevel);
+            return $"Reward at Moldiness Level {moldinessLevelDisplay}: {rewardsAtLevel[0].DisplayName}{additionalRewards}.";
         }
 
-        private static string BuildResumableLevelLabel(CampaignController campaignController, int nextLevelDisplay)
+        private static string BuildResumableStageLabel(CampaignController campaignController, int nextLevelDisplay)
         {
             if (campaignController?.State?.hasInLevelGameplayCheckpoint == true
                 && campaignController.State.inLevelRuntimeSnapshot != null)
             {
-                return $"Level {nextLevelDisplay}, Round {campaignController.State.inLevelRuntimeSnapshot.CurrentRound}";
+                return $"Stage {nextLevelDisplay}, Round {campaignController.State.inLevelRuntimeSnapshot.CurrentRound}";
             }
 
-            return $"Level {nextLevelDisplay}";
+            return $"Stage {nextLevelDisplay}";
         }
 
         private static int GetNextCampaignLevelDisplay(CampaignController campaignController)
@@ -1691,8 +1698,8 @@ namespace FungusToast.Unity.UI.Campaign
             actionFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var actionElement = actionStack.GetComponent<LayoutElement>();
-            actionElement.minWidth = 460f;
-            actionElement.preferredWidth = 500f;
+            actionElement.minWidth = CampaignHubActionWidth;
+            actionElement.preferredWidth = CampaignHubActionWidth;
 
             ReparentActionButton(resumeButton, 0);
             ReparentActionButton(newButton, 1);
@@ -1710,7 +1717,7 @@ namespace FungusToast.Unity.UI.Campaign
             button.transform.SetSiblingIndex(index);
             EnsureButtonLayout(
                 button,
-                button == backButton ? UIStyleTokens.Button.DesktopCompactMenuActionWidth : UIStyleTokens.Button.DesktopPrimaryMenuActionWidth);
+                button == backButton ? UIStyleTokens.Button.DesktopCompactMenuActionWidth : CampaignHubActionWidth);
         }
 
         private static void EnsureButtonLayout(Button button, float width)
@@ -1770,6 +1777,7 @@ namespace FungusToast.Unity.UI.Campaign
             bool hasCampaignSave = GameManager.Instance != null && GameManager.Instance.HasCampaignSave();
             bool hasResumableCampaignSave = GameManager.Instance != null && GameManager.Instance.HasResumableCampaignSave();
             ConfigureCampaignContentWidth(selectingMold);
+            UpdateActionStackContainer(!selectingMold && hasCampaignSave);
             ApplyActionButtonSemantics();
             if (moldSelectionSectionRoot != null)
             {
@@ -1815,6 +1823,37 @@ namespace FungusToast.Unity.UI.Campaign
             if (selectingMold)
             {
                 RefreshMoldSelectionUi();
+            }
+        }
+
+        private void UpdateActionStackContainer(bool includeInMoldinessSummaryCard)
+        {
+            if (actionStack == null || mainStackRoot == null || moldinessSummarySectionRoot == null)
+            {
+                return;
+            }
+
+            Transform targetParent = includeInMoldinessSummaryCard
+                ? moldinessSummarySectionRoot
+                : mainStackRoot;
+            if (actionStack.transform.parent != targetParent)
+            {
+                actionStack.transform.SetParent(targetParent, false);
+            }
+
+            actionStack.transform.SetAsLastSibling();
+            var layout = actionStack.GetComponent<VerticalLayoutGroup>();
+            if (layout != null)
+            {
+                layout.padding = includeInMoldinessSummaryCard
+                    ? new RectOffset(0, 0, 8, 0)
+                    : new RectOffset(0, 0, 0, 0);
+                layout.spacing = 12f;
+            }
+
+            if (includeInMoldinessSummaryCard)
+            {
+                ReorderMoldinessSummaryContent();
             }
         }
 
@@ -1909,7 +1948,7 @@ namespace FungusToast.Unity.UI.Campaign
             if (campaignStartDifficultyStatusLabel != null)
             {
                 campaignStartDifficultyStatusLabel.text =
-                    $"Selected start: {selectedOption.Label} (Level {selectedOption.StartLevelDisplay}). {unlockStatus}";
+                    $"Selected start: {selectedOption.Label} (Stage {selectedOption.StartLevelDisplay}). {unlockStatus}";
             }
 
             EnsureCampaignStartDifficultyButtonCount(options.Count);
@@ -1970,7 +2009,7 @@ namespace FungusToast.Unity.UI.Campaign
             string drafting = usesRandomDrafting ? "Random AI drafts" : "Smarter AI drafts";
             string start = option.Difficulty == CampaignDifficulty.Training
                 ? "Full campaign"
-                : $"Starts at Level {option.StartLevelDisplay}";
+                : $"Starts at Stage {option.StartLevelDisplay}";
             string selectedMarker = isSelected ? "SELECTED • " : string.Empty;
             return $"{selectedMarker}{option.Label}\n<size=68%>{start}\n{drafting}</size>";
         }
@@ -1988,14 +2027,14 @@ namespace FungusToast.Unity.UI.Campaign
                 : "Locked until you clear the full campaign on your current highest unlocked start.";
 
             string startSummary = isTraining
-                ? $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards."
-                : $"Starts a new campaign at <b>Level {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards for that later point in the campaign.";
+                ? $"Starts a new campaign at <b>Stage {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards."
+                : $"Starts a new campaign at <b>Stage {option.StartLevelDisplay}</b>, using the normal authored board, opponents, and rewards for that later point in the campaign.";
             string mycovariantDraftingSummary = usesRandomMycovariantDrafting
                 ? "AI players draft Mycovariants randomly (instead of intelligently)."
                 : "AI players draft Mycovariants more intelligently.";
             string skippedRewardsSummary = isTraining
                 ? string.Empty
-                : "You also do <b>not</b> retroactively earn the skipped levels' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n";
+                : "You also do <b>not</b> retroactively earn the skipped stages' adaptation drafts or other victory rewards, so the deeper start is still tougher than a full run from Training.\n\n";
 
             return $"<b>{option.Label}</b>\n\n"
                 + $"{startSummary}\n\n"

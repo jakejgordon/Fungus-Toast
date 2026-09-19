@@ -134,6 +134,11 @@ namespace FungusToast.Core.Campaign
             return ThresholdsByTier[ThresholdsByTier.Length - 1] + (overflowTierIndex * 4);
         }
 
+        public static int GetMoldinessLevelDisplayForUnlockLevel(int unlockLevel)
+        {
+            return Math.Max(0, unlockLevel) + 1;
+        }
+
         public static MoldinessProgressSnapshot GetSnapshot(MoldinessProgressionState state)
         {
             state ??= CreateDefaultState();

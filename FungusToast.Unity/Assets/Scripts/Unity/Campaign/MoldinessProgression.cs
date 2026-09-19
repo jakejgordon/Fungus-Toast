@@ -96,6 +96,11 @@ namespace FungusToast.Unity.Campaign
             return CoreCampaign.MoldinessProgression.GetThresholdForTier(tierIndex);
         }
 
+        public static int GetMoldinessLevelDisplayForUnlockLevel(int unlockLevel)
+        {
+            return CoreCampaign.MoldinessProgression.GetMoldinessLevelDisplayForUnlockLevel(unlockLevel);
+        }
+
         public static MoldinessProgressSnapshot GetSnapshot(MoldinessProgressionState state)
         {
             var snapshot = CoreCampaign.MoldinessProgression.GetSnapshot(ToCoreState(state));

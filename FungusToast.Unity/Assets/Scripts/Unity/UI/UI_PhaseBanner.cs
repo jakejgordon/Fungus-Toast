@@ -192,7 +192,7 @@ namespace FungusToast.Unity.UI
 
         public void ShowCampaignLevelIntro(int levelDisplay, string levelTitle, float holdDuration = CampaignIntroHoldDuration)
         {
-            ShowStyledIntro($"Level {Mathf.Max(1, levelDisplay)}", levelTitle, holdDuration);
+            ShowStyledIntro($"Stage {Mathf.Max(1, levelDisplay)}", levelTitle, holdDuration);
         }
 
         public void ShowGameStartSurfaceIntro(string surfaceName)

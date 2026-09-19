@@ -91,7 +91,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private const string CampaignAdaptationRedrawReadyLabel = "Use Spore Sifting";
         private const string CampaignAdaptationRedrawConfirmLabel = "Confirm Redraw";
         private const string CampaignAdaptationRedrawUsedLabel = "Spore Sifting Used";
-        private const string CampaignAdaptationRedrawTooltipText = "You unlocked the Spore Sifting moldiness reward, allowing you to redraw all Mycovariants to present new draft options once per level.";
+        private const string CampaignAdaptationRedrawTooltipText = "You unlocked the Spore Sifting moldiness reward, allowing you to redraw all Mycovariants to present new draft options once per campaign stage.";
         private const string DraftFeedTitle = "Draft Feed";
         private const string CampaignAdaptationSummaryTitle = "Current Adaptations";
 
@@ -1829,13 +1829,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             if (!redrawAvailable)
             {
                 buttonLabel = CampaignAdaptationRedrawUsedLabel;
-                statusText = "Spore Sifting has already been used for this campaign level.";
+                statusText = "Spore Sifting has already been used for this campaign stage.";
                 statusColor = UIStyleTokens.Text.Muted;
             }
             else if (confirmArmed)
             {
                 buttonLabel = CampaignAdaptationRedrawConfirmLabel;
-                statusText = "Click again to redraw all 3 Mycovariants. This spends Spore Sifting for this level.";
+                statusText = "Click again to redraw all 3 Mycovariants. This spends Spore Sifting for this stage.";
                 statusColor = UIStyleTokens.State.Warning;
             }
             else
@@ -1998,7 +1998,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 nextLevelDisplay = pendingSnapshot.clearedLevelDisplay + 1;
             }
 
-            return $"Level {nextLevelDisplay} Victory!";
+            return $"Stage {nextLevelDisplay} Victory!";
         }
 
         private void EnsureDraftMessageUI()

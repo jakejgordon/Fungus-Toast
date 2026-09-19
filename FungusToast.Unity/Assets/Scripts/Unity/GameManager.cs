@@ -2187,7 +2187,7 @@ namespace FungusToast.Unity
                     return;
                 }
 
-                gameUIManager.PhaseBanner.Show("Campaign Level", 2f);
+                gameUIManager.PhaseBanner.Show("Campaign Stage", 2f);
                 return;
             }
 

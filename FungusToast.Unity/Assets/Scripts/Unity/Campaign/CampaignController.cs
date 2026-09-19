@@ -126,8 +126,8 @@ namespace FungusToast.Unity.Campaign
             int levelDisplay = GetLevelDisplay(levelIndex);
             string levelTitle = GetLevelTitle(levelIndex);
             return string.IsNullOrWhiteSpace(levelTitle)
-                ? $"Level {levelDisplay}"
-                : $"Level {levelDisplay}: {levelTitle}";
+                ? $"Stage {levelDisplay}"
+                : $"Stage {levelDisplay}: {levelTitle}";
         }
 
         public int GetHighestUnlockedCampaignStartDifficultyIndex()

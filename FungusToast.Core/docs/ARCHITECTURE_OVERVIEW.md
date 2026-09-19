@@ -44,6 +44,20 @@ The Core project exists so the same gameplay rules can drive both simulation and
 
 Fungus Toast runs as a round-based game with a stable phase sequence.
 
+### Player-Facing Game Loop
+
+The objective of a game is to finish with more living cells than every opponent.
+
+1. Every colony begins from a starting spore and receives mutation points during the Mutation Phase.
+2. The player spends those points on immediate mutation upgrades or banks the unspent balance, ending their Mutation Phase and carrying the balance into the next round.
+3. During the Growth Phase, the game resolves multiple Growth Cycles in which colonies attempt to spread, reclaim dead cells, infest enemy cells, and overgrow toxins according to their current build.
+4. During the Decay Phase, probabilistic deaths and decay-triggered effects resolve.
+5. When entering a configured Mycovariant draft round, the draft occurs between rounds before that round's Mutation Phase. Each drafted Mycovariant is either a one-time effect or a passive for the rest of that game.
+6. At the end of each round, the game checks board occupancy. Reaching the board-size threshold starts a three-round endgame countdown; the countdown does not wait for a later scheduled draft. The current thresholds are 80% on small boards, 85% on medium boards, and 90% on large boards.
+7. When the countdown expires, players are ranked by living-cell count, then by dead-cell count as the current secondary ordering.
+
+The normal scheduled Mycovariant rounds are currently 15, 20, 25, and 30. Small or fast-filling boards can therefore end before one or more scheduled drafts; UI that previews a future draft must account for that possibility.
+
 The main Core entry points are in `FungusToast.Core.Phases.TurnEngine`:
 
 - `AssignMutationPoints(...)`
@@ -58,16 +72,16 @@ The main Core entry points are in `FungusToast.Core.Phases.TurnEngine`:
    `TurnEngine.RunGrowthPhase(...)` fires `GameBoard.OnPreGrowthPhase()`, executes `GrowthPhaseProcessor` cycles, then completes the phase through `GameBoard.OnPostGrowthPhase()` and `GameBoard.OnPostGrowthPhaseCompleted()`.
 3. **Decay Phase**
    `TurnEngine.RunDecayPhase(...)` delegates to `DeathEngine.ExecuteDeathCycle(...)` and then fires `GameBoard.OnPostDecayPhase()` for downstream consumers such as UI/log aggregation.
-4. **Optional Mycovariant Draft Phase**
-   On configured rounds, players draft mycovariants before normal round flow resumes.
-5. **Round End**
+4. **Round End**
    Endgame conditions are checked before the next round begins.
+5. **Optional Mycovariant Draft Phase**
+   After the round counter advances into a configured draft round, players draft Mycovariants before that round's Mutation Phase begins. Hypervariation drafts can also be queued into this between-round transition.
 
 ### Phase Notes
 
 - Growth uses multiple cycles per round, configured through `GameBalance.TotalGrowthCycles`.
 - Each growth cycle is executed by `GrowthEngine.ExecuteGrowthCycle(...)`, which fires `GameBoard.OnPreGrowthCycle()`, attempts player growth in living-cell order, increments the growth-cycle counter, ages living and toxin cells, and expires toxin tiles.
-- Draft timing and size are controlled through mycovariant balance/configuration values.
+- Draft timing and size are controlled through Mycovariant balance/configuration values.
 - Endgame evaluation should consume finalized round state rather than partially resolved phase state.
 
 ## Runtime Orchestration Path

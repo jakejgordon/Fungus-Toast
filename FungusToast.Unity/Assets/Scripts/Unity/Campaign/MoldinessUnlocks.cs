@@ -271,7 +271,7 @@ namespace FungusToast.Unity.Campaign
                     new MoldinessUnlockDefinition(
                         id: SporeSiftingRewardId,
                         displayName: "Spore Sifting",
-                        description: "Once per campaign level, redraw a Mycovariant draft offer before choosing a card.",
+                        description: "Once per campaign stage, redraw a Mycovariant draft offer before choosing a card.",
                         type: MoldinessUnlockType.UnlockCampaignDraftRedraw,
                         requiredUnlockLevel: 5,
                         categoryLabel: "Permanent Campaign Upgrade",

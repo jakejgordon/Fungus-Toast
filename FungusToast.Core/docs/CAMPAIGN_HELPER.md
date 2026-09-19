@@ -1,6 +1,6 @@
 # Campaign Helper
 
-See also: [README.md](README.md) for the full documentation hierarchy, [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow, and [SAVE_COMPATIBILITY.md](SAVE_COMPATIBILITY.md) for the canonical save/resume compatibility and breaking-change guidance.
+See also: [README.md](README.md) for the full documentation hierarchy, [ARCHITECTURE_OVERVIEW.md](ARCHITECTURE_OVERVIEW.md#round-flow-and-phase-structure) for the within-game round loop and win condition, [ADAPTATION_HELPER.md](ADAPTATION_HELPER.md) for Adaptation-specific workflow, [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md) for canonical player-facing terms, and [SAVE_COMPATIBILITY.md](SAVE_COMPATIBILITY.md) for the canonical save/resume compatibility and breaking-change guidance.
 
 This guide documents the current Campaign mode vision and where to configure progression, AI lineup/pools, campaign tiers, and adaptation rewards.
 
@@ -8,11 +8,31 @@ This guide documents the current Campaign mode vision and where to configure pro
 
 Campaign is a roguelike-style run:
 - Player starts on a small board versus a limited AI lineup.
-- Losing ends the run (run state resets).
+- Losing ends the active run; eligible Adaptations may first be preserved for the next run when the permanent carry-over capacity is greater than zero.
 - Winning a non-final level grants an Adaptation draft (3 choices, pick 1, no duplicates across the run).
 - After selecting an Adaptation, player can Continue Campaign or return to Main Menu.
 - Final level win shows completion messaging.
 - Victorious full campaign clears now also unlock deeper campaign start difficulties for future runs.
+
+## Player-Facing Campaign Flow
+
+This section is the canonical overview of the journey a player takes through Campaign mode. Technical subsystems may have their own helper docs, but they should not contradict this sequence.
+
+1. **Enter the campaign hub.** The player can resume an active run or begin the new-run setup flow. Moldiness is persistent meta-progression; the campaign level is the current stage inside one run. They are separate progress systems.
+2. **Configure a new run.** The player chooses an unlocked campaign start difficulty and a mold. The start difficulty selects the opening campaign level; the mold grants its mapped starting Adaptation. Any Adaptations preserved after the previous defeat are also restored to the new run.
+3. **Play a campaign level.** The selected campaign level supplies the board preset, opponent lineup or pool, and nutrient-patch rules. The level then follows the normal game loop documented in `ARCHITECTURE_OVERVIEW.md`: Mutation Phase, Growth Phase, Decay Phase, optional between-round Mycovariant drafts, occupancy countdown, and final living-cell ranking.
+4. **Resolve a non-final victory.** Clearing a level awards persistent Moldiness based on campaign depth. Any crossed Moldiness thresholds are resolved before the normal post-victory Adaptation reward. The player then drafts one eligible Adaptation, which remains active for the rest of the current run, and advances to the next campaign level.
+5. **Resolve a defeat.** A defeat does not award level-clear Moldiness. The active run ends and its level progress is cleared, while Moldiness progress and permanent unlocks remain. If permanent failed-run carry-over capacity is available and the run earned eligible non-starting Adaptations, the player must choose the allowed number to preserve for the next new run; otherwise the reset completes immediately.
+6. **Resolve a final victory.** Clearing the final level completes the run, awards its Moldiness, and unlocks the next authored campaign start difficulty when one remains.
+7. **Resume safely.** Save state can resume an in-progress level, a pending Moldiness reward, a pending post-victory Adaptation selection, or a pending defeat carry-over selection. These pending choices must resolve before the campaign advances or resets.
+
+### Progression terms that must remain distinct
+
+- **Campaign level:** the numbered stage currently being played inside one run.
+- **Campaign start difficulty:** a persistent option that determines which authored campaign level a new run starts on (`Training`, `Easy`, `Medium`, `Hard`, `Elite`, or `Boss`).
+- **Moldiness progress / Moldiness unlock level:** persistent meta-progression earned from level clears and used to offer permanent rewards.
+- **Adaptation:** a campaign reward or starting trait that persists across levels in the current run; selected eligible Adaptations can persist into one subsequent run only through defeat carry-over.
+- **Mycovariant:** a one-time or game-long ability drafted during an individual game; it does not persist to later campaign levels.
 
 ## Current Data Model
 

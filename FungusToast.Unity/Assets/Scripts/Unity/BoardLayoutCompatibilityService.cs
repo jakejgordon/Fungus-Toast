@@ -708,7 +708,7 @@ namespace FungusToast.Unity
 
             if (invalidatedCampaignCheckpoint)
             {
-                return "A recent update changed board layout data. To avoid a crash, Fungus Toast cleared your in-progress campaign checkpoint and will restart that level from a safe state. Campaign progression and permanent unlocks were kept.";
+                return "A recent update changed board layout data. To avoid a crash, Fungus Toast cleared your in-progress campaign checkpoint and will restart that stage from a safe state. Campaign progression and permanent unlocks were kept.";
             }
 
             return "A recent update changed board layout data. To avoid a crash, Fungus Toast cleared your saved hotseat game before resuming.";
@@ -718,7 +718,7 @@ namespace FungusToast.Unity
         {
             if (string.Equals(saveKind, "campaign", StringComparison.OrdinalIgnoreCase))
             {
-                return $"Fungus Toast detected that your in-progress campaign checkpoint could not be resumed safely and cleared that checkpoint to avoid a crash. The current level will restart from the beginning. Details: {failureReason}";
+                return $"Fungus Toast detected that your in-progress campaign checkpoint could not be resumed safely and cleared that checkpoint to avoid a crash. The current stage will restart from the beginning. Details: {failureReason}";
             }
 
             return $"Fungus Toast detected that your saved hotseat game could not be resumed safely and cleared that save to avoid a crash. Details: {failureReason}";

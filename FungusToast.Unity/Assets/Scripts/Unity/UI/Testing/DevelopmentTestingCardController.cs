@@ -283,7 +283,7 @@ namespace FungusToast.Unity.UI.Testing
                     $"{options.ControlPrefix}CampaignLevelRow",
                     $"{options.ControlPrefix}CampaignLevelLabel",
                     $"{options.ControlPrefix}CampaignLevelDropdown",
-                    "Campaign Level",
+                    "Campaign Stage",
                     out campaignLevelDropdown);
                 ConfigureCampaignLevelDropdown();
             }

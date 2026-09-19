@@ -10973,7 +10973,7 @@ MonoBehaviour:
   adaptationSectionHostRoot: {fileID: 0}
   adaptationHeaderLabel: Adaptations
   adaptationHeaderTooltip: Adaptations are permanent campaign traits your mold develops
-    by winning campaign levels.
+    by winning campaign stages.
   mycovariantSectionRoot: {fileID: 0}
   mycovariantHeaderText: {fileID: 0}
   mycovariantIconGridRoot: {fileID: 0}
