@@ -14,7 +14,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
     /// pins it. This replaces the old <c>TooltipTrigger</c> on the icon rather than sitting beside
     /// one, so there is exactly one surface per icon and nothing to fight over.
     /// </summary>
-    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ICursorHandSurface
     {
         private const float FallbackHoverDelaySeconds = 0.35f;
 
@@ -24,6 +24,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private bool isHovering;
         private float previewDueTime;
         private bool previewShown;
+
+        // Pinning is the icon's primary (and only) click action, so the hand shows whenever
+        // there is a player to inspect.
+        public bool ShowsHandCursor => player != null;
 
         public void Initialize(Player targetPlayer)
         {

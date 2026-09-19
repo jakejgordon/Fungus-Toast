@@ -16,9 +16,10 @@ namespace FungusToast.Unity.UI
     /// <summary>
     /// Owns the hardware cursor for the whole game. Nothing is wired per widget: every
     /// frame the pointer is raycast through the EventSystem and the hand is shown when
-    /// the top hit (or its nearest ancestor) is an interactable <see cref="Selectable"/>,
-    /// so a mutation card that toggles its button off for locked/unaffordable/maxed
-    /// states loses the hand for free. Board tile-selection modes push
+    /// the top hit (or its nearest ancestor) is an interactable <see cref="Selectable"/>
+    /// or an <see cref="ICursorHandSurface"/> that says so, so a mutation card that
+    /// toggles its button off for locked/unaffordable/maxed states loses the hand for
+    /// free. Board tile-selection modes push
     /// <see cref="CursorKind.Target"/> through <see cref="Push"/>/<see cref="Pop"/>; the
     /// reticle replaces the arrow for as long as the mode is open, while a live button
     /// under the pointer still shows the hand because that click is a button press.
@@ -183,7 +184,13 @@ namespace FungusToast.Unity.UI
             }
 
             Selectable selectable = top.GetComponentInParent<Selectable>();
-            return selectable != null && selectable.IsInteractable();
+            if (selectable != null)
+            {
+                return selectable.IsInteractable();
+            }
+
+            ICursorHandSurface surface = top.GetComponentInParent<ICursorHandSurface>();
+            return surface != null && surface.ShowsHandCursor;
         }
 
         private void Apply(CursorKind kind)
