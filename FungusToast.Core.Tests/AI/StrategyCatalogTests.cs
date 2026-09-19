@@ -582,6 +582,77 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Campaign_player_facing_mycovariant_authoring_debt_does_not_expand()
+    {
+        _ = AIRoster.CampaignStrategies.Count;
+
+        // This frozen legacy set is migration debt, not an approved authoring pattern. Remove a
+        // name when its specific ordered plan is supported by matched simulation evidence. Never
+        // add a new name here merely to make the test pass: new Campaign AIs must start curated.
+        var knownLegacyDebt = new[]
+        {
+            "AI12",
+            "AI13",
+            "AI4",
+            "AI5",
+            "AI6",
+            "CMP_AnabolicBeaconRhizolith_Elite",
+            "CMP_Attrition_ToxicTurtle_Training_Offset1",
+            "CMP_Bloom_AnabolicRegression_Medium",
+            "CMP_Bloom_BeaconRegression_Medium",
+            "CMP_Bloom_CreepingNecro_Medium",
+            "CMP_Bloom_CreepingRegression_Elite",
+            "CMP_Bloom_FortifyMimic_Medium",
+            "CMP_Bloom_NecrotoxinGauntlet_Elite",
+            "CMP_Bloom_Thanatophyte_Elite",
+            "CMP_Control_AnabolicFirst_Hard",
+            "CMP_Control_AnabolicRebirth_Medium",
+            "CMP_Control_RebirthFurnace_Medium",
+            "CMP_Defense_IronShell_Elite",
+            "CMP_Defense_ReclaimShell_Easy",
+            "CMP_Defense_ResilientShell_Easy",
+            "CMP_Economy_Economancer_Elite",
+            "CMP_Economy_HoardsporeRegent_Elite",
+            "CMP_Economy_KillReclaim_Medium",
+            "CMP_Economy_LateSpike_Hard",
+            "CMP_Economy_TempoReclaim_Medium",
+            "CMP_Growth_Pressure_Medium",
+            "CMP_Growth_PutridTendrils_Medium",
+            "CMP_Growth_WildfireBloom_Medium",
+            "CMP_Mobility_Overextender_Training_Offset1",
+            "CMP_Reclaim_InfiltrationSurge_Easy",
+            "CMP_Reclaim_Scavenger_Easy",
+            "CMP_Surge_BeaconSprinter_Medium",
+            "CMP_Surge_BeaconTempo_Medium",
+            "CMP_Surge_GrowthTempo_Medium",
+            "CMP_Surge_Pulsar_Easy",
+            "CMP_TierCap_GrowthResilience_Easy",
+            "TST_AI10_BeaconRegression",
+            "TST_AI10_CreepingRegression",
+            "TST_Campaign7_KillReclaim_Offset1",
+            "TST_Campaign7_KillReclaim_Offset2",
+            "TST_Campaign7_KillReclaim_Offset3",
+            "TST_Campaign7_KillReclaim_Offset8",
+            "TST_Training_ResilientMycelium_Offset1"
+        };
+
+        var debt = StrategyRegistry.GetDefinitions(StrategySetEnum.Campaign)
+            .Where(definition => definition.Metadata.Status != StrategyStatus.Testing)
+            .Select(definition => definition.Strategy)
+            .OfType<ParameterizedSpendingStrategy>()
+            .Where(strategy =>
+            {
+                var preferences = strategy.GetMycovariantPreferences();
+                return preferences.Count == 0 || preferences.Any(preference => preference.IsCategoryDerived);
+            })
+            .Select(strategy => strategy.StrategyName)
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Equal(knownLegacyDebt, debt);
+    }
+
+    [Fact]
     public void Campaign_progression_board_presets_only_use_registered_campaign_strategies()
     {
         var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));

@@ -267,21 +267,41 @@ Keep the profile representation derived from executable strategy configuration
 where possible. The coverage report is a maintenance aid and must not create a
 second, independently maintained ordered build list in documentation.
 
+### Required up-front profile decision
+
+Before implementing a new AI, write its four profile fields: **Name**,
+**Fantasy**, **Ordered Mutation Plan**, and **Ordered Mycovariant Preferences**.
+Player-facing and Campaign strategies must name specific Mycovariants in draft
+order. A category-derived set is useful for a broad Testing control, but it is
+not a finished player-facing preference plan and must not be promoted as one.
+
+Before implementing a new Mutation or Mycovariant, record its capability tags,
+important interactions, exclusions, and the existing non-Testing profiles that
+appear to match. Give every match one of the dispositions above. "Add for
+evaluation" means a matched Testing candidate or patch plus simulation
+evidence; it does not authorize changing the live Campaign or Proven strategy.
+This decision is part of initial scoping, not a cleanup step after the content
+is implemented.
+
 ## Authoring Checklist
 
-1. Add a uniquely named strategy in the appropriate roster list.
-2. Add/adjust theme mapping in `ExplicitStrategyThemesByName` when needed.
-3. Keep mutation-goal chains coherent: early economy, mid stabilization, late finish.
-4. Prefer category-specific mycovariant preferences for clearer test intent.
-5. Build `FungusToast.Core` and `FungusToast.Simulation` after any roster changes.
-6. Run at least one seeded smoke simulation and verify strategy names/statuses appear in exported metadata.
-7. For comparison runs, prefer a fixed `--seed`, record the `--selection-policy`, and keep the manifest's selected lineup with the results.
-8. For canonical balance experiments, prefer explicit `--strategy-names` instead of sampled rosters so roster composition does not drift with future roster edits.
-9. Explicit strategy-name experiments are single-roster by design: all names must come from the chosen `--strategy-set`, so do not mix `Proven`/`Testing`/`Campaign`/`Mycovariants` names in one run.
-10. If a design doc says a mutation name without `Max` or `Level N`, treat that as ambiguous and resolve it before implementation; for the current archetype harness, unlabeled steps were encoded as one upgrade.
-11. When introducing a mutation or Mycovariant, run the content-to-profile
+1. Define Name, Fantasy, Ordered Mutation Plan, and Ordered Mycovariant Preferences before implementation.
+2. Add a uniquely named strategy in the appropriate roster list.
+3. Add/adjust theme mapping in `ExplicitStrategyThemesByName` when needed.
+4. Keep mutation-goal chains coherent: early economy, mid stabilization, late finish.
+5. For every player-facing or Campaign AI, author a specific ordered Mycovariant list. Reserve category-derived sets for broad Testing controls.
+6. Build `FungusToast.Core` and `FungusToast.Simulation` after any roster changes.
+7. Run at least one seeded smoke simulation and verify strategy names/statuses appear in exported metadata.
+8. For comparison runs, prefer a fixed `--seed`, record the `--selection-policy`, and keep the manifest's selected lineup with the results.
+9. For canonical balance experiments, prefer explicit `--strategy-names` instead of sampled rosters so roster composition does not drift with future roster edits.
+10. Explicit strategy-name experiments are single-roster by design: all names must come from the chosen `--strategy-set`, so do not mix `Proven`/`Testing`/`Campaign`/`Mycovariants` names in one run.
+11. If a design doc says a mutation name without `Max` or `Level N`, treat that as ambiguous and resolve it before implementation; for the current archetype harness, unlabeled steps were encoded as one upgrade.
+12. When introducing a mutation or Mycovariant, run the content-to-profile
     coverage review, record a disposition for each candidate, and implement
     only explicitly approved strategy changes.
+13. Before promoting a Testing AI or changing a Campaign/Proven preference
+    plan, compare the proposed ordered list against its unchanged control with
+    deterministic simulation seeds, then confirm it on a held-out seed.
 
 ## Recommended Simulation Pattern
 

@@ -22,16 +22,22 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 
 ## Suggested Agent Workflow
 
-1. Confirm the mutation's intent, category, tier, trigger timing, scaling, and expected player-facing summary.
-2. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
-3. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
-4. Proactively list the proposed test cases for the new Mutation, including happy path behavior, key edge cases, important interactions, and likely regressions.
-5. Read `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` before finalizing prerequisites or mutation-category placement.
-6. Follow the naming and description rules in this document exactly.
-7. Wire gameplay behavior through the correct Core processors, coordinators, and analytics seams.
-8. Update Unity mutation-tree placement when the new mutation needs a node.
-9. Run the content-to-profile coverage review in `AI_STRATEGY_AUTHORING.md` whenever the mutation is added or materially changed. Record an explicit disposition for every suggested non-Testing AI match before authoring is complete; an approved match becomes a separately reviewed Testing candidate or strategy patch, never a silent roster edit.
-10. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
+1. Before implementation, define the mutation's intent, category, tier, trigger
+   timing, scaling, capability tags, important interactions, exclusions, and
+   expected player-facing summary.
+2. Identify likely non-Testing AI profile matches and give each an initial
+   coverage disposition from `AI_STRATEGY_AUTHORING.md`. An **Add for
+   evaluation** disposition requires a Testing candidate/control and simulation
+   evidence before any Campaign or Proven plan changes.
+3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+4. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
+5. Proactively list the proposed test cases for the new Mutation, including happy path behavior, key edge cases, important interactions, and likely regressions.
+6. Read `second-level/MUTATION_PREREQUISITE_GUIDELINES.md` before finalizing prerequisites or mutation-category placement.
+7. Follow the naming and description rules in this document exactly.
+8. Wire gameplay behavior through the correct Core processors, coordinators, and analytics seams.
+9. Update Unity mutation-tree placement when the new mutation needs a node.
+10. Re-run the content-to-profile coverage review after implementation or any material design change. Reconcile it with the up-front dispositions; an approved match becomes a separately reviewed Testing candidate or strategy patch, never a silent roster edit.
+11. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
 
 ---
 

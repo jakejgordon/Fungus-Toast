@@ -19,18 +19,24 @@ Mycovariants are drafted abilities that either:
 
 ## Suggested Agent Workflow
 
-1. Confirm whether the Mycovariant is draft-time active, passive, or both.
-2. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
-3. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
-4. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
-5. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
-6. Read `MYCOVARIANT_AUTHORING_STYLE.md` and `GAMEPLAY_TERMINOLOGY.md` before editing descriptions or flavor text; run `CONTENT_COPY_CHECKLIST.md` before opening a PR.
-7. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
-8. Draw the Mycovariant's icon: add a case for its id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a small diagram of the effect built from `IconGlyphs`; tiered I/II/III variants share one drawing and get pips automatically), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any mycovariant lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
-9. Implement changes in category factories and processors.
-10. Run the content-to-profile coverage review in `AI_STRATEGY_AUTHORING.md` whenever the Mycovariant is added or materially changed. Record an explicit disposition for every suggested non-Testing AI match; do not silently change an existing strategy's preference order.
-11. Validate with Core and Simulation builds when shared gameplay behavior changed.
-12. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
+1. Before implementation, define whether the Mycovariant is draft-time active,
+   passive, or both; record its capability tags, important interactions,
+   exclusions, and likely non-Testing AI profile matches.
+2. Give every likely AI match an initial coverage disposition from
+   `AI_STRATEGY_AUTHORING.md`. An **Add for evaluation** disposition requires a
+   Testing candidate/control and simulation evidence before any Campaign or
+   Proven preference list changes.
+3. Read `MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` before naming a new Mycovariant.
+4. Present **5 candidate names** that all satisfy the naming rules, each with a brief biological explanation and gameplay implication.
+5. Run a repo search to confirm proposed names are unique across Mutations, Mycovariants, and Adaptations before finalizing the chosen name.
+6. Proactively list the proposed test cases for the new or changed Mycovariant, including happy path behavior, edge cases, timing/cadence checks, interaction coverage, and likely regressions.
+7. Read `MYCOVARIANT_AUTHORING_STYLE.md` and `GAMEPLAY_TERMINOLOGY.md` before editing descriptions or flavor text; run `CONTENT_COPY_CHECKLIST.md` before opening a PR.
+8. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
+9. Draw the Mycovariant's icon: add a case for its id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a small diagram of the effect built from `IconGlyphs`; tiered I/II/III variants share one drawing and get pips automatically), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any mycovariant lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
+10. Implement changes in category factories and processors.
+11. Re-run the content-to-profile coverage review after implementation or any material design change. Reconcile it with the up-front dispositions and do not silently change an existing strategy's preference order.
+12. Validate with Core and Simulation builds when shared gameplay behavior changed.
+13. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
 
 ## Common Tasks
 
