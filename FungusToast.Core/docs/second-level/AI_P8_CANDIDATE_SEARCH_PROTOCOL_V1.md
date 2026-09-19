@@ -174,6 +174,54 @@ share was `-0.1613` (95% CI `-0.2726..-0.0500`) across 50 pairs. The combined
 runtime was 635.866 seconds within the 900-second budget. This stops the
 candidate on evidence; no holdout may run.
 
+### H1 bounded expansion — durability insertion
+
+The original H1 plan is exhausted, so the next search remains on its frozen
+parent and adds one mechanism-specific candidate rather than reopening the
+failed order and economy sweeps. Plan `p8-hard-econ-control-v2` inserts
+Homeostatic Harmony level 20 after the parent's Creeping Mold and Anabolic
+Inversion goals. The player-readable hypothesis is that the MaxEconomy opening
+can convert into durable board control by deliberately reducing ongoing decay
+before completing its Necrosporulation and Catabolic Rebirth line. The bounded
+plan emits exactly one candidate. It must still differ from the retained panel
+under deterministic characterization before any smoke run is preregistered;
+generation alone establishes no performance or band claim.
+
+Static characterization accepted
+`candidate.tst-balancedcontrol-maxeconomy.757f2707fe2e`
+(`CAND_p8-hard-econ-control-v2_GoalInsertion_757f2707`). It raises observed
+Homeostatic Harmony from 5 to 10 while retaining the parent's MaxEconomy
+opening, and it has no exact raw-build match in the declared reference set.
+Its nearest declared reference is the parent at raw distance `0.136`; the
+candidate is therefore distinct enough to enter the staged screen.
+
+The paired swap uses the candidate against parent
+`TST_BalancedControl_MaxEconomy`, with retained Hard
+`Grow>Kill>Reclaim(Econ/Reclaim)` fixed as opponent. Screening uses 160x160,
+rotating slots, seed `2026091602`, and nutrient patches, Mycovariants, and
+starting Adaptations disabled. Its holdout, if earned, is 180x140 with unused
+seed `2026091702`. The gate is a five-game smoke, 20-game calibration, 50-game
+comparison, then 100-game holdout. The comparison hypothesis is candidate-minus-
+parent paired normalized board share, direction Increase, margin `+0.05`; the
+calibration regression stop remains an interval whose upper bound is below
+`-0.05`. Each stage must clear in order, and the later stages are forbidden
+unless earned.
+
+Both five-game smoke arms completed with checksum-valid manifests and zero
+parity mismatches. Manifest comparison passed with only the declared treatment
+strategy name and definition changes. The 20-game calibration is therefore
+authorized in the unchanged 160x160 screening context, seed `2026091602`, with
+pairing group `p8-h1-757-calibration`; comparison and holdout remain forbidden
+until calibration clears its regression stop.
+
+The 20-game calibration arms completed with checksum-valid manifests, zero
+parity mismatches, and only the declared treatment differences. Candidate-minus-
+parent paired normalized board share was `-0.4666` (95% CI
+`-0.5980..-0.3352`). The entire interval is below the frozen `-0.05` regression
+boundary, so candidate `757f2707` stops on evidence. Comparison and holdout must
+not run. The result also rejects this specific Harmony-20 insertion as H1's
+durability mechanism; it does not justify weakening Homeostatic Harmony itself.
+
 ## H2 preregistered evaluation — surge-window candidate `dcb18b64`
 
 The H2 plan generated seven valid candidates from
@@ -212,6 +260,60 @@ parent normalized board share was `-0.0180` (95% CI `-0.0443..+0.0083`) across
 50 pairs. Combined runtime was 727.656 seconds within the 900-second budget.
 It does not meet the frozen `+0.05` increase margin, so the candidate stops on
 evidence and no holdout may run.
+
+### H2 current-behavior re-evaluation
+
+The result above remains valid for the behavior version it tested, but it no
+longer settles the current H2 strategy. Board-aware surge opportunity gating
+subsequently changed when planned surges fire, rank, bank, and defer, advancing
+the AI definition schema to v2. The old parent definition fingerprint is
+`93964c...`; the current parent fingerprint is `970e39...`. Because the changed
+code directly owns the cadence treatment's mechanism, carrying the old outcome
+forward would conflate two materially different surge policies.
+
+Plan `p8-hard-surge-tempo-v2` therefore regenerates only the existing
+three-round cadence treatment under the current parent. It is not a retry under
+unchanged conditions and does not reuse any old outcome. The paired swap uses
+current `TST_Arch06_SurgeGrowth` as control and retained Hard
+`TST_BalancedControl_MaxEconomy` as fixed opponent. Screening is 160x160,
+rotating slots, seed `2026091603`, with nutrient patches, Mycovariants, and
+starting Adaptations disabled. Its holdout, if earned, is 180x140 with unused
+seed `2026091703`. The gate remains five-game smoke, 20-game calibration,
+50-game comparison, and 100-game holdout. The comparison hypothesis is paired
+candidate-minus-parent normalized board share, direction Increase, margin
+`+0.05`; the calibration regression stop is an interval wholly below `-0.05`.
+Smoke must also reproduce a distinct observed surge-timing pattern before
+calibration is authorized.
+
+Both current-version smoke arms completed with checksum-valid manifests, zero
+parity mismatches, and only the declared strategy-definition differences. The
+three-round candidate recorded 70 surge activations across the five games
+(`13,15,16,13,13`) versus the five-round parent's 59
+(`13,11,13,11,11`); its first activation occurred on round 8 in every game,
+versus parent first rounds `8,8,10,8,8`. The current policy therefore preserves
+an observable timing/volume distinction. Its 20-game calibration is authorized
+in the unchanged screening context with pairing group
+`p8-h2-v2-calibration`; comparison and holdout remain forbidden until earned.
+
+Both current-version 20-game calibration arms completed with checksum-valid
+manifests, zero parity mismatches, and only the declared strategy-definition
+differences. Candidate-minus-parent paired normalized board share was `-0.0132`
+(95% CI `-0.0731..+0.0468`). The upper interval bound is not below the frozen
+`-0.05` regression boundary, so candidate `dcb18b64` clears calibration. A
+50-game paired comparison is now preregistered in the same 160x160 context with
+seed `2026091603`, pairing group `p8-h2-v2-comparison`, target
+`candidate.tst-arch06-surgegrowth.dcb18b642321`, control
+`legacy.testing.tst-arch06-surgegrowth.v1`, primary metric normalized board
+share, direction Increase, and margin `+0.05`. Holdout remains forbidden unless
+that comparison emits `supported`.
+
+The checksum-valid 50-game current-version comparison emitted `not_supported`.
+Candidate-minus-parent normalized board share was `-0.0075` (95% CI
+`-0.0374..+0.0224`) across 50 pairs, with 679.489 seconds combined runtime
+inside the 900-second budget. It does not meet the frozen `+0.05` increase
+margin, so candidate `dcb18b64` stops and no holdout may run. Together with the
+earlier behavior-version result, this exhausts the bounded three-round cadence
+treatment without claiming that all possible surge-tempo mechanisms are weak.
 
 ## E1 preregistered evaluation — regeneration-order candidate `ca22a36d`
 

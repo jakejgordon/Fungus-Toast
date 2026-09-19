@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-hard-surge-tempo-v2",
+  "purpose": "P8 H2 current-behavior re-evaluation: isolate the three-round surge cadence after board-aware surge opportunity gating changed the parent definition. Generation alone does not establish a Hard band or promotion.",
+  "parentStrategyId": "legacy.testing.tst-arch06-surgegrowth.v1",
+  "parentStrategySet": "testing",
+  "operators": ["surgeAttemptTurnFrequencySweep"],
+  "maximumCandidates": 1,
+  "surgeAttemptTurnFrequencyValues": [3],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": []
+}

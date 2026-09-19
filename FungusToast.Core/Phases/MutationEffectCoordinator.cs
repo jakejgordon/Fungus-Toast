@@ -30,7 +30,7 @@ namespace FungusToast.Core.Phases
             Random rng,
             ISimulationObserver observer)
         {
-            // Homeostatic Harmony (random + age reduction)
+            // Homeostatic Harmony (age reduction; random reduction is included in the shared helper)
             float harmonyReduction = owner.GetMutationEffect(MutationType.DefenseSurvival);
 
             // Chronoresilient Cytoplasm: increases age threshold before age-based death risk begins.
@@ -38,16 +38,8 @@ namespace FungusToast.Core.Phases
             float addedThreshold = owner.GetMutationEffect(MutationType.AgeAndRandomnessDecayResistance);
             float ageRiskThreshold = GameBalance.AgeAtWhichDecayChanceIncreases + addedThreshold; // treat as float to allow fractional future tuning
 
-            // Dynamic random decay scaling based on round (starts adding after configured start round)
-            float additionalRandom = GameBalance.GetAdditionalRandomDecayChance(board.CurrentRound);
-            float mycelialBloomPenalty = owner.GetMutationLevel(MutationIds.MycelialBloom) * GameBalance.MycelialBloomRandomDecayPenaltyPerLevel;
-            float autolyticSurgePenalty = owner.IsSurgeActive(MutationIds.HyphalSurge)
-                ? owner.GetMutationLevel(MutationIds.HyphalSurge) * GameBalance.HyphalSurgeRandomDecayPenaltyPerLevel
-                : 0f;
-
             // Random component includes base decay, round scaling, and active growth-for-fragility tradeoffs.
-            float basePlusScaling = GameBalance.BaseRandomDecayChance + additionalRandom + mycelialBloomPenalty + autolyticSurgePenalty;
-            float randomChance = Math.Max(0f, basePlusScaling - harmonyReduction);
+            float randomChance = owner.GetEffectiveRandomDecayChance(board.CurrentRound);
 
             // Age component only after threshold is exceeded
             float ageComponent = cell.GrowthCycleAge > ageRiskThreshold

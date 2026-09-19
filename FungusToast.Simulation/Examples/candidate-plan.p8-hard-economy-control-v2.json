@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "p8-hard-econ-control-v2",
+  "purpose": "P8 H1 expansion: test whether a MaxEconomy control opening can convert into durable board control by explicitly establishing Homeostatic Harmony before the late reclamation goals. Generation alone does not establish a Hard band or promotion.",
+  "parentStrategyId": "legacy.proven.tst-balancedcontrol-maxeconomy.v1",
+  "parentStrategySet": "proven",
+  "operators": ["goalInsertion"],
+  "maximumCandidates": 1,
+  "surgeAttemptTurnFrequencyValues": [],
+  "startingSporeEdgeOffsetValues": [],
+  "maxTierValues": [],
+  "goalInsertions": [
+    { "mutationId": 1, "targetLevel": 20, "position": 2 }
+  ]
+}

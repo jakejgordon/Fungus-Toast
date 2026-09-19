@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Core.Config;
 using FungusToast.Core.Growth;
 using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Players;
@@ -8,6 +9,23 @@ namespace FungusToast.Core.Tests.Mycovariants;
 
 public class BallistosporeDischargeMycovariantTests
 {
+    [Fact]
+    public void Tiered_ai_scores_use_the_declared_calibration()
+    {
+        var board = new GameBoard(width: 3, height: 3, playerCount: 1);
+        var player = new Player(0, "Owner", PlayerTypeEnum.AI);
+
+        Assert.Equal(
+            MycovariantGameBalance.BallistosporeDischargeIAIScore,
+            MycovariantRepository.GetById(MycovariantIds.BallistosporeDischargeIId).GetBaseAIScore(player, board));
+        Assert.Equal(
+            MycovariantGameBalance.BallistosporeDischargeIIAIScore,
+            MycovariantRepository.GetById(MycovariantIds.BallistosporeDischargeIIId).GetBaseAIScore(player, board));
+        Assert.Equal(
+            MycovariantGameBalance.BallistosporeDischargeIIIAIScore,
+            MycovariantRepository.GetById(MycovariantIds.BallistosporeDischargeIIIId).GetBaseAIScore(player, board));
+    }
+
     [Fact]
     public void ResolveBallistosporeDischarge_prefers_orthogonally_adjacent_empty_tiles()
     {

@@ -333,24 +333,6 @@ namespace FungusToast.Core.AI
         }
 
         /// <summary>
-        /// Gets the highest priority mycovariant preference that the player doesn't already have
-        /// </summary>
-        public MycovariantPreference? GetPreferredMycovariant(Player player)
-        {
-            var availableMycovariants = MycovariantRepository.All.ToList();
-            foreach (var preference in mycovariantPreferences.OrderByDescending(p => p.Priority))
-            {
-                // Check if player already has any of these mycovariants
-                if (player.PlayerMycovariants.Any(pm => preference.MycovariantIds.Contains(pm.Mycovariant.Id)))
-                    continue;
-                // Check if any of these mycovariants are available in the draft
-                if (availableMycovariants.Any(m => preference.MycovariantIds.Contains(m.Id)))
-                    return preference;
-            }
-            return null;
-        }
-
-        /// <summary>
         /// Selects the best mycovariant from the given choices, preferring mycovariants in the preferred list first.
         /// If no preferred mycovariants are available, falls back to normal AI scoring.
         /// </summary>

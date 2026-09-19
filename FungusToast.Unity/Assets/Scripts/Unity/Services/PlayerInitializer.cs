@@ -67,7 +67,7 @@ namespace FungusToast.Unity
             // Create human players
             for (int i = 0; i < desiredHuman; i++)
             {
-                var hp = new Player(i, desiredHuman > 1 ? $"Human {i + 1}" : "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
+                var hp = new Player(i, desiredHuman > 1 ? $"Human {i + 1}" : "Human", PlayerTypeEnum.Human);
                 hp.SetBaseMutationPoints(baseMP);
                 ApplyStartingAdaptationToHuman(hp, i);
                 players.Add(hp);
@@ -77,7 +77,7 @@ namespace FungusToast.Unity
             // Safety: ensure at least one human
             if (humanPlayers.Count == 0)
             {
-                var fallback = new Player(0, "Human", PlayerTypeEnum.Human, AITypeEnum.Random);
+                var fallback = new Player(0, "Human", PlayerTypeEnum.Human);
                 fallback.SetBaseMutationPoints(baseMP);
                 ApplyStartingAdaptationToHuman(fallback, 0);
                 players.Add(fallback);
@@ -97,7 +97,7 @@ namespace FungusToast.Unity
                 for (int i = 0; i < aiStrats.Count && i < remaining; i++)
                 {
                     int id = humanPlayers.Count + i;
-                    var ai = new Player(id, $"AI Player {id}", PlayerTypeEnum.AI, AITypeEnum.Random);
+                    var ai = new Player(id, $"AI Player {id}", PlayerTypeEnum.AI);
                     ai.SetBaseMutationPoints(baseMP);
                     ai.SetMutationStrategy(aiStrats[i]);
                     players.Add(ai);

@@ -72,6 +72,28 @@ Add `--emit-verdict` only for comparison/holdout artifacts whose resolved
 manifests contain the same preregistered hypothesis. The command fails rather
 than creating a verdict for exploratory, mismatched, or incomplete evidence.
 
+### Campaign measured-difficulty ladder
+
+After generating 100-game campaign confirmations, produce the report-only
+measured ladder check with one common artifact seed:
+
+```bash
+./.venv/bin/python analyze_campaign_ladder.py \
+  --run-root "../FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet" \
+  --seed 20260517
+```
+
+The command writes `campaign_difficulty_ladder_seed<seed>.md`. It reads the
+safe proxy's tie-aware win credit from `players.parquet` when available,
+compares each adjacent measured level, reports the current target band, and
+lists missing standard confirmations. A later level with a higher proxy win
+rate is marked `INVERSION`, but findings remain report-only: they return a
+successful exit status and do not authorize balance changes. Missing,
+incomplete, duplicate, non-holdout modern, or malformed artifacts fail loudly
+instead of producing a misleading report. Resolved artifacts must also share
+one code commit. Older complete 100-game artifacts
+with a legacy manifest remain readable and are labeled as reduced provenance.
+
 Optional confidence and interaction thresholds:
 
 ```powershell

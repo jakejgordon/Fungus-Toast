@@ -124,9 +124,12 @@ are considered complete. The current Aerated Frontier calibration uses
   Arch05 -157, Arch02 -90, others within +/-45; the already dominant Arch07
   benefits most from smarter surges. `players.parquet` gains
   `AiSurgeOpportunitiesDeclined`; `DefinitionSchemaVersion` is now v2.
-- Open follow-up: the Autolytic decay penalty is discounted by owned dead-cell
-  mutations, but strategies built around Necrophytic Bloom or Substrate Ecology
-  corpse payoffs should be able to prefer it explicitly.
+- Resolved follow-up: the Autolytic decay penalty remains discounted only by
+  owned dead-cell mutations, while the two ecology/corpse-payoff strategies now
+  explicitly prioritize Autolytic Surge. Their controlled no-necro and delayed-
+  necro variants preserve that preference; the no-Autolytic control does not.
+  The board evaluator still gates every activation, so intent cannot force a
+  wasteful surge.
 
 ### 2026-09-07 Necrotic Clearance
 
@@ -1385,6 +1388,74 @@ measurement model, phase gates, and open product decisions are in
     and the five-game rotating-slot promotion smoke completed with zero parity
     mismatches while exercising Verdant Reclaimer.
 
+95. P8 H1 reopened with one bounded durability mechanism after its original
+    order/resource-policy plan exhausted. The checked-in v2 plan inserts
+    Homeostatic Harmony 20 after the MaxEconomy parent's Creeping Mold and
+    Anabolic Inversion goals. Static characterization accepted candidate
+    `757f2707`: observed Harmony rises from 5 to 10, no declared reference is an
+    exact build match, and parent distance is `0.136`. Its staged screen is now
+    preregistered before execution; no performance or Hard-band claim follows
+    from generation or characterization.
+
+96. H1 durability candidate `757f2707` cleared smoke integrity. Both five-game
+    arms completed with checksum-valid manifests and zero parity mismatches;
+    causal-input comparison passed with only the declared candidate definition
+    change. Its preregistered 20-game calibration is now authorized in the same
+    frozen screen. Comparison and holdout remain forbidden until earned.
+
+97. H1 durability candidate `757f2707` stopped decisively at calibration. Both
+    20-game arms completed checksum-valid with zero parity mismatches and only
+    the declared treatment difference. Candidate-minus-parent normalized board
+    share was `-0.4666` (95% CI `-0.5980..-0.3352`), wholly below the frozen
+    `-0.05` regression boundary. Comparison and holdout are forbidden. This
+    rejects the specific Harmony-20 insertion, not Homeostatic Harmony's balance.
+
+98. H2's earlier cadence result cannot settle the current surge policy. It
+    measured parent definition `93964c...`; board-aware surge opportunity gating
+    later changed the directly relevant activation/banking behavior and the
+    current parent is `970e39...`. A checked-in v2 plan now regenerates only the
+    three-round cadence candidate under current behavior, with unused seeds and
+    the full staged gate preregistered. No old outcome will be reused.
+
+99. Current-version H2 candidate `dcb18b64` cleared smoke integrity and the
+    required behavior check. Both five-game arms were checksum-valid with zero
+    parity mismatches and only the declared treatment difference. The
+    three-round candidate fired 70 surges versus the parent's 59 and began by
+    round 8 in all five games, preserving a visible timing/volume distinction
+    under board-aware gating. Its 20-game calibration is now authorized.
+
+100. Current-version H2 candidate `dcb18b64` cleared its 20-game calibration.
+     Both arms were checksum-valid with zero parity mismatches and only the
+     declared treatment difference. Candidate-minus-parent normalized board
+     share was `-0.0132` (95% CI `-0.0731..+0.0468`), so the interval is not
+     wholly below the frozen `-0.05` regression stop. Its 50-game paired
+     comparison is now preregistered in the unchanged 160x160 screen with
+     hypothesis direction Increase and margin `+0.05`; holdout remains
+     forbidden unless that comparison emits `supported`.
+
+101. Current-version H2 candidate `dcb18b64` stopped at its preregistered
+     50-game comparison. Both arms were checksum-valid with zero parity
+     mismatches and only the declared treatment difference. Candidate-minus-
+     parent normalized board share was `-0.0075` (95% CI
+     `-0.0374..+0.0224`), and the verdict was `not_supported` against the frozen
+     `+0.05` increase margin. Combined runtime was 679.489 seconds inside the
+     900-second budget. Holdout is forbidden; the bounded three-round cadence
+     treatment is exhausted under current board-aware surge gating.
+
+102. The board-aware surge follow-up is implemented. `TST_EcologyAutolyticDetrital`
+     and `TST_EcologyAutolyticReclaimer` now declare Autolytic Surge as an
+     explicit surge priority, allowing their corpse-payoff identity to continue
+     seeking rewarded activations after the staged level-three goals. The
+     no-necro and delayed-necro diagnosis variants retain the same preference;
+     the no-Autolytic control remains excluded and unprioritized. Opportunity
+     thresholds still gate every activation. Core passed 705/705 tests,
+     Simulation passed 282/282, and both projects build with zero warnings or
+     errors. A five-game 160x160 implementation smoke completed with zero
+     parity mismatches: both strategies activated Autolytic in all five games,
+     and Detrital took rewarded post-goal activations above level three in three
+     games (reaching level five twice), proving the explicit priority path is
+     live without making a balance claim.
+
 ### Proposed — AI strategy naming and metadata standard
 
 No convention currently governs AI strategy names, and the roster shows it:
@@ -1425,14 +1496,22 @@ should not start until the grammar and the migration surface are agreed.
 
 None of these were done in that session; they are the loose ends it exposed.
 
-1. **Nothing checks that measured proxy outcome is monotonic.**
-   `validate_campaign_ai_rosters` checks authored difficulty means, and the
-   Campaign10 reroster note already records that the mean is a relative index
-   rather than a share prediction. The gap is that no check covers the measured
-   quantity the bands are written against: proxy win rate peaks at levels 7 and
-   8 and then falls away, so the validator passes on a ladder that inverts.
-   Decide whether the measured ladder gets a recorded expectation, a periodic
-   artifact-backed check, or stays a manual review step.
+1. **Measured campaign-ladder check resolved 2026-09-18.**
+   `analyze_campaign_ladder.py` now discovers one common-seed set of 100-game
+   campaign artifacts, validates complete Parquet/manifest evidence, reads the
+   safe proxy's tie-aware win credit when available, and reports target-band
+   status plus adjacent-level changes. A proxy win-rate increase is marked
+   `INVERSION`, but the command remains report-only and exits successfully;
+   missing, duplicate, incomplete, malformed, or non-holdout modern evidence
+   fails loudly, as do resolved artifacts from mixed code commits. The current
+   legacy seed-20260517 suite proves the surface: it
+   reports inversions at levels 5→6 (+5 points) and 9→10 (+14 points), labels
+   its reduced-provenance manifests, and identifies missing 100-game artifacts
+   for levels 3 and 11–15. These findings nominate review only and make no
+   balance change. All 7 focused analytics tests pass, and Core/Simulation build
+   with zero warnings/errors. Full analytics discovery still contains the
+   pre-existing unrelated failure in
+   `test_execution_health_aggregates_decisions_and_fallback_rate`.
 
 2. **A category preference is a very weak draft identity.** 78 of the 80
    `GetPreferredMycovariantIds` call sites name only one or two categories, and
@@ -1443,46 +1522,67 @@ None of these were done in that session; they are the loose ends it exposed.
    almost no draft intent. Decide whether campaign strategies should declare
    narrower, authored preferences instead of whole categories.
 
-3. **`AIScore` calibration now carries weight it did not before.** Category sets
-   are resolved entirely by score, so a mis-scored mycovariant now directly
-   causes a wrong pick where list position used to mask it. Worth an audit pass
-   over the score constants, particularly across tiered families.
+3. **`AIScore` tier-family audit resolved 2026-09-18.** Category sets are
+   resolved entirely by score, so the tiered families were checked against
+   their declared score progressions. The audit found one mapping defect:
+   Ballistospore Discharge II used the tier-III score constant, tying tiers II
+   and III at 6 instead of the declared 3/4/6 progression. Tier II now uses its
+   intended score of 4, protected by a regression test covering all three
+   definitions. The unused `HyphalResistanceTransferBaseAIScoreLate` constant,
+   left behind when that score was deliberately made round-independent, was
+   also removed. No other objective tier-ordering defect was found; further
+   score changes would be balance tuning and require measured evidence. Core
+   passes 708/708 tests, Simulation passes 282/282, and both projects build
+   with zero warnings/errors.
 
 4. **Dead code found while tracing the draft path.**
-   `MycovariantGameBalance.MycelialBastionSynergyBonusAIScore` is declared and
-   never read — the Bastion `AIScore` lambdas return their flat base score, and
-   only `ReclamationRhizomorphsBonusAIScore` has a live synergy path. Decide
-   whether Bastion was meant to gain a synergy bonus or the constant should go.
-   `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` is public with
-   no callers anywhere in the solution.
+   Resolved 2026-09-18: history confirms
+   `MycelialBastionSynergyBonusAIScore` was introduced beside the implemented
+   one-way Reclamation Rhizomorphs bonus but was never consumed by a Bastion
+   score. The inert constant is removed without changing draft behavior.
+   Resolved 2026-09-17: the unused public
+   `ParameterizedSpendingStrategy.GetPreferredMycovariant(Player)` helper was
+   removed; live draft selection continues through
+   `SelectMycovariantFromChoices`.
 
-5. **`Player.AIType` is dead state.** All three construction sites pass
-   `AITypeEnum.Random` and nothing varies it, so the field reads as a setting
-   that does not exist. Either wire it to something real or remove it and the
-   enum. It was dropped from the development-testing inspector block for exactly
-   this reason.
+5. **`Player.AIType` dead state resolved 2026-09-18.** The live property and
+   constructor parameter are removed; `MutationStrategy` remains the sole AI
+   behavior selector. Save compatibility is preserved by retaining the legacy
+   `AITypeEnum` and `PlayerRuntimeSnapshot.AIType` field with stable numeric
+   values. Restore ignores that historically inert value, while new snapshots
+   normalize it to `Random`, so old checkpoints remain readable without
+   advertising a runtime setting that does not exist. The compatibility test
+   restores an `Aggressive` legacy value and verifies a safe normalized
+   re-export. Core passed 706/706 tests, Simulation passed 282/282, both builds
+   have zero warnings/errors, and the checked-in Unity Core DLL/PDB are
+   refreshed. Unity Editor compile validation passed on 2026-09-18.
 
-6. **The player inspector was only built to step one.** The hover tooltip now
-   renders shared sections from `PlayerInspectorContent`, but the docked
-   `PlayerInspectorPanel` those sections were designed for does not exist yet.
-   The dev block also carries only the strategy tuning parameters; the fields
-   that actually catch AI misbehavior — unspent mutation points and banking
-   intent, target-goal progress, the mutation ledger with first-acquired round,
-   active surges, and effective growth/self-death rates — were deferred with it.
+6. **Player inspector diagnostics completed 2026-09-18.** The docked
+   `PlayerInspectorPanel` and active-surge tiles now exist. On 2026-09-18 its
+   Development Testing block gained live mutation points, income, banking
+   intent, and executable target-goal progress; the first incomplete goal is
+   visibly marked as current intent. It also gained a mutation ledger ordered
+   by first-acquired round, plus live orthogonal-growth and random-decay rates.
+   The random-decay value comes from the same new Core helper used by the decay
+   engine, avoiding a Unity-side rules copy. The panel already refreshes these
+   values on its bounded content interval. Core tests pass 707/707, Simulation
+   tests pass 282/282, and both projects build with zero warnings/errors. This
+   follow-up passed Unity Editor compile and visual validation.
 
-7. **Twenty games per level cannot resolve a small balance effect.** That is the
-   `run_campaign_balance.py` default and what the mycovariant confirmation ran
-   at; one game moves a level by five points, and the interval on a
-   before/after difference is far wider than any effect worth shipping. The
-   experiment contract caps a condition at 100 games. Agree a standard game
-   count for balance confirmations rather than deciding per run.
+7. **Balance-confirmation sample size resolved 2026-09-18.** Campaign balance
+   confirmations use 100 games per level, matching the experiment contract's
+   holdout stage and per-condition cap. `run_campaign_balance.py` now defaults
+   to 100. Smaller samples require an explicit `--games` override and remain
+   exploratory; they cannot support a final campaign tuning claim. An end-to-end
+   Campaign 0 harness run completed all 100 games with zero parity mismatches;
+   its resolved manifest records `holdout`, 100 requested games, and `complete`,
+   and the manifest checksum verifies.
 
-8. **The analytics virtual environment does not exist where it is documented.**
-   `FungusToast.Analytics/README.md` and the `validate-campaign-balance` skill
-   both point at `FungusToast.Analytics/.venv`; on the current machine only the
-   repository-root `.venv` exists, and it happens to carry pandas and pyarrow.
-   Create the documented environment or change both documents to name the real
-   one, so a validation run does not have to rediscover this.
+8. **Analytics virtual environment resolved 2026-09-17.** The documented
+   `FungusToast.Analytics/.venv` now exists on the current machine and imports
+   both pandas (`3.0.1`) and pyarrow (`23.0.1`) through its own Python binary.
+   The README's commands are therefore accurate when run from the Analytics
+   directory; no repository-path rewrite is needed.
 
 ### Proposed — Interactive HTML simulation results page
 
@@ -1648,8 +1748,8 @@ independently shippable commit.
 2. **Player inspector.** "Active Surges (N)" icon section above Adaptations in
    `PlayerInspectorPanel`, each tile carrying a rounds-remaining badge; hover
    for the tooltip. The tile-rebuild signature must include rounds remaining so
-   a pinned panel keeps counting down. Done 2026-09-11; awaiting Unity Editor
-   visual check of the six procedural glyphs.
+   a pinned panel keeps counting down. Done 2026-09-11; Unity Editor visual
+   validation of the six procedural glyphs passed on 2026-09-18.
 3. **Left panel surge section.** "Active Mycelial Surges" for the human
    player in `UI_MoldProfileRoot`, directly under the Random Decay row and
    hidden when nothing is active. Done 2026-09-13 as an icon-tile grid (same
@@ -1657,7 +1757,8 @@ independently shippable commit.
    the rounds-remaining badge and the shared surge tooltip. Refreshes on
    `Player.MutationsChanged` (activation) and via a new
    `RefreshActiveSurges()` at round start, since the tick-down at round end
-   raises no mutation event. The inspector section was renamed to match.
+   raises no mutation event. The inspector section was renamed to match. Unity
+   Editor visual validation passed on 2026-09-18.
 4. **Mutation tree glyphs.** Show the surge icon on surge cards (body, above
    the name — the corners are taken by the tier glyph and the active-surge
    hourglass) and beside the title in `MutationInspectorPanel`. Done
@@ -1665,7 +1766,8 @@ independently shippable commit.
    slot instead of the body (idle surge shows the glyph there; an active surge
    swaps the hourglass for the glyph plus a rounds badge, so the card matches
    the inspector tile). `SurgePresentation` now reads
-   `Mutation.DescriptionSections.Summary` rather than re-parsing.
+   `Mutation.DescriptionSections.Summary` rather than re-parsing. Unity Editor
+   visual validation passed on 2026-09-18.
 
 ## Working Rules
 

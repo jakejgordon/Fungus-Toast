@@ -377,6 +377,7 @@ public class StrategyCatalogTests
                 (MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel)
             },
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
+        Assert.Equal(new[] { MutationIds.HyphalSurge }, strategy.SurgePriorityIds);
     }
 
     [Fact]
@@ -401,6 +402,7 @@ public class StrategyCatalogTests
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
 
         Assert.DoesNotContain(strategy.TargetMutationGoals, goal => goal.MutationId == MutationIds.NecrophyticBloom);
+        Assert.Equal(new[] { MutationIds.HyphalSurge }, strategy.SurgePriorityIds);
     }
 
     [Fact]
@@ -412,9 +414,11 @@ public class StrategyCatalogTests
 
         Assert.Contains(MutationIds.Necrosporulation, noNecro.ExcludedMutationIds);
         Assert.DoesNotContain(noNecro.TargetMutationGoals, goal => goal.MutationId == MutationIds.Necrosporulation);
+        Assert.Equal(new[] { MutationIds.HyphalSurge }, noNecro.SurgePriorityIds);
 
         Assert.Contains(MutationIds.HyphalSurge, noAutolytic.ExcludedMutationIds);
         Assert.DoesNotContain(noAutolytic.TargetMutationGoals, goal => goal.MutationId == MutationIds.HyphalSurge);
+        Assert.Empty(noAutolytic.SurgePriorityIds);
 
         int detritalIndex = delayedNecro.TargetMutationGoals
             .Select((goal, index) => (goal, index))
@@ -423,6 +427,7 @@ public class StrategyCatalogTests
             .Select((goal, index) => (goal, index))
             .Single(pair => pair.goal.MutationId == MutationIds.Necrosporulation).index;
         Assert.True(necroIndex > detritalIndex);
+        Assert.Equal(new[] { MutationIds.HyphalSurge }, delayedNecro.SurgePriorityIds);
     }
 
     [Fact]
