@@ -27,14 +27,14 @@ namespace FungusToast.Unity.UI.MutationTree
     public class UI_MutationManager : MonoBehaviour
     {
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
-        private const string StorePointsTooltipText = "Store your unspent mutation points.\nThey carry over to the next turn,\nso you can save for stronger upgrades.";
+        private const string BankPointsTooltipText = "Ends your mutation phase now.\nYour unspent points carry over to next round,\nso you can save up for a mutation you can't afford yet.";
         private const string NormalSpeedTooltipText = "Standard pacing keeps the full growth and decay presentation sequence.";
         private const string TimeLapseTooltipText = "Skips most animations and speeds up Growth Cycles to reduce time between turns.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float SpendPointsRowHeight = 82f;
-        private const float StoreButtonMinWidth = 220f;
-        private const float StoreButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
+        private const float BankButtonMinWidth = 220f;
+        private const float BankButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float PresentationSpeedButtonMinWidth = 220f;
         private const float PresentationSpeedButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float HeaderControlsHeight = 40f;
@@ -51,10 +51,10 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float TimeLapseCoachmarkHeight = 172f;
         private const float TimeLapseCoachmarkHorizontalOffset = 5f;
         private const float TimeLapseCoachmarkVerticalOffset = -12f;
-        private const float StorePointsCoachmarkWidth = 360f;
-        private const float StorePointsCoachmarkHeight = 194f;
-        private const float StorePointsCoachmarkHorizontalOffset = 5f;
-        private const float StorePointsCoachmarkVerticalOffset = -12f;
+        private const float BankPointsCoachmarkWidth = 360f;
+        private const float BankPointsCoachmarkHeight = 194f;
+        private const float BankPointsCoachmarkHorizontalOffset = 5f;
+        private const float BankPointsCoachmarkVerticalOffset = -12f;
 
         private enum MutationInspectorDockSide
         {
@@ -82,13 +82,13 @@ namespace FungusToast.Unity.UI.MutationTree
 
         [Header("UI Wiring")]
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText = null!;
-        [SerializeField] private Button storePointsButton = null!;
-        [SerializeField] private Sprite? storePointsButtonIcon;
+        [SerializeField] private Button bankPointsButton = null!;
+        [SerializeField] private Sprite? bankPointsButtonIcon;
         [SerializeField] private Sprite? presentationSpeedButtonIcon;
         [SerializeField] private AudioClip? mutationUpgradeSuccessClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
-        [SerializeField] private AudioClip? mutationStorePointsClip = null;
-        [SerializeField, Range(0f, 1f)] private float mutationStorePointsVolume = 1f;
+        [SerializeField] private AudioClip? mutationBankPointsClip = null;
+        [SerializeField, Range(0f, 1f)] private float mutationBankPointsVolume = 1f;
         [SerializeField] private AudioClip? mutationPointBonusPopClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationPointBonusPopVolume = 1f;
 
@@ -126,18 +126,18 @@ namespace FungusToast.Unity.UI.MutationTree
         private AudioSource soundEffectAudioSource = null!;
         private Button presentationSpeedButton = null!;
         private TextMeshProUGUI? presentationSpeedButtonText;
-        private Image? storePointsButtonIconImage;
+        private Image? bankPointsButtonIconImage;
         private Image? presentationSpeedButtonIconImage;
         private RectTransform timeLapseCoachmarkRoot = null!;
         private CanvasGroup timeLapseCoachmarkCanvasGroup = null!;
         private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel = null!;
         private TextMeshProUGUI timeLapseCoachmarkBodyTextLabel = null!;
         private Button timeLapseCoachmarkCloseButton = null!;
-        private RectTransform storePointsCoachmarkRoot = null!;
-        private CanvasGroup storePointsCoachmarkCanvasGroup = null!;
-        private TextMeshProUGUI storePointsCoachmarkTitleTextLabel = null!;
-        private TextMeshProUGUI storePointsCoachmarkBodyTextLabel = null!;
-        private Button storePointsCoachmarkCloseButton = null!;
+        private RectTransform bankPointsCoachmarkRoot = null!;
+        private CanvasGroup bankPointsCoachmarkCanvasGroup = null!;
+        private TextMeshProUGUI bankPointsCoachmarkTitleTextLabel = null!;
+        private TextMeshProUGUI bankPointsCoachmarkBodyTextLabel = null!;
+        private Button bankPointsCoachmarkCloseButton = null!;
         private RectTransform headerControlsRowRect = null!;
         private RectTransform headerLeftSlotRect = null!;
         private RectTransform headerCenterSlotRect = null!;
@@ -178,8 +178,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private int lastKnownScreenHeight = -1;
         private bool hasDismissedTimeLapseCoachmarkThisGame;
         private NewPlayerTooltipId activeTimeLapseCoachmarkTooltipId = NewPlayerTooltipId.TimeLapseModeIntro;
-        private NewPlayerTooltipId activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
-        private bool hasDismissedStorePointsCoachmarkThisGame;
+        private NewPlayerTooltipId activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.BankMutationPointsIntro;
+        private bool hasDismissedBankPointsCoachmarkThisGame;
         private Dictionary<int, PlayerBoardSummary>? mutationAvailabilityBoardSummaries;
         private bool humanMimeticResilienceHasEligibleTargets = true;
         private bool humanCompetitiveAntagonismHasEligibleTargets = true;
@@ -268,7 +268,7 @@ namespace FungusToast.Unity.UI.MutationTree
             isPointerOverMutationInspector = false;
             mutationInspector?.Clear();
             HideTimeLapseCoachmarkImmediate(false);
-            HideStorePointsCoachmarkImmediate(false);
+            HideBankPointsCoachmarkImmediate(false);
             SetGlobalHudControlsSuppressed(false);
             SetDockButtonVisible(false);
         }
@@ -285,7 +285,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void Start()
         {
-            storePointsButton.onClick.AddListener(OnStoreMutationPointsClicked);
+            bankPointsButton.onClick.AddListener(OnBankMutationPointsClicked);
             RefreshSpendPointsButtonUI();
             CaptureOriginalControlScales();
             if (mutationPointsCounterText != null)
@@ -312,8 +312,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 mutationTreePanel.SetActive(false);
             }
 
-            // ── Store Points button tooltip ──
-            WireStorePointsTooltip();
+            // ── Bank Points button tooltip ──
+            WireBankPointsTooltip();
         }
 
         private void ApplyActionStyles()
@@ -442,10 +442,10 @@ namespace FungusToast.Unity.UI.MutationTree
             hasDismissedSpendMutationPointsIntroThisGame = false;
             hasDismissedMutationWorkspaceIntroThisGame = false;
             hasDismissedTimeLapseCoachmarkThisGame = false;
-            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
-            hasDismissedStorePointsCoachmarkThisGame = false;
+            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.BankMutationPointsIntro;
+            hasDismissedBankPointsCoachmarkThisGame = false;
             HideTimeLapseCoachmarkImmediate(true);
-            HideStorePointsCoachmarkImmediate(true);
+            HideBankPointsCoachmarkImmediate(true);
 
             if (mutationTreePanel != null)
             {
@@ -472,10 +472,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 spendPointsButton.interactable = false;
             }
 
-            if (storePointsButton != null)
+            if (bankPointsButton != null)
             {
-                storePointsButton.gameObject.SetActive(true);
-                storePointsButton.interactable = false;
+                bankPointsButton.gameObject.SetActive(true);
+                bankPointsButton.interactable = false;
             }
 
             SetSpendPointsButtonText("No Points Available");
@@ -840,21 +840,21 @@ namespace FungusToast.Unity.UI.MutationTree
             soundEffectAudioSource.PlayOneShot(mutationUpgradeSuccessClip, effectiveVolume);
         }
 
-        private void PlayMutationStorePointsSound()
+        private void PlayMutationBankPointsSound()
         {
-            if (mutationStorePointsClip == null)
+            if (mutationBankPointsClip == null)
             {
                 return;
             }
 
             EnsureSoundEffectAudioSource();
-            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationStorePointsVolume);
+            float effectiveVolume = SoundEffectsSettings.GetEffectiveVolume(mutationBankPointsVolume);
             if (effectiveVolume <= 0f)
             {
                 return;
             }
 
-            soundEffectAudioSource.PlayOneShot(mutationStorePointsClip, effectiveVolume);
+            soundEffectAudioSource.PlayOneShot(mutationBankPointsClip, effectiveVolume);
         }
 
         public void RefreshSpendPointsButtonUI()
@@ -1026,7 +1026,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
             TryShowMutationWorkspaceIntro();
             TryShowTimeLapseCoachmark();
-            TryShowStorePointsCoachmark();
+            TryShowBankPointsCoachmark();
         }
 
         private IEnumerator SlideOutTree()
@@ -1053,7 +1053,7 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationTreePanel.SetActive(false);
             SetGlobalHudControlsSuppressed(false);
             HideTimeLapseCoachmarkImmediate(false);
-            HideStorePointsCoachmarkImmediate(false);
+            HideBankPointsCoachmarkImmediate(false);
 
             if (dockButtonText != null)
                 dockButtonText.text = ReturnButtonLabel;
@@ -1462,7 +1462,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ShowProjectedCost(cost, inspectedPlayer.MutationPoints >= cost);
         }
 
-        private void OnStoreMutationPointsClicked()
+        private void OnBankMutationPointsClicked()
         {
             if (pendingTargetedSurgeSelection != null)
             {
@@ -1493,16 +1493,16 @@ namespace FungusToast.Unity.UI.MutationTree
                     }
                 }
 
-                PlayMutationStorePointsSound();
+                PlayMutationBankPointsSound();
                 EndHumanMutationPhase();
             }
         }
 
         private void SetMutationChoiceLocked(bool locked)
         {
-            if (storePointsButton != null)
+            if (bankPointsButton != null)
             {
-                storePointsButton.interactable = !locked;
+                bankPointsButton.interactable = !locked;
             }
 
             if (locked)
@@ -1643,9 +1643,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 legacyInset = Mathf.Max(legacyInset, pointsInset);
             }
 
-            if (TryGetTopInsetForRect(storePointsButton != null ? storePointsButton.transform as RectTransform : null, fallbackHeight: StoreButtonMinHeight, out float storeInset))
+            if (TryGetTopInsetForRect(bankPointsButton != null ? bankPointsButton.transform as RectTransform : null, fallbackHeight: BankButtonMinHeight, out float bankInset))
             {
-                legacyInset = Mathf.Max(legacyInset, storeInset);
+                legacyInset = Mathf.Max(legacyInset, bankInset);
             }
 
             if (TryGetTopInsetForRect(presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null, fallbackHeight: PresentationSpeedButtonMinHeight, out float timeLapseInset))
@@ -1955,14 +1955,14 @@ namespace FungusToast.Unity.UI.MutationTree
                 PositionTimeLapseCoachmark();
             }
 
-            if (IsStorePointsCoachmarkVisible())
+            if (IsBankPointsCoachmarkVisible())
             {
                 Button? activeAnchorButton = activeMutationPointsCoachmarkTooltipId == NewPlayerTooltipId.SpendMutationPointsIntro
                     ? spendPointsButton
-                    : storePointsButton;
+                    : bankPointsButton;
                 if (activeAnchorButton != null)
                 {
-                    PositionStorePointsCoachmark(activeAnchorButton);
+                    PositionBankPointsCoachmark(activeAnchorButton);
                 }
             }
 
@@ -2320,10 +2320,10 @@ namespace FungusToast.Unity.UI.MutationTree
             PopulateAllMutations();
             // Force enable controls regardless of previous turn state
             SetSpendPointsButtonInteractable(true);
-            if (storePointsButton != null)
+            if (bankPointsButton != null)
             {
-                storePointsButton.gameObject.SetActive(true);
-                storePointsButton.interactable = true;
+                bankPointsButton.gameObject.SetActive(true);
+                bankPointsButton.interactable = true;
             }
             if (buttonOutline != null) buttonOutline.enabled = player.MutationPoints > 0;
             SetSpendPointsButtonText(player.MutationPoints > 0 ? $"Spend {player.MutationPoints} Points!" : "No Points Available");
@@ -2392,21 +2392,21 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  Store Points button tooltip
+        //  Bank Points button tooltip
         // ═══════════════════════════════════════════════════════════════
 
-        private void WireStorePointsTooltip()
+        private void WireBankPointsTooltip()
         {
-            if (storePointsButton == null) return;
+            if (bankPointsButton == null) return;
 
             // ── Make the button clearly visible against the dark panel ──
-            StyleStorePointsButton();
+            StyleBankPointsButton();
 
-            var trigger = storePointsButton.GetComponent<TooltipTrigger>();
+            var trigger = bankPointsButton.GetComponent<TooltipTrigger>();
             if (trigger == null)
-                trigger = storePointsButton.gameObject.AddComponent<TooltipTrigger>();
+                trigger = bankPointsButton.gameObject.AddComponent<TooltipTrigger>();
 
-            trigger.SetStaticText(StorePointsTooltipText);
+            trigger.SetStaticText(BankPointsTooltipText);
         }
 
         private void EnsurePresentationSpeedButton()
@@ -2416,7 +2416,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            Button templateButton = storePointsButton != null ? storePointsButton : spendPointsButton;
+            Button templateButton = bankPointsButton != null ? bankPointsButton : spendPointsButton;
             if (templateButton == null)
             {
                 return;
@@ -2444,7 +2444,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 CacheMutationPanelLayoutReferences();
             }
 
-            if (mutationTreeRect == null || mutationPointsCounterText == null || storePointsButton == null || presentationSpeedButton == null)
+            if (mutationTreeRect == null || mutationPointsCounterText == null || bankPointsButton == null || presentationSpeedButton == null)
             {
                 return;
             }
@@ -2460,17 +2460,17 @@ namespace FungusToast.Unity.UI.MutationTree
             ConfigureHeaderControlsRowLayout();
 
             headerLeftSlotRect ??= CreateHeaderSlot("UI_MutationHeaderLeftSlot", flexibleWidth: 1f, preferredWidth: 0f);
-            headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
+            headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: BankButtonMinWidth);
             headerRightSlotRect ??= CreateHeaderSlot("UI_MutationHeaderRightSlot", flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
             headerReturnSlotRect ??= CreateHeaderSlot("UI_MutationHeaderReturnSlot", flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             ConfigureHeaderSlotLayout(headerLeftSlotRect, flexibleWidth: 1f, preferredWidth: 0f);
-            ConfigureHeaderSlotLayout(headerCenterSlotRect, flexibleWidth: 0f, preferredWidth: StoreButtonMinWidth);
+            ConfigureHeaderSlotLayout(headerCenterSlotRect, flexibleWidth: 0f, preferredWidth: BankButtonMinWidth);
             ConfigureHeaderSlotLayout(headerRightSlotRect, flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
             ConfigureHeaderSlotLayout(headerReturnSlotRect, flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             MoveLabelToHeaderLeftSlot();
-            MoveButtonToHeaderCenterSlot(storePointsButton);
+            MoveButtonToHeaderCenterSlot(bankPointsButton);
             MoveButtonToHeaderRightSlot(presentationSpeedButton);
             MoveButtonToHeaderSlot(dockButton, headerReturnSlotRect);
             ConfigureReturnToBoardButton();
@@ -2739,8 +2739,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            EnsureStorePointsCoachmarkUi();
-            if (storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            EnsureBankPointsCoachmarkUi();
+            if (bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
             {
                 return;
             }
@@ -2764,7 +2764,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.SpendMutationPointsIntro);
             }
 
-            HideStorePointsCoachmarkImmediate(false);
+            HideBankPointsCoachmarkImmediate(false);
         }
 
         private void TryShowMutationWorkspaceIntro()
@@ -2860,9 +2860,9 @@ namespace FungusToast.Unity.UI.MutationTree
             CoachmarkLayoutUtility.PlayAttention(timeLapseCoachmarkRoot);
         }
 
-        private void TryShowStorePointsCoachmark()
+        private void TryShowBankPointsCoachmark()
         {
-            if (!isTreeOpen || mutationTreePanel == null || !mutationTreePanel.activeInHierarchy || storePointsButton == null)
+            if (!isTreeOpen || mutationTreePanel == null || !mutationTreePanel.activeInHierarchy || bankPointsButton == null)
             {
                 return;
             }
@@ -2871,42 +2871,42 @@ namespace FungusToast.Unity.UI.MutationTree
             bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
             bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
             int currentRound = gameManager?.Board?.CurrentRound ?? 0;
-            if (!NewPlayerTooltipRules.ShouldShowStoreMutationPointsIntro(
+            if (!NewPlayerTooltipRules.ShouldShowBankMutationPointsIntro(
                     forceFirstGame,
                     currentRound,
-                    hasDismissedStorePointsCoachmarkThisGame,
+                    hasDismissedBankPointsCoachmarkThisGame,
                     isFastForwarding))
             {
                 return;
             }
 
-            EnsureStorePointsCoachmarkUi();
-            if (storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            EnsureBankPointsCoachmarkUi();
+            if (bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
             {
                 return;
             }
 
-            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.StoreMutationPointsIntro;
+            activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.BankMutationPointsIntro;
             NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(activeMutationPointsCoachmarkTooltipId);
-            ShowMutationPointsCoachmark(definition, storePointsButton);
+            ShowMutationPointsCoachmark(definition, bankPointsButton);
         }
 
         private void ShowMutationPointsCoachmark(NewPlayerTooltipDefinition definition, Button anchorButton)
         {
-            if (definition == null || anchorButton == null || storePointsCoachmarkRoot == null || storePointsCoachmarkCanvasGroup == null)
+            if (definition == null || anchorButton == null || bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
             {
                 return;
             }
 
-            storePointsCoachmarkTitleTextLabel.text = definition.Title;
-            storePointsCoachmarkBodyTextLabel.text = definition.Body;
-            PositionStorePointsCoachmark(anchorButton);
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(storePointsCoachmarkRoot);
-            storePointsCoachmarkRoot.gameObject.SetActive(true);
-            storePointsCoachmarkRoot.SetAsLastSibling();
-            storePointsCoachmarkCanvasGroup.blocksRaycasts = true;
-            storePointsCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(storePointsCoachmarkRoot);
+            bankPointsCoachmarkTitleTextLabel.text = definition.Title;
+            bankPointsCoachmarkBodyTextLabel.text = definition.Body;
+            PositionBankPointsCoachmark(anchorButton);
+            CoachmarkLayoutUtility.PrepareAttentionEntrance(bankPointsCoachmarkRoot);
+            bankPointsCoachmarkRoot.gameObject.SetActive(true);
+            bankPointsCoachmarkRoot.SetAsLastSibling();
+            bankPointsCoachmarkCanvasGroup.blocksRaycasts = true;
+            bankPointsCoachmarkCanvasGroup.interactable = true;
+            CoachmarkLayoutUtility.PlayAttention(bankPointsCoachmarkRoot);
         }
 
         private void EnsureTimeLapseCoachmarkUi()
@@ -3026,9 +3026,9 @@ namespace FungusToast.Unity.UI.MutationTree
             rootObject.SetActive(false);
         }
 
-        private void EnsureStorePointsCoachmarkUi()
+        private void EnsureBankPointsCoachmarkUi()
         {
-            if (storePointsCoachmarkRoot != null)
+            if (bankPointsCoachmarkRoot != null)
             {
                 return;
             }
@@ -3041,19 +3041,19 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            var rootObject = new GameObject("UI_StorePointsCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            var rootObject = new GameObject("UI_BankPointsCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
             rootObject.transform.SetParent(parent, false);
 
-            storePointsCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            storePointsCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            storePointsCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            storePointsCoachmarkRoot.pivot = new Vector2(0f, 1f);
-            storePointsCoachmarkRoot.sizeDelta = new Vector2(StorePointsCoachmarkWidth, StorePointsCoachmarkHeight);
+            bankPointsCoachmarkRoot = rootObject.GetComponent<RectTransform>();
+            bankPointsCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
+            bankPointsCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
+            bankPointsCoachmarkRoot.pivot = new Vector2(0f, 1f);
+            bankPointsCoachmarkRoot.sizeDelta = new Vector2(BankPointsCoachmarkWidth, BankPointsCoachmarkHeight);
 
-            storePointsCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            storePointsCoachmarkCanvasGroup.alpha = 0f;
-            storePointsCoachmarkCanvasGroup.blocksRaycasts = false;
-            storePointsCoachmarkCanvasGroup.interactable = false;
+            bankPointsCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            bankPointsCoachmarkCanvasGroup.alpha = 0f;
+            bankPointsCoachmarkCanvasGroup.blocksRaycasts = false;
+            bankPointsCoachmarkCanvasGroup.interactable = false;
 
             var background = rootObject.GetComponent<Image>();
             var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
@@ -3074,15 +3074,15 @@ namespace FungusToast.Unity.UI.MutationTree
             titleRect.offsetMin = new Vector2(14f, -48f);
             titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
 
-            storePointsCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            storePointsCoachmarkTitleTextLabel.text = string.Empty;
-            storePointsCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            storePointsCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            storePointsCoachmarkTitleTextLabel.fontSize = 22f;
-            storePointsCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            storePointsCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(storePointsCoachmarkTitleTextLabel);
-            storePointsCoachmarkTitleTextLabel.raycastTarget = false;
+            bankPointsCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
+            bankPointsCoachmarkTitleTextLabel.text = string.Empty;
+            bankPointsCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
+            bankPointsCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
+            bankPointsCoachmarkTitleTextLabel.fontSize = 22f;
+            bankPointsCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
+            bankPointsCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(bankPointsCoachmarkTitleTextLabel);
+            bankPointsCoachmarkTitleTextLabel.raycastTarget = false;
 
             var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
             bodyObject.transform.SetParent(rootObject.transform, false);
@@ -3092,13 +3092,13 @@ namespace FungusToast.Unity.UI.MutationTree
             bodyRect.offsetMin = new Vector2(14f, 14f);
             bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
 
-            storePointsCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            storePointsCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            storePointsCoachmarkBodyTextLabel.fontSize = 17f;
-            storePointsCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            storePointsCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            storePointsCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            storePointsCoachmarkBodyTextLabel.raycastTarget = false;
+            bankPointsCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
+            bankPointsCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
+            bankPointsCoachmarkBodyTextLabel.fontSize = 17f;
+            bankPointsCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
+            bankPointsCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
+            bankPointsCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
+            bankPointsCoachmarkBodyTextLabel.raycastTarget = false;
 
             var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
             closeObject.transform.SetParent(rootObject.transform, false);
@@ -3112,10 +3112,10 @@ namespace FungusToast.Unity.UI.MutationTree
             var closeImage = closeObject.GetComponent<Image>();
             closeImage.color = UIStyleTokens.Surface.PanelElevated;
 
-            storePointsCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(storePointsCoachmarkCloseButton);
-            storePointsCoachmarkCloseButton.onClick.RemoveAllListeners();
-            storePointsCoachmarkCloseButton.onClick.AddListener(OnMutationPointsCoachmarkDismissed);
+            bankPointsCoachmarkCloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(bankPointsCoachmarkCloseButton);
+            bankPointsCoachmarkCloseButton.onClick.RemoveAllListeners();
+            bankPointsCoachmarkCloseButton.onClick.AddListener(OnMutationPointsCoachmarkDismissed);
 
             var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             closeLabelObject.transform.SetParent(closeObject.transform, false);
@@ -3135,8 +3135,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
             if (TMP_Settings.defaultFontAsset != null)
             {
-                storePointsCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                storePointsCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
+                bankPointsCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
+                bankPointsCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
                 closeLabel.font = TMP_Settings.defaultFontAsset;
             }
 
@@ -3168,12 +3168,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
-        private void PositionStorePointsCoachmark(Button anchorButton)
+        private void PositionBankPointsCoachmark(Button anchorButton)
         {
             RectTransform? anchorRect = anchorButton != null ? anchorButton.transform as RectTransform : null;
-            RectTransform? parentRect = storePointsCoachmarkRoot != null ? storePointsCoachmarkRoot.parent as RectTransform : null;
+            RectTransform? parentRect = bankPointsCoachmarkRoot != null ? bankPointsCoachmarkRoot.parent as RectTransform : null;
             Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : anchorButton?.GetComponentInParent<Canvas>()?.rootCanvas;
-            if (anchorRect == null || parentRect == null || canvas == null || storePointsCoachmarkRoot == null)
+            if (anchorRect == null || parentRect == null || canvas == null || bankPointsCoachmarkRoot == null)
             {
                 return;
             }
@@ -3185,11 +3185,11 @@ namespace FungusToast.Unity.UI.MutationTree
             Vector3 rightCenterWorld = (corners[2] + corners[3]) * 0.5f;
 
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                storePointsCoachmarkRoot,
+                bankPointsCoachmarkRoot,
                 parentRect,
                 canvas,
                 rightCenterWorld,
-                new Vector2(StorePointsCoachmarkHorizontalOffset, StorePointsCoachmarkVerticalOffset),
+                new Vector2(BankPointsCoachmarkHorizontalOffset, BankPointsCoachmarkVerticalOffset),
                 CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
@@ -3213,7 +3213,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
             else
             {
-                hasDismissedStorePointsCoachmarkThisGame = true;
+                hasDismissedBankPointsCoachmarkThisGame = true;
             }
 
             bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
@@ -3222,7 +3222,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 NewPlayerTooltipCatalog.MarkSeen(activeMutationPointsCoachmarkTooltipId);
             }
 
-            HideStorePointsCoachmarkImmediate(false);
+            HideBankPointsCoachmarkImmediate(false);
         }
 
         private void HideTimeLapseCoachmarkImmediate(bool resetSessionDismissal)
@@ -3245,23 +3245,23 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void HideStorePointsCoachmarkImmediate(bool resetSessionDismissal)
+        private void HideBankPointsCoachmarkImmediate(bool resetSessionDismissal)
         {
             if (resetSessionDismissal)
             {
-                hasDismissedStorePointsCoachmarkThisGame = false;
+                hasDismissedBankPointsCoachmarkThisGame = false;
             }
 
-            if (storePointsCoachmarkCanvasGroup != null)
+            if (bankPointsCoachmarkCanvasGroup != null)
             {
-                storePointsCoachmarkCanvasGroup.alpha = 0f;
-                storePointsCoachmarkCanvasGroup.blocksRaycasts = false;
-                storePointsCoachmarkCanvasGroup.interactable = false;
+                bankPointsCoachmarkCanvasGroup.alpha = 0f;
+                bankPointsCoachmarkCanvasGroup.blocksRaycasts = false;
+                bankPointsCoachmarkCanvasGroup.interactable = false;
             }
 
-            if (storePointsCoachmarkRoot != null)
+            if (bankPointsCoachmarkRoot != null)
             {
-                storePointsCoachmarkRoot.gameObject.SetActive(false);
+                bankPointsCoachmarkRoot.gameObject.SetActive(false);
             }
         }
 
@@ -3273,60 +3273,60 @@ namespace FungusToast.Unity.UI.MutationTree
                 && timeLapseCoachmarkCanvasGroup.alpha > 0f;
         }
 
-        private bool IsStorePointsCoachmarkVisible()
+        private bool IsBankPointsCoachmarkVisible()
         {
-            return storePointsCoachmarkRoot != null
-                && storePointsCoachmarkCanvasGroup != null
-                && storePointsCoachmarkRoot.gameObject.activeSelf
-                && storePointsCoachmarkCanvasGroup.alpha > 0f;
+            return bankPointsCoachmarkRoot != null
+                && bankPointsCoachmarkCanvasGroup != null
+                && bankPointsCoachmarkRoot.gameObject.activeSelf
+                && bankPointsCoachmarkCanvasGroup.alpha > 0f;
         }
 
         /// <summary>
-        /// Styles the Store Points button with explicit colors and a storage icon
+        /// Styles the Bank Points button with explicit colors and a storage icon
         /// so it stands out against the dark panel header.
         /// </summary>
-        private void StyleStorePointsButton()
+        private void StyleBankPointsButton()
         {
             UIStyleTokens.Button.ApplySecondaryMenuAction(
-                storePointsButton,
-                StoreButtonMinWidth,
-                preferredHeight: StoreButtonMinHeight,
-                minHeight: StoreButtonMinHeight);
-            UIStyleTokens.Button.SetButtonLabelColor(storePointsButton, UIStyleTokens.Text.Primary);
+                bankPointsButton,
+                BankButtonMinWidth,
+                preferredHeight: BankButtonMinHeight,
+                minHeight: BankButtonMinHeight);
+            UIStyleTokens.Button.SetButtonLabelColor(bankPointsButton, UIStyleTokens.Text.Primary);
 
-            var colors = storePointsButton.colors;
+            var colors = bankPointsButton.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
             colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.55f);
             colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
             colors.selectedColor = colors.highlightedColor;
             colors.fadeDuration = 0.08f;
-            storePointsButton.transition = Selectable.Transition.ColorTint;
-            storePointsButton.colors = colors;
+            bankPointsButton.transition = Selectable.Transition.ColorTint;
+            bankPointsButton.colors = colors;
 
-            var outline = storePointsButton.GetComponent<Outline>();
+            var outline = bankPointsButton.GetComponent<Outline>();
             if (outline == null)
             {
-                outline = storePointsButton.gameObject.AddComponent<Outline>();
+                outline = bankPointsButton.gameObject.AddComponent<Outline>();
             }
 
             outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
             outline.effectDistance = new Vector2(2f, -2f);
 
-            var layout = storePointsButton.GetComponent<LayoutElement>();
+            var layout = bankPointsButton.GetComponent<LayoutElement>();
             if (layout == null)
-                layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
-            layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
-            layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
-            layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
-            layout.preferredWidth = Mathf.Max(layout.preferredWidth, StoreButtonMinWidth);
+                layout = bankPointsButton.gameObject.AddComponent<LayoutElement>();
+            layout.minHeight = Mathf.Max(layout.minHeight, BankButtonMinHeight);
+            layout.minWidth = Mathf.Max(layout.minWidth, BankButtonMinWidth);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, BankButtonMinHeight);
+            layout.preferredWidth = Mathf.Max(layout.preferredWidth, BankButtonMinWidth);
 
             _ = ConfigureHeaderActionButtonContent(
-                storePointsButton,
-                ref storePointsButtonIconImage,
-                "Store Mutation Points",
-                "StoreMutationPointsButtonContent",
-                "StoreMutationPointsButtonIcon",
-                storePointsButtonIcon,
+                bankPointsButton,
+                ref bankPointsButtonIconImage,
+                "Bank Points & End Turn",
+                "BankMutationPointsButtonContent",
+                "BankMutationPointsButtonIcon",
+                bankPointsButtonIcon,
                 UIStyleTokens.Text.Primary,
                 UIStyleTokens.Accent.Spore);
             RefreshHeaderActionButtonWidths();
@@ -3339,10 +3339,10 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            var legacyStoreContentRoot = presentationSpeedButton.transform.Find("StoreMutationPointsButtonContent");
-            if (legacyStoreContentRoot != null)
+            var legacyBankContentRoot = presentationSpeedButton.transform.Find("BankMutationPointsButtonContent");
+            if (legacyBankContentRoot != null)
             {
-                Destroy(legacyStoreContentRoot.gameObject);
+                Destroy(legacyBankContentRoot.gameObject);
             }
 
             UIStyleTokens.Button.ApplySecondaryMenuAction(
@@ -3422,7 +3422,7 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void RefreshHeaderActionButtonWidths()
         {
-            UpdateHeaderActionButtonWidth(storePointsButton, headerCenterSlotRect, StoreButtonMinWidth);
+            UpdateHeaderActionButtonWidth(bankPointsButton, headerCenterSlotRect, BankButtonMinWidth);
             UpdateHeaderActionButtonWidth(presentationSpeedButton, headerRightSlotRect, PresentationSpeedButtonMinWidth);
             UpdateHeaderActionButtonWidth(dockButton, headerReturnSlotRect, ReturnButtonMinWidth);
         }
@@ -3534,7 +3534,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
                 var preferredHeight = button == presentationSpeedButton
                     ? PresentationSpeedButtonMinHeight
-                    : StoreButtonMinHeight;
+                    : BankButtonMinHeight;
                 buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, preferredHeight);
             }
         }
@@ -3546,9 +3546,9 @@ namespace FungusToast.Unity.UI.MutationTree
                 return null;
             }
 
-            if (button == storePointsButton)
+            if (button == bankPointsButton)
             {
-                return button.transform.Find("StoreMutationPointsButtonContent") as RectTransform;
+                return button.transform.Find("BankMutationPointsButtonContent") as RectTransform;
             }
 
             if (button == presentationSpeedButton)
@@ -3972,22 +3972,22 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void RestoreStoreButtonLayout()
         {
-            if (storePointsButton == null)
+            if (bankPointsButton == null)
             {
                 return;
             }
 
-            storePointsButton.gameObject.SetActive(true);
+            bankPointsButton.gameObject.SetActive(true);
 
-            var layout = storePointsButton.GetComponent<LayoutElement>();
+            var layout = bankPointsButton.GetComponent<LayoutElement>();
             if (layout == null)
             {
-                layout = storePointsButton.gameObject.AddComponent<LayoutElement>();
+                layout = bankPointsButton.gameObject.AddComponent<LayoutElement>();
             }
 
-            layout.minWidth = Mathf.Max(layout.minWidth, StoreButtonMinWidth);
-            layout.minHeight = Mathf.Max(layout.minHeight, StoreButtonMinHeight);
-            layout.preferredHeight = Mathf.Max(layout.preferredHeight, StoreButtonMinHeight);
+            layout.minWidth = Mathf.Max(layout.minWidth, BankButtonMinWidth);
+            layout.minHeight = Mathf.Max(layout.minHeight, BankButtonMinHeight);
+            layout.preferredHeight = Mathf.Max(layout.preferredHeight, BankButtonMinHeight);
         }
 
         private void RestorePresentationSpeedButtonLayout()

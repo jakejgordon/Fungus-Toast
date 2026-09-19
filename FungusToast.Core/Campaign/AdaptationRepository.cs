@@ -217,7 +217,7 @@ namespace FungusToast.Core.Campaign
                     new AdaptationDefinition(
                         AdaptationIds.CompoundReserve,
                         "Compound Reserve",
-                        $"When you store {AdaptationGameBalance.CompoundReserveBankingThreshold} or more mutation points in a turn, gain {AdaptationGameBalance.CompoundReserveBonusPoints} additional mutation {(AdaptationGameBalance.CompoundReserveBonusPoints == 1 ? "point" : "points")}.",
+                        $"When you bank {AdaptationGameBalance.CompoundReserveBankingThreshold} or more mutation points in a turn, gain {AdaptationGameBalance.CompoundReserveBonusPoints} additional mutation {(AdaptationGameBalance.CompoundReserveBonusPoints == 1 ? "point" : "points")}.",
                         "compound_reserve",
                         isStartingAdaptation: true),
                 });

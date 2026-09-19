@@ -11,7 +11,7 @@ namespace FungusToast.Unity.UI.Onboarding
         MutationWorkspaceIntro,
         TimeLapseModeIntro,
         TimeLapseCarriedOverIntro,
-        StoreMutationPointsIntro,
+        BankMutationPointsIntro,
         ScoreboardWinCondition,
         InspectPlayersIntro,
         AdaptationPanelIntro,
@@ -100,10 +100,10 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipSurface.MutationTreeCoachmark,
                 "Show when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting and is currently enabled, unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
-                NewPlayerTooltipId.StoreMutationPointsIntro,
-                "Onboarding.StoreMutationPointsIntroSeen",
-                "Store Mutation Points",
-                "Click this button to immediately end your turn and bank your mutation points for the next round. Use this to save up for mutations that you cannot afford this turn.",
+                NewPlayerTooltipId.BankMutationPointsIntro,
+                "Onboarding.BankMutationPointsIntroSeen",
+                "Bank Points & End Turn",
+                "This ends your mutation phase right away and carries your unspent points into next round. Use it to save up for a mutation you cannot afford yet.",
                 NewPlayerTooltipSurface.MutationTreeCoachmark,
                 "Show when the mutation tree opens on round 6 or later unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
@@ -327,7 +327,7 @@ namespace FungusToast.Unity.UI.Onboarding
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseCarriedOverIntro);
         }
 
-        public static bool ShouldShowStoreMutationPointsIntro(
+        public static bool ShouldShowBankMutationPointsIntro(
             bool forceFirstGameExperience,
             int currentRound,
             bool hasDismissedThisGame,
@@ -338,7 +338,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 return false;
             }
 
-            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.StoreMutationPointsIntro);
+            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.BankMutationPointsIntro);
         }
 
         public static bool ShouldShowAdaptationPanelIntro(

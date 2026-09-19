@@ -169,7 +169,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
                     new PlayerInspectorLine(
                         "Banking Intent",
                         player.WantsToBankPointsThisTurn
-                            ? $"Yes ({player.MutationPoints} stored)"
+                            ? $"Yes ({player.MutationPoints} banked)"
                             : "No")
                 }));
 

@@ -206,7 +206,7 @@ These currently live in `NewPlayerTooltipCatalog.cs`:
 - `MutationWorkspaceIntro`
 - `TimeLapseModeIntro`
 - `TimeLapseCarriedOverIntro`
-- `StoreMutationPointsIntro`
+- `BankMutationPointsIntro`
 - `ScoreboardWinCondition`
 - `InspectPlayersIntro`
 - `AdaptationPanelIntro`
@@ -233,7 +233,7 @@ Use this section when you want a quick description of what already exists withou
 | `MutationWorkspaceIntro` | mutation tree modal | Shown the first time the player opens the mutation tree by clicking Spend Points. It combines spending and inspector guidance in one modal positioned toward the inspector side of the workspace. It is suppressed while fast-forwarding, then suppressed for the current game and, outside forced first-game experience, shown once per profile. |
 | `TimeLapseModeIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 5, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `TimeLapseCarriedOverIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting (i.e. it was already on when the session started) and is currently enabled, unless already dismissed that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile; sharing the round-5 `TimeLapseModeIntro` coachmark slot means seeing this one suppresses that one for the rest of the game. |
-| `StoreMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `BankMutationPointsIntro` | mutation tree coachmark | Shown when the mutation tree opens on round 6 or later, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `ScoreboardWinCondition` | sidebar coachmark | Shown from round 2 onward, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `InspectPlayersIntro` | sidebar coachmark | Shown from round 8 onward — deliberately the last of the fixed-round hints, after the round 1–3 sidebar/mold-profile coachmarks and the round 5–6 mutation tree ones, and before the round-15 draft intro, so it never shares a round with another. Suppressed while fast-forwarding, after dismissal this game, and for a player who already pinned the inspector this game. Pinning the inspector marks it seen for good. Outside forced first-game experience, it only shows once per profile. |
 | `AdaptationPanelIntro` | mold profile coachmark | Shown from round 3 onward when the adaptations section is visible, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |

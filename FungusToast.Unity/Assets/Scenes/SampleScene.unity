@@ -6006,7 +6006,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 56d1a8a06a90c804286d3897bb5b4b68, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  staticText: During the Mutation phase, players can spend mutation points or store
+  staticText: During the Mutation phase, players can spend mutation points or bank
     them for the next round.
   dynamicProvider: {fileID: 0}
   hoverDelay: 0.38
@@ -6257,7 +6257,7 @@ GameObject:
   - component: {fileID: 517238396}
   - component: {fileID: 517238395}
   m_Layer: 5
-  m_Name: UI_StoreMutationPointsButton
+  m_Name: UI_BankMutationPointsButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6302,7 +6302,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Store Mutation Points
+  m_text: Bank Points & End Turn
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -16415,7 +16415,7 @@ GameObject:
   - component: {fileID: 1388654717}
   - component: {fileID: 1388654716}
   m_Layer: 5
-  m_Name: UI_StoreMutationPointsButton
+  m_Name: UI_BankMutationPointsButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16622,13 +16622,13 @@ MonoBehaviour:
   dockButton: {fileID: 1117693805}
   dockButtonText: {fileID: 1677498023}
   mutationPointsCounterText: {fileID: 541730892}
-  storePointsButton: {fileID: 1388654716}
-  storePointsButtonIcon: {fileID: -3083825033370468877, guid: a4458004309240c4c97d2f6ffe39db11, type: 3}
+  bankPointsButton: {fileID: 1388654716}
+  bankPointsButtonIcon: {fileID: -3083825033370468877, guid: a4458004309240c4c97d2f6ffe39db11, type: 3}
   presentationSpeedButtonIcon: {fileID: 3831208137149316737, guid: a64e96172fa1eb7479d3273d14224b80, type: 3}
   mutationUpgradeSuccessClip: {fileID: 8300000, guid: 871d52f60a2a4cb9a31fcffbaa5a87d7, type: 3}
   mutationUpgradeSuccessVolume: 1
-  mutationStorePointsClip: {fileID: 8300000, guid: 56a96171dbfe1444788af0082dffa3f7, type: 3}
-  mutationStorePointsVolume: 1
+  mutationBankPointsClip: {fileID: 8300000, guid: 56a96171dbfe1444788af0082dffa3f7, type: 3}
+  mutationBankPointsVolume: 1
   mutationPointBonusPopClip: {fileID: 0}
   mutationPointBonusPopVolume: 1
   slideDuration: 0.5
@@ -21566,7 +21566,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   staticText: Click here to view the mutation upgrade tree and upgrade mutations,
-    or to store mutation points until the next round.
+    or to bank mutation points until the next round.
   dynamicProvider: {fileID: 0}
   hoverDelay: 0.38
   useCustomDelay: 0
