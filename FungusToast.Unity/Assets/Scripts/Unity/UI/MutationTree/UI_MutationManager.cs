@@ -775,7 +775,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 },
                 "Select one empty, non-nutrient tile to place your Chemobeacon.",
                 showCancelButton: true,
-                cancelButtonLabel: "Cancel (Esc)"
+                cancelButtonLabel: "Cancel (Esc)",
+                cancellable: true
             );
 
             TileSelectionController.Instance.SetHoverPreviewCallback(tileId =>

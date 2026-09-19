@@ -882,6 +882,7 @@ namespace FungusToast.Unity
 
         public void RestartCurrentLevel()
         {
+            AbortActiveSelection();
             gameStartService?.RestartCurrentLevel();
         }
 
@@ -1969,7 +1970,7 @@ namespace FungusToast.Unity
 
         public void ReturnToMainMenu()
         {
-            TryCancelActiveSelection();
+            AbortActiveSelection();
             gameTransitionService?.ReturnToMainMenu();
         }
 
@@ -2605,27 +2606,40 @@ namespace FungusToast.Unity
             return true;
         }
 
+        /// <summary>
+        /// Player-initiated cancel (Escape). Returns true only when a selection was actually
+        /// backed out of; a mandatory placement refuses, so Escape falls through to the
+        /// pause menu instead of forfeiting the effect.
+        /// </summary>
         private bool TryCancelActiveSelection()
         {
             if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
             {
-                MultiCellSelectionController.Instance.CancelSelection();
-                return true;
+                return MultiCellSelectionController.Instance.CancelSelection();
             }
 
             if (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.HasActiveSelection)
             {
-                MultiTileSelectionController.Instance.CancelSelection();
-                return true;
+                return MultiTileSelectionController.Instance.CancelSelection();
             }
 
             if (TileSelectionController.Instance != null && TileSelectionController.Instance.HasActiveSelection)
             {
-                TileSelectionController.Instance.CancelSelection();
-                return true;
+                return TileSelectionController.Instance.CancelSelection();
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Forced teardown of whatever selection is in progress, cancellable or not, for
+        /// when the game itself is going away.
+        /// </summary>
+        private void AbortActiveSelection()
+        {
+            MultiCellSelectionController.Instance?.AbortSelection();
+            MultiTileSelectionController.Instance?.AbortSelection();
+            TileSelectionController.Instance?.AbortSelection();
         }
 
         public void SkipToNextTrack()

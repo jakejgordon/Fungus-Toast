@@ -129,7 +129,8 @@ namespace FungusToast.Unity.UI
             int playerId,
             Action<FungalCell> onSelected,
             Action onCancel = null,
-            string promptMessage = null)
+            string promptMessage = null,
+            bool cancellable = false)
         {
             var board = GameManager.Instance?.Board;
             if (board == null)
@@ -141,6 +142,7 @@ namespace FungusToast.Unity.UI
 
             selectingPlayerId = playerId;
             SelectionActive = true;
+            IsCancellable = cancellable;
 
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
@@ -176,7 +178,8 @@ namespace FungusToast.Unity.UI
             Action onCancel = null,
             Action<int, CardinalDirection?> onPreviewChanged = null,
             string sourcePromptMessage = null,
-            string aimPromptMessage = null)
+            string aimPromptMessage = null,
+            bool cancellable = false)
         {
             var board = GameManager.Instance?.Board;
             if (board == null)
@@ -186,6 +189,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            IsCancellable = cancellable;
             onDirectionalSelectionConfirmed = onConfirmed;
             onDirectionalSelectionCancelled = onCancel;
             onDirectionalSelectionPreviewChanged = onPreviewChanged;
@@ -202,7 +206,8 @@ namespace FungusToast.Unity.UI
             Action onCancel = null,
             string promptMessage = null,
             bool showCancelButton = false,
-            string cancelButtonLabel = "Cancel")
+            string cancelButtonLabel = "Cancel",
+            bool cancellable = false)
         {
             var board = GameManager.Instance?.Board;
             if (board == null)
@@ -215,9 +220,11 @@ namespace FungusToast.Unity.UI
             bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
 
             SelectionActive = true;
+            // A visible Cancel button only makes sense for a selection the player may back out of.
+            IsCancellable = cancellable || showCancelButton;
 
             if (!string.IsNullOrEmpty(promptMessage))
-                GameManager.Instance.ShowSelectionPrompt(promptMessage, showCancelButton, cancelButtonLabel, CancelSelection);
+                GameManager.Instance.ShowSelectionPrompt(promptMessage, showCancelButton, cancelButtonLabel, () => CancelSelection());
 
             Action<int> onTileSelected = (tileId) =>
             {
@@ -255,7 +262,8 @@ namespace FungusToast.Unity.UI
             Action<BoardTile> onTileSelected,
             Action onComplete,
             int maxTiles,
-            string promptMessage = null)
+            string promptMessage = null,
+            bool cancellable = false)
         {
             var board = GameManager.Instance?.Board;
             if (board == null)
@@ -268,6 +276,7 @@ namespace FungusToast.Unity.UI
             bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
 
             SelectionActive = true;
+            IsCancellable = cancellable;
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
@@ -354,15 +363,37 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        public void CancelSelection()
+        /// <summary>
+        /// Player-initiated cancel (Escape, right-click, Cancel button). Backing out of
+        /// the aim phase to re-pick the source is always allowed since nothing has been
+        /// committed; abandoning the selection entirely is only allowed when the prompt
+        /// was started as cancellable, so a mandatory placement can never be forfeited
+        /// by reflex. Returns whether the cancel was handled.
+        /// </summary>
+        public bool CancelSelection()
         {
-            if (!SelectionActive) return;
+            if (!SelectionActive) return false;
 
             if (directionalSelectionPhase == DirectionalSelectionPhase.SelectDirection)
             {
                 BeginDirectionalSourceSelection();
-                return;
+                return true;
             }
+
+            if (!IsCancellable) return false;
+
+            AbortSelection();
+            return true;
+        }
+
+        /// <summary>
+        /// Forced teardown regardless of cancellability, for when the game itself is
+        /// going away (return to main menu). Still fires the cancel callback so the
+        /// owning flow can clean up.
+        /// </summary>
+        public void AbortSelection()
+        {
+            if (!SelectionActive) return;
 
             SelectionActive = false;
             gridVisualizer.ClearHighlights();
@@ -385,6 +416,7 @@ namespace FungusToast.Unity.UI
             SetHoverVisualSuppression(false);
 
             selectingPlayerId = -1;
+            IsCancellable = false;
             onCellSelected = null;
             onTileSelected = null;
             onCancelled = null;
@@ -422,6 +454,9 @@ namespace FungusToast.Unity.UI
         }
 
         public bool HasActiveSelection => SelectionActive;
+
+        /// <summary>True when the player may back out of the current selection without resolving it.</summary>
+        public bool IsCancellable { get; private set; }
 
         /// <summary>
         /// Registers a callback that is invoked whenever a selectable tile is newly hovered

@@ -85,10 +85,12 @@ namespace FungusToast.Unity.UI
             string promptMessage = null,
             Func<IReadOnlyCollection<int>, int, IEnumerable<int>> autoSelectTileIds = null,
             string autoButtonLabel = "Auto Placement",
-            string autoTooltipText = "Automatically select remaining tiles")
+            string autoTooltipText = "Automatically select remaining tiles",
+            bool cancellable = false)
         {
             this.selectingPlayerId = playerId;
             SelectionActive = true;
+            IsCancellable = cancellable;
             selectedTileIds.Clear();
             autoSelectionResolver = autoSelectTileIds;
             autoSelectionButtonLabel = string.IsNullOrWhiteSpace(autoButtonLabel) ? "Auto Placement" : autoButtonLabel;
@@ -251,7 +253,24 @@ namespace FungusToast.Unity.UI
             Reset();
         }
 
-        public void CancelSelection()
+        /// <summary>
+        /// Player-initiated cancel (Escape, right-click, Cancel button). A mandatory
+        /// placement (the default) ignores it so the player can never forfeit an
+        /// already-committed effect by reflex; returns whether the cancel was handled.
+        /// </summary>
+        public bool CancelSelection()
+        {
+            if (!SelectionActive || !IsCancellable) return false;
+            AbortSelection();
+            return true;
+        }
+
+        /// <summary>
+        /// Forced teardown regardless of cancellability, for when the game itself is
+        /// going away (return to main menu). Still fires the cancel callback so the
+        /// owning flow can clean up.
+        /// </summary>
+        public void AbortSelection()
         {
             if (!SelectionActive) return;
             SelectionActive = false;
@@ -265,6 +284,7 @@ namespace FungusToast.Unity.UI
             selectingPlayerId = -1;
             onCellsSelected = null;
             onCancelled = null;
+            IsCancellable = false;
             selectableTileIds.Clear();
             selectedTileIds.Clear();
             maxSelections = 5;
@@ -302,5 +322,8 @@ namespace FungusToast.Unity.UI
         }
 
         public bool HasActiveSelection => SelectionActive;
+
+        /// <summary>True when the player may back out of the current selection without resolving it.</summary>
+        public bool IsCancellable { get; private set; }
     }
 }
