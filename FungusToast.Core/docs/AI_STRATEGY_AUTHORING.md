@@ -383,6 +383,13 @@ a held-out confirmation.
   then Reclamation Rhizomorphs—and leaves all other drafts to normal AI
   scoring. Its Testing treatment is
   `TST_Campaign_AI4_CuratedMycovariantsV2`.
+- Candidate 2 comparison seed `2026091952`, 50 pairs: treatment-control
+  normalized board share `+0.003065`, 95% CI `[-0.071748, 0.077879]`; the
+  lower bound again did not support the `-0.05` non-inferiority margin.
+  Artifacts: `ai4_myco_v2_comparison_{control,treatment}_2026091952`.
+- Candidate 2 was also rejected at the comparison gate. No holdout was run and
+  AI4 remains unchanged. Its near-zero point estimate but wide interval is
+  insufficient promotion evidence, not evidence of material harm.
 
 ## Recommended Simulation Pattern
 
