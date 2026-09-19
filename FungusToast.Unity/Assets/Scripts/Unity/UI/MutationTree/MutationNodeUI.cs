@@ -33,6 +33,11 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float HoverLiftScale = 1.03f;
         private const float PressedSquashScale = 0.97f;
         private const float ButtonScaleLerpSpeed = 18f;
+        // Hover fill is the full category hue pulled toward black far enough that
+        // Text.Primary stays >= 4.5:1 on every accent (worst case Growth, 4.6:1).
+        // Every card in the tree is light-on-dark; a hovered card must stay in that
+        // family - dark text on the raw accent measured fine but read as grey.
+        private const float HoverFillDarken = 0.40f;
         private const float PressedFillDarken = 0.18f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
@@ -561,15 +566,16 @@ namespace FungusToast.Unity.UI.MutationTree
             if (nodeBackground == null || upgradeButton == null) return;
             if (!upgradeButton.interactable) return;
 
-            // A buyable card inverts to its full category accent under the pointer -
-            // the same treatment as its column header - rather than brightening a
-            // little like a highlighted row. Text contrast is decided from the accent,
-            // not the pressed shade, so it never flips mid-press.
+            // A buyable card lights up in its full, saturated category hue under the
+            // pointer rather than brightening a little like a highlighted row. The hue
+            // is darkened so light text keeps its contrast; pressing darkens it further.
             Color accent = MutationTreeColors.GetCategoryAccent(mutation.Category);
-            Color fill = isPointerPressed ? Color.Lerp(accent, Color.black, PressedFillDarken) : accent;
+            Color fill = Color.Lerp(accent, Color.black, HoverFillDarken);
+            if (isPointerPressed)
+                fill = Color.Lerp(fill, Color.black, PressedFillDarken);
             fill.a = 1f;
             nodeBackground.color = fill;
-            ApplyTextContrast(useDarkText: IsLightBackground(accent));
+            ApplyTextContrast(useDarkText: false);
         }
 
         private void ApplyTextContrast(bool useDarkText)
@@ -1950,11 +1956,10 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private bool ShouldUseDarkTextForCurrentBackground()
         {
-            return nodeBackground != null && IsLightBackground(nodeBackground.color);
-        }
+            if (nodeBackground == null)
+                return false;
 
-        private static bool IsLightBackground(Color background)
-        {
+            Color background = nodeBackground.color;
             float luminance = (0.2126f * background.r) + (0.7152f * background.g) + (0.0722f * background.b);
             return luminance >= DarkTextBackgroundLuminanceThreshold;
         }
