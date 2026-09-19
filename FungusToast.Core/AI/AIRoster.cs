@@ -603,7 +603,13 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout for the toxin engine"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 toxin level")
+                },
                 startingSporeEdgeOffset: -15
             ),
             // AI10 test permutation: more direct toxin/regression pressure

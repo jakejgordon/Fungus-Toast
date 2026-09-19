@@ -391,6 +391,28 @@ a held-out confirmation.
   AI4 remains unchanged. Its near-zero point estimate but wide interval is
   insufficient promotion evidence, not evidence of material harm.
 
+### The Necrotoxin Gauntlet (`CMP_Bloom_NecrotoxinGauntlet_Elite`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. This replaces the broad Economy-category selector with the
+  strongest deterministic mutation-point payouts before its late Tier 5
+  fallback, while excluding the three AI-only bait cards.
+- Context: the same fixed eight-player, 120x120, rotating-slot panel used by
+  the preceding migrations, with Mycovariants on and nutrients and starting
+  Adaptations off.
+- Comparison seed `2026091972`, 50 pairs: treatment-control normalized board
+  share `0.000000`, 95% CI `[0.000000, 0.000000]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `necrotoxin_myco_comparison_{control,treatment}_2026091972`.
+- Held-out seed `2026091973`, 100 pairs: treatment-control normalized board
+  share `0.000000`, 95% CI `[0.000000, 0.000000]`; the same margin was
+  supported. Artifacts:
+  `necrotoxin_myco_holdout_{control,treatment}_2026091973`.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. Exact paired parity confirms that the explicit order
+  preserves the former category-control behavior for these samples. The
+  Testing pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
