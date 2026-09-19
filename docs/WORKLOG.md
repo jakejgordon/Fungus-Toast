@@ -1496,14 +1496,22 @@ should not start until the grammar and the migration surface are agreed.
 
 None of these were done in that session; they are the loose ends it exposed.
 
-1. **Nothing checks that measured proxy outcome is monotonic.**
-   `validate_campaign_ai_rosters` checks authored difficulty means, and the
-   Campaign10 reroster note already records that the mean is a relative index
-   rather than a share prediction. The gap is that no check covers the measured
-   quantity the bands are written against: proxy win rate peaks at levels 7 and
-   8 and then falls away, so the validator passes on a ladder that inverts.
-   Decide whether the measured ladder gets a recorded expectation, a periodic
-   artifact-backed check, or stays a manual review step.
+1. **Measured campaign-ladder check resolved 2026-09-18.**
+   `analyze_campaign_ladder.py` now discovers one common-seed set of 100-game
+   campaign artifacts, validates complete Parquet/manifest evidence, reads the
+   safe proxy's tie-aware win credit when available, and reports target-band
+   status plus adjacent-level changes. A proxy win-rate increase is marked
+   `INVERSION`, but the command remains report-only and exits successfully;
+   missing, duplicate, incomplete, malformed, or non-holdout modern evidence
+   fails loudly, as do resolved artifacts from mixed code commits. The current
+   legacy seed-20260517 suite proves the surface: it
+   reports inversions at levels 5→6 (+5 points) and 9→10 (+14 points), labels
+   its reduced-provenance manifests, and identifies missing 100-game artifacts
+   for levels 3 and 11–15. These findings nominate review only and make no
+   balance change. All 7 focused analytics tests pass, and Core/Simulation build
+   with zero warnings/errors. Full analytics discovery still contains the
+   pre-existing unrelated failure in
+   `test_execution_health_aggregates_decisions_and_fallback_rate`.
 
 2. **A category preference is a very weak draft identity.** 78 of the 80
    `GetPreferredMycovariantIds` call sites name only one or two categories, and

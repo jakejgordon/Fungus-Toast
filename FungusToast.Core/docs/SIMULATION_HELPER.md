@@ -324,6 +324,21 @@ confirmation. Smaller samples remain useful for explicitly exploratory
 screening, but they must be requested with `--games` and must not support a
 final campaign tuning claim.
 
+To review the measured difficulty shape after the 100-game level artifacts
+exist, run the report-only ladder analyzer with the common harness seed:
+
+```bash
+./FungusToast.Analytics/.venv/bin/python \
+  FungusToast.Analytics/analyze_campaign_ladder.py \
+  --run-root FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet \
+  --seed <campaign-harness-seed>
+```
+
+It compares adjacent safe-proxy win rates, renders the current target bands,
+and flags increases as `INVERSION`. Inversions do not fail the command or
+authorize tuning; missing or invalid evidence does fail so the report cannot
+silently claim coverage it lacks.
+
 Important reporting rule: the harness summary is still not the final source of truth. Use it to monitor the run, then read the exported artifacts before making a campaign tuning call.
 
 Important behavior: the harness now applies the campaign player's starting Adaptations automatically.
