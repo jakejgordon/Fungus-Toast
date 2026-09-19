@@ -31,6 +31,8 @@ namespace FungusToast.Unity.UI
         private const float SummaryToxinColumnWidth = 96f;
         private const float SummaryColumnSpacing = 6f;
         private const int SummaryHorizontalInset = 12;
+        private const string TopControlsRowName = "UI_RightSidebarTopControlsRow";
+        private const float TopControlsRowBottomPadding = 6f;
         private const float DraftHistoryAttentionDurationSeconds = 4f;
 
         [Header("Player Summary Panel")]
@@ -68,6 +70,7 @@ namespace FungusToast.Unity.UI
         private int lastDraftHistoryAttentionRound = -1;
 
         private Dictionary<int, PlayerSummaryRow> playerSummaryRows = new();
+        private RectTransform topControlsRowRect;
 
         private void Awake()
         {
@@ -138,6 +141,53 @@ namespace FungusToast.Unity.UI
                 layoutGroup.childControlHeight = true;
                 layoutGroup.childForceExpandHeight = false;
             }
+        }
+
+        /// <summary>
+        /// The first row of the sidebar, above the phase tracker, where the persistent HUD
+        /// controls (pace toggle on the left, pause menu on the right) live. Built on demand
+        /// because the pause menu panel that owns those buttons is a runtime component.
+        /// </summary>
+        public RectTransform EnsureTopControlsRow()
+        {
+            if (topControlsRowRect != null)
+            {
+                return topControlsRowRect;
+            }
+
+            Transform layoutContainer = transform.Find("UI_RightSidebarLayoutContainer");
+            if (layoutContainer == null)
+            {
+                return null;
+            }
+
+            Transform existing = layoutContainer.Find(TopControlsRowName);
+            GameObject rowObject = existing != null
+                ? existing.gameObject
+                : new GameObject(TopControlsRowName, typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
+            rowObject.layer = layoutContainer.gameObject.layer;
+            topControlsRowRect = rowObject.GetComponent<RectTransform>();
+            topControlsRowRect.SetParent(layoutContainer, false);
+            topControlsRowRect.SetSiblingIndex(0);
+
+            float rowHeight = UIStyleTokens.Interaction.MinimumTargetSize + TopControlsRowBottomPadding;
+
+            var rowLayout = rowObject.GetComponent<HorizontalLayoutGroup>();
+            rowLayout.padding = new RectOffset(0, 0, 0, Mathf.RoundToInt(TopControlsRowBottomPadding));
+            rowLayout.spacing = 0f;
+            rowLayout.childAlignment = TextAnchor.MiddleLeft;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = false;
+            rowLayout.childForceExpandHeight = false;
+
+            var rowElement = rowObject.GetComponent<LayoutElement>();
+            rowElement.minHeight = rowHeight;
+            rowElement.preferredHeight = rowHeight;
+            rowElement.flexibleHeight = 0f;
+            rowElement.flexibleWidth = 1f;
+
+            return topControlsRowRect;
         }
 
         private void ApplyPlayerSummaryContainerPadding()

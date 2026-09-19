@@ -174,7 +174,7 @@ For the normal "add one more gameplay track" case, do the following:
 
 For the standard "wire up the existing music UX" case, preserve the current player-facing controls unless the request says otherwise:
 
-- keep the Next Track button available from the gameplay HUD and the in-game pause menu
+- keep the Next Track button available from the in-game pause menu (it was removed from the gameplay HUD because its skip glyph read as a game-speed control)
 - keep the tooltip meaningful by showing the current track name and the next queued track name
 - keep pause-menu music playback enabled so volume changes can be heard immediately while the menu is open
 

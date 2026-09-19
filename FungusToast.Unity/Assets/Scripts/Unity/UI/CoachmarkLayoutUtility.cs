@@ -1,6 +1,9 @@
+using System;
 using System.Collections;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using FungusToast.Unity.UI.Onboarding;
 
 namespace FungusToast.Unity.UI
 {
@@ -47,6 +50,172 @@ namespace FungusToast.Unity.UI
             }
 
             effect.PrepareEntrance();
+        }
+
+        /// <summary>
+        /// The pieces of a runtime-built coachmark card that a host needs to drive it.
+        /// </summary>
+        internal sealed class CoachmarkCard
+        {
+            public RectTransform Root;
+            public CanvasGroup CanvasGroup;
+            public TextMeshProUGUI Title;
+            public TextMeshProUGUI Body;
+            public Button CloseButton;
+
+            public bool IsVisible => Root != null && CanvasGroup != null && Root.gameObject.activeSelf && CanvasGroup.alpha > 0f;
+
+            public void Show(NewPlayerTooltipDefinition definition)
+            {
+                if (definition == null || Root == null || CanvasGroup == null)
+                {
+                    return;
+                }
+
+                Title.text = definition.Title;
+                Body.text = definition.Body;
+                PrepareAttentionEntrance(Root);
+                Root.gameObject.SetActive(true);
+                Root.SetAsLastSibling();
+                CanvasGroup.blocksRaycasts = true;
+                CanvasGroup.interactable = true;
+                PlayAttention(Root);
+            }
+
+            public void HideImmediate()
+            {
+                if (CanvasGroup != null)
+                {
+                    CanvasGroup.alpha = 0f;
+                    CanvasGroup.blocksRaycasts = false;
+                    CanvasGroup.interactable = false;
+                }
+
+                if (Root != null)
+                {
+                    Root.gameObject.SetActive(false);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Builds the standard onboarding coachmark card (tinted panel, bold title, wrapped body,
+        /// X close button) under <paramref name="parent"/>, hidden. The card pivot is top-left so
+        /// <see cref="TryPlaceAtWorldPoint"/> can drop it below an anchor control.
+        /// </summary>
+        internal static CoachmarkCard BuildCard(
+            string name,
+            Transform parent,
+            Vector2 size,
+            Action onDismissed,
+            float titleFontSize = 22f,
+            float bodyFontSize = 17f)
+        {
+            var card = new CoachmarkCard();
+
+            var rootObject = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
+            rootObject.transform.SetParent(parent, false);
+
+            card.Root = rootObject.GetComponent<RectTransform>();
+            card.Root.anchorMin = new Vector2(0.5f, 0.5f);
+            card.Root.anchorMax = new Vector2(0.5f, 0.5f);
+            card.Root.pivot = new Vector2(0f, 1f);
+            card.Root.anchoredPosition = Vector2.zero;
+            card.Root.sizeDelta = size;
+
+            card.CanvasGroup = rootObject.GetComponent<CanvasGroup>();
+            card.CanvasGroup.alpha = 0f;
+            card.CanvasGroup.blocksRaycasts = false;
+            card.CanvasGroup.interactable = false;
+
+            var background = rootObject.GetComponent<Image>();
+            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f);
+            backgroundColor.a = 0.98f;
+            background.color = backgroundColor;
+            background.raycastTarget = true;
+
+            var outline = rootObject.GetComponent<Outline>();
+            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
+            outline.effectDistance = new Vector2(1f, -1f);
+
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(rootObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0.5f, 1f);
+            titleRect.offsetMin = new Vector2(14f, -48f);
+            titleRect.offsetMax = new Vector2(-TitleRightInset, -12f);
+
+            card.Title = titleObject.GetComponent<TextMeshProUGUI>();
+            card.Title.text = string.Empty;
+            card.Title.color = UIStyleTokens.Text.Primary;
+            card.Title.fontStyle = FontStyles.Bold;
+            card.Title.fontSize = titleFontSize;
+            card.Title.alignment = TextAlignmentOptions.Left;
+            card.Title.textWrappingMode = TextWrappingModes.NoWrap;
+            TMPOverflowUtility.SetSafeEllipsis(card.Title);
+            card.Title.raycastTarget = false;
+
+            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
+            bodyObject.transform.SetParent(rootObject.transform, false);
+            var bodyRect = bodyObject.GetComponent<RectTransform>();
+            bodyRect.anchorMin = new Vector2(0f, 0f);
+            bodyRect.anchorMax = new Vector2(1f, 1f);
+            bodyRect.offsetMin = new Vector2(14f, 14f);
+            bodyRect.offsetMax = new Vector2(-14f, -BodyTopInset);
+
+            card.Body = bodyObject.GetComponent<TextMeshProUGUI>();
+            card.Body.color = UIStyleTokens.Text.Primary;
+            card.Body.fontSize = bodyFontSize;
+            card.Body.alignment = TextAlignmentOptions.TopLeft;
+            card.Body.textWrappingMode = TextWrappingModes.Normal;
+            card.Body.overflowMode = TextOverflowModes.Overflow;
+            card.Body.raycastTarget = false;
+
+            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
+            closeObject.transform.SetParent(rootObject.transform, false);
+            var closeRect = closeObject.GetComponent<RectTransform>();
+            closeRect.anchorMin = new Vector2(1f, 1f);
+            closeRect.anchorMax = new Vector2(1f, 1f);
+            closeRect.pivot = new Vector2(1f, 1f);
+            closeRect.sizeDelta = new Vector2(CloseButtonSize, CloseButtonSize);
+            closeRect.anchoredPosition = new Vector2(-CloseButtonInset, -CloseButtonInset);
+            closeObject.GetComponent<Image>().color = UIStyleTokens.Surface.PanelElevated;
+
+            card.CloseButton = closeObject.GetComponent<Button>();
+            UIStyleTokens.Button.ApplyStyle(card.CloseButton);
+            card.CloseButton.onClick.RemoveAllListeners();
+            if (onDismissed != null)
+            {
+                card.CloseButton.onClick.AddListener(() => onDismissed());
+            }
+
+            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            closeLabelObject.transform.SetParent(closeObject.transform, false);
+            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
+            closeLabelRect.anchorMin = Vector2.zero;
+            closeLabelRect.anchorMax = Vector2.one;
+            closeLabelRect.offsetMin = Vector2.zero;
+            closeLabelRect.offsetMax = Vector2.zero;
+
+            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
+            closeLabel.text = "X";
+            closeLabel.color = UIStyleTokens.Text.Primary;
+            closeLabel.fontStyle = FontStyles.Bold;
+            closeLabel.fontSize = CloseButtonFontSize;
+            closeLabel.alignment = TextAlignmentOptions.Center;
+            closeLabel.raycastTarget = false;
+
+            if (TMP_Settings.defaultFontAsset != null)
+            {
+                card.Title.font = TMP_Settings.defaultFontAsset;
+                card.Body.font = TMP_Settings.defaultFontAsset;
+                closeLabel.font = TMP_Settings.defaultFontAsset;
+            }
+
+            rootObject.SetActive(false);
+            return card;
         }
 
         internal static bool TryPlaceAtWorldPoint(

@@ -1097,6 +1097,7 @@ namespace FungusToast.Unity
             gridVisualizer?.ResetForGameTransition();
             specialEventPresentationService?.Reset();
             gameUIManager?.MutationUIManager?.ResetForNewGameState();
+            gameUIManager?.PauseMenuPanel?.ResetForNewGame();
             gameUIManager?.MutationTreeToastPresenter?.ResetForGameTransition();
             gameUIManager?.GameLogManager?.ResetForGameTransition();
             gameUIManager?.GlobalGameLogManager?.ResetForGameTransition();

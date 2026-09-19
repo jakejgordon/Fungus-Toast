@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using FungusToast.Unity.Campaign;
+using FungusToast.Unity.UI.Onboarding;
 using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 
@@ -23,6 +24,16 @@ namespace FungusToast.Unity.UI
         private const float HudButtonIconSize = 20f;
         private const float HudButtonGap = 8f;
         private const float HudButtonRightInset = 8f;
+        private const float PaceToggleHorizontalPadding = 12f;
+        private const float PaceToggleContentSpacing = 8f;
+        private const float PaceToggleFontSize = 18f;
+        private const float PaceToggleFallbackWidth = 200f;
+        private static readonly Vector2 PaceCoachmarkSize = new Vector2(340f, 172f);
+        private static readonly Vector2 PaceCoachmarkOffset = new Vector2(0f, -8f);
+        private const string PaceNormalLabel = "Pace: Normal";
+        private const string PaceTimeLapseLabel = "Pace: Time-Lapse";
+        private const string PaceNormalTooltip = "Growth and Decay play out with their full animations.\nClick to switch to Time-Lapse and skip most of them.";
+        private const string PaceTimeLapseTooltip = "Time-Lapse skips most Growth and Decay animations so rounds go by faster.\nClick to switch back to Normal.";
         private const float ActionButtonIconSize = 28f;
         private const float ActionButtonContentSpacing = 12f;
         private const float CardWidth = 420f;
@@ -47,10 +58,15 @@ namespace FungusToast.Unity.UI
         private Canvas rootCanvas;
         private TMP_FontAsset sharedFont;
 
+        private RectTransform hudControlsRow;
         private GameObject hudButtonRoot;
         private Button hudMenuButton;
-        private GameObject nextTrackHudButtonRoot;
-        private Button nextTrackHudButton;
+        private GameObject paceToggleRoot;
+        private Button paceToggleButton;
+        private TextMeshProUGUI paceToggleLabel;
+        private TooltipTrigger paceToggleTooltip;
+        private CoachmarkLayoutUtility.CoachmarkCard paceCoachmark;
+        private bool hasDismissedPaceCoachmarkThisGame;
 
         private GameObject overlayRoot;
         private CanvasGroup overlayCanvasGroup;
@@ -185,7 +201,7 @@ namespace FungusToast.Unity.UI
 
         private void EnsureBuilt()
         {
-            if (overlayRoot != null && hudButtonRoot != null && nextTrackHudButtonRoot != null)
+            if (overlayRoot != null && hudButtonRoot != null && paceToggleRoot != null)
             {
                 return;
             }
@@ -199,15 +215,31 @@ namespace FungusToast.Unity.UI
 
             sharedFont = ResolveSharedFont();
 
-            if (hudButtonRoot == null)
+            // The persistent HUD controls live in the sidebar's top row when it exists (pace on the
+            // left, menu on the right, phase tracker beneath); otherwise they fall back to the root
+            // canvas corner so a scene without the sidebar still gets a working pause button.
+            EnsureHudControlsRow();
+            Transform hudParent = hudControlsRow != null ? hudControlsRow : rootCanvas.transform;
+
+            if (paceToggleRoot == null)
             {
-                BuildHudButton(rootCanvas.transform);
+                BuildPaceToggle(hudParent);
             }
 
-            if (nextTrackHudButtonRoot == null)
+            if (hudControlsRow != null && hudControlsRow.Find("Spacer") == null)
             {
-                BuildNextTrackHudButton(rootCanvas.transform);
+                GameObject spacer = CreateUiObject("Spacer", hudControlsRow);
+                LayoutElement spacerLayout = spacer.AddComponent<LayoutElement>();
+                spacerLayout.flexibleWidth = 1f;
+                spacerLayout.minWidth = HudButtonGap;
             }
+
+            if (hudButtonRoot == null)
+            {
+                BuildHudButton(hudParent);
+            }
+
+            RefreshPaceToggle();
 
             if (overlayRoot == null)
             {
@@ -229,10 +261,26 @@ namespace FungusToast.Unity.UI
                 hudButtonRoot.SetActive(shouldShow);
             }
 
-            if (nextTrackHudButtonRoot != null)
+            if (paceToggleRoot != null)
             {
-                nextTrackHudButtonRoot.SetActive(shouldShow);
+                paceToggleRoot.SetActive(shouldShow);
             }
+
+            if (!shouldShow)
+            {
+                paceCoachmark?.HideImmediate();
+            }
+        }
+
+        private void EnsureHudControlsRow()
+        {
+            if (hudControlsRow != null)
+            {
+                return;
+            }
+
+            UI_RightSidebar sidebar = gameUI != null ? gameUI.RightSidebar : null;
+            hudControlsRow = sidebar != null ? sidebar.EnsureTopControlsRow() : null;
         }
 
         private Canvas ResolveRootCanvas()
@@ -274,6 +322,14 @@ namespace FungusToast.Unity.UI
             rootRect.sizeDelta = new Vector2(HudButtonWidth, HudButtonHeight);
             rootRect.anchoredPosition = new Vector2(-HudButtonRightInset, -6f);
 
+            LayoutElement rootLayout = hudButtonRoot.AddComponent<LayoutElement>();
+            rootLayout.minWidth = HudButtonWidth;
+            rootLayout.preferredWidth = HudButtonWidth;
+            rootLayout.minHeight = HudButtonHeight;
+            rootLayout.preferredHeight = HudButtonHeight;
+            rootLayout.flexibleWidth = 0f;
+            rootLayout.flexibleHeight = 0f;
+
             Image background = hudButtonRoot.AddComponent<Image>();
             background.color = UIStyleTokens.Button.BackgroundDefault;
 
@@ -300,50 +356,173 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private void BuildNextTrackHudButton(Transform parent)
+        private void BuildPaceToggle(Transform parent)
         {
-            nextTrackHudButtonRoot = CreateUiObject("NextTrackHudButton", parent);
-            RectTransform rootRect = nextTrackHudButtonRoot.GetComponent<RectTransform>();
+            paceToggleRoot = CreateUiObject("PaceToggleHudButton", parent);
+            RectTransform rootRect = paceToggleRoot.GetComponent<RectTransform>();
+            // Only meaningful on the root-canvas fallback; the sidebar row lays the toggle out itself.
             rootRect.anchorMin = new Vector2(1f, 1f);
             rootRect.anchorMax = new Vector2(1f, 1f);
             rootRect.pivot = new Vector2(1f, 1f);
-            rootRect.sizeDelta = new Vector2(HudButtonWidth, HudButtonHeight);
+            rootRect.sizeDelta = new Vector2(PaceToggleFallbackWidth, HudButtonHeight);
             rootRect.anchoredPosition = new Vector2(
                 -(HudButtonRightInset + HudButtonWidth + HudButtonGap),
                 -6f);
 
-            Image background = nextTrackHudButtonRoot.AddComponent<Image>();
+            HorizontalLayoutGroup contentLayout = paceToggleRoot.AddComponent<HorizontalLayoutGroup>();
+            int horizontalPadding = Mathf.RoundToInt(PaceToggleHorizontalPadding);
+            contentLayout.padding = new RectOffset(horizontalPadding, horizontalPadding, 0, 0);
+            contentLayout.spacing = PaceToggleContentSpacing;
+            contentLayout.childAlignment = TextAnchor.MiddleCenter;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = false;
+            contentLayout.childForceExpandHeight = false;
+
+            LayoutElement rootLayout = paceToggleRoot.AddComponent<LayoutElement>();
+            rootLayout.minHeight = HudButtonHeight;
+            rootLayout.preferredHeight = HudButtonHeight;
+            rootLayout.flexibleWidth = 0f;
+            rootLayout.flexibleHeight = 0f;
+
+            Image background = paceToggleRoot.AddComponent<Image>();
             background.color = UIStyleTokens.Button.BackgroundDefault;
 
-            nextTrackHudButton = nextTrackHudButtonRoot.AddComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(nextTrackHudButton);
-            nextTrackHudButton.onClick.AddListener(OnNextTrackClicked);
+            paceToggleButton = paceToggleRoot.AddComponent<Button>();
+            paceToggleButton.onClick.AddListener(OnPaceToggleClicked);
 
-            TooltipTrigger tooltip = nextTrackHudButtonRoot.AddComponent<TooltipTrigger>();
-            tooltip.SetDynamicProvider(this);
+            paceToggleTooltip = paceToggleRoot.AddComponent<TooltipTrigger>();
 
-            Sprite nextTrackIcon = gameUI != null ? gameUI.NextTrackButtonIcon : null;
-            if (nextTrackIcon != null)
+            Sprite paceIcon = gameUI != null ? gameUI.PaceToggleButtonIcon : null;
+            if (paceIcon != null)
             {
-                CreateIconImage(nextTrackHudButtonRoot.transform, "NextTrackIcon", nextTrackIcon, HudButtonIconSize, Vector2.zero);
+                CreateIconLayoutImage(paceToggleRoot.transform, "PaceIcon", paceIcon, HudButtonIconSize, UIStyleTokens.Button.TextDefault);
             }
-            else
+            else if (gameUI == null)
             {
-                if (gameUI == null)
-                {
-                    Debug.LogWarning("UI_PauseMenuPanel: Building next-track HUD button without a GameUIManager. Using text fallback.");
-                }
-
-                TextMeshProUGUI label = CreateLabel(nextTrackHudButtonRoot.transform, ">>", 18f, FontStyles.Bold);
-                RectTransform labelRect = label.rectTransform;
-                labelRect.anchorMin = Vector2.zero;
-                labelRect.anchorMax = Vector2.one;
-                labelRect.offsetMin = Vector2.zero;
-                labelRect.offsetMax = Vector2.zero;
-                label.alignment = TextAlignmentOptions.Center;
-                label.color = UIStyleTokens.Button.TextDefault;
-                label.margin = new Vector4(-6f, -5f, -6f, -5f);
+                Debug.LogWarning("UI_PauseMenuPanel: Building pace toggle without a GameUIManager. Omitting its icon.");
             }
+
+            paceToggleLabel = CreateLabel(paceToggleRoot.transform, PaceNormalLabel, PaceToggleFontSize, FontStyles.Bold);
+            paceToggleLabel.alignment = TextAlignmentOptions.MidlineLeft;
+            paceToggleLabel.color = UIStyleTokens.Button.TextDefault;
+            LayoutElement labelLayout = paceToggleLabel.GetComponent<LayoutElement>();
+            labelLayout.minHeight = HudButtonHeight;
+            labelLayout.preferredHeight = HudButtonHeight;
+        }
+
+        private void OnPaceToggleClicked()
+        {
+            GameManager.Instance?.CycleRoundPresentationSpeedMode();
+            RefreshPaceToggle();
+        }
+
+        /// <summary>
+        /// Syncs the toggle label, tint and tooltip with the current presentation speed.
+        /// Called by <see cref="GameManager.SetRoundPresentationSpeedMode"/> so the toggle
+        /// stays right no matter where the mode was changed from.
+        /// </summary>
+        public void RefreshPaceToggle()
+        {
+            if (paceToggleButton == null)
+            {
+                return;
+            }
+
+            bool isTimeLapse = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
+
+            // The selected tint on the "on" state is what makes a two-state cycling button readable
+            // at a glance; the label carries the state so it never reads as an action to take.
+            UIStyleTokens.Button.ApplyStyle(paceToggleButton, useSelectedAsNormal: isTimeLapse);
+
+            if (paceToggleLabel != null)
+            {
+                paceToggleLabel.text = isTimeLapse ? PaceTimeLapseLabel : PaceNormalLabel;
+            }
+
+            paceToggleTooltip?.SetStaticText(isTimeLapse ? PaceTimeLapseTooltip : PaceNormalTooltip);
+
+            if (isTimeLapse && paceCoachmark != null && paceCoachmark.IsVisible)
+            {
+                // Turning Time-Lapse on is the behaviour the coachmark teaches, so retire it.
+                OnPaceCoachmarkDismissed();
+            }
+        }
+
+        public void ResetForNewGame()
+        {
+            hasDismissedPaceCoachmarkThisGame = false;
+            paceCoachmark?.HideImmediate();
+        }
+
+        public void TryShowPaceCoachmark(int currentRound)
+        {
+            EnsureBuilt();
+            if (paceToggleRoot == null || !paceToggleRoot.activeInHierarchy || rootCanvas == null)
+            {
+                return;
+            }
+
+            var gameManager = GameManager.Instance;
+            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
+            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
+            if (!NewPlayerTooltipRules.ShouldShowTimeLapseModeIntro(
+                    forceFirstGame,
+                    currentRound,
+                    hasDismissedPaceCoachmarkThisGame,
+                    isFastForwarding))
+            {
+                return;
+            }
+
+            paceCoachmark ??= CoachmarkLayoutUtility.BuildCard(
+                "UI_PaceCoachmark",
+                rootCanvas.transform,
+                PaceCoachmarkSize,
+                OnPaceCoachmarkDismissed);
+
+            paceCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.TimeLapseModeIntro));
+            PositionPaceCoachmark();
+        }
+
+        private void PositionPaceCoachmark()
+        {
+            if (paceCoachmark == null || paceCoachmark.Root == null || paceToggleRoot == null || rootCanvas == null)
+            {
+                return;
+            }
+
+            RectTransform anchorRect = paceToggleRoot.GetComponent<RectTransform>();
+            RectTransform boundsRect = paceCoachmark.Root.parent as RectTransform;
+            if (anchorRect == null || boundsRect == null)
+            {
+                return;
+            }
+
+            Canvas.ForceUpdateCanvases();
+
+            Vector3[] corners = new Vector3[4];
+            anchorRect.GetWorldCorners(corners);
+            // corners[0] is bottom-left: the card hangs below the toggle, aligned to its left edge.
+            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
+                paceCoachmark.Root,
+                boundsRect,
+                rootCanvas,
+                corners[0],
+                PaceCoachmarkOffset,
+                CoachmarkLayoutUtility.DefaultScreenPadding);
+        }
+
+        private void OnPaceCoachmarkDismissed()
+        {
+            hasDismissedPaceCoachmarkThisGame = true;
+            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
+            if (!forceFirstGame)
+            {
+                NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.TimeLapseModeIntro);
+            }
+
+            paceCoachmark?.HideImmediate();
         }
 
         private void BuildOverlay(Transform parent)

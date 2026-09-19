@@ -10,7 +10,6 @@ namespace FungusToast.Unity.UI.Onboarding
         SpendMutationPointsIntro,
         MutationWorkspaceIntro,
         TimeLapseModeIntro,
-        TimeLapseCarriedOverIntro,
         BankMutationPointsIntro,
         ScoreboardWinCondition,
         InspectPlayersIntro,
@@ -88,17 +87,10 @@ namespace FungusToast.Unity.UI.Onboarding
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.TimeLapseModeIntro,
                 "Onboarding.TimeLapseModeIntroSeen",
-                "Time-Lapse Mode",
-                "Time-Lapse mode skips most animations so you can fly through the Growth and Decay Phases. Toggle it here whenever you want a faster pace.",
-                NewPlayerTooltipSurface.MutationTreeCoachmark,
-                "Show when the mutation tree opens on round 5 unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
-            new NewPlayerTooltipDefinition(
-                NewPlayerTooltipId.TimeLapseCarriedOverIntro,
-                "Onboarding.TimeLapseCarriedOverIntroSeen",
-                "Time-Lapse Still On",
-                "Time-Lapse remained on since your last session. You can toggle it off at any time.",
-                NewPlayerTooltipSurface.MutationTreeCoachmark,
-                "Show when the mutation tree opens on round 1 if Time-Lapse mode carried over from a persisted setting and is currently enabled, unless it has already been dismissed this game; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
+                "Set the Pace",
+                "Time-Lapse skips most Growth and Decay animations so rounds go by faster.\n\nClick this button any time to switch between Normal and Time-Lapse.",
+                NewPlayerTooltipSurface.SidebarCoachmark,
+                "Show on round 4 or later at the start of the human mutation phase, anchored to the pace toggle in the sidebar, unless it has already been dismissed this game or the player switched Time-Lapse on; suppress while fast-forwarding, and otherwise show once per profile unless forced first-game experience is active."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.BankMutationPointsIntro,
                 "Onboarding.BankMutationPointsIntroSeen",
@@ -299,32 +291,12 @@ namespace FungusToast.Unity.UI.Onboarding
             bool hasDismissedThisGame,
             bool isFastForwarding)
         {
-            if (currentRound != 5 || hasDismissedThisGame || isFastForwarding)
+            if (currentRound < 4 || hasDismissedThisGame || isFastForwarding)
             {
                 return false;
             }
 
             return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseModeIntro);
-        }
-
-        public static bool ShouldShowTimeLapseCarriedOverIntro(
-            bool forceFirstGameExperience,
-            int currentRound,
-            bool timeLapseCarriedOverFromPersistedSettings,
-            bool isTimeLapseCurrentlyEnabled,
-            bool hasDismissedThisGame,
-            bool isFastForwarding)
-        {
-            if (currentRound != 1
-                || !timeLapseCarriedOverFromPersistedSettings
-                || !isTimeLapseCurrentlyEnabled
-                || hasDismissedThisGame
-                || isFastForwarding)
-            {
-                return false;
-            }
-
-            return forceFirstGameExperience || !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.TimeLapseCarriedOverIntro);
         }
 
         public static bool ShouldShowBankMutationPointsIntro(

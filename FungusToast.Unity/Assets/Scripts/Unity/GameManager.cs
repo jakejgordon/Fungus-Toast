@@ -450,8 +450,6 @@ namespace FungusToast.Unity
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
         public bool IsFastRoundPresentationMode => roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
-        private bool timeLapseCarriedOverFromPersistedSettings;
-        public bool WasTimeLapseCarriedOverFromPersistedSettings => timeLapseCarriedOverFromPersistedSettings;
         private bool _fastForwardStarted = false;
         private bool initialMutationPointsAssigned = false;
         private bool skipMutationPointAssignmentForRoundStart;
@@ -545,7 +543,7 @@ namespace FungusToast.Unity
             roundPresentationSpeedMode = mode;
             ScopedPlayerPrefs.SetInt(RoundPresentationSpeedModeKey, (int)mode);
             ScopedPlayerPrefs.Save();
-            gameUIManager?.MutationUIManager?.RefreshPresentationSpeedModeUI();
+            gameUIManager?.PauseMenuPanel?.RefreshPaceToggle();
             ApplyGameplayTimeScale();
         }
 
@@ -577,7 +575,6 @@ namespace FungusToast.Unity
             roundPresentationSpeedMode = (RoundPresentationSpeedMode)ScopedPlayerPrefs.GetInt(
                 RoundPresentationSpeedModeKey,
                 (int)RoundPresentationSpeedMode.Normal);
-            timeLapseCarriedOverFromPersistedSettings = roundPresentationSpeedMode == RoundPresentationSpeedMode.TimeLapse;
         }
 
         public float GetRoundPresentationDelaySeconds(float baseSeconds)
@@ -1538,6 +1535,7 @@ namespace FungusToast.Unity
             {
                 ui.RightSidebar?.TryShowScoreboardWinConditionCoachmark(board.CurrentRound);
                 ui.RightSidebar?.TryShowInspectPlayersCoachmark(board.CurrentRound);
+                ui.PauseMenuPanel?.TryShowPaceCoachmark(board.CurrentRound);
                 ui.MoldProfileRoot?.TryShowAdaptationCoachmark(board.CurrentRound);
             }
             ui.MoldProfileRoot?.RefreshRandomDecayChance();
@@ -2378,6 +2376,7 @@ namespace FungusToast.Unity
             gameTransitionService?.ResetRuntimeStateForGameTransition();
             ConfigureBackgroundMusicService();
             ui.MutationUIManager?.ResetForNewGameState();
+            ui.PauseMenuPanel?.ResetForNewGame();
             welcomeCoachmark?.ResetForNewGame();
             ui.EndGamePanel?.gameObject.SetActive(false);
             pauseMenuService?.ForceClose();

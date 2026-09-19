@@ -28,15 +28,11 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string BankPointsTooltipText = "Ends your mutation phase now.\nYour unspent points carry over to next round,\nso you can save up for a mutation you can't afford yet.";
-        private const string NormalSpeedTooltipText = "Standard pacing keeps the full growth and decay presentation sequence.";
-        private const string TimeLapseTooltipText = "Skips most animations and speeds up Growth Cycles to reduce time between turns.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float SpendPointsRowHeight = 82f;
         private const float BankButtonMinWidth = 220f;
         private const float BankButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
-        private const float PresentationSpeedButtonMinWidth = 220f;
-        private const float PresentationSpeedButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
         private const float HeaderControlsHeight = 40f;
         private const float HeaderControlsHorizontalInset = 16f;
         private const float HeaderControlsSpacing = 12f;
@@ -47,10 +43,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string ReturnButtonLabel = "Return to Board";
         private const string ReturnButtonTooltipText = "Close the mutation workspace and return to the toast. Your unspent points remain available this turn.";
         private const float MutationPanelTopInsetPadding = 6f;
-        private const float TimeLapseCoachmarkWidth = 340f;
-        private const float TimeLapseCoachmarkHeight = 172f;
-        private const float TimeLapseCoachmarkHorizontalOffset = 5f;
-        private const float TimeLapseCoachmarkVerticalOffset = -12f;
         private const float BankPointsCoachmarkWidth = 360f;
         private const float BankPointsCoachmarkHeight = 194f;
         private const float BankPointsCoachmarkHorizontalOffset = 5f;
@@ -84,7 +76,6 @@ namespace FungusToast.Unity.UI.MutationTree
         [SerializeField] private TextMeshProUGUI mutationPointsCounterText = null!;
         [SerializeField] private Button bankPointsButton = null!;
         [SerializeField] private Sprite? bankPointsButtonIcon;
-        [SerializeField] private Sprite? presentationSpeedButtonIcon;
         [SerializeField] private AudioClip? mutationUpgradeSuccessClip = null;
         [SerializeField, Range(0f, 1f)] private float mutationUpgradeSuccessVolume = 1f;
         [SerializeField] private AudioClip? mutationBankPointsClip = null;
@@ -122,17 +113,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private bool hasDismissedSpendMutationPointsIntroThisGame;
         private bool hasDismissedMutationWorkspaceIntroThisGame;
         private TooltipTrigger spendPointsTooltipTrigger = null!;
-        private TooltipTrigger presentationSpeedTooltipTrigger = null!;
         private AudioSource soundEffectAudioSource = null!;
-        private Button presentationSpeedButton = null!;
-        private TextMeshProUGUI? presentationSpeedButtonText;
         private Image? bankPointsButtonIconImage;
-        private Image? presentationSpeedButtonIconImage;
-        private RectTransform timeLapseCoachmarkRoot = null!;
-        private CanvasGroup timeLapseCoachmarkCanvasGroup = null!;
-        private TextMeshProUGUI timeLapseCoachmarkTitleTextLabel = null!;
-        private TextMeshProUGUI timeLapseCoachmarkBodyTextLabel = null!;
-        private Button timeLapseCoachmarkCloseButton = null!;
         private RectTransform bankPointsCoachmarkRoot = null!;
         private CanvasGroup bankPointsCoachmarkCanvasGroup = null!;
         private TextMeshProUGUI bankPointsCoachmarkTitleTextLabel = null!;
@@ -141,7 +123,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private RectTransform headerControlsRowRect = null!;
         private RectTransform headerLeftSlotRect = null!;
         private RectTransform headerCenterSlotRect = null!;
-        private RectTransform headerRightSlotRect = null!;
         private RectTransform headerReturnSlotRect = null!;
         // Cached by RefreshResponsiveMutationPanelLayout() so a dock-side flip
         // (UpdateMutationInspectorDockSide) repositions the inspector against the
@@ -176,8 +157,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private Vector2 lastKnownParentSize = new(-1f, -1f);
         private int lastKnownScreenWidth = -1;
         private int lastKnownScreenHeight = -1;
-        private bool hasDismissedTimeLapseCoachmarkThisGame;
-        private NewPlayerTooltipId activeTimeLapseCoachmarkTooltipId = NewPlayerTooltipId.TimeLapseModeIntro;
         private NewPlayerTooltipId activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.BankMutationPointsIntro;
         private bool hasDismissedBankPointsCoachmarkThisGame;
         private Dictionary<int, PlayerBoardSummary>? mutationAvailabilityBoardSummaries;
@@ -248,7 +227,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private void OnEnable()
         {
             SetDockButtonVisible(true);
-            RefreshPresentationSpeedModeUI();
             RefreshResponsiveMutationPanelLayout();
             StartCoroutine(RefreshResponsiveMutationPanelLayoutNextFrame());
             if (pendingDependencyGraphRefresh)
@@ -267,7 +245,6 @@ namespace FungusToast.Unity.UI.MutationTree
             isInspectorPinned = false;
             isPointerOverMutationInspector = false;
             mutationInspector?.Clear();
-            HideTimeLapseCoachmarkImmediate(false);
             HideBankPointsCoachmarkImmediate(false);
             SetGlobalHudControlsSuppressed(false);
             SetDockButtonVisible(false);
@@ -296,7 +273,6 @@ namespace FungusToast.Unity.UI.MutationTree
             // ── Apply the dark panel theme to all backgrounds ──
             ApplyPanelTheme();
 
-            EnsurePresentationSpeedButton();
             EnsureHeaderControlsRow();
             ApplyActionStyles();
             RestoreActionRowLayout();
@@ -321,11 +297,6 @@ namespace FungusToast.Unity.UI.MutationTree
             UIStyleTokens.Button.ApplyStyle(spendPointsButton, useSelectedAsNormal: true);
             UIStyleTokens.Button.SetButtonLabelColor(spendPointsButton, UIStyleTokens.Button.TextDefault);
             StyleSpendPointsButton();
-
-            if (presentationSpeedButton != null)
-            {
-                StylePresentationSpeedButton();
-            }
 
             if (mutationPointsCounterText != null)
             {
@@ -441,10 +412,8 @@ namespace FungusToast.Unity.UI.MutationTree
             pendingTargetedSurgeSelection = null;
             hasDismissedSpendMutationPointsIntroThisGame = false;
             hasDismissedMutationWorkspaceIntroThisGame = false;
-            hasDismissedTimeLapseCoachmarkThisGame = false;
             activeMutationPointsCoachmarkTooltipId = NewPlayerTooltipId.BankMutationPointsIntro;
             hasDismissedBankPointsCoachmarkThisGame = false;
-            HideTimeLapseCoachmarkImmediate(true);
             HideBankPointsCoachmarkImmediate(true);
 
             if (mutationTreePanel != null)
@@ -486,7 +455,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             ResetPulse();
-            RefreshPresentationSpeedModeUI();
             RestoreActionRowLayout();
         }
 
@@ -551,7 +519,6 @@ namespace FungusToast.Unity.UI.MutationTree
         public void StartNewMutationPhase()
         {
             humanTurnEnded = false;
-            RefreshPresentationSpeedModeUI();
         }
 
         public void OnSpendPointsClicked()
@@ -1025,7 +992,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 StartCoroutine(PlayAffordableShimmer());
 
             TryShowMutationWorkspaceIntro();
-            TryShowTimeLapseCoachmark();
             TryShowBankPointsCoachmark();
         }
 
@@ -1052,7 +1018,6 @@ namespace FungusToast.Unity.UI.MutationTree
             mutationTreeRect.anchoredPosition = targetHiddenPosition;
             mutationTreePanel.SetActive(false);
             SetGlobalHudControlsSuppressed(false);
-            HideTimeLapseCoachmarkImmediate(false);
             HideBankPointsCoachmarkImmediate(false);
 
             if (dockButtonText != null)
@@ -1648,11 +1613,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 legacyInset = Mathf.Max(legacyInset, bankInset);
             }
 
-            if (TryGetTopInsetForRect(presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null, fallbackHeight: PresentationSpeedButtonMinHeight, out float timeLapseInset))
-            {
-                legacyInset = Mathf.Max(legacyInset, timeLapseInset);
-            }
-
             return legacyInset;
         }
 
@@ -1949,11 +1909,6 @@ namespace FungusToast.Unity.UI.MutationTree
             ApplyResponsiveMutationPanelLayout(topInset);
             ForceMutationPanelLayoutRebuild();
             PositionMutationInspector(topInset);
-
-            if (IsTimeLapseCoachmarkVisible())
-            {
-                PositionTimeLapseCoachmark();
-            }
 
             if (IsBankPointsCoachmarkVisible())
             {
@@ -2409,34 +2364,6 @@ namespace FungusToast.Unity.UI.MutationTree
             trigger.SetStaticText(BankPointsTooltipText);
         }
 
-        private void EnsurePresentationSpeedButton()
-        {
-            if (presentationSpeedButton != null)
-            {
-                return;
-            }
-
-            Button templateButton = bankPointsButton != null ? bankPointsButton : spendPointsButton;
-            if (templateButton == null)
-            {
-                return;
-            }
-
-            GameObject buttonObject = Instantiate(templateButton.gameObject, templateButton.transform.parent);
-            buttonObject.name = "PhaseSpeedButton";
-            buttonObject.transform.SetSiblingIndex(templateButton.transform.GetSiblingIndex() + 1);
-
-            presentationSpeedButton = buttonObject.GetComponent<Button>()!;
-            presentationSpeedButtonText = buttonObject.GetComponentInChildren<TextMeshProUGUI>(true)!;
-
-            presentationSpeedButton.onClick.RemoveAllListeners();
-            presentationSpeedButton.onClick.AddListener(OnPresentationSpeedButtonClicked);
-
-            StylePresentationSpeedButton();
-            WirePresentationSpeedTooltip();
-            RefreshPresentationSpeedModeUI();
-        }
-
         private void EnsureHeaderControlsRow()
         {
             if (mutationTreeRect == null)
@@ -2444,7 +2371,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 CacheMutationPanelLayoutReferences();
             }
 
-            if (mutationTreeRect == null || mutationPointsCounterText == null || bankPointsButton == null || presentationSpeedButton == null)
+            if (mutationTreeRect == null || mutationPointsCounterText == null || bankPointsButton == null)
             {
                 return;
             }
@@ -2461,17 +2388,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
             headerLeftSlotRect ??= CreateHeaderSlot("UI_MutationHeaderLeftSlot", flexibleWidth: 1f, preferredWidth: 0f);
             headerCenterSlotRect ??= CreateHeaderSlot("UI_MutationHeaderCenterSlot", flexibleWidth: 0f, preferredWidth: BankButtonMinWidth);
-            headerRightSlotRect ??= CreateHeaderSlot("UI_MutationHeaderRightSlot", flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
             headerReturnSlotRect ??= CreateHeaderSlot("UI_MutationHeaderReturnSlot", flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             ConfigureHeaderSlotLayout(headerLeftSlotRect, flexibleWidth: 1f, preferredWidth: 0f);
             ConfigureHeaderSlotLayout(headerCenterSlotRect, flexibleWidth: 0f, preferredWidth: BankButtonMinWidth);
-            ConfigureHeaderSlotLayout(headerRightSlotRect, flexibleWidth: 0f, preferredWidth: PresentationSpeedButtonMinWidth);
             ConfigureHeaderSlotLayout(headerReturnSlotRect, flexibleWidth: 0f, preferredWidth: ReturnButtonMinWidth);
 
             MoveLabelToHeaderLeftSlot();
             MoveButtonToHeaderCenterSlot(bankPointsButton);
-            MoveButtonToHeaderRightSlot(presentationSpeedButton);
             MoveButtonToHeaderSlot(dockButton, headerReturnSlotRect);
             ConfigureReturnToBoardButton();
             RefreshHeaderActionButtonWidths();
@@ -2588,21 +2512,6 @@ namespace FungusToast.Unity.UI.MutationTree
             rect.anchoredPosition = Vector2.zero;
         }
 
-        private void MoveButtonToHeaderRightSlot(Button button)
-        {
-            if (button == null || headerRightSlotRect == null)
-            {
-                return;
-            }
-
-            var rect = button.GetComponent<RectTransform>();
-            rect.SetParent(headerRightSlotRect, false);
-            rect.anchorMin = new Vector2(1f, 0.5f);
-            rect.anchorMax = new Vector2(1f, 0.5f);
-            rect.pivot = new Vector2(1f, 0.5f);
-            rect.anchoredPosition = Vector2.zero;
-        }
-
         private static void MoveButtonToHeaderSlot(Button button, RectTransform slotRect)
         {
             if (button == null || slotRect == null)
@@ -2680,22 +2589,6 @@ namespace FungusToast.Unity.UI.MutationTree
 
             spendPointsTooltipTrigger.SetStaticText(SpendPointsTooltipText);
             spendPointsTooltipTrigger.SetAutoPlacementOffsetX(60f);
-        }
-
-        private void WirePresentationSpeedTooltip()
-        {
-            if (presentationSpeedButton == null)
-            {
-                return;
-            }
-
-            presentationSpeedTooltipTrigger = presentationSpeedButton.GetComponent<TooltipTrigger>();
-            if (presentationSpeedTooltipTrigger == null)
-            {
-                presentationSpeedTooltipTrigger = presentationSpeedButton.gameObject.AddComponent<TooltipTrigger>();
-            }
-
-            presentationSpeedTooltipTrigger.SetAutoPlacementOffsetX(60f);
         }
 
         private void ConfigurePlayerHoverTargets(int playerId, bool hasVisibleIcon)
@@ -2805,61 +2698,6 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void TryShowTimeLapseCoachmark()
-        {
-            if (!isTreeOpen || mutationTreePanel == null || !mutationTreePanel.activeInHierarchy || presentationSpeedButton == null)
-            {
-                return;
-            }
-
-            GameManager gameManager = GameManager.Instance;
-            bool forceFirstGame = gameManager != null && gameManager.ShouldForceFirstGameExperience;
-            bool isFastForwarding = gameManager != null && gameManager.IsFastForwarding;
-            int currentRound = gameManager?.Board?.CurrentRound ?? 0;
-
-            NewPlayerTooltipId tooltipIdToShow;
-            if (NewPlayerTooltipRules.ShouldShowTimeLapseCarriedOverIntro(
-                    forceFirstGame,
-                    currentRound,
-                    gameManager != null && gameManager.WasTimeLapseCarriedOverFromPersistedSettings,
-                    gameManager != null && gameManager.IsFastRoundPresentationMode,
-                    hasDismissedTimeLapseCoachmarkThisGame,
-                    isFastForwarding))
-            {
-                tooltipIdToShow = NewPlayerTooltipId.TimeLapseCarriedOverIntro;
-            }
-            else if (NewPlayerTooltipRules.ShouldShowTimeLapseModeIntro(
-                    forceFirstGame,
-                    currentRound,
-                    hasDismissedTimeLapseCoachmarkThisGame,
-                    isFastForwarding))
-            {
-                tooltipIdToShow = NewPlayerTooltipId.TimeLapseModeIntro;
-            }
-            else
-            {
-                return;
-            }
-
-            EnsureTimeLapseCoachmarkUi();
-            if (timeLapseCoachmarkRoot == null || timeLapseCoachmarkCanvasGroup == null)
-            {
-                return;
-            }
-
-            activeTimeLapseCoachmarkTooltipId = tooltipIdToShow;
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(tooltipIdToShow);
-            timeLapseCoachmarkTitleTextLabel.text = definition.Title;
-            timeLapseCoachmarkBodyTextLabel.text = definition.Body;
-            PositionTimeLapseCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(timeLapseCoachmarkRoot);
-            timeLapseCoachmarkRoot.gameObject.SetActive(true);
-            timeLapseCoachmarkRoot.SetAsLastSibling();
-            timeLapseCoachmarkCanvasGroup.blocksRaycasts = true;
-            timeLapseCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(timeLapseCoachmarkRoot);
-        }
-
         private void TryShowBankPointsCoachmark()
         {
             if (!isTreeOpen || mutationTreePanel == null || !mutationTreePanel.activeInHierarchy || bankPointsButton == null)
@@ -2907,123 +2745,6 @@ namespace FungusToast.Unity.UI.MutationTree
             bankPointsCoachmarkCanvasGroup.blocksRaycasts = true;
             bankPointsCoachmarkCanvasGroup.interactable = true;
             CoachmarkLayoutUtility.PlayAttention(bankPointsCoachmarkRoot);
-        }
-
-        private void EnsureTimeLapseCoachmarkUi()
-        {
-            if (timeLapseCoachmarkRoot != null)
-            {
-                return;
-            }
-
-            Transform? parent = rootCanvas != null
-                ? rootCanvas.transform
-                : mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas?.transform;
-            if (parent == null)
-            {
-                return;
-            }
-
-            var rootObject = new GameObject("UI_TimeLapseCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(parent, false);
-
-            timeLapseCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            timeLapseCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            timeLapseCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            timeLapseCoachmarkRoot.pivot = new Vector2(0f, 1f);
-            timeLapseCoachmarkRoot.sizeDelta = new Vector2(TimeLapseCoachmarkWidth, TimeLapseCoachmarkHeight);
-
-            timeLapseCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            timeLapseCoachmarkCanvasGroup.alpha = 0f;
-            timeLapseCoachmarkCanvasGroup.blocksRaycasts = false;
-            timeLapseCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
-            backgroundColor.a = 0.97f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            timeLapseCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            timeLapseCoachmarkTitleTextLabel.text = string.Empty;
-            timeLapseCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            timeLapseCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            timeLapseCoachmarkTitleTextLabel.fontSize = 22f;
-            timeLapseCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            timeLapseCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(timeLapseCoachmarkTitleTextLabel);
-            timeLapseCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            timeLapseCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            timeLapseCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            timeLapseCoachmarkBodyTextLabel.fontSize = 17f;
-            timeLapseCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            timeLapseCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            timeLapseCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            timeLapseCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            timeLapseCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(timeLapseCoachmarkCloseButton);
-            timeLapseCoachmarkCloseButton.onClick.RemoveAllListeners();
-            timeLapseCoachmarkCloseButton.onClick.AddListener(OnTimeLapseCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                timeLapseCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                timeLapseCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
         }
 
         private void EnsureBankPointsCoachmarkUi()
@@ -3143,31 +2864,6 @@ namespace FungusToast.Unity.UI.MutationTree
             rootObject.SetActive(false);
         }
 
-        private void PositionTimeLapseCoachmark()
-        {
-            RectTransform? anchorRect = presentationSpeedButton != null ? presentationSpeedButton.transform as RectTransform : null;
-            RectTransform? parentRect = timeLapseCoachmarkRoot != null ? timeLapseCoachmarkRoot.parent as RectTransform : null;
-            Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : presentationSpeedButton?.GetComponentInParent<Canvas>()?.rootCanvas;
-            if (anchorRect == null || parentRect == null || canvas == null || timeLapseCoachmarkRoot == null)
-            {
-                return;
-            }
-
-            Canvas.ForceUpdateCanvases();
-
-            Vector3[] corners = new Vector3[4];
-            anchorRect.GetWorldCorners(corners);
-            Vector3 rightCenterWorld = (corners[2] + corners[3]) * 0.5f;
-
-            CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                timeLapseCoachmarkRoot,
-                parentRect,
-                canvas,
-                rightCenterWorld,
-                new Vector2(TimeLapseCoachmarkHorizontalOffset, TimeLapseCoachmarkVerticalOffset),
-                CoachmarkLayoutUtility.DefaultScreenPadding);
-        }
-
         private void PositionBankPointsCoachmark(Button anchorButton)
         {
             RectTransform? anchorRect = anchorButton != null ? anchorButton.transform as RectTransform : null;
@@ -3193,18 +2889,6 @@ namespace FungusToast.Unity.UI.MutationTree
                 CoachmarkLayoutUtility.DefaultScreenPadding);
         }
 
-        private void OnTimeLapseCoachmarkDismissed()
-        {
-            hasDismissedTimeLapseCoachmarkThisGame = true;
-            bool forceFirstGame = GameManager.Instance != null && GameManager.Instance.ShouldForceFirstGameExperience;
-            if (!forceFirstGame)
-            {
-                NewPlayerTooltipCatalog.MarkSeen(activeTimeLapseCoachmarkTooltipId);
-            }
-
-            HideTimeLapseCoachmarkImmediate(false);
-        }
-
         private void OnMutationPointsCoachmarkDismissed()
         {
             if (activeMutationPointsCoachmarkTooltipId == NewPlayerTooltipId.SpendMutationPointsIntro)
@@ -3225,26 +2909,6 @@ namespace FungusToast.Unity.UI.MutationTree
             HideBankPointsCoachmarkImmediate(false);
         }
 
-        private void HideTimeLapseCoachmarkImmediate(bool resetSessionDismissal)
-        {
-            if (resetSessionDismissal)
-            {
-                hasDismissedTimeLapseCoachmarkThisGame = false;
-            }
-
-            if (timeLapseCoachmarkCanvasGroup != null)
-            {
-                timeLapseCoachmarkCanvasGroup.alpha = 0f;
-                timeLapseCoachmarkCanvasGroup.blocksRaycasts = false;
-                timeLapseCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (timeLapseCoachmarkRoot != null)
-            {
-                timeLapseCoachmarkRoot.gameObject.SetActive(false);
-            }
-        }
-
         private void HideBankPointsCoachmarkImmediate(bool resetSessionDismissal)
         {
             if (resetSessionDismissal)
@@ -3263,14 +2927,6 @@ namespace FungusToast.Unity.UI.MutationTree
             {
                 bankPointsCoachmarkRoot.gameObject.SetActive(false);
             }
-        }
-
-        private bool IsTimeLapseCoachmarkVisible()
-        {
-            return timeLapseCoachmarkRoot != null
-                && timeLapseCoachmarkCanvasGroup != null
-                && timeLapseCoachmarkRoot.gameObject.activeSelf
-                && timeLapseCoachmarkCanvasGroup.alpha > 0f;
         }
 
         private bool IsBankPointsCoachmarkVisible()
@@ -3332,70 +2988,6 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshHeaderActionButtonWidths();
         }
 
-        private void StylePresentationSpeedButton()
-        {
-            if (presentationSpeedButton == null)
-            {
-                return;
-            }
-
-            var legacyBankContentRoot = presentationSpeedButton.transform.Find("BankMutationPointsButtonContent");
-            if (legacyBankContentRoot != null)
-            {
-                Destroy(legacyBankContentRoot.gameObject);
-            }
-
-            UIStyleTokens.Button.ApplySecondaryMenuAction(
-                presentationSpeedButton,
-                PresentationSpeedButtonMinWidth,
-                preferredHeight: PresentationSpeedButtonMinHeight,
-                minHeight: PresentationSpeedButtonMinHeight);
-            UIStyleTokens.Button.SetButtonLabelColor(presentationSpeedButton, UIStyleTokens.Text.Primary);
-
-            var colors = presentationSpeedButton.colors;
-            colors.normalColor = UIStyleTokens.Surface.PanelElevated;
-            colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Spore, 0.58f);
-            colors.pressedColor = UIStyleTokens.Surface.PanelPrimary;
-            colors.selectedColor = colors.highlightedColor;
-            colors.fadeDuration = 0.08f;
-            presentationSpeedButton.transition = Selectable.Transition.ColorTint;
-            presentationSpeedButton.colors = colors;
-
-            var outline = presentationSpeedButton.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = presentationSpeedButton.gameObject.AddComponent<Outline>();
-            }
-
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.95f);
-            outline.effectDistance = new Vector2(2f, -2f);
-
-            var layout = presentationSpeedButton.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = presentationSpeedButton.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layout.minHeight = Mathf.Max(layout.minHeight, PresentationSpeedButtonMinHeight);
-            layout.minWidth = Mathf.Max(layout.minWidth, PresentationSpeedButtonMinWidth);
-            layout.preferredHeight = Mathf.Max(layout.preferredHeight, PresentationSpeedButtonMinHeight);
-            layout.preferredWidth = Mathf.Max(layout.preferredWidth, PresentationSpeedButtonMinWidth);
-
-            presentationSpeedButtonText = ConfigureHeaderActionButtonContent(
-                presentationSpeedButton,
-                ref presentationSpeedButtonIconImage,
-                "Time-Lapse",
-                "TimeLapseButtonContent",
-                "TimeLapseButtonIcon",
-                presentationSpeedButtonIcon,
-                UIStyleTokens.Text.Primary,
-                UIStyleTokens.Text.Primary) ?? presentationSpeedButtonText;
-            presentationSpeedButtonIconImage ??= GetHeaderActionButtonContentRoot(presentationSpeedButton)?
-                .Find("TimeLapseButtonIcon")?
-                .GetComponent<Image>();
-            RefreshHeaderActionButtonWidths();
-        }
-
         private void StyleSpendPointsButton()
         {
             if (spendPointsButton == null)
@@ -3423,7 +3015,6 @@ namespace FungusToast.Unity.UI.MutationTree
         private void RefreshHeaderActionButtonWidths()
         {
             UpdateHeaderActionButtonWidth(bankPointsButton, headerCenterSlotRect, BankButtonMinWidth);
-            UpdateHeaderActionButtonWidth(presentationSpeedButton, headerRightSlotRect, PresentationSpeedButtonMinWidth);
             UpdateHeaderActionButtonWidth(dockButton, headerReturnSlotRect, ReturnButtonMinWidth);
         }
 
@@ -3532,10 +3123,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (button.TryGetComponent<RectTransform>(out var buttonRect))
             {
                 buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
-                var preferredHeight = button == presentationSpeedButton
-                    ? PresentationSpeedButtonMinHeight
-                    : BankButtonMinHeight;
-                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, preferredHeight);
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, BankButtonMinHeight);
             }
         }
 
@@ -3549,11 +3137,6 @@ namespace FungusToast.Unity.UI.MutationTree
             if (button == bankPointsButton)
             {
                 return button.transform.Find("BankMutationPointsButtonContent") as RectTransform;
-            }
-
-            if (button == presentationSpeedButton)
-            {
-                return button.transform.Find("TimeLapseButtonContent") as RectTransform;
             }
 
             return button.GetComponentsInChildren<HorizontalLayoutGroup>(true)
@@ -3709,47 +3292,6 @@ namespace FungusToast.Unity.UI.MutationTree
             return existingIconImage;
         }
 
-        private void OnPresentationSpeedButtonClicked()
-        {
-            GameManager.Instance?.CycleRoundPresentationSpeedMode();
-            RefreshPresentationSpeedModeUI();
-        }
-
-        public void RefreshPresentationSpeedModeUI()
-        {
-            if (presentationSpeedButton == null)
-            {
-                return;
-            }
-
-            RoundPresentationSpeedMode mode = GameManager.Instance != null
-                ? GameManager.Instance.RoundPresentationSpeedMode
-                : RoundPresentationSpeedMode.Normal;
-
-            if (presentationSpeedButtonText != null)
-            {
-                presentationSpeedButtonText.text = mode == RoundPresentationSpeedMode.TimeLapse
-                    ? "Time-Lapse: On"
-                    : "Time-Lapse: Off";
-                presentationSpeedButtonText.fontStyle = FontStyles.Bold;
-            }
-
-            RefreshHeaderActionButtonWidths();
-
-            if (presentationSpeedTooltipTrigger != null)
-            {
-                presentationSpeedTooltipTrigger.SetStaticText(
-                    mode == RoundPresentationSpeedMode.TimeLapse
-                        ? TimeLapseTooltipText
-                        : NormalSpeedTooltipText);
-            }
-
-            if (mode == RoundPresentationSpeedMode.TimeLapse && IsTimeLapseCoachmarkVisible())
-            {
-                OnTimeLapseCoachmarkDismissed();
-            }
-        }
-
         // ═══════════════════════════════════════════════════════════════
         //  Panel-wide dark theme
         // ═══════════════════════════════════════════════════════════════
@@ -3894,8 +3436,7 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             EnsureHeaderControlsRow();
             RestoreSpendButtonLayout();
-            RestoreStoreButtonLayout();
-            RestorePresentationSpeedButtonLayout();
+            RestoreBankButtonLayout();
 
             if (mutationPointsCounterText != null)
             {
@@ -3970,7 +3511,7 @@ namespace FungusToast.Unity.UI.MutationTree
             RefreshSpendPointsButtonWidth();
         }
 
-        private void RestoreStoreButtonLayout()
+        private void RestoreBankButtonLayout()
         {
             if (bankPointsButton == null)
             {
@@ -3988,26 +3529,6 @@ namespace FungusToast.Unity.UI.MutationTree
             layout.minWidth = Mathf.Max(layout.minWidth, BankButtonMinWidth);
             layout.minHeight = Mathf.Max(layout.minHeight, BankButtonMinHeight);
             layout.preferredHeight = Mathf.Max(layout.preferredHeight, BankButtonMinHeight);
-        }
-
-        private void RestorePresentationSpeedButtonLayout()
-        {
-            if (presentationSpeedButton == null)
-            {
-                return;
-            }
-
-            presentationSpeedButton.gameObject.SetActive(true);
-
-            var layout = presentationSpeedButton.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = presentationSpeedButton.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layout.minWidth = Mathf.Max(layout.minWidth, PresentationSpeedButtonMinWidth);
-            layout.minHeight = Mathf.Max(layout.minHeight, PresentationSpeedButtonMinHeight);
-            layout.preferredHeight = Mathf.Max(layout.preferredHeight, PresentationSpeedButtonMinHeight);
         }
 
         private static void ForceLayoutRebuild(RectTransform? rowRect)
