@@ -365,8 +365,9 @@ namespace FungusToast.Unity.UI.MutationTree
             var pinObject = new GameObject("Pin", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button), typeof(LayoutElement));
             pinObject.transform.SetParent(toolbarObject.transform, false);
             LayoutElement pinLayout = pinObject.GetComponent<LayoutElement>();
-            pinLayout.minWidth = 64f;
-            pinLayout.preferredWidth = 64f;
+            // Sized for the bold "Pinned" state so toggling the label never wraps.
+            pinLayout.minWidth = 84f;
+            pinLayout.preferredWidth = 84f;
             pinLayout.preferredHeight = ToolbarHeight;
             pinButton = pinObject.GetComponent<Button>();
             pinButton.targetGraphic = pinObject.GetComponent<Image>();
@@ -381,6 +382,8 @@ namespace FungusToast.Unity.UI.MutationTree
             pinButtonLabel.fontStyle = FontStyles.Bold;
             pinButtonLabel.color = UIStyleTokens.Text.Primary;
             pinButtonLabel.alignment = TextAlignmentOptions.Center;
+            pinButtonLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            pinButtonLabel.overflowMode = TextOverflowModes.Overflow;
             pinButtonLabel.raycastTarget = false;
             pinButtonLabel.text = "Pin";
         }
