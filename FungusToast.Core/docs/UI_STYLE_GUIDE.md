@@ -297,6 +297,15 @@ Ability icons are drawn in code, not loaded from image files. `FungusToast.Unity
 - Review loop: `dotnet run` in `tools/icon-preview` renders every icon outside Unity to `TEMP/icon-sheets/icon-review.html` at the real slot sizes and fails if any adaptation, mycovariant or surge lacks a dedicated drawing. In the editor, `Fungus Toast > Icons` exports the same PNGs and runs the same coverage check.
 - New content: add a drawer to the family's icon file (keyed by `IconId` for adaptations, by id for mycovariants and surges), run the harness, and look at the sheet. A missing drawer falls back to a generic ring and logs a warning in the editor.
 
+### 5.10 Cursors
+Three 32x32 hardware cursors, all generated, all on-palette: fill `Text.Primary`, 1px outline `Text.OnAccent` so they read over both the toast photo and the dark panels, with `Accent.Lichen` reserved for the reticle's centre dot. Silhouettes stay conventional (arrow, pointing hand, crosshair) with 2px of transparent padding.
+
+- **Arrow** (`cursor_arrow.png`, hotspot 2,2) - the default; also set as the Player Settings default cursor so it applies from the first frame, main menu included.
+- **Hand** (`cursor_hand.png`, hotspot 11,2 at the fingertip) - shown over anything a click acts on. `CursorManager` raycasts the pointer through the EventSystem every frame and shows the hand only when the top hit (or its nearest ancestor) is an interactable `Selectable`. Nothing is wired per widget: a mutation card that turns `upgradeButton.interactable` off for locked/unaffordable/maxed states loses the hand automatically, which is the affordance - no hand means no purchase.
+- **Target** (`cursor_target.png`, hotspot 16,16) - while the board is in a tile-selection mode. The three selection controllers push it via `CursorManager.Push(CursorKind.Target, this)` and pop it on every exit path; the override outranks hover detection so leaving a card can never drop the reticle. The magnifier lens and the cell inspector tooltip stay available during placement - the player needs them to judge nearby toxins and mold before committing a tile.
+- Assets live in `FungusToast.Unity/Assets/Resources/UI/Cursors/` (Resources because the manager self-bootstraps with no scene reference). `CursorTextureImporter` forces Texture Type = Cursor, alpha-is-transparency, no mipmaps, no compression for that folder - never hand-edit the .meta files.
+- Regenerate: `python tools/cursor-gen/generate_cursors.py`. Shapes are signed-distance fields rasterised with 4x4 supersampling; colours are parsed from `UIStyleTokens.cs`, so a palette change plus a rerun keeps the set on-style. The script also writes the review sheet to `TEMP/cursor-preview/preview.html` (1x/2x/4x over toast, panels and real screenshots, 8x with hotspots marked) and rewrites the board highlight sprite (`hover_player_icon_temp_replacement_64x64.png`) as opaque white, because tilemap tints multiply and the old magenta placeholder hid every colour the hover and selection code applied. Hotspots in the script and `CursorManager` must agree.
+
 ---
 
 ## 6) Screen-by-Screen Rules (Full UI Pass)
