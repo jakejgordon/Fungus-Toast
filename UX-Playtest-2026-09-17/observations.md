@@ -29,7 +29,7 @@ Screenshot: [001-main-menu-campaign-tooltip.png](screenshots/001-main-menu-campa
 
 ### 002 — Campaign hub / resume screen
 
-**Status: In progress (2026-09-18).** Addressing the contradictory next-reward copy, renaming campaign-run levels to stages throughout player-facing UI, and consolidating the hub into a compact centered card. The opaque reward-icon concern is intentionally excluded from this pass.
+**Status: Fixed (2026-09-18).** Commit `3f059ee` — next-reward copy now reports the moldiness level reached after crossing the threshold (`MoldinessProgression.cs`, `MoldinessProgressionTests.cs`), campaign-run levels are labelled `Stage` throughout player-facing UI (`UI_CampaignPanelController.cs`, `UI_EndGamePanel.cs`, `UI_PauseMenuPanel.cs`, `MycovariantDraftController.cs`, `UI_PhaseBanner.cs`), and the hub action stack nests inside the moldiness summary card. Verified in-app by the maintainer on 2026-09-18. The opaque reward-icon concern (P2) was intentionally excluded from this pass.
 
 Screenshot: [002-campaign-hub.png](screenshots/002-campaign-hub.png)
 
@@ -41,6 +41,8 @@ Screenshot: [002-campaign-hub.png](screenshots/002-campaign-hub.png)
 - **P3 — Excess dead space:** The progression block and action block are vertically separated, weakening scan flow at this wide resolution. Consider a centered card or tighter vertical rhythm.
 
 ### 003 — Game 1 start / HUD hierarchy
+
+**Status: Deferred (2026-09-18).** Skipped for now at the maintainer's request; revisit after the mutation-tree work in 004.
 
 Screenshot: [003-game-1-start-hud.png](screenshots/003-game-1-start-hud.png)
 
