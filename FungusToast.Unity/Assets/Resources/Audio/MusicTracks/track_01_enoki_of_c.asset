@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2d7179dfaf54a2d86715fdd7142288f, type: 3}
+  m_Name: track_01_enoki_of_c
+  m_EditorClassIdentifier: 
+  clip: {fileID: 8300000, guid: 8de36b481d57a144e81d193ca26b2c14, type: 3}
+  trackNumber: 1
+  title: Enoki of C

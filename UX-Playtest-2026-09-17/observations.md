@@ -70,7 +70,7 @@ Screenshot: [004-mutation-tree-first-open.png](screenshots/004-mutation-tree-fir
 
 ### 005 — Music-skip tooltip
 
-**Status: In progress (2026-09-19).** The P2 "simulation speed is hard to find" bullet is addressed together with 004's Time-Lapse placement: the Next Track button is removed from the gameplay HUD (it remains in the pause menu, so the only skip-forward glyph on the board is gone) and the pace toggle now sits at the top-left of the right sidebar with an explicit `Pace:` label. The track-name (P2) and tooltip-placement (P3) bullets are not yet addressed.
+**Status: In progress (2026-09-19).** The P2 "simulation speed is hard to find" bullet is addressed together with 004's Time-Lapse placement: the Next Track button is removed from the gameplay HUD (it remains in the pause menu, so the only skip-forward glyph on the board is gone) and the pace toggle now sits at the top-left of the right sidebar with an explicit `Pace:` label. The track-name P2 is addressed (2026-09-19, pending the maintainer's in-editor pass): each gameplay clip now has a `MusicTrack` ScriptableObject (`Resources/Audio/MusicTracks/`) carrying a proper title and track number, and `MusicTrackCatalog` resolves the clip to `Track 5 - Break From the Mold` for the tooltip's `Current:` / `Next:` lines; a clip with no asset falls back to a title derived from the `track_XX_` filename rather than leaking the key. Metadata lives on an asset rather than being parsed from filenames because filenames cannot carry apostrophes or article casing (`fun_guses_lament` -> "Fun Gus's Lament"). Artist/collection was not added. The tooltip-placement (P3) bullet is not yet addressed.
 
 Screenshot: [005-music-skip-tooltip.png](screenshots/005-music-skip-tooltip.png)
 

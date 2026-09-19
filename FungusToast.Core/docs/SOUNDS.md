@@ -141,18 +141,30 @@ Current behavior:
 - there is currently a `5` second unpaused delay between tracks
 - playback uses a shuffle-bag style rotation so each configured gameplay track plays once before the order resets
 - music still respects the existing gameplay music volume settings, pause state, and fade-in behavior
-- the player can skip immediately to the next queued gameplay track from both the gameplay HUD and the in-game pause menu
+- the player can skip immediately to the next queued gameplay track from the in-game pause menu
+- the skip button's tooltip names the current and next track using player-facing metadata (`Track 5 - Break From the Mold`), never the raw clip name
 - the in-game pause menu does not stop gameplay music, so music volume changes can be auditioned in real time while the menu is open
 
-Currently assigned in the active gameplay scene playlist:
+Currently assigned in the active gameplay scene playlist (with the player-facing title from each track's `MusicTrack` asset):
 
-- `track_01_enoki_of_c.mp3`
-- `track_02_spororific_lounge.mp3`
-- `track_03_fun_guses_lament.mp3`
-- `track_04_mycorizing.mp3`
-- `track_05_break_from_the_mold.mp3`
-- `track_06_twice_cooked_bread.mp3`
-- `track_07_fungus_amongus.mp3`
+| Clip | Track | Title |
+| --- | --- | --- |
+| `track_01_enoki_of_c.mp3` | 1 | Enoki of C |
+| `track_02_spororific_lounge.mp3` | 2 | Spororific Lounge |
+| `track_03_fun_guses_lament.mp3` | 3 | Fun Gus's Lament |
+| `track_04_mycorizing.mp3` | 4 | Mycorizing |
+| `track_05_break_from_the_mold.mp3` | 5 | Break From the Mold |
+| `track_06_twice_cooked_bread.mp3` | 6 | Twice Cooked Bread |
+| `track_07_fungus_amongus.mp3` | 7 | Fungus Amongus |
+
+### Track metadata (`MusicTrack` assets)
+
+The clip's asset name is an internal key; the title and track number players see come from a `MusicTrack` ScriptableObject (`FungusToast.Unity/Assets/Scripts/Unity/Services/MusicTrack.cs`) that references the clip. Those assets live under `FungusToast.Unity/Assets/Resources/Audio/MusicTracks/` and are discovered at runtime by `MusicTrackCatalog` (`Resources.LoadAll`), keyed by clip, so the scene playlist keeps referencing raw `AudioClip`s and needs no rewiring.
+
+- one `MusicTrack` asset per gameplay clip, named after the clip (`track_05_break_from_the_mold.asset`)
+- fields: `clip`, `trackNumber` (the `XX` from the filename), `title` (proper title case, apostrophes and lowercase articles allowed - this is the one place the real title lives)
+- the tooltip renders `Track {trackNumber} - {title}`
+- a clip with no `MusicTrack` asset falls back to a name derived from the `track_XX_` filename convention (`track_08_new_song` -> `Track 8 - New Song`), so a forgotten asset degrades to a readable title rather than an asset key; it cannot restore punctuation or unusual capitalisation, which is why the asset is still expected
 
 ### Standard workflow for adding a new gameplay music track
 
@@ -169,13 +181,14 @@ For the normal "add one more gameplay track" case, do the following:
 1. Confirm the new asset exists under `FungusToast.Unity/Assets/Audio/Music`.
 2. Check the asset's `.meta` import settings and align them with the existing gameplay music tracks.
 3. Wire the new clip into the active gameplay playlist in `FungusToast.Unity/Assets/Scenes/SampleScene.unity`.
-4. Do not change `BackgroundMusicService` or `GameManager` code unless the playback behavior itself needs to change.
-5. Update the gameplay music section of this document so it stays accurate.
+4. Add a matching `MusicTrack` asset under `FungusToast.Unity/Assets/Resources/Audio/MusicTracks/` (Create > Configs > MusicTrack, or copy an existing `.asset` and update `clip`, `trackNumber`, `title`) so the tooltip shows a real title.
+5. Do not change `BackgroundMusicService`, `GameManager`, or `MusicTrackCatalog` code unless the playback or naming behavior itself needs to change.
+6. Update the gameplay music section of this document so it stays accurate.
 
 For the standard "wire up the existing music UX" case, preserve the current player-facing controls unless the request says otherwise:
 
 - keep the Next Track button available from the in-game pause menu (it was removed from the gameplay HUD because its skip glyph read as a game-speed control)
-- keep the tooltip meaningful by showing the current track name and the next queued track name
+- keep the tooltip meaningful by showing the current track and the next queued track by their `MusicTrack` title and number
 - keep pause-menu music playback enabled so volume changes can be heard immediately while the menu is open
 
 Current implementation details for standard gameplay-track wiring:
@@ -200,7 +213,7 @@ Current implementation details for standard gameplay-track wiring:
 
 Default rule for future gameplay-track additions:
 
-- if the request is only to add another track to the existing gameplay rotation, prefer scene and importer updates over code changes
+- if the request is only to add another track to the existing gameplay rotation, prefer scene, importer, and `MusicTrack` asset updates over code changes
 - only edit `FungusToast.Unity/Assets/Scripts/Unity/GameManager.cs` or `FungusToast.Unity/Assets/Scripts/Unity/Services/BackgroundMusicService.cs` when the requested behavior changes
 
 Canonical import settings for gameplay music assets:

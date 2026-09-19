@@ -2663,14 +2663,12 @@ namespace FungusToast.Unity
 
         public string GetCurrentGameplayTrackName()
         {
-            AudioClip? clip = backgroundMusicService?.GetCurrentGameplayTrack();
-            return clip != null ? clip.name : string.Empty;
+            return MusicTrackCatalog.GetDisplayName(backgroundMusicService?.GetCurrentGameplayTrack());
         }
 
         public string GetNextGameplayTrackName()
         {
-            AudioClip? clip = backgroundMusicService?.GetNextGameplayTrack();
-            return clip != null ? clip.name : string.Empty;
+            return MusicTrackCatalog.GetDisplayName(backgroundMusicService?.GetNextGameplayTrack());
         }
 
         private void ConfigureBackgroundMusicService()
