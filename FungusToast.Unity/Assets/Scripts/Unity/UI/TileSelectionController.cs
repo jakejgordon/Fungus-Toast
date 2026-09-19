@@ -33,6 +33,32 @@ namespace FungusToast.Unity.UI
         private int selectingPlayerId = -1;
         private HashSet<int> selectableTileIds = new HashSet<int>();
         private bool selectionActive = false;
+
+        // Entering a selection mode requests the target reticle; leaving it (finish,
+        // cancel, auto-complete, or a directional phase change) releases it. Routing
+        // every path through the setter means no exit can forget the cursor.
+        private bool SelectionActive
+        {
+            get => selectionActive;
+            set
+            {
+                if (selectionActive == value)
+                {
+                    return;
+                }
+
+                selectionActive = value;
+                if (value)
+                {
+                    CursorManager.Instance?.Push(CursorKind.Target, this);
+                }
+                else
+                {
+                    CursorManager.Instance?.Pop(this);
+                }
+            }
+        }
+
         private Action<int> onTileSelected; // For generic board tile selection
         private Color highlightColorA = new Color(0.2f, 0.8f, 1f, 1f);
         private Color highlightColorB = new Color(0.7f, 1f, 1f, 1f);
@@ -61,9 +87,14 @@ namespace FungusToast.Unity.UI
             magnifyingGlass = FindAnyObjectByType<MagnifyingGlassFollowMouse>();
         }
 
+        private void OnDisable()
+        {
+            CursorManager.Instance?.Pop(this);
+        }
+
         private void Update()
         {
-            if (!selectionActive || directionalSelectionPhase != DirectionalSelectionPhase.SelectDirection)
+            if (!SelectionActive || directionalSelectionPhase != DirectionalSelectionPhase.SelectDirection)
             {
                 return;
             }
@@ -109,7 +140,7 @@ namespace FungusToast.Unity.UI
             }
 
             selectingPlayerId = playerId;
-            selectionActive = true;
+            SelectionActive = true;
 
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
@@ -183,7 +214,7 @@ namespace FungusToast.Unity.UI
 
             bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
 
-            selectionActive = true;
+            SelectionActive = true;
 
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage, showCancelButton, cancelButtonLabel, CancelSelection);
@@ -236,7 +267,7 @@ namespace FungusToast.Unity.UI
 
             bool IsSelectableTarget(BoardTile tile) => tile != null && !tile.IsBlocked && isValidTile(tile);
 
-            selectionActive = true;
+            SelectionActive = true;
             if (!string.IsNullOrEmpty(promptMessage))
                 GameManager.Instance.ShowSelectionPrompt(promptMessage);
 
@@ -268,7 +299,7 @@ namespace FungusToast.Unity.UI
                 onTileSelected?.Invoke(tile);
                 if (selectedCount >= maxTiles || selectedTileIds.Count >= selectableTileIds.Count)
                 {
-                    selectionActive = false;
+                    SelectionActive = false;
                     gridVisualizer.ClearHighlights();
                     GameManager.Instance.HideSelectionPrompt();
                     if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
@@ -278,7 +309,7 @@ namespace FungusToast.Unity.UI
             };
             onCancelled = () =>
             {
-                selectionActive = false;
+                SelectionActive = false;
                 gridVisualizer.ClearHighlights();
                 GameManager.Instance.HideSelectionPrompt();
                 if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
@@ -289,9 +320,9 @@ namespace FungusToast.Unity.UI
 
         public void OnTileClicked(int tileId)
         {
-            if (!selectionActive || !selectableTileIds.Contains(tileId))
+            if (!SelectionActive || !selectableTileIds.Contains(tileId))
             {
-                if (!selectionActive)
+                if (!SelectionActive)
                     Debug.LogWarning($"TileSelectionController.OnTileClicked called when selection is not active. TileId: {tileId}");
                 return;
             }
@@ -305,7 +336,7 @@ namespace FungusToast.Unity.UI
             if (onTileSelected != null)
             {
                 onTileSelected(tileId);
-                selectionActive = false;
+                SelectionActive = false;
                 gridVisualizer.ClearHighlights();
                 if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                 Reset();
@@ -316,7 +347,7 @@ namespace FungusToast.Unity.UI
             if (cell != null && cell.IsAlive)
             {
                 onCellSelected?.Invoke(cell);
-                selectionActive = false;
+                SelectionActive = false;
                 gridVisualizer.ClearHighlights();
                 if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
                 Reset();
@@ -325,7 +356,7 @@ namespace FungusToast.Unity.UI
 
         public void CancelSelection()
         {
-            if (!selectionActive) return;
+            if (!SelectionActive) return;
 
             if (directionalSelectionPhase == DirectionalSelectionPhase.SelectDirection)
             {
@@ -333,7 +364,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            selectionActive = false;
+            SelectionActive = false;
             gridVisualizer.ClearHighlights();
             if (hoverHighlighter != null) hoverHighlighter.ClearSelectableTiles();
             var cancelled = onCancelled;
@@ -377,12 +408,12 @@ namespace FungusToast.Unity.UI
 
         public bool IsSelectable(int tileId)
         {
-            return selectionActive && selectableTileIds.Contains(tileId);
+            return SelectionActive && selectableTileIds.Contains(tileId);
         }
 
         public void ReapplySelectionHighlights()
         {
-            if (!selectionActive || selectableTileIds.Count == 0)
+            if (!SelectionActive || selectableTileIds.Count == 0)
             {
                 return;
             }
@@ -390,7 +421,7 @@ namespace FungusToast.Unity.UI
             gridVisualizer.HighlightTiles(selectableTileIds, highlightColorA, highlightColorB);
         }
 
-        public bool HasActiveSelection => selectionActive;
+        public bool HasActiveSelection => SelectionActive;
 
         /// <summary>
         /// Registers a callback that is invoked whenever a selectable tile is newly hovered
@@ -415,7 +446,7 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            selectionActive = true;
+            SelectionActive = true;
             directionalSelectionPhase = DirectionalSelectionPhase.SelectSource;
             selectingPlayerId = directionalSelectingPlayerId;
             directionalAnchorTileId = -1;
@@ -454,7 +485,7 @@ namespace FungusToast.Unity.UI
 
         private void BeginDirectionalAim(int anchorTileId)
         {
-            selectionActive = true;
+            SelectionActive = true;
             directionalSelectionPhase = DirectionalSelectionPhase.SelectDirection;
             directionalAnchorTileId = anchorTileId;
             currentDirectionalAim = null;
@@ -540,7 +571,7 @@ namespace FungusToast.Unity.UI
             int anchorTileId = directionalAnchorTileId;
             CardinalDirection direction = currentDirectionalAim.Value;
 
-            selectionActive = false;
+            SelectionActive = false;
             onDirectionalSelectionPreviewChanged?.Invoke(anchorTileId, null);
             Reset();
             confirmed?.Invoke(anchorTileId, direction);

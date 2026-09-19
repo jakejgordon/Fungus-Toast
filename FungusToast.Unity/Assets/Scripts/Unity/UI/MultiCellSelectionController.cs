@@ -23,6 +23,32 @@ namespace FungusToast.Unity.UI
         private HashSet<int> selectedTileIds = new HashSet<int>();
         private int maxSelections = 5;
         private bool selectionActive = false;
+
+        // Entering a selection mode requests the target reticle; leaving it (finish,
+        // cancel, auto-complete, or a directional phase change) releases it. Routing
+        // every path through the setter means no exit can forget the cursor.
+        private bool SelectionActive
+        {
+            get => selectionActive;
+            set
+            {
+                if (selectionActive == value)
+                {
+                    return;
+                }
+
+                selectionActive = value;
+                if (value)
+                {
+                    CursorManager.Instance?.Push(CursorKind.Target, this);
+                }
+                else
+                {
+                    CursorManager.Instance?.Pop(this);
+                }
+            }
+        }
+
         private int lastRemaining = -1;
         private Func<IReadOnlyCollection<int>, int, IEnumerable<int>> autoSelectionResolver;
         private string autoSelectionButtonLabel = "Auto Placement";
@@ -41,6 +67,11 @@ namespace FungusToast.Unity.UI
                 throw new System.Exception($"{nameof(MultiCellSelectionController)} requires a reference to GridVisualizer. Assign it in the Inspector.");
         }
 
+        private void OnDisable()
+        {
+            CursorManager.Instance?.Pop(this);
+        }
+
         /// <summary>
         /// Prompts the player to select multiple of their living fungal cells.
         /// Highlights valid cells and waits for clicks.
@@ -57,7 +88,7 @@ namespace FungusToast.Unity.UI
             string autoTooltipText = "Automatically select remaining tiles")
         {
             this.selectingPlayerId = playerId;
-            selectionActive = true;
+            SelectionActive = true;
             selectedTileIds.Clear();
             autoSelectionResolver = autoSelectTileIds;
             autoSelectionButtonLabel = string.IsNullOrWhiteSpace(autoButtonLabel) ? "Auto Placement" : autoButtonLabel;
@@ -144,7 +175,7 @@ namespace FungusToast.Unity.UI
 
         public void OnTileClicked(int tileId)
         {
-            if (!selectionActive || !selectableTileIds.Contains(tileId)) return;
+            if (!SelectionActive || !selectableTileIds.Contains(tileId)) return;
 
             var cell = GameManager.Instance.Board.GetCell(tileId);
             if (cell != null && cell.IsAlive && !cell.IsResistant)
@@ -181,7 +212,7 @@ namespace FungusToast.Unity.UI
 
         private void AutoCompleteSelection()
         {
-            if (!selectionActive || autoSelectionResolver == null)
+            if (!SelectionActive || autoSelectionResolver == null)
             {
                 return;
             }
@@ -209,7 +240,7 @@ namespace FungusToast.Unity.UI
 
         private void FinishSelection()
         {
-            selectionActive = false;
+            SelectionActive = false;
             gridVisualizer.ClearAllHighlights();
             var selectedCells = selectedTileIds
                 .Select(id => GameManager.Instance.Board.GetCell(id))
@@ -222,8 +253,8 @@ namespace FungusToast.Unity.UI
 
         public void CancelSelection()
         {
-            if (!selectionActive) return;
-            selectionActive = false;
+            if (!SelectionActive) return;
+            SelectionActive = false;
             gridVisualizer.ClearAllHighlights(); // Clear both pulsing and selected highlights
             onCancelled?.Invoke();
             Reset();
@@ -248,7 +279,7 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public bool IsSelectable(int tileId)
         {
-            return selectionActive && selectableTileIds.Contains(tileId);
+            return SelectionActive && selectableTileIds.Contains(tileId);
         }
 
         /// <summary>
@@ -256,12 +287,12 @@ namespace FungusToast.Unity.UI
         /// </summary>
         public bool IsSelected(int tileId)
         {
-            return selectionActive && selectedTileIds.Contains(tileId);
+            return SelectionActive && selectedTileIds.Contains(tileId);
         }
 
         public void ReapplySelectionHighlights()
         {
-            if (!selectionActive || selectableTileIds.Count == 0)
+            if (!SelectionActive || selectableTileIds.Count == 0)
             {
                 return;
             }
@@ -270,6 +301,6 @@ namespace FungusToast.Unity.UI
             gridVisualizer.ShowSelectedTiles(selectedTileIds, Color.black);
         }
 
-        public bool HasActiveSelection => selectionActive;
+        public bool HasActiveSelection => SelectionActive;
     }
 }
