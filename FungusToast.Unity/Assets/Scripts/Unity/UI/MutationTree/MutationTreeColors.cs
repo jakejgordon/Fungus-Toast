@@ -17,7 +17,6 @@ namespace FungusToast.Unity.UI.MutationTree
         // Every fill below keeps Text.Primary at >= 5:1 against the six accents.
         public const float AvailableFillBlend = 0.26f;
         public const float OwnedFillBlend     = 0.16f;
-        public const float HoverFillBlend     = 0.12f;
         public const float MaxedFillBlend     = 0.25f;
         public const float LockedRailBlend    = 0.50f;
 

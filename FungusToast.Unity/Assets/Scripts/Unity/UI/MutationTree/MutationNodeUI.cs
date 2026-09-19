@@ -27,6 +27,13 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float SearchNonMatchAlpha = 0.10f;
         private const float UnrelatedRelationshipAlpha = 0.24f;
         private const float PurchasablePrerequisitePulseDurationSeconds = 1f;
+        // Button physics for a card the player can buy right now: a small lift while the
+        // pointer is over it and a squash while the button is held, so the card answers
+        // the cursor like a button rather than highlighting like a list row.
+        private const float HoverLiftScale = 1.03f;
+        private const float PressedSquashScale = 0.97f;
+        private const float ButtonScaleLerpSpeed = 18f;
+        private const float PressedFillDarken = 0.18f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
         private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
@@ -92,6 +99,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private UI_MutationManager uiManager;
         private Player player;
         private bool isPointerHovering;
+        private bool isPointerPressed;
+        private float currentButtonScale = 1f;
         private float baseCanvasAlpha = 1f;
         private bool isSearchActive;
         private bool isSearchMatch;
@@ -103,7 +112,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private Coroutine upgradeEffectCoroutine;
         private Coroutine blockedInvestmentPulseCoroutine;
         private int lastUpgradeAttemptFrame = -1;
-        private BlockedInvestmentClickForwarder blockedInvestmentClickForwarder;
+        private NodeButtonPointerForwarder nodeButtonPointerForwarder;
         private float targetProgressFill;
         private float currentProgressFill;
         private static readonly float ProgressLerpSpeed = 6f;
@@ -193,9 +202,10 @@ namespace FungusToast.Unity.UI.MutationTree
             // MutationNodeUI lives on the card root, which has no Graphic, so the
             // child upgrade Button (a Selectable, and therefore an IPointerDownHandler)
             // swallows the pointer press before it can bubble to this component's
-            // OnPointerDown. Route click feedback through a forwarder that sits on the
-            // Button itself so blocked-investment clicks are actually seen.
-            EnsureBlockedInvestmentClickForwarder();
+            // OnPointerDown. Route click and press feedback through a forwarder that
+            // sits on the Button itself so blocked-investment clicks and the pressed
+            // state are actually seen.
+            EnsureNodeButtonPointerForwarder();
         }
 
         private void OnUpgradeClicked()
@@ -369,6 +379,9 @@ namespace FungusToast.Unity.UI.MutationTree
             if (pendingUnlockOverlay != null)
                 pendingUnlockOverlay.transform.localScale = Vector3.one;
             transform.localScale = Vector3.one;
+            currentButtonScale = 1f;
+            isPointerHovering = false;
+            isPointerPressed = false;
         }
 
         private void Update()
@@ -382,6 +395,34 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             UpdatePurchasablePrerequisitePulse();
+            UpdateButtonScale();
+        }
+
+        private float TargetButtonScale
+        {
+            get
+            {
+                if (!isPointerHovering || upgradeButton == null || !upgradeButton.interactable)
+                    return 1f;
+                return isPointerPressed ? PressedSquashScale : HoverLiftScale;
+            }
+        }
+
+        private void UpdateButtonScale()
+        {
+            // The purchase bounce owns the card scale while it plays.
+            if (upgradeEffectCoroutine != null)
+                return;
+
+            float target = TargetButtonScale;
+            if (Mathf.Approximately(currentButtonScale, target))
+                return;
+
+            float blend = 1f - Mathf.Exp(-ButtonScaleLerpSpeed * Time.unscaledDeltaTime);
+            currentButtonScale = Mathf.Lerp(currentButtonScale, target, blend);
+            if (Mathf.Abs(currentButtonScale - target) < 0.001f)
+                currentButtonScale = target;
+            transform.localScale = Vector3.one * currentButtonScale;
         }
 
         // ── Affordability / state background tinting ──────────────────────
@@ -451,7 +492,14 @@ namespace FungusToast.Unity.UI.MutationTree
             if (showPendingUnlock) return $"NEXT ROUND\n{level}";
             if (isLocked) return $"LOCKED\n{level}";
             if (isDisabledBecauseNoEffect) return $"NO TARGET\n{level}";
-            if (canAfford) return currentLevel > 0 ? $"READY\n{level}" : $"AVAILABLE\n{level}";
+            // The one state where a click does something is the only one phrased as
+            // an instruction; every other label describes. That contrast is what makes
+            // a buyable card read as a button instead of an enabled row.
+            if (canAfford)
+            {
+                string verb = mutation.IsSurge ? "ACTIVATE" : currentLevel > 0 ? "UPGRADE" : "BUY";
+                return $"{verb}\n{level}";
+            }
             return currentLevel > 0 ? $"OWNED\n{level}" : $"NEED POINTS\n{level}";
         }
 
@@ -513,11 +561,15 @@ namespace FungusToast.Unity.UI.MutationTree
             if (nodeBackground == null || upgradeButton == null) return;
             if (!upgradeButton.interactable) return;
 
-            nodeBackground.color = Color.Lerp(
-                nodeBackground.color,
-                MutationTreeColors.GetCategoryAccent(mutation.Category),
-                MutationTreeColors.HoverFillBlend);
-            ApplyTextContrast(useDarkText: false);
+            // A buyable card inverts to its full category accent under the pointer -
+            // the same treatment as its column header - rather than brightening a
+            // little like a highlighted row. Text contrast is decided from the accent,
+            // not the pressed shade, so it never flips mid-press.
+            Color accent = MutationTreeColors.GetCategoryAccent(mutation.Category);
+            Color fill = isPointerPressed ? Color.Lerp(accent, Color.black, PressedFillDarken) : accent;
+            fill.a = 1f;
+            nodeBackground.color = fill;
+            ApplyTextContrast(useDarkText: IsLightBackground(accent));
         }
 
         private void ApplyTextContrast(bool useDarkText)
@@ -561,11 +613,27 @@ namespace FungusToast.Unity.UI.MutationTree
         public void OnPointerExit(PointerEventData eventData)
         {
             isPointerHovering = false;
+            isPointerPressed = false;
 
             uiManager.HandleMutationNodeHoverExit(mutation);
 
             // Restore correct base state tint after hover.
             UpdateDisplay();
+        }
+
+        /// <summary>
+        /// Invoked by <see cref="NodeButtonPointerForwarder"/> when the left button goes
+        /// down or up over the node's Button. Only a buyable card squashes; a blocked
+        /// click gets its own attention pulse instead.
+        /// </summary>
+        private void HandleForwardedPress(bool pressed)
+        {
+            isPointerPressed = pressed && upgradeButton != null && upgradeButton.interactable;
+
+            if (isPointerHovering)
+            {
+                ApplyInteractableHoverVisual();
+            }
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -577,7 +645,7 @@ namespace FungusToast.Unity.UI.MutationTree
         }
 
         /// <summary>
-        /// Invoked by <see cref="BlockedInvestmentClickForwarder"/> for every left click on
+        /// Invoked by <see cref="NodeButtonPointerForwarder"/> for every left click on
         /// the node's Button, including clicks the Button ignores because it is not
         /// interactable (locked / unaffordable) — those never reach this component's
         /// OnPointerDown. A click the Button handled as a real upgrade this frame is
@@ -699,6 +767,7 @@ namespace FungusToast.Unity.UI.MutationTree
             }
 
             transform.localScale = originalScale;
+            currentButtonScale = 1f;
             // Restore proper background tint
             UpdateDisplay();
             upgradeEffectCoroutine = null;
@@ -1881,10 +1950,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private bool ShouldUseDarkTextForCurrentBackground()
         {
-            if (nodeBackground == null)
-                return false;
+            return nodeBackground != null && IsLightBackground(nodeBackground.color);
+        }
 
-            Color background = nodeBackground.color;
+        private static bool IsLightBackground(Color background)
+        {
             float luminance = (0.2126f * background.r) + (0.7152f * background.g) + (0.0722f * background.b);
             return luminance >= DarkTextBackgroundLuminanceThreshold;
         }
@@ -2220,19 +2290,19 @@ namespace FungusToast.Unity.UI.MutationTree
             }
         }
 
-        private void EnsureBlockedInvestmentClickForwarder()
+        private void EnsureNodeButtonPointerForwarder()
         {
             if (upgradeButton == null)
                 return;
 
-            if (blockedInvestmentClickForwarder == null)
+            if (nodeButtonPointerForwarder == null)
             {
                 GameObject buttonObject = upgradeButton.gameObject;
-                blockedInvestmentClickForwarder = buttonObject.GetComponent<BlockedInvestmentClickForwarder>()
-                    ?? buttonObject.AddComponent<BlockedInvestmentClickForwarder>();
+                nodeButtonPointerForwarder = buttonObject.GetComponent<NodeButtonPointerForwarder>()
+                    ?? buttonObject.AddComponent<NodeButtonPointerForwarder>();
             }
 
-            blockedInvestmentClickForwarder.Bind(HandleForwardedClick);
+            nodeButtonPointerForwarder.Bind(HandleForwardedClick, HandleForwardedPress);
         }
 
         /// <summary>
@@ -2241,13 +2311,15 @@ namespace FungusToast.Unity.UI.MutationTree
         /// press before it can reach the card-root component, so clicks on a
         /// non-interactable node would otherwise be invisible to the node script.
         /// </summary>
-        private sealed class BlockedInvestmentClickForwarder : MonoBehaviour, IPointerClickHandler
+        private sealed class NodeButtonPointerForwarder : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
         {
             private System.Action onLeftClick;
+            private System.Action<bool> onLeftPressChanged;
 
-            public void Bind(System.Action handler)
+            public void Bind(System.Action clickHandler, System.Action<bool> pressChangedHandler)
             {
-                onLeftClick = handler;
+                onLeftClick = clickHandler;
+                onLeftPressChanged = pressChangedHandler;
             }
 
             public void OnPointerClick(PointerEventData eventData)
@@ -2255,6 +2327,22 @@ namespace FungusToast.Unity.UI.MutationTree
                 if (eventData.button == PointerEventData.InputButton.Left)
                 {
                     onLeftClick?.Invoke();
+                }
+            }
+
+            public void OnPointerDown(PointerEventData eventData)
+            {
+                if (eventData.button == PointerEventData.InputButton.Left)
+                {
+                    onLeftPressChanged?.Invoke(true);
+                }
+            }
+
+            public void OnPointerUp(PointerEventData eventData)
+            {
+                if (eventData.button == PointerEventData.InputButton.Left)
+                {
+                    onLeftPressChanged?.Invoke(false);
                 }
             }
         }
