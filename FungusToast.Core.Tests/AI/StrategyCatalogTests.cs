@@ -789,6 +789,32 @@ public class StrategyCatalogTests
         Assert.All(treatment.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));
     }
 
+    [Fact]
+    public void Necrotoxin_Gauntlet_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.CampaignStrategiesByName["CMP_Bloom_NecrotoxinGauntlet_Elite"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_NecrotoxinGauntlet_EconomyControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_NecrotoxinGauntlet_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Single(control.GetMycovariantPreferences());
+        Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.PlasmidBountyIIId,
+                MycovariantIds.PlasmidBountyId,
+                MycovariantIds.AscusWagerId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+        Assert.All(treatment.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)
