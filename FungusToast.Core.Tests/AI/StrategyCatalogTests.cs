@@ -612,7 +612,6 @@ public class StrategyCatalogTests
             "CMP_Defense_IronShell_Elite",
             "CMP_Defense_ReclaimShell_Easy",
             "CMP_Defense_ResilientShell_Easy",
-            "CMP_Economy_HoardsporeRegent_Elite",
             "CMP_Economy_KillReclaim_Medium",
             "CMP_Economy_LateSpike_Hard",
             "CMP_Economy_TempoReclaim_Medium",
@@ -677,6 +676,38 @@ public class StrategyCatalogTests
                 MycovariantIds.PlasmidBountyIIId,
                 MycovariantIds.PlasmidBountyId,
                 MycovariantIds.AscusWagerId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+        Assert.All(treatment.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));
+    }
+
+    [Fact]
+    public void Hoardspore_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.CampaignStrategiesByName["CMP_Economy_HoardsporeRegent_Elite"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_Hoardspore_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_Hoardspore_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
+
+        Assert.Single(control.GetMycovariantPreferences());
+        Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.ReclamationRhizomorphsId,
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.PlasmidBountyIIId,
+                MycovariantIds.AscusWagerId,
+                MycovariantIds.PlasmidBountyId
             },
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
         Assert.All(treatment.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));

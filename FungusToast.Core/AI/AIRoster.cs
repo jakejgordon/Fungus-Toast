@@ -478,7 +478,15 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation),
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Extra attempts sustain the reclamation engine"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Cell deaths seed additional reclamation"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 996, "Free Tier 5 level after the core engine"),
+                    new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
+                },
                 startingSporeEdgeOffset: 6
             ),
             // AI3
@@ -1288,6 +1296,42 @@ namespace FungusToast.Core.AI
                     new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
                     new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
                 }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Hoardspore_CategoryControl",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Economy,
+                    MycovariantCategory.Reclamation),
+                startingSporeEdgeOffset: 6
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Hoardspore_CuratedMycovariants",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Extra attempts sustain the reclamation engine"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Cell deaths seed additional reclamation"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 996, "Free Tier 5 level after the core engine"),
+                    new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
+                },
+                startingSporeEdgeOffset: 6
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",

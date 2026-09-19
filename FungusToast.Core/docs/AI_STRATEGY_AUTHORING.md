@@ -329,6 +329,25 @@ a held-out confirmation.
   invariant mismatches. The Testing control/treatment pair remains registered
   so the comparison is reproducible.
 
+### Hoardspore Regent (`CMP_Economy_HoardsporeRegent_Elite`)
+
+- Promoted order: Plasmid Bounty III, Reclamation Rhizomorphs, Necrophoric
+  Adaptation, Plasmid Bounty II, Ascus Wager, Plasmid Bounty I. This preserves
+  an immediate economy opener, then makes the strategy's reclamation fantasy
+  explicit before its secondary economy fallbacks; AI bait cards are excluded.
+- Context: the same eight-player, 120x120, rotating-slot, fixed `TST_Arch02`
+  through `TST_Arch08` panel used for The Economancer, with Mycovariants on and
+  nutrients and starting Adaptations off.
+- Comparison seed `2026091912`, 50 pairs: treatment-control normalized board
+  share `+0.017703`, 95% CI `[-0.044011, 0.079417]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `hoardspore_myco_comparison_{control,treatment}_2026091912`.
+- Held-out seed `2026091913`, 100 pairs: treatment-control normalized board
+  share `-0.005289`, 95% CI `[-0.021197, 0.010618]`; the same margin was
+  supported. Artifacts: `hoardspore_myco_holdout_{control,treatment}_2026091913`.
+- Both stages passed manifest contamination checks. The Testing pair remains
+  registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
