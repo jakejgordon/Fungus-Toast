@@ -348,6 +348,24 @@ a held-out confirmation.
 - Both stages passed manifest contamination checks. The Testing pair remains
   registered for reproducibility.
 
+### Iron Shell (`CMP_Defense_IronShell_Elite`)
+
+- Promoted order: Reclamation Rhizomorphs, Necrophoric Adaptation, Plasmid
+  Bounty III, Plasmid Bounty II, Ascus Wager, Plasmid Bounty I. The two
+  attrition/reclamation passives lead its defensive fantasy; safe economy
+  payoffs follow, and AI bait cards are excluded.
+- Context: the same fixed eight-player 120x120 panel and systems controls used
+  by the preceding migrations.
+- Comparison seed `2026091922`, 50 pairs: treatment-control normalized board
+  share `+0.032433`, 95% CI `[-0.034393, 0.099259]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `ironshell_myco_comparison_{control,treatment}_2026091922`.
+- Held-out seed `2026091923`, 100 pairs: treatment-control normalized board
+  share `+0.013053`, 95% CI `[-0.025559, 0.051665]`; the same margin was
+  supported. Artifacts: `ironshell_myco_holdout_{control,treatment}_2026091923`.
+- Both stages passed manifest contamination checks. The Testing pair remains
+  registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

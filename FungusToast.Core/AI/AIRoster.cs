@@ -501,7 +501,15 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration),
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Extra attempts reinforce the defensive reclamation loop"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Attrition converts cell deaths into reclaimed ground"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 998, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 996, "Free Tier 5 level after defensive setup"),
+                    new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
+                }
             ),
             // AI4
             new ParameterizedSpendingStrategy(
@@ -1332,6 +1340,42 @@ namespace FungusToast.Core.AI
                     new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
                 },
                 startingSporeEdgeOffset: 6
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_IronShell_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Economy,
+                    MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_IronShell_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift, GameBalance.HyperadaptiveDriftMaxLevel),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Extra attempts reinforce the defensive reclamation loop"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Attrition converts cell deaths into reclaimed ground"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 998, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 996, "Free Tier 5 level after defensive setup"),
+                    new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
