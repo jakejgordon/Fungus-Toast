@@ -459,7 +459,13 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
                     new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
+                }
             ),
             // AI2
             new ParameterizedSpendingStrategy(
@@ -1250,6 +1256,39 @@ namespace FungusToast.Core.AI
         /// </summary>
         private static readonly List<IMutationSpendingStrategy> _rawTestingStrategies = new List<IMutationSpendingStrategy>
         {
+            // Matched Campaign preference experiment: behavior-identical Economancer clones
+            // whose only treatment difference is the Mycovariant plan. Keep these Testing-only
+            // until the curated arm clears comparison and held-out simulation evidence.
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Economancer_CategoryControl",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Economancer_CuratedMycovariants",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
+                }
+            ),
             new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,

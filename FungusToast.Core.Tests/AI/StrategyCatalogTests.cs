@@ -4,6 +4,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
+using FungusToast.Core.Mycovariants;
 using FungusToast.Core.Phases;
 using FungusToast.Core.Players;
 using FungusToast.Core.Tests.Mutations;
@@ -611,7 +612,6 @@ public class StrategyCatalogTests
             "CMP_Defense_IronShell_Elite",
             "CMP_Defense_ReclaimShell_Easy",
             "CMP_Defense_ResilientShell_Easy",
-            "CMP_Economy_Economancer_Elite",
             "CMP_Economy_HoardsporeRegent_Elite",
             "CMP_Economy_KillReclaim_Medium",
             "CMP_Economy_LateSpike_Hard",
@@ -650,6 +650,53 @@ public class StrategyCatalogTests
             .ToArray();
 
         Assert.Equal(knownLegacyDebt, debt);
+    }
+
+    [Fact]
+    public void Economancer_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.CampaignStrategiesByName["CMP_Economy_Economancer_Elite"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_Economancer_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.TestingStrategiesByName["TST_Campaign_Economancer_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
+
+        Assert.Single(control.GetMycovariantPreferences());
+        Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.PlasmidBountyIIId,
+                MycovariantIds.PlasmidBountyId,
+                MycovariantIds.AscusWagerId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+        Assert.All(treatment.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));
+    }
+
+    private static void AssertStrategyConfigurationEqualExceptMycovariants(
+        ParameterizedSpendingStrategy expected,
+        ParameterizedSpendingStrategy actual)
+    {
+        Assert.Equal(expected.PrioritizeHighTier, actual.PrioritizeHighTier);
+        Assert.Equal(expected.MaxTier, actual.MaxTier);
+        Assert.Equal(expected.PriorityMutationCategories, actual.PriorityMutationCategories);
+        Assert.Equal(
+            expected.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
+            actual.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)));
+        Assert.Equal(expected.SurgePriorityIds, actual.SurgePriorityIds);
+        Assert.Equal(expected.SurgeAttemptTurnFrequency, actual.SurgeAttemptTurnFrequency);
+        Assert.Equal(expected.EconomyProfile, actual.EconomyProfile);
+        Assert.Equal(expected.ExcludedMutationIds.OrderBy(id => id), actual.ExcludedMutationIds.OrderBy(id => id));
+        Assert.Equal(expected.StartingSporeEdgeOffset, actual.StartingSporeEdgeOffset);
     }
 
     [Fact]

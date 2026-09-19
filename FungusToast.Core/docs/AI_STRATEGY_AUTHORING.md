@@ -303,6 +303,32 @@ is implemented.
     plan, compare the proposed ordered list against its unchanged control with
     deterministic simulation seeds, then confirm it on a held-out seed.
 
+## Campaign Mycovariant Migration Ledger
+
+Legacy Campaign entries with empty or category-derived plans are frozen by
+`Campaign_player_facing_mycovariant_authoring_debt_does_not_expand`. Each name
+leaves that baseline only after a specific list clears a matched comparison and
+a held-out confirmation.
+
+### The Economancer (`CMP_Economy_Economancer_Elite`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. The list prioritizes deterministic mutation-point payout and
+  excludes AI bait cards.
+- Context: eight players, 120x120, rotating slots, Mycovariants enabled,
+  nutrients and starting Adaptations disabled. The other seven strategies were
+  the fixed `TST_Arch02` through `TST_Arch08` panel.
+- Comparison seed `2026091902`, 50 pairs: treatment-control normalized board
+  share `-0.005873`, 95% CI `[-0.028119, 0.016373]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `economancer_myco_comparison_{control,treatment}_2026091902`.
+- Held-out seed `2026091903`, 100 pairs: treatment-control normalized board
+  share `+0.007541`, 95% CI `[-0.007239, 0.022321]`; the same margin was
+  supported. Artifacts: `economancer_myco_holdout_{control,treatment}_2026091903`.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing control/treatment pair remains registered
+  so the comparison is reproducible.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
