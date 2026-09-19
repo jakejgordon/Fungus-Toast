@@ -1378,6 +1378,40 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_AI4_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_AI4_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Extra attempts reinforce rebirth reclamation"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Deaths seed reclaimed cells for the regeneration loop"),
+                    new(MycovariantIds.CornerConduitIIIId, 998, "Strongest recurring growth corridor"),
+                    new(MycovariantIds.CornerConduitIIId, 997, "Secondary recurring growth corridor"),
+                    new(MycovariantIds.CornerConduitIId, 996, "Baseline recurring growth corridor"),
+                    new(MycovariantIds.PerimeterProliferatorId, 995, "Persistent edge-growth multiplier"),
+                    new(MycovariantIds.HyphalDrawId, 994, "Fallback forward biomass relocation")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
