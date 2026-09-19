@@ -1284,9 +1284,11 @@ namespace FungusToast.Unity.UI
 
         // ==================== SELECTABLE TILE HIGHLIGHT PULSE ====================
         /// <summary>
-        /// Duration of one ping-pong leg of the magenta pulse applied to selectable tiles while a board selection is open.
+        /// Duration of one ping-pong leg of the pulse applied to selectable tiles while a board selection is open.
+        /// A 22-tile Ballistospore placement at 0.4s read as a strobe across the whole board; 1.6s keeps the
+        /// tiles visibly alive without the flicker. Shared by the hover highlight on player/legend tiles.
         /// </summary>
-        public const float SelectableTilePulseDurationSeconds = 0.4f;
+        public const float SelectableTilePulseDurationSeconds = 1.6f;
 
         /// <summary>
         /// Fully transparent end of the selectable-tile magenta pulse.
