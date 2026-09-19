@@ -366,6 +366,24 @@ a held-out confirmation.
 - Both stages passed manifest contamination checks. The Testing pair remains
   registered for reproducibility.
 
+### AI4 / Creeping Reclaimer (`AI4`) — migration in progress
+
+- Candidate 1 order: Reclamation Rhizomorphs, Necrophoric Adaptation, Corner
+  Conduit III, Corner Conduit II, Corner Conduit I, Perimeter Proliferator,
+  Hyphal Draw.
+- Comparison seed `2026091932`, 50 pairs: treatment-control normalized board
+  share `-0.049997`, 95% CI `[-0.163269, 0.063274]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts:
+  `ai4_myco_comparison_{control,treatment}_2026091932`.
+- Candidate 1 was rejected at the comparison gate. No holdout was run and the
+  Campaign strategy was not changed.
+- AI4-specific draft evidence showed that the broad list displaced stronger
+  scorer-selected choices. Candidate 2 therefore limits authored preferences
+  to the fantasy's two signature reclamation cards—Necrophoric Adaptation,
+  then Reclamation Rhizomorphs—and leaves all other drafts to normal AI
+  scoring. Its Testing treatment is
+  `TST_Campaign_AI4_CuratedMycovariantsV2`.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

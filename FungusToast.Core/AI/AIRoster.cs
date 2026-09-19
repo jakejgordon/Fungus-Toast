@@ -1412,6 +1412,23 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_AI4_CuratedMycovariantsV2",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.NecrophoricAdaptation, 1000, "Deaths seed reclaimed cells for the regeneration loop"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Extra attempts reinforce rebirth reclamation")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
