@@ -61,6 +61,7 @@ Main projects:
   - `Assembly-CSharp-Editor.csproj`
   - `FungusToast.Unity.csproj`
 - No magic constants for tunable gameplay/UI values. Use the appropriate constants file.
+- Nullable reference types are per-file in `FungusToast.Unity`. `FungusToast.Core` has `<Nullable>enable</Nullable>` project-wide, but Unity generates `Assembly-CSharp.csproj` without it and that file must not be edited, so a Unity script that uses `?` on a reference type, `null!`, or `!` null-forgiving must start with `#nullable enable` (first line, before the usings) or every annotation raises CS8632. Match the file you are in: add the directive when you introduce the first annotation to a file, and do not add annotations to a file that has no directive without also adding it. In Core, never add the directive; it is already on.
 - Prefer minimal, scoped changes over opportunistic refactors. **One sanctioned exception:** when touching a `FungusToast.Unity` area, migrate the Inspector-authored wiring you are already editing there to code, per `FungusToast.Core/docs/UNITY_CODE_FIRST_MIGRATION.md`. Stay inside that doc's scope and do not expand the blast radius to untouched files.
 - When touching Unity UI, follow the established patterns in `FungusToast.Core/docs/UI_ARCHITECTURE_HELPER.md`.
 - When touching Unity UI visuals, layout, buttons, or contrast, explicitly consult `FungusToast.Core/docs/UI_STYLE_GUIDE.md` and use its button-role, readability, and spacing guidance instead of ad hoc styling.
@@ -86,6 +87,8 @@ See `FungusToast.Core/docs/BUILD_INSTRUCTIONS.md` for the authoritative build co
 
 For Unity-facing changes, also validate Unity compile health in the Unity environment. Unity-generated project files may exist for editor/tooling support, but the Unity Editor remains the authoritative build/compile surface for Unity-side correctness.
 
+Compile health means **no errors and no new warnings**: after the Editor recompiles, the Console's warning filter must show nothing from the files you touched. The known pre-existing warnings are the CS0649 set on `UI_ModeSelectPanelController`; anything else is yours. When the Editor is not available to the agent, the offline check is a temp copy of `Assembly-CSharp.csproj` (output paths redirected under `Temp/`, new `.cs` files added by hand since Unity only regenerates the list on refresh) built with VS 2022 `MSBuild.exe <temp>.csproj -restore -p:Configuration=Debug -clp:WarningsOnly`, filtering the output for the touched files, then deleting the temp csproj and its `Temp/` output. Never commit the temp csproj.
+
 ## Quick Validation Checklist
 
 Choose the smallest checklist that matches the change:
@@ -110,7 +113,7 @@ Choose the smallest checklist that matches the change:
 ### Unity-facing change
 1. Build Core
 2. Build Simulation if shared behavior changed
-3. Validate Unity compile health in the Unity environment
+3. Validate Unity compile health in the Unity environment: no errors, no new warnings from touched files (see "Unity compile validation")
 4. Verify the affected UI/flow in Unity
 
 ## AI Productivity Rules
