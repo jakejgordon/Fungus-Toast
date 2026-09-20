@@ -35,10 +35,6 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     public float hoverDelaySeconds = 0.2f;
     [SerializeField] private bool enableLegacyTooltipLayoutFixes = false;
     
-    [Header("Magnifying Glass Settings")]
-    [SerializeField] private bool autoDetectRadius = true; // Automatically detect radius from visual root
-    [SerializeField] private float manualRadius = 128f; // Manual override if auto-detection fails
-
     [Header("Debug")]
     public bool enableDebugLogs = false; // Disable debugging by default
 
@@ -74,82 +70,47 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         CacheRootCanvas();
 
         ResolveMagnifierCamera();
-        
-        // Auto-detect magnifying glass radius from visual root if enabled
-        if (autoDetectRadius && visualRoot != null)
-        {
-            DetectMagnifyingGlassRadius();
-        }
     }
 
     /// <summary>
-    /// Automatically detects the magnifying glass radius from the visual root's Image component.
-    /// Assumes the magnifying glass is a circular image and uses half the width as radius.
+    /// Half the on-screen width of the visible lens, in screen pixels. The lens is what
+    /// the magnifier's mask clips to, so that rect is measured when one exists; otherwise
+    /// the widest graphic under the visuals root stands in. World corners include every
+    /// canvas and transform scale. (The visuals root's own graphics are unreliable here:
+    /// the zoomed area is a RawImage that stretches past the ring, and the stretch-anchored
+    /// border reports a zero sizeDelta.)
     /// </summary>
-    void DetectMagnifyingGlassRadius()
+    float GetMagnifyingGlassScreenRadius()
     {
-        // Look for Image component in visualRoot or its children
-        Image magnifierImage = visualRoot.GetComponent<Image>();
-        if (magnifierImage == null)
+        if (visualRoot == null)
+            return 0f;
+
+        CacheRootCanvas();
+        Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
+            ? rootCanvas.worldCamera
+            : null;
+
+        var corners = new Vector3[4];
+        float ScreenWidth(RectTransform rect)
         {
-            magnifierImage = visualRoot.GetComponentInChildren<Image>();
+            rect.GetWorldCorners(corners);
+            Vector2 left = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[0]);
+            Vector2 right = RectTransformUtility.WorldToScreenPoint(uiCamera, corners[3]);
+            return Mathf.Abs(right.x - left.x);
         }
 
-        if (magnifierImage != null)
-        {
-            RectTransform rectTransform = magnifierImage.GetComponent<RectTransform>();
-            if (rectTransform != null)
-            {
-                // Use half the width as radius (assuming square/circular image)
-                float detectedRadius = rectTransform.sizeDelta.x * 0.5f;
-                
-                if (enableDebugLogs)
-                    Debug.Log($"[Tooltip] Auto-detected magnifying glass radius: {detectedRadius} (from image size: {rectTransform.sizeDelta})");
-                
-                // Only update manual radius if it's currently at default value (128) or 0
-                // This preserves any custom value set in the Inspector
-                if (manualRadius <= 128f)
-                {
-                    manualRadius = detectedRadius;
-                    if (enableDebugLogs)
-                        Debug.Log($"[Tooltip] Updated manual radius to detected value: {manualRadius}");
-                }
-                else
-                {
-                    if (enableDebugLogs)
-                        Debug.Log($"[Tooltip] Keeping custom manual radius: {manualRadius} (detected: {detectedRadius})");
-                }
-            }
-        }
-        else
-        {
-            if (enableDebugLogs)
-                Debug.LogWarning($"[Tooltip] Could not auto-detect magnifying glass radius - no Image component found in visualRoot. Using manual radius: {manualRadius}");
-        }
-    }
+        Mask mask = visualRoot.GetComponentInParent<Mask>();
+        if (mask != null)
+            return ScreenWidth(mask.rectTransform) * 0.5f;
 
-    /// <summary>
-    /// Gets the current magnifying glass radius, either auto-detected or manual override.
-    /// </summary>
-    float GetMagnifyingGlassRadius()
-    {
-        if (autoDetectRadius && visualRoot != null)
-        {
-            Image magnifierImage = visualRoot.GetComponent<Image>();
-            if (magnifierImage == null)
-                magnifierImage = visualRoot.GetComponentInChildren<Image>();
+        RectMask2D rectMask = visualRoot.GetComponentInParent<RectMask2D>();
+        if (rectMask != null)
+            return ScreenWidth(rectMask.rectTransform) * 0.5f;
 
-            if (magnifierImage != null)
-            {
-                RectTransform rectTransform = magnifierImage.GetComponent<RectTransform>();
-                if (rectTransform != null)
-                {
-                    return rectTransform.sizeDelta.x * 0.5f;
-                }
-            }
-        }
-        
-        return manualRadius;
+        float widest = 0f;
+        foreach (Graphic graphic in visualRoot.GetComponentsInChildren<Graphic>())
+            widest = Mathf.Max(widest, ScreenWidth(graphic.rectTransform));
+        return widest * 0.5f;
     }
 
     void Update()
@@ -775,8 +736,11 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         // Clear the lens ring when it is showing; otherwise just clear the pointer.
         bool lensVisible = visualRoot != null && visualRoot.activeInHierarchy;
-        float clearance = (lensVisible ? GetMagnifyingGlassRadius() + TooltipLensGap : TooltipNeighborhoodClearance) * canvasScale;
-        float neighborhoodRadius = clearance - TooltipLensGap * canvasScale * 0.5f;
+        float gap = TooltipLensGap * canvasScale;
+        float clearance = lensVisible
+            ? GetMagnifyingGlassScreenRadius() + gap
+            : TooltipNeighborhoodClearance * canvasScale;
+        float neighborhoodRadius = clearance - gap * 0.5f;
         var inspectedNeighborhood = new Rect(
             mousePos.x - neighborhoodRadius,
             mousePos.y - neighborhoodRadius,
