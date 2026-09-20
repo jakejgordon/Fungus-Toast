@@ -299,12 +299,19 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
             hoverCoroutine = null;
         }
 
-        // Hide tooltip immediately when changing cells
+        isHoveringOverValidCell = true;
+
+        // Once the inspector is open, sliding onto a neighbouring cell retargets it in
+        // place. Re-running the hover delay and fade for every cell left a half-faded
+        // panel under a moving pointer, which read as an illegible translucent tooltip.
         if (isTooltipVisible)
-            HideTooltip();
+        {
+            if (!ShowTooltipForCell(newCellPos))
+                HideTooltip();
+            return;
+        }
 
         // Start new hover timer for the new cell
-        isHoveringOverValidCell = true;
         hoverCoroutine = StartCoroutine(HoverDelay(newCellPos));
     }
 
@@ -321,7 +328,8 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         hoverCoroutine = null;
     }
 
-    void ShowTooltipForCell(Vector3Int cellPos)
+    /// <summary>Shows or retargets the inspector for <paramref name="cellPos"/>; false when the cell has nothing to inspect.</summary>
+    bool ShowTooltipForCell(Vector3Int cellPos)
     {
         if (enableDebugLogs)
             Debug.Log($"[Tooltip Debug] ShowTooltipForCell called for position: {cellPos}");
@@ -329,14 +337,14 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipPrefab == null)
         {
             Debug.LogError("[Tooltip] Tooltip prefab is not assigned! Please assign it in the Inspector.");
-            return;
+            return false;
         }
 
         if (FungusToast.Unity.GameManager.Instance == null)
         {
             if (enableDebugLogs)
                 Debug.LogWarning("[Tooltip] GameManager.Instance is null!");
-            return;
+            return false;
         }
 
         // Get the tile ID and cell data
@@ -352,7 +360,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         {
             if (enableDebugLogs)
                 Debug.Log("[Tooltip Debug] Cell is null - no tooltip will be shown");
-            return;
+            return false;
         }
 
         // Create tooltip instance if it doesn't exist
@@ -366,7 +374,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipInstance == null)
         {
             Debug.LogError("[Tooltip] Failed to create tooltip instance!");
-            return;
+            return false;
         }
 
         // Activate tooltip and set as last sibling for proper rendering order
@@ -393,7 +401,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         else
         {
             Debug.LogError("[Tooltip] CellTooltipUI component not found on tooltip prefab!");
-            return;
+            return false;
         }
 
         if (enableLegacyTooltipLayoutFixes)
@@ -422,6 +430,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         
         if (enableDebugLogs)
             Debug.Log("[Tooltip Debug] Tooltip should now be visible!");
+        return true;
     }
 
     void CreateTooltipInstance()

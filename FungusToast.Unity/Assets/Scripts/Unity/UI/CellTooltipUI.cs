@@ -5,6 +5,7 @@ using FungusToast.Core.Board;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Core.Growth;
+using FungusToast.Core.Players;
 using System;
 using System.Text;
 
@@ -53,7 +54,7 @@ namespace FungusToast.Unity.UI
 
         [Header("Style")]
         [SerializeField] private Image tooltipBackgroundImage;
-        [SerializeField, Range(0.5f, 1f)] private float tooltipBackgroundAlpha = 0.96f;
+        [SerializeField, Range(0.5f, 1f)] private float tooltipBackgroundAlpha = 1f;
 
         // ── Constants ──────────────────────────────────────────────────────
         private const float TooltipWidth = 332f;
@@ -67,6 +68,7 @@ namespace FungusToast.Unity.UI
         private const float DetailSectionFontSize = UIStyleTokens.Typography.CaptionMinimum;
         private const float OwnerBadgeSize = 18f;
         private const float OwnerBadgeHorizontalOffset = 12f;
+        private const float EdgeOutlineAlpha = 0.35f;
 
         // ── Runtime state ──────────────────────────────────────────────────
         private UI_PlayerBinder playerBinder;
@@ -389,9 +391,19 @@ namespace FungusToast.Unity.UI
 
             if (tooltipBackgroundImage != null)
             {
-                var c = UIStyleTokens.Surface.PanelSecondary;
+                // The inspector floats over bright toast, so it uses the darkest panel
+                // surface at full opacity; a hairline outline keeps its edge legible
+                // where the toast highlights come close to the panel colour.
+                var c = UIStyleTokens.Surface.PanelPrimary;
                 c.a = tooltipBackgroundAlpha;
                 tooltipBackgroundImage.color = c;
+
+                var outline = tooltipBackgroundImage.GetComponent<Outline>();
+                if (outline == null)
+                    outline = tooltipBackgroundImage.gameObject.AddComponent<Outline>();
+                outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, EdgeOutlineAlpha);
+                outline.effectDistance = new Vector2(1f, -1f);
+                outline.useGraphicAlpha = true;
             }
         }
 
@@ -429,13 +441,32 @@ namespace FungusToast.Unity.UI
         {
             if (cell.OwnerPlayerId.HasValue)
                 sb.AppendLine(EmphasizedLine("Owner",
-                    $"Player {cell.OwnerPlayerId.Value + 1}",
+                    PlayerDisplayName(inspectedBoard, cell.OwnerPlayerId.Value),
                     UIStyleTokens.Text.Primary));
 
             if (cell.LastOwnerPlayerId.HasValue)
                 sb.AppendLine(EmphasizedLine("Last Owner",
-                    $"Player {cell.LastOwnerPlayerId.Value + 1}",
+                    PlayerDisplayName(inspectedBoard, cell.LastOwnerPlayerId.Value),
                     UIStyleTokens.Text.Secondary));
+        }
+
+        /// <summary>
+        /// Names a player the way the scoreboard does (<c>Human</c>, <c>AI Player 3</c>) so the
+        /// inspector and the standings agree; the human is tagged <c>(You)</c> to match the
+        /// scoreboard's YOU badge. Falls back to the ordinal when the board has no player list.
+        /// </summary>
+        private static string PlayerDisplayName(GameBoard board, int playerId)
+        {
+            Player player = board != null && playerId >= 0 && playerId < board.Players.Count
+                ? board.Players[playerId]
+                : null;
+
+            if (player == null || string.IsNullOrWhiteSpace(player.PlayerName))
+                return $"Player {playerId + 1}";
+
+            return player.PlayerType == PlayerTypeEnum.Human
+                ? $"{player.PlayerName} (You)"
+                : player.PlayerName;
         }
 
         private void AppendAge(FungalCell cell)
@@ -521,7 +552,7 @@ namespace FungusToast.Unity.UI
         private void AppendChemobeaconInfo(BoardTile tile, GameBoard board, GameBoard.ChemobeaconMarker chemobeacon)
         {
             sb.AppendLine(EmphasizedLine("Status", "Chemobeacon", UIStyleTokens.Accent.Spore));
-            sb.AppendLine(EmphasizedLine("Owner", $"Player {chemobeacon.PlayerId + 1}", UIStyleTokens.Text.Primary));
+            sb.AppendLine(EmphasizedLine("Owner", PlayerDisplayName(board, chemobeacon.PlayerId), UIStyleTokens.Text.Primary));
             sb.AppendLine(DetailLine("Rounds Remaining", chemobeacon.TurnsRemaining.ToString(), UIStyleTokens.Text.Secondary, UIStyleTokens.State.Warning));
             sb.AppendLine(DetailLine("Effect", $"Projects {GameBalance.ChemotacticBeaconBaseTiles} + {GameBalance.ChemotacticBeaconTilesPerLevel}/level living cells toward the marker", UIStyleTokens.Text.Secondary, UIStyleTokens.State.Success));
             sb.AppendLine(DetailLine("Effect", "Replaces toxins, dead cells, enemy cells, and empty tiles in its path", UIStyleTokens.Text.Secondary, UIStyleTokens.Text.Primary));
