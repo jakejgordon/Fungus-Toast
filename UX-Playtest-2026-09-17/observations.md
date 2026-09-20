@@ -6,6 +6,7 @@
 - Refer to observations by their stable three-digit identifiers (`001` through `024`).
 - When work begins on an observation, record its status as `In progress`. When implementation and verification are complete, record `Fixed`, the relevant files or commit, and the verification evidence. Use `Deferred` only with a short rationale, and `Rejected` when the proposed changes are intentionally declined.
 - Preserve the baseline screenshots in `screenshots/` while any observation remains unresolved so before-and-after behavior can be compared.
+- **Tutorial pacing (maintainer decision, 2026-09-20):** coachmarks for secondary features - Time-Lapse, scouting rivals, banking points - are intentionally staggered into later rounds of the first game so the opening rounds teach only the core spend-grow-decay loop. "The tip arrives late" is not a defect on its own; it only matters when the control is confusing before its tip appears. Priorities in 006, 009, and 010 were softened on that basis.
 - **Completion cleanup:** Once every observation is either verified `Fixed`, intentionally `Deferred`, or intentionally `Rejected`, delete this `observations.md` file and remove the `Campaign UX remediation` section that links to it from the repository-root `AGENTS.md` in the same change. Decide separately whether the baseline screenshots and session README should be retained as historical evidence.
 
 ## Session setup
@@ -86,13 +87,13 @@ Screenshot: [005-music-skip-tooltip.png](screenshots/005-music-skip-tooltip.png)
 
 ### 006 — Time-Lapse tutorial timing
 
-**Status: In progress (2026-09-19).** P1 and P2 are addressed by the 004 pace-toggle move: the coachmark now appears on the board at the start of the round-4 mutation phase (after the round-2 scoreboard and round-3 adaptation hints, before the round-6 bank-points one) and is anchored directly below the toggle it describes, so it no longer waits for a tree visit or floats away from its control. Switching Time-Lapse on retires it. The responsive-state (P2) and blank-transition (P3) bullets are not yet addressed.
+**Status: In progress (2026-09-19).** The timing and association bullets are addressed by the 004 pace-toggle move: the coachmark now appears on the board at the start of the round-4 mutation phase (after the round-2 scoreboard and round-3 adaptation hints, before the round-6 bank-points one) and is anchored directly below the toggle it describes, so it no longer waits for a tree visit or floats away from its control. Switching Time-Lapse on retires it. Timing was downgraded to P3 on 2026-09-20: Time-Lapse is a pacing convenience, not a decision the first game depends on, so a mid-game tip is acceptable; the real fix was labelling the control (`Pace: Normal`) so it is self-explanatory before the tip arrives. The responsive-state (P2) and blank-transition (P3) bullets are not yet addressed.
 
 Screenshot: [006-time-lapse-tutorial.png](screenshots/006-time-lapse-tutorial.png)
 
 - **What happened:** On opening mutations in Round 5, a first-time tooltip finally explains that Time-Lapse skips most animations and can be toggled for faster Growth/Decay phases.
 - **Works well:** The copy answers both “what does it do?” and “when should I use it?” in three short sentences; the close button is obvious.
-- **P1 — Tutorial arrives after the need:** The player has already waited through four rounds and previously encountered `Time-Lapse: On` without explanation. Show this on the first mutation-tree visit or the first time the pace control is visible.
+- **P3 — Tutorial arrives after the control:** The player had seen `Time-Lapse: On` for four rounds before it was explained. A later tip is fine for a convenience feature as long as the control reads clearly on its own; make the label self-describing (`Pace: Normal / Time-Lapse`) and keep the tip mid-game.
 - **P2 — Weak visual association:** The tutorial floats at the far right and does not point to or highlight the `Time-Lapse: On` control near the top center-right. Anchor the callout to the control and dim unrelated content.
 - **P2 — Full-width responsive state is disorienting:** With a different selected mutation, the detail panel moves from the left rail to the right, shifting the search and tree while the tutorial is open. Keep navigation and detail placement stable between selections.
 - **P3 — Brief blank transition:** Immediately after opening the mutation tree, one capture showed a near-empty dark frame for roughly one second before content appeared. Preserve the prior screen under a loading veil or fade directly between populated layouts.
@@ -121,22 +122,26 @@ Screenshot: [008-board-cell-hover-inspector.png](screenshots/008-board-cell-hove
 
 ### 009 — Store Mutation Points tutorial
 
+**Status: In progress (2026-09-20).** The hidden-cost P2 is covered by 004's rename: the button is now `Bank Points & End Turn` and its hover tooltip leads with "Ends your mutation phase now", so the consequence is on the control itself before any tip appears. The timing bullet was downgraded to P2 on the same date: banking is optional in the opening rounds, and the round-6 tip is acceptable now that the label carries the consequence. The cadence bullet stays P3; staggering by round is intentional and no progress indicator is planned.
+
 Screenshot: [009-store-mutation-points-tutorial.png](screenshots/009-store-mutation-points-tutorial.png)
 
 - **What happened:** In Round 6, the tutorial finally explains that `Store Mutation Points` ends the turn immediately and banks points for the next round, specifically for unaffordable mutations.
 - **Works well:** The wording resolves all three ambiguities: whether it ends the turn, whether points persist, and why the action is useful.
-- **P1 — Explanation is delayed:** The control has been present since Round 1 and is strategically relevant as soon as cards cost more than the player’s current balance. Show this on first mutation-tree open, or on first selection of a card the player cannot afford.
+- **P2 — Explanation is delayed:** The control has been present since Round 1 and becomes relevant as soon as cards cost more than the player’s current balance. A round-6 tip is acceptable if the button label and hover tooltip already state the consequence; otherwise consider triggering on first selection of a card the player cannot afford.
 - **P2 — Hidden cost deserves emphasis:** `Immediately end your turn` is the most consequential part of the action but appears mid-sentence. Put it in the button label/confirmation (`Bank points & end mutation phase`) or lead the tooltip with it.
-- **P3 — Tutorial sequence lacks a visible cadence:** Time-Lapse appeared in Round 5 and stored points in Round 6 without a progress indicator or reason for staggered timing. If intentionally paced, show `Tip 2 of N` or trigger by first relevance instead of round count.
+- **P3 — Tutorial sequence lacks a visible cadence:** Time-Lapse appeared in Round 5 and stored points in Round 6 without a progress indicator or reason for staggered timing. Staggering is intentional; a `Tip 2 of N` counter is optional polish, not a requirement.
 
 ### 010 — Scout Your Rivals tutorial (Round 8)
+
+**Status: In progress (2026-09-20).** The timing bullet was downgraded to P3: scouting rivals is a second-game skill, and Round 8 is a deliberate place for it. The obstruction P2 is being addressed by letting the player move the card out of the way rather than by re-anchoring it (design in progress; see the drag-to-move note in `UI_STYLE_GUIDE.md` once it lands). The benefit-copy P2 is not yet addressed.
 
 Screenshot: [010-scout-your-rivals-tutorial.png](screenshots/010-scout-your-rivals-tutorial.png)
 
 - **What happened:** A first-time tooltip appeared over the board explaining that scoreboard colony icons can be hovered, clicked to pin, and then inspected for adaptations and mycovariants.
 - **Works well:** The instruction is concrete and explains the full hover → pin → inspect interaction chain. The tooltip appears adjacent to the scoreboard it describes.
-- **P1 — High-value comparison arrives late:** This feature is introduced at Round 8, after seven spending decisions. Earlier access would make competitive decisions more informed.
-- **P2 — The callout obstructs its subject:** It covers a meaningful portion of both the playfield and scoreboard. Anchor it to one highlighted rival icon or use a short guided interaction.
+- **P3 — Comparison feature arrives mid-game:** This feature is introduced at Round 8, after seven spending decisions. That is acceptable for a feature that only pays off once the player is comfortable with their own build; no earlier trigger is planned.
+- **P2 — The callout obstructs its subject:** It covers a meaningful portion of both the playfield and scoreboard. Let the player drag it aside, or anchor it to one highlighted rival icon.
 - **P2 — Benefit remains vague:** “What that colony has been up to” is friendly but does not preview the decision-useful categories revealed after pinning. Name or preview them in the callout.
 
 ### 011 — Round 15 mycovariant draft
