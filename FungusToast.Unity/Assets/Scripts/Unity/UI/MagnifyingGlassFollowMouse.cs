@@ -14,7 +14,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 {
     private const float UnitsPerPixelComparisonEpsilon = 0.0001f;
     private const float TooltipScreenPadding = 12f;
+    // Canvas units: how far the inspector clears the pointer when the lens is hidden.
     private const float TooltipNeighborhoodClearance = 72f;
+    // Canvas units: gap between the lens ring and the inspector's near edge.
+    private const float TooltipLensGap = 20f;
 
     [Header("Grid Reference")]
     // Assign this in the Inspector to your GridVisualizer instance
@@ -30,7 +33,6 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
     
     [Header("Tooltip Settings")]
     public float hoverDelaySeconds = 0.2f;
-    public Vector2 tooltipOffset = new Vector2(75f, 15f); // Reduced from 150f, 30f
     [SerializeField] private bool enableLegacyTooltipLayoutFixes = false;
     
     [Header("Magnifying Glass Settings")]
@@ -762,15 +764,19 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         if (tooltipRectTransform == null || rootCanvas == null)
             return;
 
+        // Everything here is in screen pixels. The lens and the tooltip are canvas-scaled,
+        // so a fixed pixel offset drifts away from the ring as the game view shrinks.
+        float canvasScale = Mathf.Max(0.01f, rootCanvas.scaleFactor);
         Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
         Vector3 mousePos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
         Rect tooltipPixelRect = RectTransformUtility.PixelAdjustRect(tooltipRectTransform, rootCanvas);
-        Vector2 tooltipSize = tooltipPixelRect.size;
+        Vector2 tooltipSize = tooltipPixelRect.size * canvasScale;
         Vector2 screenSize = new Vector2(Screen.width, Screen.height);
 
-        float horizontalClearance = Mathf.Max(TooltipNeighborhoodClearance, tooltipOffset.x);
-        float verticalClearance = Mathf.Max(TooltipNeighborhoodClearance, Mathf.Abs(tooltipOffset.y));
-        float neighborhoodRadius = Mathf.Max(TooltipNeighborhoodClearance, GetMagnifyingGlassRadius());
+        // Clear the lens ring when it is showing; otherwise just clear the pointer.
+        bool lensVisible = visualRoot != null && visualRoot.activeInHierarchy;
+        float clearance = (lensVisible ? GetMagnifyingGlassRadius() + TooltipLensGap : TooltipNeighborhoodClearance) * canvasScale;
+        float neighborhoodRadius = clearance - TooltipLensGap * canvasScale * 0.5f;
         var inspectedNeighborhood = new Rect(
             mousePos.x - neighborhoodRadius,
             mousePos.y - neighborhoodRadius,
@@ -779,10 +785,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         Vector2[] candidates =
         {
-            new(mousePos.x + horizontalClearance, mousePos.y - tooltipSize.y * 0.5f),
-            new(mousePos.x - horizontalClearance - tooltipSize.x, mousePos.y - tooltipSize.y * 0.5f),
-            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y + verticalClearance),
-            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y - verticalClearance - tooltipSize.y)
+            new(mousePos.x + clearance, mousePos.y - tooltipSize.y * 0.5f),
+            new(mousePos.x - clearance - tooltipSize.x, mousePos.y - tooltipSize.y * 0.5f),
+            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y + clearance),
+            new(mousePos.x - tooltipSize.x * 0.5f, mousePos.y - clearance - tooltipSize.y)
         };
 
         Vector2 tooltipPos = ClampTooltipPosition(candidates[0], tooltipSize, screenSize);
@@ -800,7 +806,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         PositionRectTransformAtScreen(tooltipRectTransform, tooltipPos);
 
         if (enableDebugLogs)
-            Debug.Log($"[Tooltip Debug] Positioned tooltip at: {tooltipPos} (mouse: {mousePos}, offset: {tooltipOffset})");
+            Debug.Log($"[Tooltip Debug] Positioned tooltip at: {tooltipPos} (mouse: {mousePos}, clearance: {clearance})");
     }
 
     private static Vector2 ClampTooltipPosition(Vector2 position, Vector2 tooltipSize, Vector2 screenSize)
