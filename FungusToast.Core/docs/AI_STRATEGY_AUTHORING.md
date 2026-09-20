@@ -413,6 +413,26 @@ a held-out confirmation.
   preserves the former category-control behavior for these samples. The
   Testing pair remains registered for reproducibility.
 
+### Harvest Broker (`CMP_Economy_KillReclaim_Medium`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. The deterministic payout ladder supports its value-building
+  fantasy and excludes the three AI-only bait cards.
+- Context: the same fixed eight-player, 120x120, rotating-slot panel used by
+  the preceding migrations, with Mycovariants on and nutrients and starting
+  Adaptations off.
+- Comparison seed `2026091992`, 50 pairs: treatment-control normalized board
+  share `+0.023827`, 95% CI `[-0.022874, 0.070527]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `harvestbroker_myco_comparison_{control,treatment}_2026091992`.
+- Held-out seed `2026091993`, 100 pairs: treatment-control normalized board
+  share `+0.011017`, 95% CI `[-0.021961, 0.043996]`; the same margin was
+  supported. Artifacts:
+  `harvestbroker_myco_holdout_{control,treatment}_2026091993`.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
