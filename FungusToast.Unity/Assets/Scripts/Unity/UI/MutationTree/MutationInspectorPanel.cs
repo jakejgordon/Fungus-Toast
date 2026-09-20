@@ -157,6 +157,14 @@ namespace FungusToast.Unity.UI.MutationTree
 
         public void Clear()
         {
+            // OnDisable on the owning manager runs during scene teardown, when the panel's
+            // children may already be destroyed. Unity's fake-null makes `this == null` and
+            // the widget checks true once that has happened, so there is nothing left to reset.
+            if (this == null || titleText == null || titleSurgeGlyph == null)
+            {
+                return;
+            }
+
             titleText.text = "Inspect a mutation";
             titleText.color = UIStyleTokens.Text.Primary;
             SetTitleSurgeGlyph(null);

@@ -244,7 +244,12 @@ namespace FungusToast.Unity.UI.MutationTree
             selectedMutationPlayer = null;
             isInspectorPinned = false;
             isPointerOverMutationInspector = false;
-            mutationInspector?.Clear();
+            // `?.` skips only a C# null; a panel already destroyed during scene teardown
+            // needs Unity's overloaded null check to be left alone.
+            if (mutationInspector != null)
+            {
+                mutationInspector.Clear();
+            }
             HideBankPointsCoachmarkImmediate(false);
             SetGlobalHudControlsSuppressed(false);
             SetDockButtonVisible(false);
