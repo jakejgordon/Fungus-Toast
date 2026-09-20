@@ -602,7 +602,6 @@ public class StrategyCatalogTests
             "CMP_Bloom_AnabolicRegression_Medium",
             "CMP_Bloom_BeaconRegression_Medium",
             "CMP_Bloom_CreepingNecro_Medium",
-            "CMP_Bloom_CreepingRegression_Elite",
             "CMP_Bloom_FortifyMimic_Medium",
             "CMP_Bloom_Thanatophyte_Elite",
             "CMP_Control_AnabolicFirst_Hard",
@@ -857,6 +856,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.Single(control.GetMycovariantPreferences());
         Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
         Assert.Equal(

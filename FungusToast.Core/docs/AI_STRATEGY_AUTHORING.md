@@ -433,6 +433,26 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Creeping Regression (`CMP_Bloom_CreepingRegression_Elite`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. The deterministic payout ladder funds its expensive regression
+  engine and excludes the three AI-only bait cards.
+- Context: the same fixed eight-player, 120x120, rotating-slot panel used by
+  the preceding migrations, with Mycovariants on and nutrients and starting
+  Adaptations off.
+- Comparison seed `2026092012`, 50 pairs: treatment-control normalized board
+  share `+0.006273`, 95% CI `[-0.006022, 0.018567]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `creepingregression_myco_comparison_{control,treatment}_2026092012`.
+- Held-out seed `2026092013`, 100 pairs: treatment-control normalized board
+  share `0.000000`, 95% CI `[0.000000, 0.000000]`; the same margin was
+  supported. Artifacts:
+  `creepingregression_myco_holdout_{control,treatment}_2026092013`.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
