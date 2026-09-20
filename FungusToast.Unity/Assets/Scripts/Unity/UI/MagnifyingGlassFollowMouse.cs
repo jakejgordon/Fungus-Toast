@@ -189,6 +189,12 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
                     OnCellHoverChanged(currentCellPos);
                     lastHoveredCellPos = currentCellPos;
                 }
+                else if (isTooltipVisible)
+                {
+                    // The open inspector rides alongside the lens. Placing it only on
+                    // cell entry left it stranded a cell or more behind a sweeping pointer.
+                    PlaceTooltipBesidePointer();
+                }
             }
         }
         else
@@ -744,6 +750,17 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         Canvas.ForceUpdateCanvases();
         LayoutRebuilder.ForceRebuildLayoutImmediate(tooltipRectTransform);
+        PlaceTooltipBesidePointer();
+    }
+
+    /// <summary>
+    /// Places the already-laid-out tooltip next to the pointer, outside the magnifier
+    /// neighbourhood where possible. Cheap enough to run every frame the inspector is open.
+    /// </summary>
+    void PlaceTooltipBesidePointer()
+    {
+        if (tooltipRectTransform == null || rootCanvas == null)
+            return;
 
         Vector2 pointerScreen = UnityInputAdapter.GetPointerScreenPosition();
         Vector3 mousePos = new Vector3(pointerScreen.x, pointerScreen.y, 0f);
