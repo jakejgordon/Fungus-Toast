@@ -185,8 +185,14 @@ namespace FungusToast.Unity.UI
         }
     }
 
-    public sealed class CompactIconHoverFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    public sealed class CompactIconHoverFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler, ICursorSurface
     {
+        /// <summary>
+        /// Hover is the whole interaction here (the tile only shows its tooltip), so the arrow
+        /// is the honest cursor even when the tile sits inside a draggable inspector.
+        /// </summary>
+        public CursorKind? PreferredCursor => CursorKind.Arrow;
+
         private Image background;
         private Outline focusOutline;
         private Color normalColor;

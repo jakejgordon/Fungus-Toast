@@ -11,8 +11,9 @@ namespace FungusToast.Unity.UI
     /// surface: the body text is not interactive, and a big target beats a precise
     /// title-bar grab. Controls nested inside the card (the close button, icon tiles)
     /// still work because Unity only starts a drag after the pointer moves past its drag
-    /// threshold, and <see cref="CursorManager"/> gives a nested <see cref="Selectable"/>
-    /// the hand rather than the move cursor.
+    /// threshold, and <see cref="CursorManager"/> lets the nearest surface decide the
+    /// cursor, so a nested <see cref="Selectable"/> shows the hand and a hover-only icon
+    /// tile shows the arrow rather than the move cursor.
     ///
     /// Affordances, in the order a player meets them: a dot grip in the title row (built by
     /// <see cref="CoachmarkLayoutUtility.AddGrip"/>), the four-way move cursor while the
@@ -25,7 +26,7 @@ namespace FungusToast.Unity.UI
     /// is persisted across sessions.
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
-    public sealed class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+    public sealed class DraggableCard : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, ICursorSurface
     {
         private const float LiftScale = 1.02f;
 
@@ -53,6 +54,8 @@ namespace FungusToast.Unity.UI
         public bool ShowsMoveCursor =>
             isActiveAndEnabled
             && (canvasGroup == null || (canvasGroup.interactable && canvasGroup.blocksRaycasts));
+
+        public CursorKind? PreferredCursor => ShowsMoveCursor ? CursorKind.Move : null;
 
         /// <summary>
         /// Wires the card. <paramref name="bounds"/> is the rect the card is clamped inside

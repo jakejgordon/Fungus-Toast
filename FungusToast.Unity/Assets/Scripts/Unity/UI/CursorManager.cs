@@ -16,14 +16,15 @@ namespace FungusToast.Unity.UI
 
     /// <summary>
     /// Owns the hardware cursor for the whole game. Nothing is wired per widget: every
-    /// frame the pointer is raycast through the EventSystem and the hand is shown when
-    /// the top hit (or its nearest ancestor) is an interactable <see cref="Selectable"/>
-    /// or an <see cref="ICursorHandSurface"/> that says so, so a mutation card that
-    /// toggles its button off for locked/unaffordable/maxed states loses the hand for
-    /// free. The four-way move cursor works the same way: it shows when the top hit
-    /// sits inside a <see cref="DraggableCard"/> and nothing clickable is closer, and a
-    /// drag in progress pushes it so it stays put even if the pointer outruns the card
-    /// for a frame. Board tile-selection modes push
+    /// frame the pointer is raycast through the EventSystem and the manager walks up from
+    /// the top hit until it meets a surface with an opinion - an interactable
+    /// <see cref="Selectable"/> asks for the hand, and anything implementing
+    /// <see cref="ICursorSurface"/> asks for whatever it returns. Nearest wins, so a
+    /// mutation card that toggles its button off for locked/unaffordable/maxed states
+    /// loses the hand for free, the X inside a <see cref="DraggableCard"/> shows the hand
+    /// over the card's move cursor, and a hover-only icon tile inside that card shows the
+    /// arrow. A drag in progress pushes the move cursor so it stays put even if the pointer
+    /// outruns the card for a frame. Board tile-selection modes push
     /// <see cref="CursorKind.Target"/> through <see cref="Push"/>/<see cref="Pop"/>; the
     /// reticle replaces the arrow for as long as the mode is open, while a live button
     /// under the pointer still shows the hand because that click is a button press.
@@ -52,6 +53,7 @@ namespace FungusToast.Unity.UI
         // request, and so requests from destroyed owners can be pruned.
         private readonly List<(object owner, CursorKind kind)> overrides = new();
         private readonly List<RaycastResult> raycastResults = new();
+        private readonly List<ICursorSurface> cursorSurfaces = new();
         private PointerEventData pointerEventData;
         private CursorKind appliedKind = CursorKind.Arrow;
         private bool cursorApplied;
@@ -165,8 +167,8 @@ namespace FungusToast.Unity.UI
         }
 
         /// <summary>
-        /// The cursor the surface under the pointer asks for, or null when it has no
-        /// opinion and the override stack (or the arrow) decides.
+        /// The cursor the surfaces under the pointer ask for, nearest first, or null when
+        /// none has an opinion and the override stack (or the arrow) decides.
         /// </summary>
         private CursorKind? ResolvePointerSurfaceCursor()
         {
@@ -193,22 +195,41 @@ namespace FungusToast.Unity.UI
                 return null;
             }
 
-            // A click surface nested inside a draggable card (its close button) wins over
-            // the card: the nearest ancestor with an opinion decides.
-            Selectable selectable = top.GetComponentInParent<Selectable>();
-            if (selectable != null)
+            // Walk outward one object at a time so depth, not component type, decides:
+            // the close button inside a draggable card beats the card, and a hover-only
+            // tile inside the card beats it too.
+            for (Transform current = top.transform; current != null; current = current.parent)
             {
-                return selectable.IsInteractable() ? CursorKind.Hand : null;
+                if (current.TryGetComponent(out Selectable selectable))
+                {
+                    // A disabled control has no opinion rather than asking for the arrow, so
+                    // a locked mutation card still defers to the reticle during placement.
+                    if (selectable.IsInteractable())
+                    {
+                        return CursorKind.Hand;
+                    }
+
+                    continue;
+                }
+
+                cursorSurfaces.Clear();
+                current.GetComponents(cursorSurfaces);
+                for (int i = 0; i < cursorSurfaces.Count; i++)
+                {
+                    if (cursorSurfaces[i] is Behaviour { isActiveAndEnabled: false })
+                    {
+                        continue;
+                    }
+
+                    CursorKind? preferred = cursorSurfaces[i].PreferredCursor;
+                    if (preferred.HasValue)
+                    {
+                        return preferred;
+                    }
+                }
             }
 
-            ICursorHandSurface surface = top.GetComponentInParent<ICursorHandSurface>();
-            if (surface != null)
-            {
-                return surface.ShowsHandCursor ? CursorKind.Hand : null;
-            }
-
-            DraggableCard draggable = top.GetComponentInParent<DraggableCard>();
-            return draggable != null && draggable.ShowsMoveCursor ? CursorKind.Move : null;
+            return null;
         }
 
         private void Apply(CursorKind kind)
