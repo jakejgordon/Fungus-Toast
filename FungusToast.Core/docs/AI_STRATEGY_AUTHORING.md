@@ -453,6 +453,26 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Voltaic Rot (`CMP_Bloom_AnabolicRegression_Medium`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. The deterministic payout ladder funds its anabolic-to-decay
+  engine and excludes the three AI-only bait cards.
+- Context: the same fixed eight-player, 120x120, rotating-slot panel used by
+  the preceding migrations, with Mycovariants on and nutrients and starting
+  Adaptations off.
+- Comparison seed `2026092032`, 50 pairs: treatment-control normalized board
+  share `+0.000453`, 95% CI `[-0.000435, 0.001341]`; preregistered
+  non-inferiority margin `-0.05`, supported. Artifacts:
+  `voltaicrot_myco_comparison_{control,treatment}_2026092032`.
+- Held-out seed `2026092033`, 100 pairs: treatment-control normalized board
+  share `+0.001303`, 95% CI `[-0.002226, 0.004832]`; the same margin was
+  supported. Artifacts:
+  `voltaicrot_myco_holdout_{control,treatment}_2026092033`.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
