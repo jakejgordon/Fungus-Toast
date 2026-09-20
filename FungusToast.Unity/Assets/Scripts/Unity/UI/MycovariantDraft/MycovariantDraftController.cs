@@ -159,11 +159,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         private Transform draftHistoryOverlayContentTransform;
         private TextMeshProUGUI draftHistoryEmptyStateText;
         private Button draftHistoryCloseButton;
-        private RectTransform mycovariantDraftCoachmarkRoot;
-        private CanvasGroup mycovariantDraftCoachmarkCanvasGroup;
-        private TextMeshProUGUI mycovariantDraftCoachmarkTitleTextLabel;
-        private TextMeshProUGUI mycovariantDraftCoachmarkBodyTextLabel;
-        private Button mycovariantDraftCoachmarkCloseButton;
+        private CoachmarkLayoutUtility.CoachmarkCard mycovariantDraftCoachmark;
         private bool hasDismissedMycovariantDraftCoachmarkThisGame;
 
         private bool _cameraRecenteredThisDraftPhase = false;
@@ -1142,148 +1138,48 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
-            EnsureMycovariantDraftCoachmarkUi();
-            if (mycovariantDraftCoachmarkRoot == null || mycovariantDraftCoachmarkCanvasGroup == null)
+            mycovariantDraftCoachmark ??= BuildMycovariantDraftCoachmark();
+            if (mycovariantDraftCoachmark == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MycovariantDraftIntro);
-            mycovariantDraftCoachmarkTitleTextLabel.text = definition.Title;
-            mycovariantDraftCoachmarkBodyTextLabel.text = definition.Body;
+            mycovariantDraftCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.MycovariantDraftIntro));
             PositionMycovariantDraftCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(mycovariantDraftCoachmarkRoot);
-            mycovariantDraftCoachmarkRoot.gameObject.SetActive(true);
-            mycovariantDraftCoachmarkRoot.SetAsLastSibling();
-            mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = true;
-            mycovariantDraftCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(mycovariantDraftCoachmarkRoot);
         }
 
-        private void EnsureMycovariantDraftCoachmarkUi()
+        /// <summary>Sits to the left of the choice row, placed by its right-centre point.</summary>
+        private CoachmarkLayoutUtility.CoachmarkCard BuildMycovariantDraftCoachmark()
         {
-            if (mycovariantDraftCoachmarkRoot != null || draftPanel == null)
+            if (draftPanel == null)
             {
-                return;
+                return null;
             }
 
             Transform parent = draftPanel.GetComponentInParent<Canvas>()?.rootCanvas?.transform ?? transform.parent;
             if (parent == null)
             {
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_MycovariantDraftCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(parent, false);
-
-            mycovariantDraftCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            mycovariantDraftCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            mycovariantDraftCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            mycovariantDraftCoachmarkRoot.pivot = new Vector2(1f, 0.5f);
-            mycovariantDraftCoachmarkRoot.sizeDelta = new Vector2(320f, 204f);
-
-            mycovariantDraftCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            mycovariantDraftCoachmarkCanvasGroup.alpha = 0f;
-            mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = false;
-            mycovariantDraftCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
-            backgroundColor.a = 0.97f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            mycovariantDraftCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            mycovariantDraftCoachmarkTitleTextLabel.text = string.Empty;
-            mycovariantDraftCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            mycovariantDraftCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            mycovariantDraftCoachmarkTitleTextLabel.fontSize = 22f;
-            mycovariantDraftCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            mycovariantDraftCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(mycovariantDraftCoachmarkTitleTextLabel);
-            mycovariantDraftCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            mycovariantDraftCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            mycovariantDraftCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            mycovariantDraftCoachmarkBodyTextLabel.fontSize = 17f;
-            mycovariantDraftCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            mycovariantDraftCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            mycovariantDraftCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            mycovariantDraftCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            mycovariantDraftCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(mycovariantDraftCoachmarkCloseButton);
-            mycovariantDraftCoachmarkCloseButton.onClick.RemoveAllListeners();
-            mycovariantDraftCoachmarkCloseButton.onClick.AddListener(OnMycovariantDraftCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                mycovariantDraftCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                mycovariantDraftCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            return CoachmarkLayoutUtility.BuildCard(
+                "UI_MycovariantDraftCoachmark",
+                parent,
+                new Vector2(320f, 204f),
+                OnMycovariantDraftCoachmarkDismissed,
+                pivot: new Vector2(1f, 0.5f));
         }
 
         private void PositionMycovariantDraftCoachmark()
         {
-            if (mycovariantDraftCoachmarkRoot == null || draftPanel == null)
+            RectTransform coachmarkRoot = mycovariantDraftCoachmark?.Root;
+            if (coachmarkRoot == null || draftPanel == null)
             {
                 return;
             }
 
             RectTransform anchorRect = choiceContainer?.parent as RectTransform;
-            RectTransform parentRect = mycovariantDraftCoachmarkRoot.parent as RectTransform;
+            RectTransform parentRect = coachmarkRoot.parent as RectTransform;
             Canvas canvas = draftPanel.GetComponentInParent<Canvas>()?.rootCanvas;
             if (anchorRect == null || parentRect == null || canvas == null)
             {
@@ -1297,7 +1193,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             Vector3 topLeftWorld = corners[1];
 
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                mycovariantDraftCoachmarkRoot,
+                coachmarkRoot,
                 parentRect,
                 canvas,
                 topLeftWorld,
@@ -1324,17 +1220,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 hasDismissedMycovariantDraftCoachmarkThisGame = false;
             }
 
-            if (mycovariantDraftCoachmarkCanvasGroup != null)
-            {
-                mycovariantDraftCoachmarkCanvasGroup.alpha = 0f;
-                mycovariantDraftCoachmarkCanvasGroup.blocksRaycasts = false;
-                mycovariantDraftCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (mycovariantDraftCoachmarkRoot != null)
-            {
-                mycovariantDraftCoachmarkRoot.gameObject.SetActive(false);
-            }
+            mycovariantDraftCoachmark?.HideImmediate();
         }
 
         private void ShowDraftUI()
@@ -1350,7 +1236,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             interactionBlocker.alpha = 0.8f;
             uiState = DraftUIState.Idle;
 
-            if (mycovariantDraftCoachmarkRoot != null && mycovariantDraftCoachmarkRoot.gameObject.activeSelf)
+            if (mycovariantDraftCoachmark != null
+                && mycovariantDraftCoachmark.IsVisible
+                && !mycovariantDraftCoachmark.Draggable.HasBeenMoved)
             {
                 PositionMycovariantDraftCoachmark();
             }

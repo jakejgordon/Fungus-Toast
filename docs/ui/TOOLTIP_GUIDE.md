@@ -118,6 +118,7 @@ copy.
 **Current note:**
 - these are still part of the broader onboarding family when they teach first-time concepts
 - their content should live in `NewPlayerTooltipCatalog.cs` if they are new-player guidance
+- every coachmark card is built by `CoachmarkLayoutUtility.BuildCard` and is draggable (grip glyph, move cursor, lift while dragging); a host only chooses size, pivot, and where to anchor it, and leaves a card alone once `Draggable.HasBeenMoved` is set. See `UI_STYLE_GUIDE.md` section 5.11.
 
 **Use this when:**
 - hover is too subtle

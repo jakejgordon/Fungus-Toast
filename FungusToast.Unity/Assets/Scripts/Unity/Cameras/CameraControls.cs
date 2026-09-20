@@ -15,8 +15,8 @@ namespace FungusToast.Unity.Cameras
         private const float CameraPanCoachmarkWidth = 380f;
         private const float CameraPanCoachmarkMinHeight = 150f;
         private const float CameraPanCoachmarkBottomOffset = 22f;
-        private const float CameraPanCoachmarkBodyHorizontalPadding = 14f;
-        private const float CameraPanCoachmarkBodyBottomPadding = 14f;
+        private const float CameraPanCoachmarkBodyHorizontalPadding = CoachmarkLayoutUtility.ContentInset;
+        private const float CameraPanCoachmarkBodyBottomPadding = CoachmarkLayoutUtility.ContentInset;
         private const float CameraPanCoachmarkBodyTopReservedHeight = CoachmarkLayoutUtility.BodyTopInset;
         private const float CameraPanDragThreshold = 0.01f;
         // Short beat after the welcome coachmark closes. The old 3s (scene-serialized) delay was
@@ -60,11 +60,7 @@ namespace FungusToast.Unity.Cameras
         [Tooltip("For boards smaller than the viewport, keep at least this fraction of the board visible on each axis while panning.")]
         [SerializeField] [Range(0.5f, 1f)] private float minVisibleSmallBoardFraction = 0.85f;
 
-        private RectTransform cameraPanCoachmarkRoot;
-        private CanvasGroup cameraPanCoachmarkCanvasGroup;
-        private TextMeshProUGUI cameraPanCoachmarkTitleTextLabel;
-        private TextMeshProUGUI cameraPanCoachmarkBodyTextLabel;
-        private Button cameraPanCoachmarkCloseButton;
+        private CoachmarkLayoutUtility.CoachmarkCard cameraPanCoachmark;
         private float cameraPanCoachmarkElapsed;
         private bool hasDismissedCameraPanCoachmarkThisGame;
         private GameBoard trackedOnboardingBoard;
@@ -219,22 +215,14 @@ namespace FungusToast.Unity.Cameras
                 return;
             }
 
-            EnsureCameraPanCoachmarkUi(gameManager);
-            if (cameraPanCoachmarkRoot == null || cameraPanCoachmarkCanvasGroup == null)
+            cameraPanCoachmark ??= BuildCameraPanCoachmark(gameManager);
+            if (cameraPanCoachmark == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.CameraPanIntro);
-            cameraPanCoachmarkTitleTextLabel.text = definition.Title;
-            cameraPanCoachmarkBodyTextLabel.text = definition.Body;
+            cameraPanCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.CameraPanIntro));
             RefreshCameraPanCoachmarkLayout();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(cameraPanCoachmarkRoot);
-            cameraPanCoachmarkRoot.gameObject.SetActive(true);
-            cameraPanCoachmarkRoot.SetAsLastSibling();
-            cameraPanCoachmarkCanvasGroup.blocksRaycasts = true;
-            cameraPanCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(cameraPanCoachmarkRoot);
         }
 
         private void ResolveCameraPanOnboarding(GameManager gameManager)
@@ -251,7 +239,7 @@ namespace FungusToast.Unity.Cameras
 
         private bool IsCameraPanCoachmarkVisible()
         {
-            return cameraPanCoachmarkRoot != null && cameraPanCoachmarkRoot.gameObject.activeSelf;
+            return cameraPanCoachmark != null && cameraPanCoachmark.Root != null && cameraPanCoachmark.Root.gameObject.activeSelf;
         }
 
         private int GetHumanPlayerCountForOnboarding(GameManager gameManager)
@@ -264,157 +252,59 @@ namespace FungusToast.Unity.Cameras
             return Mathf.Max(0, gameManager.ConfiguredHumanPlayerCount);
         }
 
-        private void EnsureCameraPanCoachmarkUi(GameManager gameManager)
+        /// <summary>Sits bottom-centre over the board, where the pan gesture happens.</summary>
+        private CoachmarkLayoutUtility.CoachmarkCard BuildCameraPanCoachmark(GameManager gameManager)
         {
-            if (cameraPanCoachmarkRoot != null)
-            {
-                return;
-            }
-
             Canvas rootCanvas = ResolveRootCanvas(gameManager);
             if (rootCanvas == null)
             {
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_CameraPanCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(rootCanvas.transform, false);
-
-            cameraPanCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            cameraPanCoachmarkRoot.anchorMin = new Vector2(0.5f, 0f);
-            cameraPanCoachmarkRoot.anchorMax = new Vector2(0.5f, 0f);
-            cameraPanCoachmarkRoot.pivot = new Vector2(0.5f, 0f);
-            cameraPanCoachmarkRoot.anchoredPosition = new Vector2(0f, CameraPanCoachmarkBottomOffset);
-            cameraPanCoachmarkRoot.sizeDelta = new Vector2(CameraPanCoachmarkWidth, CameraPanCoachmarkMinHeight);
-
-            cameraPanCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            cameraPanCoachmarkCanvasGroup.alpha = 0f;
-            cameraPanCoachmarkCanvasGroup.blocksRaycasts = false;
-            cameraPanCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.14f);
-            backgroundColor.a = 0.97f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -42f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -10f);
-
-            cameraPanCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            cameraPanCoachmarkTitleTextLabel.text = string.Empty;
-            cameraPanCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            cameraPanCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            cameraPanCoachmarkTitleTextLabel.fontSize = 22f;
-            cameraPanCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            cameraPanCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(cameraPanCoachmarkTitleTextLabel);
-            cameraPanCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(CameraPanCoachmarkBodyHorizontalPadding, CameraPanCoachmarkBodyBottomPadding);
-            bodyRect.offsetMax = new Vector2(-CameraPanCoachmarkBodyHorizontalPadding, -CameraPanCoachmarkBodyTopReservedHeight);
-
-            cameraPanCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            cameraPanCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            cameraPanCoachmarkBodyTextLabel.fontSize = 17f;
-            cameraPanCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            cameraPanCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            cameraPanCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            cameraPanCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            cameraPanCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(cameraPanCoachmarkCloseButton);
-            cameraPanCoachmarkCloseButton.onClick.RemoveAllListeners();
-            cameraPanCoachmarkCloseButton.onClick.AddListener(OnCameraPanCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                cameraPanCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                cameraPanCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            var card = CoachmarkLayoutUtility.BuildCard(
+                "UI_CameraPanCoachmark",
+                rootCanvas.transform,
+                new Vector2(CameraPanCoachmarkWidth, CameraPanCoachmarkMinHeight),
+                OnCameraPanCoachmarkDismissed,
+                pivot: new Vector2(0.5f, 0f));
+            card.Root.anchorMin = new Vector2(0.5f, 0f);
+            card.Root.anchorMax = new Vector2(0.5f, 0f);
+            card.Root.anchoredPosition = new Vector2(0f, CameraPanCoachmarkBottomOffset);
+            return card;
         }
 
         private void RefreshCameraPanCoachmarkLayout()
         {
-            if (cameraPanCoachmarkRoot == null || cameraPanCoachmarkBodyTextLabel == null)
+            if (cameraPanCoachmark == null || cameraPanCoachmark.Root == null || cameraPanCoachmark.Body == null)
             {
                 return;
             }
 
+            RectTransform coachmarkRoot = cameraPanCoachmark.Root;
             float availableBodyWidth = Mathf.Max(
                 1f,
                 CameraPanCoachmarkWidth - (2f * CameraPanCoachmarkBodyHorizontalPadding));
-            Vector2 bodyPreferredSize = cameraPanCoachmarkBodyTextLabel.GetPreferredValues(
-                cameraPanCoachmarkBodyTextLabel.text,
+            Vector2 bodyPreferredSize = cameraPanCoachmark.Body.GetPreferredValues(
+                cameraPanCoachmark.Body.text,
                 availableBodyWidth,
                 0f);
             float requiredHeight = CameraPanCoachmarkBodyTopReservedHeight
                 + bodyPreferredSize.y
                 + CameraPanCoachmarkBodyBottomPadding;
 
-            cameraPanCoachmarkRoot.sizeDelta = new Vector2(
+            coachmarkRoot.sizeDelta = new Vector2(
                 CameraPanCoachmarkWidth,
                 Mathf.Max(CameraPanCoachmarkMinHeight, requiredHeight));
 
             Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(cameraPanCoachmarkRoot);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(coachmarkRoot);
 
-            if (cameraPanCoachmarkRoot.parent is RectTransform parentRect)
+            if (coachmarkRoot.parent is RectTransform parentRect)
             {
                 CoachmarkLayoutUtility.SetAnchoredPositionClamped(
-                    cameraPanCoachmarkRoot,
+                    coachmarkRoot,
                     parentRect,
-                    cameraPanCoachmarkRoot.anchoredPosition,
+                    coachmarkRoot.anchoredPosition,
                     CoachmarkLayoutUtility.DefaultScreenPadding);
             }
         }
@@ -449,17 +339,7 @@ namespace FungusToast.Unity.Cameras
 
         private void HideCameraPanCoachmarkImmediate()
         {
-            if (cameraPanCoachmarkCanvasGroup != null)
-            {
-                cameraPanCoachmarkCanvasGroup.alpha = 0f;
-                cameraPanCoachmarkCanvasGroup.blocksRaycasts = false;
-                cameraPanCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (cameraPanCoachmarkRoot != null)
-            {
-                cameraPanCoachmarkRoot.gameObject.SetActive(false);
-            }
+            cameraPanCoachmark?.HideImmediate();
         }
 
         private float GetPanDeltaTime()

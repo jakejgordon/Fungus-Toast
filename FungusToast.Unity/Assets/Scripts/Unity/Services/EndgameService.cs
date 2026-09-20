@@ -476,10 +476,7 @@ namespace FungusToast.Unity
         private TextMeshProUGUI selectionPromptActionButtonText;
         private MoldButtonTooltipProvider selectionPromptActionTooltipProvider;
         private TooltipTrigger selectionPromptActionTooltipTrigger;
-        private RectTransform autoPlacementCoachmarkRoot;
-        private CanvasGroup autoPlacementCoachmarkCanvasGroup;
-        private TextMeshProUGUI autoPlacementCoachmarkTitleText;
-        private TextMeshProUGUI autoPlacementCoachmarkBodyText;
+        private CoachmarkLayoutUtility.CoachmarkCard autoPlacementCoachmark;
 
         public SelectionPromptService(
             GameObject selectionPromptPanel,
@@ -768,116 +765,50 @@ namespace FungusToast.Unity
                 return;
             }
 
-            EnsureAutoPlacementCoachmarkUi();
-            if (autoPlacementCoachmarkRoot == null || autoPlacementCoachmarkCanvasGroup == null || selectionPromptActionButton == null)
+            autoPlacementCoachmark ??= BuildAutoPlacementCoachmark();
+            if (autoPlacementCoachmark == null || selectionPromptActionButton == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AutoPlacementIntro);
-            autoPlacementCoachmarkTitleText.text = definition.Title;
-            autoPlacementCoachmarkBodyText.text = definition.Body;
+            autoPlacementCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.AutoPlacementIntro));
             PositionAutoPlacementCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(autoPlacementCoachmarkRoot);
-            autoPlacementCoachmarkRoot.gameObject.SetActive(true);
-            autoPlacementCoachmarkRoot.SetAsLastSibling();
-            autoPlacementCoachmarkCanvasGroup.blocksRaycasts = true;
-            autoPlacementCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(autoPlacementCoachmarkRoot);
             NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.AutoPlacementIntro);
         }
 
-        private void EnsureAutoPlacementCoachmarkUi()
+        /// <summary>Hangs above the Auto Placement button by its bottom-right corner.</summary>
+        private CoachmarkLayoutUtility.CoachmarkCard BuildAutoPlacementCoachmark()
         {
-            if (autoPlacementCoachmarkRoot != null || selectionPromptActionButton == null)
+            if (selectionPromptActionButton == null)
             {
-                return;
+                return null;
             }
 
             Canvas canvas = selectionPromptActionButton.GetComponentInParent<Canvas>()?.rootCanvas;
             if (canvas == null)
             {
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_AutoPlacementCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.layer = selectionPromptActionButton.gameObject.layer;
-            rootObject.transform.SetParent(canvas.transform, false);
-
-            autoPlacementCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            autoPlacementCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            autoPlacementCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            autoPlacementCoachmarkRoot.pivot = new Vector2(1f, 0f);
-            autoPlacementCoachmarkRoot.sizeDelta = new Vector2(AutoPlacementCoachmarkWidth, AutoPlacementCoachmarkHeight);
-
-            autoPlacementCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            autoPlacementCoachmarkCanvasGroup.alpha = 0f;
-            autoPlacementCoachmarkCanvasGroup.blocksRaycasts = false;
-            autoPlacementCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            background.color = UIStyleTokens.WithAlpha(Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f), 0.98f);
-            background.raycastTarget = true;
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            autoPlacementCoachmarkTitleText = CreateCoachmarkText(rootObject.transform, "Title", 23f, FontStyles.Bold, TextAlignmentOptions.TopLeft, new Vector2(14f, -46f), new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -10f));
-            autoPlacementCoachmarkTitleText.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(autoPlacementCoachmarkTitleText);
-
-            autoPlacementCoachmarkBodyText = CreateCoachmarkText(rootObject.transform, "Body", 18f, FontStyles.Normal, TextAlignmentOptions.TopLeft, new Vector2(14f, 12f), new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset));
-            autoPlacementCoachmarkBodyText.textWrappingMode = TextWrappingModes.Normal;
-            autoPlacementCoachmarkBodyText.overflowMode = TextOverflowModes.Overflow;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.layer = rootObject.layer;
-            closeObject.transform.SetParent(rootObject.transform, false);
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = Vector2.one;
-            closeRect.anchorMax = Vector2.one;
-            closeRect.pivot = Vector2.one;
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-            closeObject.GetComponent<Image>().color = UIStyleTokens.Surface.PanelElevated;
-            var closeButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(closeButton);
-            closeButton.onClick.AddListener(HideAutoPlacementCoachmark);
-            var closeLabel = CreateCoachmarkText(closeObject.transform, "Label", CoachmarkLayoutUtility.CloseButtonFontSize, FontStyles.Bold, TextAlignmentOptions.Center, Vector2.zero, Vector2.zero);
-            closeLabel.text = "X";
-            closeLabel.rectTransform.anchorMin = Vector2.zero;
-            closeLabel.rectTransform.anchorMax = Vector2.one;
-            closeLabel.rectTransform.offsetMin = Vector2.zero;
-            closeLabel.rectTransform.offsetMax = Vector2.zero;
-
-            rootObject.SetActive(false);
-        }
-
-        private static TextMeshProUGUI CreateCoachmarkText(Transform parent, string name, float fontSize, FontStyles fontStyle, TextAlignmentOptions alignment, Vector2 offsetMin, Vector2 offsetMax)
-        {
-            var textObject = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObject.transform.SetParent(parent, false);
-            var rect = textObject.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = offsetMin;
-            rect.offsetMax = offsetMax;
-            var text = textObject.GetComponent<TextMeshProUGUI>();
-            text.font = TMP_Settings.defaultFontAsset;
-            text.fontSize = fontSize;
-            text.fontStyle = fontStyle;
-            text.alignment = alignment;
-            text.color = UIStyleTokens.Text.Primary;
-            text.raycastTarget = false;
-            return text;
+            var card = CoachmarkLayoutUtility.BuildCard(
+                "UI_AutoPlacementCoachmark",
+                canvas.transform,
+                new Vector2(AutoPlacementCoachmarkWidth, AutoPlacementCoachmarkHeight),
+                HideAutoPlacementCoachmark,
+                titleFontSize: 23f,
+                bodyFontSize: 18f,
+                pivot: new Vector2(1f, 0f));
+            card.Root.gameObject.layer = selectionPromptActionButton.gameObject.layer;
+            return card;
         }
 
         private void PositionAutoPlacementCoachmark()
         {
             RectTransform actionRect = selectionPromptActionButton != null ? selectionPromptActionButton.transform as RectTransform : null;
-            RectTransform parentRect = autoPlacementCoachmarkRoot != null ? autoPlacementCoachmarkRoot.parent as RectTransform : null;
+            RectTransform coachmarkRoot = autoPlacementCoachmark?.Root;
+            RectTransform parentRect = coachmarkRoot != null ? coachmarkRoot.parent as RectTransform : null;
             Canvas canvas = selectionPromptActionButton != null ? selectionPromptActionButton.GetComponentInParent<Canvas>()?.rootCanvas : null;
-            if (actionRect == null || parentRect == null || canvas == null || autoPlacementCoachmarkRoot == null)
+            if (actionRect == null || parentRect == null || canvas == null || coachmarkRoot == null)
             {
                 return;
             }
@@ -886,7 +817,7 @@ namespace FungusToast.Unity
             Vector3[] corners = new Vector3[4];
             actionRect.GetWorldCorners(corners);
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                autoPlacementCoachmarkRoot,
+                coachmarkRoot,
                 parentRect,
                 canvas,
                 corners[1],
@@ -896,17 +827,7 @@ namespace FungusToast.Unity
 
         private void HideAutoPlacementCoachmark()
         {
-            if (autoPlacementCoachmarkCanvasGroup != null)
-            {
-                autoPlacementCoachmarkCanvasGroup.alpha = 0f;
-                autoPlacementCoachmarkCanvasGroup.blocksRaycasts = false;
-                autoPlacementCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (autoPlacementCoachmarkRoot != null)
-            {
-                autoPlacementCoachmarkRoot.gameObject.SetActive(false);
-            }
+            autoPlacementCoachmark?.HideImmediate();
         }
 
         private void ConfigureSelectionPromptButtonLayout(bool cancelButtonVisible, bool actionButtonVisible)

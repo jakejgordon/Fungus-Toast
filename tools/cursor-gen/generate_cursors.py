@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the Fungus Toast hardware cursor set (arrow, hand, target).
+"""Generate the Fungus Toast hardware cursor set (arrow, hand, target, move).
 
 Pure stdlib: shapes are signed-distance fields rasterised with 4x4 supersampling
 into 32x32 RGBA PNGs, so nothing here needs Pillow or Unity. Colours are read
@@ -186,6 +186,28 @@ def target_layers():
     return [Layer(reticle), Layer(dot, fill="accent")], (16, 16)
 
 
+def move_layers():
+    # Four-way arrow: the conventional "this surface can be dragged" glyph, shown over
+    # draggable cards. Hotspot on the centre so the pointer position reads unchanged.
+    cx = cy = 16.5
+    shaft = 1.9
+    head_len, head_half = 6.5, 5.8
+    reach = 14.0
+    shafts = [
+        capsule(cx, cy, cx, cy - (reach - head_len), shaft),
+        capsule(cx, cy, cx, cy + (reach - head_len), shaft),
+        capsule(cx, cy, cx - (reach - head_len), cy, shaft),
+        capsule(cx, cy, cx + (reach - head_len), cy, shaft),
+    ]
+    heads = [
+        polygon([(cx, cy - reach), (cx - head_half, cy - reach + head_len), (cx + head_half, cy - reach + head_len)]),
+        polygon([(cx, cy + reach), (cx + head_half, cy + reach - head_len), (cx - head_half, cy + reach - head_len)]),
+        polygon([(cx - reach, cy), (cx - reach + head_len, cy + head_half), (cx - reach + head_len, cy - head_half)]),
+        polygon([(cx + reach, cy), (cx + reach - head_len, cy - head_half), (cx + reach - head_len, cy + head_half)]),
+    ]
+    return [Layer(union(*shafts, *heads))], (16, 16)
+
+
 # ---------------------------------------------------------------------------
 # Rasteriser
 # ---------------------------------------------------------------------------
@@ -332,7 +354,7 @@ def write_preview(cursors, palette):
  .zoom .cur{{outline:1px solid #666}}
  .hot{{position:absolute;box-sizing:border-box;border:2px solid #ff2d2d;pointer-events:none}}
 </style></head><body>
-<h2 style="margin:0 0 12px">Fungus Toast cursors: arrow / hand / target</h2>
+<h2 style="margin:0 0 12px">Fungus Toast cursors: arrow / hand / target / move</h2>
 <p style="margin:0 0 14px;opacity:.75">32x32 hardware cursors. Fill Text.Primary, 1px outline Text.OnAccent, accent Accent.Lichen. Hotspots: {hotspot_text}.</p>
 {''.join(rows)}
 {zoom}
@@ -367,7 +389,12 @@ def main(argv) -> int:
 
     palette = load_tokens(STYLE_TOKENS)
     cursors = {}
-    for name, builder in (("cursor_arrow", arrow_layers), ("cursor_hand", hand_layers), ("cursor_target", target_layers)):
+    for name, builder in (
+        ("cursor_arrow", arrow_layers),
+        ("cursor_hand", hand_layers),
+        ("cursor_target", target_layers),
+        ("cursor_move", move_layers),
+    ):
         layers, hotspot = builder()
         pixels = rasterise(layers, palette)
         cursors[name] = (encode_png(pixels, SIZE, SIZE), hotspot, pixels)

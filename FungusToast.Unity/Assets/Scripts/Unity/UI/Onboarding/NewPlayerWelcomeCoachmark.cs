@@ -18,18 +18,15 @@ namespace FungusToast.Unity.UI.Onboarding
         private const float MinHeight = 150f;
         private const float TitleFontSize = 28f;
         private const float BodyFontSize = 21f;
-        private const float TitleRowHeight = 56f;
-        private const float BodyTopInset = TitleRowHeight + 6f;
+        private const float TitleRowHeight = 42f;
+        private const float BodyTopInset = CoachmarkLayoutUtility.TitleTopInset + TitleRowHeight + 6f;
         private const float BodyHorizontalPadding = 20f;
-        private const float BodyBottomPadding = 20f;
+        private const float BodyBottomPadding = BodyHorizontalPadding;
 
         private readonly Func<Canvas> resolveRootCanvas;
         private readonly Func<bool> getForceFirstGameExperience;
 
-        private RectTransform root;
-        private CanvasGroup canvasGroup;
-        private TextMeshProUGUI titleLabel;
-        private TextMeshProUGUI bodyLabel;
+        private CoachmarkLayoutUtility.CoachmarkCard card;
         private bool isArmed;
         private bool hasDismissedThisGame;
         private bool hasEvaluatedThisGame;
@@ -50,7 +47,7 @@ namespace FungusToast.Unity.UI.Onboarding
         /// </summary>
         public bool IsActive => !hasEvaluatedThisGame || isArmed || IsVisible;
 
-        public bool IsVisible => root != null && root.gameObject.activeSelf;
+        public bool IsVisible => card != null && card.Root != null && card.Root.gameObject.activeSelf;
 
         /// <summary>True from the round-1 check passing until acknowledged: the show delay plus on-screen time.</summary>
         public bool IsPendingOrVisible => isArmed || IsVisible;
@@ -89,22 +86,14 @@ namespace FungusToast.Unity.UI.Onboarding
             }
 
             isArmed = false;
-            EnsureUi();
-            if (root == null || canvasGroup == null)
+            card ??= BuildCard();
+            if (card == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.WelcomeIntro);
-            titleLabel.text = definition.Title;
-            bodyLabel.text = definition.Body;
+            card.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.WelcomeIntro));
             RefreshLayout();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(root);
-            root.gameObject.SetActive(true);
-            root.SetAsLastSibling();
-            canvasGroup.blocksRaycasts = true;
-            canvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(root);
         }
 
         /// <summary>
@@ -142,26 +131,11 @@ namespace FungusToast.Unity.UI.Onboarding
 
         private void HideImmediate()
         {
-            if (canvasGroup != null)
-            {
-                canvasGroup.alpha = 0f;
-                canvasGroup.blocksRaycasts = false;
-                canvasGroup.interactable = false;
-            }
-
-            if (root != null)
-            {
-                root.gameObject.SetActive(false);
-            }
+            card?.HideImmediate();
         }
 
-        private void EnsureUi()
+        private CoachmarkLayoutUtility.CoachmarkCard BuildCard()
         {
-            if (root != null)
-            {
-                return;
-            }
-
             Canvas rootCanvas = resolveRootCanvas?.Invoke();
             if (rootCanvas == null)
             {
@@ -173,131 +147,38 @@ namespace FungusToast.Unity.UI.Onboarding
             if (rootCanvas == null)
             {
                 Debug.LogWarning("[NewPlayerWelcomeCoachmark] No canvas found; skipping the welcome coachmark.");
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_WelcomeCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(rootCanvas.transform, false);
-
-            root = rootObject.GetComponent<RectTransform>();
-            root.anchorMin = new Vector2(0.5f, 0.5f);
-            root.anchorMax = new Vector2(0.5f, 0.5f);
-            root.pivot = new Vector2(0.5f, 0.5f);
-            root.anchoredPosition = Vector2.zero;
-            root.sizeDelta = new Vector2(Width, MinHeight);
-
-            canvasGroup = rootObject.GetComponent<CanvasGroup>();
-            canvasGroup.alpha = 0f;
-            canvasGroup.blocksRaycasts = false;
-            canvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.14f);
-            backgroundColor.a = 0.97f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(BodyHorizontalPadding, -TitleRowHeight);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -14f);
-
-            titleLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            titleLabel.text = string.Empty;
-            titleLabel.color = UIStyleTokens.Text.Primary;
-            titleLabel.fontStyle = FontStyles.Bold;
-            titleLabel.fontSize = TitleFontSize;
-            titleLabel.alignment = TextAlignmentOptions.Left;
-            titleLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(titleLabel);
-            titleLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(BodyHorizontalPadding, BodyBottomPadding);
-            bodyRect.offsetMax = new Vector2(-BodyHorizontalPadding, -BodyTopInset);
-
-            bodyLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            bodyLabel.color = UIStyleTokens.Text.Primary;
-            bodyLabel.fontSize = BodyFontSize;
-            bodyLabel.alignment = TextAlignmentOptions.TopLeft;
-            bodyLabel.textWrappingMode = TextWrappingModes.Normal;
-            bodyLabel.overflowMode = TextOverflowModes.Overflow;
-            bodyLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            var closeButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(closeButton);
-            closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(OnCloseClicked);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                titleLabel.font = TMP_Settings.defaultFontAsset;
-                bodyLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            var built = CoachmarkLayoutUtility.BuildCard(
+                "UI_WelcomeCoachmark",
+                rootCanvas.transform,
+                new Vector2(Width, MinHeight),
+                OnCloseClicked,
+                TitleFontSize,
+                BodyFontSize,
+                pivot: new Vector2(0.5f, 0.5f),
+                titleRowHeight: TitleRowHeight,
+                contentInset: BodyHorizontalPadding);
+            built.Root.anchoredPosition = Vector2.zero;
+            return built;
         }
 
         private void RefreshLayout()
         {
-            if (root == null || bodyLabel == null)
+            if (card == null || card.Root == null || card.Body == null)
             {
                 return;
             }
 
             float availableBodyWidth = Mathf.Max(1f, Width - (2f * BodyHorizontalPadding));
-            Vector2 bodyPreferredSize = bodyLabel.GetPreferredValues(bodyLabel.text, availableBodyWidth, 0f);
+            Vector2 bodyPreferredSize = card.Body.GetPreferredValues(card.Body.text, availableBodyWidth, 0f);
             float requiredHeight = BodyTopInset + bodyPreferredSize.y + BodyBottomPadding;
 
-            root.sizeDelta = new Vector2(Width, Mathf.Max(MinHeight, requiredHeight));
+            card.Root.sizeDelta = new Vector2(Width, Mathf.Max(MinHeight, requiredHeight));
 
             Canvas.ForceUpdateCanvases();
-            LayoutRebuilder.ForceRebuildLayoutImmediate(root);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(card.Root);
         }
     }
 }

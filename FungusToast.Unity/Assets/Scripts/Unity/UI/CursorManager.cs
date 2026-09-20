@@ -10,7 +10,8 @@ namespace FungusToast.Unity.UI
     {
         Arrow,
         Hand,
-        Target
+        Target,
+        Move
     }
 
     /// <summary>
@@ -19,7 +20,10 @@ namespace FungusToast.Unity.UI
     /// the top hit (or its nearest ancestor) is an interactable <see cref="Selectable"/>
     /// or an <see cref="ICursorHandSurface"/> that says so, so a mutation card that
     /// toggles its button off for locked/unaffordable/maxed states loses the hand for
-    /// free. Board tile-selection modes push
+    /// free. The four-way move cursor works the same way: it shows when the top hit
+    /// sits inside a <see cref="DraggableCard"/> and nothing clickable is closer, and a
+    /// drag in progress pushes it so it stays put even if the pointer outruns the card
+    /// for a frame. Board tile-selection modes push
     /// <see cref="CursorKind.Target"/> through <see cref="Push"/>/<see cref="Pop"/>; the
     /// reticle replaces the arrow for as long as the mode is open, while a live button
     /// under the pointer still shows the hand because that click is a button press.
@@ -35,12 +39,14 @@ namespace FungusToast.Unity.UI
         private static readonly Vector2 ArrowHotspot = new(2f, 2f);
         private static readonly Vector2 HandHotspot = new(11f, 2f);
         private static readonly Vector2 TargetHotspot = new(16f, 16f);
+        private static readonly Vector2 MoveHotspot = new(16f, 16f);
 
         public static CursorManager Instance { get; private set; }
 
         private Texture2D arrowTexture;
         private Texture2D handTexture;
         private Texture2D targetTexture;
+        private Texture2D moveTexture;
 
         // Most recent push wins. Owners are tracked so a mode can release only its own
         // request, and so requests from destroyed owners can be pruned.
@@ -103,6 +109,7 @@ namespace FungusToast.Unity.UI
             arrowTexture = Load("cursor_arrow");
             handTexture = Load("cursor_hand");
             targetTexture = Load("cursor_target");
+            moveTexture = Load("cursor_move");
         }
 
         private void Update()
@@ -146,9 +153,8 @@ namespace FungusToast.Unity.UI
             // A live button under the pointer always gets the hand, even mid-placement:
             // clicking Auto Placement or Cancel is a button press, not a tile pick. The
             // override only decides what replaces the arrow everywhere else.
-            CursorKind resolved = IsPointerOverInteractable()
-                ? CursorKind.Hand
-                : overrides.Count > 0 ? overrides[overrides.Count - 1].kind : CursorKind.Arrow;
+            CursorKind resolved = ResolvePointerSurfaceCursor()
+                ?? (overrides.Count > 0 ? overrides[overrides.Count - 1].kind : CursorKind.Arrow);
 
             if (cursorApplied && resolved == appliedKind)
             {
@@ -158,12 +164,16 @@ namespace FungusToast.Unity.UI
             Apply(resolved);
         }
 
-        private bool IsPointerOverInteractable()
+        /// <summary>
+        /// The cursor the surface under the pointer asks for, or null when it has no
+        /// opinion and the override stack (or the arrow) decides.
+        /// </summary>
+        private CursorKind? ResolvePointerSurfaceCursor()
         {
             EventSystem eventSystem = EventSystem.current;
             if (eventSystem == null)
             {
-                return false;
+                return null;
             }
 
             pointerEventData ??= new PointerEventData(eventSystem);
@@ -172,7 +182,7 @@ namespace FungusToast.Unity.UI
             eventSystem.RaycastAll(pointerEventData, raycastResults);
             if (raycastResults.Count == 0)
             {
-                return false;
+                return null;
             }
 
             // RaycastAll sorts front-to-back, so only the top hit decides: a modal dim or
@@ -180,17 +190,25 @@ namespace FungusToast.Unity.UI
             GameObject top = raycastResults[0].gameObject;
             if (top == null)
             {
-                return false;
+                return null;
             }
 
+            // A click surface nested inside a draggable card (its close button) wins over
+            // the card: the nearest ancestor with an opinion decides.
             Selectable selectable = top.GetComponentInParent<Selectable>();
             if (selectable != null)
             {
-                return selectable.IsInteractable();
+                return selectable.IsInteractable() ? CursorKind.Hand : null;
             }
 
             ICursorHandSurface surface = top.GetComponentInParent<ICursorHandSurface>();
-            return surface != null && surface.ShowsHandCursor;
+            if (surface != null)
+            {
+                return surface.ShowsHandCursor ? CursorKind.Hand : null;
+            }
+
+            DraggableCard draggable = top.GetComponentInParent<DraggableCard>();
+            return draggable != null && draggable.ShowsMoveCursor ? CursorKind.Move : null;
         }
 
         private void Apply(CursorKind kind)
@@ -206,6 +224,10 @@ namespace FungusToast.Unity.UI
                 case CursorKind.Target:
                     texture = targetTexture;
                     hotspot = TargetHotspot;
+                    break;
+                case CursorKind.Move:
+                    texture = moveTexture;
+                    hotspot = MoveHotspot;
                     break;
                 default:
                     texture = arrowTexture;

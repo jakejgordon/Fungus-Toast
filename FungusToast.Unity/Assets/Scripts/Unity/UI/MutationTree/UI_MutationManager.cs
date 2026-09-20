@@ -115,11 +115,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private TooltipTrigger spendPointsTooltipTrigger = null!;
         private AudioSource soundEffectAudioSource = null!;
         private Image? bankPointsButtonIconImage;
-        private RectTransform bankPointsCoachmarkRoot = null!;
-        private CanvasGroup bankPointsCoachmarkCanvasGroup = null!;
-        private TextMeshProUGUI bankPointsCoachmarkTitleTextLabel = null!;
-        private TextMeshProUGUI bankPointsCoachmarkBodyTextLabel = null!;
-        private Button bankPointsCoachmarkCloseButton = null!;
+        private CoachmarkLayoutUtility.CoachmarkCard? bankPointsCoachmark;
         private RectTransform headerControlsRowRect = null!;
         private RectTransform headerLeftSlotRect = null!;
         private RectTransform headerCenterSlotRect = null!;
@@ -1915,7 +1911,7 @@ namespace FungusToast.Unity.UI.MutationTree
             ForceMutationPanelLayoutRebuild();
             PositionMutationInspector(topInset);
 
-            if (IsBankPointsCoachmarkVisible())
+            if (IsBankPointsCoachmarkVisible() && bankPointsCoachmark?.Draggable?.HasBeenMoved != true)
             {
                 Button? activeAnchorButton = activeMutationPointsCoachmarkTooltipId == NewPlayerTooltipId.SpendMutationPointsIntro
                     ? spendPointsButton
@@ -2637,8 +2633,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            EnsureBankPointsCoachmarkUi();
-            if (bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
+            bankPointsCoachmark ??= BuildBankPointsCoachmark();
+            if (bankPointsCoachmark == null)
             {
                 return;
             }
@@ -2723,8 +2719,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 return;
             }
 
-            EnsureBankPointsCoachmarkUi();
-            if (bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
+            bankPointsCoachmark ??= BuildBankPointsCoachmark();
+            if (bankPointsCoachmark == null)
             {
                 return;
             }
@@ -2736,145 +2732,43 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private void ShowMutationPointsCoachmark(NewPlayerTooltipDefinition definition, Button anchorButton)
         {
-            if (definition == null || anchorButton == null || bankPointsCoachmarkRoot == null || bankPointsCoachmarkCanvasGroup == null)
+            if (definition == null || anchorButton == null || bankPointsCoachmark == null)
             {
                 return;
             }
 
-            bankPointsCoachmarkTitleTextLabel.text = definition.Title;
-            bankPointsCoachmarkBodyTextLabel.text = definition.Body;
+            bankPointsCoachmark.Show(definition);
             PositionBankPointsCoachmark(anchorButton);
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(bankPointsCoachmarkRoot);
-            bankPointsCoachmarkRoot.gameObject.SetActive(true);
-            bankPointsCoachmarkRoot.SetAsLastSibling();
-            bankPointsCoachmarkCanvasGroup.blocksRaycasts = true;
-            bankPointsCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(bankPointsCoachmarkRoot);
         }
 
-        private void EnsureBankPointsCoachmarkUi()
+        /// <summary>
+        /// One card serves both the spend-points and bank-points intros; it hangs off the
+        /// right edge of whichever button it is describing.
+        /// </summary>
+        private CoachmarkLayoutUtility.CoachmarkCard? BuildBankPointsCoachmark()
         {
-            if (bankPointsCoachmarkRoot != null)
-            {
-                return;
-            }
-
             Transform? parent = rootCanvas != null
                 ? rootCanvas.transform
                 : mutationTreeRect?.GetComponentInParent<Canvas>()?.rootCanvas?.transform;
             if (parent == null)
             {
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_BankPointsCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(parent, false);
-
-            bankPointsCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            bankPointsCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            bankPointsCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            bankPointsCoachmarkRoot.pivot = new Vector2(0f, 1f);
-            bankPointsCoachmarkRoot.sizeDelta = new Vector2(BankPointsCoachmarkWidth, BankPointsCoachmarkHeight);
-
-            bankPointsCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            bankPointsCoachmarkCanvasGroup.alpha = 0f;
-            bankPointsCoachmarkCanvasGroup.blocksRaycasts = false;
-            bankPointsCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.Accent.Spore, 0.14f);
-            backgroundColor.a = 0.97f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = new Color(UIStyleTokens.State.Focus.r, UIStyleTokens.State.Focus.g, UIStyleTokens.State.Focus.b, 0.8f);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            bankPointsCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            bankPointsCoachmarkTitleTextLabel.text = string.Empty;
-            bankPointsCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            bankPointsCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            bankPointsCoachmarkTitleTextLabel.fontSize = 22f;
-            bankPointsCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            bankPointsCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            FungusToast.Unity.UI.TMPOverflowUtility.SetSafeEllipsis(bankPointsCoachmarkTitleTextLabel);
-            bankPointsCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            bankPointsCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            bankPointsCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            bankPointsCoachmarkBodyTextLabel.fontSize = 17f;
-            bankPointsCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            bankPointsCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            bankPointsCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            bankPointsCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            bankPointsCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(bankPointsCoachmarkCloseButton);
-            bankPointsCoachmarkCloseButton.onClick.RemoveAllListeners();
-            bankPointsCoachmarkCloseButton.onClick.AddListener(OnMutationPointsCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                bankPointsCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                bankPointsCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            return CoachmarkLayoutUtility.BuildCard(
+                "UI_BankPointsCoachmark",
+                parent,
+                new Vector2(BankPointsCoachmarkWidth, BankPointsCoachmarkHeight),
+                OnMutationPointsCoachmarkDismissed);
         }
 
         private void PositionBankPointsCoachmark(Button anchorButton)
         {
             RectTransform? anchorRect = anchorButton != null ? anchorButton.transform as RectTransform : null;
-            RectTransform? parentRect = bankPointsCoachmarkRoot != null ? bankPointsCoachmarkRoot.parent as RectTransform : null;
+            RectTransform? coachmarkRoot = bankPointsCoachmark?.Root;
+            RectTransform? parentRect = coachmarkRoot != null ? coachmarkRoot.parent as RectTransform : null;
             Canvas? canvas = rootCanvas != null ? rootCanvas.rootCanvas : anchorButton?.GetComponentInParent<Canvas>()?.rootCanvas;
-            if (anchorRect == null || parentRect == null || canvas == null || bankPointsCoachmarkRoot == null)
+            if (anchorRect == null || parentRect == null || canvas == null || coachmarkRoot == null)
             {
                 return;
             }
@@ -2886,7 +2780,7 @@ namespace FungusToast.Unity.UI.MutationTree
             Vector3 rightCenterWorld = (corners[2] + corners[3]) * 0.5f;
 
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                bankPointsCoachmarkRoot,
+                coachmarkRoot,
                 parentRect,
                 canvas,
                 rightCenterWorld,
@@ -2921,25 +2815,12 @@ namespace FungusToast.Unity.UI.MutationTree
                 hasDismissedBankPointsCoachmarkThisGame = false;
             }
 
-            if (bankPointsCoachmarkCanvasGroup != null)
-            {
-                bankPointsCoachmarkCanvasGroup.alpha = 0f;
-                bankPointsCoachmarkCanvasGroup.blocksRaycasts = false;
-                bankPointsCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (bankPointsCoachmarkRoot != null)
-            {
-                bankPointsCoachmarkRoot.gameObject.SetActive(false);
-            }
+            bankPointsCoachmark?.HideImmediate();
         }
 
         private bool IsBankPointsCoachmarkVisible()
         {
-            return bankPointsCoachmarkRoot != null
-                && bankPointsCoachmarkCanvasGroup != null
-                && bankPointsCoachmarkRoot.gameObject.activeSelf
-                && bankPointsCoachmarkCanvasGroup.alpha > 0f;
+            return bankPointsCoachmark != null && bankPointsCoachmark.IsVisible;
         }
 
         /// <summary>

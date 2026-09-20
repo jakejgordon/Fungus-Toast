@@ -20,6 +20,22 @@ namespace FungusToast.Unity.UI
         internal const float TitleRightInset = CloseButtonInset + CloseButtonSize + 10f;
         internal const float BodyTopInset = CloseButtonInset + CloseButtonSize + 2f;
 
+        // Drag grip: a 2x3 dot cluster leading the title row, the same "this moves" glyph
+        // as a desktop toolbar or kanban card. Drawn from tinted Images so it needs no font
+        // support and stays on-palette.
+        internal const float ContentInset = 14f;
+        internal const float GripDotSize = 3f;
+        internal const float GripDotGap = 3f;
+        internal const int GripColumns = 2;
+        internal const int GripRows = 3;
+        internal const float GripWidth = (GripColumns * GripDotSize) + ((GripColumns - 1) * GripDotGap);
+        internal const float GripHeight = (GripRows * GripDotSize) + ((GripRows - 1) * GripDotGap);
+        internal const float GripToTitleGap = 8f;
+        // Title text starts after the grip.
+        internal const float TitleLeftInset = ContentInset + GripWidth + GripToTitleGap;
+        internal const float TitleTopInset = 12f;
+        internal const float TitleHeight = 36f;
+
         internal static void PlayAttention(RectTransform coachmarkRect)
         {
             if (coachmarkRect == null)
@@ -62,6 +78,7 @@ namespace FungusToast.Unity.UI
             public TextMeshProUGUI Title;
             public TextMeshProUGUI Body;
             public Button CloseButton;
+            public DraggableCard Draggable;
 
             public bool IsVisible => Root != null && CanvasGroup != null && Root.gameObject.activeSelf && CanvasGroup.alpha > 0f;
 
@@ -74,6 +91,7 @@ namespace FungusToast.Unity.UI
 
                 Title.text = definition.Title;
                 Body.text = definition.Body;
+                Draggable?.ResetMoved();
                 PrepareAttentionEntrance(Root);
                 Root.gameObject.SetActive(true);
                 Root.SetAsLastSibling();
@@ -99,9 +117,12 @@ namespace FungusToast.Unity.UI
         }
 
         /// <summary>
-        /// Builds the standard onboarding coachmark card (tinted panel, bold title, wrapped body,
-        /// X close button) under <paramref name="parent"/>, hidden. The card pivot is top-left so
-        /// <see cref="TryPlaceAtWorldPoint"/> can drop it below an anchor control.
+        /// Builds the standard onboarding coachmark card (tinted panel, drag grip, bold title,
+        /// wrapped body, X close button) under <paramref name="parent"/>, hidden and draggable
+        /// within that parent. The default pivot is top-left so <see cref="TryPlaceAtWorldPoint"/>
+        /// can drop it below an anchor control; hosts that place the card by another corner pass
+        /// <paramref name="pivot"/>. A card set in larger type passes a taller
+        /// <paramref name="titleRowHeight"/> and a roomier <paramref name="contentInset"/>.
         /// </summary>
         internal static CoachmarkCard BuildCard(
             string name,
@@ -109,9 +130,14 @@ namespace FungusToast.Unity.UI
             Vector2 size,
             Action onDismissed,
             float titleFontSize = 22f,
-            float bodyFontSize = 17f)
+            float bodyFontSize = 17f,
+            Vector2? pivot = null,
+            float titleRowHeight = TitleHeight,
+            float contentInset = ContentInset)
         {
             var card = new CoachmarkCard();
+            float titleLeftInset = contentInset + GripWidth + GripToTitleGap;
+            float bodyTopInset = Mathf.Max(BodyTopInset, TitleTopInset + titleRowHeight + 6f);
 
             var rootObject = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
             rootObject.transform.SetParent(parent, false);
@@ -119,7 +145,7 @@ namespace FungusToast.Unity.UI
             card.Root = rootObject.GetComponent<RectTransform>();
             card.Root.anchorMin = new Vector2(0.5f, 0.5f);
             card.Root.anchorMax = new Vector2(0.5f, 0.5f);
-            card.Root.pivot = new Vector2(0f, 1f);
+            card.Root.pivot = pivot ?? new Vector2(0f, 1f);
             card.Root.anchoredPosition = Vector2.zero;
             card.Root.sizeDelta = size;
 
@@ -138,14 +164,16 @@ namespace FungusToast.Unity.UI
             outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
             outline.effectDistance = new Vector2(1f, -1f);
 
+            AddGrip(card.Root, contentInset, TitleTopInset, titleRowHeight);
+
             var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleObject.transform.SetParent(rootObject.transform, false);
             var titleRect = titleObject.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0f, 1f);
             titleRect.anchorMax = new Vector2(1f, 1f);
             titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-TitleRightInset, -12f);
+            titleRect.offsetMin = new Vector2(titleLeftInset, -(TitleTopInset + titleRowHeight));
+            titleRect.offsetMax = new Vector2(-TitleRightInset, -TitleTopInset);
 
             card.Title = titleObject.GetComponent<TextMeshProUGUI>();
             card.Title.text = string.Empty;
@@ -162,8 +190,8 @@ namespace FungusToast.Unity.UI
             var bodyRect = bodyObject.GetComponent<RectTransform>();
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -BodyTopInset);
+            bodyRect.offsetMin = new Vector2(contentInset, contentInset);
+            bodyRect.offsetMax = new Vector2(-contentInset, -bodyTopInset);
 
             card.Body = bodyObject.GetComponent<TextMeshProUGUI>();
             card.Body.color = UIStyleTokens.Text.Primary;
@@ -214,8 +242,70 @@ namespace FungusToast.Unity.UI
                 closeLabel.font = TMP_Settings.defaultFontAsset;
             }
 
+            card.Draggable = MakeDraggable(card.Root);
+
             rootObject.SetActive(false);
             return card;
+        }
+
+        /// <summary>
+        /// Adds the drag grip to the leading edge of a card's title row, vertically centred
+        /// on the title. Callers lay the title out from <paramref name="leftInset"/> +
+        /// <see cref="GripWidth"/> + <see cref="GripToTitleGap"/> (<see cref="TitleLeftInset"/>
+        /// for the defaults).
+        /// </summary>
+        internal static void AddGrip(
+            RectTransform cardRoot,
+            float leftInset = ContentInset,
+            float titleTopInset = TitleTopInset,
+            float titleHeight = TitleHeight)
+        {
+            var gripObject = new GameObject("Grip", typeof(RectTransform));
+            gripObject.transform.SetParent(cardRoot, false);
+            var gripRect = gripObject.GetComponent<RectTransform>();
+            gripRect.anchorMin = new Vector2(0f, 1f);
+            gripRect.anchorMax = new Vector2(0f, 1f);
+            gripRect.pivot = new Vector2(0f, 1f);
+            gripRect.sizeDelta = new Vector2(GripWidth, GripHeight);
+            float titleCentre = titleTopInset + (titleHeight * 0.5f);
+            gripRect.anchoredPosition = new Vector2(leftInset, -(titleCentre - (GripHeight * 0.5f)));
+
+            for (int row = 0; row < GripRows; row++)
+            {
+                for (int column = 0; column < GripColumns; column++)
+                {
+                    var dotObject = new GameObject("Dot", typeof(RectTransform), typeof(Image));
+                    dotObject.transform.SetParent(gripObject.transform, false);
+                    var dotRect = dotObject.GetComponent<RectTransform>();
+                    dotRect.anchorMin = new Vector2(0f, 1f);
+                    dotRect.anchorMax = new Vector2(0f, 1f);
+                    dotRect.pivot = new Vector2(0f, 1f);
+                    dotRect.sizeDelta = new Vector2(GripDotSize, GripDotSize);
+                    dotRect.anchoredPosition = new Vector2(
+                        column * (GripDotSize + GripDotGap),
+                        -row * (GripDotSize + GripDotGap));
+
+                    var dotImage = dotObject.GetComponent<Image>();
+                    dotImage.color = UIStyleTokens.Text.Muted;
+                    dotImage.raycastTarget = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Makes a floating card draggable within <paramref name="bounds"/> (its parent when
+        /// null). The card root must be a raycast target so the drag has a surface to start on.
+        /// </summary>
+        internal static DraggableCard MakeDraggable(RectTransform cardRoot, RectTransform bounds = null, Vector2? padding = null)
+        {
+            var draggable = cardRoot.GetComponent<DraggableCard>();
+            if (draggable == null)
+            {
+                draggable = cardRoot.gameObject.AddComponent<DraggableCard>();
+            }
+
+            draggable.Configure(bounds, padding);
+            return draggable;
         }
 
         internal static bool TryPlaceAtWorldPoint(
@@ -259,12 +349,12 @@ namespace FungusToast.Unity.UI
             coachmarkRect.anchoredPosition = ClampAnchoredPosition(coachmarkRect, boundsRect, desiredAnchoredPosition, padding);
         }
 
-        private static Vector2 LocalPointToAnchoredPosition(RectTransform coachmarkRect, RectTransform boundsRect, Vector2 localPoint)
+        internal static Vector2 LocalPointToAnchoredPosition(RectTransform coachmarkRect, RectTransform boundsRect, Vector2 localPoint)
         {
             return localPoint - GetAnchorReference(coachmarkRect, boundsRect);
         }
 
-        private static Vector2 ClampAnchoredPosition(
+        internal static Vector2 ClampAnchoredPosition(
             RectTransform coachmarkRect,
             RectTransform boundsRect,
             Vector2 desiredAnchoredPosition,
@@ -355,6 +445,23 @@ namespace FungusToast.Unity.UI
             EnsureBackdrop();
             animationCoroutine = StartCoroutine(PlayAttentionAnimation());
             isEntrancePrepared = false;
+        }
+
+        /// <summary>
+        /// Ends the entrance/pulse animation early, leaving the card at rest with the
+        /// backdrop settled. A drag calls this so it owns scale and outline outright.
+        /// </summary>
+        internal void Settle()
+        {
+            if (animationCoroutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(animationCoroutine);
+            animationCoroutine = null;
+            RestoreCoachmarkVisuals();
+            SetBackdropAlpha(UIEffectConstants.CoachmarkBackdropAlpha);
         }
 
         internal void PrepareEntrance()

@@ -45,24 +45,12 @@ namespace FungusToast.Unity.UI
         private GridVisualizer gridVisualizer;
         private GameBoard board;
         private int? perspectivePlayerId;
-        private RectTransform scoreboardCoachmarkRoot;
-        private CanvasGroup scoreboardCoachmarkCanvasGroup;
-        private TextMeshProUGUI scoreboardCoachmarkTitleTextLabel;
-        private TextMeshProUGUI scoreboardCoachmarkBodyTextLabel;
-        private Button scoreboardCoachmarkCloseButton;
-        private RectTransform endgameCountdownCoachmarkRoot;
-        private CanvasGroup endgameCountdownCoachmarkCanvasGroup;
-        private TextMeshProUGUI endgameCountdownCoachmarkTitleTextLabel;
-        private TextMeshProUGUI endgameCountdownCoachmarkBodyTextLabel;
-        private Button endgameCountdownCoachmarkCloseButton;
+        private CoachmarkLayoutUtility.CoachmarkCard scoreboardCoachmark;
+        private CoachmarkLayoutUtility.CoachmarkCard endgameCountdownCoachmark;
         private UI_GameLogPanel draftHistoryLogPanel;
         private Action onDraftHistoryRequested;
         private Func<bool> canOpenDraftHistory;
-        private RectTransform inspectPlayersCoachmarkRoot;
-        private CanvasGroup inspectPlayersCoachmarkCanvasGroup;
-        private TextMeshProUGUI inspectPlayersCoachmarkTitleTextLabel;
-        private TextMeshProUGUI inspectPlayersCoachmarkBodyTextLabel;
-        private Button inspectPlayersCoachmarkCloseButton;
+        private CoachmarkLayoutUtility.CoachmarkCard inspectPlayersCoachmark;
         private bool hasDismissedInspectPlayersCoachmarkThisGame;
         private bool hasPinnedPlayerInspectorThisGame;
         private bool hasDismissedScoreboardCoachmarkThisGame;
@@ -542,22 +530,15 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            EnsureEndgameCountdownCoachmarkUi();
-            if (endgameCountdownCoachmarkRoot == null || endgameCountdownCoachmarkCanvasGroup == null)
+            endgameCountdownCoachmark ??= BuildSidebarCoachmark(
+                "UI_EndgameCountdownCoachmark", new Vector2(380f, 209f), OnEndgameCountdownCoachmarkDismissed);
+            if (endgameCountdownCoachmark == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.EndgameCountdownIntro);
-            endgameCountdownCoachmarkTitleTextLabel.text = definition.Title;
-            endgameCountdownCoachmarkBodyTextLabel.text = definition.Body;
+            endgameCountdownCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.EndgameCountdownIntro));
             PositionEndgameCountdownCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(endgameCountdownCoachmarkRoot);
-            endgameCountdownCoachmarkRoot.gameObject.SetActive(true);
-            endgameCountdownCoachmarkRoot.SetAsLastSibling();
-            endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = true;
-            endgameCountdownCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(endgameCountdownCoachmarkRoot);
         }
 
         public void TryShowScoreboardWinConditionCoachmark(int currentRound)
@@ -574,22 +555,15 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            EnsureScoreboardCoachmarkUi();
-            if (scoreboardCoachmarkRoot == null || scoreboardCoachmarkCanvasGroup == null)
+            scoreboardCoachmark ??= BuildSidebarCoachmark(
+                "UI_ScoreboardCoachmark", new Vector2(360f, 194f), OnScoreboardCoachmarkDismissed);
+            if (scoreboardCoachmark == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.ScoreboardWinCondition);
-            scoreboardCoachmarkTitleTextLabel.text = definition.Title;
-            scoreboardCoachmarkBodyTextLabel.text = definition.Body;
+            scoreboardCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.ScoreboardWinCondition));
             PositionScoreboardCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(scoreboardCoachmarkRoot);
-            scoreboardCoachmarkRoot.gameObject.SetActive(true);
-            scoreboardCoachmarkRoot.SetAsLastSibling();
-            scoreboardCoachmarkCanvasGroup.blocksRaycasts = true;
-            scoreboardCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(scoreboardCoachmarkRoot);
         }
 
         /// <summary>
@@ -612,152 +586,47 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
-            EnsureInspectPlayersCoachmarkUi();
-            if (inspectPlayersCoachmarkRoot == null || inspectPlayersCoachmarkCanvasGroup == null)
+            inspectPlayersCoachmark ??= BuildSidebarCoachmark(
+                "UI_InspectPlayersCoachmark", new Vector2(360f, 214f), OnInspectPlayersCoachmarkDismissed);
+            if (inspectPlayersCoachmark == null)
             {
                 return;
             }
 
-            NewPlayerTooltipDefinition definition = NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.InspectPlayersIntro);
-            inspectPlayersCoachmarkTitleTextLabel.text = definition.Title;
-            inspectPlayersCoachmarkBodyTextLabel.text = definition.Body;
+            inspectPlayersCoachmark.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.InspectPlayersIntro));
             PositionInspectPlayersCoachmark();
-            CoachmarkLayoutUtility.PrepareAttentionEntrance(inspectPlayersCoachmarkRoot);
-            inspectPlayersCoachmarkRoot.gameObject.SetActive(true);
-            inspectPlayersCoachmarkRoot.SetAsLastSibling();
-            inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = true;
-            inspectPlayersCoachmarkCanvasGroup.interactable = true;
-            CoachmarkLayoutUtility.PlayAttention(inspectPlayersCoachmarkRoot);
         }
 
-        private void EnsureInspectPlayersCoachmarkUi()
+        /// <summary>
+        /// The sidebar's coachmarks hang off its top-left corner, so they are placed by their
+        /// top-right pivot and use the slightly larger type the sidebar has always used.
+        /// </summary>
+        private CoachmarkLayoutUtility.CoachmarkCard BuildSidebarCoachmark(string name, Vector2 size, Action onDismissed)
         {
-            if (inspectPlayersCoachmarkRoot != null)
-            {
-                return;
-            }
-
             Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (canvas == null)
             {
-                return;
+                return null;
             }
 
-            var rootObject = new GameObject("UI_InspectPlayersCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(canvas.transform, false);
-
-            inspectPlayersCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            inspectPlayersCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            inspectPlayersCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            inspectPlayersCoachmarkRoot.pivot = new Vector2(1f, 1f);
-            inspectPlayersCoachmarkRoot.anchoredPosition = Vector2.zero;
-            inspectPlayersCoachmarkRoot.sizeDelta = new Vector2(360f, 214f);
-
-            inspectPlayersCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            inspectPlayersCoachmarkCanvasGroup.alpha = 0f;
-            inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = false;
-            inspectPlayersCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f);
-            backgroundColor.a = 0.98f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            inspectPlayersCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            inspectPlayersCoachmarkTitleTextLabel.text = string.Empty;
-            inspectPlayersCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            inspectPlayersCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            inspectPlayersCoachmarkTitleTextLabel.fontSize = 24f;
-            inspectPlayersCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            inspectPlayersCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(inspectPlayersCoachmarkTitleTextLabel);
-            inspectPlayersCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            inspectPlayersCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            inspectPlayersCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            inspectPlayersCoachmarkBodyTextLabel.fontSize = 19f;
-            inspectPlayersCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            inspectPlayersCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            inspectPlayersCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            inspectPlayersCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            inspectPlayersCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(inspectPlayersCoachmarkCloseButton);
-            inspectPlayersCoachmarkCloseButton.onClick.RemoveAllListeners();
-            inspectPlayersCoachmarkCloseButton.onClick.AddListener(OnInspectPlayersCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                inspectPlayersCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                inspectPlayersCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            return CoachmarkLayoutUtility.BuildCard(
+                name,
+                canvas.transform,
+                size,
+                onDismissed,
+                titleFontSize: 24f,
+                bodyFontSize: 19f,
+                pivot: new Vector2(1f, 1f));
         }
 
         private void PositionInspectPlayersCoachmark()
         {
-            if (inspectPlayersCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            if (inspectPlayersCoachmark == null || inspectPlayersCoachmark.Root == null || transform is not RectTransform sidebarRect)
             {
                 return;
             }
 
-            RectTransform parentRect = inspectPlayersCoachmarkRoot.parent as RectTransform;
+            RectTransform parentRect = inspectPlayersCoachmark.Root.parent as RectTransform;
             Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (parentRect == null || canvas == null)
             {
@@ -772,7 +641,7 @@ namespace FungusToast.Unity.UI
 
             // Sits below the win-condition slot so the two never overlap if both are pending.
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                inspectPlayersCoachmarkRoot,
+                inspectPlayersCoachmark.Root,
                 parentRect,
                 canvas,
                 topLeftWorld,
@@ -816,137 +685,7 @@ namespace FungusToast.Unity.UI
                 hasDismissedInspectPlayersCoachmarkThisGame = false;
             }
 
-            if (inspectPlayersCoachmarkCanvasGroup != null)
-            {
-                inspectPlayersCoachmarkCanvasGroup.alpha = 0f;
-                inspectPlayersCoachmarkCanvasGroup.blocksRaycasts = false;
-                inspectPlayersCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (inspectPlayersCoachmarkRoot != null)
-            {
-                inspectPlayersCoachmarkRoot.gameObject.SetActive(false);
-            }
-        }
-
-        private void EnsureScoreboardCoachmarkUi()
-        {
-            if (scoreboardCoachmarkRoot != null)
-            {
-                return;
-            }
-
-            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
-            if (canvas == null)
-            {
-                return;
-            }
-
-            var rootObject = new GameObject("UI_ScoreboardCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(canvas.transform, false);
-
-            scoreboardCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            scoreboardCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            scoreboardCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            scoreboardCoachmarkRoot.pivot = new Vector2(1f, 1f);
-            scoreboardCoachmarkRoot.anchoredPosition = Vector2.zero;
-            scoreboardCoachmarkRoot.sizeDelta = new Vector2(360f, 194f);
-
-            scoreboardCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            scoreboardCoachmarkCanvasGroup.alpha = 0f;
-            scoreboardCoachmarkCanvasGroup.blocksRaycasts = false;
-            scoreboardCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Info, 0.16f);
-            backgroundColor.a = 0.98f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            scoreboardCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            scoreboardCoachmarkTitleTextLabel.text = string.Empty;
-            scoreboardCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            scoreboardCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            scoreboardCoachmarkTitleTextLabel.fontSize = 24f;
-            scoreboardCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            scoreboardCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(scoreboardCoachmarkTitleTextLabel);
-            scoreboardCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            scoreboardCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            scoreboardCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            scoreboardCoachmarkBodyTextLabel.fontSize = 19f;
-            scoreboardCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            scoreboardCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            scoreboardCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            scoreboardCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            scoreboardCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(scoreboardCoachmarkCloseButton);
-            scoreboardCoachmarkCloseButton.onClick.RemoveAllListeners();
-            scoreboardCoachmarkCloseButton.onClick.AddListener(OnScoreboardCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                scoreboardCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                scoreboardCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            inspectPlayersCoachmark?.HideImmediate();
         }
 
         private void OnScoreboardCoachmarkDismissed()
@@ -968,143 +707,17 @@ namespace FungusToast.Unity.UI
                 hasDismissedScoreboardCoachmarkThisGame = false;
             }
 
-            if (scoreboardCoachmarkCanvasGroup != null)
-            {
-                scoreboardCoachmarkCanvasGroup.alpha = 0f;
-                scoreboardCoachmarkCanvasGroup.blocksRaycasts = false;
-                scoreboardCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (scoreboardCoachmarkRoot != null)
-            {
-                scoreboardCoachmarkRoot.gameObject.SetActive(false);
-            }
-        }
-
-        private void EnsureEndgameCountdownCoachmarkUi()
-        {
-            if (endgameCountdownCoachmarkRoot != null)
-            {
-                return;
-            }
-
-            Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
-            if (canvas == null)
-            {
-                return;
-            }
-
-            var rootObject = new GameObject("UI_EndgameCountdownCoachmark", typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
-            rootObject.transform.SetParent(canvas.transform, false);
-
-            endgameCountdownCoachmarkRoot = rootObject.GetComponent<RectTransform>();
-            endgameCountdownCoachmarkRoot.anchorMin = new Vector2(0.5f, 0.5f);
-            endgameCountdownCoachmarkRoot.anchorMax = new Vector2(0.5f, 0.5f);
-            endgameCountdownCoachmarkRoot.pivot = new Vector2(1f, 1f);
-            endgameCountdownCoachmarkRoot.anchoredPosition = Vector2.zero;
-            endgameCountdownCoachmarkRoot.sizeDelta = new Vector2(380f, 209f);
-
-            endgameCountdownCoachmarkCanvasGroup = rootObject.GetComponent<CanvasGroup>();
-            endgameCountdownCoachmarkCanvasGroup.alpha = 0f;
-            endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = false;
-            endgameCountdownCoachmarkCanvasGroup.interactable = false;
-
-            var background = rootObject.GetComponent<Image>();
-            var backgroundColor = Color.Lerp(UIStyleTokens.Surface.PanelSecondary, UIStyleTokens.State.Warning, 0.18f);
-            backgroundColor.a = 0.98f;
-            background.color = backgroundColor;
-            background.raycastTarget = true;
-
-            var outline = rootObject.GetComponent<Outline>();
-            outline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, UIStyleTokens.Alpha.FocusOutline);
-            outline.effectDistance = new Vector2(1f, -1f);
-
-            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
-            titleObject.transform.SetParent(rootObject.transform, false);
-            var titleRect = titleObject.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0f, 1f);
-            titleRect.anchorMax = new Vector2(1f, 1f);
-            titleRect.pivot = new Vector2(0.5f, 1f);
-            titleRect.offsetMin = new Vector2(14f, -48f);
-            titleRect.offsetMax = new Vector2(-CoachmarkLayoutUtility.TitleRightInset, -12f);
-
-            endgameCountdownCoachmarkTitleTextLabel = titleObject.GetComponent<TextMeshProUGUI>();
-            endgameCountdownCoachmarkTitleTextLabel.text = string.Empty;
-            endgameCountdownCoachmarkTitleTextLabel.color = UIStyleTokens.Text.Primary;
-            endgameCountdownCoachmarkTitleTextLabel.fontStyle = FontStyles.Bold;
-            endgameCountdownCoachmarkTitleTextLabel.fontSize = 24f;
-            endgameCountdownCoachmarkTitleTextLabel.alignment = TextAlignmentOptions.Left;
-            endgameCountdownCoachmarkTitleTextLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            TMPOverflowUtility.SetSafeEllipsis(endgameCountdownCoachmarkTitleTextLabel);
-            endgameCountdownCoachmarkTitleTextLabel.raycastTarget = false;
-
-            var bodyObject = new GameObject("Body", typeof(RectTransform), typeof(TextMeshProUGUI));
-            bodyObject.transform.SetParent(rootObject.transform, false);
-            var bodyRect = bodyObject.GetComponent<RectTransform>();
-            bodyRect.anchorMin = new Vector2(0f, 0f);
-            bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(14f, 14f);
-            bodyRect.offsetMax = new Vector2(-14f, -CoachmarkLayoutUtility.BodyTopInset);
-
-            endgameCountdownCoachmarkBodyTextLabel = bodyObject.GetComponent<TextMeshProUGUI>();
-            endgameCountdownCoachmarkBodyTextLabel.color = UIStyleTokens.Text.Primary;
-            endgameCountdownCoachmarkBodyTextLabel.fontSize = 18f;
-            endgameCountdownCoachmarkBodyTextLabel.alignment = TextAlignmentOptions.TopLeft;
-            endgameCountdownCoachmarkBodyTextLabel.textWrappingMode = TextWrappingModes.Normal;
-            endgameCountdownCoachmarkBodyTextLabel.overflowMode = TextOverflowModes.Overflow;
-            endgameCountdownCoachmarkBodyTextLabel.raycastTarget = false;
-
-            var closeObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button));
-            closeObject.transform.SetParent(rootObject.transform, false);
-            var closeRect = closeObject.GetComponent<RectTransform>();
-            closeRect.anchorMin = new Vector2(1f, 1f);
-            closeRect.anchorMax = new Vector2(1f, 1f);
-            closeRect.pivot = new Vector2(1f, 1f);
-            closeRect.sizeDelta = new Vector2(CoachmarkLayoutUtility.CloseButtonSize, CoachmarkLayoutUtility.CloseButtonSize);
-            closeRect.anchoredPosition = new Vector2(-CoachmarkLayoutUtility.CloseButtonInset, -CoachmarkLayoutUtility.CloseButtonInset);
-
-            var closeImage = closeObject.GetComponent<Image>();
-            closeImage.color = UIStyleTokens.Surface.PanelElevated;
-
-            endgameCountdownCoachmarkCloseButton = closeObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyStyle(endgameCountdownCoachmarkCloseButton);
-            endgameCountdownCoachmarkCloseButton.onClick.RemoveAllListeners();
-            endgameCountdownCoachmarkCloseButton.onClick.AddListener(OnEndgameCountdownCoachmarkDismissed);
-
-            var closeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            closeLabelObject.transform.SetParent(closeObject.transform, false);
-            var closeLabelRect = closeLabelObject.GetComponent<RectTransform>();
-            closeLabelRect.anchorMin = Vector2.zero;
-            closeLabelRect.anchorMax = Vector2.one;
-            closeLabelRect.offsetMin = Vector2.zero;
-            closeLabelRect.offsetMax = Vector2.zero;
-
-            var closeLabel = closeLabelObject.GetComponent<TextMeshProUGUI>();
-            closeLabel.text = "X";
-            closeLabel.color = UIStyleTokens.Text.Primary;
-            closeLabel.fontStyle = FontStyles.Bold;
-            closeLabel.fontSize = CoachmarkLayoutUtility.CloseButtonFontSize;
-            closeLabel.alignment = TextAlignmentOptions.Center;
-            closeLabel.raycastTarget = false;
-
-            if (TMP_Settings.defaultFontAsset != null)
-            {
-                endgameCountdownCoachmarkTitleTextLabel.font = TMP_Settings.defaultFontAsset;
-                endgameCountdownCoachmarkBodyTextLabel.font = TMP_Settings.defaultFontAsset;
-                closeLabel.font = TMP_Settings.defaultFontAsset;
-            }
-
-            rootObject.SetActive(false);
+            scoreboardCoachmark?.HideImmediate();
         }
 
         private void PositionScoreboardCoachmark()
         {
-            if (scoreboardCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            if (scoreboardCoachmark == null || scoreboardCoachmark.Root == null || transform is not RectTransform sidebarRect)
             {
                 return;
             }
 
-            RectTransform parentRect = scoreboardCoachmarkRoot.parent as RectTransform;
+            RectTransform parentRect = scoreboardCoachmark.Root.parent as RectTransform;
             Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (parentRect == null || canvas == null)
             {
@@ -1118,7 +731,7 @@ namespace FungusToast.Unity.UI
             Vector3 topLeftWorld = corners[1];
 
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                scoreboardCoachmarkRoot,
+                scoreboardCoachmark.Root,
                 parentRect,
                 canvas,
                 topLeftWorld,
@@ -1128,12 +741,12 @@ namespace FungusToast.Unity.UI
 
         private void PositionEndgameCountdownCoachmark()
         {
-            if (endgameCountdownCoachmarkRoot == null || transform is not RectTransform sidebarRect)
+            if (endgameCountdownCoachmark == null || endgameCountdownCoachmark.Root == null || transform is not RectTransform sidebarRect)
             {
                 return;
             }
 
-            RectTransform parentRect = endgameCountdownCoachmarkRoot.parent as RectTransform;
+            RectTransform parentRect = endgameCountdownCoachmark.Root.parent as RectTransform;
             Canvas canvas = GetComponentInParent<Canvas>()?.rootCanvas;
             if (parentRect == null || canvas == null)
             {
@@ -1147,7 +760,7 @@ namespace FungusToast.Unity.UI
             Vector3 topLeftWorld = corners[1];
 
             CoachmarkLayoutUtility.TryPlaceAtWorldPoint(
-                endgameCountdownCoachmarkRoot,
+                endgameCountdownCoachmark.Root,
                 parentRect,
                 canvas,
                 topLeftWorld,
@@ -1174,17 +787,7 @@ namespace FungusToast.Unity.UI
                 hasDismissedEndgameCountdownCoachmarkThisGame = false;
             }
 
-            if (endgameCountdownCoachmarkCanvasGroup != null)
-            {
-                endgameCountdownCoachmarkCanvasGroup.alpha = 0f;
-                endgameCountdownCoachmarkCanvasGroup.blocksRaycasts = false;
-                endgameCountdownCoachmarkCanvasGroup.interactable = false;
-            }
-
-            if (endgameCountdownCoachmarkRoot != null)
-            {
-                endgameCountdownCoachmarkRoot.gameObject.SetActive(false);
-            }
+            endgameCountdownCoachmark?.HideImmediate();
         }
 
         public void SetRoundAndOccupancy(int round, float occupancy)

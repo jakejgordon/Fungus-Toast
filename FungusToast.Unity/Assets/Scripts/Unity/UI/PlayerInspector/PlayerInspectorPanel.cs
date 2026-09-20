@@ -26,6 +26,10 @@ namespace FungusToast.Unity.UI.PlayerInspector
     /// pinned on another. Nested tooltips from the tiles still work because this panel is not the
     /// shared tooltip view.
     ///
+    /// While pinned the panel is a <see cref="DraggableCard"/>: the player can drag it off the
+    /// board cells it covers, and once they have, it stops following its scoreboard icon until
+    /// it is pinned on a different player.
+    ///
     /// One instance exists per session, mirroring <see cref="TooltipManager"/>.
     /// </summary>
     public sealed class PlayerInspectorPanel : MonoBehaviour
@@ -57,7 +61,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 / (CompactIconTileFactory.TileSize + CompactIconTileFactory.Spacing)));
 
         private const string PreviewHint = "Click to pin";
-        private const string PinnedHint = "Pinned — click again to unpin. Hover an icon to read it.";
+        private const string PinnedHint = "Pinned — click again to unpin. Hover an icon to read it, or drag the panel aside.";
 
         /// <summary>Raised whenever the player pins the inspector, so onboarding can retire its hint.</summary>
         public static event Action? Pinned;
@@ -77,6 +81,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private RectTransform surgeGrid = null!;
         private RectTransform adaptationGrid = null!;
         private RectTransform mycovariantGrid = null!;
+        private DraggableCard draggable = null!;
 
         private readonly List<GameObject> surgeTiles = new();
         private readonly List<GameObject> adaptationTiles = new();
@@ -260,6 +265,9 @@ namespace FungusToast.Unity.UI.PlayerInspector
             mycovariantGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorMycovariantGrid", IconColumns);
             hintText = CreateLabel("Hint", BodyFontSize, FontStyles.Italic, UIStyleTokens.Text.Muted);
 
+            draggable = CoachmarkLayoutUtility.MakeDraggable(rootRect, canvasRect, new Vector2(ScreenPadding, ScreenPadding));
+            draggable.enabled = false;
+
             gameObject.SetActive(false);
         }
 
@@ -274,12 +282,15 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             var headerRect = (RectTransform)headerObject.transform;
 
+            // Same drag grip as the coachmarks, leading the title.
+            CoachmarkLayoutUtility.AddGrip(headerRect, leftInset: 0f, titleTopInset: 0f, titleHeight: HeaderHeight);
+
             var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
             titleObject.transform.SetParent(headerRect, false);
             var titleRect = (RectTransform)titleObject.transform;
             titleRect.anchorMin = Vector2.zero;
             titleRect.anchorMax = Vector2.one;
-            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMin = new Vector2(CoachmarkLayoutUtility.GripWidth + CoachmarkLayoutUtility.GripToTitleGap, 0f);
             titleRect.offsetMax = new Vector2(-(CloseButtonSize + 6f), 0f);
 
             titleText = titleObject.GetComponent<TextMeshProUGUI>();
@@ -364,6 +375,8 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 surgeSignature = null;
                 adaptationSignature = null;
                 mycovariantSignature = null;
+                // A new subject re-anchors the panel even if the player had dragged it.
+                draggable.ResetMoved();
             }
             nextContentRefreshTime = 0f;
 
@@ -374,6 +387,8 @@ namespace FungusToast.Unity.UI.PlayerInspector
             // so hovering a row never blocks board cells, placement clicks, or its own pointer-exit.
             canvasGroup.blocksRaycasts = pinned;
             canvasGroup.interactable = pinned;
+            // Only a pinned panel can be dragged; the preview closes on pointer exit anyway.
+            draggable.enabled = pinned;
 
             // A trait tile's tooltip may still be up from a previously pinned state.
             TooltipManager.Instance?.CancelAll();
@@ -415,7 +430,11 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 RefreshContent();
             }
 
-            Reposition();
+            // Once the player has dragged the panel it is theirs; stop chasing the icon.
+            if (!draggable.HasBeenMoved)
+            {
+                Reposition();
+            }
         }
 
         private void RefreshContent()
