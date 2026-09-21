@@ -493,6 +493,23 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Harvest Broker, offset 2 (`TST_Campaign7_KillReclaim_Offset2`) — rejected
+
+- Candidate order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager.
+- Comparison seed `2026092072`, 50 pairs: treatment-control normalized board
+  share `0.000000`, 95% CI `[0.000000, 0.000000]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092073`, 100 pairs: treatment-control normalized board
+  share `-0.019344`, 95% CI `[-0.051656, 0.012967]`; the lower bound narrowly
+  missed the same margin, so the candidate was rejected and the Campaign
+  strategy remains unchanged. Artifacts use
+  `harvestbroker_offset2_myco_{comparison,holdout}_{control,treatment}` with
+  their respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility; the held-out result must not be tuned against.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
