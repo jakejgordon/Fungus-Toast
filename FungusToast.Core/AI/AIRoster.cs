@@ -1621,6 +1621,38 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HarvestBrokerOffset2_EconomyControl",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 2
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HarvestBrokerOffset2_CuratedMycovariants",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
+                },
+                startingSporeEdgeOffset: 2
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
