@@ -623,7 +623,6 @@ public class StrategyCatalogTests
             "CMP_TierCap_GrowthResilience_Easy",
             "TST_AI10_BeaconRegression",
             "TST_AI10_CreepingRegression",
-            "TST_Campaign7_KillReclaim_Offset1",
             "TST_Campaign7_KillReclaim_Offset2",
             "TST_Campaign7_KillReclaim_Offset3",
             "TST_Campaign7_KillReclaim_Offset8",
@@ -913,6 +912,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.Single(control.GetMycovariantPreferences());
         Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
         Assert.Equal(
