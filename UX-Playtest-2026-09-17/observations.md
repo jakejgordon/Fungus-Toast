@@ -146,6 +146,8 @@ Screenshot: [010-scout-your-rivals-tutorial.png](screenshots/010-scout-your-riva
 
 ### 011 — Round 15 mycovariant draft
 
+**Status: Partially rejected (2026-09-20).** The truncation P1 is **Rejected**: the baseline screenshot shows the Chemotactic Mycotoxins card ending with the complete sentence "...move to a random empty tile next to an enemy living cell." - the observer misread the last line as a cut-off. The maintainer could not reproduce any clipping in-app either, and `MycovariantCard` already applies `TMPOverflowUtility.SetSafeEllipsis` plus auto-sizing (14-18 pt) to the effect text, so overflow would show an ellipsis rather than a mid-sentence stop. 014's claim that the second draft "confirms" the truncation was layout-dependent inherits the misreading and is withdrawn with it. The tutorial-overlap P1 and the empty-space P2 are not yet addressed. The selection-affordance P2 is under discussion; no human tester has been observed struggling with it, so it is not a priority.
+
 Screenshot: [011-round-15-mycovariant-draft.png](screenshots/011-round-15-mycovariant-draft.png)
 
 - **What happened:** The first draft opened automatically, showed the complete pick order in a persistent feed, and offered three cards while a tutorial explained passive versus one-time effects.
@@ -174,7 +176,7 @@ Screenshot: [013-filament-overdrive-cross-branch-prerequisites.png](screenshots/
 
 Screenshot: [014-round-20-second-draft.png](screenshots/014-round-20-second-draft.png)
 
-- **What happened:** The Round 20 draft appears without the first-time tutorial. All three descriptions fit, confirming that the Round 15 truncation is tied to the tutorial/layout state rather than the underlying card copy.
+- **What happened:** The Round 20 draft appears without the first-time tutorial. All three descriptions fit. (The Round 15 card was never truncated - see 011 - so this does not confirm a layout-dependent overflow.)
 - **Works well:** The pick order, rival choices, immediate impact summaries, board state, and standings are all visible at once.
 - **P2 — Comparison density remains poor:** The cards occupy a tall fixed container but use only their upper third, while long lines and narrow columns make rule text slower to compare. Let cards fit content, widen the comparison area, or use a compact `effect / timing / target` summary.
 - **P2 — One-time versus persistent is buried in prose:** This is the highest-level decision axis, but it has no visual treatment once the tutorial is gone. Add a `Passive` or `One-time` badge to each card.
