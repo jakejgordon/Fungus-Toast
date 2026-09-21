@@ -40,7 +40,12 @@ namespace FungusToast.Unity.UI
         private Color restingOutlineColor;
         private bool isDragging;
 
-        /// <summary>True from the end of the first drag until <see cref="ResetMoved"/>.</summary>
+        /// <summary>
+        /// True from the start of the first drag until <see cref="ResetMoved"/>. Set on
+        /// begin, not end, so a host that re-places the card every frame (the inspector
+        /// following its scoreboard icon) lets go the moment the drag starts; otherwise
+        /// it would snap the card back under the pointer for the whole first drag.
+        /// </summary>
         public bool HasBeenMoved { get; private set; }
 
         /// <summary>Raised when a drag ends, so a host can stop re-anchoring the card.</summary>
@@ -95,6 +100,7 @@ namespace FungusToast.Unity.UI
             GetComponent<CoachmarkAttentionEffect>()?.Settle();
 
             isDragging = true;
+            HasBeenMoved = true;
             grabOffset = localPoint - cardRect.anchoredPosition;
             restingScale = cardRect.localScale;
             cardRect.localScale = restingScale * LiftScale;
@@ -127,7 +133,6 @@ namespace FungusToast.Unity.UI
             }
 
             FinishDrag();
-            HasBeenMoved = true;
             Moved?.Invoke();
         }
 
