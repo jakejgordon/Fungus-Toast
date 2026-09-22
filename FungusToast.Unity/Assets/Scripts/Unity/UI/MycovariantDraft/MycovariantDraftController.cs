@@ -436,16 +436,19 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
             int currentRound = GameManager.Instance?.Board?.CurrentRound ?? 0;
 
+            var cards = new List<MycovariantCard>(choices.Count);
             foreach (var m in choices)
             {
-                CreateChoiceCard(
+                cards.Add(CreateChoiceCard(
                     m,
                     m.Name,
                     MycovariantDescriptionFormatter.GetDraftPreviewDescription(m, currentRound),
                     MycovariantArtRepository.GetIcon(m),
                     () => OnChoicePicked(m),
-                    highlight: false);
+                    highlight: false));
             }
+
+            SyncChoiceCardEffectFontSizes(cards);
         }
 
         private void OnChoicePicked(Mycovariant picked)
@@ -755,6 +758,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 card.SetActiveHighlight(false);
                 card.gameObject.SetActive(true);
             }
+
+            SyncChoiceCardEffectFontSizes(GetVisibleChoiceCards());
         }
 
         private void ReplacePickedCard(Mycovariant picked)
@@ -782,6 +787,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 pickedCard.SetMycovariant(replacement, OnChoicePicked);
                 pickedCard.SetActiveHighlight(false);
                 pickedCard.gameObject.SetActive(true);
+                SyncChoiceCardEffectFontSizes(GetVisibleChoiceCards());
             }
             else
             {
@@ -894,19 +900,60 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             ClearChoiceCards();
 
+            var cards = new List<MycovariantCard>(choices.Count);
             for (int i = 0; i < choices.Count; i++)
             {
                 var adaptation = choices[i];
-                CreateChoiceCard(
+                cards.Add(CreateChoiceCard(
                     null,
                     adaptation.Name,
                     adaptation.Description,
                     AdaptationArtRepository.GetIcon(adaptation),
                     () => OnAdaptationChoicePicked(adaptation),
-                    highlight: true);
+                    highlight: true));
             }
 
+            SyncChoiceCardEffectFontSizes(cards);
             RefreshCampaignAdaptationUtilityUi();
+        }
+
+        private List<MycovariantCard> GetVisibleChoiceCards()
+        {
+            var cards = new List<MycovariantCard>();
+            foreach (Transform child in choiceContainer)
+            {
+                var card = child.GetComponent<MycovariantCard>();
+                if (card != null && card.gameObject.activeSelf)
+                {
+                    cards.Add(card);
+                }
+            }
+
+            return cards;
+        }
+
+        /// <summary>
+        /// Each card auto-sizes its effect text independently (14-18pt), so a short card next to a
+        /// long one renders at a visibly different size and exaggerates the length gap. Lock every
+        /// visible card to the smallest size any of them needed so the set reads at one size.
+        /// </summary>
+        private static void SyncChoiceCardEffectFontSizes(IReadOnlyList<MycovariantCard> cards)
+        {
+            if (cards == null || cards.Count < 2)
+            {
+                return;
+            }
+
+            float smallest = float.MaxValue;
+            foreach (var card in cards)
+            {
+                smallest = Mathf.Min(smallest, card.MeasureAutoSizedEffectFontSize());
+            }
+
+            foreach (var card in cards)
+            {
+                card.ApplyEffectFontSize(smallest);
+            }
         }
 
         private void ClearChoiceCards()

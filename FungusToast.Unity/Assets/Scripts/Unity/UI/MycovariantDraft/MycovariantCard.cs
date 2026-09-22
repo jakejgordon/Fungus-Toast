@@ -11,6 +11,8 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
     {
         private const float TitleFontSizeMin = 16f;
         private const float TitleFontSizeMax = 20f;
+        private const float EffectFontSizeMin = 14f;
+        private const float EffectFontSizeMax = 18f;
 
         public Image iconImage;
         public TextMeshProUGUI nameText;
@@ -82,8 +84,8 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             if (effectText != null)
             {
                 effectText.enableAutoSizing = true;
-                effectText.fontSizeMin = 14f;
-                effectText.fontSizeMax = 18f;
+                effectText.fontSizeMin = EffectFontSizeMin;
+                effectText.fontSizeMax = EffectFontSizeMax;
                 effectText.textWrappingMode = TextWrappingModes.Normal;
                 TMPOverflowUtility.SetSafeEllipsis(effectText);
                 effectText.alignment = TextAlignmentOptions.TopLeft;
@@ -107,6 +109,37 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             {
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
             }
+        }
+
+        /// <summary>
+        /// Re-runs auto-sizing on the effect text and returns the point size it settled on.
+        /// The draft controller feeds the smallest result across the visible cards back into
+        /// <see cref="ApplyEffectFontSize"/> so three cards read as a set instead of a short
+        /// card at 18pt next to a long one at 14pt.
+        /// </summary>
+        public float MeasureAutoSizedEffectFontSize()
+        {
+            if (effectText == null)
+            {
+                return EffectFontSizeMax;
+            }
+
+            effectText.enableAutoSizing = true;
+            effectText.fontSizeMin = EffectFontSizeMin;
+            effectText.fontSizeMax = EffectFontSizeMax;
+            effectText.ForceMeshUpdate(ignoreActiveState: true, forceTextReparsing: true);
+            return effectText.fontSize;
+        }
+
+        public void ApplyEffectFontSize(float fontSize)
+        {
+            if (effectText == null)
+            {
+                return;
+            }
+
+            effectText.enableAutoSizing = false;
+            effectText.fontSize = Mathf.Clamp(fontSize, EffectFontSizeMin, EffectFontSizeMax);
         }
 
         private void RefreshBaitBadge()
