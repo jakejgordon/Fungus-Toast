@@ -1184,7 +1184,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
                     new TargetMutationGoal(MutationIds.AdaptiveExpression, 5)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth),
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalDrawId, 1000, "Pulls the growth lane aggressively toward the leading rival"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection toward dominant enemy biomass"),
+                    new(MycovariantIds.CornerConduitIIIId, 998, "Largest recurring projection toward an open corner"),
+                    new(MycovariantIds.PerimeterProliferatorId, 997, "Rewards the offset start with persistent edge growth"),
+                    new(MycovariantIds.AggressotropicConduitIIId, 996, "Fallback recurring projection toward enemy biomass")
+                },
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(

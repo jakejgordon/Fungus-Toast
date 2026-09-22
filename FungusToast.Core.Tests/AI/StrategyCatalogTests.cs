@@ -613,7 +613,6 @@ public class StrategyCatalogTests
             "CMP_Growth_Pressure_Medium",
             "CMP_Growth_PutridTendrils_Medium",
             "CMP_Growth_WildfireBloom_Medium",
-            "CMP_Mobility_Overextender_Training_Offset1",
             "CMP_Reclaim_InfiltrationSurge_Easy",
             "CMP_Reclaim_Scavenger_Easy",
             "CMP_Surge_BeaconSprinter_Medium",
@@ -1009,6 +1008,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.Single(control.GetMycovariantPreferences());
         Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
         Assert.Equal(

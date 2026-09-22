@@ -560,6 +560,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Overextender, offset 1 (`CMP_Mobility_Overextender_Training_Offset1`)
+
+- Promoted order: Hyphal Draw, Aggressotropic Conduit III, Corner Conduit III,
+  Perimeter Proliferator, Aggressotropic Conduit II. The list deliberately
+  expresses forward relocation and recurring projection while rewarding the
+  one-tile edge offset.
+- Comparison seed `2026092172`, 50 pairs: treatment-control normalized board
+  share `+0.012282`, 95% CI `[-0.017728, 0.042293]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092173`, 100 pairs: treatment-control normalized board
+  share `+0.003127`, 95% CI `[-0.021306, 0.027560]`; the same margin was
+  supported. Artifacts use
+  `overextender_offset1_myco_{comparison,holdout}_{control,treatment}` with
+  their respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
