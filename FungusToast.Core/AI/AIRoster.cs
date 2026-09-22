@@ -1691,6 +1691,38 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 3
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HarvestBrokerOffset8_EconomyControl",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy),
+                startingSporeEdgeOffset: 8
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants",
+                prioritizeHighTier: true,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
+                },
+                startingSporeEdgeOffset: 8
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -2895,6 +2927,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign7_KillReclaim_Offset2"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign7_KillReclaim_Offset3"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign7_KillReclaim_Offset8"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_HarvestBrokerOffset8_EconomyControl"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
