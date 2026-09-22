@@ -542,6 +542,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Resilient Mycelium, offset 1 (`TST_Training_ResilientMycelium_Offset1`)
+
+- Promoted order: Hyphal Resistance Transfer, Septal Alarm, Mycelial Bastion
+  III, Mycelial Bastion II, Mycelial Bastion I. Persistent resistance spread
+  and death-triggered hardening reinforce its Chitin Fortification plan before
+  the immediate resistant-cell fallbacks.
+- Comparison seed `2026092142`, 50 pairs: treatment-control normalized board
+  share `+0.048156`, 95% CI `[-0.015318, 0.111630]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092143`, 100 pairs: treatment-control normalized board
+  share `+0.012385`, 95% CI `[-0.027588, 0.052357]`; the same margin was
+  supported. Artifacts use
+  `resilientmycelium_offset1_myco_{comparison,holdout}_{control,treatment}`
+  with their respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

@@ -1244,7 +1244,14 @@ namespace FungusToast.Core.AI
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
                 surgeAttemptTurnFrequency: 8,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Growth),
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Persistent resistance spread compounds the fortified-cell plan"),
+                    new(MycovariantIds.SeptalAlarmId, 999, "Losses harden surviving neighbors during defensive trades"),
+                    new(MycovariantIds.MycelialBastionIIIId, 998, "Largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.MycelialBastionIIId, 997, "Second-largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.MycelialBastionIId, 996, "Reliable fallback resistant-cell reinforcement")
+                },
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
