@@ -611,6 +611,25 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Grave Bastion (`CMP_Defense_ReclaimShell_Easy`)
+
+- Promoted order: Reclamation Rhizomorphs, Necrophoric Adaptation, Hyphal
+  Resistance Transfer, Septal Alarm, Mycelial Bastion III. Recurring and
+  loss-triggered reclamation lead the rebuild plan; persistent and
+  loss-triggered resistance protect the recovered ground before the largest
+  immediate bastion fallback.
+- Comparison seed `2026092282`, 50 pairs: treatment-control normalized board
+  share `+0.033033`, 95% CI `[-0.022931, 0.088996]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092283`, 100 pairs: treatment-control normalized board
+  share `+0.015793`, 95% CI `[-0.024985, 0.056570]`; the same margin was
+  supported. Artifacts use
+  `reclaimshell_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

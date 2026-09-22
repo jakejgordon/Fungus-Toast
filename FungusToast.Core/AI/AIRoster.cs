@@ -795,7 +795,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 1)
                 },
                 surgePriorityIds: new List<int> { MutationIds.NecroticClearance },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Reclamation)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Recurring reclamation reinforces the rebuild-after-trades plan"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Turns colony losses into additional reclamation attempts"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 998, "Persistent resistance spread protects reclaimed territory"),
+                    new(MycovariantIds.SeptalAlarmId, 997, "Losses harden surviving neighbors during defensive trades"),
+                    new(MycovariantIds.MycelialBastionIIIId, 996, "Largest immediate resistant-cell reinforcement")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Surge_BeaconTempo_Medium",
