@@ -1729,6 +1729,45 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 8
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ResilientMyceliumOffset1_CategoryControl",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Resistance,
+                    MycovariantCategory.Growth),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 5)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Persistent resistance spread compounds the fortified-cell plan"),
+                    new(MycovariantIds.SeptalAlarmId, 999, "Losses harden surviving neighbors during defensive trades"),
+                    new(MycovariantIds.MycelialBastionIIIId, 998, "Largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.MycelialBastionIIId, 997, "Second-largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.MycelialBastionIId, 996, "Reliable fallback resistant-cell reinforcement")
+                },
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -2935,6 +2974,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign7_KillReclaim_Offset8"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_HarvestBrokerOffset8_EconomyControl"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_ResilientMyceliumOffset1_CategoryControl"] = StrategyTheme.Defense,
+                ["TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants"] = StrategyTheme.Defense,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
