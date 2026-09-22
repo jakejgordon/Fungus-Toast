@@ -596,6 +596,21 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Resilient Shell (`CMP_Defense_ResilientShell_Easy`) — rejected
+
+- Candidate order: Hyphal Resistance Transfer, Septal Alarm, Mycelial Bastion
+  III, Mycelial Bastion II, Mycelial Bastion I. This reused the fortified-cell
+  sequence promoted for Resilient Mycelium, but tested it independently with
+  Resilient Shell's high-tier and minor-economy behavior intact.
+- Comparison seed `2026092242`, 50 pairs: treatment-control normalized board
+  share `-0.044802`, 95% CI `[-0.118860, 0.029257]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `resilientshell_myco_comparison_{control,treatment}_2026092242`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
