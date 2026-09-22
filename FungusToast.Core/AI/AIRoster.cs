@@ -1775,6 +1775,43 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_OverextenderOffset1_GrowthControl",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_OverextenderOffset1_CuratedMycovariants",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalDrawId, 1000, "Pulls the growth lane aggressively toward the leading rival"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection toward dominant enemy biomass"),
+                    new(MycovariantIds.CornerConduitIIIId, 998, "Largest recurring projection toward an open corner"),
+                    new(MycovariantIds.PerimeterProliferatorId, 997, "Rewards the offset start with persistent edge growth"),
+                    new(MycovariantIds.AggressotropicConduitIIId, 996, "Fallback recurring projection toward enemy biomass")
+                },
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -2983,6 +3020,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_ResilientMyceliumOffset1_CategoryControl"] = StrategyTheme.Defense,
                 ["TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants"] = StrategyTheme.Defense,
+                ["TST_Campaign_OverextenderOffset1_GrowthControl"] = StrategyTheme.Mobility,
+                ["TST_Campaign_OverextenderOffset1_CuratedMycovariants"] = StrategyTheme.Mobility,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
