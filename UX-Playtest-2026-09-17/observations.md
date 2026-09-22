@@ -159,12 +159,16 @@ Screenshot: [011-round-15-mycovariant-draft.png](screenshots/011-round-15-mycova
 
 ### 012 — Unity editor chrome leaks into the player UI
 
+**Status: Rejected (2026-09-21).** The tooltips in evidence (`Asset Store` / `Hold Ctrl to drag and move`, `Toolbar Help`, `Select editor layout`) are the Unity 6 editor's own main-toolbar tooltips, drawn by the editor as separate popup windows when the pointer rests on the top strip of a maximized Game view - they are not part of the game's UI, receive no game raycasts, and cannot appear in a player build. The observer was playing inside the editor; the maintainer cannot reproduce it in normal play. Cross-game priority 4 was removed with this rejection.
+
 Evidence: [009-store-mutation-points-tutorial.png](screenshots/009-store-mutation-points-tutorial.png) and repeated live mutation-tree observations.
 
 - **P1 — Release-quality and trust issue:** Hovering the mutation UI repeatedly exposes editor-facing tooltips such as `Asset Store — Hold Ctrl to drag and move`, `Toolbar Help`, and `Select editor layout`. These labels are unrelated to gameplay and imply that hidden Unity editor toolbar elements are receiving pointer events in the standalone build.
 - **Suggestion:** Remove or disable the editor toolbar layer in player builds, confirm raycast targets and sorting order, and add a smoke test that hovers the full top/search regions in a non-development build.
 
 ### 013 — “Direct unlock” hides cross-branch prerequisites
+
+**Status: Fixed (2026-09-21).** The inspector section is renamed `Leads to` (`MutationInspectorPanel.cs`), with its empty state now `Nothing further in the tree`, the idle summary reworded to "Requirements and what each mutation leads to stay here...", and the footer hint to "Click a linked mutation to focus it." The rename alone removes the promise of an immediate result; the locked card's own `Requirements` section already lists the complete set (including cross-branch ones) when selected, so the other two suggestions - previewing the full requirement set before the predecessor purchase and summarising unmet requirements on the locked card - were intentionally not pursued. Pending the maintainer's in-editor pass.
 
 Screenshot: [013-filament-overdrive-cross-branch-prerequisites.png](screenshots/013-filament-overdrive-cross-branch-prerequisites.png)
 
@@ -301,5 +305,4 @@ Screenshots: [026-game-2-endgame-countdown.png](screenshots/026-game-2-endgame-c
 1. **P1 — Enforce one active teaching/modal layer at a time.** Tutorial, draft, placement, hover-inspector, mutation-tree, and results states currently stack and obscure each other.
 2. **P1 — Make irreversible actions explicit.** Mutation purchases and mycovariant picks need clear action labels, selected states, and/or lightweight confirmation.
 3. **P1 — Make progression and schedules truthful.** Separate campaign stage from Moldiness level, correct reward-tier copy, and never advertise a draft after the projected end of a short match.
-4. **P1 — Remove editor-facing UI from player builds.** Unity toolbar tooltips undermine trust and can intercept pointer attention.
-5. **P2 — Replace icon-memory tests with persistent summaries.** Adaptations, carry-over choices, and mold starting traits need labels and stable comparison panels.
+4. **P2 — Replace icon-memory tests with persistent summaries.** Adaptations, carry-over choices, and mold starting traits need labels and stable comparison panels.

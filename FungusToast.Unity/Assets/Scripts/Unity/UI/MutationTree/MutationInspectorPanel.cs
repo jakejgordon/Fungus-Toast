@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
@@ -169,7 +169,7 @@ namespace FungusToast.Unity.UI.MutationTree
             titleText.color = UIStyleTokens.Text.Primary;
             SetTitleSurgeGlyph(null);
             metadataText.text = "Hover a node to compare its next level.";
-            summaryText.text = "Requirements and direct unlocks stay here while you move around the tree.";
+            summaryText.text = "Requirements and what each mutation leads to stay here while you move around the tree.";
             technicalDetailsText.text = string.Empty;
             SetTextBlockActive(technicalDetailsText, false);
             stateText.text = string.Empty;
@@ -304,13 +304,13 @@ namespace FungusToast.Unity.UI.MutationTree
             emptyRequirementsText = CreateText("NoRequirements", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Root mutation — no prerequisites", parent: requirementsSection);
 
             RectTransform dependentsSection = CreateSectionRoot("DependentsSection");
-            _ = CreateText("UnlocksLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Direct unlocks", parent: dependentsSection);
+            _ = CreateText("UnlocksLabel", 16f, 20f, FontStyles.Bold, UIStyleTokens.Accent.Spore, text: "Leads to", parent: dependentsSection);
             dependentsRoot = CreateChipRoot("Dependents", dependentsSection);
-            emptyDependentsText = CreateText("NoDependents", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "No direct dependents", parent: dependentsSection);
+            emptyDependentsText = CreateText("NoDependents", SupportingTextSize, 18f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Nothing further in the tree", parent: dependentsSection);
 
             maxLevelBonusText = CreateText("MaxLevelBonus", SupportingTextSize, 32f, FontStyles.Normal, UIStyleTokens.State.Warning, UIStyleTokens.Surface.PanelSecondary);
             synergyText = CreateText("Synergy", SupportingTextSize, 32f, FontStyles.Normal, UIStyleTokens.Text.Primary, UIStyleTokens.Surface.PanelSecondary);
-            hintText = CreateText("Hint", SupportingTextSize, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a requirement or unlock to focus it. Purchases remain immediate on the mutation cards.");
+            hintText = CreateText("Hint", SupportingTextSize, 36f, FontStyles.Italic, UIStyleTokens.Text.Muted, text: "Click a linked mutation to focus it. Purchases remain immediate on the mutation cards.");
 
             Clear();
         }
