@@ -630,6 +630,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Scavenger Court (`CMP_Reclaim_Scavenger_Easy`)
+
+- Promoted order: Reclamation Rhizomorphs, Necrophoric Adaptation, Plasmid
+  Bounty III, Plasmid Bounty II, Plasmid Bounty I. Recurring and
+  loss-triggered reclamation lead the fantasy, followed by deterministic
+  mutation-point payouts that respect its Tier 4 cap.
+- Comparison seed `2026092312`, 50 pairs: treatment-control normalized board
+  share `+0.009146`, 95% CI `[-0.032623, 0.050915]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092313`, 100 pairs: treatment-control normalized board
+  share `-0.010485`, 95% CI `[-0.031378, 0.010408]`; the same margin was
+  supported. Artifacts use
+  `scavenger_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

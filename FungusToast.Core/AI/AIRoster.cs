@@ -737,7 +737,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
                     new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Reclamation, MycovariantCategory.Economy)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Recurring reclamation directly reinforces the scavenger plan"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Colony losses create more chances to reclaim dead ground"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 998, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 996, "Reliable immediate mutation-point fallback")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Surge_Pulsar_Easy",
