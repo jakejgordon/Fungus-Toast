@@ -1994,6 +1994,41 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_InfiltrationSurge_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, GameBalance.HyphalSurgeMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Reclamation,
+                    MycovariantCategory.Growth)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_InfiltrationSurge_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, GameBalance.NecrohyphalInfiltrationMaxLevel),
+                    new TargetMutationGoal(MutationIds.HyphalSurge, GameBalance.HyphalSurgeMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 8,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Recurring reclamation consolidates infiltrated ground"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Losses create new footholds through additional reclamation"),
+                    new(MycovariantIds.HyphalDrawId, 998, "Pulls the surge lane toward the leading rival"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 997, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.AggressotropicConduitIIId, 996, "Fallback recurring projection toward enemy biomass")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3212,6 +3247,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_ReclaimShell_CuratedMycovariants"] = StrategyTheme.Defense,
                 ["TST_Campaign_Scavenger_CategoryControl"] = StrategyTheme.Reclamation,
                 ["TST_Campaign_Scavenger_CuratedMycovariants"] = StrategyTheme.Reclamation,
+                ["TST_Campaign_InfiltrationSurge_CategoryControl"] = StrategyTheme.Reclamation,
+                ["TST_Campaign_InfiltrationSurge_CuratedMycovariants"] = StrategyTheme.Reclamation,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
