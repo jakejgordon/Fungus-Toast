@@ -1098,6 +1098,29 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Scavenger_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Reclaim_Scavenger_Easy"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_Scavenger_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_Scavenger_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Single(control.GetMycovariantPreferences());
+        Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.ReclamationRhizomorphsId,
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.PlasmidBountyIIId,
+                MycovariantIds.PlasmidBountyId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)

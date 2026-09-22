@@ -1948,6 +1948,45 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Scavenger_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier4,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 5),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 2),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Reclamation,
+                    MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Scavenger_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier4,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 5),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 2),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 2)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Recurring reclamation directly reinforces the scavenger plan"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Colony losses create more chances to reclaim dead ground"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 998, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 996, "Reliable immediate mutation-point fallback")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3164,6 +3203,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_ResilientShell_CuratedMycovariants"] = StrategyTheme.Defense,
                 ["TST_Campaign_ReclaimShell_CategoryControl"] = StrategyTheme.Defense,
                 ["TST_Campaign_ReclaimShell_CuratedMycovariants"] = StrategyTheme.Defense,
+                ["TST_Campaign_Scavenger_CategoryControl"] = StrategyTheme.Reclamation,
+                ["TST_Campaign_Scavenger_CuratedMycovariants"] = StrategyTheme.Reclamation,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
