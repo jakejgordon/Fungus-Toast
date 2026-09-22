@@ -578,6 +578,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Toxic Turtle, offset 1 (`CMP_Attrition_ToxicTurtle_Training_Offset1`)
+
+- Promoted order: Enduring Toxaphores, Hyphal Resistance Transfer, Septal
+  Alarm, Chemotactic Mycotoxins, Ballistospore Discharge III. The order keeps
+  the slow toxin field alive, hardens the colony through long trades, then
+  improves toxin placement and supplies an immediate field fallback.
+- Comparison seed `2026092202`, 50 pairs: treatment-control normalized board
+  share `+0.024777`, 95% CI `[0.009149, 0.040404]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092203`, 100 pairs: treatment-control normalized board
+  share `+0.021767`, 95% CI `[0.011087, 0.032447]`; the same margin was
+  supported. Artifacts use
+  `toxicturtle_offset1_myco_{comparison,holdout}_{control,treatment}` with
+  their respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

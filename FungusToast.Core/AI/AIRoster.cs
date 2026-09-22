@@ -1303,7 +1303,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
                     new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Fungicide, MycovariantCategory.Resistance),
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.EnduringToxaphoresId, 1000, "Extends the toxin field that drives the attrition plan"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread protects the slow toxin engine"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden surviving neighbors during long trades"),
+                    new(MycovariantIds.ChemotacticMycotoxinsId, 997, "Repositions existing toxins toward useful pressure"),
+                    new(MycovariantIds.BallistosporeDischargeIIIId, 996, "Largest immediate toxin-field reinforcement")
+                },
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
