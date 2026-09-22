@@ -1819,6 +1819,45 @@ namespace FungusToast.Core.AI
                 startingSporeEdgeOffset: 1
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ToxicTurtleOffset1_CategoryControl",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 35),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Fungicide,
+                    MycovariantCategory.Resistance),
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ToxicTurtleOffset1_CuratedMycovariants",
+                prioritizeHighTier: false,
+                economyBias: EconomyBias.IgnoreEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotoxinTracer, 35),
+                    new TargetMutationGoal(MutationIds.MycotoxinPotentiation, 1),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 5),
+                    new TargetMutationGoal(MutationIds.PutrefactiveMycotoxin, GameBalance.PutrefactiveMycotoxinMaxLevel),
+                    new TargetMutationGoal(MutationIds.MycotoxinCatabolism)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.EnduringToxaphoresId, 1000, "Extends the toxin field that drives the attrition plan"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread protects the slow toxin engine"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden surviving neighbors during long trades"),
+                    new(MycovariantIds.ChemotacticMycotoxinsId, 997, "Repositions existing toxins toward useful pressure"),
+                    new(MycovariantIds.BallistosporeDischargeIIIId, 996, "Largest immediate toxin-field reinforcement")
+                },
+                startingSporeEdgeOffset: 1
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3029,6 +3068,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants"] = StrategyTheme.Defense,
                 ["TST_Campaign_OverextenderOffset1_GrowthControl"] = StrategyTheme.Mobility,
                 ["TST_Campaign_OverextenderOffset1_CuratedMycovariants"] = StrategyTheme.Mobility,
+                ["TST_Campaign_ToxicTurtleOffset1_CategoryControl"] = StrategyTheme.Attrition,
+                ["TST_Campaign_ToxicTurtleOffset1_CuratedMycovariants"] = StrategyTheme.Attrition,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
