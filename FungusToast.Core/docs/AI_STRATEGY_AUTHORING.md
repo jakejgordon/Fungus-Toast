@@ -648,6 +648,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Needle Reclaimer (`CMP_Reclaim_InfiltrationSurge_Easy`)
+
+- Promoted order: Reclamation Rhizomorphs, Necrophoric Adaptation, Hyphal
+  Draw, Aggressotropic Conduit III, Aggressotropic Conduit II. Reclamation
+  consolidates weak-seam footholds first; directed pull and recurring enemy-
+  facing projection then express the surge half of the strategy.
+- Comparison seed `2026092352`, 50 pairs: treatment-control normalized board
+  share `+0.016298`, 95% CI `[-0.044665, 0.077261]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092353`, 100 pairs: treatment-control normalized board
+  share `+0.009714`, 95% CI `[-0.036407, 0.055835]`; the same margin was
+  supported. Artifacts use
+  `infiltrationsurge_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

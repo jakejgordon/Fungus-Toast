@@ -773,7 +773,14 @@ namespace FungusToast.Core.AI
                 },
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
                 surgeAttemptTurnFrequency: 8,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Reclamation, MycovariantCategory.Growth)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.ReclamationRhizomorphsId, 1000, "Recurring reclamation consolidates infiltrated ground"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Losses create new footholds through additional reclamation"),
+                    new(MycovariantIds.HyphalDrawId, 998, "Pulls the surge lane toward the leading rival"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 997, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.AggressotropicConduitIIId, 996, "Fallback recurring projection toward enemy biomass")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Defense_ResilientShell_Easy",
