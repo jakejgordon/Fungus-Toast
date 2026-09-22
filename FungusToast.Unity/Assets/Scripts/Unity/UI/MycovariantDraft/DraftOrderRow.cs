@@ -21,6 +21,11 @@ public class DraftOrderRow : MonoBehaviour
     public Color previousColor = new Color(1f, 1f, 1f, 0.3f); // Faded
     public Color arrowColor = Color.white;
 
+    // The ordinal sits in the gap between the 48px portrait and the 80px row's bottom edge.
+    private const float OrdinalOffsetY = -32f;
+    private const float OrdinalHeight = 16f;
+    private const float StatusLabelWidth = 170f;
+
     private readonly List<GameObject> cells = new();
 
     public void SetDraftOrder(List<Player> draftOrder, int activeIndex)
@@ -48,6 +53,8 @@ public class DraftOrderRow : MonoBehaviour
                 continue;
             }
 
+            bool isHuman = draftOrder[i].PlayerType == PlayerTypeEnum.Human;
+
             // Set icon
             var icon = cellUI.IconImage;
             icon.sprite = playerBinder.GetIcon(draftOrder[i]);
@@ -60,6 +67,8 @@ public class DraftOrderRow : MonoBehaviour
                 highlightBG.enabled = (i == activeIndex);
                 highlightBG.color = (i == activeIndex) ? activeHighlightColor : Color.clear;
             }
+
+            AddOrdinal(cellGO.transform, i + 1, isHuman, isDone: i < activeIndex);
 
             cells.Add(cellGO);
 
@@ -81,5 +90,101 @@ public class DraftOrderRow : MonoBehaviour
                 cells.Add(arrowObj);
             }
         }
+
+        AddStatusLabel(draftOrder, activeIndex);
+    }
+
+    /// <summary>
+    /// Small pick number under each portrait so the sequence reads without decoding the arrows.
+    /// The human's number uses the scoreboard's YOU accent so their slot is easy to find.
+    /// </summary>
+    private static void AddOrdinal(Transform cell, int pickNumber, bool isHuman, bool isDone)
+    {
+        var ordinalObj = new GameObject("OrdinalText", typeof(RectTransform), typeof(TextMeshProUGUI));
+        ordinalObj.transform.SetParent(cell, false);
+
+        var rect = ordinalObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = new Vector2(0f, OrdinalOffsetY);
+        rect.sizeDelta = new Vector2(50f, OrdinalHeight);
+
+        var text = ordinalObj.GetComponent<TextMeshProUGUI>();
+        text.text = pickNumber.ToString();
+        text.fontSize = UIStyleTokens.Typography.MicroMinimum;
+        text.fontStyle = isHuman ? FontStyles.Bold : FontStyles.Normal;
+        text.alignment = TextAlignmentOptions.Center;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+
+        var color = isHuman ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Text.Secondary;
+        if (isDone)
+        {
+            color.a *= 0.5f;
+        }
+        text.color = color;
+    }
+
+    /// <summary>
+    /// Plain-language summary of where the human sits in the order, appended after the last portrait.
+    /// </summary>
+    private void AddStatusLabel(List<Player> draftOrder, int activeIndex)
+    {
+        int humanIndex = draftOrder.FindIndex(p => p.PlayerType == PlayerTypeEnum.Human);
+        if (humanIndex < 0)
+        {
+            return;
+        }
+
+        string ordinal = ToOrdinal(humanIndex + 1);
+        string label;
+        if (humanIndex == activeIndex)
+        {
+            label = "Your pick";
+        }
+        else if (humanIndex < activeIndex)
+        {
+            label = $"You picked {ordinal}";
+        }
+        else
+        {
+            label = $"You pick {ordinal} of {draftOrder.Count}";
+        }
+
+        var labelObj = new GameObject("PickStatusText", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelObj.transform.SetParent(transform, false);
+
+        var rect = labelObj.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(StatusLabelWidth, 0f); // Height follows the row like the arrows do.
+
+        var text = labelObj.GetComponent<TextMeshProUGUI>();
+        text.text = label;
+        text.fontSize = UIStyleTokens.Typography.CaptionMinimum;
+        text.fontStyle = humanIndex == activeIndex ? FontStyles.Bold : FontStyles.Normal;
+        text.color = humanIndex == activeIndex ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Text.Secondary;
+        text.alignment = TextAlignmentOptions.MidlineLeft;
+        text.margin = new Vector4(12f, 0f, 0f, 0f);
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.raycastTarget = false;
+
+        cells.Add(labelObj);
+    }
+
+    private static string ToOrdinal(int number)
+    {
+        int lastTwo = number % 100;
+        if (lastTwo is >= 11 and <= 13)
+        {
+            return $"{number}th";
+        }
+
+        return (number % 10) switch
+        {
+            1 => $"{number}st",
+            2 => $"{number}nd",
+            3 => $"{number}rd",
+            _ => $"{number}th",
+        };
     }
 }
