@@ -526,6 +526,22 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Harvest Broker, offset 8 (`TST_Campaign7_KillReclaim_Offset8`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager, preserving the distinct eight-tile starting-spore offset.
+- Comparison seed `2026092112`, 50 pairs: treatment-control normalized board
+  share `+0.012222`, 95% CI `[-0.015757, 0.040201]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092113`, 100 pairs: treatment-control normalized board
+  share `+0.024827`, 95% CI `[-0.010251, 0.059905]`; the same margin was
+  supported. Artifacts use
+  `harvestbroker_offset8_myco_{comparison,holdout}_{control,treatment}` with
+  their respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
