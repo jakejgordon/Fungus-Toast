@@ -2134,6 +2134,34 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ResilientCanopy_NoPreferenceControl",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier2,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_ResilientCanopy_CuratedMycovariants",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier2,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Spreads durable growth outward from resistant cells"),
+                    new(MycovariantIds.SeptalAlarmId, 999, "Hardens the surviving canopy around each loss"),
+                    new(MycovariantIds.PerimeterProliferatorId, 998, "Accelerates safe expansion along the crust"),
+                    new(MycovariantIds.MycelialBastionIIIId, 997, "Largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 996, "Adds recurring outward growth with a resistant leading tip")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3358,6 +3386,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_TempoReclaim_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_Pulsar_CategoryControl"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_Pulsar_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_ResilientCanopy_NoPreferenceControl"] = StrategyTheme.TierCap,
+                ["TST_Campaign_ResilientCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
