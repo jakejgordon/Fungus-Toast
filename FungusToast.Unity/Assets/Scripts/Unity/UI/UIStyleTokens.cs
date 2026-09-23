@@ -180,6 +180,35 @@ namespace FungusToast.Unity.UI
             }
         }
 
+        /// <summary>
+        /// Tinted chips, badges, and two-state control fills. See UI_STYLE_GUIDE.md section 5.12.
+        ///
+        /// A raw accent is a mid-tone: it sits too dark for dark text and too light for light text,
+        /// so a label placed straight onto one lands between 2:1 and 4.5:1 whichever way you go.
+        /// The fix is the same one the mutation tree already uses for category accents - blend the
+        /// accent into a dark surface, keep the accent as the border for hue identity, and set the
+        /// label in <see cref="Text.Primary"/>. That measures 8-9:1 for every accent in the palette.
+        /// </summary>
+        public static class Badge
+        {
+            /// <summary>
+            /// Accent share of a chip fill. Matches the mutation-tree category ceiling, which is the
+            /// point past which <see cref="Text.Primary"/> drops below 5:1 on the brightest accents.
+            /// </summary>
+            public const float AccentFillBlend = 0.26f;
+
+            /// <summary>Chip labels never auto-size below Type.Micro, however tight the chip is.</summary>
+            public const float MinimumLabelFontSize = Typography.MicroMinimum;
+
+            public const float MaximumLabelFontSize = 16f;
+
+            public static Color Fill(Color accent) => Color.Lerp(Surface.Canvas, accent, AccentFillBlend);
+
+            public static Color Border(Color accent) => accent;
+
+            public static Color Label => Text.Primary;
+        }
+
         public static class Button
         {
             public const float DesktopPrimaryMenuActionWidth = 500f;

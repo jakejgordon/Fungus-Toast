@@ -15,10 +15,11 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         private const float TitleFontSizeMax = 20f;
         private const float EffectFontSizeMin = 14f;
         private const float EffectFontSizeMax = 18f;
-        private const float TypeBadgeWidth = 82f;
-        private const float BadgeHeight = 22f;
+        private const float TypeBadgeWidth = 92f;
+        private const float BadgeHeight = 24f;
         private const float ChooseButtonHeight = 40f;
         private const float CardEdgeInset = 10f;
+        private const float MinimumEffectTextHeight = 80f;
 
         public Image iconImage;
         public TextMeshProUGUI nameText;
@@ -39,6 +40,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         private GameObject typeBadgeRoot;
         private TextMeshProUGUI typeBadgeLabel;
         private Image typeBadgeBackground;
+        private Outline typeBadgeOutline;
         private TooltipTrigger typeBadgeTooltip;
         private GameObject chooseAffordanceRoot;
         private Image chooseAffordanceBackground;
@@ -119,6 +121,8 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             RefreshChooseAffordance();
             SetActiveHighlight(false);
 
+            ReserveRoomForChooseAffordance();
+
             // Force layout rebuild to fix text overlap issues
             // This ensures proper text positioning whenever card content is updated
             Canvas.ForceUpdateCanvases();
@@ -127,6 +131,65 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             {
                 UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
             }
+        }
+
+        /// <summary>
+        /// Caps the effect text at the room left above the Choose strip. The text carries a
+        /// ContentSizeFitter, so it would otherwise keep growing downwards and slide underneath the
+        /// strip on a long description; with a fixed box, TMP's auto-sizing shrinks to fit instead,
+        /// and <see cref="MeasureAutoSizedEffectFontSize"/> then reports that smaller size so all
+        /// three cards still share one size.
+        /// </summary>
+        private void ReserveRoomForChooseAffordance()
+        {
+            if (effectText == null)
+            {
+                return;
+            }
+
+            var group = GetComponent<VerticalLayoutGroup>();
+            var cardRect = transform as RectTransform;
+            if (group == null || cardRect == null)
+            {
+                return;
+            }
+
+            // Measure the siblings that actually flow, so a hidden bait or type badge does not
+            // reserve room it is not using.
+            float usedByOthers = group.padding.top + group.padding.bottom;
+            int flowChildCount = 0;
+            foreach (RectTransform child in transform)
+            {
+                var childLayout = child.GetComponent<LayoutElement>();
+                if (!child.gameObject.activeSelf || (childLayout != null && childLayout.ignoreLayout))
+                {
+                    continue;
+                }
+
+                flowChildCount++;
+                if (child != effectText.rectTransform)
+                {
+                    usedByOthers += child.rect.height;
+                }
+            }
+
+            usedByOthers += group.spacing * Mathf.Max(0, flowChildCount - 1);
+
+            // The strip sits inside the bottom padding band, so only its own height and one gap
+            // above it are unaccounted for.
+            float available = cardRect.rect.height - usedByOthers - ChooseButtonHeight - group.spacing;
+            if (available < MinimumEffectTextHeight)
+            {
+                return;
+            }
+
+            var fitter = effectText.GetComponent<ContentSizeFitter>();
+            if (fitter != null)
+            {
+                fitter.enabled = false;
+            }
+
+            effectText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, available);
         }
 
         /// <summary>
@@ -252,8 +315,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             EnsureTypeBadge();
 
             bool isPassive = mycovariant.Type == MycovariantType.Passive;
+            var accent = isPassive ? UIStyleTokens.State.Info : UIStyleTokens.Accent.Moss;
             typeBadgeLabel.text = isPassive ? MycovariantTagCopy.PassiveLabel : MycovariantTagCopy.OneTimeLabel;
-            typeBadgeBackground.color = isPassive ? UIStyleTokens.State.Info : UIStyleTokens.Accent.Moss;
+            typeBadgeBackground.color = UIStyleTokens.Badge.Fill(accent);
+            typeBadgeOutline.effectColor = UIStyleTokens.Badge.Border(accent);
             typeBadgeTooltip.SetStaticText(
                 isPassive ? MycovariantTagCopy.PassiveTooltip : MycovariantTagCopy.OneTimeTooltip);
             typeBadgeRoot.SetActive(true);
@@ -266,7 +331,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
-            typeBadgeRoot = new GameObject("TypeBadge", typeof(RectTransform), typeof(Image), typeof(TooltipTrigger));
+            typeBadgeRoot = new GameObject("TypeBadge", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(TooltipTrigger));
             typeBadgeRoot.transform.SetParent(transform, false);
 
             // The card root is a VerticalLayoutGroup that does not control child sizes, so the badge
@@ -280,6 +345,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             typeBadgeBackground.raycastTarget = true;
             typeBadgeTooltip = typeBadgeRoot.GetComponent<TooltipTrigger>();
 
+            typeBadgeOutline = typeBadgeRoot.GetComponent<Outline>();
+            typeBadgeOutline.effectDistance = new Vector2(1f, -1f);
+            typeBadgeOutline.useGraphicAlpha = true;
+
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             labelObject.transform.SetParent(typeBadgeRoot.transform, false);
             var labelRect = labelObject.GetComponent<RectTransform>();
@@ -291,10 +360,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             typeBadgeLabel = labelObject.GetComponent<TextMeshProUGUI>();
             typeBadgeLabel.alignment = TextAlignmentOptions.Center;
             typeBadgeLabel.enableAutoSizing = true;
-            typeBadgeLabel.fontSizeMin = 11f;
-            typeBadgeLabel.fontSizeMax = 13f;
+            typeBadgeLabel.fontSizeMin = UIStyleTokens.Badge.MinimumLabelFontSize;
+            typeBadgeLabel.fontSizeMax = UIStyleTokens.Badge.MaximumLabelFontSize;
             typeBadgeLabel.textWrappingMode = TextWrappingModes.NoWrap;
-            typeBadgeLabel.color = UIStyleTokens.Text.OnAccent;
+            typeBadgeLabel.color = UIStyleTokens.Badge.Label;
             typeBadgeLabel.raycastTarget = false;
         }
 
@@ -376,7 +445,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 return;
             }
 
-            baitBadgeRoot = new GameObject("BaitBadge", typeof(RectTransform), typeof(Image), typeof(TooltipTrigger));
+            baitBadgeRoot = new GameObject("BaitBadge", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(TooltipTrigger));
             baitBadgeRoot.transform.SetParent(transform, false);
             baitBadgeRoot.transform.SetAsLastSibling();
 
@@ -385,11 +454,16 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             rect.anchorMax = new Vector2(1f, 1f);
             rect.pivot = new Vector2(1f, 1f);
             rect.anchoredPosition = new Vector2(-10f, -8f);
-            rect.sizeDelta = new Vector2(72f, 24f);
+            rect.sizeDelta = new Vector2(72f, BadgeHeight);
 
             var background = baitBadgeRoot.GetComponent<Image>();
-            background.color = UIStyleTokens.State.Warning;
+            background.color = UIStyleTokens.Badge.Fill(UIStyleTokens.State.Warning);
             background.raycastTarget = true;
+
+            var badgeOutline = baitBadgeRoot.GetComponent<Outline>();
+            badgeOutline.effectColor = UIStyleTokens.Badge.Border(UIStyleTokens.State.Warning);
+            badgeOutline.effectDistance = new Vector2(1f, -1f);
+            badgeOutline.useGraphicAlpha = true;
 
             var trigger = baitBadgeRoot.GetComponent<TooltipTrigger>();
             trigger.SetStaticText(MycovariantTagCopy.BaitTooltip);
@@ -405,11 +479,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             var label = labelObject.GetComponent<TextMeshProUGUI>();
             label.text = MycovariantTagCopy.BaitLabel;
             label.alignment = TextAlignmentOptions.Center;
-            label.fontSize = 13f;
             label.enableAutoSizing = true;
-            label.fontSizeMin = 11f;
-            label.fontSizeMax = 13f;
-            label.color = UIStyleTokens.Text.OnAccent;
+            label.fontSizeMin = UIStyleTokens.Badge.MinimumLabelFontSize;
+            label.fontSizeMax = UIStyleTokens.Badge.MaximumLabelFontSize;
+            label.color = UIStyleTokens.Badge.Label;
             label.raycastTarget = false;
         }
 

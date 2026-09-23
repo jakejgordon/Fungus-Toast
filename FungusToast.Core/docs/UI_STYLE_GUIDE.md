@@ -134,6 +134,7 @@ Notes:
 - Avoid abbreviations when the full word fits in the available UI space; prefer full wording to reduce ambiguity (especially for non-native English readers).
 - On dark blue surfaces, default body and control text to `Text.Primary` unless the element is intentionally de-emphasized and still clears contrast comfortably at its rendered size.
 - Treat `Text.Secondary`, `Text.Muted`, `State.Success`, and `State.Warning` as supporting colors, not the default for dense small copy on dark cards.
+- Chip and badge labels floor at `Type.Micro` (14px) for auto-sizing. Small size and marginal contrast compound; see section 5.12.
 
 ---
 
@@ -322,6 +323,38 @@ A floating card is any panel that stays open over the board or another surface u
 - **A moved card is the player's.** From the moment the first drag starts, `DraggableCard.HasBeenMoved` is true and the host must stop re-placing the card (a host that re-places every frame would otherwise snap it back under the pointer for the whole first drag): the inspector stops following its scoreboard icon, the mutation tree stops re-anchoring the bank-points card on responsive relayout, and the draft and mold-profile cards skip their per-refresh placement. `CoachmarkCard.Show` resets the flag, so a card shown fresh (next round, next game) returns to its anchored position; the inspector resets when pinned on a different player. Nothing is persisted across sessions.
 - **Do not add drag to** hover tooltips, the cell inspector, phase banners, toasts, or modal dialogs with a dim backdrop. Those either follow the pointer, close on their own, or are meant to hold attention.
 
+### 5.12 Tinted Chips, Badges, and Two-State Fills
+
+Covers every small filled element that carries a label in a semantic hue: draft-card tags (`Passive`, `One-time`, `Bait`), status pills, count badges, and the "on" state of a two-state control such as the sidebar `Pace` toggle.
+
+**The rule: never put a label directly on a raw accent.** Every `Accent.*` and `State.*` token is a mid-tone, which is the one band where no text color works. Measured against the palette's own text tokens:
+
+| Fill | `Text.OnAccent` (dark) | `Text.Primary` (light) |
+|---|---|---|
+| `State.Info` | 6.07:1 | 2.43:1 |
+| `Accent.Moss` | **4.43:1** | 3.33:1 |
+| `Accent.Lichen` | 6.57:1 | 2.24:1 |
+| `State.Warning` | 7.79:1 | 1.89:1 |
+| `Button.Bg.Selected` | 7.80:1 | 1.89:1 |
+
+Dark text is the only option that clears 4.5:1, and it does so by a margin thin enough that one hue tweak fails it - `Accent.Moss` already does. Light text is never viable. A chip that passes today is one palette change from failing.
+
+**Use the accent-blended dark fill instead.** This is the same treatment the mutation tree already uses for category accents (section 2.6), generalized:
+
+- Fill: the accent blended into `Surface.Canvas` at no more than **0.26**.
+- Border: the raw accent at 1px, so hue identity still reads at a glance.
+- Label: `Text.Primary`.
+
+That lands every accent in the palette between **7.9:1 and 9.5:1**, and the accent still names the chip. `UIStyleTokens.Badge` implements it (`Badge.Fill(accent)`, `Badge.Border(accent)`, `Badge.Label`); use the helper rather than re-deriving the blend.
+
+**Two-state controls must not lose contrast when switched on.** A toggle whose "off" state is the light neutral fill (9.64:1) and whose "on" state is `Button.Bg.Selected` with dark text (5.93:1) is legible by the numbers but reads as muddy, because the eye compares it against the crisper off state. Hold both states within roughly 2:1 of each other. For dark-panel utility toggles, pair the light neutral fill for "off" with an accent-blended dark fill plus `Text.Primary` for "on", which keeps both near 9:1.
+
+**Minimum label size.** Chip and badge labels use `Type.Micro` (14px) as the auto-size floor, never lower. An 11px label strains the eye even at 6:1; the size and the contrast compound. If a 14px label does not fit, the chip is too small or the word is too long - shorten the word, do not shrink the text. `UIStyleTokens.Badge.MinimumLabelFontSize` carries this floor.
+
+**Light-on-accent is still fine for large text.** These rules govern small labels. A hero heading at `Type.H1`/`H2` over an accent fill only needs 3:1 and may use whichever text token reads better.
+
+---
+
 ---
 
 ## 6) Screen-by-Screen Rules (Full UI Pass)
@@ -403,6 +436,9 @@ Board layers must communicate state in this order, from lowest to highest priori
 
 - Body text on panel surfaces should target ~4.5:1 contrast where practical.
 - Large headers should target ~3:1 minimum.
+- Never set a label directly on a raw `Accent.*` or `State.*` fill. Mid-tones fail light text outright and clear dark text only barely (`Accent.Moss` measures 4.43:1). Use the accent-blended dark fill from section 5.12, via `UIStyleTokens.Badge`.
+- When a control changes state, check contrast in **every** state. A pass in the resting state says nothing about the selected one, and a large drop between them reads as broken even when both pass.
+- Compute the ratio rather than eyeballing it. Mid-tone fills are exactly where intuition is least reliable.
 - Do not rely on red vs green alone to communicate outcome; use wording/icons/position.
 - Disabled controls must look disabled and remain readable.
 - Keyboard/gamepad support is future work, but new UI should not block it structurally.

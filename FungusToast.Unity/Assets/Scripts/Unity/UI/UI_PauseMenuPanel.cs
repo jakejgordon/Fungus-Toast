@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -64,6 +64,7 @@ namespace FungusToast.Unity.UI
         private GameObject paceToggleRoot;
         private Button paceToggleButton;
         private TextMeshProUGUI paceToggleLabel;
+        private Image paceToggleIcon;
         private TooltipTrigger paceToggleTooltip;
         private CoachmarkLayoutUtility.CoachmarkCard paceCoachmark;
         private bool hasDismissedPaceCoachmarkThisGame;
@@ -396,7 +397,7 @@ namespace FungusToast.Unity.UI
             Sprite paceIcon = gameUI != null ? gameUI.PaceToggleButtonIcon : null;
             if (paceIcon != null)
             {
-                CreateIconLayoutImage(paceToggleRoot.transform, "PaceIcon", paceIcon, HudButtonIconSize, UIStyleTokens.Button.TextDefault);
+                paceToggleIcon = CreateIconLayoutImage(paceToggleRoot.transform, "PaceIcon", paceIcon, HudButtonIconSize, UIStyleTokens.Button.TextDefault);
             }
             else if (gameUI == null)
             {
@@ -431,13 +432,41 @@ namespace FungusToast.Unity.UI
 
             bool isTimeLapse = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
 
-            // The selected tint on the "on" state is what makes a two-state cycling button readable
-            // at a glance; the label carries the state so it never reads as an action to take.
-            UIStyleTokens.Button.ApplyStyle(paceToggleButton, useSelectedAsNormal: isTimeLapse);
+            // The "on" state is tinted so the button reads at a glance, but it does not take the
+            // light-green CTA fill: that is a saturated mid-tone, and dark text on it drops from
+            // 9.6:1 to 5.9:1, which is the drop that makes the on-state look muddy beside the off
+            // one. A dark accent-blended fill with a light label holds ~9:1 in both states
+            // (UI_STYLE_GUIDE.md section 5.12).
+            UIStyleTokens.Button.ApplyStyle(paceToggleButton);
+
+            var fill = isTimeLapse
+                ? UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Lichen)
+                : UIStyleTokens.Button.BackgroundDefault;
+            var content = isTimeLapse ? UIStyleTokens.Badge.Label : UIStyleTokens.Button.TextDefault;
+
+            if (paceToggleButton.image != null)
+            {
+                var colors = paceToggleButton.colors;
+                colors.normalColor = fill;
+                if (isTimeLapse)
+                {
+                    colors.highlightedColor = UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Spore);
+                    colors.pressedColor = UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Moss);
+                    colors.selectedColor = fill;
+                }
+
+                paceToggleButton.colors = colors;
+            }
+
+            if (paceToggleIcon != null)
+            {
+                paceToggleIcon.color = content;
+            }
 
             if (paceToggleLabel != null)
             {
                 paceToggleLabel.text = isTimeLapse ? PaceTimeLapseLabel : PaceNormalLabel;
+                paceToggleLabel.color = content;
             }
 
             paceToggleTooltip?.SetStaticText(isTimeLapse ? PaceTimeLapseTooltip : PaceNormalTooltip);
