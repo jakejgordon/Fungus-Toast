@@ -723,6 +723,24 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### The Economancer (`CMP_Economy_LateSpike_Hard`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. Immediate mutation-point payouts fund the max-economy plan in
+  descending order; the free Tier 5 level remains a late fallback once the
+  stockpile engine is established.
+- Comparison seed `2026092442`, 50 pairs: treatment-control normalized board
+  share `+0.060493`, 95% CI `[+0.003701, +0.117286]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092443`, 100 pairs: treatment-control normalized board
+  share `+0.114086`, 95% CI `[+0.054407, +0.173766]`; the same margin was
+  supported. Artifacts use
+  `latespike_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
