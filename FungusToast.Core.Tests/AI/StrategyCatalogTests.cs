@@ -1223,6 +1223,28 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Late_Spike_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Economy_LateSpike_Hard"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_LateSpike_NoPreferenceControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_LateSpike_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Empty(campaign.GetMycovariantPreferences());
+        Assert.Empty(control.GetMycovariantPreferences());
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.PlasmidBountyIIId,
+                MycovariantIds.PlasmidBountyId,
+                MycovariantIds.AscusWagerId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)

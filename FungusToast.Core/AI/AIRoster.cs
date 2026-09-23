@@ -2170,6 +2170,35 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_LateSpike_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_LateSpike_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 level")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3396,6 +3425,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_Pulsar_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_ResilientCanopy_NoPreferenceControl"] = StrategyTheme.TierCap,
                 ["TST_Campaign_ResilientCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
+                ["TST_Campaign_LateSpike_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
+                ["TST_Campaign_LateSpike_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
