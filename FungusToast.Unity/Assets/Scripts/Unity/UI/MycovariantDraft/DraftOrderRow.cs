@@ -101,51 +101,61 @@ public class DraftOrderRow : MonoBehaviour
 
     /// <summary>
     /// Small pick number under each portrait so the sequence reads without decoding the arrows.
-    /// The human's number is a filled pill in the scoreboard's YOU accent, which both survives the
-    /// light draft backdrop and colour-links their slot to the summary label at the end of the row.
+    /// The human's number sits on a filled pill in the scoreboard's YOU accent, which both survives
+    /// the light draft backdrop and colour-links their slot to the summary label at the row's end.
     /// </summary>
     private static void AddOrdinal(Transform cell, int pickNumber, bool isHuman, bool isDone)
     {
-        var ordinalObj = new GameObject("OrdinalText", typeof(RectTransform), typeof(TextMeshProUGUI));
-        ordinalObj.transform.SetParent(cell, false);
+        // The pill and the label are siblings under a container rather than parent and child:
+        // a UGUI child always draws on top of its parent's graphic, so a pill parented to the
+        // label would cover the number.
+        var rootObj = new GameObject("Ordinal", typeof(RectTransform));
+        rootObj.transform.SetParent(cell, false);
 
-        var rect = ordinalObj.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = new Vector2(0f, OrdinalOffsetY);
-        rect.sizeDelta = new Vector2(OrdinalWidth, OrdinalHeight);
+        var rootRect = rootObj.GetComponent<RectTransform>();
+        rootRect.anchorMin = new Vector2(0.5f, 0.5f);
+        rootRect.anchorMax = new Vector2(0.5f, 0.5f);
+        rootRect.pivot = new Vector2(0.5f, 0.5f);
+        rootRect.anchoredPosition = new Vector2(0f, OrdinalOffsetY);
+        rootRect.sizeDelta = new Vector2(OrdinalWidth, OrdinalHeight);
 
-        var text = ordinalObj.GetComponent<TextMeshProUGUI>();
+        if (isHuman)
+        {
+            AddOrdinalPill(rootObj.transform, isDone);
+        }
+
+        var labelObj = new GameObject("OrdinalText", typeof(RectTransform), typeof(TextMeshProUGUI));
+        labelObj.transform.SetParent(rootObj.transform, false);
+
+        var labelRect = labelObj.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        var text = labelObj.GetComponent<TextMeshProUGUI>();
         text.text = pickNumber.ToString();
         text.fontSize = UIStyleTokens.Typography.MicroMinimum;
         text.fontStyle = isHuman ? FontStyles.Bold : FontStyles.Normal;
         text.alignment = TextAlignmentOptions.Center;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
-        text.color = isHuman ? UIStyleTokens.Text.OnAccent : UIStyleTokens.Text.Primary;
 
-        if (isHuman)
-        {
-            AddOrdinalPill(ordinalObj.transform, isDone);
-        }
-
+        var color = isHuman ? UIStyleTokens.Text.OnAccent : UIStyleTokens.Text.Primary;
         if (isDone)
         {
-            var faded = text.color;
-            faded.a *= 0.6f;
-            text.color = faded;
+            color.a *= 0.6f;
         }
+        text.color = color;
     }
 
     /// <summary>
     /// Lichen pill behind the human's pick number, matching the scoreboard's YOU badge.
     /// </summary>
-    private static void AddOrdinalPill(Transform ordinal, bool isDone)
+    private static void AddOrdinalPill(Transform ordinalRoot, bool isDone)
     {
         var pillObj = new GameObject("OrdinalPill", typeof(RectTransform), typeof(Image));
-        pillObj.transform.SetParent(ordinal, false);
-        pillObj.transform.SetAsFirstSibling();
+        pillObj.transform.SetParent(ordinalRoot, false);
 
         var rect = pillObj.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0.5f, 0.5f);

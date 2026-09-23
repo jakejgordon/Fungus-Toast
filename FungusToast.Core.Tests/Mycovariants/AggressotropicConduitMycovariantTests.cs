@@ -210,6 +210,17 @@ public class AggressotropicConduitMycovariantTests
     }
 
     [Fact]
+    public void Draft_preview_description_uses_singular_tile_for_a_single_tile()
+    {
+        var myco = new Mycovariant { Id = MycovariantIds.AggressotropicConduitIId, Name = "Aggressotropic Conduit I" };
+
+        string description = MycovariantDescriptionFormatter.GetDraftPreviewDescription(myco, currentRound: 10);
+
+        Assert.Contains("up to 1 tile from your starting spore", description);
+        Assert.DoesNotContain("1 tiles", description);
+    }
+
+    [Fact]
     public void Owned_tooltip_description_shows_locked_in_bonus_details()
     {
         var myco = new PlayerMycovariant(

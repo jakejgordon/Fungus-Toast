@@ -86,7 +86,7 @@ namespace FungusToast.Core.Mycovariants
             {
                 Id = MycovariantIds.AscusWagerId,
                 Name = "Ascus Wager",
-                Description = $"One-time on draft: gain {MycovariantGameBalance.AscusWagerTier5LevelsGranted} free level of a random Tier 5 mutation, ignoring prerequisites.",
+                Description = $"One-time on draft: gain {MycovariantGameBalance.AscusWagerTier5LevelsGranted} free {(MycovariantGameBalance.AscusWagerTier5LevelsGranted == 1 ? "level" : "levels")} of a random Tier 5 mutation, ignoring prerequisites.",
                 FlavorText = "A sealed ascus bursts with reckless promise, gambling the colony's future on a single rare trait.",
                 IconId = "myco_ascus_wager",
                 Type = MycovariantType.Economy,
