@@ -666,6 +666,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Tempo Harvester (`CMP_Economy_TempoReclaim_Medium`)
+
+- Promoted order: Plasmid Bounty III, Reclamation Rhizomorphs, Necrophoric
+  Adaptation, Plasmid Bounty II, Plasmid Bounty I, Ascus Wager. The largest
+  immediate payout starts the tempo engine; recurring and loss-triggered
+  reclamation convert that tempo into board presence before smaller economy
+  fallbacks.
+- Comparison seed `2026092392`, 50 pairs: treatment-control normalized board
+  share `-0.010586`, 95% CI `[-0.026581, 0.005409]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092393`, 100 pairs: treatment-control normalized board
+  share `+0.000864`, 95% CI `[-0.021518, 0.023247]`; the same margin was
+  supported. Artifacts use
+  `temporeclaim_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

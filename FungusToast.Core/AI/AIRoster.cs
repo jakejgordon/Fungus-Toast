@@ -990,7 +990,15 @@ namespace FungusToast.Core.AI
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 8,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Reclamation)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout starts the tempo engine"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Recurring reclamation turns tempo gains into board presence"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Losses create additional reclamation opportunities"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 996, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 995, "Late fallback for a free Tier 5 level")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Bloom_CreepingNecro_Medium",
