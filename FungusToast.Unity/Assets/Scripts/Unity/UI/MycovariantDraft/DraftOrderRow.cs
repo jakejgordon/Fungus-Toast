@@ -5,6 +5,7 @@ using FungusToast.Unity.UI;
 using System.Collections.Generic;
 using TMPro; // For TextMeshProUGUI
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DraftOrderRow : MonoBehaviour
 {
@@ -24,7 +25,11 @@ public class DraftOrderRow : MonoBehaviour
     // The ordinal sits in the gap between the 48px portrait and the 80px row's bottom edge.
     private const float OrdinalOffsetY = -32f;
     private const float OrdinalHeight = 16f;
+    private const float OrdinalWidth = 50f;
+    private const float OrdinalPillWidth = 22f;
     private const float StatusLabelWidth = 170f;
+    // Wide enough that the summary label reads as a caption for the row rather than a ninth slot.
+    private const float StatusLabelLeftMargin = 28f;
 
     private readonly List<GameObject> cells = new();
 
@@ -96,7 +101,8 @@ public class DraftOrderRow : MonoBehaviour
 
     /// <summary>
     /// Small pick number under each portrait so the sequence reads without decoding the arrows.
-    /// The human's number uses the scoreboard's YOU accent so their slot is easy to find.
+    /// The human's number is a filled pill in the scoreboard's YOU accent, which both survives the
+    /// light draft backdrop and colour-links their slot to the summary label at the end of the row.
     /// </summary>
     private static void AddOrdinal(Transform cell, int pickNumber, bool isHuman, bool isDone)
     {
@@ -108,7 +114,7 @@ public class DraftOrderRow : MonoBehaviour
         rect.anchorMax = new Vector2(0.5f, 0.5f);
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = new Vector2(0f, OrdinalOffsetY);
-        rect.sizeDelta = new Vector2(50f, OrdinalHeight);
+        rect.sizeDelta = new Vector2(OrdinalWidth, OrdinalHeight);
 
         var text = ordinalObj.GetComponent<TextMeshProUGUI>();
         text.text = pickNumber.ToString();
@@ -117,13 +123,45 @@ public class DraftOrderRow : MonoBehaviour
         text.alignment = TextAlignmentOptions.Center;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
+        text.color = isHuman ? UIStyleTokens.Text.OnAccent : UIStyleTokens.Text.Primary;
 
-        var color = isHuman ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Text.Secondary;
+        if (isHuman)
+        {
+            AddOrdinalPill(ordinalObj.transform, isDone);
+        }
+
         if (isDone)
         {
-            color.a *= 0.5f;
+            var faded = text.color;
+            faded.a *= 0.6f;
+            text.color = faded;
         }
-        text.color = color;
+    }
+
+    /// <summary>
+    /// Lichen pill behind the human's pick number, matching the scoreboard's YOU badge.
+    /// </summary>
+    private static void AddOrdinalPill(Transform ordinal, bool isDone)
+    {
+        var pillObj = new GameObject("OrdinalPill", typeof(RectTransform), typeof(Image));
+        pillObj.transform.SetParent(ordinal, false);
+        pillObj.transform.SetAsFirstSibling();
+
+        var rect = pillObj.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(OrdinalPillWidth, OrdinalHeight);
+
+        var image = pillObj.GetComponent<Image>();
+        var color = UIStyleTokens.Accent.Lichen;
+        if (isDone)
+        {
+            color.a *= 0.6f;
+        }
+        image.color = color;
+        image.raycastTarget = false;
     }
 
     /// <summary>
@@ -164,7 +202,7 @@ public class DraftOrderRow : MonoBehaviour
         text.fontStyle = humanIndex == activeIndex ? FontStyles.Bold : FontStyles.Normal;
         text.color = humanIndex == activeIndex ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Text.Secondary;
         text.alignment = TextAlignmentOptions.MidlineLeft;
-        text.margin = new Vector4(12f, 0f, 0f, 0f);
+        text.margin = new Vector4(StatusLabelLeftMargin, 0f, 0f, 0f);
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
 
