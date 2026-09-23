@@ -218,7 +218,9 @@ namespace FungusToast.Unity.UI.MutationTree
 
             var panelOutline = panelObject.GetComponent<Outline>();
             panelOutline.effectColor = new Color(UIStyleTokens.Accent.Spore.r, UIStyleTokens.Accent.Spore.g, UIStyleTokens.Accent.Spore.b, 0.85f);
-            panelOutline.effectDistance = new Vector2(1f, -1f);
+            // Same resting width as the coachmark cards: a 1-unit outline falls below a pixel
+            // on a scaled-down canvas and its top edge drops out.
+            panelOutline.effectDistance = new Vector2(1f, -1f) * UIEffectConstants.CoachmarkBorderWidthMultiplier;
 
             var closeButtonObject = new GameObject("CloseButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             closeButtonObject.transform.SetParent(panelObject.transform, false);

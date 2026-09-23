@@ -58,6 +58,7 @@ namespace FungusToast.Unity.UI
         internal const float TitleLeftInset = ContentInset + GripWidth + GripToTitleGap;
         internal const float TitleTopInset = 12f;
         internal const float TitleHeight = 36f;
+        internal const float TitleMinFontScale = 0.8f;
 
         internal static void PlayAttention(RectTransform coachmarkRect)
         {
@@ -257,6 +258,11 @@ namespace FungusToast.Unity.UI
             card.Title.fontSize = titleFontSize;
             card.Title.alignment = TextAlignmentOptions.Left;
             card.Title.textWrappingMode = TextWrappingModes.NoWrap;
+            // A title a little too long for its row shrinks to fit rather than losing its
+            // last letters; truncation only kicks in past the floor.
+            card.Title.enableAutoSizing = true;
+            card.Title.fontSizeMax = titleFontSize;
+            card.Title.fontSizeMin = titleFontSize * TitleMinFontScale;
             TMPOverflowUtility.SetSafeEllipsis(card.Title);
             card.Title.raycastTarget = false;
 
