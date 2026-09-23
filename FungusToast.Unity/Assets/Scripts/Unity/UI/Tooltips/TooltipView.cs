@@ -56,16 +56,6 @@ namespace FungusToast.Unity.UI.Tooltips
             if (text != null)
             {
                 text.color = UIStyleTokens.Text.Primary;
-
-                // The ContentSizeFitter grows the box to the text, so auto-sizing has nothing to
-                // shrink into. Worse, TMP's preferred-height pass auto-sizes against the rect's
-                // previous height while rendering auto-sizes against the new one, so the box can
-                // end up shorter than the rendered text and clip its last line.
-                if (text.enableAutoSizing)
-                {
-                    text.enableAutoSizing = false;
-                    text.fontSize = text.fontSizeMax;
-                }
             }
         }
 
