@@ -721,6 +721,14 @@ namespace FungusToast.Core.AI
                 {
                     MutationCategory.Growth,
                     MutationCategory.CellularResilience
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Spreads durable growth outward from resistant cells"),
+                    new(MycovariantIds.SeptalAlarmId, 999, "Hardens the surviving canopy around each loss"),
+                    new(MycovariantIds.PerimeterProliferatorId, 998, "Accelerates safe expansion along the crust"),
+                    new(MycovariantIds.MycelialBastionIIIId, 997, "Largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 996, "Adds recurring outward growth with a resistant leading tip")
                 }
             ),
             new ParameterizedSpendingStrategy(

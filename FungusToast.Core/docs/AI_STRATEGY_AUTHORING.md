@@ -704,6 +704,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Resilient Canopy (`CMP_TierCap_GrowthResilience_Easy`)
+
+- Promoted order: Hyphal Resistance Transfer, Septal Alarm, Perimeter
+  Proliferator, Mycelial Bastion III, Aggressotropic Conduit III. Persistent
+  and loss-triggered resistance reinforce its simple growth-and-resilience
+  toolkit; crust growth and immediate or recurring fortified expansion provide
+  complementary fallbacks.
+- Comparison seed `2026092432`, 50 pairs: treatment-control normalized board
+  share `+0.044713`, 95% CI `[+0.008011, +0.081415]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092433`, 100 pairs: treatment-control normalized board
+  share `+0.049778`, 95% CI `[+0.020180, +0.079375]`; the same margin was
+  supported. Artifacts use
+  `resilientcanopy_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
