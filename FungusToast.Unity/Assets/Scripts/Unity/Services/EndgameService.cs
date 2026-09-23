@@ -138,6 +138,7 @@ namespace FungusToast.Unity
             }
             else if (isCountdownActive)
             {
+                ui.RightSidebar?.RetireEndgameCountdownCoachmark();
                 roundsRemainingUntilGameEnd--;
                 if (roundsRemainingUntilGameEnd <= 0)
                 {

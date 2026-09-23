@@ -144,9 +144,9 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipId.EndgameCountdownIntro,
                 "Onboarding.EndgameCountdownIntroSeen",
                 "Game End Approaching",
-                "Once the board reaches a high occupancy threshold based on the map size, a 3-turn endgame countdown begins. When that countdown ends, the game is over and the player with the most living cells wins.",
+                "The toast is nearly covered, so the game ends in 3 rounds. The player with the most living cells then wins.\n\nThe countdown at the top of the sidebar tracks the rounds left.",
                 NewPlayerTooltipSurface.SidebarCoachmark,
-                "Show the first time the endgame countdown begins unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile."),
+                "Show the first time the endgame countdown begins unless it has already been dismissed this game; skip persisted seen-state checks only during forced first-game experience, and otherwise show once per profile. The card retires itself (counted as dismissed) when the countdown next advances, leaving the sidebar countdown to carry the information."),
         };
 
         private static readonly Dictionary<NewPlayerTooltipId, NewPlayerTooltipDefinition> DefinitionsById = BuildDefinitionsById();

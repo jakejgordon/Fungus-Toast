@@ -239,7 +239,7 @@ Use this section when you want a quick description of what already exists withou
 | `CameraPanIntro` | board coachmark | Titled "Pan and Zoom the Board". Shown during round 1 half a second after `WelcomeIntro` closes, for a human player who has not already dismissed it and has not yet moved or zoomed the camera. It is suppressed while fast-forwarding and otherwise only shows once per profile outside forced first-game experience. |
 | `MycovariantDraftIntro` | draft coachmark | Shown the first time the Mycovariant draft panel opens, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
 | `AutoPlacementIntro` | selection-prompt coachmark | Shown the first time an active Mycovariant offers the Auto Placement button (for example, Mycelial Bastion), unless the game is fast-forwarding. It is marked seen when displayed, so it may first appear several games into a profile but never repeats automatically. |
-| `EndgameCountdownIntro` | sidebar coachmark | Shown the first time the endgame countdown begins, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. |
+| `EndgameCountdownIntro` | sidebar coachmark | Shown the first time the endgame countdown begins, unless the player already dismissed it that game or the game is fast-forwarding. Outside forced first-game experience, it only shows once per profile. It retires itself (counted as dismissed) when the countdown next advances, handing off to the sidebar countdown. |
 
 For exact gating conditions, prefer `NewPlayerTooltipRules` over this prose summary.
 

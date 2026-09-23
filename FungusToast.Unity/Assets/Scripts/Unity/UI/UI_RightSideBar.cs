@@ -780,6 +780,18 @@ namespace FungusToast.Unity.UI
             HideEndgameCountdownCoachmarkImmediate(false);
         }
 
+        /// <summary>
+        /// The endgame card teaches the rule once; after a full round with it up, the sidebar
+        /// countdown carries the information, so the card closes itself as if dismissed.
+        /// </summary>
+        public void RetireEndgameCountdownCoachmark()
+        {
+            if (endgameCountdownCoachmark != null && endgameCountdownCoachmark.IsVisible)
+            {
+                OnEndgameCountdownCoachmarkDismissed();
+            }
+        }
+
         private void HideEndgameCountdownCoachmarkImmediate(bool resetSessionDismissal)
         {
             if (resetSessionDismissal)
