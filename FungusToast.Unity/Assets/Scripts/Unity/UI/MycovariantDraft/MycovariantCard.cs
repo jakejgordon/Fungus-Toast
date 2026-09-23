@@ -13,6 +13,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         private const float TitleFontSizeMax = 20f;
         private const float EffectFontSizeMin = 14f;
         private const float EffectFontSizeMax = 18f;
+        private const float TypeBadgeWidth = 82f;
+        private const float BadgeHeight = 22f;
+        private const float ChooseButtonHeight = 40f;
+        private const float CardEdgeInset = 10f;
 
         public Image iconImage;
         public TextMeshProUGUI nameText;
@@ -30,6 +34,12 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         // Cache the outline
         private Outline outline;
         private GameObject baitBadgeRoot;
+        private GameObject typeBadgeRoot;
+        private TextMeshProUGUI typeBadgeLabel;
+        private Image typeBadgeBackground;
+        private TooltipTrigger typeBadgeTooltip;
+        private Button chooseButton;
+        private System.Action chooseAction;
 
         public Mycovariant Mycovariant => mycovariant;
 
@@ -98,7 +108,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 pickButton.onClick.AddListener(() => onClick?.Invoke());
             }
 
+            chooseAction = onClick;
             RefreshBaitBadge();
+            RefreshTypeBadge();
+            EnsureChooseButton();
             SetActiveHighlight(false);
 
             // Force layout rebuild to fix text overlap issues
@@ -140,6 +153,153 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
             effectText.enableAutoSizing = false;
             effectText.fontSize = Mathf.Clamp(fontSize, EffectFontSizeMin, EffectFontSizeMax);
+        }
+
+        /// <summary>
+        /// Keeps the whole-card pick button and the explicit Choose button in the same state so a
+        /// card cannot look actionable while picks are blocked.
+        /// </summary>
+        public void SetPickInteractable(bool interactable)
+        {
+            if (pickButton != null)
+            {
+                pickButton.interactable = interactable;
+            }
+
+            if (chooseButton != null)
+            {
+                chooseButton.interactable = interactable;
+            }
+        }
+
+        /// <summary>
+        /// One-time versus persistent is the highest-level axis for comparing draft options, but it
+        /// was only readable from the opening words of the prose. Passive Mycovariants keep paying
+        /// off; every other type resolves once, during the draft.
+        /// </summary>
+        private void RefreshTypeBadge()
+        {
+            if (mycovariant == null)
+            {
+                if (typeBadgeRoot != null)
+                {
+                    typeBadgeRoot.SetActive(false);
+                }
+
+                return;
+            }
+
+            EnsureTypeBadge();
+
+            bool isPassive = mycovariant.Type == MycovariantType.Passive;
+            typeBadgeLabel.text = isPassive ? MycovariantTagCopy.PassiveLabel : MycovariantTagCopy.OneTimeLabel;
+            typeBadgeBackground.color = isPassive ? UIStyleTokens.State.Info : UIStyleTokens.Accent.Moss;
+            typeBadgeTooltip.SetStaticText(
+                isPassive ? MycovariantTagCopy.PassiveTooltip : MycovariantTagCopy.OneTimeTooltip);
+            typeBadgeRoot.SetActive(true);
+        }
+
+        private void EnsureTypeBadge()
+        {
+            if (typeBadgeRoot != null)
+            {
+                return;
+            }
+
+            typeBadgeRoot = new GameObject("TypeBadge", typeof(RectTransform), typeof(Image), typeof(TooltipTrigger));
+            typeBadgeRoot.transform.SetParent(transform, false);
+
+            // The card root is a VerticalLayoutGroup that does not control child sizes, so the badge
+            // keeps the height set here and flows directly beneath the icon/name row.
+            typeBadgeRoot.transform.SetSiblingIndex(1);
+
+            var rect = typeBadgeRoot.GetComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(TypeBadgeWidth, BadgeHeight);
+
+            typeBadgeBackground = typeBadgeRoot.GetComponent<Image>();
+            typeBadgeBackground.raycastTarget = true;
+            typeBadgeTooltip = typeBadgeRoot.GetComponent<TooltipTrigger>();
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(typeBadgeRoot.transform, false);
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = new Vector2(6f, 2f);
+            labelRect.offsetMax = new Vector2(-6f, -2f);
+
+            typeBadgeLabel = labelObject.GetComponent<TextMeshProUGUI>();
+            typeBadgeLabel.alignment = TextAlignmentOptions.Center;
+            typeBadgeLabel.enableAutoSizing = true;
+            typeBadgeLabel.fontSizeMin = 11f;
+            typeBadgeLabel.fontSizeMax = 13f;
+            typeBadgeLabel.textWrappingMode = TextWrappingModes.NoWrap;
+            typeBadgeLabel.color = UIStyleTokens.Text.OnAccent;
+            typeBadgeLabel.raycastTarget = false;
+        }
+
+        /// <summary>
+        /// Explicit pick affordance pinned to the card's bottom edge. The whole card has always been
+        /// clickable and still is; this only makes that readable, and it puts the blank lower region
+        /// of a fixed-height card to use once the description is short.
+        /// </summary>
+        private void EnsureChooseButton()
+        {
+            if (chooseButton != null)
+            {
+                return;
+            }
+
+            var buttonObject = new GameObject("ChooseButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            buttonObject.transform.SetParent(transform, false);
+            buttonObject.transform.SetAsLastSibling();
+
+            // Anchored to the bottom rather than flowed, so the layout group above does not push it
+            // up or down as the description grows and shrinks.
+            buttonObject.GetComponent<LayoutElement>().ignoreLayout = true;
+
+            var rect = buttonObject.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.offsetMin = new Vector2(CardEdgeInset, CardEdgeInset);
+            rect.offsetMax = new Vector2(-CardEdgeInset, CardEdgeInset + ChooseButtonHeight);
+
+            var background = buttonObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Button.BackgroundDefault;
+
+            chooseButton = buttonObject.GetComponent<Button>();
+            chooseButton.targetGraphic = background;
+            chooseButton.colors = new ColorBlock
+            {
+                normalColor = UIStyleTokens.Button.BackgroundDefault,
+                highlightedColor = UIStyleTokens.Button.BackgroundHover,
+                pressedColor = UIStyleTokens.Button.BackgroundPressed,
+                selectedColor = UIStyleTokens.Button.BackgroundDefault,
+                disabledColor = UIStyleTokens.Button.BackgroundDisabled,
+                colorMultiplier = 1f,
+                fadeDuration = 0.1f,
+            };
+            chooseButton.onClick.AddListener(() => chooseAction?.Invoke());
+
+            var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
+            labelObject.transform.SetParent(buttonObject.transform, false);
+            var labelRect = labelObject.GetComponent<RectTransform>();
+            labelRect.anchorMin = Vector2.zero;
+            labelRect.anchorMax = Vector2.one;
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
+
+            var label = labelObject.GetComponent<TextMeshProUGUI>();
+            label.text = MycovariantTagCopy.ChooseLabel;
+            label.alignment = TextAlignmentOptions.Center;
+            label.fontStyle = FontStyles.Bold;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14f;
+            label.fontSizeMax = 18f;
+            label.textWrappingMode = TextWrappingModes.NoWrap;
+            label.color = UIStyleTokens.Button.TextDefault;
+            label.raycastTarget = false;
         }
 
         private void RefreshBaitBadge()

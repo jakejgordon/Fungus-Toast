@@ -9,6 +9,25 @@ namespace FungusToast.Core.Mycovariants
     {
         public const string BaitLabel = "Bait";
 
+        public const string PassiveLabel = "Passive";
+
+        public const string OneTimeLabel = "One-time";
+
+        public const string ChooseLabel = "Choose";
+
+        /// <summary>
+        /// Tooltip for the Passive tag, carried by every Mycovariant whose
+        /// <see cref="MycovariantType"/> is <see cref="MycovariantType.Passive"/>.
+        /// </summary>
+        public const string PassiveTooltip =
+            "Passive Mycovariant. Its effect keeps applying for the rest of the game once drafted.";
+
+        /// <summary>
+        /// Tooltip for the One-time tag, carried by every Mycovariant that resolves during the draft.
+        /// </summary>
+        public const string OneTimeTooltip =
+            "One-time Mycovariant. Its effect resolves once, as you draft it, and does not apply again.";
+
         /// <summary>
         /// Tooltip for the Bait tag. States the draft rule enforced by
         /// <see cref="MycovariantPoolManager"/> (only the Human or the last AI in draft order is

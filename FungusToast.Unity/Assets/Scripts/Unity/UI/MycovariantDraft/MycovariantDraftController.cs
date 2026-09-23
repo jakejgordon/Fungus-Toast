@@ -891,8 +891,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             foreach (Transform child in choiceContainer)
             {
                 var card = child.GetComponent<MycovariantCard>();
-                if (card != null && card.pickButton != null)
-                    card.pickButton.interactable = interactable;
+                if (card != null)
+                    card.SetPickInteractable(interactable);
             }
         }
 
