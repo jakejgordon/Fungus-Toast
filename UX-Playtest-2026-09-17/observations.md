@@ -201,6 +201,8 @@ Screenshot: [015-round-25-third-draft.png](screenshots/015-round-25-third-draft.
 
 ### 016 — Endgame countdown tutorial
 
+**Status: In progress (2026-09-22).** First pass on the P1 layering, pending the maintainer's in-editor pass. Coachmark cards now come in two draw-order layers (`CoachmarkLayer` in `CoachmarkLayoutUtility.cs`). *HUD* cards - endgame countdown, scoreboard win condition, inspect players, pace, adaptation, camera pan, welcome - are inserted directly beneath `UI_MutationTreePanel` in `UICanvas` instead of at the end, so opening the tree covers them; the same ordering also puts them beneath every panel that follows the tree in the canvas (results screen, selection prompt, pause menu, and the draft panel once it raises itself), which addresses the "persists into the draft and results screen" part of the bullet as well. *Overlay* cards - the spend/bank-points card (it teaches a control on the open tree), the draft intro, and Auto Placement (it points at the selection prompt) - stay on top. Dragging a card keeps it in its layer (`DraggableCard` now calls `CoachmarkLayoutUtility.BringToFront`), and the shared dim backdrop is placed directly beneath the lowest visible card, fixing an off-by-one that could land it above a card it had previously sat below. Not addressed: auto-dismissal / reposition-per-view, and the P2 duplication. Verification so far: offline MSBuild compile of Assembly-CSharp with no new warnings.
+
 Screenshot: [016-endgame-countdown-tutorial.png](screenshots/016-endgame-countdown-tutorial.png)
 
 - **What happened:** At 87.53% occupancy, the game announced a three-round endgame countdown and explained that the player with the most living cells wins.

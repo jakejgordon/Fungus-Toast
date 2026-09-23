@@ -1218,7 +1218,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 parent,
                 new Vector2(320f, 204f),
                 OnMycovariantDraftCoachmarkDismissed,
-                pivot: new Vector2(1f, 0.5f));
+                pivot: new Vector2(1f, 0.5f),
+                layer: CoachmarkLayer.Overlay);
         }
 
         private void PositionMycovariantDraftCoachmark()

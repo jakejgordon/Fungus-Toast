@@ -3,10 +3,33 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using FungusToast.Unity.UI.MutationTree;
 using FungusToast.Unity.UI.Onboarding;
 
 namespace FungusToast.Unity.UI
 {
+    /// <summary>Where a coachmark card sits in its canvas's draw order.</summary>
+    internal enum CoachmarkLayer
+    {
+        /// <summary>
+        /// Teaches the board or the always-on HUD. Drawn just beneath the mutation tree, so the
+        /// tree - and every panel layered above it (results screen, selection prompt, pause
+        /// menu, draft) - covers the card instead of the card covering them.
+        /// </summary>
+        Hud,
+
+        /// <summary>
+        /// Teaches a control that is itself drawn over the HUD (the tree's point buttons, the
+        /// draft, the placement prompt). Drawn on top of everything in its canvas.
+        /// </summary>
+        Overlay,
+    }
+
+    /// <summary>Tags a <see cref="CoachmarkLayer.Hud"/> card so a drag keeps it in that layer.</summary>
+    internal sealed class HudLayerCoachmark : MonoBehaviour
+    {
+    }
+
     internal static class CoachmarkLayoutUtility
     {
         internal static readonly Vector2 DefaultScreenPadding = new Vector2(8f, 8f);
@@ -52,6 +75,51 @@ namespace FungusToast.Unity.UI
             effect.Play();
         }
 
+        /// <summary>
+        /// Raises a coachmark to the top of its layer: the end of its parent's children for an
+        /// overlay card, or just beneath the mutation tree for a HUD card. Falls back to the end
+        /// when the tree is not a sibling (a card parented somewhere else).
+        /// </summary>
+        internal static void BringToFront(RectTransform coachmarkRect)
+        {
+            if (coachmarkRect == null)
+            {
+                return;
+            }
+
+            Transform ceiling = coachmarkRect.GetComponent<HudLayerCoachmark>() != null
+                ? FindHudLayerCeiling(coachmarkRect.parent)
+                : null;
+            if (ceiling == null)
+            {
+                coachmarkRect.SetAsLastSibling();
+                return;
+            }
+
+            // Moving a card that is already below the tree shifts the tree down one slot.
+            int ceilingIndex = ceiling.GetSiblingIndex();
+            coachmarkRect.SetSiblingIndex(coachmarkRect.GetSiblingIndex() < ceilingIndex ? ceilingIndex - 1 : ceilingIndex);
+        }
+
+        private static Transform FindHudLayerCeiling(Transform parent)
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            for (int childIndex = 0; childIndex < parent.childCount; childIndex++)
+            {
+                Transform child = parent.GetChild(childIndex);
+                if (child.GetComponent<UI_MutationTreePanelMarker>() != null)
+                {
+                    return child;
+                }
+            }
+
+            return null;
+        }
+
         internal static void PrepareAttentionEntrance(RectTransform coachmarkRect)
         {
             if (coachmarkRect == null)
@@ -94,7 +162,7 @@ namespace FungusToast.Unity.UI
                 Draggable?.ResetMoved();
                 PrepareAttentionEntrance(Root);
                 Root.gameObject.SetActive(true);
-                Root.SetAsLastSibling();
+                BringToFront(Root);
                 CanvasGroup.blocksRaycasts = true;
                 CanvasGroup.interactable = true;
                 PlayAttention(Root);
@@ -123,6 +191,8 @@ namespace FungusToast.Unity.UI
         /// can drop it below an anchor control; hosts that place the card by another corner pass
         /// <paramref name="pivot"/>. A card set in larger type passes a taller
         /// <paramref name="titleRowHeight"/> and a roomier <paramref name="contentInset"/>.
+        /// Cards default to <see cref="CoachmarkLayer.Hud"/>; one that points at a control
+        /// drawn over the HUD passes <see cref="CoachmarkLayer.Overlay"/>.
         /// </summary>
         internal static CoachmarkCard BuildCard(
             string name,
@@ -133,7 +203,8 @@ namespace FungusToast.Unity.UI
             float bodyFontSize = 17f,
             Vector2? pivot = null,
             float titleRowHeight = TitleHeight,
-            float contentInset = ContentInset)
+            float contentInset = ContentInset,
+            CoachmarkLayer layer = CoachmarkLayer.Hud)
         {
             var card = new CoachmarkCard();
             float titleLeftInset = contentInset + GripWidth + GripToTitleGap;
@@ -141,6 +212,10 @@ namespace FungusToast.Unity.UI
 
             var rootObject = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
             rootObject.transform.SetParent(parent, false);
+            if (layer == CoachmarkLayer.Hud)
+            {
+                rootObject.AddComponent<HudLayerCoachmark>();
+            }
 
             card.Root = rootObject.GetComponent<RectTransform>();
             card.Root.anchorMin = new Vector2(0.5f, 0.5f);
@@ -537,7 +612,12 @@ namespace FungusToast.Unity.UI
             backdropStartAlpha = backdropRect.gameObject.activeSelf && backdropImage != null
                 ? backdropImage.color.a
                 : 0f;
-            backdropRect.SetSiblingIndex(firstCoachmarkSiblingIndex);
+            // Directly beneath the lowest card. A backdrop that already sits below it vacates a
+            // slot when moved, so it lands one index lower than one moving down from above.
+            int backdropIndex = backdropRect.GetSiblingIndex();
+            backdropRect.SetSiblingIndex(backdropIndex < firstCoachmarkSiblingIndex
+                ? firstCoachmarkSiblingIndex - 1
+                : firstCoachmarkSiblingIndex);
             backdropRect.gameObject.SetActive(true);
             SetBackdropAlpha(backdropStartAlpha);
         }

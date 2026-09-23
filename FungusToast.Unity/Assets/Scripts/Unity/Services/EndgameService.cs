@@ -797,7 +797,8 @@ namespace FungusToast.Unity
                 HideAutoPlacementCoachmark,
                 titleFontSize: 23f,
                 bodyFontSize: 18f,
-                pivot: new Vector2(1f, 0f));
+                pivot: new Vector2(1f, 0f),
+                layer: CoachmarkLayer.Overlay);
             card.Root.gameObject.layer = selectionPromptActionButton.gameObject.layer;
             return card;
         }

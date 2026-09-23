@@ -110,7 +110,7 @@ namespace FungusToast.Unity.UI
                 outline.effectColor = UIStyleTokens.State.Focus;
             }
 
-            cardRect.SetAsLastSibling();
+            CoachmarkLayoutUtility.BringToFront(cardRect);
             CursorManager.Instance?.Push(CursorKind.Move, this);
         }
 

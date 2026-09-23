@@ -2743,7 +2743,8 @@ namespace FungusToast.Unity.UI.MutationTree
 
         /// <summary>
         /// One card serves both the spend-points and bank-points intros; it hangs off the
-        /// right edge of whichever button it is describing.
+        /// right edge of whichever button it is describing. It is an overlay card: the
+        /// bank-points intro is shown over the open tree it teaches.
         /// </summary>
         private CoachmarkLayoutUtility.CoachmarkCard? BuildBankPointsCoachmark()
         {
@@ -2759,7 +2760,8 @@ namespace FungusToast.Unity.UI.MutationTree
                 "UI_BankPointsCoachmark",
                 parent,
                 new Vector2(BankPointsCoachmarkWidth, BankPointsCoachmarkHeight),
-                OnMutationPointsCoachmarkDismissed);
+                OnMutationPointsCoachmarkDismissed,
+                layer: CoachmarkLayer.Overlay);
         }
 
         private void PositionBankPointsCoachmark(Button anchorButton)
