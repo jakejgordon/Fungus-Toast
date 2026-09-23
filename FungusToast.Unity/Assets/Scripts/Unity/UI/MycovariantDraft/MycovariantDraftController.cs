@@ -449,6 +449,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             }
 
             SyncChoiceCardEffectFontSizes(cards);
+
+            // Cards can be rebuilt outside a state transition, so re-apply the current turn's state
+            // rather than leaving a new card's Choose affordance hidden until the next one.
+            SetAllPickButtonsInteractable(uiState == DraftUIState.HumanTurn);
         }
 
         private void OnChoicePicked(Mycovariant picked)

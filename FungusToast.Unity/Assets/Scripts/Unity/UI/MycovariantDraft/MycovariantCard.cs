@@ -2,12 +2,14 @@
 using FungusToast.Unity.UI;
 using FungusToast.Unity.UI.Tooltips;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
 namespace Assets.Scripts.Unity.UI.MycovariantDraft
 {
-    public class MycovariantCard : MonoBehaviour
+    public class MycovariantCard : MonoBehaviour,
+        IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         private const float TitleFontSizeMin = 16f;
         private const float TitleFontSizeMax = 20f;
@@ -38,8 +40,11 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         private TextMeshProUGUI typeBadgeLabel;
         private Image typeBadgeBackground;
         private TooltipTrigger typeBadgeTooltip;
-        private Button chooseButton;
-        private System.Action chooseAction;
+        private GameObject chooseAffordanceRoot;
+        private Image chooseAffordanceBackground;
+        private bool pickInteractable;
+        private bool pointerInside;
+        private bool pointerHeld;
 
         public Mycovariant Mycovariant => mycovariant;
 
@@ -108,10 +113,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 pickButton.onClick.AddListener(() => onClick?.Invoke());
             }
 
-            chooseAction = onClick;
             RefreshBaitBadge();
             RefreshTypeBadge();
-            EnsureChooseButton();
+            EnsureChooseAffordance();
+            RefreshChooseAffordance();
             SetActiveHighlight(false);
 
             // Force layout rebuild to fix text overlap issues
@@ -161,15 +166,70 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         /// </summary>
         public void SetPickInteractable(bool interactable)
         {
+            pickInteractable = interactable;
+
             if (pickButton != null)
             {
                 pickButton.interactable = interactable;
             }
 
-            if (chooseButton != null)
+            if (!interactable)
             {
-                chooseButton.interactable = interactable;
+                pointerInside = false;
+                pointerHeld = false;
             }
+
+            RefreshChooseAffordance();
+        }
+
+        public void OnPointerEnter(PointerEventData eventData)
+        {
+            pointerInside = true;
+            RefreshChooseAffordance();
+        }
+
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            pointerInside = false;
+            pointerHeld = false;
+            RefreshChooseAffordance();
+        }
+
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            pointerHeld = true;
+            RefreshChooseAffordance();
+        }
+
+        public void OnPointerUp(PointerEventData eventData)
+        {
+            pointerHeld = false;
+            RefreshChooseAffordance();
+        }
+
+        /// <summary>
+        /// The strip is shown only while this card can actually be picked, so it never invites a
+        /// click during an AI turn, and it mirrors the card's own hover and press state because the
+        /// card - not the strip - is the control.
+        /// </summary>
+        private void RefreshChooseAffordance()
+        {
+            if (chooseAffordanceRoot == null)
+            {
+                return;
+            }
+
+            chooseAffordanceRoot.SetActive(pickInteractable);
+            if (!pickInteractable)
+            {
+                return;
+            }
+
+            chooseAffordanceBackground.color = pointerHeld
+                ? UIStyleTokens.Button.BackgroundPressed
+                : pointerInside
+                    ? UIStyleTokens.Button.BackgroundHover
+                    : UIStyleTokens.Button.BackgroundDefault;
         }
 
         /// <summary>
@@ -239,51 +299,40 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         }
 
         /// <summary>
-        /// Explicit pick affordance pinned to the card's bottom edge. The whole card has always been
-        /// clickable and still is; this only makes that readable, and it puts the blank lower region
-        /// of a fixed-height card to use once the description is short.
+        /// Explicit pick affordance pinned to the card's bottom edge. It is deliberately NOT a
+        /// Button: the whole card is the single control, and a real button here would be a second
+        /// control for the same action, which both teaches that only the button is clickable and
+        /// gives keyboard and screen-reader users two stops for one choice. Raycasts pass straight
+        /// through to the card beneath, and the strip just reflects that card's state.
         /// </summary>
-        private void EnsureChooseButton()
+        private void EnsureChooseAffordance()
         {
-            if (chooseButton != null)
+            if (chooseAffordanceRoot != null)
             {
                 return;
             }
 
-            var buttonObject = new GameObject("ChooseButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            buttonObject.transform.SetParent(transform, false);
-            buttonObject.transform.SetAsLastSibling();
+            chooseAffordanceRoot = new GameObject("ChooseAffordance", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
+            chooseAffordanceRoot.transform.SetParent(transform, false);
+            chooseAffordanceRoot.transform.SetAsLastSibling();
 
             // Anchored to the bottom rather than flowed, so the layout group above does not push it
             // up or down as the description grows and shrinks.
-            buttonObject.GetComponent<LayoutElement>().ignoreLayout = true;
+            chooseAffordanceRoot.GetComponent<LayoutElement>().ignoreLayout = true;
 
-            var rect = buttonObject.GetComponent<RectTransform>();
+            var rect = chooseAffordanceRoot.GetComponent<RectTransform>();
             rect.anchorMin = new Vector2(0f, 0f);
             rect.anchorMax = new Vector2(1f, 0f);
             rect.pivot = new Vector2(0.5f, 0f);
             rect.offsetMin = new Vector2(CardEdgeInset, CardEdgeInset);
             rect.offsetMax = new Vector2(-CardEdgeInset, CardEdgeInset + ChooseButtonHeight);
 
-            var background = buttonObject.GetComponent<Image>();
-            background.color = UIStyleTokens.Button.BackgroundDefault;
-
-            chooseButton = buttonObject.GetComponent<Button>();
-            chooseButton.targetGraphic = background;
-            chooseButton.colors = new ColorBlock
-            {
-                normalColor = UIStyleTokens.Button.BackgroundDefault,
-                highlightedColor = UIStyleTokens.Button.BackgroundHover,
-                pressedColor = UIStyleTokens.Button.BackgroundPressed,
-                selectedColor = UIStyleTokens.Button.BackgroundDefault,
-                disabledColor = UIStyleTokens.Button.BackgroundDisabled,
-                colorMultiplier = 1f,
-                fadeDuration = 0.1f,
-            };
-            chooseButton.onClick.AddListener(() => chooseAction?.Invoke());
+            chooseAffordanceBackground = chooseAffordanceRoot.GetComponent<Image>();
+            chooseAffordanceBackground.color = UIStyleTokens.Button.BackgroundDefault;
+            chooseAffordanceBackground.raycastTarget = false;
 
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(buttonObject.transform, false);
+            labelObject.transform.SetParent(chooseAffordanceRoot.transform, false);
             var labelRect = labelObject.GetComponent<RectTransform>();
             labelRect.anchorMin = Vector2.zero;
             labelRect.anchorMax = Vector2.one;
