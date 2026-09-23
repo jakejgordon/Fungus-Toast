@@ -2036,6 +2036,48 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_TempoReclaim_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, 2),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 1)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Economy,
+                    MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_TempoReclaim_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.NecrohyphalInfiltration, 2),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 5),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 1),
+                    new TargetMutationGoal(MutationIds.Necrosporulation, 1)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 8,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout starts the tempo engine"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Recurring reclamation turns tempo gains into board presence"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Losses create additional reclamation opportunities"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 996, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 995, "Late fallback for a free Tier 5 level")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3256,6 +3298,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_Scavenger_CuratedMycovariants"] = StrategyTheme.Reclamation,
                 ["TST_Campaign_InfiltrationSurge_CategoryControl"] = StrategyTheme.Reclamation,
                 ["TST_Campaign_InfiltrationSurge_CuratedMycovariants"] = StrategyTheme.Reclamation,
+                ["TST_Campaign_TempoReclaim_CategoryControl"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_TempoReclaim_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
