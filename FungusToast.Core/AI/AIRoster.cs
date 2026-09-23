@@ -2086,6 +2086,47 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Pulsar_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier3,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 3),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 2),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 1)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Growth,
+                    MycovariantCategory.Resistance)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Pulsar_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier3,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge, 3),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 2),
+                    new TargetMutationGoal(MutationIds.AdaptiveExpression, 1)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 8,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Spreads resistance outward after each burst of growth"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Projects recurring growth toward rivals and fortifies its leading tip"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Hardens survivors when exposed burst growth is lost"),
+                    new(MycovariantIds.HyphalDrawId, 997, "Pulls existing biomass into a forward pressure lane"),
+                    new(MycovariantIds.MycelialBastionIIIId, 996, "Largest immediate resistant-cell reinforcement")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3308,6 +3349,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_InfiltrationSurge_CuratedMycovariants"] = StrategyTheme.Reclamation,
                 ["TST_Campaign_TempoReclaim_CategoryControl"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_TempoReclaim_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_Pulsar_CategoryControl"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_Pulsar_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
