@@ -685,6 +685,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Pulsar Sprout (`CMP_Surge_Pulsar_Easy`)
+
+- Promoted order: Hyphal Resistance Transfer, Aggressotropic Conduit III,
+  Septal Alarm, Hyphal Draw, Mycelial Bastion III. Persistent resistance
+  spreads after its growth bursts; recurring enemy-facing projection and
+  loss-triggered hardening help the exposed surge hold ground before the
+  one-time positioning and reinforcement fallbacks.
+- Comparison seed `2026092422`, 50 pairs: treatment-control normalized board
+  share `-0.002939`, 95% CI `[-0.040927, 0.035049]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092423`, 100 pairs: treatment-control normalized board
+  share `+0.005724`, 95% CI `[-0.016361, 0.027809]`; the same margin was
+  supported. Artifacts use
+  `pulsar_myco_{comparison,holdout}_{control,treatment}` with their respective
+  seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

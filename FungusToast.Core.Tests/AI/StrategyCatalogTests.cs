@@ -613,7 +613,6 @@ public class StrategyCatalogTests
             "CMP_Surge_BeaconSprinter_Medium",
             "CMP_Surge_BeaconTempo_Medium",
             "CMP_Surge_GrowthTempo_Medium",
-            "CMP_Surge_Pulsar_Easy",
             "CMP_TierCap_GrowthResilience_Easy",
             "TST_AI10_BeaconRegression",
             "TST_AI10_CreepingRegression",
@@ -1183,6 +1182,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.Single(control.GetMycovariantPreferences());
         Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
         Assert.Equal(
