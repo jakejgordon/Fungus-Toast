@@ -21,7 +21,7 @@ namespace FungusToast.Unity.UI.Onboarding
         private const float TitleRowHeight = 42f;
         private const float BodyTopInset = CoachmarkLayoutUtility.TitleTopInset + TitleRowHeight + 6f;
         private const float BodyHorizontalPadding = 20f;
-        private const float BodyBottomPadding = BodyHorizontalPadding;
+        private const float BodyBottomPadding = BodyHorizontalPadding + CoachmarkLayoutUtility.BodyBottomExtraInset;
 
         private readonly Func<Canvas> resolveRootCanvas;
         private readonly Func<bool> getForceFirstGameExperience;

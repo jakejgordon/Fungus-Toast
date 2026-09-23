@@ -59,6 +59,9 @@ namespace FungusToast.Unity.UI
         internal const float TitleTopInset = 12f;
         internal const float TitleHeight = 36f;
         internal const float TitleMinFontScale = 0.8f;
+        // The body's last line sits a little further from the bottom edge than the text does
+        // from the sides; an equal inset reads as cramped under a paragraph.
+        internal const float BodyBottomExtraInset = 6f;
 
         internal static void PlayAttention(RectTransform coachmarkRect)
         {
@@ -149,6 +152,12 @@ namespace FungusToast.Unity.UI
             public Button CloseButton;
             public DraggableCard Draggable;
 
+            // Vertical space above and below the body, recorded by BuildCard so Show can size
+            // the card to its copy.
+            internal float BodyTopSpace;
+            internal float BodyBottomSpace;
+            internal float BodySideSpace;
+
             public bool IsVisible => Root != null && CanvasGroup != null && Root.gameObject.activeSelf && CanvasGroup.alpha > 0f;
 
             public void Show(NewPlayerTooltipDefinition definition)
@@ -160,6 +169,7 @@ namespace FungusToast.Unity.UI
 
                 Title.text = definition.Title;
                 Body.text = definition.Body;
+                FitHeightToBody();
                 Draggable?.ResetMoved();
                 PrepareAttentionEntrance(Root);
                 Root.gameObject.SetActive(true);
@@ -167,6 +177,23 @@ namespace FungusToast.Unity.UI
                 CanvasGroup.blocksRaycasts = true;
                 CanvasGroup.interactable = true;
                 PlayAttention(Root);
+            }
+
+            /// <summary>
+            /// Sizes the card to its body copy so every card keeps the same bottom margin,
+            /// whatever height its host authored. Hosts place the card after Show, so they
+            /// see the fitted size.
+            /// </summary>
+            private void FitHeightToBody()
+            {
+                if (Root == null || Body == null)
+                {
+                    return;
+                }
+
+                float bodyWidth = Mathf.Max(1f, Root.sizeDelta.x - (2f * BodySideSpace));
+                float bodyHeight = Body.GetPreferredValues(Body.text, bodyWidth, 0f).y;
+                Root.sizeDelta = new Vector2(Root.sizeDelta.x, BodyTopSpace + bodyHeight + BodyBottomSpace);
             }
 
             public void HideImmediate()
@@ -210,6 +237,10 @@ namespace FungusToast.Unity.UI
             var card = new CoachmarkCard();
             float titleLeftInset = contentInset + GripWidth + GripToTitleGap;
             float bodyTopInset = Mathf.Max(BodyTopInset, TitleTopInset + titleRowHeight + 6f);
+            float bodyBottomInset = contentInset + BodyBottomExtraInset;
+            card.BodyTopSpace = bodyTopInset;
+            card.BodyBottomSpace = bodyBottomInset;
+            card.BodySideSpace = contentInset;
 
             var rootObject = new GameObject(name, typeof(RectTransform), typeof(CanvasGroup), typeof(Image), typeof(Outline));
             rootObject.transform.SetParent(parent, false);
@@ -271,7 +302,7 @@ namespace FungusToast.Unity.UI
             var bodyRect = bodyObject.GetComponent<RectTransform>();
             bodyRect.anchorMin = new Vector2(0f, 0f);
             bodyRect.anchorMax = new Vector2(1f, 1f);
-            bodyRect.offsetMin = new Vector2(contentInset, contentInset);
+            bodyRect.offsetMin = new Vector2(contentInset, bodyBottomInset);
             bodyRect.offsetMax = new Vector2(-contentInset, -bodyTopInset);
 
             card.Body = bodyObject.GetComponent<TextMeshProUGUI>();

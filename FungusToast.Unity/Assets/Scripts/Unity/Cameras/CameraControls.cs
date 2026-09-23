@@ -16,7 +16,7 @@ namespace FungusToast.Unity.Cameras
         private const float CameraPanCoachmarkMinHeight = 150f;
         private const float CameraPanCoachmarkBottomOffset = 22f;
         private const float CameraPanCoachmarkBodyHorizontalPadding = CoachmarkLayoutUtility.ContentInset;
-        private const float CameraPanCoachmarkBodyBottomPadding = CoachmarkLayoutUtility.ContentInset;
+        private const float CameraPanCoachmarkBodyBottomPadding = CoachmarkLayoutUtility.ContentInset + CoachmarkLayoutUtility.BodyBottomExtraInset;
         private const float CameraPanCoachmarkBodyTopReservedHeight = CoachmarkLayoutUtility.BodyTopInset;
         private const float CameraPanDragThreshold = 0.01f;
         // Short beat after the welcome coachmark closes. The old 3s (scene-serialized) delay was
