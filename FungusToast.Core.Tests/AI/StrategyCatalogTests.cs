@@ -1246,6 +1246,29 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Growth_Pressure_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Growth_Pressure_Medium"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_GrowthPressure_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_GrowthPressure_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Single(control.GetMycovariantPreferences());
+        Assert.True(control.GetMycovariantPreferences()[0].IsCategoryDerived);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.HyphalDrawId,
+                MycovariantIds.PerimeterProliferatorId,
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.CornerConduitIIIId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)

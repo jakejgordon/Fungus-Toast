@@ -2206,6 +2206,41 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_GrowthPressure_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 3),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 2),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Growth,
+                    MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_GrowthPressure_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 3),
+                    new TargetMutationGoal(MutationIds.CreepingMold, 3),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae, 2),
+                    new TargetMutationGoal(MutationIds.AnabolicInversion, 1)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.HyphalDrawId, 999, "Pulls existing biomass into a forward pressure lane"),
+                    new(MycovariantIds.PerimeterProliferatorId, 998, "Accelerates expansion along contested crust lanes"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 997, "Largest immediate payout funds the growth backbone"),
+                    new(MycovariantIds.CornerConduitIIIId, 996, "Largest recurring projection toward a strategic corner")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3434,6 +3469,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_ResilientCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
                 ["TST_Campaign_LateSpike_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
                 ["TST_Campaign_LateSpike_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
+                ["TST_Campaign_GrowthPressure_CategoryControl"] = StrategyTheme.Offense,
+                ["TST_Campaign_GrowthPressure_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
