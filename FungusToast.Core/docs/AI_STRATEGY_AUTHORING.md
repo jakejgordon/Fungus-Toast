@@ -840,6 +840,20 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Rebirth Conductor (`CMP_Control_AnabolicRebirth_Medium`) — rejected
+
+- Candidate order: Necrophoric Adaptation, Reclamation Rhizomorphs. Deaths
+  would seed reclaimed cells for the rebirth loop, then recurring reclamation
+  would sustain repeated Catabolic Rebirth and Putrefactive Rejuvenation.
+- Comparison seed `2026092512`, 50 pairs: treatment-control normalized board
+  share `-0.118289`, 95% CI `[-0.233667, -0.002910]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `anabolicrebirth_myco_comparison_{control,treatment}_2026092512`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
