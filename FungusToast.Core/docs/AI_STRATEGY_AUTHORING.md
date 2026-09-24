@@ -760,6 +760,22 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Putrid Tendrils (`CMP_Growth_PutridTendrils_Medium`) — rejected
+
+- Candidate order: Aggressotropic Conduit III, Hyphal Draw, Necrophoric
+  Adaptation, Reclamation Rhizomorphs, Perimeter Proliferator. Enemy-facing
+  projection and forward biomass movement led the tendril plan; loss-triggered
+  and repeat reclamation supported its late rebirth engine before the crust
+  growth fallback.
+- Comparison seed `2026092462`, 50 pairs: treatment-control normalized board
+  share `+0.026835`, 95% CI `[-0.069383, +0.123053]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `putridtendrils_myco_comparison_{control,treatment}_2026092462`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
