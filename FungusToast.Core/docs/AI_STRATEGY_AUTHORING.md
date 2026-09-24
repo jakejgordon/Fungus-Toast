@@ -887,6 +887,23 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Legacy Hoardspore Regent (`AI13`) — rejected
+
+- Candidate order: Plasmid Bounty III, Reclamation Rhizomorphs, Necrophoric
+  Adaptation, Plasmid Bounty II, Ascus Wager, Plasmid Bounty I. Immediate
+  economy accelerates the max-economy control engine, reclamation sustains its
+  full lifecycle, and the remaining payouts support its late-game stockpile.
+- Comparison seed `2026092542`, 50 pairs: treatment-control normalized board
+  share `+0.063230`, 95% CI `[-0.199399, +0.325859]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `legacyhoardspore_myco_comparison_{control,treatment}_2026092542`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  The positive point estimate with a wide interval is insufficient promotion
+  evidence, not evidence of harm. Both comparison arms had zero simulation
+  invariant mismatches; the Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
