@@ -2422,6 +2422,49 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_GrowthTempo_NoPreferenceControl",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier4),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_GrowthTempo_CuratedMycovariants",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.MycelialSurges,
+                    MutationCategory.Growth
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier4,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PerimeterProliferatorId, 1000, "Recurring crust expansion establishes the board presence used by later surges"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection converts growth into enemy-facing pressure"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 998, "Largest immediate payout funds the frequent surge cadence"),
+                    new(MycovariantIds.HyphalDrawId, 997, "Repositions established biomass into a sudden pressure lane"),
+                    new(MycovariantIds.BallistosporeDischargeIIIId, 996, "Largest one-shot reinforcement for a tempo burst")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3660,6 +3703,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_BeaconSprinter_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_BeaconTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_BeaconTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_GrowthTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_GrowthTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
