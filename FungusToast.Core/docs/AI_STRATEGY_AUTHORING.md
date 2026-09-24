@@ -794,6 +794,21 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Beacon Sprinter (`CMP_Surge_BeaconSprinter_Medium`) — rejected
+
+- Candidate order: Hyphal Draw, Aggressotropic Conduit III, Ballistospore
+  Discharge III, Plasmid Bounty III, Corner Conduit III. Immediate forward
+  movement led the tempo plan, followed by recurring projection, one-shot
+  reinforcement, surge funding, and an alternate route.
+- Comparison seed `2026092482`, 50 pairs: treatment-control normalized board
+  share `-0.177084`, 95% CI `[-0.394998, +0.040830]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `beaconsprinter_myco_comparison_{control,treatment}_2026092482`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
