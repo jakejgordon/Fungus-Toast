@@ -854,6 +854,21 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Rebirth Furnace (`CMP_Control_RebirthFurnace_Medium`) — rejected
+
+- Candidate order: Septal Alarm, Hyphal Resistance Transfer, Necrophoric
+  Adaptation, Reclamation Rhizomorphs, Aggressotropic Conduit III. Death- and
+  resistance-triggered effects led the furnace plan, followed by reclamation
+  support and recurring outward pressure for rebuilt territory.
+- Comparison seed `2026092522`, 50 pairs: treatment-control normalized board
+  share `+0.063075`, 95% CI `[-0.168080, +0.294230]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `rebirthfurnace_myco_comparison_{control,treatment}_2026092522`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
