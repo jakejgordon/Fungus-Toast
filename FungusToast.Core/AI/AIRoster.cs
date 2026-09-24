@@ -2603,6 +2603,34 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RejuvenationEngine_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                }),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RejuvenationEngine_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout develops the deep mutation economy"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Deaths seed reclaimed cells for repeated renewal"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 998, "Additional reclamation attempts sustain the rebirth loop"),
+                    new(MycovariantIds.AscusWagerId, 997, "A free Tier 5 level advances the late renewal engine")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3851,6 +3879,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_VoltaicBloom_CuratedMycovariants"] = StrategyTheme.Control,
                 ["TST_Campaign_HoardsporeRegentLegacy_CategoryControl"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_RejuvenationEngine_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
+                ["TST_Campaign_RejuvenationEngine_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
