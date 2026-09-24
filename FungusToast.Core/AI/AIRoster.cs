@@ -2465,6 +2465,34 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_AnabolicRebirth_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                }),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_AnabolicRebirth_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.NecrophoricAdaptation, 1000, "Deaths seed reclaimed cells for the rebirth loop"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Additional reclamation attempts sustain repeated rebirth")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3705,6 +3733,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_BeaconTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_GrowthTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_GrowthTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_AnabolicRebirth_NoPreferenceControl"] = StrategyTheme.Control,
+                ["TST_Campaign_AnabolicRebirth_CuratedMycovariants"] = StrategyTheme.Control,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
