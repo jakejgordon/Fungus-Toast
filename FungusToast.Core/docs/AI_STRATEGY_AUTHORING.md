@@ -809,6 +809,21 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Beacon Tempo (`CMP_Surge_BeaconTempo_Medium`) — rejected
+
+- Candidate order: Plasmid Bounty III, Aggressotropic Conduit III, Hyphal
+  Draw, Septal Alarm, Corner Conduit III. The immediate mutation-point payout
+  led the more patient tempo plan, followed by recurring enemy projection,
+  forward repositioning, loss-triggered resistance, and an alternate route.
+- Comparison seed `2026092492`, 50 pairs: treatment-control normalized board
+  share `-0.042978`, 95% CI `[-0.142379, +0.056423]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `beacontempo_myco_comparison_{control,treatment}_2026092492`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
