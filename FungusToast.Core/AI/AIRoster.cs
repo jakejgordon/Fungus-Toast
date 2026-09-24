@@ -2248,6 +2248,46 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_PutridTendrils_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.TendrilNortheast, 2),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 2),
+                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 2),
+                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 2),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_PutridTendrils_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.TendrilNortheast, 2),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 2),
+                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 2),
+                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 2),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 2),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.HyphalDrawId, 999, "Pulls existing biomass into a forward tendril lane"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Turns losses along exposed lanes into adjacent reclamation"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 997, "Adds a second chance to the late reclaim engine"),
+                    new(MycovariantIds.PerimeterProliferatorId, 996, "Accelerates tendril expansion along the crust")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3478,6 +3518,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_LateSpike_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
                 ["TST_Campaign_GrowthPressure_CategoryControl"] = StrategyTheme.Offense,
                 ["TST_Campaign_GrowthPressure_CuratedMycovariants"] = StrategyTheme.Offense,
+                ["TST_Campaign_PutridTendrils_NoPreferenceControl"] = StrategyTheme.Offense,
+                ["TST_Campaign_PutridTendrils_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
