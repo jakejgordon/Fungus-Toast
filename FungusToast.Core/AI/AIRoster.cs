@@ -2569,6 +2569,40 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HoardsporeRegentLegacy_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout accelerates the max-economy control engine"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Additional reclamation attempts sustain the full lifecycle"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Deaths seed reclamation for the Catabolic Rebirth finish"),
+                    new(MycovariantIds.PlasmidBountyIIId, 997, "Second-largest immediate payout extends the metabolic base"),
+                    new(MycovariantIds.AscusWagerId, 996, "A free Tier 5 level rewards the established late-game engine"),
+                    new(MycovariantIds.PlasmidBountyId, 995, "Reliable fallback mutation-point payout")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3815,6 +3849,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_RebirthFurnace_CuratedMycovariants"] = StrategyTheme.Control,
                 ["TST_Campaign_VoltaicBloom_CategoryControl"] = StrategyTheme.Control,
                 ["TST_Campaign_VoltaicBloom_CuratedMycovariants"] = StrategyTheme.Control,
+                ["TST_Campaign_HoardsporeRegentLegacy_CategoryControl"] = StrategyTheme.EconomyRamp,
+                ["TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
