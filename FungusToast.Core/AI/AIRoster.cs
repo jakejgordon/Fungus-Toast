@@ -2288,6 +2288,64 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_WildfireBloom_NoPreferenceControl",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, GameBalance.ChitinFortificationMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 3),
+                    new TargetMutationGoal(MutationIds.TendrilNortheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 10),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier5
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_WildfireBloom_CuratedMycovariants",
+                prioritizeHighTier: true,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.GeneticDrift,
+                    MutationCategory.MycelialSurges
+                },
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, GameBalance.MycotropicInductionMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, GameBalance.ChitinFortificationMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChronoresilientCytoplasm, 3),
+                    new TargetMutationGoal(MutationIds.TendrilNortheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilNorthwest, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSoutheast, 10),
+                    new TargetMutationGoal(MutationIds.TendrilSouthwest, 10),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
+                surgeAttemptTurnFrequency: 7,
+                economyBias: EconomyBias.MaxEconomy,
+                maxTier: MutationTier.Tier5,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.PerimeterProliferatorId, 999, "Accelerates wide growth along the crust"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 998, "Spreads resistance through the established growth lanes"),
+                    new(MycovariantIds.SeptalAlarmId, 997, "Hardens exposed lanes when cells are lost"),
+                    new(MycovariantIds.HyphalDrawId, 996, "Pulls existing biomass into a forward pressure lane")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3520,6 +3578,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_GrowthPressure_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["TST_Campaign_PutridTendrils_NoPreferenceControl"] = StrategyTheme.Offense,
                 ["TST_Campaign_PutridTendrils_CuratedMycovariants"] = StrategyTheme.Offense,
+                ["TST_Campaign_WildfireBloom_NoPreferenceControl"] = StrategyTheme.Offense,
+                ["TST_Campaign_WildfireBloom_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
