@@ -2493,6 +2493,40 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RebirthFurnace_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                },
+                startingSporeEdgeOffset: -8
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RebirthFurnace_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                },
+                startingSporeEdgeOffset: -8,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.SeptalAlarmId, 1000, "Deaths harden surviving cells around the rebirth cycle"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Spreads that resistance through regrown territory"),
+                    new(MycovariantIds.NecrophoricAdaptation, 998, "Deaths reclaim adjacent cells while the furnace rebuilds"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 997, "Additional reclamation attempts reinforce the death-and-regrowth loop"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 996, "Largest recurring projection keeps the rebuilt colony pressing outward")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3735,6 +3769,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_GrowthTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_AnabolicRebirth_NoPreferenceControl"] = StrategyTheme.Control,
                 ["TST_Campaign_AnabolicRebirth_CuratedMycovariants"] = StrategyTheme.Control,
+                ["TST_Campaign_RebirthFurnace_NoPreferenceControl"] = StrategyTheme.Control,
+                ["TST_Campaign_RebirthFurnace_CuratedMycovariants"] = StrategyTheme.Control,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
