@@ -741,6 +741,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Pressure Bloom (`CMP_Growth_Pressure_Medium`)
+
+- Promoted order: Aggressotropic Conduit III, Hyphal Draw, Perimeter
+  Proliferator, Plasmid Bounty III, Corner Conduit III. Recurring projection
+  toward enemy biomass leads the plan; immediate repositioning and crust-lane
+  expansion sustain outward pressure before economy and corner projection
+  fallbacks.
+- Comparison seed `2026092452`, 50 pairs: treatment-control normalized board
+  share `+0.005614`, 95% CI `[-0.043183, +0.054412]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092453`, 100 pairs: treatment-control normalized board
+  share `+0.001245`, 95% CI `[-0.036197, +0.038688]`; the same margin was
+  supported. Artifacts use
+  `growthpressure_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

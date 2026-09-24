@@ -886,7 +886,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.RegenerativeHyphae, 2),
                     new TargetMutationGoal(MutationIds.AnabolicInversion, 1)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Economy)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.HyphalDrawId, 999, "Pulls existing biomass into a forward pressure lane"),
+                    new(MycovariantIds.PerimeterProliferatorId, 998, "Accelerates expansion along contested crust lanes"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 997, "Largest immediate payout funds the growth backbone"),
+                    new(MycovariantIds.CornerConduitIIIId, 996, "Largest recurring projection toward a strategic corner")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Bloom_FortifyMimic_Medium",
