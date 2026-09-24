@@ -2389,6 +2389,39 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconTempo_NoPreferenceControl",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconTempo_CuratedMycovariants",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 10,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout funds the planned surge windows"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.HyphalDrawId, 998, "Repositions existing biomass into a prepared pressure lane"),
+                    new(MycovariantIds.SeptalAlarmId, 997, "Hardens exposed setup lanes when cells are lost"),
+                    new(MycovariantIds.CornerConduitIIIId, 996, "Largest recurring projection toward an alternate route")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3625,6 +3658,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_WildfireBloom_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["TST_Campaign_BeaconSprinter_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
                 ["TST_Campaign_BeaconSprinter_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_BeaconTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_BeaconTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,

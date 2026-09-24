@@ -1339,6 +1339,28 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Beacon_Tempo_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Surge_BeaconTempo_Medium"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_BeaconTempo_NoPreferenceControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_BeaconTempo_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Empty(control.GetMycovariantPreferences());
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PlasmidBountyIIIId,
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.HyphalDrawId,
+                MycovariantIds.SeptalAlarmId,
+                MycovariantIds.CornerConduitIIIId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)
