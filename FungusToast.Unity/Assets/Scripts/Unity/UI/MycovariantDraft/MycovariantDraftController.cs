@@ -440,15 +440,13 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             ClearChoiceCards();
 
-            int currentRound = GameManager.Instance?.Board?.CurrentRound ?? 0;
-
             var cards = new List<MycovariantCard>(choices.Count);
             foreach (var m in choices)
             {
                 cards.Add(CreateChoiceCard(
                     m,
                     m.Name,
-                    MycovariantDescriptionFormatter.GetDraftPreviewDescription(m, currentRound),
+                    GetDraftCardDescription(m),
                     MycovariantArtRepository.GetIcon(m),
                     () => OnChoicePicked(m),
                     highlight: false));
@@ -459,6 +457,16 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             // Cards can be rebuilt outside a state transition, so re-apply the current turn's state
             // rather than leaving a new card's Choose affordance hidden until the next one.
             SetAllPickButtonsInteractable(uiState == DraftUIState.HumanTurn);
+        }
+
+        /// <summary>
+        /// Every draft card shows the round-aware preview, so a card dealt in as a replacement
+        /// reads the same as one dealt at the start (Conduit tile counts grow with the round).
+        /// </summary>
+        private static string GetDraftCardDescription(Mycovariant mycovariant)
+        {
+            int currentRound = GameManager.Instance?.Board?.CurrentRound ?? 0;
+            return MycovariantDescriptionFormatter.GetDraftPreviewDescription(mycovariant, currentRound);
         }
 
         private void OnChoicePicked(Mycovariant picked)
@@ -762,7 +770,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                 if (card.Mycovariant == null || card.Mycovariant.Id != choice.Id)
                 {
-                    card.SetMycovariant(choice, OnChoicePicked);
+                    card.SetMycovariant(choice, GetDraftCardDescription(choice), OnChoicePicked);
                 }
 
                 card.SetActiveHighlight(false);
@@ -794,7 +802,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             var replacement = GetReplacementMycovariant(picked);
             if (replacement != null)
             {
-                pickedCard.SetMycovariant(replacement, OnChoicePicked);
+                pickedCard.SetMycovariant(replacement, GetDraftCardDescription(replacement), OnChoicePicked);
                 pickedCard.SetActiveHighlight(false);
                 pickedCard.gameObject.SetActive(true);
                 SyncChoiceCardEffectFontSizes(GetVisibleChoiceCards());

@@ -60,7 +60,11 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             // Defensive: Outline might be missing on prefab, that's fine.
         }
 
-        public void SetMycovariant(Mycovariant mycovariant, System.Action<Mycovariant> onPicked)
+        /// <param name="description">
+        /// The copy to show - the draft passes its round-aware preview, which differs from
+        /// <see cref="Mycovariant.Description"/> for mycovariants that scale with the draft round.
+        /// </param>
+        public void SetMycovariant(Mycovariant mycovariant, string description, System.Action<Mycovariant> onPicked)
         {
             this.mycovariant = mycovariant;
             this.onPicked = onPicked;
@@ -68,7 +72,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             SetChoiceContent(
                 mycovariant,
                 mycovariant.Name,
-                mycovariant.Description,
+                description,
                 MycovariantArtRepository.GetIcon(mycovariant),
                 () => this.onPicked?.Invoke(mycovariant));
 
