@@ -704,7 +704,14 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.Necrosporulation),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth, MycovariantCategory.Reclamation)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.NecrophoricAdaptation, 1000, "Deaths seed reclamation for the Catabolic Rebirth finish"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Additional reclamation attempts reinforce the recovery loop"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 998, "Largest recurring projection extends the Creeping Mold base"),
+                    new(MycovariantIds.PerimeterProliferatorId, 997, "Recurring crust growth broadens the flexible board plan"),
+                    new(MycovariantIds.HyphalDrawId, 996, "Repositions established biomass into a forward lane")
+                }
             ),
             // AI13
             new ParameterizedSpendingStrategy(

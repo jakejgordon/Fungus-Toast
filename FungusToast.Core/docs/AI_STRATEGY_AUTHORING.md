@@ -869,6 +869,24 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Voltaic Bloom (`AI12`)
+
+- Promoted order: Necrophoric Adaptation, Reclamation Rhizomorphs,
+  Aggressotropic Conduit III, Perimeter Proliferator, Hyphal Draw. Reclamation
+  supports the Catabolic Rebirth finish, recurring projection and crust growth
+  extend the Creeping Mold base, and forward movement remains the fallback.
+- Comparison seed `2026092532`, 50 pairs: treatment-control normalized board
+  share `+0.133719`, 95% CI `[-0.008831, +0.276268]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092533`, 100 pairs: treatment-control normalized board
+  share `+0.118048`, 95% CI `[-0.017135, +0.253230]`; the same margin was
+  supported. Artifacts use
+  `voltaicbloom_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

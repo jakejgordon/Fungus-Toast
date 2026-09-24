@@ -592,7 +592,6 @@ public class StrategyCatalogTests
         // add a new name here merely to make the test pass: new Campaign AIs must start curated.
         var knownLegacyDebt = new[]
         {
-            "AI12",
             "AI13",
             "AI4",
             "AI5",
@@ -1433,6 +1432,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
         Assert.Equal(
             new[]
