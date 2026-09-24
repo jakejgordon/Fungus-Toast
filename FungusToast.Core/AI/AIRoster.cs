@@ -682,7 +682,15 @@ namespace FungusToast.Core.AI
                 surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChitinFortification },
                 surgeAttemptTurnFrequency: 7,
                 economyBias: EconomyBias.MaxEconomy,
-                maxTier: MutationTier.Tier5
+                maxTier: MutationTier.Tier5,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.PerimeterProliferatorId, 999, "Accelerates wide growth along the crust"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 998, "Spreads resistance through the established growth lanes"),
+                    new(MycovariantIds.SeptalAlarmId, 997, "Hardens exposed lanes when cells are lost"),
+                    new(MycovariantIds.HyphalDrawId, 996, "Pulls existing biomass into a forward pressure lane")
+                }
             ),
             // AI12
             new ParameterizedSpendingStrategy(

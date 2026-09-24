@@ -776,6 +776,24 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Wildfire Bloom (`CMP_Growth_WildfireBloom_Medium`)
+
+- Promoted order: Aggressotropic Conduit III, Perimeter Proliferator, Hyphal
+  Resistance Transfer, Septal Alarm, Hyphal Draw. Recurring enemy-facing and
+  crust expansion lead the plan; persistent and loss-triggered resistance help
+  its wide lanes survive before the one-time forward-movement fallback.
+- Comparison seed `2026092472`, 50 pairs: treatment-control normalized board
+  share `+0.058225`, 95% CI `[+0.007895, +0.108556]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092473`, 100 pairs: treatment-control normalized board
+  share `+0.088428`, 95% CI `[+0.055696, +0.121160]`; the same margin was
+  supported. Artifacts use
+  `wildfirebloom_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
