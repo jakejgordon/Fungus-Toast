@@ -2527,6 +2527,41 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_VoltaicBloom_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Growth,
+                    MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_VoltaicBloom_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.CreepingMold),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.NecrophoricAdaptation, 1000, "Deaths seed reclamation for the Catabolic Rebirth finish"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 999, "Additional reclamation attempts reinforce the recovery loop"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 998, "Largest recurring projection extends the Creeping Mold base"),
+                    new(MycovariantIds.PerimeterProliferatorId, 997, "Recurring crust growth broadens the flexible board plan"),
+                    new(MycovariantIds.HyphalDrawId, 996, "Repositions established biomass into a forward lane")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3771,6 +3806,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_AnabolicRebirth_CuratedMycovariants"] = StrategyTheme.Control,
                 ["TST_Campaign_RebirthFurnace_NoPreferenceControl"] = StrategyTheme.Control,
                 ["TST_Campaign_RebirthFurnace_CuratedMycovariants"] = StrategyTheme.Control,
+                ["TST_Campaign_VoltaicBloom_CategoryControl"] = StrategyTheme.Control,
+                ["TST_Campaign_VoltaicBloom_CuratedMycovariants"] = StrategyTheme.Control,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,

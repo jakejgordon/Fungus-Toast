@@ -1424,6 +1424,28 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Voltaic_Bloom_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["AI12"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_VoltaicBloom_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_VoltaicBloom_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.ReclamationRhizomorphsId,
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.PerimeterProliferatorId,
+                MycovariantIds.HyphalDrawId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)
