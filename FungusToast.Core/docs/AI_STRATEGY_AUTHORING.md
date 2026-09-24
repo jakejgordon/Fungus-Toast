@@ -824,6 +824,22 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Growth Tempo (`CMP_Surge_GrowthTempo_Medium`) — rejected
+
+- Candidate order: Perimeter Proliferator, Aggressotropic Conduit III, Plasmid
+  Bounty III, Hyphal Draw, Ballistospore Discharge III. Recurring crust growth
+  and enemy-facing projection established the board presence for later tempo
+  bursts; immediate funding, repositioning, and reinforcement were the
+  fallbacks.
+- Comparison seed `2026092502`, 50 pairs: treatment-control normalized board
+  share `-0.026239`, 95% CI `[-0.076934, +0.024457]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `growthtempo_myco_comparison_{control,treatment}_2026092502`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
