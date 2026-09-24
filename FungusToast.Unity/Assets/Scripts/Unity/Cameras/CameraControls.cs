@@ -239,7 +239,7 @@ namespace FungusToast.Unity.Cameras
 
         private bool IsCameraPanCoachmarkVisible()
         {
-            return cameraPanCoachmark != null && cameraPanCoachmark.Root != null && cameraPanCoachmark.Root.gameObject.activeSelf;
+            return cameraPanCoachmark != null && cameraPanCoachmark.IsShowing;
         }
 
         private int GetHumanPlayerCountForOnboarding(GameManager gameManager)

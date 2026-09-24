@@ -47,7 +47,7 @@ namespace FungusToast.Unity.UI.Onboarding
         /// </summary>
         public bool IsActive => !hasEvaluatedThisGame || isArmed || IsVisible;
 
-        public bool IsVisible => card != null && card.Root != null && card.Root.gameObject.activeSelf;
+        public bool IsVisible => card != null && card.IsShowing;
 
         /// <summary>True from the round-1 check passing until acknowledged: the show delay plus on-screen time.</summary>
         public bool IsPendingOrVisible => isArmed || IsVisible;

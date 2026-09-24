@@ -63,6 +63,63 @@ namespace FungusToast.Unity.UI
         // from the sides; an equal inset reads as cramped under a paragraph.
         internal const float BodyBottomExtraInset = 6f;
 
+        // HUD cards built so far, so a hold can reach every one of them. Destroyed cards are
+        // pruned when the hold changes.
+        private static readonly System.Collections.Generic.List<CoachmarkCard> hudCards = new System.Collections.Generic.List<CoachmarkCard>();
+        private static object hudHoldOwner;
+
+        /// <summary>True while a modal task (the draft) has taken the HUD cards off screen.</summary>
+        internal static bool AreHudCoachmarksHeld => hudHoldOwner != null;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetHudHold()
+        {
+            hudCards.Clear();
+            hudHoldOwner = null;
+        }
+
+        /// <summary>
+        /// Takes every <see cref="CoachmarkLayer.Hud"/> card off screen while a modal task owns
+        /// the player's attention, so only the task and its own teaching card are asking for it.
+        /// Held cards are not dismissed: <see cref="ReleaseHudCoachmarks"/> brings back the ones
+        /// still unread, and a card a host shows during the hold waits for the release.
+        /// Overlay cards are unaffected - they teach the task itself.
+        /// </summary>
+        internal static void HoldHudCoachmarks(object owner)
+        {
+            if (owner == null || hudHoldOwner != null)
+            {
+                return;
+            }
+
+            hudHoldOwner = owner;
+            hudCards.RemoveAll(card => card.Root == null);
+            foreach (var card in hudCards)
+            {
+                card.Hold();
+            }
+        }
+
+        /// <summary>
+        /// Ends a hold taken by <paramref name="owner"/>; a no-op for anyone else. With
+        /// <paramref name="reveal"/> false the held cards stay hidden (a scene teardown), and
+        /// their hosts see them as closed.
+        /// </summary>
+        internal static void ReleaseHudCoachmarks(object owner, bool reveal = true)
+        {
+            if (owner == null || !ReferenceEquals(hudHoldOwner, owner))
+            {
+                return;
+            }
+
+            hudHoldOwner = null;
+            hudCards.RemoveAll(card => card.Root == null);
+            foreach (var card in hudCards)
+            {
+                card.Release(reveal);
+            }
+        }
+
         internal static void PlayAttention(RectTransform coachmarkRect)
         {
             if (coachmarkRect == null)
@@ -152,13 +209,28 @@ namespace FungusToast.Unity.UI
             public Button CloseButton;
             public DraggableCard Draggable;
 
+            internal bool IsHudLayer;
+            // Showing, but kept off screen by a HUD hold until it is released.
+            private bool isHeld;
+
             // Vertical space above and below the body, recorded by BuildCard so Show can size
             // the card to its copy.
             internal float BodyTopSpace;
             internal float BodyBottomSpace;
             internal float BodySideSpace;
 
-            public bool IsVisible => Root != null && CanvasGroup != null && Root.gameObject.activeSelf && CanvasGroup.alpha > 0f;
+            /// <summary>
+            /// Whether the card is up as far as its host is concerned. A card held off screen by
+            /// a HUD hold still counts, so hosts neither re-show it nor treat it as dismissed.
+            /// </summary>
+            public bool IsVisible => Root != null && CanvasGroup != null
+                && (isHeld || (Root.gameObject.activeSelf && CanvasGroup.alpha > 0f));
+
+            /// <summary>
+            /// Like <see cref="IsVisible"/>, but also true during the entrance, before the card
+            /// has faded in.
+            /// </summary>
+            public bool IsShowing => Root != null && (isHeld || Root.gameObject.activeSelf);
 
             public void Show(NewPlayerTooltipDefinition definition)
             {
@@ -171,6 +243,18 @@ namespace FungusToast.Unity.UI
                 Body.text = definition.Body;
                 FitHeightToBody();
                 Draggable?.ResetMoved();
+                if (IsHudLayer && AreHudCoachmarksHeld)
+                {
+                    isHeld = true;
+                    return;
+                }
+
+                Reveal();
+            }
+
+            /// <summary>Plays the card's entrance and makes it interactive.</summary>
+            private void Reveal()
+            {
                 PrepareAttentionEntrance(Root);
                 Root.gameObject.SetActive(true);
                 BringToFront(Root);
@@ -196,8 +280,40 @@ namespace FungusToast.Unity.UI
                 Root.sizeDelta = new Vector2(Root.sizeDelta.x, BodyTopSpace + bodyHeight + BodyBottomSpace);
             }
 
+            internal void Hold()
+            {
+                if (isHeld || Root == null || !Root.gameObject.activeSelf)
+                {
+                    return;
+                }
+
+                isHeld = true;
+                CanvasGroup.blocksRaycasts = false;
+                CanvasGroup.interactable = false;
+                Root.gameObject.SetActive(false);
+            }
+
+            /// <summary>
+            /// Brings a held card back with its entrance, where the player left it: a card the
+            /// player dragged keeps its spot, and the host placed an undragged one when shown.
+            /// </summary>
+            internal void Release(bool reveal)
+            {
+                if (!isHeld || Root == null)
+                {
+                    return;
+                }
+
+                isHeld = false;
+                if (reveal)
+                {
+                    Reveal();
+                }
+            }
+
             public void HideImmediate()
             {
+                isHeld = false;
                 if (CanvasGroup != null)
                 {
                     CanvasGroup.alpha = 0f;
@@ -247,6 +363,8 @@ namespace FungusToast.Unity.UI
             if (layer == CoachmarkLayer.Hud)
             {
                 rootObject.AddComponent<HudLayerCoachmark>();
+                card.IsHudLayer = true;
+                hudCards.Add(card);
             }
 
             card.Root = rootObject.GetComponent<RectTransform>();

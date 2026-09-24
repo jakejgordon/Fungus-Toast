@@ -119,6 +119,7 @@ copy.
 - these are still part of the broader onboarding family when they teach first-time concepts
 - their content should live in `NewPlayerTooltipCatalog.cs` if they are new-player guidance
 - every coachmark card is built by `CoachmarkLayoutUtility.BuildCard` and is draggable (grip glyph, move cursor, lift while dragging); a host only chooses size, pivot, and where to anchor it, and leaves a card alone once `Draggable.HasBeenMoved` is set. See `UI_STYLE_GUIDE.md` section 5.11.
+- a card is either a *HUD* card (teaches the board or always-on HUD; drawn beneath the mutation tree) or an *Overlay* card (teaches a control drawn over the HUD; drawn on top). While a modal task owns the player's attention - today, the mycovariant draft, including any tile placement a pick starts - it calls `CoachmarkLayoutUtility.HoldHudCoachmarks` and every HUD card steps off screen; `ReleaseHudCoachmarks` brings back the ones still unread when the task closes. A held card still reports `IsVisible`, so hosts neither re-show nor treat it as dismissed, and a HUD card shown during the hold waits for the release. Only one teaching layer is ever asking for attention.
 
 **Use this when:**
 - hover is too subtle

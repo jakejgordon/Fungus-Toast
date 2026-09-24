@@ -258,6 +258,12 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         public bool HasDraftHistory => draftHistoryEntries.Count > 0;
 
+        private void OnDestroy()
+        {
+            // Leaving the scene mid-draft must not strand the next game's tips behind a hold.
+            CoachmarkLayoutUtility.ReleaseHudCoachmarks(this, reveal: false);
+        }
+
         public void ShowDraftHistoryOverlay()
         {
             if (!HasDraftHistory)
@@ -948,6 +954,9 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 return;
             }
 
+            // Emphasis first: bold digits are wider, so they feed into the size measurement.
+            EmphasizeTierDifferences(cards);
+
             float smallest = float.MaxValue;
             foreach (var card in cards)
             {
@@ -959,6 +968,30 @@ namespace FungusToast.Unity.UI.MycovariantDraft
                 card.ApplyEffectFontSize(smallest);
             }
         }
+
+        /// <summary>
+        /// When the offer holds two tiers of one family (Ballistospore Discharge I and II), their
+        /// copy differs only in a number; highlight that number on each card so the comparison
+        /// reads at a glance instead of by rereading both sentences. Every card is rewritten from
+        /// its raw description, so a card whose sibling was just replaced drops its highlight.
+        /// </summary>
+        private static void EmphasizeTierDifferences(IReadOnlyList<MycovariantCard> cards)
+        {
+            string[] marked = MycovariantTierComparison.EmphasizeTierDifferences(
+                cards.Select(card => card.Title).ToArray(),
+                cards.Select(card => card.Description).ToArray(),
+                value => $"<b><mark={TierDifferenceMarkHex}>{value}</mark></b>");
+
+            for (int index = 0; index < cards.Count; index++)
+            {
+                cards[index].SetEffectTextMarkup(marked[index]);
+            }
+        }
+
+        // State.Warning at ~40% alpha: a soft gold wash behind the digits that keeps the card's
+        // dark effect text readable on its light surface.
+        private static readonly string TierDifferenceMarkHex =
+            "#" + ColorUtility.ToHtmlStringRGB(FungusToast.Unity.UI.UIStyleTokens.State.Warning) + "66";
 
         private void ClearChoiceCards()
         {
@@ -1277,6 +1310,10 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
         private void ShowDraftUI()
         {
+            // The draft is the player's one task until it closes: board and HUD tips (the
+            // endgame countdown, scouting rivals, ...) step aside and come back afterwards. The
+            // draft's own intro card is an overlay card, so it is unaffected.
+            CoachmarkLayoutUtility.HoldHudCoachmarks(this);
             draftPanel.SetActive(true);
             draftPanel.transform.SetAsLastSibling();
             if (draftMessagePanel != null)
@@ -1334,6 +1371,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
             interactionBlocker.blocksRaycasts = false;
             interactionBlocker.alpha = 0f;
             HideMycovariantDraftCoachmarkImmediate(false);
+            CoachmarkLayoutUtility.ReleaseHudCoachmarks(this);
             if (draftOrderRow != null)
             {
                 draftOrderRow.gameObject.SetActive(true);

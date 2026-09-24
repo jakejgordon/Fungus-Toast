@@ -50,6 +50,10 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
         public Mycovariant Mycovariant => mycovariant;
 
+        /// <summary>The card's title and effect copy as set, before any comparison markup.</summary>
+        public string Title { get; private set; } = string.Empty;
+        public string Description { get; private set; } = string.Empty;
+
         private void Awake()
         {
             outline = GetComponent<Outline>();
@@ -79,6 +83,9 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
 
         public void SetCardContent(string title, string description, Sprite icon, System.Action onClick)
         {
+            Title = title ?? string.Empty;
+            Description = description ?? string.Empty;
+
             if (iconImage != null)
             {
                 iconImage.sprite = icon;
@@ -190,6 +197,19 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             }
 
             effectText.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, available);
+        }
+
+        /// <summary>
+        /// Swaps in a marked-up copy of <see cref="Description"/> (the draft emphasizes numbers
+        /// that differ between offered tiers). Call before measuring the effect font size, since
+        /// bold digits are wider.
+        /// </summary>
+        public void SetEffectTextMarkup(string markedUpDescription)
+        {
+            if (effectText != null)
+            {
+                effectText.text = markedUpDescription ?? Description;
+            }
         }
 
         /// <summary>
