@@ -2354,6 +2354,41 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconSprinter_NoPreferenceControl",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                startingSporeEdgeOffset: -10),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconSprinter_CuratedMycovariants",
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.HyperadaptiveDrift),
+                    new TargetMutationGoal(MutationIds.HyphalSurge),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, 3)
+                },
+                surgePriorityIds: new List<int> { MutationIds.HyphalSurge, MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                startingSporeEdgeOffset: -10,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalDrawId, 1000, "Immediate forward repositioning toward the leading enemy"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection toward enemy biomass"),
+                    new(MycovariantIds.BallistosporeDischargeIIIId, 998, "Largest immediate spore reinforcement for a tempo window"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 997, "Largest immediate payout funds the surge cadence"),
+                    new(MycovariantIds.CornerConduitIIIId, 996, "Largest recurring projection toward an alternate route")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3588,6 +3623,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_PutridTendrils_CuratedMycovariants"] = StrategyTheme.Offense,
                 ["TST_Campaign_WildfireBloom_NoPreferenceControl"] = StrategyTheme.Offense,
                 ["TST_Campaign_WildfireBloom_CuratedMycovariants"] = StrategyTheme.Offense,
+                ["TST_Campaign_BeaconSprinter_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
+                ["TST_Campaign_BeaconSprinter_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
