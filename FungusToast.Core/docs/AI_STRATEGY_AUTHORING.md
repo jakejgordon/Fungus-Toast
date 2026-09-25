@@ -904,6 +904,24 @@ a held-out confirmation.
   invariant mismatches; the Testing pair remains registered for
   reproducibility.
 
+### Rejuvenation Engine (`AI5`)
+
+- Promoted order: Plasmid Bounty III, Necrophoric Adaptation, Reclamation
+  Rhizomorphs, Ascus Wager. Immediate economy develops the deep mutation
+  engine, death-triggered and repeat reclamation sustain renewal, and the free
+  Tier 5 level advances the late rebirth plan.
+- Comparison seed `2026092552`, 50 pairs: treatment-control normalized board
+  share `+0.004464`, 95% CI `[-0.022552, +0.031481]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092553`, 100 pairs: treatment-control normalized board
+  share `+0.009237`, 95% CI `[-0.028806, +0.047280]`; the same margin was
+  supported. Artifacts use
+  `rejuvenationengine_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

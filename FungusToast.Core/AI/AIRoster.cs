@@ -534,6 +534,13 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.CreepingMold),
                     new TargetMutationGoal(MutationIds.CatabolicRebirth),
                     new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate payout develops the deep mutation economy"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Deaths seed reclaimed cells for repeated renewal"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 998, "Additional reclamation attempts sustain the rebirth loop"),
+                    new(MycovariantIds.AscusWagerId, 997, "A free Tier 5 level advances the late renewal engine")
                 }
             ),
             // AI6
