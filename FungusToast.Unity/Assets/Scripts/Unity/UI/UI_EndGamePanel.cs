@@ -813,6 +813,7 @@ namespace FungusToast.Unity.UI
                     summary.ResistantCells,
                     summary.DeadCells,
                     summary.ToxinCells,
+                    currentPlayerStatistics.GetPlayerStatistics(p.PlayerId).TilesColonized,
                     currentPlayerStatistics.GetPlayerStatistics(p.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
                 rank++;
@@ -916,6 +917,7 @@ namespace FungusToast.Unity.UI
                     summary.ResistantCells,
                     summary.DeadCells,
                     summary.ToxinCells,
+                    currentPlayerStatistics.GetPlayerStatistics(player.PlayerId).TilesColonized,
                     currentPlayerStatistics.GetPlayerStatistics(player.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
                 rank++;
@@ -1231,6 +1233,7 @@ namespace FungusToast.Unity.UI
                     rowData.resistantCells,
                     rowData.deadCells,
                     rowData.toxinCells,
+                    rowData.tilesColonized,
                     rowData.spentMutationPoints,
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
             }
@@ -3119,13 +3122,22 @@ namespace FungusToast.Unity.UI
 
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsRankWidth, TextAlignmentOptions.Center, false);
             CreateHeaderCell(header.transform, string.Empty, EndGameResultsIconWidth, TextAlignmentOptions.Center, false);
-            CreateHeaderCell(header.transform, "Player", EndGameResultsPlayerColumnWidth, TextAlignmentOptions.Left, true);
-            CreateHeaderCell(header.transform, "Alive", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
-            CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
-            CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
-            CreateHeaderCell(header.transform, "Toxins", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false);
-            CreateHeaderCell(header.transform, "Spent Points", EndGameResultsSpentPointsWidth, TextAlignmentOptions.Right, false);
-            CreateHeaderCell(header.transform, "Details", EndGameResultsDetailsWidth, TextAlignmentOptions.Center, false);
+            CreateHeaderCell(header.transform, "Player", EndGameResultsPlayerColumnWidth, TextAlignmentOptions.Left, true,
+                "Players are ranked by living cells at game end.");
+            CreateHeaderCell(header.transform, "Alive", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+                "Living cells on the board at game end, including resistant cells.");
+            CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+                "Living cells that cannot be killed, displaced, or lost to random decay.");
+            CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+                "Dead cells this player still owns at game end.");
+            CreateHeaderCell(header.transform, "Toxins", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+                "Toxin tiles this player still owns at game end.");
+            CreateHeaderCell(header.transform, "Colonized", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+                "Tiles colonized during the game. Colonize: place a new living cell in an empty tile.");
+            CreateHeaderCell(header.transform, "Spent Points", EndGameResultsSpentPointsWidth, TextAlignmentOptions.Right, false,
+                "Total mutation points spent on mutation upgrades and surge activations during the game.");
+            CreateHeaderCell(header.transform, "Details", EndGameResultsDetailsWidth, TextAlignmentOptions.Center, false,
+                "View a player's end-of-game build details.");
         }
 
         private Player ResolvePlayerForDetails(int playerId)
@@ -4682,7 +4694,7 @@ namespace FungusToast.Unity.UI
                 manager?.TestingForcedStartingAdaptationIds);
         }
 
-        private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible)
+        private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible, string tooltip = null)
         {
             var cell = new GameObject($"UI_GameEndHeader_{text}", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
             cell.transform.SetParent(parent, false);
@@ -4702,6 +4714,9 @@ namespace FungusToast.Unity.UI
             label.fontSizeMin = 14f;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             TMPOverflowUtility.SetSafeEllipsis(label);
+            label.raycastTarget = !string.IsNullOrWhiteSpace(tooltip);
+
+            AttachStaticTooltip(cell, tooltip);
         }
 
         private static void EnsureButtonLayout(Button button)

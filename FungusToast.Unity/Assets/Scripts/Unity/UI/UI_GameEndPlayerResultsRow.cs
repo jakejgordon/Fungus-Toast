@@ -20,6 +20,7 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI resistantText = null!;
         [SerializeField] private TextMeshProUGUI deadText;
         [SerializeField] private TextMeshProUGUI toxinText;
+        private TextMeshProUGUI colonizedText = null!;
         private TextMeshProUGUI spentPointsText = null!;
         [SerializeField] private Button detailsButton;
         [SerializeField] private Image rowBackground;
@@ -49,6 +50,7 @@ namespace FungusToast.Unity.UI
             if (resistantText != null) resistantText.color = UIStyleTokens.State.Success;
             if (deadText != null) deadText.color = UIStyleTokens.Text.Muted;
             if (toxinText != null) toxinText.color = UIStyleTokens.Text.Muted;
+            if (colonizedText != null) colonizedText.color = UIStyleTokens.Text.Secondary;
             if (spentPointsText != null) spentPointsText.color = UIStyleTokens.Text.Secondary;
 
             ConfigureText(rankText, TextAlignmentOptions.Center, 23f, allowAutoSize: false);
@@ -57,16 +59,18 @@ namespace FungusToast.Unity.UI
             EnsureResistantText();
             ConfigureText(deadText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
             EnsureToxinText();
+            EnsureColonizedText();
             EnsureSpentPointsText();
             EnsureDetailsButton();
             EnsureColumnWidths();
         }
 
         /* -------- public API -------- */
-        public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, int spentPoints, Action onDetailsRequested = null)
+        public void Populate(int rank, Sprite icon, string playerName, int living, int resistant, int dead, int toxins, int colonized, int spentPoints, Action onDetailsRequested = null)
         {
             EnsureResistantText();
             EnsureToxinText();
+            EnsureColonizedText();
             EnsureSpentPointsText();
 
             rankText.text = rank.ToString();
@@ -82,6 +86,11 @@ namespace FungusToast.Unity.UI
             if (toxinText != null)
             {
                 toxinText.text = FormatCountOrZero(toxins);
+            }
+
+            if (colonizedText != null)
+            {
+                colonizedText.text = FormatCountOrZero(colonized);
             }
 
             if (spentPointsText != null)
@@ -152,6 +161,37 @@ namespace FungusToast.Unity.UI
             layout.flexibleWidth = -1f;
         }
 
+        private void EnsureColonizedText()
+        {
+            if (colonizedText != null || deadText == null)
+            {
+                return;
+            }
+
+            var clone = Instantiate(deadText.gameObject, deadText.transform.parent);
+            clone.name = "UI_PlayerResultsColonizedText";
+            int toxinSiblingIndex = toxinText != null ? toxinText.transform.GetSiblingIndex() : deadText.transform.GetSiblingIndex();
+            clone.transform.SetSiblingIndex(toxinSiblingIndex + 1);
+
+            colonizedText = clone.GetComponent<TextMeshProUGUI>();
+            if (colonizedText != null)
+            {
+                colonizedText.color = UIStyleTokens.Text.Secondary;
+                ConfigureText(colonizedText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
+                colonizedText.text = "0";
+            }
+
+            var layout = clone.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = clone.AddComponent<LayoutElement>();
+            }
+
+            layout.preferredWidth = MetricColumnWidth;
+            layout.minWidth = MetricColumnWidth;
+            layout.flexibleWidth = -1f;
+        }
+
         private void EnsureSpentPointsText()
         {
             if (spentPointsText != null || deadText == null)
@@ -161,8 +201,8 @@ namespace FungusToast.Unity.UI
 
             var clone = Instantiate(deadText.gameObject, deadText.transform.parent);
             clone.name = "UI_PlayerResultsSpentPointsText";
-            int toxinSiblingIndex = toxinText != null ? toxinText.transform.GetSiblingIndex() : deadText.transform.GetSiblingIndex();
-            clone.transform.SetSiblingIndex(toxinSiblingIndex + 1);
+            Transform precedingColumn = colonizedText != null ? colonizedText.transform : toxinText != null ? toxinText.transform : deadText.transform;
+            clone.transform.SetSiblingIndex(precedingColumn.GetSiblingIndex() + 1);
 
             spentPointsText = clone.GetComponent<TextMeshProUGUI>();
             if (spentPointsText != null)
@@ -241,6 +281,7 @@ namespace FungusToast.Unity.UI
             ApplyColumnWidth(resistantText, MetricColumnWidth);
             ApplyColumnWidth(deadText, MetricColumnWidth);
             ApplyColumnWidth(toxinText, MetricColumnWidth);
+            ApplyColumnWidth(colonizedText, MetricColumnWidth);
             ApplyColumnWidth(spentPointsText, SpentPointsColumnWidth);
 
             if (detailsButton != null)
