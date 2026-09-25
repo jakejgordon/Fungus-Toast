@@ -2638,6 +2638,37 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RootedCanopy_CategoryControl",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier3,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(
+                    MycovariantCategory.Growth,
+                    MycovariantCategory.Resistance)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RootedCanopy_CuratedMycovariants",
+                prioritizeHighTier: true,
+                maxTier: MutationTier.Tier3,
+                priorityMutationCategories: new List<MutationCategory>
+                {
+                    MutationCategory.Growth,
+                    MutationCategory.CellularResilience
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.HyphalResistanceTransferId, 1000, "Persistent resistance spread reinforces safe established growth"),
+                    new(MycovariantIds.SeptalAlarmId, 999, "Losses harden surviving neighbors around the sturdy canopy"),
+                    new(MycovariantIds.PerimeterProliferatorId, 998, "Recurring crust growth expands the limited toolkit"),
+                    new(MycovariantIds.MycelialBastionIIIId, 997, "Largest immediate resistant-cell reinforcement"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 996, "Largest recurring projection provides a controlled outward route")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3888,6 +3919,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
                 ["TST_Campaign_RejuvenationEngine_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
                 ["TST_Campaign_RejuvenationEngine_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
+                ["TST_Campaign_RootedCanopy_CategoryControl"] = StrategyTheme.TierCap,
+                ["TST_Campaign_RootedCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
