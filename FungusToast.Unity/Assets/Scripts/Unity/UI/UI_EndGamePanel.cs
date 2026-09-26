@@ -44,6 +44,9 @@ namespace FungusToast.Unity.UI
         private const float OutcomeBackdropAnchorMaxY = 0.99f;
         private const float CampaignOutcomeSpacerPreferredHeight = 94f;
         private const float CampaignOutcomeSpacerMinHeight = 88f;
+        // The victory banner is short enough that the content inset already clears it; the full
+        // spacer left a ~100px gap between the banner and the results table.
+        private const float CampaignVictorySpacerHeight = 12f;
         private const int CampaignOutcomeSubtitleFontSize = 26;
         private const float EndGameOverlayHorizontalInset = 120f;
         private const float PendingMoldinessRewardPanelWidth = 950f;
@@ -70,6 +73,9 @@ namespace FungusToast.Unity.UI
         private const float CampaignMoldinessAwardPulseStrength = 0.08f;
         private const float CampaignMoldinessAwardPulseSpeed = 2.6f;
         private const float CampaignMoldinessAwardPulseMinAlpha = 0.82f;
+        private const float CampaignMoldinessToastWidth = 240f;
+        private const float ClaimRewardPulseStrength = 0.045f;
+        private const float ClaimRewardPulseSpeed = 4.2f;
         private const float EndGameConfirmationPrimaryButtonWidth = 500f;
         private const float EndGameConfirmationCompactButtonWidth = 330f;
         private const float EndGameConfirmationButtonHeight = 56f;
@@ -145,6 +151,8 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI pulsingMoldinessAwardLabel;
         private Vector3 pulsingMoldinessAwardBaseScale = Vector3.one;
         private Color pulsingMoldinessAwardBaseColor = Color.white;
+        private RectTransform pulsingClaimRewardButton;
+        private Vector3 pulsingClaimRewardButtonBaseScale = Vector3.one;
         private readonly List<Component> legacyResultsHeaderCandidates = new();
         private RectTransform endGameLayoutContainer;
         private RectTransform endGameContentShellRoot;
@@ -256,6 +264,7 @@ namespace FungusToast.Unity.UI
         private void Update()
         {
             UpdateCampaignMoldinessAwardPulse();
+            UpdateClaimRewardButtonPulse();
 
             if (!Application.isPlaying)
             {
@@ -836,7 +845,7 @@ namespace FungusToast.Unity.UI
                 Destroy(child.gameObject);
             }
 
-            BuildCampaignTopSpacer();
+            BuildCampaignTopSpacer(CampaignVictorySpacerHeight);
 
             var contentColumns = new GameObject("UI_CampaignVictoryContentColumns", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             contentColumns.transform.SetParent(resultsContainer, false);
@@ -1155,7 +1164,7 @@ namespace FungusToast.Unity.UI
                 Destroy(child.gameObject);
             }
 
-            BuildCampaignTopSpacer();
+            BuildCampaignTopSpacer(CampaignVictorySpacerHeight);
 
             var contentColumns = new GameObject("UI_CampaignVictoryContentColumns", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             contentColumns.transform.SetParent(resultsContainer, false);
@@ -1650,7 +1659,7 @@ namespace FungusToast.Unity.UI
             title.alignment = TextAlignmentOptions.Center;
             ConfigureCampaignMoldinessAwardPulse(title, snapshot.isFinalCampaignVictory && snapshot.moldinessAwarded > 0);
 
-            var meter = UI_MoldinessToastMeter.Create(root.transform);
+            var meter = UI_MoldinessToastMeter.Create(root.transform, CampaignMoldinessToastWidth);
             bool animateAward = victory
                 && snapshot.moldinessAwarded > 0
                 && !ReferenceEquals(snapshot, lastAnimatedMoldinessSnapshot);
@@ -1669,8 +1678,9 @@ namespace FungusToast.Unity.UI
                 meter.ShowStatic(snapshot.moldinessTierAfterAward, snapshot.moldinessProgressAfterAward);
             }
 
-            string thresholdMessage = snapshot.pendingMoldinessUnlockCount > 0
-                ? $"Threshold reached. {snapshot.pendingMoldinessUnlockCount} moldiness reward{Pluralize(snapshot.pendingMoldinessUnlockCount)} pending."
+            int pendingRewards = snapshot.pendingMoldinessUnlockCount;
+            string thresholdMessage = pendingRewards > 0
+                ? (pendingRewards == 1 ? "New reward unlocked! Claim it below." : $"{pendingRewards} new rewards unlocked! Claim them below.")
                 : (snapshot.moldinessAwarded > 0
                     ? "No new threshold crossed this run."
                     : "Moldiness is earned by clearing stages - none gained this run.");
@@ -1683,8 +1693,13 @@ namespace FungusToast.Unity.UI
             ApplyCarryoverInfoTextWidth(detail, CampaignMoldinessSummaryTextWidth);
             detail.alignment = TextAlignmentOptions.Center;
 
-            // "Threshold reached" would spoil the level-up, so it waits for the toast to settle.
+            // The unlock line would spoil the level-up, so it waits for the toast to settle, and
+            // then the claim button starts pulsing to tie the moment to the next action.
             meter.RevealAfterAnimation(detail);
+            if (victory && pendingRewards > 0)
+            {
+                meter.WhenFinished(StartClaimRewardButtonPulse);
+            }
         }
 
         private static void ApplyCarryoverInfoTextWidth(TextMeshProUGUI label, float width)
@@ -2330,6 +2345,7 @@ namespace FungusToast.Unity.UI
         /* ─────────── Buttons / Helpers ─────────── */
         private void OnContinueCampaign()
         {
+            ResetClaimRewardButtonPulse();
             if (hasPendingDefeatCarryoverEvent)
             {
                 ShowCampaignPendingDefeatCarryoverSelection(
@@ -2657,8 +2673,44 @@ namespace FungusToast.Unity.UI
             pulsingMoldinessAwardLabel.color = pulsingColor;
         }
 
+        private void StartClaimRewardButtonPulse()
+        {
+            ResetClaimRewardButtonPulse();
+            if (continueButton == null || !continueButton.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            pulsingClaimRewardButton = continueButton.GetComponent<RectTransform>();
+            pulsingClaimRewardButtonBaseScale = pulsingClaimRewardButton.localScale;
+        }
+
+        private void UpdateClaimRewardButtonPulse()
+        {
+            if (pulsingClaimRewardButton == null)
+            {
+                return;
+            }
+
+            float pulse = (Mathf.Sin(Time.unscaledTime * ClaimRewardPulseSpeed) + 1f) * 0.5f;
+            pulsingClaimRewardButton.localScale = pulsingClaimRewardButtonBaseScale * (1f + (pulse * ClaimRewardPulseStrength));
+        }
+
+        private void ResetClaimRewardButtonPulse()
+        {
+            if (pulsingClaimRewardButton != null)
+            {
+                pulsingClaimRewardButton.localScale = pulsingClaimRewardButtonBaseScale;
+            }
+
+            pulsingClaimRewardButton = null;
+            pulsingClaimRewardButtonBaseScale = Vector3.one;
+        }
+
         private void ResetCampaignMoldinessAwardPulse()
         {
+            ResetClaimRewardButtonPulse();
+
             if (pulsingMoldinessAwardLabel != null)
             {
                 pulsingMoldinessAwardLabel.rectTransform.localScale = pulsingMoldinessAwardBaseScale;
@@ -3808,7 +3860,7 @@ namespace FungusToast.Unity.UI
             showPostAdaptationConfirmationState = visible;
         }
 
-        private void BuildCampaignTopSpacer()
+        private void BuildCampaignTopSpacer(float height = CampaignOutcomeSpacerPreferredHeight)
         {
             if (resultsContainer == null)
             {
@@ -3824,8 +3876,8 @@ namespace FungusToast.Unity.UI
             spacer.transform.SetParent(resultsContainer, false);
 
             var layout = spacer.GetComponent<LayoutElement>();
-            layout.preferredHeight = CampaignOutcomeSpacerPreferredHeight;
-            layout.minHeight = CampaignOutcomeSpacerMinHeight;
+            layout.preferredHeight = height;
+            layout.minHeight = Mathf.Min(height, CampaignOutcomeSpacerMinHeight);
             layout.flexibleHeight = 0f;
         }
 

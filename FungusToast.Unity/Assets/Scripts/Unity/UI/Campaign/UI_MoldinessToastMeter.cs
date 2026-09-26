@@ -83,6 +83,7 @@ namespace FungusToast.Unity.UI.Campaign
         private readonly List<TileVisual> tiles = new();
         private readonly List<int> fillOrder = new();
         private readonly List<Graphic> revealOnFinish = new();
+        private readonly List<Action> finishCallbacks = new();
         private int currentTier;
         private int currentThreshold;
         private int filledCount;
@@ -183,6 +184,23 @@ namespace FungusToast.Unity.UI.Campaign
 
             revealOnFinish.Add(graphic);
             SetAlpha(graphic, isAnimating ? 0f : 1f);
+        }
+
+        /// <summary>Runs <paramref name="callback"/> once the award settles, or right away if nothing is animating.</summary>
+        public void WhenFinished(Action? callback)
+        {
+            if (callback == null)
+            {
+                return;
+            }
+
+            if (isAnimating)
+            {
+                finishCallbacks.Add(callback);
+                return;
+            }
+
+            callback();
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -415,6 +433,13 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void FinishReveal(bool instant)
         {
+            var callbacks = finishCallbacks.ToArray();
+            finishCallbacks.Clear();
+            foreach (var callback in callbacks)
+            {
+                callback();
+            }
+
             revealOnFinish.RemoveAll(graphic => graphic == null);
             if (instant || !isActiveAndEnabled)
             {
