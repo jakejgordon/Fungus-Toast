@@ -382,6 +382,7 @@ That lands every accent in the palette between **7.9:1 and 9.5:1**, and the acce
 - In large menu-style buttons, prefer centered icon-plus-label groupings over left-edge icon placement unless the entire button stack is intentionally left-aligned like a navigation list.
 - Mode select screens may keep peer choices such as `Solo / Hotseat Game` and `Campaign` neutral/light when neither choice is being recommended.
 - Campaign entry screens should promote the best forward action with the affirmative green treatment: `Resume Campaign` when a resumable run exists, otherwise `Start Campaign`.
+- The campaign hub's moldiness card shares the `500px` action-stack column, so it never widens to use spare screen space; it grows vertically instead. Progress is drawn as the moldiness toast (`UI_MoldinessToastMeter`, 200px on the hub) beside its copy, and that copy stays at `Type.Body`/`Type.Caption` rather than `Type.Micro`, with the next-reward line in `Text.Primary`.
 - Pause and post-victory overlays should keep `Resume`, `Continue Campaign`, `Select Adaptation`, or equivalent forward actions as the lone green CTA in their local action stack.
 - `Main Menu`, `Exit Game`, `Back`, and similar dismissal/navigation controls should not share the affirmative green treatment on these screens.
 

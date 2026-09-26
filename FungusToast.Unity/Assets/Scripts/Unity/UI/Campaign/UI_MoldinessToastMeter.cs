@@ -25,7 +25,7 @@ namespace FungusToast.Unity.UI.Campaign
     {
         public const float DefaultToastWidth = 200f;
         private const float LevelLabelHeight = 32f;
-        private const float CounterLabelHeight = 26f;
+        private const float CounterLabelHeight = 28f;
         private const float SectionSpacing = 6f;
 
         // Crumb area that holds the tiles, in normalized toast coordinates (y up).
@@ -511,7 +511,7 @@ namespace FungusToast.Unity.UI.Campaign
             bannerLabel.rectTransform.offsetMax = new Vector2(-8f, -4f);
             banner.gameObject.SetActive(false);
 
-            counterLabel = CreateLabel("UI_MoldinessToastCounter", 18f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
+            counterLabel = CreateLabel("UI_MoldinessToastCounter", 20f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
             PlaceCentered(counterLabel.rectTransform, new Vector2(toastWidth + 40f, CounterLabelHeight), new Vector2(0f, -(height - CounterLabelHeight) * 0.5f));
         }
 

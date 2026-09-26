@@ -34,8 +34,10 @@ namespace FungusToast.Unity.UI.Campaign
         private const float MoldinessSummaryPanelMinWidth = 500f;
         private const float MoldinessSummaryPanelPreferredWidth = 500f;
         private const float MoldinessSummaryTextWidth = 440f;
-        private const float MoldinessToastWidth = 150f;
-        private const float MoldinessProgressRowSpacing = 20f;
+        // The card is pinned to the 500px action-stack column (style guide section 4), so it
+        // uses the spare vertical room instead: a large toast and body-size copy beside it.
+        private const float MoldinessToastWidth = 200f;
+        private const float MoldinessProgressRowSpacing = 24f;
         private const float MoldinessProgressDetailsWidth = MoldinessSummaryTextWidth - MoldinessToastWidth - MoldinessProgressRowSpacing;
         private const float MoldinessUnlockedRewardsGridWidth = 440f;
         private const float ActionButtonIconSize = 22f;
@@ -557,9 +559,9 @@ namespace FungusToast.Unity.UI.Campaign
             tooltipTrigger.SetPinOnClick(false);
 
             var layout = moldinessSummarySectionRoot.GetComponent<VerticalLayoutGroup>();
-            layout.padding = new RectOffset(18, 18, 18, 18);
+            layout.padding = new RectOffset(18, 18, 24, 24);
             layout.childAlignment = TextAnchor.UpperCenter;
-            layout.spacing = 10f;
+            layout.spacing = 14f;
             layout.childControlWidth = true;
             layout.childControlHeight = false;
             layout.childForceExpandWidth = false;
@@ -592,7 +594,7 @@ namespace FungusToast.Unity.UI.Campaign
                 26f);
             moldinessSummaryNextRewardLabel ??= CreateMoldinessSummaryText(
                 "UI_CampaignMoldinessSummaryNextReward",
-                17f,
+                20f,
                 FontStyles.Normal,
                 UIStyleTokens.Text.Secondary,
                 42f);
@@ -968,13 +970,15 @@ namespace FungusToast.Unity.UI.Campaign
             if (moldinessSummaryLifetimeLabel != null)
             {
                 moldinessSummaryLifetimeLabel.text = $"Lifetime earned: {snapshot.LifetimeEarned}";
-                moldinessSummaryLifetimeLabel.fontSize = 16f;
-                moldinessSummaryLifetimeLabel.color = UIStyleTokens.Text.Muted;
+                moldinessSummaryLifetimeLabel.fontSize = 18f;
+                moldinessSummaryLifetimeLabel.color = UIStyleTokens.Text.Secondary;
             }
 
             if (moldinessSummaryNextRewardLabel != null)
             {
                 moldinessSummaryNextRewardLabel.text = BuildNextMoldinessRewardPreview(campaignController.State?.moldiness);
+                // Set here, not at creation: ApplyStyle's palette pass turns every small label Secondary.
+                moldinessSummaryNextRewardLabel.color = UIStyleTokens.Text.Primary;
             }
 
             if (moldinessSummaryPendingLabel != null)
