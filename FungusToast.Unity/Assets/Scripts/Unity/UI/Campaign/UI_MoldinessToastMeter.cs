@@ -91,6 +91,7 @@ namespace FungusToast.Unity.UI.Campaign
         private int finalProgress;
         private bool isAnimating;
         private bool snapToFinalOnEnable;
+        private int deferredAwardPoints;
 
         /// <param name="showLevelLabel">
         /// False when the host already titles the card with the level; the meter still updates
@@ -152,7 +153,7 @@ namespace FungusToast.Unity.UI.Campaign
             progressBefore = Math.Max(0, progressBefore);
             var (simulatedTier, simulatedProgress) = Advance(tierBefore, progressBefore, awarded);
             bool replayMatches = simulatedTier == expectedTierAfter && simulatedProgress == expectedProgressAfter;
-            if (awarded <= 0 || !replayMatches || !isActiveAndEnabled)
+            if (awarded <= 0 || !replayMatches)
             {
                 ShowStatic(expectedTierAfter, expectedProgressAfter);
                 return;
@@ -171,7 +172,16 @@ namespace FungusToast.Unity.UI.Campaign
                 SetAlpha(graphic, 0f);
             }
 
-            StartCoroutine(RunAward(awarded));
+            // Hosts often build their content while still hidden and activate it afterwards (the
+            // end-game panel does), so an inactive meter holds the award until it is first shown.
+            if (isActiveAndEnabled)
+            {
+                StartCoroutine(RunAward(awarded));
+            }
+            else
+            {
+                deferredAwardPoints = awarded;
+            }
         }
 
         /// <summary>Keeps <paramref name="graphic"/> hidden while an award plays and fades it in once the award settles.</summary>
@@ -228,6 +238,14 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 snapToFinalOnEnable = false;
                 SkipToEnd();
+                return;
+            }
+
+            if (deferredAwardPoints > 0 && isAnimating)
+            {
+                int awarded = deferredAwardPoints;
+                deferredAwardPoints = 0;
+                StartCoroutine(RunAward(awarded));
             }
         }
 
@@ -240,6 +258,7 @@ namespace FungusToast.Unity.UI.Campaign
         {
             StopAllCoroutines();
             isAnimating = false;
+            deferredAwardPoints = 0;
             hitArea.raycastTarget = false;
             ClearChildren(fxLayer);
             toastHolder.localScale = Vector3.one;
