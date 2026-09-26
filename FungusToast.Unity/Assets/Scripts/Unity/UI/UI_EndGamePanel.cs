@@ -65,7 +65,6 @@ namespace FungusToast.Unity.UI
         private const float CampaignMoldinessSummaryPanelMinWidth = 280f;
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
         private const float CampaignMoldinessSummaryTextWidth = 248f;
-        private const float CampaignMoldinessSummaryToastGridWidth = 188f;
         private const float CampaignMoldinessUnlockedRewardsGridWidth = 400f;
         private const float CampaignMoldinessAwardPulseScaleMultiplier = 1.08f;
         private const float CampaignMoldinessAwardPulseStrength = 0.08f;
@@ -140,7 +139,9 @@ namespace FungusToast.Unity.UI
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
         private CampaignVictorySnapshot cachedCampaignVictorySnapshot;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
-        private readonly List<Image> moldinessSummaryToastTiles = new();
+        // The award animation plays once per victory; rebuilding the same results (e.g. after
+        // claiming a moldiness reward) shows the settled toast instead of replaying it.
+        private CampaignVictorySnapshot lastAnimatedMoldinessSnapshot;
         private TextMeshProUGUI pulsingMoldinessAwardLabel;
         private Vector3 pulsingMoldinessAwardBaseScale = Vector3.one;
         private Color pulsingMoldinessAwardBaseColor = Color.white;
@@ -1640,10 +1641,6 @@ namespace FungusToast.Unity.UI
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
 
-            int currentLevel = snapshot.moldinessTierAfterAward + 1;
-            int progressAfter = Mathf.Clamp(snapshot.moldinessProgressAfterAward, 0, Math.Max(1, snapshot.moldinessThresholdAfterAward));
-            int threshold = Math.Max(1, snapshot.moldinessThresholdAfterAward);
-
             var title = CreateCarryoverInfoText(root.transform,
                 victory ? $"+{snapshot.moldinessAwarded} Moldiness" : "Moldiness progression",
                 24f,
@@ -1653,15 +1650,24 @@ namespace FungusToast.Unity.UI
             title.alignment = TextAlignmentOptions.Center;
             ConfigureCampaignMoldinessAwardPulse(title, snapshot.isFinalCampaignVictory && snapshot.moldinessAwarded > 0);
 
-            var status = CreateCarryoverInfoText(root.transform,
-                $"Moldiness Level {currentLevel}  •  {progressAfter} / {threshold} to next threshold",
-                18f,
-                UIStyleTokens.Text.Secondary,
-                FontStyles.Normal);
-            ApplyCarryoverInfoTextWidth(status, CampaignMoldinessSummaryTextWidth);
-            status.alignment = TextAlignmentOptions.Center;
-
-            BuildMoldinessToastGrid(root.transform, progressAfter, threshold);
+            var meter = UI_MoldinessToastMeter.Create(root.transform);
+            bool animateAward = victory
+                && snapshot.moldinessAwarded > 0
+                && !ReferenceEquals(snapshot, lastAnimatedMoldinessSnapshot);
+            if (animateAward)
+            {
+                lastAnimatedMoldinessSnapshot = snapshot;
+                meter.PlayAward(
+                    snapshot.moldinessTierBeforeAward,
+                    snapshot.moldinessProgressBeforeAward,
+                    snapshot.moldinessAwarded,
+                    snapshot.moldinessTierAfterAward,
+                    snapshot.moldinessProgressAfterAward);
+            }
+            else
+            {
+                meter.ShowStatic(snapshot.moldinessTierAfterAward, snapshot.moldinessProgressAfterAward);
+            }
 
             string thresholdMessage = snapshot.pendingMoldinessUnlockCount > 0
                 ? $"Threshold reached. {snapshot.pendingMoldinessUnlockCount} moldiness reward{Pluralize(snapshot.pendingMoldinessUnlockCount)} pending."
@@ -1676,65 +1682,9 @@ namespace FungusToast.Unity.UI
                 snapshot.pendingMoldinessUnlockCount > 0 ? FontStyles.Bold : FontStyles.Normal);
             ApplyCarryoverInfoTextWidth(detail, CampaignMoldinessSummaryTextWidth);
             detail.alignment = TextAlignmentOptions.Center;
-        }
 
-        private void BuildMoldinessToastGrid(Transform parent, int progress, int threshold)
-        {
-            if (parent == null)
-            {
-                return;
-            }
-
-            moldinessSummaryToastTiles.Clear();
-            var gridRoot = new GameObject("UI_CampaignMoldinessSummaryToastGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter), typeof(LayoutElement));
-            gridRoot.transform.SetParent(parent, false);
-
-            int columns = Mathf.Clamp(Mathf.CeilToInt(Mathf.Sqrt(threshold)), 3, 8);
-            int rows = Mathf.Max(1, Mathf.CeilToInt(threshold / (float)columns));
-            float maxGridWidth = CampaignMoldinessSummaryToastGridWidth;
-            float maxGridHeight = 112f;
-            float spacing = threshold <= 12 ? 6f : 4f;
-            float cellWidth = Mathf.Clamp((maxGridWidth - ((columns - 1) * spacing)) / columns, 14f, 34f);
-            float cellHeight = Mathf.Clamp((maxGridHeight - ((rows - 1) * spacing)) / rows, 14f, 34f);
-
-            var grid = gridRoot.GetComponent<GridLayoutGroup>();
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columns;
-            grid.cellSize = new Vector2(cellWidth, cellHeight);
-            grid.spacing = new Vector2(spacing, spacing);
-            grid.childAlignment = TextAnchor.UpperCenter;
-
-            var fitter = gridRoot.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-
-            var element = gridRoot.GetComponent<LayoutElement>();
-            element.minWidth = maxGridWidth;
-            element.preferredWidth = maxGridWidth;
-            element.minHeight = Mathf.Max(56f, (rows * cellHeight) + ((rows - 1) * spacing));
-            element.preferredHeight = -1f;
-
-            int tileCount = Math.Max(1, threshold);
-            int filledCount = Mathf.Clamp(progress, 0, tileCount);
-            var orderedIndices = BuildEndgameToastFillOrder(tileCount, columns, rows);
-            var filledIndices = new HashSet<int>(orderedIndices.Take(filledCount));
-
-            for (int i = 0; i < tileCount; i++)
-            {
-                var tileObject = new GameObject($"UI_CampaignMoldinessSummaryTile_{i + 1}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
-                tileObject.transform.SetParent(gridRoot.transform, false);
-
-                var image = tileObject.GetComponent<Image>();
-                image.raycastTarget = false;
-                image.color = filledIndices.Contains(i) ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Surface.PanelPrimary;
-                moldinessSummaryToastTiles.Add(image);
-
-                var tileLayout = tileObject.GetComponent<LayoutElement>();
-                tileLayout.minWidth = cellWidth;
-                tileLayout.preferredWidth = cellWidth;
-                tileLayout.minHeight = cellHeight;
-                tileLayout.preferredHeight = cellHeight;
-            }
+            // "Threshold reached" would spoil the level-up, so it waits for the toast to settle.
+            meter.RevealAfterAnimation(detail);
         }
 
         private static void ApplyCarryoverInfoTextWidth(TextMeshProUGUI label, float width)
@@ -1756,150 +1706,6 @@ namespace FungusToast.Unity.UI
             if (rect != null)
             {
                 rect.sizeDelta = new Vector2(width, rect.sizeDelta.y);
-            }
-        }
-
-        private static List<int> BuildEndgameToastFillOrder(int tileCount, int columns, int rows)
-        {
-            var available = new HashSet<int>(Enumerable.Range(0, tileCount));
-            var frontier = new HashSet<int>();
-            var ordered = new List<int>(tileCount);
-
-            foreach (int seed in GetEndgameToastSeedIndices(tileCount, columns, rows))
-            {
-                if (!available.Remove(seed))
-                {
-                    continue;
-                }
-
-                ordered.Add(seed);
-                AddEndgameToastNeighbors(seed, tileCount, columns, rows, frontier, available);
-            }
-
-            while (ordered.Count < tileCount)
-            {
-                if (frontier.Count == 0)
-                {
-                    int fallback = available
-                        .OrderBy(index => GetEndgameToastFallbackScore(index, tileCount, columns, rows))
-                        .ThenBy(index => index)
-                        .First();
-                    frontier.Add(fallback);
-                }
-
-                int next = frontier
-                    .OrderBy(index => GetEndgameToastFrontierScore(index, tileCount, columns, rows))
-                    .ThenBy(index => index)
-                    .First();
-                frontier.Remove(next);
-
-                if (!available.Remove(next))
-                {
-                    continue;
-                }
-
-                ordered.Add(next);
-                AddEndgameToastNeighbors(next, tileCount, columns, rows, frontier, available);
-            }
-
-            return ordered;
-        }
-
-        private static IEnumerable<int> GetEndgameToastSeedIndices(int tileCount, int columns, int rows)
-        {
-            int seedCount = tileCount >= 10 ? 2 : 1;
-            var chosen = new HashSet<int>();
-
-            for (int i = 0; i < seedCount; i++)
-            {
-                int seed = Enumerable.Range(0, tileCount)
-                    .Where(index => !chosen.Contains(index))
-                    .OrderBy(index => GetEndgameToastSeedScore(index, tileCount, columns, rows, i))
-                    .ThenBy(index => index)
-                    .First();
-                chosen.Add(seed);
-                yield return seed;
-            }
-        }
-
-        private static void AddEndgameToastNeighbors(int index, int tileCount, int columns, int rows, HashSet<int> frontier, HashSet<int> available)
-        {
-            int row = index / columns;
-            int column = index % columns;
-
-            for (int rowDelta = -1; rowDelta <= 1; rowDelta++)
-            {
-                for (int columnDelta = -1; columnDelta <= 1; columnDelta++)
-                {
-                    if (rowDelta == 0 && columnDelta == 0)
-                    {
-                        continue;
-                    }
-
-                    int neighborRow = row + rowDelta;
-                    int neighborColumn = column + columnDelta;
-                    if (neighborRow < 0 || neighborRow >= rows || neighborColumn < 0 || neighborColumn >= columns)
-                    {
-                        continue;
-                    }
-
-                    int neighborIndex = (neighborRow * columns) + neighborColumn;
-                    if (neighborIndex >= tileCount || !available.Contains(neighborIndex))
-                    {
-                        continue;
-                    }
-
-                    frontier.Add(neighborIndex);
-                }
-            }
-        }
-
-        private static float GetEndgameToastSeedScore(int index, int tileCount, int columns, int rows, int seedOffset)
-        {
-            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
-            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
-            float hash = GetEndgameToastHash01(index, tileCount, (seedOffset + 1) * 193);
-            return centerDistance * 0.65f + hash * 0.35f;
-        }
-
-        private static float GetEndgameToastFrontierScore(int index, int tileCount, int columns, int rows)
-        {
-            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
-            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
-            float verticalBias = Mathf.Abs(position.y - 0.45f);
-            float hash = GetEndgameToastHash01(index, tileCount, 521);
-            return hash * 0.6f + centerDistance * 0.25f + verticalBias * 0.15f;
-        }
-
-        private static float GetEndgameToastFallbackScore(int index, int tileCount, int columns, int rows)
-        {
-            Vector2 position = GetEndgameToastNormalizedPosition(index, columns, rows);
-            float centerDistance = Vector2.Distance(position, new Vector2(0.5f, 0.5f));
-            float hash = GetEndgameToastHash01(index, tileCount, 887);
-            return centerDistance * 0.55f + hash * 0.45f;
-        }
-
-        private static Vector2 GetEndgameToastNormalizedPosition(int index, int columns, int rows)
-        {
-            int row = index / columns;
-            int column = index % columns;
-            float normalizedColumn = columns <= 1 ? 0.5f : column / (float)(columns - 1);
-            float normalizedRow = rows <= 1 ? 0.5f : row / (float)(rows - 1);
-            return new Vector2(normalizedColumn, normalizedRow);
-        }
-
-        private static float GetEndgameToastHash01(int index, int tileCount, int salt)
-        {
-            unchecked
-            {
-                uint value = (uint)(index + 1);
-                value ^= (uint)(tileCount * 2246822519u);
-                value ^= (uint)salt * 3266489917u;
-                value *= 668265263u;
-                value ^= value >> 15;
-                value *= 2246822519u;
-                value ^= value >> 13;
-                return (value & 0x00FFFFFFu) / 16777215f;
             }
         }
 
