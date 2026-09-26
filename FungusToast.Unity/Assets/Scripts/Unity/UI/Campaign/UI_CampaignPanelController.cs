@@ -44,18 +44,6 @@ namespace FungusToast.Unity.UI.Campaign
         private const string CampaignStartDifficultyTitleText = "1. Choose Starting Difficulty";
         private const string MoldSelectionTitleText = "2. Choose Your Mold";
 
-        private static readonly string[] MoldDisplayNames =
-        {
-            "Mycelavis",
-            "Sporalunea",
-            "Cineramyxa",
-            "Velutora",
-            "Glaucoryza",
-            "Viridomyxa",
-            "Noctephyra",
-            "Aureomycella"
-        };
-
         private enum CampaignPanelStep
         {
             MainActions,
@@ -89,11 +77,6 @@ namespace FungusToast.Unity.UI.Campaign
         private Slider moldinessSummaryProgressBar;
         private Image moldinessSummaryProgressFill;
         private MoldinessUnlockedRewardsStripController moldinessUnlockedRewardsStrip;
-        private TextMeshProUGUI moldinessUnlockedRewardsLabel;
-        private RectTransform moldinessUnlockedRewardsGridRoot;
-        private GridLayoutGroup moldinessUnlockedRewardsGrid;
-        private readonly List<GameObject> moldinessUnlockedRewardIcons = new();
-        private readonly List<TextMeshProUGUI> moldinessUnlockedRewardCountBadges = new();
         private RectTransform moldSelectionSectionRoot;
         private TextMeshProUGUI moldSelectionTitleLabel;
         private TextMeshProUGUI moldSelectionStatusLabel;
@@ -738,48 +721,6 @@ namespace FungusToast.Unity.UI.Campaign
 
         }
 
-        private void EnsureMoldinessUnlockedRewardsGrid()
-        {
-            if (moldinessSummarySectionRoot == null)
-            {
-                return;
-            }
-
-            if (moldinessUnlockedRewardsGrid == null)
-            {
-                moldinessUnlockedRewardsGridRoot = moldinessSummarySectionRoot.Find("UI_CampaignMoldinessUnlockedRewardsGrid") as RectTransform;
-                if (moldinessUnlockedRewardsGridRoot == null)
-                {
-                    var gridObject = new GameObject(
-                        "UI_CampaignMoldinessUnlockedRewardsGrid",
-                        typeof(RectTransform),
-                        typeof(GridLayoutGroup),
-                        typeof(ContentSizeFitter),
-                        typeof(LayoutElement));
-                    gridObject.transform.SetParent(moldinessSummarySectionRoot, false);
-                    moldinessUnlockedRewardsGridRoot = gridObject.GetComponent<RectTransform>();
-                }
-
-                moldinessUnlockedRewardsGrid = moldinessUnlockedRewardsGridRoot.GetComponent<GridLayoutGroup>();
-            }
-
-            moldinessUnlockedRewardsGrid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            moldinessUnlockedRewardsGrid.constraintCount = 7;
-            moldinessUnlockedRewardsGrid.cellSize = new Vector2(48f, 48f);
-            moldinessUnlockedRewardsGrid.spacing = new Vector2(8f, 8f);
-            moldinessUnlockedRewardsGrid.childAlignment = TextAnchor.UpperCenter;
-
-            var fitter = moldinessUnlockedRewardsGrid.GetComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-            var element = moldinessUnlockedRewardsGrid.GetComponent<LayoutElement>();
-            element.minWidth = MoldinessUnlockedRewardsGridWidth;
-            element.preferredWidth = MoldinessUnlockedRewardsGridWidth;
-            element.minHeight = 0f;
-            element.preferredHeight = -1f;
-        }
-
         private void ReorderMoldinessSummaryContent()
         {
             if (moldinessSummarySectionRoot == null)
@@ -799,182 +740,6 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 actionStack.transform.SetSiblingIndex(siblingIndex);
             }
-        }
-
-        private void RefreshMoldinessUnlockedRewardsGrid(List<MoldinessUnlockDefinition> unlockedRewards)
-        {
-            if (moldinessUnlockedRewardsGridRoot == null || moldinessUnlockedRewardsGrid == null)
-            {
-                return;
-            }
-
-            unlockedRewards ??= new List<MoldinessUnlockDefinition>();
-            moldinessUnlockedRewardsGridRoot.gameObject.SetActive(unlockedRewards.Count > 0);
-            var rewardCounts = unlockedRewards
-                .GroupBy(reward => reward.Id, StringComparer.Ordinal)
-                .ToDictionary(group => group.Key, group => group.Count(), StringComparer.Ordinal);
-            var uniqueRewards = unlockedRewards
-                .GroupBy(reward => reward.Id, StringComparer.Ordinal)
-                .Select(group => group.First())
-                .ToList();
-
-            while (moldinessUnlockedRewardIcons.Count < uniqueRewards.Count)
-            {
-                var iconRoot = new GameObject(
-                    $"UI_CampaignMoldinessUnlockedReward_{moldinessUnlockedRewardIcons.Count + 1}",
-                    typeof(RectTransform),
-                    typeof(Image),
-                    typeof(LayoutElement),
-                    typeof(TooltipTrigger));
-                iconRoot.transform.SetParent(moldinessUnlockedRewardsGrid.transform, false);
-
-                var background = iconRoot.GetComponent<Image>();
-                background.color = UIStyleTokens.Surface.PanelSecondary;
-                background.raycastTarget = true;
-
-                var layout = iconRoot.GetComponent<LayoutElement>();
-                layout.minWidth = 48f;
-                layout.preferredWidth = 48f;
-                layout.minHeight = 48f;
-                layout.preferredHeight = 48f;
-
-                var outline = iconRoot.AddComponent<Outline>();
-                outline.effectColor = new Color(1f, 1f, 1f, 0.08f);
-                outline.effectDistance = new Vector2(1f, -1f);
-
-                var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
-                iconObject.transform.SetParent(iconRoot.transform, false);
-                var iconRect = iconObject.GetComponent<RectTransform>();
-                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
-                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
-                iconRect.pivot = new Vector2(0.5f, 0.5f);
-                iconRect.sizeDelta = new Vector2(34f, 34f);
-                iconRect.anchoredPosition = Vector2.zero;
-
-                var badgeObject = new GameObject("CountBadge", typeof(RectTransform), typeof(Image));
-                badgeObject.transform.SetParent(iconRoot.transform, false);
-                var badgeRect = badgeObject.GetComponent<RectTransform>();
-                badgeRect.anchorMin = new Vector2(1f, 0f);
-                badgeRect.anchorMax = new Vector2(1f, 0f);
-                badgeRect.pivot = new Vector2(1f, 0f);
-                badgeRect.anchoredPosition = new Vector2(-2f, 2f);
-                badgeRect.sizeDelta = new Vector2(20f, 20f);
-                var badgeImage = badgeObject.GetComponent<Image>();
-                badgeImage.color = UIStyleTokens.Surface.PanelPrimary;
-                badgeImage.raycastTarget = false;
-
-                var badgeOutline = badgeObject.AddComponent<Outline>();
-                badgeOutline.effectColor = new Color(0f, 0f, 0f, 0.35f);
-                badgeOutline.effectDistance = new Vector2(1f, -1f);
-
-                var badgeLabelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-                badgeLabelObject.transform.SetParent(badgeObject.transform, false);
-                var badgeLabelRect = badgeLabelObject.GetComponent<RectTransform>();
-                badgeLabelRect.anchorMin = Vector2.zero;
-                badgeLabelRect.anchorMax = Vector2.one;
-                badgeLabelRect.offsetMin = Vector2.zero;
-                badgeLabelRect.offsetMax = Vector2.zero;
-                var badgeLabel = badgeLabelObject.GetComponent<TextMeshProUGUI>();
-                badgeLabel.alignment = TextAlignmentOptions.Center;
-                badgeLabel.fontSize = 13f;
-                badgeLabel.fontStyle = FontStyles.Bold;
-                badgeLabel.color = UIStyleTokens.Text.Primary;
-                badgeLabel.enableAutoSizing = true;
-                badgeLabel.fontSizeMin = 10f;
-                badgeLabel.fontSizeMax = 13f;
-                badgeLabel.raycastTarget = false;
-
-                moldinessUnlockedRewardIcons.Add(iconRoot);
-                moldinessUnlockedRewardCountBadges.Add(badgeLabel);
-            }
-
-            for (int i = 0; i < moldinessUnlockedRewardIcons.Count; i++)
-            {
-                var iconRoot = moldinessUnlockedRewardIcons[i];
-                bool shouldShow = i < uniqueRewards.Count;
-                iconRoot.SetActive(shouldShow);
-                if (!shouldShow)
-                {
-                    continue;
-                }
-
-                var reward = uniqueRewards[i];
-                int ownedCount = rewardCounts.TryGetValue(reward.Id, out int count) ? count : 1;
-                var background = iconRoot.GetComponent<Image>();
-                background.color = new Color(reward.AccentColor.r, reward.AccentColor.g, reward.AccentColor.b, 0.16f);
-
-                var outline = iconRoot.GetComponent<Outline>();
-                if (outline != null)
-                {
-                    outline.effectColor = new Color(reward.AccentColor.r, reward.AccentColor.g, reward.AccentColor.b, 0.45f);
-                }
-
-                var iconImage = iconRoot.transform.Find("Icon")?.GetComponent<Image>();
-                if (iconImage != null)
-                {
-                    iconImage.sprite = GetMoldinessRewardIcon(reward);
-                    iconImage.preserveAspect = true;
-                    iconImage.color = Color.white;
-                    iconImage.raycastTarget = false;
-                }
-
-                if (i < moldinessUnlockedRewardCountBadges.Count)
-                {
-                    var badgeLabel = moldinessUnlockedRewardCountBadges[i];
-                    var badgeRoot = badgeLabel != null ? badgeLabel.transform.parent?.gameObject : null;
-                    bool showBadge = reward.IsRepeatable && ownedCount > 1;
-                    if (badgeRoot != null)
-                    {
-                        badgeRoot.SetActive(showBadge);
-                        var badgeImage = badgeRoot.GetComponent<Image>();
-                        if (badgeImage != null)
-                        {
-                            badgeImage.color = new Color(reward.AccentColor.r, reward.AccentColor.g, reward.AccentColor.b, 0.92f);
-                        }
-                    }
-
-                    if (badgeLabel != null)
-                    {
-                        badgeLabel.text = CompactCountLabel(ownedCount);
-                        badgeLabel.color = UIStyleTokens.Text.Primary;
-                    }
-                }
-
-                var tooltipTrigger = iconRoot.GetComponent<TooltipTrigger>();
-                if (reward.Type == MoldinessUnlockType.UnlockAdaptation && AdaptationRepository.TryGetById(reward.AdaptationId, out var adaptation))
-                {
-                    var provider = iconRoot.GetComponent<AdaptationTooltipProvider>() ?? iconRoot.AddComponent<AdaptationTooltipProvider>();
-                    provider.Initialize(adaptation);
-                    tooltipTrigger.SetDynamicProvider(provider);
-                }
-                else
-                {
-                    var provider = iconRoot.GetComponent<MoldinessRewardTooltipProvider>() ?? iconRoot.AddComponent<MoldinessRewardTooltipProvider>();
-                    int carryoverCapacity = reward.Type == MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover
-                        ? Mathf.Max(0, GameManager.Instance?.CampaignController?.State?.moldiness?.failedRunAdaptationCarryoverCount ?? 0)
-                        : 0;
-                    provider.Initialize(reward, ownedCount, carryoverCapacity);
-                    tooltipTrigger.SetDynamicProvider(provider);
-                }
-
-                tooltipTrigger.SetAutoPlacementOffsetX(18f);
-                tooltipTrigger.SetPinOnClick(false);
-            }
-        }
-
-        private static string CompactCountLabel(int count)
-        {
-            if (count < 100)
-            {
-                return count.ToString();
-            }
-
-            if (count < 1000)
-            {
-                return $"{count / 100f:0.#}h";
-            }
-
-            return $"{count / 1000f:0.#}k";
         }
 
         private static Sprite GetMoldinessRewardIcon(MoldinessUnlockDefinition offer)
@@ -1311,24 +1076,6 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             return Mathf.Max(1, nextLevelDisplay);
-        }
-
-        private static int GetMoldinessRewardCategorySortOrder(MoldinessUnlockDefinition definition)
-        {
-            if (definition == null)
-            {
-                return int.MaxValue;
-            }
-
-            return definition.Type switch
-            {
-                MoldinessUnlockType.IncreaseFailedRunAdaptationCarryover => 0,
-                MoldinessUnlockType.UnlockCampaignIntel => 0,
-                MoldinessUnlockType.UnlockCampaignDraftRedraw => 0,
-                MoldinessUnlockType.UnlockAdaptation => 1,
-                MoldinessUnlockType.UnlockMycovariant => 2,
-                _ => 3
-            };
         }
 
         private void BuildMoldSelectionSection()

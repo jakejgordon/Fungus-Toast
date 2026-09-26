@@ -195,21 +195,6 @@ namespace FungusToast.Unity.UI
 
         // Post-victory campaign testing controls (runtime-built to avoid scene dependency).
         private GameObject postVictoryTestingRoot;
-        private Button postVictoryTestingToggleButton = null;
-        private TMP_Dropdown postVictoryMycovariantDropdown;
-        private GameObject postVictoryMycovariantRow = null;
-        private TMP_Dropdown postVictoryAdaptationDropdown;
-        private GameObject postVictoryAdaptationRow = null;
-        private Button postVictoryFastForwardButton = null;
-        private Button postVictorySkipToEndButton = null;
-        private Button postVictoryForcedResultButton = null;
-        private bool postVictoryTestingEnabled;
-        private bool postVictorySkipToEnd;
-        private int postVictoryFastForwardRounds;
-        private ForcedGameResultMode postVictoryForcedResult = ForcedGameResultMode.Natural;
-        private int? postVictoryForcedMycovariantId;
-        private string postVictoryForcedAdaptationId = string.Empty;
-        private List<AdaptationDefinition> postVictorySortedAdaptations = new();
         private GameObject detailsOverlayRoot;
         private CanvasGroup detailsOverlayCanvasGroup;
         private Image detailsOverlayBackground;
@@ -1524,16 +1509,6 @@ namespace FungusToast.Unity.UI
             return label;
         }
 
-        private static string GetDefeatCarryoverSelectionHelperText(int selectionCapacity, DefeatCarryoverEntryMode entryMode)
-        {
-            if (entryMode == DefeatCarryoverEntryMode.DeferredResumePrompt)
-            {
-                return $"These spores are waiting from your last failed campaign. Choose exactly {selectionCapacity} adaptation{Pluralize(selectionCapacity)} to preserve for the next run.";
-            }
-
-            return "Choose which adaptations you want to keep before you return to the campaign menu.";
-        }
-
         private static string FormatDefeatCarryoverButtonLabel(int carryoverCapacity)
         {
             return carryoverCapacity > 1
@@ -2553,19 +2528,6 @@ namespace FungusToast.Unity.UI
         }
 
         /* ─────────── Buttons / Helpers ─────────── */
-        private void OnClose()
-        {
-            // legacy close (non-campaign) – keep ability to just hide panel
-            HideInstant();
-
-            // Re-enable the right sidebar so players can see summaries after closing results
-            var sidebar = gameUI?.RightSidebar ?? GameManager.Instance?.GameUI?.RightSidebar;
-            if (sidebar != null)
-            {
-                sidebar.gameObject.SetActive(true);
-            }
-        }
-
         private void OnContinueCampaign()
         {
             if (hasPendingDefeatCarryoverEvent)
@@ -4902,280 +4864,6 @@ namespace FungusToast.Unity.UI
             UpdatePostVictoryTestingVisibility(false);
         }
 
-        private Button CreatePostVictorySettingButton(Transform newParent, string name, UnityEngine.Events.UnityAction action)
-        {
-            var template = exitButton != null ? exitButton : continueButton;
-            if (template == null)
-            {
-                return null;
-            }
-
-            var clone = Instantiate(template.gameObject, newParent);
-            clone.name = name;
-
-            var button = clone.GetComponent<Button>();
-            if (button == null)
-            {
-                return null;
-            }
-
-            button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(action);
-            button.interactable = true;
-
-            UIStyleTokens.Button.ApplyStyle(button);
-
-            EnsureButtonLayout(button);
-            var layout = button.GetComponent<LayoutElement>();
-            if (layout != null)
-            {
-                layout.preferredHeight = 42f;
-                layout.minHeight = 40f;
-                layout.preferredWidth = 440f;
-                layout.minWidth = 320f;
-            }
-
-            var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
-            if (label != null)
-            {
-                label.enableAutoSizing = true;
-                label.fontSizeMax = 28f;
-                label.fontSizeMin = 18f;
-                label.alignment = TextAlignmentOptions.Center;
-                label.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            return button;
-        }
-
-        private GameObject CreatePostVictoryMycovariantRow(Transform parent)
-        {
-            if (parent == null)
-            {
-                return null;
-            }
-
-            var row = new GameObject("UI_PostVictoryMycovariantRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            row.transform.SetParent(parent, false);
-
-            var rowLayout = row.GetComponent<VerticalLayoutGroup>();
-            rowLayout.childControlHeight = true;
-            rowLayout.childControlWidth = true;
-            rowLayout.childForceExpandHeight = false;
-            rowLayout.childForceExpandWidth = false;
-            rowLayout.spacing = 4f;
-            rowLayout.padding = new RectOffset(4, 4, 2, 2);
-
-            var rowElement = row.GetComponent<LayoutElement>();
-            rowElement.preferredHeight = 86f;
-            rowElement.minHeight = 80f;
-
-            var labelObj = new GameObject("UI_PostVictoryMycovariantLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            labelObj.transform.SetParent(row.transform, false);
-            var label = labelObj.GetComponent<TextMeshProUGUI>();
-            label.text = "Forced Mycovariant";
-            label.color = UIStyleTokens.Text.Primary;
-            label.fontSize = 20f;
-            label.enableAutoSizing = true;
-            label.fontSizeMax = 20f;
-            label.fontSizeMin = 15f;
-            label.alignment = TextAlignmentOptions.Left;
-
-            var labelLayout = labelObj.GetComponent<LayoutElement>();
-            labelLayout.preferredHeight = 28f;
-            labelLayout.minHeight = 24f;
-
-            postVictoryMycovariantDropdown = DevelopmentTestingDropdownFactory.Create(row.transform, "UI_PostVictoryMycovariantDropdown");
-            var dropdownObj = postVictoryMycovariantDropdown.gameObject;
-            if (postVictoryMycovariantDropdown != null)
-            {
-                postVictoryMycovariantDropdown.onValueChanged.RemoveAllListeners();
-                postVictoryMycovariantDropdown.onValueChanged.AddListener(OnPostVictoryMycovariantDropdownChanged);
-            }
-
-            var dropdownLayout = dropdownObj.GetComponent<LayoutElement>();
-            if (dropdownLayout == null)
-            {
-                dropdownLayout = dropdownObj.AddComponent<LayoutElement>();
-            }
-
-            dropdownLayout.preferredHeight = 44f;
-            dropdownLayout.minHeight = 40f;
-            dropdownLayout.preferredWidth = 440f;
-            dropdownLayout.minWidth = 320f;
-
-            PopulatePostVictoryMycovariantDropdown();
-            return row;
-        }
-
-        private GameObject CreatePostVictoryAdaptationRow(Transform parent)
-        {
-            if (parent == null)
-            {
-                return null;
-            }
-
-            var row = new GameObject("UI_PostVictoryAdaptationRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
-            row.transform.SetParent(parent, false);
-
-            var rowLayout = row.GetComponent<VerticalLayoutGroup>();
-            rowLayout.childControlHeight = true;
-            rowLayout.childControlWidth = true;
-            rowLayout.childForceExpandHeight = false;
-            rowLayout.childForceExpandWidth = false;
-            rowLayout.spacing = 4f;
-            rowLayout.padding = new RectOffset(4, 4, 2, 2);
-
-            var rowElement = row.GetComponent<LayoutElement>();
-            rowElement.preferredHeight = 86f;
-            rowElement.minHeight = 80f;
-
-            var labelObj = new GameObject("UI_PostVictoryAdaptationLabel", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(LayoutElement));
-            labelObj.transform.SetParent(row.transform, false);
-            var label = labelObj.GetComponent<TextMeshProUGUI>();
-            label.text = "Forced Adaptation";
-            label.color = UIStyleTokens.Text.Primary;
-            label.fontSize = 20f;
-            label.enableAutoSizing = true;
-            label.fontSizeMax = 20f;
-            label.fontSizeMin = 15f;
-            label.alignment = TextAlignmentOptions.Left;
-
-            var labelLayout = labelObj.GetComponent<LayoutElement>();
-            labelLayout.preferredHeight = 28f;
-            labelLayout.minHeight = 24f;
-
-            postVictoryAdaptationDropdown = DevelopmentTestingDropdownFactory.Create(row.transform, "UI_PostVictoryAdaptationDropdown");
-            var dropdownObj = postVictoryAdaptationDropdown.gameObject;
-            if (postVictoryAdaptationDropdown != null)
-            {
-                postVictoryAdaptationDropdown.onValueChanged.RemoveAllListeners();
-                postVictoryAdaptationDropdown.onValueChanged.AddListener(OnPostVictoryAdaptationDropdownChanged);
-            }
-
-            var dropdownLayout = dropdownObj.GetComponent<LayoutElement>();
-            if (dropdownLayout == null)
-            {
-                dropdownLayout = dropdownObj.AddComponent<LayoutElement>();
-            }
-
-            dropdownLayout.preferredHeight = 44f;
-            dropdownLayout.minHeight = 40f;
-            dropdownLayout.preferredWidth = 440f;
-            dropdownLayout.minWidth = 320f;
-
-            PopulatePostVictoryAdaptationDropdown();
-            return row;
-        }
-
-        private void PopulatePostVictoryMycovariantDropdown()
-        {
-            if (postVictoryMycovariantDropdown == null)
-            {
-                return;
-            }
-
-            var options = new List<string> { "None" };
-            var all = FungusToast.Core.Mycovariants.MycovariantRepository.All;
-            for (int i = 0; i < all.Count; i++)
-            {
-                options.Add($"{all[i].Name} (ID: {all[i].Id})");
-            }
-
-            postVictoryMycovariantDropdown.ClearOptions();
-            postVictoryMycovariantDropdown.AddOptions(options);
-            postVictoryMycovariantDropdown.value = 0;
-            postVictoryMycovariantDropdown.RefreshShownValue();
-
-            if (postVictoryMycovariantDropdown.captionText != null)
-            {
-                postVictoryMycovariantDropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (postVictoryMycovariantDropdown.itemText != null)
-            {
-                postVictoryMycovariantDropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            ApplyDropdownReadability(postVictoryMycovariantDropdown);
-        }
-
-        private void PopulatePostVictoryAdaptationDropdown()
-        {
-            if (postVictoryAdaptationDropdown == null)
-            {
-                return;
-            }
-
-            postVictorySortedAdaptations = AdaptationRepository.All
-                .OrderBy(adaptation => adaptation.Name, StringComparer.OrdinalIgnoreCase)
-                .ThenBy(adaptation => adaptation.Id, StringComparer.Ordinal)
-                .ToList();
-
-            var options = new List<string> { "None" };
-            for (int i = 0; i < postVictorySortedAdaptations.Count; i++)
-            {
-                var adaptation = postVictorySortedAdaptations[i];
-                options.Add($"{adaptation.Name} (ID: {adaptation.Id})");
-            }
-
-            postVictoryAdaptationDropdown.ClearOptions();
-            postVictoryAdaptationDropdown.AddOptions(options);
-            postVictoryAdaptationDropdown.value = 0;
-            postVictoryAdaptationDropdown.RefreshShownValue();
-
-            if (postVictoryAdaptationDropdown.captionText != null)
-            {
-                postVictoryAdaptationDropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (postVictoryAdaptationDropdown.itemText != null)
-            {
-                postVictoryAdaptationDropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            ApplyDropdownReadability(postVictoryAdaptationDropdown);
-        }
-
-        private void OnPostVictoryMycovariantDropdownChanged(int index)
-        {
-            if (index <= 0)
-            {
-                postVictoryForcedMycovariantId = null;
-                return;
-            }
-
-            var all = FungusToast.Core.Mycovariants.MycovariantRepository.All;
-            int mapped = index - 1;
-            if (mapped >= 0 && mapped < all.Count)
-            {
-                postVictoryForcedMycovariantId = all[mapped].Id;
-            }
-            else
-            {
-                postVictoryForcedMycovariantId = null;
-            }
-        }
-
-        private void OnPostVictoryAdaptationDropdownChanged(int index)
-        {
-            if (index <= 0)
-            {
-                postVictoryForcedAdaptationId = string.Empty;
-                return;
-            }
-
-            int mapped = index - 1;
-            if (mapped >= 0 && mapped < postVictorySortedAdaptations.Count)
-            {
-                postVictoryForcedAdaptationId = postVictorySortedAdaptations[mapped].Id;
-            }
-            else
-            {
-                postVictoryForcedAdaptationId = string.Empty;
-            }
-        }
-
         private void UpdatePostVictoryTestingVisibility(bool visible)
         {
             EnsurePostVictoryTestingControls();
@@ -5215,178 +4903,10 @@ namespace FungusToast.Unity.UI
             postVictoryTestingRailVisible = showTestingRail;
         }
 
-        private void EnsurePostVictoryControlOrder()
-        {
-            if (playAgainButton == null || postVictoryTestingRoot == null)
-            {
-                return;
-            }
-
-            var parent = playAgainButton.transform.parent;
-            if (parent == null)
-            {
-                return;
-            }
-
-            if (continueButton != null && continueButton.transform.parent != parent)
-            {
-                continueButton.transform.SetParent(parent, false);
-            }
-
-            if (exitButton != null && exitButton.transform.parent != parent)
-            {
-                exitButton.transform.SetParent(parent, false);
-            }
-
-            int nextIndex = playAgainButton.transform.GetSiblingIndex() + 1;
-            postVictoryTestingRoot.transform.SetSiblingIndex(nextIndex);
-            nextIndex++;
-
-            if (continueButton != null)
-            {
-                continueButton.transform.SetSiblingIndex(nextIndex);
-                nextIndex++;
-            }
-
-            if (exitButton != null)
-            {
-                exitButton.transform.SetSiblingIndex(nextIndex);
-            }
-        }
-
-        private void SyncPostVictoryTestingDefaultsFromGameManager()
-        {
-            var manager = GameManager.Instance;
-            if (manager == null)
-            {
-                return;
-            }
-
-            postVictoryTestingEnabled = manager.IsTestingModeEnabled;
-            postVictoryFastForwardRounds = Mathf.Max(0, manager.fastForwardRounds);
-            postVictorySkipToEnd = manager.testingSkipToEndgameAfterFastForward;
-            postVictoryForcedResult = manager.TestingForcedGameResult;
-            postVictoryForcedMycovariantId = manager.TestingMycovariantId;
-            postVictoryForcedAdaptationId = manager.TestingForcedAdaptationId;
-
-            if (!postVictorySkipToEnd && postVictoryForcedResult != ForcedGameResultMode.Natural)
-            {
-                postVictoryForcedResult = ForcedGameResultMode.Natural;
-            }
-
-            if (!postVictorySkipToEnd)
-            {
-                postVictoryForcedAdaptationId = string.Empty;
-            }
-        }
-
         private void UpdatePostVictoryTestingLabels()
         {
             postVictoryTestingCardController?.RefreshVisualState();
             RefreshRuntimeEndGameLayout();
-        }
-
-        private void OnPostVictoryTestingToggled()
-        {
-            postVictoryTestingEnabled = !postVictoryTestingEnabled;
-
-            if (!postVictoryTestingEnabled)
-            {
-                postVictoryFastForwardRounds = 0;
-                postVictorySkipToEnd = false;
-                postVictoryForcedResult = ForcedGameResultMode.Natural;
-                postVictoryForcedMycovariantId = null;
-                postVictoryForcedAdaptationId = string.Empty;
-            }
-
-            if (postVictoryFastForwardButton != null)
-                postVictoryFastForwardButton.gameObject.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryMycovariantRow != null)
-                postVictoryMycovariantRow.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryMycovariantDropdown != null)
-                postVictoryMycovariantDropdown.interactable = postVictoryTestingEnabled;
-
-            if (postVictoryAdaptationRow != null)
-                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            if (postVictoryAdaptationDropdown != null)
-                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
-
-            if (postVictorySkipToEndButton != null)
-                postVictorySkipToEndButton.gameObject.SetActive(postVictoryTestingEnabled);
-
-            if (postVictoryForcedResultButton != null)
-                postVictoryForcedResultButton.gameObject.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            if (!postVictorySkipToEnd)
-            {
-                postVictoryForcedAdaptationId = string.Empty;
-            }
-
-            UpdatePostVictoryTestingLayoutHeight();
-            UpdatePostVictoryTestingLabels();
-            ApplyControlReadabilityOverrides();
-        }
-
-        private void OnPostVictoryFastForwardCycle()
-        {
-            postVictoryFastForwardRounds = DevelopmentTestingFastForwardPresets.GetNext(postVictoryFastForwardRounds);
-
-            UpdatePostVictoryTestingLabels();
-        }
-
-        private void OnPostVictorySkipToEndToggled()
-        {
-            postVictorySkipToEnd = !postVictorySkipToEnd;
-            if (postVictorySkipToEnd)
-            {
-                postVictoryForcedResult = ForcedGameResultMode.ForcedWin;
-            }
-            else
-            {
-                postVictoryForcedResult = ForcedGameResultMode.Natural;
-                postVictoryForcedAdaptationId = string.Empty;
-            }
-
-            if (postVictoryForcedResultButton != null)
-                postVictoryForcedResultButton.gameObject.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            if (postVictoryAdaptationRow != null)
-                postVictoryAdaptationRow.SetActive(postVictoryTestingEnabled && postVictorySkipToEnd);
-
-            if (postVictoryAdaptationDropdown != null)
-                postVictoryAdaptationDropdown.interactable = postVictoryTestingEnabled && postVictorySkipToEnd;
-
-            UpdatePostVictoryTestingLayoutHeight();
-            UpdatePostVictoryTestingLabels();
-        }
-
-        private void UpdatePostVictoryTestingLayoutHeight()
-        {
-            if (postVictoryTestingRoot == null)
-            {
-                return;
-            }
-
-            var rootElement = postVictoryTestingRoot.GetComponent<LayoutElement>();
-            if (rootElement == null)
-            {
-                return;
-            }
-
-            float height = 16f; // top/bottom padding budget
-            if (postVictoryTestingToggleButton != null && postVictoryTestingToggleButton.gameObject.activeSelf) height += 42f + 6f;
-            if (postVictoryMycovariantRow != null && postVictoryMycovariantRow.activeSelf) height += 86f + 6f;
-            if (postVictoryAdaptationRow != null && postVictoryAdaptationRow.activeSelf) height += 86f + 6f;
-            if (postVictoryFastForwardButton != null && postVictoryFastForwardButton.gameObject.activeSelf) height += 42f + 6f;
-            if (postVictorySkipToEndButton != null && postVictorySkipToEndButton.gameObject.activeSelf) height += 42f + 6f;
-            if (postVictoryForcedResultButton != null && postVictoryForcedResultButton.gameObject.activeSelf) height += 42f + 6f;
-
-            height = Mathf.Max(56f, height);
-            rootElement.preferredHeight = height;
-            rootElement.minHeight = height;
         }
 
         private void ApplyControlReadabilityOverrides()
@@ -5396,18 +4916,11 @@ namespace FungusToast.Unity.UI
             SetButtonContentColor(playAgainButton, UIStyleTokens.Button.TextDefault);
             SetButtonContentColor(toggleResultsDockButton, UIStyleTokens.Text.Primary);
 
-            SetButtonContentColor(postVictoryTestingToggleButton, UIStyleTokens.Button.TextDefault);
-            SetButtonContentColor(postVictoryFastForwardButton, UIStyleTokens.Button.TextDefault);
-            SetButtonContentColor(postVictorySkipToEndButton, UIStyleTokens.Button.TextDefault);
-            SetButtonContentColor(postVictoryForcedResultButton, UIStyleTokens.Button.TextDefault);
-
             if (detailsCloseButton != null)
             {
                 UIStyleTokens.Button.ApplyPanelSecondaryStyle(detailsCloseButton);
             }
 
-            ApplyDropdownReadability(postVictoryMycovariantDropdown);
-            ApplyDropdownReadability(postVictoryAdaptationDropdown);
             ApplyResultsHeaderReadabilityOverrides();
         }
 
@@ -5526,55 +5039,6 @@ namespace FungusToast.Unity.UI
                 || string.Equals(text, "Details", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
-        {
-            if (dropdown == null)
-            {
-                return;
-            }
-
-            if (dropdown.captionText != null)
-            {
-                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            if (dropdown.itemText != null)
-            {
-                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-            }
-
-            var labels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
-            for (int i = 0; i < labels.Length; i++)
-            {
-                var label = labels[i];
-                if (label == null)
-                {
-                    continue;
-                }
-
-                if (label.name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    label.color = UIStyleTokens.Text.Disabled;
-                }
-                else
-                {
-                    label.color = UIStyleTokens.Button.TextDefault;
-                }
-            }
-        }
-
-        private void OnPostVictoryForcedResultCycle()
-        {
-            postVictoryForcedResult = postVictoryForcedResult switch
-            {
-                ForcedGameResultMode.Natural => ForcedGameResultMode.ForcedWin,
-                ForcedGameResultMode.ForcedWin => ForcedGameResultMode.ForcedLoss,
-                _ => ForcedGameResultMode.Natural
-            };
-
-            UpdatePostVictoryTestingLabels();
-        }
-
         private void ApplyPostVictoryTestingSettings(GameManager manager)
         {
             if (manager == null || postVictoryTestingCardController == null)
@@ -5583,16 +5047,6 @@ namespace FungusToast.Unity.UI
             }
 
             postVictoryTestingCardController.ApplyToGameManager(manager);
-        }
-
-        private static string FormatForcedResult(ForcedGameResultMode mode)
-        {
-            return mode switch
-            {
-                ForcedGameResultMode.ForcedWin => "Forced Win",
-                ForcedGameResultMode.ForcedLoss => "Forced Loss",
-                _ => "Natural"
-            };
         }
 
         private static IReadOnlyList<MoldinessUnlockDefinition> EnsureForcedMoldinessRewardVisible(IReadOnlyList<MoldinessUnlockDefinition> offers)
