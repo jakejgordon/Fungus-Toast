@@ -65,16 +65,6 @@ namespace FungusToast.Unity.UI
         private const float EndGameLegacyHeaderHeight = 42f;
         private const float EndGameResultsScrollMinHeight = 220f;
         private const float EndGameTestingRailMinimumCardWidth = 1480f;
-        private const float EndGameResultsHeaderHorizontalPadding = 18f;
-        private const float EndGameResultsRankWidth = 60f;
-        private const float EndGameResultsIconWidth = 52f;
-        private const float EndGameResultsMetricWidth = 92f;
-        private const float EndGameResultsSpentPointsWidth = 132f;
-        private const float EndGameResultsDetailsWidth = 108f;
-        // Must match UI_GameEndPlayerResultsRow.prefab's row HorizontalLayoutGroup spacing and nameText preferred width,
-        // otherwise the header cells drift out of alignment with the data row columns.
-        private const float EndGameResultsRowSpacing = 14f;
-        private const float EndGameResultsPlayerColumnWidth = 260f;
         private const float CampaignMoldinessSummaryPanelMinWidth = 280f;
         private const float CampaignMoldinessSummaryPanelPreferredWidth = 288f;
         private const float CampaignMoldinessSummaryTextWidth = 248f;
@@ -118,6 +108,9 @@ namespace FungusToast.Unity.UI
         [SerializeField] private CanvasGroup canvasGroup;
         [SerializeField] private Transform resultsContainer;
         [SerializeField] private UI_GameEndPlayerResultsRow playerResultRowPrefab;
+        // The current table's header and first row, for the development alignment check.
+        private RectTransform resultsHeaderRow;
+        private RectTransform firstResultsRow;
         [SerializeField] private Button continueButton; // campaign mid-run victory only
         [SerializeField] private Button exitButton; // always available to return to mode select
         [SerializeField] private Button playAgainButton; // solo / hotseat replay
@@ -802,7 +795,7 @@ namespace FungusToast.Unity.UI
             int rank = 1;
             foreach (var p in ranked)
             {
-                var row = Instantiate(playerResultRowPrefab, resultsContainer);
+                var row = CreateResultsRow(resultsContainer);
                 var summary = summaries[p.PlayerId];
                 Sprite icon = gameUI != null
                     ? gameUI.PlayerUIBinder.GetIcon(p)
@@ -908,7 +901,7 @@ namespace FungusToast.Unity.UI
             int rank = 1;
             foreach (var player in ranked)
             {
-                var row = Instantiate(playerResultRowPrefab, resultsColumn.transform);
+                var row = CreateResultsRow(resultsColumn.transform);
                 var summary = summaries[player.PlayerId];
                 Sprite icon = gameUI != null
                     ? gameUI.PlayerUIBinder.GetIcon(player)
@@ -1222,10 +1215,14 @@ namespace FungusToast.Unity.UI
 
             BuildResultsHeader(resultsColumn.transform);
 
+            int? perspectivePlayerId = GetSoleHumanPlayerId(snapshot.rows
+                .Select(rowData => ResolvePlayerForDetails(rowData.playerId))
+                .Where(player => player != null)
+                .ToList());
             for (int i = 0; i < snapshot.rows.Count; i++)
             {
                 var rowData = snapshot.rows[i];
-                var row = Instantiate(playerResultRowPrefab, resultsColumn.transform);
+                var row = CreateResultsRow(resultsColumn.transform);
 
                 Sprite icon = gameUI != null
                     ? gameUI.PlayerUIBinder.GetPlayerIcon(rowData.playerId)
@@ -1246,6 +1243,7 @@ namespace FungusToast.Unity.UI
                     rowData.tilesColonized,
                     rowData.spentMutationPoints,
                     player != null ? () => ShowPlayerDetails(player, capturedRank, capturedIcon) : null);
+                row.SetPerspectivePlayer(perspectivePlayerId.HasValue && rowData.playerId == perspectivePlayerId.Value);
             }
 
             BuildCampaignMoldinessSummaryContent(snapshot, victory: true, contentColumns.transform);
@@ -3194,6 +3192,18 @@ namespace FungusToast.Unity.UI
             canvasGroup.alpha = targetAlpha;
         }
 
+        /// <summary>Every results row is made here, after <see cref="BuildResultsHeader"/>, so the alignment check sees the first one.</summary>
+        private UI_GameEndPlayerResultsRow CreateResultsRow(Transform parent)
+        {
+            var row = Instantiate(playerResultRowPrefab, parent);
+            if (firstResultsRow == null)
+            {
+                firstResultsRow = row.transform as RectTransform;
+            }
+
+            return row;
+        }
+
         private void BuildResultsHeader(Transform parentOverride = null)
         {
             var parent = parentOverride ?? resultsContainer;
@@ -3204,36 +3214,37 @@ namespace FungusToast.Unity.UI
 
             var header = new GameObject("UI_GameEndResultsHeaderRow", typeof(RectTransform), typeof(HorizontalLayoutGroup), typeof(LayoutElement));
             header.transform.SetParent(parent, false);
+            firstResultsRow = null;
 
             var layout = header.GetComponent<HorizontalLayoutGroup>();
             layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.spacing = EndGameResultsRowSpacing;
-            layout.padding = new RectOffset((int)EndGameResultsHeaderHorizontalPadding, (int)EndGameResultsHeaderHorizontalPadding, 2, 2);
-            layout.childControlWidth = true;
+            layout.padding = new RectOffset(0, 0, 2, 2);
             layout.childControlHeight = true;
-            layout.childForceExpandWidth = false;
             layout.childForceExpandHeight = false;
+            // Columns come from the same spec the rows use; see EndGameResultsTableLayout.
+            EndGameResultsTableLayout.ApplyRowLayout(layout);
 
             var headerLayout = header.GetComponent<LayoutElement>();
             headerLayout.preferredHeight = 36f;
 
-            CreateHeaderCell(header.transform, string.Empty, EndGameResultsRankWidth, TextAlignmentOptions.Center, false);
-            CreateHeaderCell(header.transform, string.Empty, EndGameResultsIconWidth, TextAlignmentOptions.Center, false);
-            CreateHeaderCell(header.transform, "Player", EndGameResultsPlayerColumnWidth, TextAlignmentOptions.Left, true,
+            resultsHeaderRow = header.GetComponent<RectTransform>();
+            CreateHeaderCell(header.transform, string.Empty, EndGameResultsTableLayout.Column.Rank, TextAlignmentOptions.Center);
+            CreateHeaderCell(header.transform, string.Empty, EndGameResultsTableLayout.Column.Icon, TextAlignmentOptions.Center);
+            CreateHeaderCell(header.transform, "Player", EndGameResultsTableLayout.Column.Player, TextAlignmentOptions.Left,
                 "Players are ranked by living cells at game end.");
-            CreateHeaderCell(header.transform, "Alive", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Alive", EndGameResultsTableLayout.Column.Alive, TextAlignmentOptions.Right,
                 "Living cells on the board at game end, including resistant cells.");
-            CreateHeaderCell(header.transform, "Resistant", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Resistant", EndGameResultsTableLayout.Column.Resistant, TextAlignmentOptions.Right,
                 "Living cells that cannot be killed, displaced, or lost to random decay.");
-            CreateHeaderCell(header.transform, "Dead", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Dead", EndGameResultsTableLayout.Column.Dead, TextAlignmentOptions.Right,
                 "Dead cells this player still owns at game end.");
-            CreateHeaderCell(header.transform, "Toxins", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Toxins", EndGameResultsTableLayout.Column.Toxins, TextAlignmentOptions.Right,
                 "Toxin tiles this player still owns at game end.");
-            CreateHeaderCell(header.transform, "Colonized", EndGameResultsMetricWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Colonized", EndGameResultsTableLayout.Column.Colonized, TextAlignmentOptions.Right,
                 "Tiles colonized during the game. Colonize: place a new living cell in an empty tile.");
-            CreateHeaderCell(header.transform, "Spent Points", EndGameResultsSpentPointsWidth, TextAlignmentOptions.Right, false,
+            CreateHeaderCell(header.transform, "Spent Points", EndGameResultsTableLayout.Column.SpentPoints, TextAlignmentOptions.Right,
                 "Total mutation points spent on mutation upgrades and surge activations during the game.");
-            CreateHeaderCell(header.transform, "Details", EndGameResultsDetailsWidth, TextAlignmentOptions.Center, false,
+            CreateHeaderCell(header.transform, "Details", EndGameResultsTableLayout.Column.Details, TextAlignmentOptions.Center,
                 "View a player's end-of-game build details.");
         }
 
@@ -4703,6 +4714,8 @@ namespace FungusToast.Unity.UI
                 {
                     resetResultsScrollPositionOnNextLayout = false;
                 }
+
+                EndGameResultsTableLayout.WarnIfMisaligned(resultsHeaderRow, firstResultsRow);
             }
             finally
             {
@@ -4795,14 +4808,11 @@ namespace FungusToast.Unity.UI
                 manager?.TestingForcedStartingAdaptationIds);
         }
 
-        private void CreateHeaderCell(Transform parent, string text, float preferredWidth, TextAlignmentOptions alignment, bool flexible, string tooltip = null)
+        private void CreateHeaderCell(Transform parent, string text, EndGameResultsTableLayout.Column column, TextAlignmentOptions alignment, string tooltip = null)
         {
             var cell = new GameObject($"UI_GameEndHeader_{text}", typeof(RectTransform), typeof(LayoutElement), typeof(TextMeshProUGUI));
             cell.transform.SetParent(parent, false);
-
-            var layout = cell.GetComponent<LayoutElement>();
-            layout.preferredWidth = preferredWidth;
-            layout.flexibleWidth = flexible ? 1f : -1f;
+            EndGameResultsTableLayout.ApplyCell(cell, column);
 
             var label = cell.GetComponent<TextMeshProUGUI>();
             label.text = text;

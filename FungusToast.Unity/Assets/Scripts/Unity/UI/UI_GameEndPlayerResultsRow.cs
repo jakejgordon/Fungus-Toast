@@ -8,9 +8,6 @@ namespace FungusToast.Unity.UI
 {
     public class UI_GameEndPlayerResultsRow : MonoBehaviour
     {
-        private const float MetricColumnWidth = 92f;
-        private const float SpentPointsColumnWidth = 132f;
-        private const float DetailsColumnWidth = 108f;
         // Same YOU treatment as the in-match scoreboard (PlayerSummaryRow): accent strip,
         // Moss row tint, and a Lichen pill on the mold icon.
         private const float YouAccentStripWidth = 4f;
@@ -60,6 +57,12 @@ namespace FungusToast.Unity.UI
             if (toxinText != null) toxinText.color = UIStyleTokens.Text.Muted;
             if (colonizedText != null) colonizedText.color = UIStyleTokens.Text.Secondary;
             if (spentPointsText != null) spentPointsText.color = UIStyleTokens.Text.Secondary;
+
+            var rowLayout = GetComponent<HorizontalLayoutGroup>();
+            if (rowLayout != null)
+            {
+                EndGameResultsTableLayout.ApplyRowLayout(rowLayout);
+            }
 
             ConfigureText(rankText, TextAlignmentOptions.Center, 23f, allowAutoSize: false);
             ConfigureText(nameText, TextAlignmentOptions.Left, 23f, allowAutoSize: true);
@@ -226,16 +229,6 @@ namespace FungusToast.Unity.UI
                 ConfigureText(resistantText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
                 resistantText.text = "0";
             }
-
-            var layout = clone.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = clone.AddComponent<LayoutElement>();
-            }
-
-            layout.preferredWidth = MetricColumnWidth;
-            layout.minWidth = MetricColumnWidth;
-            layout.flexibleWidth = -1f;
         }
 
         private void EnsureToxinText()
@@ -256,16 +249,6 @@ namespace FungusToast.Unity.UI
                 ConfigureText(toxinText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
                 toxinText.text = "0";
             }
-
-            var layout = clone.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = clone.AddComponent<LayoutElement>();
-            }
-
-            layout.preferredWidth = MetricColumnWidth;
-            layout.minWidth = MetricColumnWidth;
-            layout.flexibleWidth = -1f;
         }
 
         private void EnsureColonizedText()
@@ -287,16 +270,6 @@ namespace FungusToast.Unity.UI
                 ConfigureText(colonizedText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
                 colonizedText.text = "0";
             }
-
-            var layout = clone.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = clone.AddComponent<LayoutElement>();
-            }
-
-            layout.preferredWidth = MetricColumnWidth;
-            layout.minWidth = MetricColumnWidth;
-            layout.flexibleWidth = -1f;
         }
 
         private void EnsureSpentPointsText()
@@ -318,16 +291,6 @@ namespace FungusToast.Unity.UI
                 ConfigureText(spentPointsText, TextAlignmentOptions.Right, 21f, allowAutoSize: false);
                 spentPointsText.text = "0";
             }
-
-            var layout = clone.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = clone.AddComponent<LayoutElement>();
-            }
-
-            layout.preferredWidth = SpentPointsColumnWidth;
-            layout.minWidth = SpentPointsColumnWidth;
-            layout.flexibleWidth = -1f;
         }
 
         private void EnsureDetailsButton()
@@ -354,11 +317,9 @@ namespace FungusToast.Unity.UI
             detailsButton = buttonObject.GetComponent<Button>();
 
             var layout = buttonObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = DetailsColumnWidth;
-            layout.minWidth = DetailsColumnWidth;
             layout.preferredHeight = 42f;
             layout.minHeight = 38f;
-            layout.flexibleWidth = -1f;
+            EndGameResultsTableLayout.ApplyCell(buttonObject, EndGameResultsTableLayout.Column.Details);
 
             var labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
             labelObject.transform.SetParent(buttonObject.transform, false);
@@ -384,43 +345,24 @@ namespace FungusToast.Unity.UI
 
         private void EnsureColumnWidths()
         {
-            ApplyColumnWidth(livingText, MetricColumnWidth);
-            ApplyColumnWidth(resistantText, MetricColumnWidth);
-            ApplyColumnWidth(deadText, MetricColumnWidth);
-            ApplyColumnWidth(toxinText, MetricColumnWidth);
-            ApplyColumnWidth(colonizedText, MetricColumnWidth);
-            ApplyColumnWidth(spentPointsText, SpentPointsColumnWidth);
-
-            if (detailsButton != null)
-            {
-                var layout = detailsButton.GetComponent<LayoutElement>();
-                if (layout == null)
-                {
-                    layout = detailsButton.gameObject.AddComponent<LayoutElement>();
-                }
-
-                layout.preferredWidth = DetailsColumnWidth;
-                layout.minWidth = DetailsColumnWidth;
-                layout.flexibleWidth = -1f;
-            }
+            ApplyColumn(rankText, EndGameResultsTableLayout.Column.Rank);
+            ApplyColumn(iconImage, EndGameResultsTableLayout.Column.Icon);
+            ApplyColumn(nameText, EndGameResultsTableLayout.Column.Player);
+            ApplyColumn(livingText, EndGameResultsTableLayout.Column.Alive);
+            ApplyColumn(resistantText, EndGameResultsTableLayout.Column.Resistant);
+            ApplyColumn(deadText, EndGameResultsTableLayout.Column.Dead);
+            ApplyColumn(toxinText, EndGameResultsTableLayout.Column.Toxins);
+            ApplyColumn(colonizedText, EndGameResultsTableLayout.Column.Colonized);
+            ApplyColumn(spentPointsText, EndGameResultsTableLayout.Column.SpentPoints);
+            ApplyColumn(detailsButton, EndGameResultsTableLayout.Column.Details);
         }
 
-        private static void ApplyColumnWidth(Component component, float width)
+        private static void ApplyColumn(Component component, EndGameResultsTableLayout.Column column)
         {
-            if (component == null)
+            if (component != null)
             {
-                return;
+                EndGameResultsTableLayout.ApplyCell(component.gameObject, column);
             }
-
-            var layout = component.GetComponent<LayoutElement>();
-            if (layout == null)
-            {
-                layout = component.gameObject.AddComponent<LayoutElement>();
-            }
-
-            layout.preferredWidth = width;
-            layout.minWidth = width;
-            layout.flexibleWidth = -1f;
         }
 
         private void ConfigureDetailsButton(Action onDetailsRequested)
@@ -499,6 +441,153 @@ namespace FungusToast.Unity.UI
                 label.textWrappingMode = TextWrappingModes.NoWrap;
                 TMPOverflowUtility.SetSafeEllipsis(label);
             }
+        }
+    }
+
+    /// <summary>
+    /// The results table's column layout, shared by the header (<c>UI_EndGamePanel.BuildResultsHeader</c>)
+    /// and every <see cref="UI_GameEndPlayerResultsRow"/>. Both sides apply these values through
+    /// <see cref="ApplyRowLayout"/> and <see cref="ApplyCell"/>, so a header cell and the row cell
+    /// beneath it always resolve to the same x and width. Change a column here, never in the
+    /// prefab or at a call site.
+    /// </summary>
+    /// <remarks>
+    /// Every fixed column has min = preferred and the Player column is the only one that flexes or
+    /// shrinks. When the table is narrower than the sum of preferred widths, a HorizontalLayoutGroup
+    /// shrinks each child between its min and preferred width, so any column whose min differs
+    /// between header and rows drifts - the header once had no min width and slid right of its
+    /// values one column at a time.
+    /// </remarks>
+    internal static class EndGameResultsTableLayout
+    {
+        /// <summary>Columns in display order; the order matches the children of the header and each row.</summary>
+        internal enum Column
+        {
+            Rank,
+            Icon,
+            Player,
+            Alive,
+            Resistant,
+            Dead,
+            Toxins,
+            Colonized,
+            SpentPoints,
+            Details,
+        }
+
+        internal const float ColumnSpacing = 14f;
+        internal const int HorizontalPadding = 18;
+        internal const float PlayerMinWidth = 140f;
+        private const float MetricWidth = 92f;
+
+        internal static float GetPreferredWidth(Column column)
+        {
+            switch (column)
+            {
+                case Column.Rank: return 60f;
+                case Column.Icon: return 52f;
+                case Column.Player: return 260f;
+                case Column.SpentPoints: return 132f;
+                case Column.Details: return 108f;
+                default: return MetricWidth;
+            }
+        }
+
+        /// <summary>Applies the shared padding and spacing; vertical padding is left to the caller.</summary>
+        internal static void ApplyRowLayout(HorizontalLayoutGroup layout)
+        {
+            if (layout == null)
+            {
+                return;
+            }
+
+            layout.padding = new RectOffset(HorizontalPadding, HorizontalPadding, layout.padding.top, layout.padding.bottom);
+            layout.spacing = ColumnSpacing;
+            layout.childControlWidth = true;
+            layout.childForceExpandWidth = false;
+        }
+
+        internal static void ApplyCell(GameObject cell, Column column)
+        {
+            if (cell == null)
+            {
+                return;
+            }
+
+            var layout = cell.GetComponent<LayoutElement>();
+            if (layout == null)
+            {
+                layout = cell.AddComponent<LayoutElement>();
+            }
+
+            float preferred = GetPreferredWidth(column);
+            bool isPlayer = column == Column.Player;
+            layout.ignoreLayout = false;
+            layout.preferredWidth = preferred;
+            layout.minWidth = isPlayer ? PlayerMinWidth : preferred;
+            layout.flexibleWidth = isPlayer ? 1f : 0f;
+        }
+
+        /// <summary>
+        /// Development check: logs a warning when any header cell and the row cell beneath it
+        /// resolved to a different x or width. Call after the layout has been rebuilt.
+        /// </summary>
+        internal static void WarnIfMisaligned(RectTransform header, RectTransform row)
+        {
+            if (!Debug.isDebugBuild || header == null || row == null)
+            {
+                return;
+            }
+
+            var headerCells = GetLayoutCells(header);
+            var rowCells = GetLayoutCells(row);
+            if (headerCells.Count != rowCells.Count)
+            {
+                Debug.LogWarning($"[EndGameResultsTable] Header has {headerCells.Count} columns but rows have {rowCells.Count}.");
+                return;
+            }
+
+            for (int i = 0; i < headerCells.Count; i++)
+            {
+                Rect headerRect = headerCells[i].rect;
+                Rect rowRect = rowCells[i].rect;
+                if (headerRect.width <= 0f || rowRect.width <= 0f)
+                {
+                    return;
+                }
+
+                float headerX = headerCells[i].localPosition.x + headerRect.xMin;
+                float rowX = rowCells[i].localPosition.x + rowRect.xMin;
+                if (Mathf.Abs(headerX - rowX) > 0.5f || Mathf.Abs(headerRect.width - rowRect.width) > 0.5f)
+                {
+                    Debug.LogWarning(
+                        $"[EndGameResultsTable] Column {(Column)i} is misaligned: header x={headerX:F1} w={headerRect.width:F1}, "
+                        + $"row x={rowX:F1} w={rowRect.width:F1}. Apply EndGameResultsTableLayout to both sides.");
+                    return;
+                }
+            }
+        }
+
+        private static System.Collections.Generic.List<RectTransform> GetLayoutCells(RectTransform parent)
+        {
+            var cells = new System.Collections.Generic.List<RectTransform>();
+            foreach (Transform child in parent)
+            {
+                if (!child.gameObject.activeSelf || !(child is RectTransform rect))
+                {
+                    continue;
+                }
+
+                var element = child.GetComponent<LayoutElement>();
+                if (element != null && element.ignoreLayout)
+                {
+                    continue;
+                }
+
+                cells.Add(rect);
+            }
+
+            return cells;
         }
     }
 }
