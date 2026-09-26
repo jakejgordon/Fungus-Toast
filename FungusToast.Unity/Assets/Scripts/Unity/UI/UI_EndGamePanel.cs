@@ -106,7 +106,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameDockSummaryPreferredWidth = 360f;
         private const float EndGameDockToggleButtonWidth = 210f;
         private const float EndGameDockActionButtonPreferredWidth = 188f;
-        private const float EndGameDockLongActionButtonPreferredWidth = 248f;
+        private const float EndGameDockLongActionButtonPreferredWidth = 300f;
         private const float EndGameDockActionButtonMinWidth = 164f;
         private const float EndGameActionButtonIconSize = 22f;
         private const float EndGameActionButtonContentSpacing = 10f;
@@ -272,6 +272,11 @@ namespace FungusToast.Unity.UI
             EnsurePendingRewardBreadBackground();
 
             HideInstant();
+        }
+
+        private void OnDisable()
+        {
+            CoachmarkLayoutUtility.ReleaseHudCoachmarks(this, reveal: false);
         }
 
         private void Update()
@@ -686,9 +691,10 @@ namespace FungusToast.Unity.UI
                 {
                     // defeat – show lost level index (1-based)
                     outcomeLabel.text =
-                        $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign Lost</b></color>\n" +
-                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Stage {lostLevelDisplay}</color></size>\n" +
-                        $"<size=22><color=#{ToHex(UIStyleTokens.Text.Secondary)}>Oh no! You just weren't moldy enough.</color></size>";
+                        // Title and stage share a line so the loss summary's two lines fit the banner.
+                        $"<color=#{ToHex(UIStyleTokens.State.Danger)}><b>Campaign Lost</b></color>" +
+                        $"<size=28><color=#{ToHex(UIStyleTokens.Text.Secondary)}>  •  Stage {lostLevelDisplay}</color></size>\n" +
+                        $"<size=22><color=#{ToHex(UIStyleTokens.Text.Secondary)}>{BuildCampaignLossSummary(ranked, board, playerStatistics)}</color></size>";
                 }
                 else if (finalLevel)
                 {
@@ -735,7 +741,7 @@ namespace FungusToast.Unity.UI
                     if (continueButton != null)
                     {
                         continueButton.gameObject.SetActive(true);
-                        SetButtonLabel(continueButton, "Preserve Spores for Next Run");
+                        SetButtonLabel(continueButton, FormatDefeatCarryoverButtonLabel(defeatCarryoverSelectionCapacity));
                     }
 
                     if (playAgainButton != null)
@@ -762,7 +768,7 @@ namespace FungusToast.Unity.UI
 
             if (!victory && hasPendingDefeatCarryoverEvent && continueButton != null)
             {
-                SetButtonLabel(continueButton, "Preserve Spores for Next Run");
+                SetButtonLabel(continueButton, FormatDefeatCarryoverButtonLabel(defeatCarryoverSelectionCapacity));
             }
 
             ApplyControlReadabilityOverrides();
@@ -790,6 +796,7 @@ namespace FungusToast.Unity.UI
             BuildResultsHeader();
 
             var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+            int? perspectivePlayerId = GetSoleHumanPlayerId(ranked);
 
             /* build rows */
             int rank = 1;
@@ -816,6 +823,7 @@ namespace FungusToast.Unity.UI
                     currentPlayerStatistics.GetPlayerStatistics(p.PlayerId).TilesColonized,
                     currentPlayerStatistics.GetPlayerStatistics(p.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
+                row.SetPerspectivePlayer(perspectivePlayerId.HasValue && p.PlayerId == perspectivePlayerId.Value);
                 rank++;
             }
 
@@ -896,6 +904,7 @@ namespace FungusToast.Unity.UI
             BuildResultsHeader(resultsColumn.transform);
 
             var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+            int? perspectivePlayerId = GetSoleHumanPlayerId(ranked);
             int rank = 1;
             foreach (var player in ranked)
             {
@@ -920,6 +929,7 @@ namespace FungusToast.Unity.UI
                     currentPlayerStatistics.GetPlayerStatistics(player.PlayerId).TilesColonized,
                     currentPlayerStatistics.GetPlayerStatistics(player.PlayerId).SpentMutationPoints,
                     () => ShowPlayerDetails(capturedPlayer, capturedRank, capturedIcon));
+                row.SetPerspectivePlayer(perspectivePlayerId.HasValue && player.PlayerId == perspectivePlayerId.Value);
                 rank++;
             }
 
@@ -1526,6 +1536,93 @@ namespace FungusToast.Unity.UI
             return "Choose which adaptations you want to keep before you return to the campaign menu.";
         }
 
+        private static string FormatDefeatCarryoverButtonLabel(int carryoverCapacity)
+        {
+            return carryoverCapacity > 1
+                ? $"Choose {carryoverCapacity} Adaptations to Keep"
+                : "Choose Adaptation to Keep";
+        }
+
+        /// <summary>
+        /// The match's only human, whose results row carries the YOU treatment. Null for hotseat
+        /// and AI-only games, where no single row is "you".
+        /// </summary>
+        private static int? GetSoleHumanPlayerId(IReadOnlyList<Player> ranked)
+        {
+            if (ranked == null)
+            {
+                return null;
+            }
+
+            var humans = ranked.Where(player => player != null && player.PlayerType == PlayerTypeEnum.Human).ToList();
+            return humans.Count == 1 ? humans[0].PlayerId : (int?)null;
+        }
+
+        /// <summary>
+        /// Explains a campaign loss from the results table: the human's place and living-cell gap
+        /// to the winner, then at most one recap line naming the clearest deficit in the table.
+        /// </summary>
+        private static string BuildCampaignLossSummary(List<Player> ranked, GameBoard board, EndgamePlayerStatisticsSnapshot playerStatistics)
+        {
+            const string fallback = "Oh no! You just weren't moldy enough.";
+            int? humanId = GetSoleHumanPlayerId(ranked);
+            if (!humanId.HasValue || ranked.Count < 2 || board == null)
+            {
+                return fallback;
+            }
+
+            var winner = ranked[0];
+            int humanIndex = ranked.FindIndex(player => player != null && player.PlayerId == humanId.Value);
+            if (humanIndex <= 0)
+            {
+                return fallback;
+            }
+
+            var summaries = BoardUtilities.GetPlayerBoardSummaries(ranked, board);
+            if (!summaries.TryGetValue(winner.PlayerId, out var winnerSummary) || !summaries.TryGetValue(humanId.Value, out var humanSummary))
+            {
+                return fallback;
+            }
+
+            int livingGap = Math.Max(0, winnerSummary.LivingCells - humanSummary.LivingCells);
+            string placement = $"You finished {FormatOrdinal(humanIndex + 1)} of {ranked.Count}, "
+                + $"{livingGap:N0} living cell{Pluralize(livingGap)} behind {winner.PlayerName} "
+                + $"({humanSummary.LivingCells:N0} vs {winnerSummary.LivingCells:N0}).";
+
+            var statistics = playerStatistics ?? EndgamePlayerStatisticsSnapshot.Empty;
+            int humanSpent = statistics.GetPlayerStatistics(humanId.Value).SpentMutationPoints;
+            int winnerSpent = statistics.GetPlayerStatistics(winner.PlayerId).SpentMutationPoints;
+
+            string recap = null;
+            if (humanSummary.DeadCells > humanSummary.LivingCells && humanSummary.DeadCells > winnerSummary.DeadCells)
+            {
+                recap = $"Decay hit you hardest: {humanSummary.DeadCells:N0} of your cells died, against {winnerSummary.DeadCells:N0} of {winner.PlayerName}'s.";
+            }
+            else if (winnerSpent - humanSpent >= Math.Max(10, winnerSpent / 5))
+            {
+                recap = $"{winner.PlayerName} spent {winnerSpent - humanSpent:N0} more mutation points than you ({winnerSpent:N0} vs {humanSpent:N0}).";
+            }
+
+            return recap == null ? placement : $"{placement}\n{recap}";
+        }
+
+        private static string FormatOrdinal(int value)
+        {
+            int lastTwo = value % 100;
+            if (lastTwo >= 11 && lastTwo <= 13)
+            {
+                return $"{value}th";
+            }
+
+            return (value % 10) switch
+            {
+                1 => $"{value}st",
+                2 => $"{value}nd",
+                3 => $"{value}rd",
+                _ => $"{value}th",
+            };
+        }
+
         private static string FormatSporesInReserveCarryoverText(int carryoverCapacity, bool isSelectionScreen)
         {
             if (carryoverCapacity <= 0)
@@ -1603,7 +1700,7 @@ namespace FungusToast.Unity.UI
                 ? $"Threshold reached. {snapshot.pendingMoldinessUnlockCount} moldiness reward{Pluralize(snapshot.pendingMoldinessUnlockCount)} pending."
                 : (snapshot.moldinessAwarded > 0
                     ? "No new threshold crossed this run."
-                    : "No moldiness gained this stage.");
+                    : "Moldiness is earned by clearing stages - none gained this run.");
 
             var detail = CreateCarryoverInfoText(root.transform,
                 thresholdMessage,
@@ -3914,6 +4011,10 @@ namespace FungusToast.Unity.UI
 
         private void PreparePanelForContentBuild()
         {
+            // Gameplay teaching cards are finished once the match is: take them off screen so
+            // neither the results nor Inspect Board shows a leftover tip. OnDisable releases
+            // them without a reveal.
+            CoachmarkLayoutUtility.HoldHudCoachmarks(this);
             SetEndGameResultsDocked(false, preserveCurrentOverlayCanvasState: true);
 
             if (!gameObject.activeSelf)
@@ -4544,9 +4645,9 @@ namespace FungusToast.Unity.UI
                     }
                 }
 
-                ConfigureActionBarButtonLayout(playAgainButton);
-                ConfigureActionBarButtonLayout(continueButton);
-                ConfigureActionBarButtonLayout(exitButton);
+                // EnsureActionButtonsShareContainer has already sized the buttons for their
+                // container (bottom bar or vertical stack). Re-applying the bar sizing here
+                // squeezed the loss screen's stacked buttons to 280 and cut off their labels.
 
                 Canvas.ForceUpdateCanvases();
 

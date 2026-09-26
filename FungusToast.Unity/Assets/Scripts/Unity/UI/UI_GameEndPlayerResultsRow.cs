@@ -11,6 +11,12 @@ namespace FungusToast.Unity.UI
         private const float MetricColumnWidth = 92f;
         private const float SpentPointsColumnWidth = 132f;
         private const float DetailsColumnWidth = 108f;
+        // Same YOU treatment as the in-match scoreboard (PlayerSummaryRow): accent strip,
+        // Moss row tint, and a Lichen pill on the mold icon.
+        private const float YouAccentStripWidth = 4f;
+        private const float YouBadgeWidth = 44f;
+        private const float YouBadgeHeight = 20f;
+        private static readonly Vector2 YouBadgeOffset = new Vector2(4f, -2f);
 
         [Header("References")]
         [SerializeField] private TextMeshProUGUI rankText;
@@ -24,6 +30,8 @@ namespace FungusToast.Unity.UI
         private TextMeshProUGUI spentPointsText = null!;
         [SerializeField] private Button detailsButton;
         [SerializeField] private Image rowBackground;
+        private GameObject youAccentStrip = null!;
+        private GameObject youBadgeRoot = null!;
 
         private void Awake()
         {
@@ -99,6 +107,105 @@ namespace FungusToast.Unity.UI
             }
 
             ConfigureDetailsButton(onDetailsRequested);
+        }
+
+        /// <summary>Marks the row as the local human's, matching the scoreboard's YOU treatment.</summary>
+        public void SetPerspectivePlayer(bool isPerspectivePlayer)
+        {
+            EnsurePerspectiveVisuals();
+
+            if (rowBackground != null)
+            {
+                var inactive = UIStyleTokens.Surface.PanelSecondary;
+                inactive.a = 0.6f;
+                rowBackground.color = isPerspectivePlayer
+                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Moss, UIStyleTokens.Alpha.PerspectiveHighlight)
+                    : inactive;
+            }
+
+            if (youAccentStrip != null)
+            {
+                youAccentStrip.SetActive(isPerspectivePlayer);
+            }
+
+            if (youBadgeRoot != null)
+            {
+                youBadgeRoot.SetActive(isPerspectivePlayer);
+            }
+        }
+
+        private void EnsurePerspectiveVisuals()
+        {
+            if (youAccentStrip == null)
+            {
+                var stripObject = new GameObject("UI_YouAccentStrip", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(LayoutElement));
+                stripObject.transform.SetParent(transform, false);
+                stripObject.GetComponent<LayoutElement>().ignoreLayout = true;
+
+                var stripRect = stripObject.GetComponent<RectTransform>();
+                stripRect.anchorMin = new Vector2(0f, 0f);
+                stripRect.anchorMax = new Vector2(0f, 1f);
+                stripRect.pivot = new Vector2(0f, 0.5f);
+                stripRect.anchoredPosition = Vector2.zero;
+                stripRect.sizeDelta = new Vector2(YouAccentStripWidth, 0f);
+
+                var strip = stripObject.GetComponent<Image>();
+                strip.raycastTarget = false;
+                strip.color = UIStyleTokens.Accent.Lichen;
+                stripObject.SetActive(false);
+                youAccentStrip = stripObject;
+            }
+
+            if (youBadgeRoot == null && iconImage != null)
+            {
+                var badgeObject = new GameObject("UI_YouBadge", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Outline), typeof(LayoutElement));
+                badgeObject.transform.SetParent(iconImage.transform, false);
+                badgeObject.GetComponent<LayoutElement>().ignoreLayout = true;
+
+                var badgeRect = badgeObject.GetComponent<RectTransform>();
+                badgeRect.anchorMin = new Vector2(1f, 1f);
+                badgeRect.anchorMax = new Vector2(1f, 1f);
+                badgeRect.pivot = new Vector2(1f, 1f);
+                badgeRect.anchoredPosition = YouBadgeOffset;
+                badgeRect.sizeDelta = new Vector2(YouBadgeWidth, YouBadgeHeight);
+
+                var badgeBackground = badgeObject.GetComponent<Image>();
+                badgeBackground.raycastTarget = false;
+                badgeBackground.color = UIStyleTokens.Accent.Lichen;
+
+                var badgeOutline = badgeObject.GetComponent<Outline>();
+                badgeOutline.effectColor = UIStyleTokens.Surface.PanelPrimary;
+                badgeOutline.effectDistance = new Vector2(1f, -1f);
+                badgeOutline.useGraphicAlpha = true;
+
+                var badgeTextObject = new GameObject("UI_YouBadgeText", typeof(RectTransform), typeof(CanvasRenderer), typeof(TextMeshProUGUI));
+                badgeTextObject.transform.SetParent(badgeObject.transform, false);
+
+                var badgeTextRect = badgeTextObject.GetComponent<RectTransform>();
+                badgeTextRect.anchorMin = Vector2.zero;
+                badgeTextRect.anchorMax = Vector2.one;
+                badgeTextRect.offsetMin = Vector2.zero;
+                badgeTextRect.offsetMax = Vector2.zero;
+
+                var badgeText = badgeTextObject.GetComponent<TextMeshProUGUI>();
+                badgeText.text = "YOU";
+                badgeText.color = UIStyleTokens.Text.OnAccent;
+                badgeText.alignment = TextAlignmentOptions.Center;
+                badgeText.fontStyle = FontStyles.Bold;
+                badgeText.enableAutoSizing = false;
+                badgeText.fontSize = UIStyleTokens.Typography.MicroMinimum;
+                badgeText.margin = new Vector4(4f, 0f, 4f, 0f);
+                badgeText.textWrappingMode = TextWrappingModes.NoWrap;
+                badgeText.overflowMode = TextOverflowModes.Ellipsis;
+                badgeText.raycastTarget = false;
+                if (nameText != null)
+                {
+                    badgeText.font = nameText.font;
+                }
+
+                badgeObject.SetActive(false);
+                youBadgeRoot = badgeObject;
+            }
         }
 
         private void EnsureResistantText()
