@@ -168,6 +168,21 @@ Notes:
 - Narrower setup flows may use a tighter `470x52px` button when the whole column is intentionally constrained, but overlays and modal confirmation states should default back to the `500x56px` standard.
 - In two-column layouts with a right-side development/testing rail, keep the main action stack centered in the available overlay and top-align the rail with the stack rather than allowing the rail width to pull the primary actions off-center.
 
+### Button Size Tiers
+- Width signals role and nothing else. Buttons in one action group share a height and one label font-size range; do not vary height or label size to create emphasis.
+- Use at most two width tiers per group: the `500px` primary tier for forward, neutral, and main navigation actions (including `Main Menu`, `Inspect Board`, and `Play Again`), and the `330px` compact tier for `Back`, `Exit Game`, cancel, and other dismissals.
+- Emphasis comes from the semantic role colours in section 5.1.0, not from size. The green forward action is never narrower than its siblings.
+- A styling helper's width and its container's width must agree. If a helper applies the canonical `500px` width, the stack column must be at least `500px`, or the button overflows into neighbouring UI.
+
+### Action Rows vs Stacks
+- Modal and end-game action groups always use the vertical action stack. Do not lay them out as a horizontal row: a row forces mixed widths and label auto-sizing that make the forward action read smallest.
+- The only horizontal button group on these surfaces is the compact docked-results bar, which is a toolbar rather than a decision point.
+
+### Development/Testing Rail
+- Rail width `400px`, placed beside the main column with at least an `18px` gap between the column's `500px` edge and the rail.
+- Rail buttons use the dark panel-secondary utility style, fill the rail card's inner width, and stay `40-44px` high (`DevelopmentTestingCardController` owns these sizes); dropdown rows follow section 5.3.
+- The rail never changes the width, height, or centering of the main action stack.
+
 ---
 
 ## 5) Component Recipes

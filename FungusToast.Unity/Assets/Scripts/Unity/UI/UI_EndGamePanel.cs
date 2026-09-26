@@ -54,10 +54,7 @@ namespace FungusToast.Unity.UI
         private const float EndGameContentTopInset = 30f;
         private const float EndGameContentTopInsetWithOutcome = 126f;
         private const float EndGameConfirmationContentTopInsetWithOutcome = 162f;
-        private const float EndGameContentBottomInset = 110f;
         private const float EndGameConfirmationContentBottomInset = 56f;
-        private const float EndGameActionBarHeight = 60f;
-        private const float EndGameActionBarBottomInset = 24f;
         private const float EndGameRailWidth = 400f;
         private const float EndGameRailGap = 18f;
         private const float EndGameActionButtonMinWidth = 220f;
@@ -155,7 +152,6 @@ namespace FungusToast.Unity.UI
         private LayoutElement endGameTestingRailLayoutElement;
         private RectTransform endGameTestingRailMirrorSpacerRoot;
         private LayoutElement endGameTestingRailMirrorSpacerLayoutElement;
-        private RectTransform endGameActionBarRoot;
         private RectTransform endGameDockBarRoot;
         private CanvasGroup endGameDockBarCanvasGroup;
         private TextMeshProUGUI endGameDockSummaryLabel;
@@ -177,7 +173,6 @@ namespace FungusToast.Unity.UI
         private bool showCampaignLossActionStack;
         private bool isEndGameResultsDocked;
 
-        private bool UseVerticalActionStack => showPostAdaptationConfirmationState || requiresMoldinessRewardSelection || requiresDefeatCarryoverSelection || showCampaignLossActionStack;
         private bool CanShowResultsDockToggle => !showPostAdaptationConfirmationState && !requiresMoldinessRewardSelection && !requiresDefeatCarryoverSelection;
 
         private sealed class MoldinessRewardOptionVisual
@@ -331,7 +326,6 @@ namespace FungusToast.Unity.UI
             EnsureButtonLayout(exitButton);
             EnsureButtonLayout(playAgainButton);
             EnsureActionButtonsShareContainer();
-            EnsureButtonContainerLayout();
             EnsureDockedResultsControls();
             EnsurePostVictoryTestingControls();
             EnsureDetailsModal();
@@ -4174,32 +4168,6 @@ namespace FungusToast.Unity.UI
             endGameTestingRailLayoutElement.minWidth = EndGameRailWidth;
             endGameTestingRailLayoutElement.preferredWidth = EndGameRailWidth;
 
-            if (endGameActionBarRoot == null)
-            {
-                var actionBar = new GameObject("UI_EndGameActionBar", typeof(RectTransform), typeof(HorizontalLayoutGroup));
-                actionBar.transform.SetParent(resultsCardBackground.transform, false);
-                endGameActionBarRoot = actionBar.GetComponent<RectTransform>();
-            }
-
-            endGameActionBarRoot.SetParent(resultsCardBackground.transform, false);
-            endGameActionBarRoot.anchorMin = new Vector2(0f, 0f);
-            endGameActionBarRoot.anchorMax = new Vector2(1f, 0f);
-            endGameActionBarRoot.pivot = new Vector2(0.5f, 0f);
-            endGameActionBarRoot.anchoredPosition = new Vector2(0f, EndGameActionBarBottomInset);
-            endGameActionBarRoot.sizeDelta = new Vector2(0f, EndGameActionBarHeight);
-            endGameActionBarRoot.offsetMin = new Vector2(EndGameContentHorizontalInset, endGameActionBarRoot.offsetMin.y);
-            endGameActionBarRoot.offsetMax = new Vector2(-EndGameContentHorizontalInset, endGameActionBarRoot.offsetMax.y);
-            endGameActionBarRoot.localScale = Vector3.one;
-
-            var actionBarLayout = endGameActionBarRoot.GetComponent<HorizontalLayoutGroup>();
-            actionBarLayout.childAlignment = TextAnchor.MiddleCenter;
-            actionBarLayout.childControlWidth = true;
-            actionBarLayout.childControlHeight = true;
-            actionBarLayout.childForceExpandWidth = false;
-            actionBarLayout.childForceExpandHeight = false;
-            actionBarLayout.spacing = 18f;
-            actionBarLayout.padding = new RectOffset(0, 0, 0, 0);
-
             if (endGamePostAdaptationRoot == null)
             {
                 var confirmationRoot = new GameObject("UI_EndGamePostAdaptationRoot", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
@@ -4502,7 +4470,6 @@ namespace FungusToast.Unity.UI
                     endGameTestingRailRoot.SetSiblingIndex(showMirroredRailSpacer ? 2 : 1);
                 }
 
-                bool hasActionButtons = IsAnyActionButtonVisible();
                 float topInset;
                 if (outcomeLabel != null && outcomeLabel.gameObject.activeSelf)
                 {
@@ -4515,22 +4482,10 @@ namespace FungusToast.Unity.UI
                     topInset = EndGameContentTopInset;
                 }
 
-                bool useBottomActionBar = hasActionButtons && !UseVerticalActionStack;
-                float bottomInset = useBottomActionBar
-                    ? EndGameContentBottomInset
-                    : UseVerticalActionStack
-                        ? EndGameConfirmationContentBottomInset
-                        : EndGameActionBarBottomInset;
-
                 if (endGameContentShellRoot != null)
                 {
-                    endGameContentShellRoot.offsetMin = new Vector2(EndGameContentHorizontalInset, bottomInset);
+                    endGameContentShellRoot.offsetMin = new Vector2(EndGameContentHorizontalInset, EndGameConfirmationContentBottomInset);
                     endGameContentShellRoot.offsetMax = new Vector2(-EndGameContentHorizontalInset, -topInset);
-                }
-
-                if (endGameActionBarRoot != null)
-                {
-                    endGameActionBarRoot.gameObject.SetActive(useBottomActionBar);
                 }
 
                 if (endGameResultsScrollRoot != null)
@@ -4540,7 +4495,7 @@ namespace FungusToast.Unity.UI
 
                 if (endGamePostAdaptationRoot != null)
                 {
-                    endGamePostAdaptationRoot.gameObject.SetActive(UseVerticalActionStack);
+                    endGamePostAdaptationRoot.gameObject.SetActive(true);
                 }
 
                 if (endGameMainColumnRoot != null)
@@ -4550,35 +4505,23 @@ namespace FungusToast.Unity.UI
                         legacyResultsTitleText.transform.SetSiblingIndex(0);
                     }
 
-                    if (requiresMoldinessRewardSelection)
-                    {
-                        if (endGameResultsScrollRoot != null)
-                        {
-                            endGameResultsScrollRoot.SetSiblingIndex(1);
-                        }
-
-                        if (endGamePostAdaptationRoot != null)
-                        {
-                            endGamePostAdaptationRoot.SetSiblingIndex(2);
-                        }
-                    }
-                    else if (requiresDefeatCarryoverSelection || showCampaignLossActionStack)
-                    {
-                        if (endGameResultsScrollRoot != null)
-                        {
-                            endGameResultsScrollRoot.SetSiblingIndex(1);
-                        }
-
-                        if (endGamePostAdaptationRoot != null)
-                        {
-                            endGamePostAdaptationRoot.SetSiblingIndex(2);
-                        }
-                    }
-                    else if (showPostAdaptationConfirmationState)
+                    if (showPostAdaptationConfirmationState)
                     {
                         if (endGamePostAdaptationRoot != null)
                         {
                             endGamePostAdaptationRoot.SetSiblingIndex(1);
+                        }
+                    }
+                    else
+                    {
+                        if (endGameResultsScrollRoot != null)
+                        {
+                            endGameResultsScrollRoot.SetSiblingIndex(1);
+                        }
+
+                        if (endGamePostAdaptationRoot != null)
+                        {
+                            endGamePostAdaptationRoot.SetSiblingIndex(2);
                         }
                     }
                 }
@@ -4619,7 +4562,7 @@ namespace FungusToast.Unity.UI
                 }
 
                 // EnsureActionButtonsShareContainer has already sized the buttons for their
-                // container (bottom bar or vertical stack). Re-applying the bar sizing here
+                // container (dock bar or vertical stack). Re-applying the bar sizing here
                 // squeezed the loss screen's stacked buttons to 280 and cut off their labels.
 
                 Canvas.ForceUpdateCanvases();
@@ -4661,11 +4604,6 @@ namespace FungusToast.Unity.UI
                     LayoutRebuilder.ForceRebuildLayoutImmediate(endGameResultsScrollRoot);
                 }
 
-                if (endGameActionBarRoot != null)
-                {
-                    LayoutRebuilder.ForceRebuildLayoutImmediate(endGameActionBarRoot);
-                }
-
                 if (endGameResultsScrollRect != null && resetResultsScrollPositionOnNextLayout)
                 {
                     endGameResultsScrollRect.StopMovement();
@@ -4683,16 +4621,6 @@ namespace FungusToast.Unity.UI
             {
                 isRefreshingRuntimeLayout = false;
             }
-        }
-
-        private bool IsAnyActionButtonVisible()
-        {
-            return IsButtonVisible(playAgainButton) || IsButtonVisible(continueButton) || IsButtonVisible(exitButton);
-        }
-
-        private static bool IsButtonVisible(Button button)
-        {
-            return button != null && button.gameObject.activeSelf;
         }
 
         private float GetDockBarPreferredWidth(Button button)
@@ -5129,7 +5057,7 @@ namespace FungusToast.Unity.UI
 
             var targetParent = isEndGameResultsDocked
                 ? endGameDockButtonStripRoot
-                : UseVerticalActionStack ? endGamePostAdaptationRoot : endGameActionBarRoot;
+                : endGamePostAdaptationRoot;
             if (targetParent == null)
             {
                 return;
@@ -5181,7 +5109,7 @@ namespace FungusToast.Unity.UI
                     exitButton.transform.SetSiblingIndex(nextIndex);
                 }
             }
-            else if (UseVerticalActionStack)
+            else
             {
                 bool hasHelperText = endGamePostAdaptationHelperLabel != null && endGamePostAdaptationHelperLabel.gameObject.activeSelf;
                 if (hasHelperText)
@@ -5213,31 +5141,6 @@ namespace FungusToast.Unity.UI
                     exitButton.transform.SetSiblingIndex(nextIndex);
                 }
             }
-            else
-            {
-                if (toggleResultsDockButton != null)
-                {
-                    toggleResultsDockButton.transform.SetSiblingIndex(nextIndex);
-                    nextIndex++;
-                }
-
-                if (playAgainButton != null)
-                {
-                    playAgainButton.transform.SetSiblingIndex(nextIndex);
-                    nextIndex++;
-                }
-
-                if (continueButton != null)
-                {
-                    continueButton.transform.SetSiblingIndex(nextIndex);
-                    nextIndex++;
-                }
-
-                if (exitButton != null)
-                {
-                    exitButton.transform.SetSiblingIndex(nextIndex);
-                }
-            }
 
             if (isEndGameResultsDocked)
             {
@@ -5246,34 +5149,12 @@ namespace FungusToast.Unity.UI
                 ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
                 ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
             }
-            else if (UseVerticalActionStack)
+            else
             {
                 ConfigureVerticalActionStackButtonLayout(toggleResultsDockButton);
                 ConfigureVerticalActionStackButtonLayout(continueButton);
                 ConfigureVerticalActionStackButtonLayout(playAgainButton);
                 ConfigureVerticalActionStackButtonLayout(exitButton);
-            }
-            else
-            {
-                int visibleActionCount = (IsButtonVisible(toggleResultsDockButton) ? 1 : 0)
-                    + (IsButtonVisible(playAgainButton) ? 1 : 0)
-                    + (IsButtonVisible(continueButton) ? 1 : 0)
-                    + (IsButtonVisible(exitButton) ? 1 : 0);
-                bool useCompactHorizontalLayout = visibleActionCount >= 4;
-
-                ConfigureDockBarButtonLayout(toggleResultsDockButton, EndGameDockToggleButtonWidth);
-                if (useCompactHorizontalLayout)
-                {
-                    ConfigureDockBarButtonLayout(playAgainButton, EndGameDockActionButtonPreferredWidth);
-                    ConfigureDockBarButtonLayout(continueButton, GetDockBarPreferredWidth(continueButton));
-                    ConfigureDockBarButtonLayout(exitButton, EndGameDockActionButtonPreferredWidth);
-                }
-                else
-                {
-                    ConfigureActionBarButtonLayout(playAgainButton);
-                    ConfigureActionBarButtonLayout(continueButton);
-                    ConfigureActionBarButtonLayout(exitButton);
-                }
             }
         }
 
@@ -5367,20 +5248,6 @@ namespace FungusToast.Unity.UI
                 label.alignment = TextAlignmentOptions.Center;
                 label.margin = new Vector4(18f, 0f, 18f, 0f);
             }
-        }
-
-        private void EnsureButtonContainerLayout()
-        {
-            if (endGameActionBarRoot == null)
-            {
-                return;
-            }
-
-            var layout = endGameActionBarRoot.GetComponent<HorizontalLayoutGroup>();
-            layout.childControlWidth = true;
-            layout.childForceExpandWidth = false;
-            layout.childForceExpandHeight = false;
-            layout.childAlignment = TextAnchor.MiddleCenter;
         }
 
         private void EnsureOutcomePlacement()
