@@ -28,14 +28,14 @@ namespace FungusToast.Unity.UI.Campaign
         private const float PrimaryColumnWidth = 500f;
         private const float DevelopmentRailWidth = 400f;
         private const float LayoutShellWidth = 500f;
-        private const float DevelopmentRailOffsetX = 440f;
+        private const float DevelopmentRailGap = 18f;
+        private const float DevelopmentRailOffsetX = (PrimaryColumnWidth + DevelopmentRailWidth) / 2f + DevelopmentRailGap;
         private const float DevelopmentRailTopOffsetY = -18f;
         private const float MoldinessSummaryPanelMinWidth = 500f;
         private const float MoldinessSummaryPanelPreferredWidth = 500f;
         private const float MoldinessSummaryTextWidth = 440f;
         private const float MoldinessProgressBarWidth = 440f;
         private const float MoldinessUnlockedRewardsGridWidth = 440f;
-        private const float CampaignHubActionWidth = 460f;
         private const float ActionButtonIconSize = 22f;
         private const float ActionButtonContentSpacing = 10f;
         private const float ActionButtonHorizontalPadding = 12f;
@@ -1444,8 +1444,8 @@ namespace FungusToast.Unity.UI.Campaign
             actionFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             var actionElement = actionStack.GetComponent<LayoutElement>();
-            actionElement.minWidth = CampaignHubActionWidth;
-            actionElement.preferredWidth = CampaignHubActionWidth;
+            actionElement.minWidth = UIStyleTokens.Button.DesktopPrimaryMenuActionWidth;
+            actionElement.preferredWidth = UIStyleTokens.Button.DesktopPrimaryMenuActionWidth;
 
             ReparentActionButton(resumeButton, 0);
             ReparentActionButton(newButton, 1);
@@ -1463,7 +1463,7 @@ namespace FungusToast.Unity.UI.Campaign
             button.transform.SetSiblingIndex(index);
             EnsureButtonLayout(
                 button,
-                button == backButton ? UIStyleTokens.Button.DesktopCompactMenuActionWidth : CampaignHubActionWidth);
+                button == backButton ? UIStyleTokens.Button.DesktopCompactMenuActionWidth : UIStyleTokens.Button.DesktopPrimaryMenuActionWidth);
         }
 
         private static void EnsureButtonLayout(Button button, float width)
