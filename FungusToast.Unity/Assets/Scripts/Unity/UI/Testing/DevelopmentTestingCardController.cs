@@ -169,11 +169,254 @@ namespace FungusToast.Unity.UI.Testing
         }
     }
 
+    /// <summary>
+    /// Builds development-testing dropdowns entirely in code so no scene template is required.
+    /// Built-in UI sprites are unavailable at runtime, so every graphic is a flat tinted rect and
+    /// the arrow is drawn as a two-stroke chevron.
+    /// </summary>
+    public static class DevelopmentTestingDropdownFactory
+    {
+        private const float CaptionLeftPadding = 12f;
+        private const float CaptionRightPadding = 36f;
+        private const float ArrowSize = 20f;
+        private const float ArrowRightInset = 18f;
+        private const float ArrowStrokeLength = 11f;
+        private const float ArrowStrokeThickness = 2.5f;
+        private const float ArrowStrokeOffset = 3.5f;
+        private const float ListHeight = 240f;
+        private const float ListGap = 4f;
+        private const float ItemHeight = 32f;
+        private const float ItemLabelLeftPadding = 14f;
+        private const float ItemMarkerWidth = 4f;
+        private const float ScrollbarWidth = 16f;
+        private const float ScrollbarHandleInset = 4f;
+
+        public static TMP_Dropdown Create(Transform parent, string name)
+        {
+            var root = TMP_DefaultControls.CreateDropdown(new TMP_DefaultControls.Resources());
+            root.name = name;
+            root.transform.SetParent(parent, false);
+            if (parent != null)
+            {
+                SetLayerRecursively(root, parent.gameObject.layer);
+            }
+
+            var dropdown = root.GetComponent<TMP_Dropdown>();
+            dropdown.ClearOptions();
+            dropdown.colors = UIStyleTokens.Button.BuildColorBlock();
+            ApplyFlatImage(root.GetComponent<Image>(), Color.white);
+
+            StyleCaption(dropdown.captionText);
+            BuildArrow(root.transform.Find("Arrow"));
+            StyleTemplate(dropdown.template);
+            return dropdown;
+        }
+
+        private static void StyleCaption(TMP_Text caption)
+        {
+            if (caption == null)
+            {
+                return;
+            }
+
+            caption.color = UIStyleTokens.Button.TextDefault;
+            caption.alignment = TextAlignmentOptions.MidlineLeft;
+            caption.textWrappingMode = TextWrappingModes.NoWrap;
+            caption.overflowMode = TextOverflowModes.Ellipsis;
+
+            var rect = caption.rectTransform;
+            rect.offsetMin = new Vector2(CaptionLeftPadding, 2f);
+            rect.offsetMax = new Vector2(-CaptionRightPadding, -2f);
+        }
+
+        private static void BuildArrow(Transform arrow)
+        {
+            if (arrow == null)
+            {
+                return;
+            }
+
+            // The default arrow Image has no sprite and would render as a solid square.
+            var placeholderImage = arrow.GetComponent<Image>();
+            if (placeholderImage != null)
+            {
+                UnityEngine.Object.DestroyImmediate(placeholderImage);
+            }
+
+            var arrowRect = (RectTransform)arrow;
+            arrowRect.sizeDelta = new Vector2(ArrowSize, ArrowSize);
+            arrowRect.anchoredPosition = new Vector2(-ArrowRightInset, 0f);
+
+            CreateArrowStroke(arrow, "StrokeLeft", -ArrowStrokeOffset, -45f);
+            CreateArrowStroke(arrow, "StrokeRight", ArrowStrokeOffset, 45f);
+        }
+
+        private static void CreateArrowStroke(Transform arrow, string name, float x, float angle)
+        {
+            var stroke = new GameObject(name, typeof(RectTransform), typeof(Image));
+            stroke.layer = arrow.gameObject.layer;
+            stroke.transform.SetParent(arrow, false);
+
+            var rect = stroke.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 0.5f);
+            rect.sizeDelta = new Vector2(ArrowStrokeLength, ArrowStrokeThickness);
+            rect.anchoredPosition = new Vector2(x, 0f);
+            rect.localRotation = Quaternion.Euler(0f, 0f, angle);
+
+            var image = stroke.GetComponent<Image>();
+            ApplyFlatImage(image, UIStyleTokens.Button.TextDefault);
+            image.raycastTarget = false;
+        }
+
+        private static void StyleTemplate(RectTransform template)
+        {
+            if (template == null)
+            {
+                return;
+            }
+
+            template.anchoredPosition = new Vector2(0f, -ListGap);
+            template.sizeDelta = new Vector2(0f, ListHeight);
+            ApplyFlatImage(template.GetComponent<Image>(), UIStyleTokens.Surface.PanelElevated);
+
+            var scrollRect = template.GetComponent<ScrollRect>();
+            if (scrollRect != null)
+            {
+                scrollRect.verticalScrollbarSpacing = 0f;
+            }
+
+            var viewport = template.Find("Viewport") as RectTransform;
+            if (viewport != null)
+            {
+                viewport.sizeDelta = new Vector2(-ScrollbarWidth, 0f);
+                ApplyFlatImage(viewport.GetComponent<Image>(), Color.white);
+            }
+
+            var content = viewport != null ? viewport.Find("Content") as RectTransform : null;
+            if (content != null)
+            {
+                content.sizeDelta = new Vector2(0f, ItemHeight);
+                StyleItem(content.Find("Item") as RectTransform);
+            }
+
+            StyleScrollbar(template.Find("Scrollbar") as RectTransform);
+        }
+
+        private static void StyleItem(RectTransform item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            item.sizeDelta = new Vector2(0f, ItemHeight);
+
+            var toggle = item.GetComponent<Toggle>();
+            if (toggle != null)
+            {
+                toggle.colors = UIStyleTokens.Button.BuildColorBlock();
+            }
+
+            var background = item.Find("Item Background");
+            if (background != null)
+            {
+                ApplyFlatImage(background.GetComponent<Image>(), Color.white);
+            }
+
+            // The checkmark becomes a thin accent bar on the item's leading edge.
+            var checkmark = item.Find("Item Checkmark") as RectTransform;
+            if (checkmark != null)
+            {
+                checkmark.anchorMin = new Vector2(0f, 0f);
+                checkmark.anchorMax = new Vector2(0f, 1f);
+                checkmark.pivot = new Vector2(0f, 0.5f);
+                checkmark.sizeDelta = new Vector2(ItemMarkerWidth, 0f);
+                checkmark.anchoredPosition = Vector2.zero;
+                ApplyFlatImage(checkmark.GetComponent<Image>(), UIStyleTokens.Accent.Moss);
+            }
+
+            var label = item.Find("Item Label") as RectTransform;
+            if (label != null)
+            {
+                label.offsetMin = new Vector2(ItemLabelLeftPadding, 1f);
+                label.offsetMax = new Vector2(-10f, -1f);
+
+                var text = label.GetComponent<TMP_Text>();
+                if (text != null)
+                {
+                    text.color = UIStyleTokens.Button.TextDefault;
+                    text.alignment = TextAlignmentOptions.MidlineLeft;
+                    text.textWrappingMode = TextWrappingModes.NoWrap;
+                    text.overflowMode = TextOverflowModes.Ellipsis;
+                }
+            }
+        }
+
+        private static void StyleScrollbar(RectTransform scrollbarRect)
+        {
+            if (scrollbarRect == null)
+            {
+                return;
+            }
+
+            scrollbarRect.sizeDelta = new Vector2(ScrollbarWidth, 0f);
+            ApplyFlatImage(scrollbarRect.GetComponent<Image>(), UIStyleTokens.Surface.PanelSecondary);
+
+            var slidingArea = scrollbarRect.Find("Sliding Area") as RectTransform;
+            if (slidingArea != null)
+            {
+                slidingArea.sizeDelta = new Vector2(-ScrollbarHandleInset, -ScrollbarHandleInset);
+                var handle = slidingArea.Find("Handle") as RectTransform;
+                if (handle != null)
+                {
+                    handle.sizeDelta = Vector2.zero;
+                    ApplyFlatImage(handle.GetComponent<Image>(), Color.white);
+                }
+            }
+
+            var scrollbar = scrollbarRect.GetComponent<Scrollbar>();
+            if (scrollbar != null)
+            {
+                scrollbar.colors = new ColorBlock
+                {
+                    normalColor = UIStyleTokens.Accent.Moss,
+                    highlightedColor = UIStyleTokens.Accent.Lichen,
+                    pressedColor = UIStyleTokens.Accent.Spore,
+                    selectedColor = UIStyleTokens.Accent.Lichen,
+                    disabledColor = UIStyleTokens.Text.Disabled,
+                    colorMultiplier = 1f,
+                    fadeDuration = 0.1f
+                };
+            }
+        }
+
+        private static void ApplyFlatImage(Image image, Color color)
+        {
+            if (image == null)
+            {
+                return;
+            }
+
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.color = color;
+        }
+
+        private static void SetLayerRecursively(GameObject target, int layer)
+        {
+            target.layer = layer;
+            for (int index = 0; index < target.transform.childCount; index++)
+            {
+                SetLayerRecursively(target.transform.GetChild(index).gameObject, layer);
+            }
+        }
+    }
+
     public sealed class DevelopmentTestingCardOptions
     {
         public Transform Parent { get; set; }
         public Button ButtonTemplate { get; set; }
-        public TMP_Dropdown DropdownTemplate { get; set; }
         public bool SupportsCampaignLevelSelection { get; set; } = true;
         public bool SupportsForcedAdaptation { get; set; }
         public bool SupportsForceMoldinessRewards { get; set; }
@@ -1027,28 +1270,14 @@ namespace FungusToast.Unity.UI.Testing
             row.transform.SetParent(cardRoot.transform, false);
             ConfigureDropdownRow(row, labelName, labelText);
 
-            if (options.DropdownTemplate != null)
-            {
-                var dropdownObject = UnityEngine.Object.Instantiate(options.DropdownTemplate.gameObject, row.transform);
-                dropdownObject.name = dropdownName;
-                dropdown = dropdownObject.GetComponent<TMP_Dropdown>();
-                ConfigureDropdown(dropdown);
+            dropdown = DevelopmentTestingDropdownFactory.Create(row.transform, dropdownName);
+            ConfigureDropdown(dropdown);
 
-                var dropdownElement = dropdownObject.GetComponent<LayoutElement>();
-                if (dropdownElement == null)
-                {
-                    dropdownElement = dropdownObject.AddComponent<LayoutElement>();
-                }
-
-                dropdownElement.minHeight = DropdownControlMinHeight;
-                dropdownElement.preferredHeight = DropdownControlPreferredHeight;
-                dropdownElement.minWidth = options.SettingWidth - 10f;
-                dropdownElement.preferredWidth = options.SettingWidth;
-            }
-            else
-            {
-                Debug.LogWarning($"{options.LogPrefix}: No TMP_Dropdown template found; {labelText} selector unavailable.");
-            }
+            var dropdownElement = dropdown.gameObject.AddComponent<LayoutElement>();
+            dropdownElement.minHeight = DropdownControlMinHeight;
+            dropdownElement.preferredHeight = DropdownControlPreferredHeight;
+            dropdownElement.minWidth = options.SettingWidth - 10f;
+            dropdownElement.preferredWidth = options.SettingWidth;
 
             return row;
         }

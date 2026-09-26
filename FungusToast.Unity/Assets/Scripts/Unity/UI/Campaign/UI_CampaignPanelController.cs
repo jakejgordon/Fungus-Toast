@@ -378,7 +378,6 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 Parent = developmentTestingRailRoot,
                 ButtonTemplate = backButton != null ? backButton : resumeButton,
-                DropdownTemplate = FindDropdownTemplate(),
                 SupportsCampaignLevelSelection = true,
                 SupportsForcedAdaptation = true,
                 SupportsForceMoldinessRewards = true,
@@ -1723,11 +1722,6 @@ namespace FungusToast.Unity.UI.Campaign
         private static void EnsureButtonLayout(Button button, float width)
         {
             UIStyleTokens.Button.ConfigureMenuActionLayout(button, width);
-        }
-
-        private TMP_Dropdown FindDropdownTemplate()
-        {
-            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
         }
 
         private void ApplyStyle()

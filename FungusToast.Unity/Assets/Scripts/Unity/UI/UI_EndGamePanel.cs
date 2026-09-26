@@ -4777,11 +4777,6 @@ namespace FungusToast.Unity.UI
             }
         }
 
-        private static TMP_Dropdown FindDropdownTemplate()
-        {
-            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
-        }
-
         private static DevelopmentTestingConfiguration BuildTestingConfigurationFromGameManager(GameManager manager)
         {
             bool isEnabled = manager != null && manager.IsTestingModeEnabled;
@@ -4883,7 +4878,6 @@ namespace FungusToast.Unity.UI
             {
                 Parent = endGameTestingRailRoot,
                 ButtonTemplate = buttonTemplate,
-                DropdownTemplate = FindDropdownTemplate(),
                 SupportsCampaignLevelSelection = GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.Campaign,
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = true,
@@ -4961,13 +4955,6 @@ namespace FungusToast.Unity.UI
                 return null;
             }
 
-            TMP_Dropdown template = FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
-            if (template == null)
-            {
-                Debug.LogWarning("UI_EndGamePanel: Unable to create Mycovariant dropdown because no TMP_Dropdown template was found in scene.");
-                return null;
-            }
-
             var row = new GameObject("UI_PostVictoryMycovariantRow", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
             row.transform.SetParent(parent, false);
 
@@ -4998,9 +4985,8 @@ namespace FungusToast.Unity.UI
             labelLayout.preferredHeight = 28f;
             labelLayout.minHeight = 24f;
 
-            var dropdownObj = Instantiate(template.gameObject, row.transform);
-            dropdownObj.name = "UI_PostVictoryMycovariantDropdown";
-            postVictoryMycovariantDropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+            postVictoryMycovariantDropdown = DevelopmentTestingDropdownFactory.Create(row.transform, "UI_PostVictoryMycovariantDropdown");
+            var dropdownObj = postVictoryMycovariantDropdown.gameObject;
             if (postVictoryMycovariantDropdown != null)
             {
                 postVictoryMycovariantDropdown.onValueChanged.RemoveAllListeners();
@@ -5026,13 +5012,6 @@ namespace FungusToast.Unity.UI
         {
             if (parent == null)
             {
-                return null;
-            }
-
-            TMP_Dropdown template = FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
-            if (template == null)
-            {
-                Debug.LogWarning("UI_EndGamePanel: Unable to create Adaptation dropdown because no TMP_Dropdown template was found in scene.");
                 return null;
             }
 
@@ -5066,9 +5045,8 @@ namespace FungusToast.Unity.UI
             labelLayout.preferredHeight = 28f;
             labelLayout.minHeight = 24f;
 
-            var dropdownObj = Instantiate(template.gameObject, row.transform);
-            dropdownObj.name = "UI_PostVictoryAdaptationDropdown";
-            postVictoryAdaptationDropdown = dropdownObj.GetComponent<TMP_Dropdown>();
+            postVictoryAdaptationDropdown = DevelopmentTestingDropdownFactory.Create(row.transform, "UI_PostVictoryAdaptationDropdown");
+            var dropdownObj = postVictoryAdaptationDropdown.gameObject;
             if (postVictoryAdaptationDropdown != null)
             {
                 postVictoryAdaptationDropdown.onValueChanged.RemoveAllListeners();

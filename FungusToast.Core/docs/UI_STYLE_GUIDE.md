@@ -254,6 +254,7 @@ Notes:
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
 - Placeholder text may use `Text.Disabled`, but selected values must not use disabled/muted colors.
 - For TMP dropdowns, verify both caption text and template item text after runtime styling passes.
+- Development/testing dropdowns are built in code by `DevelopmentTestingDropdownFactory.Create` (in `DevelopmentTestingCardController.cs`); never clone a scene `TMP_Dropdown` as a template. The factory uses flat token-tinted rects (light `Button` fills, `Surface.PanelElevated` list frame, `Accent.Moss` selection bar and scrollbar handle) and a two-stroke chevron arrow, because built-in UI sprites are unavailable at runtime.
 
 ### 5.4 Panels and Sidebars
 - Major sidebars: `Surface.PanelPrimary`.

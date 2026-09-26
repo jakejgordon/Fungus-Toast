@@ -61,8 +61,7 @@ namespace FungusToast.Unity.UI.GameStart
         private List<UI_HotseatHumanCountButton> humanPlayerButtons; // 1..8 reuse same prefab style
         private TextMeshProUGUI playerSummaryLabel; // "X Players (Y Human / Z AI)"
 
-        // Legacy testing dropdown template; ResolveDropdownTemplate() falls back to
-        // any TMP_Dropdown in the scene when DevelopmentTestingAccess is available.
+        // Legacy scene testing section; only hidden now, the dev card builds its own controls.
         private GameObject testingOptionsSectionRoot;
 
         // These belong to the gameplay overlay (GameUIManager's hierarchy), not the
@@ -379,7 +378,6 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 Parent = testingCardSectionRoot,
                 ButtonTemplate = backButton != null ? backButton : startGameButton,
-                DropdownTemplate = ResolveDropdownTemplate(),
                 SupportsCampaignLevelSelection = false,
                 SupportsBoardSizeOverride = false,
                 SupportsForcedAdaptation = false,
@@ -1184,15 +1182,7 @@ namespace FungusToast.Unity.UI.GameStart
             }
             else
             {
-                TMP_Dropdown template = ResolveDropdownTemplate();
-                if (template == null)
-                {
-                    return;
-                }
-
-                var dropdownObject = Instantiate(template.gameObject, boardSizeSectionRoot);
-                dropdownObject.name = "UI_StartGameBoardSizeDropdown";
-                boardSizeDropdown = dropdownObject.GetComponent<TMP_Dropdown>();
+                boardSizeDropdown = DevelopmentTestingDropdownFactory.Create(boardSizeSectionRoot, "UI_StartGameBoardSizeDropdown");
             }
 
             if (boardSizeDropdown == null)
@@ -2126,16 +2116,6 @@ namespace FungusToast.Unity.UI.GameStart
             {
                 sections.Add(candidate);
             }
-        }
-
-        private TMP_Dropdown ResolveDropdownTemplate()
-        {
-            if (testingOptionsSectionRoot != null)
-            {
-                return testingOptionsSectionRoot.GetComponentInChildren<TMP_Dropdown>(true);
-            }
-
-            return FindAnyObjectByType<TMP_Dropdown>(FindObjectsInactive.Include);
         }
 
         private void HideLegacyTestingControls()
