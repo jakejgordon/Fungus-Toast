@@ -1925,7 +1925,7 @@ namespace FungusToast.Unity.UI
 
             moldinessRewardOptionVisuals.Add(visual);
 
-            var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, offer.AccentColor, FontStyles.Bold);
+            var badgeLabel = CreateCarryoverInfoText(badgeObject.transform, offer.CategoryLabel ?? string.Empty, 16f, UIStyleTokens.Text.Primary, FontStyles.Bold);
             var badgeLabelLayout = badgeLabel.GetComponent<LayoutElement>();
             if (badgeLabelLayout != null)
             {
@@ -2008,8 +2008,9 @@ namespace FungusToast.Unity.UI
 
             fillOverlayObject.transform.SetAsFirstSibling();
 
+            // Don't use ApplyPanelSecondaryStyle here: it forces every child label to bold, and bold
+            // dilation on the small description line clips glyph tops at some canvas scales.
             var button = buttonObject.GetComponent<Button>();
-            UIStyleTokens.Button.ApplyPanelSecondaryStyle(button);
             var colors = button.colors;
             colors.normalColor = UIStyleTokens.Surface.PanelElevated;
             colors.highlightedColor = UIStyleTokens.Surface.PanelElevated;
