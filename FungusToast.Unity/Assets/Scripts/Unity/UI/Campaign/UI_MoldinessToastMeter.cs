@@ -23,8 +23,7 @@ namespace FungusToast.Unity.UI.Campaign
     /// </remarks>
     public sealed class UI_MoldinessToastMeter : MonoBehaviour, IPointerClickHandler
     {
-        private const float ToastWidth = 200f;
-        private const float ToastHeight = ToastWidth * ToastTexHeight / ToastTexWidth;
+        public const float DefaultToastWidth = 200f;
         private const float LevelLabelHeight = 32f;
         private const float CounterLabelHeight = 26f;
         private const float SectionSpacing = 6f;
@@ -68,6 +67,9 @@ namespace FungusToast.Unity.UI.Campaign
             public bool IsFilled;
         }
 
+        private float toastWidth = DefaultToastWidth;
+        private float toastHeight = DefaultToastWidth * ToastTexHeight / ToastTexWidth;
+        private Image hitArea = null!;
         private RectTransform toastHolder = null!;
         private CanvasGroup toastGroup = null!;
         private RectTransform tileRoot = null!;
@@ -89,25 +91,39 @@ namespace FungusToast.Unity.UI.Campaign
         private bool isAnimating;
         private bool snapToFinalOnEnable;
 
-        public static UI_MoldinessToastMeter Create(Transform parent)
+        /// <param name="showLevelLabel">
+        /// False when the host already titles the card with the level; the meter still updates
+        /// its counter, and a level-up is still announced by the banner.
+        /// </param>
+        public static UI_MoldinessToastMeter Create(Transform parent, float toastWidth = DefaultToastWidth, bool showLevelLabel = true)
         {
             var rootObject = new GameObject("UI_MoldinessToastMeter", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             rootObject.transform.SetParent(parent, false);
 
-            // Transparent raycast target so a click anywhere on the meter can skip the animation.
-            var hitArea = rootObject.GetComponent<Image>();
-            hitArea.color = new Color(0f, 0f, 0f, 0f);
+            var meter = rootObject.AddComponent<UI_MoldinessToastMeter>();
+            meter.toastWidth = toastWidth;
+            meter.toastHeight = toastWidth * ToastTexHeight / ToastTexWidth;
 
-            float height = LevelLabelHeight + SectionSpacing + ToastHeight + SectionSpacing + CounterLabelHeight;
+            // Transparent raycast target so a click anywhere on the meter can skip the animation;
+            // only live while an award plays, so a static meter never swallows hover or clicks.
+            meter.hitArea = rootObject.GetComponent<Image>();
+            meter.hitArea.color = new Color(0f, 0f, 0f, 0f);
+            meter.hitArea.raycastTarget = false;
+
+            float levelSpace = showLevelLabel ? LevelLabelHeight + SectionSpacing : 0f;
+            float height = levelSpace + meter.toastHeight + SectionSpacing + CounterLabelHeight;
             var element = rootObject.GetComponent<LayoutElement>();
-            element.minWidth = ToastWidth;
-            element.preferredWidth = ToastWidth;
+            element.minWidth = toastWidth;
+            element.preferredWidth = toastWidth;
             element.minHeight = height;
             element.preferredHeight = height;
             element.flexibleHeight = 0f;
 
-            var meter = rootObject.AddComponent<UI_MoldinessToastMeter>();
-            meter.BuildChrome(height);
+            // Hosts whose layout groups don't control child height read the rect size instead.
+            ((RectTransform)rootObject.transform).sizeDelta = new Vector2(toastWidth, height);
+
+            meter.BuildChrome(height, levelSpace);
+            meter.levelLabel.gameObject.SetActive(showLevelLabel);
             return meter;
         }
 
@@ -148,6 +164,7 @@ namespace FungusToast.Unity.UI.Campaign
             SetLevelLabel(tierBefore);
             SetCounterLabel();
             isAnimating = true;
+            hitArea.raycastTarget = true;
             foreach (var graphic in revealOnFinish)
             {
                 SetAlpha(graphic, 0f);
@@ -205,6 +222,7 @@ namespace FungusToast.Unity.UI.Campaign
         {
             StopAllCoroutines();
             isAnimating = false;
+            hitArea.raycastTarget = false;
             ClearChildren(fxLayer);
             toastHolder.localScale = Vector3.one;
             toastHolder.localRotation = Quaternion.identity;
@@ -239,6 +257,7 @@ namespace FungusToast.Unity.UI.Campaign
 
             yield return new WaitForSecondsRealtime(TilePopDuration);
             isAnimating = false;
+            hitArea.raycastTarget = false;
             FinishReveal(instant: false);
         }
 
@@ -297,7 +316,7 @@ namespace FungusToast.Unity.UI.Campaign
             toastHolder.localRotation = Quaternion.identity;
 
             // Then it crumbles away into a puff of spores.
-            SpawnSpores(new Vector2(0f, -ToastHeight * 0.05f), count: 28, minDistance: 50f, maxDistance: 120f, lifetime: 0.9f);
+            SpawnSpores(new Vector2(0f, -toastHeight * 0.05f), count: 28, minDistance: 50f, maxDistance: 120f, lifetime: 0.9f);
             var scatterDirections = tiles
                 .Select(tile => (tile.Root.anchoredPosition.normalized + UnityEngine.Random.insideUnitCircle * 0.6f).normalized)
                 .ToArray();
@@ -417,41 +436,41 @@ namespace FungusToast.Unity.UI.Campaign
             }));
         }
 
-        private void BuildChrome(float height)
+        private void BuildChrome(float height, float levelSpace)
         {
-            float toastCenterY = (height * 0.5f) - LevelLabelHeight - SectionSpacing - (ToastHeight * 0.5f);
+            float toastCenterY = (height * 0.5f) - levelSpace - (toastHeight * 0.5f);
 
             levelLabel = CreateLabel("UI_MoldinessToastLevel", 22f, FontStyles.Bold, UIStyleTokens.Text.Primary);
-            PlaceCentered(levelLabel.rectTransform, new Vector2(ToastWidth + 40f, LevelLabelHeight), new Vector2(0f, (height - LevelLabelHeight) * 0.5f));
+            PlaceCentered(levelLabel.rectTransform, new Vector2(toastWidth + 40f, LevelLabelHeight), new Vector2(0f, (height - LevelLabelHeight) * 0.5f));
 
             var holderObject = new GameObject("UI_MoldinessToast", typeof(RectTransform), typeof(CanvasGroup));
             toastHolder = holderObject.GetComponent<RectTransform>();
             toastHolder.SetParent(transform, false);
-            PlaceCentered(toastHolder, new Vector2(ToastWidth, ToastHeight), new Vector2(0f, toastCenterY));
+            PlaceCentered(toastHolder, new Vector2(toastWidth, toastHeight), new Vector2(0f, toastCenterY));
             toastGroup = holderObject.GetComponent<CanvasGroup>();
             toastGroup.blocksRaycasts = false;
 
             // The shadow lives inside the holder so it fades and crumbles with the slice.
             var shadow = CreateImage("UI_MoldinessToastShadow", toastHolder, GetToastSprite(), new Color(0f, 0f, 0f, 0.35f));
-            PlaceCentered(shadow.rectTransform, new Vector2(ToastWidth, ToastHeight), new Vector2(4f, -5f));
+            PlaceCentered(shadow.rectTransform, new Vector2(toastWidth, toastHeight), new Vector2(4f, -5f));
 
             var toast = CreateImage("UI_MoldinessToastSlice", toastHolder, GetToastSprite(), Color.white);
-            PlaceCentered(toast.rectTransform, new Vector2(ToastWidth, ToastHeight), Vector2.zero);
+            PlaceCentered(toast.rectTransform, new Vector2(toastWidth, toastHeight), Vector2.zero);
 
             var tileRootObject = new GameObject("UI_MoldinessToastTiles", typeof(RectTransform));
             tileRoot = tileRootObject.GetComponent<RectTransform>();
             tileRoot.SetParent(toastHolder, false);
-            PlaceCentered(tileRoot, new Vector2(ToastWidth, ToastHeight), Vector2.zero);
+            PlaceCentered(tileRoot, new Vector2(toastWidth, toastHeight), Vector2.zero);
 
             var fxObject = new GameObject("UI_MoldinessToastFx", typeof(RectTransform));
             fxLayer = fxObject.GetComponent<RectTransform>();
             fxLayer.SetParent(transform, false);
-            PlaceCentered(fxLayer, new Vector2(ToastWidth, ToastHeight), new Vector2(0f, toastCenterY));
+            PlaceCentered(fxLayer, new Vector2(toastWidth, toastHeight), new Vector2(0f, toastCenterY));
 
             var bannerObject = new GameObject("UI_MoldinessLevelUpBanner", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(CanvasGroup));
             banner = bannerObject.GetComponent<RectTransform>();
             banner.SetParent(transform, false);
-            PlaceCentered(banner, new Vector2(ToastWidth + 30f, 78f), new Vector2(0f, toastCenterY));
+            PlaceCentered(banner, new Vector2(toastWidth + 30f, 78f), new Vector2(0f, toastCenterY));
             var bannerBackground = bannerObject.GetComponent<Image>();
             bannerBackground.color = new Color(UIStyleTokens.Surface.PanelPrimary.r, UIStyleTokens.Surface.PanelPrimary.g, UIStyleTokens.Surface.PanelPrimary.b, 0.95f);
             bannerBackground.raycastTarget = false;
@@ -468,7 +487,7 @@ namespace FungusToast.Unity.UI.Campaign
             banner.gameObject.SetActive(false);
 
             counterLabel = CreateLabel("UI_MoldinessToastCounter", 18f, FontStyles.Normal, UIStyleTokens.Text.Secondary);
-            PlaceCentered(counterLabel.rectTransform, new Vector2(ToastWidth + 40f, CounterLabelHeight), new Vector2(0f, -(height - CounterLabelHeight) * 0.5f));
+            PlaceCentered(counterLabel.rectTransform, new Vector2(toastWidth + 40f, CounterLabelHeight), new Vector2(0f, -(height - CounterLabelHeight) * 0.5f));
         }
 
         private void BuildToast(int tierIndex, int progress)
@@ -481,11 +500,11 @@ namespace FungusToast.Unity.UI.Campaign
             currentThreshold = Math.Max(1, MoldinessProgression.GetThresholdForTier(tierIndex));
             filledCount = Mathf.Clamp(progress, 0, currentThreshold);
 
-            float areaWidth = (CrumbMaxX - CrumbMinX) * ToastWidth;
-            float areaHeight = (CrumbMaxY - CrumbMinY) * ToastHeight;
+            float areaWidth = (CrumbMaxX - CrumbMinX) * toastWidth;
+            float areaHeight = (CrumbMaxY - CrumbMinY) * toastHeight;
             var areaCenter = new Vector2(
-                (((CrumbMinX + CrumbMaxX) * 0.5f) - 0.5f) * ToastWidth,
-                (((CrumbMinY + CrumbMaxY) * 0.5f) - 0.5f) * ToastHeight);
+                (((CrumbMinX + CrumbMaxX) * 0.5f) - 0.5f) * toastWidth,
+                (((CrumbMinY + CrumbMaxY) * 0.5f) - 0.5f) * toastHeight);
             var (columns, rows, cell) = ChooseGrid(currentThreshold, areaWidth, areaHeight);
             float tileSize = Mathf.Min(cell * TileFillRatio, MaxTileSize);
             var moldSprites = GetMoldTileSprites();
