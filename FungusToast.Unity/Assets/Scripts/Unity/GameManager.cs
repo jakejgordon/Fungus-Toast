@@ -638,6 +638,30 @@ namespace FungusToast.Unity
             soundEffectService?.PlayOneShot(startingSporeDropClip, startingSporeDropVolume);
         }
 
+        // Loaded from Resources rather than serialized on the scene. The files are placeholder
+        // copies of existing effects; replacing them in place swaps in the real recordings
+        // (see the moldiness-sound TODO in docs/WORKLOG.md).
+        private const string MoldinessToastCrumbleClipPath = "Audio/SFX/sfx_ui_moldiness_toast_crumble_01";
+        private const string MoldinessLevelUpClipPath = "Audio/SFX/sfx_ui_moldiness_level_up_01";
+        private const float MoldinessToastCrumbleVolume = 1f;
+        private const float MoldinessLevelUpVolume = 1f;
+        private AudioClip? moldinessToastCrumbleClip;
+        private AudioClip? moldinessLevelUpClip;
+
+        /// <summary>A full moldiness toast crumbling into spores.</summary>
+        public void PlayMoldinessToastCrumbleSound()
+        {
+            moldinessToastCrumbleClip ??= Resources.Load<AudioClip>(MoldinessToastCrumbleClipPath);
+            soundEffectService?.PlayOneShot(moldinessToastCrumbleClip, MoldinessToastCrumbleVolume);
+        }
+
+        /// <summary>The "Level Up!" banner for a newly reached moldiness level.</summary>
+        public void PlayMoldinessLevelUpSound()
+        {
+            moldinessLevelUpClip ??= Resources.Load<AudioClip>(MoldinessLevelUpClipPath);
+            soundEffectService?.PlayOneShot(moldinessLevelUpClip, MoldinessLevelUpVolume);
+        }
+
         public void StopJettingMyceliumVolleySound()
         {
             soundEffectService?.StopLoop(jettingMyceliumLoopFadeOutSeconds);

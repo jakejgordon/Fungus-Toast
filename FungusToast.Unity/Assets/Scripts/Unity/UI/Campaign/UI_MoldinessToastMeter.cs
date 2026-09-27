@@ -94,6 +94,12 @@ namespace FungusToast.Unity.UI.Campaign
 
         /// <summary>Invoked as each awarded point molds a tile, so the host can add sound.</summary>
         public Action? TileFilled { get; set; }
+
+        /// <summary>Invoked when a full slice starts crumbling into spores.</summary>
+        public Action? SliceCrumbled { get; set; }
+
+        /// <summary>Invoked as the "Level Up!" banner appears for the next moldiness level.</summary>
+        public Action? LevelReached { get; set; }
         private int deferredAwardPoints;
 
         /// <param name="showLevelLabel">
@@ -357,6 +363,7 @@ namespace FungusToast.Unity.UI.Campaign
             toastHolder.localRotation = Quaternion.identity;
 
             // Then it crumbles away into a puff of spores.
+            SliceCrumbled?.Invoke();
             SpawnSpores(new Vector2(0f, -toastHeight * 0.05f), count: 28, minDistance: 50f, maxDistance: 120f, lifetime: 0.9f);
             var scatterDirections = tiles
                 .Select(tile => (tile.Root.anchoredPosition.normalized + UnityEngine.Random.insideUnitCircle * 0.6f).normalized)
@@ -388,6 +395,7 @@ namespace FungusToast.Unity.UI.Campaign
             bannerLabel.text =
                 $"<b>Level Up!</b>\n<size=62%><color=#{ColorUtility.ToHtmlStringRGB(UIStyleTokens.Text.Primary)}>Moldiness Level {nextTier + 1} unlocked</color></size>";
             banner.gameObject.SetActive(true);
+            LevelReached?.Invoke();
             yield return Tween(0.35f, t =>
             {
                 bannerGroup.alpha = Mathf.Clamp01(t * 2f);

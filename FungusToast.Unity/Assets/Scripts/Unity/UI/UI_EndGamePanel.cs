@@ -1661,6 +1661,8 @@ namespace FungusToast.Unity.UI
 
             var meter = UI_MoldinessToastMeter.Create(root.transform, CampaignMoldinessToastWidth);
             meter.TileFilled = () => GameManager.Instance?.PlayStartingSporeDropSound();
+            meter.SliceCrumbled = () => GameManager.Instance?.PlayMoldinessToastCrumbleSound();
+            meter.LevelReached = () => GameManager.Instance?.PlayMoldinessLevelUpSound();
             bool animateAward = victory
                 && snapshot.moldinessAwarded > 0
                 && !ReferenceEquals(snapshot, lastAnimatedMoldinessSnapshot);
