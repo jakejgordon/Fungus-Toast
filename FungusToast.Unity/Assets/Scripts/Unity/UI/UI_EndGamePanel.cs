@@ -91,6 +91,9 @@ namespace FungusToast.Unity.UI
         private const float DetailsHeaderIconSize = 56f;
         private const float DetailsSectionSpacing = 12f;
         private const float DefeatCarryoverInfoFontSize = 23f;
+        private const float DefeatCarryoverCardWidth = 460f;
+        private const float DefeatCarryoverCardHeight = 168f;
+        private const float DefeatCarryoverCardSpacing = 16f;
         private const float EndGameDockBarHeight = 88f;
         private const float EndGameDockBarBottomInset = 18f;
         private const float EndGameDockBarHorizontalInset = 18f;
@@ -134,17 +137,18 @@ namespace FungusToast.Unity.UI
         private bool hasPendingDefeatCarryoverEvent;
         private int defeatCarryoverSelectionCapacity;
         private string selectedMoldinessRewardId;
-        private MoldinessRewardOptionVisual selectedMoldinessRewardVisual;
+        private OptionCardVisual selectedMoldinessRewardVisual;
         private readonly HashSet<string> selectedDefeatCarryoverAdaptationIds = new();
-        private readonly Dictionary<string, Image> defeatCarryoverOptionImages = new();
+        private readonly Dictionary<string, OptionCardVisual> defeatCarryoverOptionVisuals = new();
         private readonly List<Image> moldinessRewardOptionBackgrounds = new();
-        private readonly List<MoldinessRewardOptionVisual> moldinessRewardOptionVisuals = new();
+        private readonly List<OptionCardVisual> moldinessRewardOptionVisuals = new();
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
         private bool returnToCampaignMenuAfterMoldinessReward;
         private bool showPostAdaptationConfirmationAfterMoldinessRewardSelection;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
         private CampaignVictorySnapshot cachedCampaignVictorySnapshot;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
+        private Color? continueButtonBaseGraphicColor;
         // The award animation plays once per victory; rebuilding the same results (e.g. after
         // claiming a moldiness reward) shows the settled toast instead of replaying it.
         private CampaignVictorySnapshot lastAnimatedMoldinessSnapshot;
@@ -184,9 +188,9 @@ namespace FungusToast.Unity.UI
 
         private bool CanShowResultsDockToggle => !showPostAdaptationConfirmationState && !requiresMoldinessRewardSelection && !requiresDefeatCarryoverSelection;
 
-        private sealed class MoldinessRewardOptionVisual
+        private sealed class OptionCardVisual
         {
-            public string RewardId;
+            public string OptionId;
             public Image Background;
             public Image HoverOverlay;
             public Image FillOverlay;
@@ -983,7 +987,7 @@ namespace FungusToast.Unity.UI
             selectedMoldinessRewardId = null;
             defeatCarryoverSelectionCapacity = Mathf.Max(0, Mathf.Min(selectionCapacity, options?.Count ?? 0));
             selectedDefeatCarryoverAdaptationIds.Clear();
-            defeatCarryoverOptionImages.Clear();
+            defeatCarryoverOptionVisuals.Clear();
             moldinessRewardOptionBackgrounds.Clear();
             moldinessRewardOptionVisuals.Clear();
             pendingDefeatCarryoverOptions.Clear();
@@ -1086,7 +1090,7 @@ namespace FungusToast.Unity.UI
             if (continueButton != null)
             {
                 continueButton.gameObject.SetActive(true);
-                continueButton.interactable = !hasAvailableOffers;
+                SetContinueButtonAvailable(!hasAvailableOffers);
                 SetButtonLabel(continueButton, hasAvailableOffers ? "Choose Moldiness Reward" : "Continue");
             }
 
@@ -1335,7 +1339,11 @@ namespace FungusToast.Unity.UI
             subtitle.alignment = TextAlignmentOptions.Center;
             defeatCarryoverSelectionStatusLabel = subtitle;
 
-            var gridRoot = new GameObject("UI_DefeatCarryoverSelectionGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
+            // Labeled cards rather than an icon row, so every option's name and full effect can be
+            // compared at a glance instead of being probed one hover tooltip at a time.
+            int optionCount = options?.Count ?? 0;
+            int columnCount = optionCount > 1 ? 2 : 1;
+            var gridRoot = new GameObject("UI_DefeatCarryoverSelectionGrid", typeof(RectTransform), typeof(GridLayoutGroup), typeof(LayoutElement));
             gridRoot.transform.SetParent(root.transform, false);
 
             var gridRect = gridRoot.GetComponent<RectTransform>();
@@ -1344,64 +1352,163 @@ namespace FungusToast.Unity.UI
             gridRect.pivot = new Vector2(0.5f, 1f);
 
             var grid = gridRoot.GetComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(112f, 112f);
-            grid.spacing = new Vector2(16f, 16f);
+            grid.cellSize = new Vector2(DefeatCarryoverCardWidth, DefeatCarryoverCardHeight);
+            grid.spacing = new Vector2(DefeatCarryoverCardSpacing, DefeatCarryoverCardSpacing);
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = Mathf.Clamp(options?.Count ?? 1, 1, 4);
+            grid.constraintCount = columnCount;
             grid.childAlignment = TextAnchor.UpperCenter;
 
-            var fitter = gridRoot.GetComponent<ContentSizeFitter>();
-            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            int rowCount = Mathf.Max(1, Mathf.CeilToInt(optionCount / (float)columnCount));
+            var gridElement = gridRoot.GetComponent<LayoutElement>();
+            gridElement.minHeight = (rowCount * DefeatCarryoverCardHeight) + ((rowCount - 1) * DefeatCarryoverCardSpacing);
+            gridElement.preferredHeight = gridElement.minHeight;
 
             if (options != null)
             {
                 foreach (var adaptation in options)
                 {
-                    CreateDefeatCarryoverOptionButton(gridRoot.transform, adaptation, selectionCapacity);
+                    CreateDefeatCarryoverOptionCard(gridRoot.transform, adaptation, selectionCapacity);
                 }
             }
         }
 
-        private void CreateDefeatCarryoverOptionButton(Transform parent, AdaptationDefinition adaptation, int selectionCapacity)
+        private void CreateDefeatCarryoverOptionCard(Transform parent, AdaptationDefinition adaptation, int selectionCapacity)
         {
             if (adaptation == null || parent == null)
             {
                 return;
             }
 
-            var optionObject = new GameObject($"UI_DefeatCarryover_{adaptation.Id}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
-            optionObject.transform.SetParent(parent, false);
+            var cardObject = new GameObject($"UI_DefeatCarryover_{adaptation.Id}", typeof(RectTransform), typeof(Image), typeof(Button));
+            cardObject.transform.SetParent(parent, false);
 
-            var optionImage = optionObject.GetComponent<Image>();
-            optionImage.color = Color.white;
-            optionImage.sprite = AdaptationArtRepository.GetIcon(adaptation);
-            optionImage.type = Image.Type.Simple;
-            optionImage.preserveAspect = true;
+            var background = cardObject.GetComponent<Image>();
+            background.color = UIStyleTokens.Surface.PanelElevated;
+            background.raycastTarget = true;
 
-            var layout = optionObject.GetComponent<LayoutElement>();
-            layout.preferredWidth = 112f;
-            layout.minWidth = 112f;
-            layout.preferredHeight = 112f;
-            layout.minHeight = 112f;
+            var hoverOverlay = CreateOptionCardOverlay(cardObject.transform, "HoverOverlay", UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.10f));
+            var fillOverlay = CreateOptionCardOverlay(cardObject.transform, "FillOverlay", UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 0.12f));
+            var fillOverlayOutline = fillOverlay.gameObject.AddComponent<Outline>();
+            fillOverlayOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 1f);
+            fillOverlayOutline.effectDistance = new Vector2(2f, -2f);
+            fillOverlayOutline.enabled = false;
 
-            var provider = optionObject.AddComponent<AdaptationTooltipProvider>();
-            provider.Initialize(adaptation);
+            var outline = cardObject.AddComponent<Outline>();
 
-            var tooltipTrigger = optionObject.AddComponent<TooltipTrigger>();
-            tooltipTrigger.SetDynamicProvider(provider);
-            tooltipTrigger.SetAutoPlacementOffsetX(20f);
+            var iconObject = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            iconObject.transform.SetParent(cardObject.transform, false);
+            var iconImage = iconObject.GetComponent<Image>();
+            iconImage.sprite = AdaptationArtRepository.GetIcon(adaptation);
+            iconImage.preserveAspect = true;
+            iconImage.color = Color.white;
+            iconImage.raycastTarget = false;
+            var iconRect = iconObject.GetComponent<RectTransform>();
+            iconRect.anchorMin = new Vector2(0f, 1f);
+            iconRect.anchorMax = new Vector2(0f, 1f);
+            iconRect.pivot = new Vector2(0f, 1f);
+            iconRect.anchoredPosition = new Vector2(14f, -14f);
+            iconRect.sizeDelta = new Vector2(64f, 64f);
 
-            var button = optionObject.GetComponent<Button>();
+            var titleObject = new GameObject("Title", typeof(RectTransform), typeof(TextMeshProUGUI));
+            titleObject.transform.SetParent(cardObject.transform, false);
+            var titleRect = titleObject.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0f, 1f);
+            titleRect.anchorMax = new Vector2(1f, 1f);
+            titleRect.pivot = new Vector2(0f, 1f);
+            titleRect.offsetMin = new Vector2(92f, -42f);
+            titleRect.offsetMax = new Vector2(-14f, -12f);
+            var title = titleObject.GetComponent<TextMeshProUGUI>();
+            title.text = adaptation.Name;
+            title.fontSize = 22f;
+            title.fontStyle = FontStyles.Bold;
+            title.color = UIStyleTokens.Text.Primary;
+            title.alignment = TextAlignmentOptions.Left;
+            title.enableAutoSizing = true;
+            title.fontSizeMax = 22f;
+            title.fontSizeMin = 18f;
+            title.textWrappingMode = TextWrappingModes.NoWrap;
+            title.raycastTarget = false;
+            TMPOverflowUtility.SetSafeEllipsis(title);
+            title.maxVisibleLines = 1;
+
+            // The whole effect is on the card, so no hover tooltip: it would only repeat this text
+            // while covering the neighbouring options.
+            int boardWidth = GameManager.Instance?.Board?.Width ?? FungusToast.Core.Config.GameBalance.BoardWidth;
+            var descriptionObject = new GameObject("Description", typeof(RectTransform), typeof(TextMeshProUGUI));
+            descriptionObject.transform.SetParent(cardObject.transform, false);
+            var descriptionRect = descriptionObject.GetComponent<RectTransform>();
+            descriptionRect.anchorMin = new Vector2(0f, 0f);
+            descriptionRect.anchorMax = new Vector2(1f, 1f);
+            descriptionRect.pivot = new Vector2(0f, 1f);
+            descriptionRect.offsetMin = new Vector2(92f, 10f);
+            descriptionRect.offsetMax = new Vector2(-14f, -46f);
+            var description = descriptionObject.GetComponent<TextMeshProUGUI>();
+            description.text = AdaptationRepository.GetTooltipDescription(adaptation, boardWidth);
+            description.fontSize = 17f;
+            description.fontStyle = FontStyles.Normal;
+            description.color = UIStyleTokens.Text.Secondary;
+            description.alignment = TextAlignmentOptions.TopLeft;
+            description.enableAutoSizing = true;
+            description.fontSizeMax = 17f;
+            description.fontSizeMin = UIStyleTokens.Typography.MicroMinimum;
+            description.textWrappingMode = TextWrappingModes.Normal;
+            description.raycastTarget = false;
+            TMPOverflowUtility.SetSafeEllipsis(description);
+
+            hoverOverlay.transform.SetAsFirstSibling();
+            fillOverlay.transform.SetAsFirstSibling();
+
+            var visual = new OptionCardVisual
+            {
+                OptionId = adaptation.Id,
+                Background = background,
+                HoverOverlay = hoverOverlay,
+                FillOverlay = fillOverlay,
+                FillOverlayOutline = fillOverlayOutline,
+                Outline = outline
+            };
+            defeatCarryoverOptionVisuals[adaptation.Id] = visual;
+            ApplyOptionCardVisualState(visual, isSelected: false);
+
+            var button = cardObject.GetComponent<Button>();
             button.transition = Selectable.Transition.None;
-            button.targetGraphic = null;
-            button.onClick.AddListener(() => ToggleDefeatCarryoverSelection(adaptation.Id, optionImage, selectionCapacity));
+            button.targetGraphic = background;
+            button.onClick.AddListener(() => ToggleDefeatCarryoverSelection(adaptation.Id, selectionCapacity));
 
-            defeatCarryoverOptionImages[adaptation.Id] = optionImage;
-            UpdateDefeatCarryoverOptionVisual(optionImage, false);
+            var eventTrigger = cardObject.AddComponent<EventTrigger>();
+            AddPointerEvent(eventTrigger, EventTriggerType.PointerEnter, () => SetDefeatCarryoverHoverState(visual, true));
+            AddPointerEvent(eventTrigger, EventTriggerType.PointerExit, () => SetDefeatCarryoverHoverState(visual, false));
         }
 
-        private void ToggleDefeatCarryoverSelection(string adaptationId, Image optionImage, int selectionCapacity)
+        private static Image CreateOptionCardOverlay(Transform parent, string name, Color color)
+        {
+            var overlayObject = new GameObject(name, typeof(RectTransform), typeof(Image));
+            overlayObject.transform.SetParent(parent, false);
+            var overlayRect = overlayObject.GetComponent<RectTransform>();
+            overlayRect.anchorMin = Vector2.zero;
+            overlayRect.anchorMax = Vector2.one;
+            overlayRect.offsetMin = new Vector2(3f, 3f);
+            overlayRect.offsetMax = new Vector2(-3f, -3f);
+            var overlay = overlayObject.GetComponent<Image>();
+            overlay.color = color;
+            overlay.raycastTarget = false;
+            overlay.enabled = false;
+            overlayObject.SetActive(false);
+            return overlay;
+        }
+
+        private void SetDefeatCarryoverHoverState(OptionCardVisual visual, bool isHovered)
+        {
+            if (visual == null)
+            {
+                return;
+            }
+
+            visual.IsHovered = isHovered;
+            ApplyOptionCardVisualState(visual, selectedDefeatCarryoverAdaptationIds.Contains(visual.OptionId));
+        }
+
+        private void ToggleDefeatCarryoverSelection(string adaptationId, int selectionCapacity)
         {
             if (string.IsNullOrWhiteSpace(adaptationId))
             {
@@ -1413,7 +1520,7 @@ namespace FungusToast.Unity.UI
             if (isSelected)
             {
                 selectedDefeatCarryoverAdaptationIds.Remove(adaptationId);
-                UpdateDefeatCarryoverOptionVisual(optionImage, false);
+                ApplyDefeatCarryoverOptionVisual(adaptationId);
                 RefreshDefeatCarryoverSelectionUi();
                 return;
             }
@@ -1427,10 +1534,7 @@ namespace FungusToast.Unity.UI
                         && !string.Equals(currentlySelectedId, adaptationId, StringComparison.Ordinal))
                     {
                         selectedDefeatCarryoverAdaptationIds.Remove(currentlySelectedId);
-                        if (defeatCarryoverOptionImages.TryGetValue(currentlySelectedId, out var previousImage))
-                        {
-                            UpdateDefeatCarryoverOptionVisual(previousImage, false);
-                        }
+                        ApplyDefeatCarryoverOptionVisual(currentlySelectedId);
                     }
                 }
                 else
@@ -1440,30 +1544,17 @@ namespace FungusToast.Unity.UI
             }
 
             selectedDefeatCarryoverAdaptationIds.Add(adaptationId);
-            UpdateDefeatCarryoverOptionVisual(optionImage, true);
+            ApplyDefeatCarryoverOptionVisual(adaptationId);
+            EventSystem.current?.SetSelectedGameObject(null);
             RefreshDefeatCarryoverSelectionUi();
         }
 
-        private static void UpdateDefeatCarryoverOptionVisual(Image optionImage, bool isSelected)
+        private void ApplyDefeatCarryoverOptionVisual(string adaptationId)
         {
-            if (optionImage == null)
+            if (defeatCarryoverOptionVisuals.TryGetValue(adaptationId, out var visual))
             {
-                return;
+                ApplyOptionCardVisualState(visual, selectedDefeatCarryoverAdaptationIds.Contains(adaptationId));
             }
-
-            optionImage.color = Color.white;
-            optionImage.material = null;
-
-            var outline = optionImage.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = optionImage.gameObject.AddComponent<Outline>();
-            }
-
-            outline.effectColor = isSelected
-                ? UIStyleTokens.WithAlpha(UIStyleTokens.State.Success, 0.95f)
-                : UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0f);
-            outline.effectDistance = isSelected ? new Vector2(4f, -4f) : Vector2.zero;
         }
 
         private void RefreshDefeatCarryoverSelectionUi()
@@ -1481,10 +1572,39 @@ namespace FungusToast.Unity.UI
                     : UIStyleTokens.Text.Secondary;
             }
 
-            if (continueButton != null)
+            SetContinueButtonAvailable(selectedCount == requiredCount);
+        }
+
+        /// <summary>
+        /// Enables or disables the continue action and makes the disabled state read as disabled.
+        /// The prefab tints the button Image green, and the grey disabled tint multiplies into it,
+        /// leaving a muted green that still looks like a live primary action; so while disabled the
+        /// Image drops to white (the disabled tint then shows as neutral grey) and the label dims.
+        /// </summary>
+        private void SetContinueButtonAvailable(bool available)
+        {
+            if (continueButton == null)
             {
-                continueButton.interactable = selectedCount == requiredCount;
+                return;
             }
+
+            continueButton.interactable = available;
+
+            var graphic = continueButton.targetGraphic;
+            if (graphic != null)
+            {
+                continueButtonBaseGraphicColor ??= graphic.color;
+                graphic.color = available ? continueButtonBaseGraphicColor.Value : Color.white;
+            }
+
+            SetButtonContentColor(continueButton, GetContinueButtonContentColor());
+        }
+
+        private Color GetContinueButtonContentColor()
+        {
+            return continueButton == null || continueButton.interactable
+                ? UIStyleTokens.Button.TextDefault
+                : UIStyleTokens.Button.TextDisabled;
         }
 
         private static TextMeshProUGUI CreateCarryoverInfoText(Transform parent, string text, float fontSize, Color color, FontStyles fontStyle)
@@ -1914,9 +2034,9 @@ namespace FungusToast.Unity.UI
             Color badgeBaseColor = UIStyleTokens.WithAlpha(offer.AccentColor, UIStyleTokens.Alpha.BadgeTint);
             badgeImage.color = badgeBaseColor;
 
-            var visual = new MoldinessRewardOptionVisual
+            var visual = new OptionCardVisual
             {
-                RewardId = offer.Id,
+                OptionId = offer.Id,
                 Background = background,
                 HoverOverlay = hoverOverlay,
                 FillOverlay = fillOverlay,
@@ -2218,7 +2338,7 @@ namespace FungusToast.Unity.UI
             };
         }
 
-        private void SelectMoldinessReward(MoldinessRewardOptionVisual clickedVisual)
+        private void SelectMoldinessReward(OptionCardVisual clickedVisual)
         {
             if (clickedVisual == null)
             {
@@ -2226,11 +2346,11 @@ namespace FungusToast.Unity.UI
             }
 
             bool togglingOff = ReferenceEquals(selectedMoldinessRewardVisual, clickedVisual)
-                || string.Equals(selectedMoldinessRewardId, clickedVisual.RewardId, StringComparison.Ordinal);
+                || string.Equals(selectedMoldinessRewardId, clickedVisual.OptionId, StringComparison.Ordinal);
 
             if (selectedMoldinessRewardVisual != null)
             {
-                ApplyMoldinessRewardOptionVisualState(selectedMoldinessRewardVisual, isSelected: false);
+                ApplyOptionCardVisualState(selectedMoldinessRewardVisual, isSelected: false);
             }
 
             if (togglingOff)
@@ -2241,8 +2361,8 @@ namespace FungusToast.Unity.UI
             else
             {
                 selectedMoldinessRewardVisual = clickedVisual;
-                selectedMoldinessRewardId = clickedVisual.RewardId;
-                ApplyMoldinessRewardOptionVisualState(clickedVisual, isSelected: true);
+                selectedMoldinessRewardId = clickedVisual.OptionId;
+                ApplyOptionCardVisualState(clickedVisual, isSelected: true);
             }
 
             EventSystem.current?.SetSelectedGameObject(null);
@@ -2258,7 +2378,7 @@ namespace FungusToast.Unity.UI
 
             bool hasOffers = moldinessRewardOptionVisuals.Count > 0;
             bool hasSelection = selectedMoldinessRewardVisual != null && !string.IsNullOrWhiteSpace(selectedMoldinessRewardId);
-            continueButton.interactable = !hasOffers || hasSelection;
+            SetContinueButtonAvailable(!hasOffers || hasSelection);
             SetButtonLabel(
                 continueButton,
                 !hasOffers
@@ -2268,7 +2388,7 @@ namespace FungusToast.Unity.UI
                         : "Choose Moldiness Reward");
         }
 
-        private void SetMoldinessRewardHoverState(MoldinessRewardOptionVisual visual, bool isHovered)
+        private void SetMoldinessRewardHoverState(OptionCardVisual visual, bool isHovered)
         {
             if (visual == null)
             {
@@ -2276,7 +2396,7 @@ namespace FungusToast.Unity.UI
             }
 
             visual.IsHovered = isHovered;
-            ApplyMoldinessRewardOptionVisualState(visual, ReferenceEquals(selectedMoldinessRewardVisual, visual));
+            ApplyOptionCardVisualState(visual, ReferenceEquals(selectedMoldinessRewardVisual, visual));
         }
 
         private static void AddPointerEvent(EventTrigger trigger, EventTriggerType eventType, Action callback)
@@ -2291,7 +2411,7 @@ namespace FungusToast.Unity.UI
             trigger.triggers.Add(entry);
         }
 
-        private static void ApplyMoldinessRewardOptionVisualState(MoldinessRewardOptionVisual visual, bool isSelected)
+        private static void ApplyOptionCardVisualState(OptionCardVisual visual, bool isSelected)
         {
             if (visual == null)
             {
@@ -4701,7 +4821,7 @@ namespace FungusToast.Unity.UI
 
         private void ApplyControlReadabilityOverrides()
         {
-            SetButtonContentColor(continueButton, UIStyleTokens.Button.TextDefault);
+            SetButtonContentColor(continueButton, GetContinueButtonContentColor());
             SetButtonContentColor(exitButton, UIStyleTokens.Button.TextDefault);
             SetButtonContentColor(playAgainButton, UIStyleTokens.Button.TextDefault);
             SetButtonContentColor(toggleResultsDockButton, UIStyleTokens.Text.Primary);
