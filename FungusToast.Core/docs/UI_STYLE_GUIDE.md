@@ -19,7 +19,7 @@ Applies to every `FlavorText` string (Mutations, Mycovariants) and to any evocat
 - **Register: lab notebook, not epic fantasy.** The narrator is a mycologist writing a terse field note about a mold that happens to be at war on a slice of toast. Precise, a little wry, faintly unsettling. One sentence; two only when the second earns it.
   - On-brand: `Oscillatory homeostasis stabilizes intracellular pressure and toxin accumulation.` / `Even in death, the colony endures.` / `Compressed hyphae redirect their force into the few pores that remain.`
   - Off-brand: `Ultimate genomic instability unlocks forbidden evolutionary pathways, sacrificing foundational adaptations to achieve impossible transcendence.`
-- **Setting is the toast.** When the line needs a place, use the loaf: `crust`, `loaf`, `pores`, `substrate`, `crumb`, `toast`. Never `battlefield`, `terrain`, `arena`, `warzone`, or other martial-setting words.
+- **Setting is the medium.** Mutation and mycovariant flavor appears on every level, so when a line needs a place, use words that fit any medium: `medium`, `surface`, `pores`, `crust` (the established edge term), `grain`. Bread words (`loaf`, `crumb`, `toast`) belong only in copy tied to a bread medium. Never `battlefield`, `terrain`, `arena`, `warzone`, or other martial-setting words.
 - **Banned intensifiers.** `ultimate`, `impossible`, `unstoppable`, `unassailable`, `impenetrable`, `unprecedented`, `catastrophic`, `lethal precision`, `dominoes of death`, and similar superlatives. If the tier is high, let the mechanism sound stranger, not louder.
 - **Vocabulary.** Real mycology and cell biology (`hyphae`, `septa`, `conidia`, `ascus`, `plasmid`, `chitin`, `autolysis`, `quorum`) is encouraged; one specialist term per sentence is plenty. Check that the term means what the mechanic does (`actinic` is about light, not spores).
 - **Voice, not mechanics.** Flavor never restates or contradicts the description. It may hint at the mechanism poetically, but the numbers, timing, and targeting live only in the description.
@@ -30,6 +30,8 @@ Applies to every `FlavorText` string (Mutations, Mycovariants) and to any evocat
 - Never tint, glow, or stylize the medium or its backdrop to serve the UI palette. Color energy and quirk come from the UI chrome: surfaces, buttons, headings, and the menu backdrop.
 - The UI palette must hold up next to every backdrop, so do not tune it against a single one. Surfaces that sit in the same hue family as common backdrops (warm wood browns in particular) blend into them and should be avoided.
 - The mold colors and board art are well received by players. Palette work targets the menus, panels, and frame, not those.
+- One global UI palette for now. Per-medium accents are deferred until all mediums and backdrops exist and can be judged together.
+- The logo art is not a constraint on the palette; it will be updated to match whichever palette is chosen.
 
 ### Core UX Principles
 1. **Clarity over decoration**: gameplay state is always more important than style flourish.

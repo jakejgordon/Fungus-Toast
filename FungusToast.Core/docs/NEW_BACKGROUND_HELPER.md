@@ -55,6 +55,17 @@ The medium will eventually sit in front of a **backdrop** chosen per medium, bui
 
 Until backdrop art exists, a flat color (the Main Camera clear color in `SampleScene.unity`) fills the space around the medium. Treat that as a placeholder, not a design surface.
 
+### Backdrop photo guidelines
+
+Backdrops are real photos (plates, cutting boards, napkins, tables), shot so they composite cleanly under a separately photographed medium:
+
+- **Shoot straight down.** Hold the camera level over the center. Step back and zoom in rather than shooting wide up close, so edges do not bow with perspective.
+- **Soft, even light.** Use overcast window light or diffuse shade, with no flash and no hard shadows. Match the light direction of the medium sprites. Keep white balance fixed across a set, and shoot RAW if the camera allows it.
+- **Shoot each layer empty.** Photograph the surface with nothing on it (the medium is composited on top), and the setting with nothing on it where you can, so layers can be reused across mediums.
+- **Cover the widest screen.** The frame must fill a 21:9 ultrawide (3440x1440) as well as 16:9, so shoot at high resolution with generous margin beyond the surface.
+- **Quiet, neutral materials.** Natural wood, white or cream ceramic, undyed linen. Avoid saturated colors, especially hues close to a player mold color (red, orange, blue, purple, teal, yellow-green), and avoid busy patterns such as gingham near the medium. The backdrop should never out-detail the medium; natural depth of field is fine.
+- **Own the photos.** Self-shot photos avoid licensing questions.
+
 **Realism rule.** The medium and its backdrop are photographic and must stay realistic. Do not tint, glow, stylize, recolor, or add effects to them to fit a UI palette or a mood. Stylization belongs to the UI chrome (menus, panels, buttons), which must be designed to sit well against a range of real backdrops: warm wood, white ceramic, bark, skin.
 
 ## Source Art Expectations

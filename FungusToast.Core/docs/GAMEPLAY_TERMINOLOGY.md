@@ -113,7 +113,7 @@ Fungus Toast uses precise verbs for board-state changes so gameplay logic, analy
 
 | Term | Meaning | Usage |
 |------|---------|-------|
-| `toast` | The play surface as a whole, in its fantasy framing. | Preferred in summaries and flavor ("somewhere else on the toast"). |
+| `medium` | The play surface as a whole, in its fantasy framing: whatever the mold grows on this level (toast, cracker, cheese, pita, later toenail or tree bark). | Preferred in summaries and generic copy ("somewhere else on the medium"). Name the concrete medium only in copy that is specific to one level. Do not write `toast` for the play surface; it is the game's name, not a generic noun. Avoid `substrate` here, because it collides with the Substrate Ecology mutation category. |
 | `board` | The play surface as a grid. | Acceptable in technical copy where geometry matters ("board size", "center of the board", "off the board"). Either word is fine; do not mix them inside one sentence. |
 | `crust` | The outermost ring of playable tiles. | Gloss it on first use in a description as "the board edge (the crust)". |
 | `playable crust` | The crust of the current background, which may be irregular. | Use only when the distinction from a rectangular edge matters. |
