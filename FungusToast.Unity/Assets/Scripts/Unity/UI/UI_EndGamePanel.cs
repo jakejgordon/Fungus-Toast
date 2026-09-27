@@ -1660,6 +1660,7 @@ namespace FungusToast.Unity.UI
             ConfigureCampaignMoldinessAwardPulse(title, snapshot.isFinalCampaignVictory && snapshot.moldinessAwarded > 0);
 
             var meter = UI_MoldinessToastMeter.Create(root.transform, CampaignMoldinessToastWidth);
+            meter.TileFilled = () => GameManager.Instance?.PlayStartingSporeDropSound();
             bool animateAward = victory
                 && snapshot.moldinessAwarded > 0
                 && !ReferenceEquals(snapshot, lastAnimatedMoldinessSnapshot);

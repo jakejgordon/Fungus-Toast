@@ -91,6 +91,9 @@ namespace FungusToast.Unity.UI.Campaign
         private int finalProgress;
         private bool isAnimating;
         private bool snapToFinalOnEnable;
+
+        /// <summary>Invoked as each awarded point molds a tile, so the host can add sound.</summary>
+        public Action? TileFilled { get; set; }
         private int deferredAwardPoints;
 
         /// <param name="showLevelLabel">
@@ -305,6 +308,7 @@ namespace FungusToast.Unity.UI.Campaign
             tile.IsFilled = true;
             SetCounterLabel();
             StartCoroutine(PopTile(tile));
+            TileFilled?.Invoke();
             StartCoroutine(Punch(counterLabel.rectTransform, 1.22f, 0.22f));
             StartCoroutine(FlashCounter());
             SpawnSpores(tile.Root.anchoredPosition, count: 5, minDistance: 14f, maxDistance: 28f, lifetime: 0.55f);

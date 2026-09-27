@@ -632,6 +632,12 @@ namespace FungusToast.Unity
             soundEffectService?.PlayLoop(jettingMyceliumSprayLoopClip, jettingMyceliumSprayLoopVolume);
         }
 
+        /// <summary>The starting-spore landing; also reused for each tile the moldiness toast molds over.</summary>
+        public void PlayStartingSporeDropSound()
+        {
+            soundEffectService?.PlayOneShot(startingSporeDropClip, startingSporeDropVolume);
+        }
+
         public void StopJettingMyceliumVolleySound()
         {
             soundEffectService?.StopLoop(jettingMyceliumLoopFadeOutSeconds);
@@ -2277,7 +2283,7 @@ namespace FungusToast.Unity
             {
                 yield return gridVisualizer.PlayStartingSporeArrivalAnimation(
                     startingIds,
-                    () => soundEffectService?.PlayOneShot(startingSporeDropClip, startingSporeDropVolume));
+                    PlayStartingSporeDropSound);
             }
 
             bool willFastForward = testingModeEnabled && fastForwardRounds > 0 && !_fastForwardStarted;
