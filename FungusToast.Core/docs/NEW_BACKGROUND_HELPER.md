@@ -43,6 +43,20 @@ Use these guardrails up front:
 3. Keep `backgroundScaleMultiplier` at `1.0` unless a validated shape still needs a render-only framing adjustment after the footprint is already correct.
 4. Prefer changing the shape model over stacking compensating tweaks. Repeated inset/scale/clip adjustments usually mean the chosen model is wrong.
 
+## Mediums And Backdrops
+
+The thing the mold grows on is the **medium** (`BoardMediumConfig`). "Toast" is the game's name and the original medium, but it is only one of many: toast, cracker, cheese, baguette, pita, Kaiser bun today, and later non-food mediums such as a toenail or tree bark. Do not assume bread when writing code, docs, or art direction for the medium.
+
+The medium will eventually sit in front of a **backdrop** chosen per medium, built in layers from the medium outward:
+
+1. **Medium** - the board sprite itself, the only thing mold grows on.
+2. **Surface** - what the medium rests on. Breads will usually sit on a plate or a cutting board.
+3. **Setting** - what the surface rests on, such as a table. Non-food mediums get their own natural context rather than a kitchen.
+
+Until backdrop art exists, a flat color (the Main Camera clear color in `SampleScene.unity`) fills the space around the medium. Treat that as a placeholder, not a design surface.
+
+**Realism rule.** The medium and its backdrop are photographic and must stay realistic. Do not tint, glow, stylize, recolor, or add effects to them to fit a UI palette or a mood. Stylization belongs to the UI chrome (menus, panels, buttons), which must be designed to sit well against a range of real backdrops: warm wood, white ceramic, bark, skin.
+
 ## Source Art Expectations
 
 The workflow below assumes the bread/bun image itself is already fit for a game board. Check these before measuring anything:
@@ -50,7 +64,7 @@ The workflow below assumes the bread/bun image itself is already fit for a game 
 - The sprite has a real alpha channel with fully transparent surroundings, not a rendered checkerboard or a flat color that gets keyed later. Everything outside the loaf is `0%` opacity.
 - Surface shading is controlled enough to read cleanly under mold tiles. Harsh dark pockets, deep crevices, and burnt patches compete with cell sprites and have repeatedly been softened during iteration; prefer even, gently textured crumb.
 - The silhouette has no unnaturally sharp border points or thin spikes. Those become one-tile peninsulas after masking and look like clipping bugs.
-- The loaf is the only subject. No plate, table, kitchen, crumbs scattered outside the silhouette, or drop shadow.
+- The loaf is the only subject. No plate, table, kitchen, crumbs scattered outside the silhouette, or drop shadow. Plates, cutting boards, and tables belong to the separate backdrop layers described above, never baked into the medium sprite.
 
 ## Owning Files
 

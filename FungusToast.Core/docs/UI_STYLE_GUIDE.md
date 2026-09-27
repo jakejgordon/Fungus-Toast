@@ -25,6 +25,12 @@ Applies to every `FlavorText` string (Mutations, Mycovariants) and to any evocat
 - **Voice, not mechanics.** Flavor never restates or contradicts the description. It may hint at the mechanism poetically, but the numbers, timing, and targeting live only in the description.
 - **Tone across tiers.** Higher tiers get colder and more clinical, not more heroic. A Tier 6 line reads like the observation the mycologist did not want to make.
 
+### Realistic Board, Stylized Chrome
+- The mold grows on a **medium** that varies by level (toast, cracker, cheese, pita, later toenail or tree bark), and each medium will get a realistic photographic backdrop (plate or cutting board on a table for breads). See [NEW_BACKGROUND_HELPER.md](NEW_BACKGROUND_HELPER.md#mediums-and-backdrops).
+- Never tint, glow, or stylize the medium or its backdrop to serve the UI palette. Color energy and quirk come from the UI chrome: surfaces, buttons, headings, and the menu backdrop.
+- The UI palette must hold up next to every backdrop, so do not tune it against a single one. Surfaces that sit in the same hue family as common backdrops (warm wood browns in particular) blend into them and should be avoided.
+- The mold colors and board art are well received by players. Palette work targets the menus, panels, and frame, not those.
+
 ### Core UX Principles
 1. **Clarity over decoration**: gameplay state is always more important than style flourish.
 2. **Semantic consistency**: same meaning must use same colors/states everywhere.
