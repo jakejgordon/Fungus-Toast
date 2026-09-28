@@ -6,9 +6,9 @@ All four were processed with ChatGPT from the owner's own photos. They are 8-bit
 
 | File | Layer | Used for | Real size |
 |------|-------|----------|-----------|
-| `cutting_board_surface_2048x1504.png` | Surface (alpha cutout) | Whole cutting board, seen when zoomed out | Not yet measured (proportions match a 44.5 x 33 cm board) |
-| `cutting_board_material_1024x1024.png` | Seamless tile | Close-zoom detail on the cutting board, and the setting under the plate (the plate was photographed on a larger board of the same material) | Tile size to be set by matching its grain to the board photo |
-| `plate_surface_1476x1476.png` | Surface (alpha cutout) | Plate, sits on the cutting-board material | Not yet measured (typical dinner plate is about 27 cm) |
+| `cutting_board_surface_2048x1504.png` | Surface (alpha cutout) | Whole cutting board, seen when zoomed out | 17.25 x 12.75 in (43.8 x 32.4 cm), about 45 px/cm |
+| `cutting_board_material_1024x1024.png` | Seamless tile | Setting under the plate (the plate was photographed on a larger board of the same material). Too coarse for close-zoom detail; see below. | Grain matches the board photo at about 45-52 cm per tile, so only about 20-23 px/cm |
+| `plate_surface_1476x1476.png` | Surface (alpha cutout) | Plate, sits on the cutting-board material | 8.5 in (21.6 cm) diameter, about 67 px/cm |
 | `countertop_material_512x512.png` | Seamless tile | Setting under the cutting board, seen only when zoomed out | Not yet set (about 15 cm per tile reads naturally) |
 
 ## Edits made after delivery
@@ -18,4 +18,5 @@ All four were processed with ChatGPT from the owner's own photos. They are 8-bit
 
 ## Still needed
 
-Real measurements of the cutting board, the plate, and each medium, so the game can place mediums at true physical scale.
+- Real sizes of each medium, so the game can place them at true physical scale.
+- A close-zoom material tile for the cutting board. At default zoom the area around the medium is shown at roughly 120 px/cm, and the current tile holds about 20 px/cm. It should be made from a dedicated close-up photo of the board surface rather than from the whole-board shot.
