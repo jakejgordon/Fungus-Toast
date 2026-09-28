@@ -24,8 +24,9 @@ Read these docs first:
    - `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`
    - `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`
 5. Use `scripts/validate_board_backgrounds.py` to measure, validate, and emit baked masks when needed.
-6. Do not hand-author blocked-tile ID lists.
-7. Keep placement, blocked tiles, mask rendering, and overlay alignment tied to one canonical footprint model.
+6. Give the medium a real-world size: add its sprite to `BoardBackdropCatalog.cs` with a typical width in cm, its measured visible rect, and a surface (plate or cutting board), and add the same row to the sizes table in `NEW_BACKGROUND_HELPER.md`. A medium missing from the catalog renders with no backdrop.
+7. Do not hand-author blocked-tile ID lists.
+8. Keep placement, blocked tiles, mask rendering, and overlay alignment tied to one canonical footprint model.
 
 ## Validation
 

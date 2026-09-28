@@ -2,7 +2,7 @@
 
 Source images for the photographic backdrops behind each medium. The layering, realism rule, and density targets are in `FungusToast.Core/docs/NEW_BACKGROUND_HELPER.md` (Mediums And Backdrops).
 
-All four were processed with ChatGPT from the owner's own photos. They are 8-bit sRGB PNGs with no metadata.
+Runtime copies live in `FungusToast.Unity/Assets/Resources/Backdrops/`; update both when an image changes. All four were processed with ChatGPT from the owner's own photos. They are 8-bit sRGB PNGs with no metadata.
 
 | File | Layer | Used for | Real size |
 |------|-------|----------|-----------|

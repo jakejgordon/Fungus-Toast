@@ -60,6 +60,10 @@ namespace FungusToast.Unity.Cameras
         [Tooltip("For boards smaller than the viewport, keep at least this fraction of the board visible on each axis while panning.")]
         [SerializeField] [Range(0.5f, 1f)] private float minVisibleSmallBoardFraction = 0.85f;
 
+        [Header("Real-Scale Backdrop")]
+        [Tooltip("Breathing room around the plate or cutting board when fully zoomed out.")]
+        [SerializeField] private float backdropZoomOutMargin = 1.08f;
+
         private CoachmarkLayoutUtility.CoachmarkCard cameraPanCoachmark;
         private float cameraPanCoachmarkElapsed;
         private bool hasDismissedCameraPanCoachmarkThisGame;
@@ -109,7 +113,7 @@ namespace FungusToast.Unity.Cameras
                     Vector3 worldBefore = cam.ScreenToWorldPoint(new Vector3(mouseScreenPos.x, mouseScreenPos.y, cam.nearClipPlane));
 
                     // 2. Apply zoom
-                    size -= scroll * GetZoomSpeedForCurrentBoard();
+                    size -= scroll * GetZoomSpeedForCurrentBoard() * GetZoomOutStepScale(size);
                     size = Mathf.Clamp(size, GetDynamicMinZoom(), GetDynamicMaxZoom());
                     cam.orthographicSize = size;
 
@@ -390,7 +394,47 @@ namespace FungusToast.Unity.Cameras
                 dynamicMaxZoom = Mathf.Min(dynamicMaxZoom, framedZoomCap);
             }
 
+            // A real-scale backdrop lifts both caps far enough to show the whole plate or cutting board.
+            if (TryGetBackdropFitZoom(out float backdropFitZoom))
+            {
+                dynamicMaxZoom = Mathf.Max(dynamicMaxZoom, backdropFitZoom);
+            }
+
             return Mathf.Max(GetDynamicMinZoom(), dynamicMaxZoom);
+        }
+
+        private bool TryGetBackdropFitZoom(out float fitZoom)
+        {
+            fitZoom = 0f;
+            Camera camera = Camera.main;
+            if (camera == null || !TryGetBackdropBounds(out Rect backdropBounds))
+            {
+                return false;
+            }
+
+            float sizeByHeight = backdropBounds.height * 0.5f;
+            float sizeByWidth = backdropBounds.width * 0.5f / Mathf.Max(0.01f, camera.aspect);
+            fitZoom = Mathf.Max(sizeByHeight, sizeByWidth) * Mathf.Max(1f, backdropZoomOutMargin);
+            return true;
+        }
+
+        private bool TryGetBackdropBounds(out Rect backdropBounds)
+        {
+            backdropBounds = default;
+            return gameManager?.gridVisualizer != null
+                && gameManager.gridVisualizer.TryGetBackdropSurfaceWorldBounds(out backdropBounds);
+        }
+
+        // Past the initial framing a fixed step would take dozens of notches to reach a whole-plate view,
+        // so the step grows with how far out the camera already is.
+        private float GetZoomOutStepScale(float currentSize)
+        {
+            if (cameraCenterer == null || !cameraCenterer.HasInitialFraming)
+            {
+                return 1f;
+            }
+
+            return Mathf.Max(1f, currentSize / Mathf.Max(0.01f, cameraCenterer.InitialOrthographicSize));
         }
 
         private bool ShouldApplySmallBoardZoomCap()
@@ -455,6 +499,13 @@ namespace FungusToast.Unity.Cameras
                 boardHeight,
                 viewHalfHeight,
                 allowFullBoardOffscreen: false);
+
+            // Zoomed out past the board, keep the view centered over the plate or cutting board.
+            if (TryGetBackdropBounds(out Rect backdropBounds))
+            {
+                clampedX = Mathf.Clamp(clampedX, backdropBounds.xMin, backdropBounds.xMax);
+                clampedY = Mathf.Clamp(clampedY, backdropBounds.yMin, backdropBounds.yMax);
+            }
 
             return new Vector3(clampedX, clampedY, desiredPosition.z);
         }

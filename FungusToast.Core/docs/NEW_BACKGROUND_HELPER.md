@@ -57,7 +57,7 @@ Until backdrop art exists, a flat color (the Main Camera clear color in `SampleS
 
 ### Real-world sizes
 
-Placing mediums at true scale needs each one's physical size. Mediums use typical sizes for their food type (not measured) and can be tuned by eye. Surfaces are measured. "Width" is the sprite's visible (opaque) width; height follows from the sprite's proportions.
+Placing mediums at true scale needs each one's physical size. The runtime source of truth is `BoardBackdropCatalog.cs`, which also stores each sprite's measured visible rect; keep this table in sync with it. Mediums use typical sizes for their food type (not measured) and can be tuned by eye. Surfaces are measured. "Width" is the sprite's visible (opaque) width; height follows from the sprite's proportions.
 
 | Asset | Kind | Width | Density | Default surface |
 |-------|------|-------|---------|-----------------|
@@ -105,6 +105,9 @@ The workflow below assumes the bread/bun image itself is already fit for a game 
 - Runtime/background metadata owner: `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`
 - Toast medium asset: `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`
 - Validation and bake tooling: `scripts/validate_board_backgrounds.py`
+- Real-scale backdrop data (medium sizes, surfaces, settings): `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardBackdropCatalog.cs`
+- Backdrop rendering (surface, setting tile, contact shadows): `FungusToast.Unity/Assets/Scripts/Unity/Grid/Helpers/GridBoardBackdropRenderer.cs`
+- Backdrop textures loaded at runtime: `FungusToast.Unity/Assets/Resources/Backdrops/` (sources and notes in `art-source/backdrops/`)
 
 ## Core Rule
 

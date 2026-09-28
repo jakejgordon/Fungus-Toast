@@ -105,6 +105,25 @@ namespace FungusToast.Unity.Grid
         public int CurrentBoardVisualPaddingTiles => board == null ? 0 : GetCrustThickness(board);
         public int PlayerMoldTileCount => playerMoldTiles?.Length ?? 0;
 
+        /// <summary>
+        /// World-space bounds of the plate or cutting board under the medium, when a real-scale backdrop is showing.
+        /// The camera uses this to let players zoom out far enough to see the whole surface.
+        /// </summary>
+        public bool TryGetBackdropSurfaceWorldBounds(out Rect worldBounds)
+        {
+            worldBounds = default;
+            if (boardMediumRenderer == null || !boardMediumRenderer.TryGetBackdropSurfaceLocalRect(out Rect localRect))
+            {
+                return false;
+            }
+
+            Transform visualParent = toastTilemap != null ? toastTilemap.transform : transform;
+            Vector3 min = visualParent.TransformPoint(localRect.min);
+            Vector3 max = visualParent.TransformPoint(localRect.max);
+            worldBounds = Rect.MinMaxRect(Mathf.Min(min.x, max.x), Mathf.Min(min.y, max.y), Mathf.Max(min.x, max.x), Mathf.Max(min.y, max.y));
+            return true;
+        }
+
         // Selection highlight state
         private readonly List<Vector3Int> highlightedPositions = new();
         private Coroutine pulseHighlightCoroutine;

@@ -22,6 +22,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Tilemap> _getHoverOverlayTilemap;
 		private readonly Func<Tilemap> _getPingOverlayTilemap;
 		private readonly Func<Transform> _getVisualParent;
+		private readonly GridBoardBackdropRenderer _backdropRenderer;
 
 		private SpriteRenderer _generatedCrustRenderer;
 		private SpriteRenderer _backgroundRenderer;
@@ -63,6 +64,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getHoverOverlayTilemap = getHoverOverlayTilemap;
 			_getPingOverlayTilemap = getPingOverlayTilemap;
 			_getVisualParent = getVisualParent;
+			_backdropRenderer = new GridBoardBackdropRenderer(getVisualParent, getToastTilemap);
 		}
 
 		public TileBase GetSurfaceTile(int x, int y, TileBase fallbackTile)
@@ -110,6 +112,12 @@ namespace FungusToast.Unity.Grid.Helpers
 			}
 
 			return activeMedium?.GetCrustThickness(activeBoard.Width, activeBoard.Height) ?? 0;
+		}
+
+		/// <summary>The plate or cutting board's visible area in the visual parent's local space, when one is showing.</summary>
+		public bool TryGetBackdropSurfaceLocalRect(out Rect localRect)
+		{
+			return _backdropRenderer.TryGetSurfaceLocalRect(out localRect);
 		}
 
 		public Matrix4x4 GetPlayableSurfaceTileMatrix()
@@ -178,6 +186,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
 		public void ResetBoardBackgroundVisual()
 		{
+			_backdropRenderer.Reset();
 			if (_backgroundRenderer == null)
 			{
 				ResetBoardClipMaskVisual();
@@ -307,6 +316,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.color = backgroundSettings.BackgroundColor;
 			PositionBoardBackgroundRenderer(activeBoard, backgroundSettings);
 			_backgroundRenderer.enabled = true;
+			_backdropRenderer.Render(_backgroundRenderer, backgroundSettings.BackgroundSprite);
 			EnsureBoardClipMask(activeBoard, backgroundSettings);
 			EnsurePlayableAreaOverlayVisual(activeBoard, backgroundSettings);
 			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium, backgroundSettings);
