@@ -55,6 +55,26 @@ The medium will eventually sit in front of a **backdrop** chosen per medium, bui
 
 Until backdrop art exists, a flat color (the Main Camera clear color in `SampleScene.unity`) fills the space around the medium. Treat that as a placeholder, not a design surface.
 
+### Real-world sizes
+
+Placing mediums at true scale needs each one's physical size. Mediums use typical sizes for their food type (not measured) and can be tuned by eye. Surfaces are measured. "Width" is the sprite's visible (opaque) width; height follows from the sprite's proportions.
+
+| Asset | Kind | Width | Density | Default surface |
+|-------|------|-------|---------|-----------------|
+| `white_bread_1024x1024.png` | Sandwich bread slice | 11.0 cm | ~85 px/cm | Plate |
+| `kaiser_bun_1086x1448.png` | Kaiser bun, cut face | 10.5 cm | ~95 px/cm | Plate |
+| `pita_900x900.png` | Pita round | 16.5 cm | ~52 px/cm | Plate |
+| `hotdog_bun_900x900.png` | Hot dog bun, top view | 16.0 cm | ~45 px/cm | Plate |
+| `cheese_800x800.png` | Pale cheese slice from a block | 8.0 cm | ~85 px/cm | Cutting board |
+| `cracker_final_600x600.png` | Saltine-style square cracker | 5.0 cm | ~117 px/cm | Cutting board |
+| `seed_cracker_550x550.png` | Hexagonal seed cracker | 6.0 cm | ~91 px/cm | Cutting board |
+| `plate_surface_1476x1476.png` (art-source) | Plate | 21.6 cm (8.5 in) | ~67 px/cm | Setting: cutting-board material |
+| `cutting_board_surface_2048x1504.png` (art-source) | Cutting board | 43.8 cm (17.25 in) | ~45 px/cm | Setting: countertop |
+
+`yellow_cheese_600x600.png` (cheddar, typical width 7.0 cm) and `hotdog_bun_900x600.png` exist but are not referenced by `ToastBoardMedium.asset`.
+
+At default zoom the medium fills most of the screen height, so a smaller medium is magnified more. The pita and hot dog bun sprites are the least detailed per centimeter, but they are also the largest mediums and are magnified least, so all of them display at similar sharpness.
+
 ### Backdrop photo guidelines
 
 Backdrops are real photos (plates, cutting boards, napkins, tables), shot so they composite cleanly under a separately photographed medium:
