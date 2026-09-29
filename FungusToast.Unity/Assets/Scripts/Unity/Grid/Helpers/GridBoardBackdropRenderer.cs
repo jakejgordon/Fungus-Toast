@@ -23,14 +23,16 @@ namespace FungusToast.Unity.Grid.Helpers
         // zoomed-out view on an ultrawide screen.
         private const float SettingCoverageInSurfaceWidths = 6f;
 
-        // Soft contact shadows are stacks of darkened copies, each a little larger and lower.
-        private const int ShadowLayerCount = 5;
-        private const float SurfaceShadowSpreadPerLayer = 0.006f;
+        // Soft contact shadows are stacks of darkened copies, each a little larger and lower. Eight thin layers
+        // fade smoothly; fewer, darker layers read as an outline. The medium's shadow peaks near 44% at its
+        // edge so it stays visible on the tan cutting board, where a fainter one disappeared.
+        private const int ShadowLayerCount = 8;
+        private const float SurfaceShadowSpreadPerLayer = 0.0055f;
         private const float SurfaceShadowDropPerLayer = 0.004f;
-        private const float SurfaceShadowAlphaPerLayer = 0.07f;
-        private const float MediumShadowSpreadPerLayer = 0.008f;
+        private const float SurfaceShadowAlphaPerLayer = 0.055f;
+        private const float MediumShadowSpreadPerLayer = 0.0045f;
         private const float MediumShadowDropPerLayer = 0.003f;
-        private const float MediumShadowAlphaPerLayer = 0.06f;
+        private const float MediumShadowAlphaPerLayer = 0.07f;
 
         private readonly Func<Transform> _getVisualParent;
         private readonly Func<Tilemap> _getToastTilemap;
