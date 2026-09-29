@@ -960,6 +960,23 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Beacon of Rot (`CMP_Bloom_BeaconRegression_Medium`) — rejected
+
+- Candidate order: Enduring Toxaphores, Aggressotropic Conduit III, Septal
+  Alarm, Necrophoric Adaptation, Plasmid Bounty III. Toxin persistence and
+  recurring enemy-facing projection led the beacon-and-decay plan, followed by
+  loss-triggered resistance, reclamation, and immediate mutation-point funding.
+- Comparison seed `2026092582`, 50 pairs: treatment-control normalized board
+  share `+0.130560`, 95% CI `[-0.271386, +0.532506]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `beaconofrot_myco_comparison_{control,treatment}_2026092582_v2`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  The positive point estimate with a wide interval is insufficient promotion
+  evidence, not evidence of harm. Both comparison arms had zero simulation
+  invariant mismatches; the Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
