@@ -66,10 +66,13 @@ Placing mediums at true scale needs each one's physical size. The runtime source
 | `pita_900x900.png` | Pita round | 16.5 cm | ~52 px/cm | Plate |
 | `hotdog_bun_900x900.png` | Hot dog bun, top view | 16.0 cm | ~45 px/cm | Plate |
 | `cheese_800x800.png` | Pale cheese slice from a block | 8.0 cm | ~85 px/cm | Cutting board |
-| `cracker_final_600x600.png` | Saltine-style square cracker | 5.0 cm | ~117 px/cm | Cutting board |
-| `seed_cracker_550x550.png` | Hexagonal seed cracker | 6.0 cm | ~91 px/cm | Cutting board |
+| `cracker_final_600x600.png` | Saltine-style square cracker | 5.0 cm | ~117 px/cm | Small plate |
+| `seed_cracker_550x550.png` | Hexagonal seed cracker | 6.0 cm | ~91 px/cm | Small plate |
 | `plate_surface_1476x1476.png` (art-source) | Plate | 21.6 cm (8.5 in) | ~67 px/cm | Setting: cutting-board material |
+| Same plate photo, drawn smaller | Small (bread) plate | 16.5 cm (6.5 in) | ~87 px/cm | Setting: cutting-board material |
 | `cutting_board_surface_2048x1504.png` (art-source) | Cutting board | 43.8 cm (17.25 in) | ~45 px/cm | Setting: countertop |
+
+Crackers sit on the small plate rather than the cutting board: a 5-6 cm cracker on a 44 cm board shows only plain board until zoomed out about 7x, the board and crackers are nearly the same tan, and the board photo looks soft that close up. The plate's rim appears after about 2.7x, and its smooth white center stays sharp.
 
 `yellow_cheese_600x600.png` (cheddar, typical width 7.0 cm) and `hotdog_bun_900x600.png` exist but are not referenced by `ToastBoardMedium.asset`.
 
