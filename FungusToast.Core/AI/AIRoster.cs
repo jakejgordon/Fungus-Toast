@@ -2721,6 +2721,41 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconOfRot_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade)
+                },
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_BeaconOfRot_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression),
+                    new TargetMutationGoal(MutationIds.PutrefactiveCascade)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.EnduringToxaphoresId, 1000, "Extends the toxin field that powers the late decay plan"),
+                    new(MycovariantIds.AggressotropicConduitIIIId, 999, "Largest recurring projection follows pressure from the beacon"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden surviving cells around contested lanes"),
+                    new(MycovariantIds.NecrophoricAdaptation, 997, "Attrition creates reclaimed footholds for the regression engine"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 996, "Largest immediate payout advances the deep mutation chain")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,

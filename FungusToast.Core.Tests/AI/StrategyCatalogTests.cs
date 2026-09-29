@@ -1542,6 +1542,28 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Beacon_Of_Rot_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Bloom_BeaconRegression_Medium"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_BeaconOfRot_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_BeaconOfRot_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.EnduringToxaphoresId,
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.SeptalAlarmId,
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.PlasmidBountyIIIId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)
