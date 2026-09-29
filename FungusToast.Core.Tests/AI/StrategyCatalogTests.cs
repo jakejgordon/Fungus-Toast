@@ -594,7 +594,6 @@ public class StrategyCatalogTests
         {
             "AI13",
             "AI4",
-            "AI6",
             "CMP_AnabolicBeaconRhizolith_Elite",
             "CMP_Bloom_BeaconRegression_Medium",
             "CMP_Bloom_CreepingNecro_Medium",
@@ -1503,6 +1502,9 @@ public class StrategyCatalogTests
 
         AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
         AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.Equal(
+            campaign.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)),
+            treatment.GetMycovariantPreferences().Select(preference => (preference.MycovariantIds.Single(), preference.Priority)));
         Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
         Assert.Equal(
             new[]

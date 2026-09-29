@@ -922,6 +922,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Rooted Canopy (`AI6`)
+
+- Promoted order: Hyphal Resistance Transfer, Septal Alarm, Perimeter
+  Proliferator, Mycelial Bastion III, Aggressotropic Conduit III. Persistent
+  and loss-triggered resistance reinforce its safe growth identity; recurring
+  crust growth, immediate fortification, and controlled outward projection
+  provide complementary routes within its Tier 3 toolkit.
+- Comparison seed `2026092562`, 50 pairs: treatment-control normalized board
+  share `+0.031654`, 95% CI `[-0.004977, +0.068284]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092563`, 100 pairs: treatment-control normalized board
+  share `+0.017024`, 95% CI `[-0.011662, +0.045710]`; the same margin was
+  supported. Artifacts use
+  `rootedcanopy_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
