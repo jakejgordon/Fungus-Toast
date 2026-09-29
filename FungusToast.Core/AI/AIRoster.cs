@@ -2756,6 +2756,38 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Gravebloom_NoPreferenceControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                }
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_Gravebloom_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.CreepingMold, GameBalance.CreepingMoldMaxLevel),
+                    new TargetMutationGoal(MutationIds.RegenerativeHyphae),
+                    new TargetMutationGoal(MutationIds.Necrosporulation),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.SeptalAlarmId, 1000, "Losses harden surviving cells throughout the slow decay spread"),
+                    new(MycovariantIds.NecrophoricAdaptation, 999, "Attrition creates reclaimed footholds for the rebirth loop"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 998, "Additional reclamation sustains the long gravebloom cycle"),
+                    new(MycovariantIds.EnduringToxaphoresId, 997, "Extends toxins created during the spreading decay plan"),
+                    new(MycovariantIds.PerimeterProliferatorId, 996, "Recurring crust growth widens the Creeping Mold base")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
