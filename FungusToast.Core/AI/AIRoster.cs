@@ -938,7 +938,14 @@ namespace FungusToast.Core.AI
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChitinFortification, MutationIds.MimeticResilience },
                 surgeAttemptTurnFrequency: 9,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Reclamation)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.MycelialBastionIIIId, 1000, "Largest immediate resistant-cell reinforcement for the defensive bloom"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread extends the fortified core"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden survivors during defensive trades"),
+                    new(MycovariantIds.NecrophoricAdaptation, 997, "Attrition reclaims cells around the bastion"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 996, "Additional reclamation reinforces recovered ground")
+                }
             ),
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_Economy_KillReclaim_Medium",

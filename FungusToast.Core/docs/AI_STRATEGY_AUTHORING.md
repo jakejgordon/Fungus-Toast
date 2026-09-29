@@ -992,6 +992,24 @@ a held-out confirmation.
   Both comparison arms had zero simulation invariant mismatches; the Testing
   pair remains registered for reproducibility.
 
+### Mimic Bastion (`CMP_Bloom_FortifyMimic_Medium`)
+
+- Promoted order: Mycelial Bastion III, Hyphal Resistance Transfer, Septal
+  Alarm, Necrophoric Adaptation, Reclamation Rhizomorphs. Immediate and
+  persistent resistance lead the defensive bloom, followed by loss-triggered
+  hardening and two reclamation fallbacks.
+- Comparison seed `2026092602`, 50 pairs: treatment-control normalized board
+  share `+0.053975`, 95% CI `[+0.000325, +0.107624]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092603`, 100 pairs: treatment-control normalized board
+  share `-0.000555`, 95% CI `[-0.032557, +0.031447]`; the same margin was
+  supported. Artifacts use
+  `mimicbastion_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
