@@ -22,6 +22,7 @@ namespace FungusToast.Unity.Grid.Helpers
 		private readonly Func<Tilemap> _getHoverOverlayTilemap;
 		private readonly Func<Tilemap> _getPingOverlayTilemap;
 		private readonly Func<Transform> _getVisualParent;
+		private readonly Func<int> _getGameplaySeed;
 		private readonly GridBoardBackdropRenderer _backdropRenderer;
 
 		private SpriteRenderer _generatedCrustRenderer;
@@ -52,7 +53,8 @@ namespace FungusToast.Unity.Grid.Helpers
 			Func<Tilemap> getSelectedTilemap,
 			Func<Tilemap> getHoverOverlayTilemap,
 			Func<Tilemap> getPingOverlayTilemap,
-			Func<Transform> getVisualParent)
+			Func<Transform> getVisualParent,
+			Func<int> getGameplaySeed)
 		{
 			_getActiveMedium = getActiveMedium;
 			_getToastTilemap = getToastTilemap;
@@ -64,6 +66,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_getHoverOverlayTilemap = getHoverOverlayTilemap;
 			_getPingOverlayTilemap = getPingOverlayTilemap;
 			_getVisualParent = getVisualParent;
+			_getGameplaySeed = getGameplaySeed;
 			_backdropRenderer = new GridBoardBackdropRenderer(getVisualParent, getToastTilemap);
 		}
 
@@ -316,7 +319,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			_backgroundRenderer.color = backgroundSettings.BackgroundColor;
 			PositionBoardBackgroundRenderer(activeBoard, backgroundSettings);
 			_backgroundRenderer.enabled = true;
-			_backdropRenderer.Render(_backgroundRenderer, backgroundSettings.BackgroundSprite);
+			_backdropRenderer.Render(_backgroundRenderer, backgroundSettings.BackgroundSprite, _getGameplaySeed());
 			EnsureBoardClipMask(activeBoard, backgroundSettings);
 			EnsurePlayableAreaOverlayVisual(activeBoard, backgroundSettings);
 			EnsureBoardEdgeFadeVisual(activeBoard, activeMedium, backgroundSettings);

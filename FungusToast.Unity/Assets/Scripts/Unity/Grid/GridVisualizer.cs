@@ -271,7 +271,8 @@ namespace FungusToast.Unity.Grid
                 () => SelectedTileMap,
                 () => HoverOverlayTileMap,
                 () => PingOverlayTileMap,
-                () => toastTilemap != null ? toastTilemap.transform : transform);
+                () => toastTilemap != null ? toastTilemap.transform : transform,
+                () => GameManager.Instance != null ? GameManager.Instance.GetGameplaySeedInternal() : 0);
             overlayRenderer = new GridOverlayRenderer(
                 () => ActiveBoard,
                 () => moldTilemap,

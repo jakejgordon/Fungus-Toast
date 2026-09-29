@@ -60,18 +60,19 @@ namespace FungusToast.Unity.Grid.Helpers
             return _hasSurfaceLocalRect;
         }
 
-        public void Render(SpriteRenderer mediumRenderer, Sprite mediumSprite)
+        public void Render(SpriteRenderer mediumRenderer, Sprite mediumSprite, int gameplaySeed)
         {
             if (mediumRenderer == null
                 || !BoardBackdropCatalog.TryGetMedium(mediumSprite, out BoardBackdropCatalog.MediumScale medium)
-                || !BoardBackdropCatalog.TryGetSurface(medium.SurfaceId, out BoardBackdropCatalog.Surface surface))
+                || !BoardBackdropCatalog.TryGetSurface(medium.SurfaceId, out BoardBackdropCatalog.Surface surface)
+                || !BoardBackdropCatalog.TryPickSetting(surface, gameplaySeed, out BoardBackdropCatalog.Setting setting))
             {
                 Reset();
                 return;
             }
 
             Sprite surfaceSprite = LoadSprite(surface.SurfaceResource);
-            Sprite settingSprite = LoadSprite(surface.SettingTileResource);
+            Sprite settingSprite = LoadSprite(setting.TileResource);
             if (surfaceSprite == null || settingSprite == null)
             {
                 Reset();
@@ -133,7 +134,7 @@ namespace FungusToast.Unity.Grid.Helpers
                 MediumShadowSpreadPerLayer,
                 MediumShadowDropPerLayer,
                 MediumShadowAlphaPerLayer);
-            PlaceSetting(settingSprite, mediumCenter, surface.SettingTileCm * unitsPerCm, surfaceVisibleSize);
+            PlaceSetting(settingSprite, mediumCenter, setting.TileCm * unitsPerCm, surfaceVisibleSize);
 
             _surfaceLocalRect = new Rect(mediumCenter - (surfaceVisibleSize * 0.5f), surfaceVisibleSize);
             _hasSurfaceLocalRect = true;
