@@ -1444,6 +1444,28 @@ public class StrategyCatalogTests
     }
 
     [Fact]
+    public void Voltaic_Bloom_Hard_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_Control_AnabolicFirst_Hard"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_VoltaicBloomHard_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_VoltaicBloomHard_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.ReclamationRhizomorphsId,
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.PerimeterProliferatorId,
+                MycovariantIds.HyphalDrawId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
+    [Fact]
     public void Legacy_Hoardspore_Regent_mycovariant_experiment_changes_only_the_preference_plan()
     {
         var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["AI13"]);
