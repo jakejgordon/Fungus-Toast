@@ -88,7 +88,7 @@ MonoBehaviour:
     composeSafeAreaWithBoardBoundsMetadata: 0
     backgroundScaleMultiplier: 1
     renderPlayableAreaOverlay: 1
-    playableAreaOverlayColor: {r: 0.81, g: 0.67, b: 0.42, a: 0.2}
+    playableAreaOverlayColor: {r: 0.9, g: 0.8, b: 0.6, a: 0.12}
     renderBoardEdgeFade: 1
     boardEdgeFadeColor: {r: 0.35, g: 0.2, b: 0.08, a: 0.08}
     boardEdgeFadeWidthTiles: 1.2
