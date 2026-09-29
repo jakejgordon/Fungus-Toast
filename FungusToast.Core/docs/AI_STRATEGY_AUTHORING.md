@@ -977,6 +977,21 @@ a held-out confirmation.
   invariant mismatches; the Testing pair remains registered for
   reproducibility.
 
+### Gravebloom (`CMP_Bloom_CreepingNecro_Medium`) — rejected
+
+- Candidate order: Septal Alarm, Necrophoric Adaptation, Reclamation
+  Rhizomorphs, Enduring Toxaphores, Perimeter Proliferator. Loss-triggered
+  resistance and reclamation led the slow decay plan, followed by repeat
+  reclamation, toxin persistence, and recurring crust expansion.
+- Comparison seed `2026092592`, 50 pairs: treatment-control normalized board
+  share `-0.023826`, 95% CI `[-0.139386, +0.091735]`; the lower bound did not
+  support the preregistered `-0.05` non-inferiority margin. Artifacts use
+  `gravebloom_myco_comparison_{control,treatment}_2026092592`.
+- The candidate was rejected at the comparison gate. No holdout was run, the
+  Campaign strategy remains unchanged, and its migration-debt entry remains.
+  Both comparison arms had zero simulation invariant mismatches; the Testing
+  pair remains registered for reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
