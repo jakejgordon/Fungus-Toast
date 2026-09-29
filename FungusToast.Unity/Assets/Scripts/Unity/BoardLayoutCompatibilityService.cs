@@ -411,7 +411,6 @@ namespace FungusToast.Unity
                 signature,
                 medium.renderBoardBackground,
                 medium.backgroundSprite,
-                medium.backgroundColor,
                 medium.hidePlayableSurfaceTiles,
                 medium.deriveBlockedTilesFromBackgroundAlpha,
                 medium.backgroundAlphaPlayableThreshold,
@@ -425,13 +424,7 @@ namespace FungusToast.Unity
                 medium.backgroundInsetBottomNormalized,
                 medium.backgroundInsetTopNormalized,
                 medium.composeSafeAreaWithBoardBoundsMetadata,
-                medium.backgroundScaleMultiplier,
-                medium.renderPlayableAreaOverlay,
-                medium.playableAreaOverlayColor,
-                medium.renderBoardEdgeFade,
-                medium.boardEdgeFadeColor,
-                medium.boardEdgeFadeWidthTiles,
-                medium.boardEdgeFadeNoiseStrength);
+                medium.backgroundScaleMultiplier);
 
             signature.Append(":overrides=");
             if (medium.boardBackgroundOverrides == null)
@@ -457,7 +450,6 @@ namespace FungusToast.Unity
                         signature,
                         backgroundOverride.renderBoardBackground,
                         backgroundOverride.backgroundSprite,
-                        backgroundOverride.backgroundColor,
                         backgroundOverride.hidePlayableSurfaceTiles,
                         backgroundOverride.deriveBlockedTilesFromBackgroundAlpha,
                         backgroundOverride.backgroundAlphaPlayableThreshold,
@@ -471,13 +463,7 @@ namespace FungusToast.Unity
                         backgroundOverride.backgroundInsetBottomNormalized,
                         backgroundOverride.backgroundInsetTopNormalized,
                         backgroundOverride.composeSafeAreaWithBoardBoundsMetadata,
-                        backgroundOverride.backgroundScaleMultiplier,
-                        backgroundOverride.renderPlayableAreaOverlay,
-                        backgroundOverride.playableAreaOverlayColor,
-                        backgroundOverride.renderBoardEdgeFade,
-                        backgroundOverride.boardEdgeFadeColor,
-                        backgroundOverride.boardEdgeFadeWidthTiles,
-                        backgroundOverride.boardEdgeFadeNoiseStrength);
+                        backgroundOverride.backgroundScaleMultiplier);
                 }
             }
 
@@ -515,11 +501,12 @@ namespace FungusToast.Unity
             }
         }
 
+        // Covers only settings that shape the playable layout; tint, overlay, and edge-fade styling are left
+        // out so cosmetic tuning does not clear in-progress saves.
         private static void AppendBoardBackgroundSettingsSignature(
             StringBuilder signature,
             bool renderBoardBackground,
             Sprite backgroundSprite,
-            Color backgroundColor,
             bool hidePlayableSurfaceTiles,
             bool deriveBlockedTilesFromBackgroundAlpha,
             float backgroundAlphaPlayableThreshold,
@@ -533,17 +520,10 @@ namespace FungusToast.Unity
             float backgroundInsetBottomNormalized,
             float backgroundInsetTopNormalized,
             bool composeSafeAreaWithBoardBoundsMetadata,
-            float backgroundScaleMultiplier,
-            bool renderPlayableAreaOverlay,
-            Color playableAreaOverlayColor,
-            bool renderBoardEdgeFade,
-            Color boardEdgeFadeColor,
-            float boardEdgeFadeWidthTiles,
-            float boardEdgeFadeNoiseStrength)
+            float backgroundScaleMultiplier)
         {
             signature.Append(":render=").Append(renderBoardBackground);
             signature.Append(":sprite=").Append(GetSpriteStableId(backgroundSprite));
-            AppendColor(signature, backgroundColor);
             signature.Append(":hide=").Append(hidePlayableSurfaceTiles);
             signature.Append(":alphaMask=").Append(deriveBlockedTilesFromBackgroundAlpha);
             signature.Append(':').Append(backgroundAlphaPlayableThreshold);
@@ -559,12 +539,6 @@ namespace FungusToast.Unity
             signature.Append(backgroundInsetTopNormalized);
             signature.Append(":compose=").Append(composeSafeAreaWithBoardBoundsMetadata);
             signature.Append(":scale=").Append(backgroundScaleMultiplier);
-            signature.Append(":overlay=").Append(renderPlayableAreaOverlay);
-            AppendColor(signature, playableAreaOverlayColor);
-            signature.Append(":edgeFade=").Append(renderBoardEdgeFade);
-            AppendColor(signature, boardEdgeFadeColor);
-            signature.Append(':').Append(boardEdgeFadeWidthTiles);
-            signature.Append(':').Append(boardEdgeFadeNoiseStrength);
         }
 
         private static void AppendVector2IntList(StringBuilder signature, IReadOnlyList<Vector2Int> coordinates)
@@ -664,14 +638,6 @@ namespace FungusToast.Unity
         private static void AppendVector2(StringBuilder signature, Vector2 value)
         {
             signature.Append('@').Append(value.x).Append(',').Append(value.y);
-        }
-
-        private static void AppendColor(StringBuilder signature, Color color)
-        {
-            signature.Append('@').Append(color.r);
-            signature.Append(',').Append(color.g);
-            signature.Append(',').Append(color.b);
-            signature.Append(',').Append(color.a);
         }
 
         private static string GetSpriteStableId(Sprite sprite)
