@@ -2677,6 +2677,43 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RhizolithCrown_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_RhizolithCrown_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MaxEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.ChemotacticBeacon, GameBalance.ChemotacticBeaconMaxLevel),
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
+                surgeAttemptTurnFrequency: 5,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection extends pressure from the beacon core"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread keeps established anchors intact"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden surviving cells around contested anchors"),
+                    new(MycovariantIds.CornerConduitIIIId, 997, "Largest recurring alternate projection route"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 996, "Largest immediate payout funds the max-economy beacon engine")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
@@ -3929,6 +3966,8 @@ namespace FungusToast.Core.AI
                 ["TST_Campaign_RejuvenationEngine_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
                 ["TST_Campaign_RootedCanopy_CategoryControl"] = StrategyTheme.TierCap,
                 ["TST_Campaign_RootedCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
+                ["TST_Campaign_RhizolithCrown_CategoryControl"] = StrategyTheme.Control,
+                ["TST_Campaign_RhizolithCrown_CuratedMycovariants"] = StrategyTheme.Control,
                 ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
                 ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
                 ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,

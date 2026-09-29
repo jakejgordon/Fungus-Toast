@@ -1518,6 +1518,28 @@ public class StrategyCatalogTests
             treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
     }
 
+    [Fact]
+    public void Rhizolith_Crown_mycovariant_experiment_changes_only_the_preference_plan()
+    {
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.CampaignStrategiesByName["CMP_AnabolicBeaconRhizolith_Elite"]);
+        var control = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_RhizolithCrown_CategoryControl"]);
+        var treatment = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.TestingStrategiesByName["TST_Campaign_RhizolithCrown_CuratedMycovariants"]);
+
+        AssertStrategyConfigurationEqualExceptMycovariants(campaign, control);
+        AssertStrategyConfigurationEqualExceptMycovariants(control, treatment);
+        Assert.All(control.GetMycovariantPreferences(), preference => Assert.True(preference.IsCategoryDerived));
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.AggressotropicConduitIIIId,
+                MycovariantIds.HyphalResistanceTransferId,
+                MycovariantIds.SeptalAlarmId,
+                MycovariantIds.CornerConduitIIIId,
+                MycovariantIds.PlasmidBountyIIIId
+            },
+            treatment.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+    }
+
     private static void AssertStrategyConfigurationEqualExceptMycovariants(
         ParameterizedSpendingStrategy expected,
         ParameterizedSpendingStrategy actual)
