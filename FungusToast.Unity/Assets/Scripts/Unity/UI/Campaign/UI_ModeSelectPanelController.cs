@@ -88,7 +88,6 @@ namespace FungusToast.Unity.UI.Campaign
         private TextMeshProUGUI hotseatDescriptionText;
         private TextMeshProUGUI campaignDescriptionText;
 
-        private TextMeshProUGUI alphaSummaryText;
         private TextMeshProUGUI versionText;
         private RectTransform buildStatusBadgeRoot;
         private GameObject creditsPanel;
@@ -119,23 +118,8 @@ namespace FungusToast.Unity.UI.Campaign
         private bool isStartupTransitioning;
         private RectTransform ambientBackdropLayerRoot;
         private RectTransform ambientMoldLayerRoot;
-        private readonly List<AmbientBackdropDecoration> ambientBackdropDecorations = new();
         private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
         private float ambientSequenceStartTime = -1f;
-
-        private sealed class AmbientBackdropDecoration
-        {
-            public RectTransform RectTransform;
-            public Image Image;
-            public Vector2 BaseSize;
-            public Vector2 AnchoredPosition;
-            public float BaseAlpha;
-            public float AlphaPhase;
-            public float AlphaSpeed;
-            public float AlphaRange;
-            public float ScalePhase;
-            public float ScaleSpeed;
-        }
 
         private sealed class AmbientMoldDecoration
         {
@@ -292,11 +276,6 @@ namespace FungusToast.Unity.UI.Campaign
             if (titleText != null)
             {
                 titleText.color = UIStyleTokens.Accent.Spore;
-            }
-
-            if (alphaSummaryText != null)
-            {
-                alphaSummaryText.gameObject.SetActive(false);
             }
 
             if (versionText != null)
@@ -562,11 +541,6 @@ namespace FungusToast.Unity.UI.Campaign
             if (contentRoot == null)
             {
                 return;
-            }
-
-            if (alphaSummaryText != null)
-            {
-                alphaSummaryText.gameObject.SetActive(false);
             }
 
             if (creditsButton == null)
