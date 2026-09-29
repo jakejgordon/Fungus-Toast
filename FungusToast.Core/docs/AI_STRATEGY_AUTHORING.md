@@ -1010,6 +1010,23 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Thanatophyte (`CMP_Bloom_Thanatophyte_Elite`)
+
+- Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
+  Ascus Wager. Immediate mutation-point payouts develop the max-economy decay
+  engine in descending order; the free Tier 5 level remains a late fallback.
+- Comparison seed `2026092612`, 50 pairs: treatment-control normalized board
+  share `+0.039551`, 95% CI `[-0.011222, +0.090323]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092613`, 100 pairs: treatment-control normalized board
+  share `+0.011006`, 95% CI `[-0.016009, +0.038021]`; the same margin was
+  supported. Artifacts use
+  `thanatophyte_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:

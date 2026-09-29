@@ -655,7 +655,13 @@ namespace FungusToast.Core.AI
                     new TargetMutationGoal(MutationIds.OntogenicRegression, GameBalance.OntogenicRegressionMaxLevel),
                     new TargetMutationGoal(MutationIds.PutrefactiveCascade, GameBalance.PutrefactiveCascadeMaxLevel)
                 },
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PlasmidBountyIIIId, 1000, "Largest immediate mutation-point payout for the decay engine"),
+                    new(MycovariantIds.PlasmidBountyIIId, 999, "Second-largest immediate mutation-point payout"),
+                    new(MycovariantIds.PlasmidBountyId, 998, "Reliable immediate mutation-point payout"),
+                    new(MycovariantIds.AscusWagerId, 997, "Late fallback for a free Tier 5 decay level")
+                }
             ),
             // AI10 test permutation: beacon/surge pressure with regression follow-through
             new ParameterizedSpendingStrategy(
