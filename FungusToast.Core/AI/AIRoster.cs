@@ -1229,7 +1229,14 @@ namespace FungusToast.Core.AI
                 },
                 surgePriorityIds: new List<int> { MutationIds.ChemotacticBeacon },
                 surgeAttemptTurnFrequency: 5,
-                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Economy, MycovariantCategory.Growth)
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.AggressotropicConduitIIIId, 1000, "Largest recurring projection extends pressure from the beacon core"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread keeps established anchors intact"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden surviving cells around contested anchors"),
+                    new(MycovariantIds.CornerConduitIIIId, 997, "Largest recurring alternate projection route"),
+                    new(MycovariantIds.PlasmidBountyIIIId, 996, "Largest immediate payout funds the max-economy beacon engine")
+                }
             ),
             // Campaign balance harness: safe player-proxy baseline
             new ParameterizedSpendingStrategy(

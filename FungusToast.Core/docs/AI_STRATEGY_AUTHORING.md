@@ -941,6 +941,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Rhizolith Crown (`CMP_AnabolicBeaconRhizolith_Elite`)
+
+- Promoted order: Aggressotropic Conduit III, Hyphal Resistance Transfer,
+  Septal Alarm, Corner Conduit III, Plasmid Bounty III. Recurring enemy-facing
+  projection leads from the beacon core; persistent and loss-triggered
+  resistance protect contested anchors, with an alternate route and economy
+  payout as fallbacks.
+- Comparison seed `2026092572`, 50 pairs: treatment-control normalized board
+  share `+0.073831`, 95% CI `[+0.017625, +0.130037]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092573`, 100 pairs: treatment-control normalized board
+  share `+0.056772`, 95% CI `[+0.017900, +0.095643]`; the same margin was
+  supported. Artifacts use
+  `rhizolithcrown_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- Both stages passed manifest contamination checks and had zero simulation
+  invariant mismatches. The Testing pair remains registered for
+  reproducibility.
+
 ## Recommended Simulation Pattern
 
 Use batch mode with deterministic seeds and coverage-balanced selection for statistical relevance:
