@@ -2788,6 +2788,43 @@ namespace FungusToast.Core.AI
                 }
             ),
             new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_MimicBastion_CategoryControl",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier4,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.MimeticResilience, GameBalance.MimeticResilienceMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification, MutationIds.MimeticResilience },
+                surgeAttemptTurnFrequency: 9,
+                preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Resistance, MycovariantCategory.Reclamation)
+            ),
+            new ParameterizedSpendingStrategy(
+                strategyName: "TST_Campaign_MimicBastion_CuratedMycovariants",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.MinorEconomy,
+                maxTier: MutationTier.Tier4,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.NecrophyticBloom, GameBalance.NecrophyticBloomMaxLevel),
+                    new TargetMutationGoal(MutationIds.ChitinFortification, 5),
+                    new TargetMutationGoal(MutationIds.MimeticResilience, GameBalance.MimeticResilienceMaxLevel)
+                },
+                surgePriorityIds: new List<int> { MutationIds.ChitinFortification, MutationIds.MimeticResilience },
+                surgeAttemptTurnFrequency: 9,
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.MycelialBastionIIIId, 1000, "Largest immediate resistant-cell reinforcement for the defensive bloom"),
+                    new(MycovariantIds.HyphalResistanceTransferId, 999, "Persistent resistance spread extends the fortified core"),
+                    new(MycovariantIds.SeptalAlarmId, 998, "Losses harden survivors during defensive trades"),
+                    new(MycovariantIds.NecrophoricAdaptation, 997, "Attrition reclaims cells around the bastion"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 996, "Additional reclamation reinforces recovered ground")
+                }
+            ),
+            new ParameterizedSpendingStrategy(
                 strategyName: "TST_EcologyCrustFirst",
                 prioritizeHighTier: true,
                 economyBias: EconomyBias.ModerateEconomy,
