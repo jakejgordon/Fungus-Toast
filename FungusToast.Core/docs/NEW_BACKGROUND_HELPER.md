@@ -239,7 +239,7 @@ Then do an in-Unity visual pass at the affected board sizes and verify:
 2. blocked-tile footprint
 3. hover / inspection / magnifier alignment
 4. highlight and overlay clipping
-5. board-edge fade and playable-area tint alignment
+5. board-edge fade and playable-area tint alignment. Both follow a smoothed version of the blocked-tile silhouette (a Gaussian blur of the playable grid, `SmoothPlayableField` in `GridVisualizer.Reclaim.cs`), so they trace a rounded outline rather than one-tile stair-steps; only the mold and highlight tilemaps clip to the exact tile mask
 
 ## Common Failure Modes
 

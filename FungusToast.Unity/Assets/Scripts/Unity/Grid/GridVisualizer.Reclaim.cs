@@ -355,9 +355,9 @@ namespace FungusToast.Unity.Grid.Helpers
 				RebuildBoardEdgeFadeSprite(activeBoard, activeMedium, backgroundSettings, cacheKey);
 			}
 
-			_boardEdgeFadeRenderer.maskInteraction = _boardClipMask != null && _boardClipMask.enabled
-				? SpriteMaskInteraction.VisibleInsideMask
-				: SpriteMaskInteraction.None;
+			// Not clipped to the tile mask: that mask is tile-quantized and drew the fade as stair-steps along
+			// the photo's edge. The fade's alpha already stays inside the smoothed playable silhouette.
+			_boardEdgeFadeRenderer.maskInteraction = SpriteMaskInteraction.None;
 			PositionBoardEdgeFadeRenderer(activeBoard);
 			_boardEdgeFadeRenderer.enabled = _boardEdgeFadeSprite != null;
 		}
@@ -675,7 +675,7 @@ namespace FungusToast.Unity.Grid.Helpers
 			};
 
 			var pixels = new Color32[textureWidth * textureHeight];
-			Color32 opaqueWhite = new Color32(255, 255, 255, 255);
+			var insideField = SmoothPlayableField.Build(activeBoard, SmoothPlayableField.SilhouetteSigmaTiles);
 
 			for (int py = 0; py < textureHeight; py++)
 			{
@@ -683,12 +683,13 @@ namespace FungusToast.Unity.Grid.Helpers
 				for (int px = 0; px < textureWidth; px++)
 				{
 					float x = (px + 0.5f) / pixelsPerUnit;
-					if (!IsPlayableTile(activeBoard, Mathf.FloorToInt(x), Mathf.FloorToInt(y)))
+					float inside = insideField.Inside(x, y);
+					if (inside <= 0.001f)
 					{
 						continue;
 					}
 
-					pixels[(py * textureWidth) + px] = opaqueWhite;
+					pixels[(py * textureWidth) + px] = new Color32(255, 255, 255, (byte)Mathf.RoundToInt(inside * 255f));
 				}
 			}
 
@@ -767,6 +768,10 @@ namespace FungusToast.Unity.Grid.Helpers
 			float fadeWidth = Mathf.Max(0.001f, backgroundSettings.BoardEdgeFadeWidthTiles);
 			Color fadeColor = backgroundSettings.BoardEdgeFadeColor;
 			float noiseStrength = Mathf.Clamp(backgroundSettings.BoardEdgeFadeNoiseStrength, 0f, 0.2f);
+			var insideField = SmoothPlayableField.Build(activeBoard, SmoothPlayableField.SilhouetteSigmaTiles);
+			// A wider blur of the same grid falls from 1 deep inside to 0.5 at the silhouette over roughly
+			// the fade width, which gives a smooth distance-like ramp without tile-edge stair-steps.
+			var depthField = SmoothPlayableField.Build(activeBoard, Mathf.Max(SmoothPlayableField.SilhouetteSigmaTiles, fadeWidth * SmoothPlayableField.FadeSigmaPerFadeTile));
 
 			for (int py = 0; py < textureHeight; py++)
 			{
@@ -774,14 +779,13 @@ namespace FungusToast.Unity.Grid.Helpers
 				for (int px = 0; px < textureWidth; px++)
 				{
 					float x = (px + 0.5f) / pixelsPerUnit;
-					float distanceToEdge = GetDistanceToPlayableEdge(activeBoard, x, y);
-					if (float.IsInfinity(distanceToEdge) || float.IsNaN(distanceToEdge))
+					float inside = insideField.Inside(x, y);
+					if (inside <= 0.001f)
 					{
 						continue;
 					}
 
-					float fade = 1f - Mathf.Clamp01(distanceToEdge / fadeWidth);
-					fade = Mathf.SmoothStep(0f, 1f, fade);
+					float fade = inside * (1f - SmoothPlayableField.Smoothstep(0.5f, 0.97f, depthField.Sample(x, y)));
 					if (fade <= 0.001f)
 					{
 						continue;
@@ -818,46 +822,129 @@ namespace FungusToast.Unity.Grid.Helpers
 			_boardEdgeFadeCacheKey = cacheKey;
 		}
 
-		private static float GetDistanceToPlayableEdge(GameBoard activeBoard, float x, float y)
+		/// <summary>
+		/// The playable-tile grid (1 playable, 0 blocked or off-board) blurred with a Gaussian and sampled
+		/// bilinearly between tile centers. Its 0.5 contour follows the blocked-tile silhouette but rounds
+		/// off the one-tile stair-steps, so overlays drawn over a medium photo trace a smooth outline.
+		/// </summary>
+		private sealed class SmoothPlayableField
 		{
-			if (activeBoard == null || x < 0f || y < 0f || x >= activeBoard.Width || y >= activeBoard.Height)
+			/// <summary>Blur for the silhouette itself: enough to round one-tile steps, little enough to keep the shape.</summary>
+			public const float SilhouetteSigmaTiles = 0.6f;
+
+			/// <summary>Blur for the edge-fade depth ramp, per tile of configured fade width.</summary>
+			public const float FadeSigmaPerFadeTile = 0.55f;
+
+			private readonly float[] _values;
+			private readonly int _width;
+			private readonly int _height;
+			private readonly int _margin;
+
+			private SmoothPlayableField(float[] values, int width, int height, int margin)
 			{
-				return float.PositiveInfinity;
+				_values = values;
+				_width = width;
+				_height = height;
+				_margin = margin;
 			}
 
-			int tileX = Mathf.Clamp(Mathf.FloorToInt(x), 0, activeBoard.Width - 1);
-			int tileY = Mathf.Clamp(Mathf.FloorToInt(y), 0, activeBoard.Height - 1);
-			BoardTile tile = activeBoard.Grid[tileX, tileY];
-			if (tile == null || tile.IsBlocked)
+			public static SmoothPlayableField Build(GameBoard activeBoard, float sigmaTiles)
 			{
-				return float.PositiveInfinity;
+				int radius = Mathf.Max(1, Mathf.CeilToInt(sigmaTiles * 3f));
+				int margin = radius + 1;
+				int width = activeBoard.Width + (margin * 2);
+				int height = activeBoard.Height + (margin * 2);
+
+				var grid = new float[width * height];
+				for (int y = 0; y < activeBoard.Height; y++)
+				{
+					for (int x = 0; x < activeBoard.Width; x++)
+					{
+						if (IsPlayableTile(activeBoard, x, y))
+						{
+							grid[((y + margin) * width) + x + margin] = 1f;
+						}
+					}
+				}
+
+				var kernel = new float[(radius * 2) + 1];
+				float kernelSum = 0f;
+				for (int i = -radius; i <= radius; i++)
+				{
+					float weight = Mathf.Exp(-(i * i) / (2f * sigmaTiles * sigmaTiles));
+					kernel[i + radius] = weight;
+					kernelSum += weight;
+				}
+
+				for (int i = 0; i < kernel.Length; i++)
+				{
+					kernel[i] /= kernelSum;
+				}
+
+				var horizontal = new float[grid.Length];
+				for (int y = 0; y < height; y++)
+				{
+					for (int x = 0; x < width; x++)
+					{
+						float sum = 0f;
+						for (int k = -radius; k <= radius; k++)
+						{
+							int sampleX = Mathf.Clamp(x + k, 0, width - 1);
+							sum += grid[(y * width) + sampleX] * kernel[k + radius];
+						}
+
+						horizontal[(y * width) + x] = sum;
+					}
+				}
+
+				var blurred = new float[grid.Length];
+				for (int y = 0; y < height; y++)
+				{
+					for (int x = 0; x < width; x++)
+					{
+						float sum = 0f;
+						for (int k = -radius; k <= radius; k++)
+						{
+							int sampleY = Mathf.Clamp(y + k, 0, height - 1);
+							sum += horizontal[(sampleY * width) + x] * kernel[k + radius];
+						}
+
+						blurred[(y * width) + x] = sum;
+					}
+				}
+
+				return new SmoothPlayableField(blurred, width, height, margin);
 			}
 
-			float localX = x - tileX;
-			float localY = y - tileY;
-			float minDistance = float.PositiveInfinity;
-
-			if (!IsPlayableTile(activeBoard, tileX - 1, tileY))
+			/// <summary>Field value at a board-space point; tile (x, y) has its center at (x + 0.5, y + 0.5).</summary>
+			public float Sample(float boardX, float boardY)
 			{
-				minDistance = Mathf.Min(minDistance, localX);
+				float gridX = boardX - 0.5f + _margin;
+				float gridY = boardY - 0.5f + _margin;
+				int x0 = Mathf.Clamp(Mathf.FloorToInt(gridX), 0, _width - 1);
+				int y0 = Mathf.Clamp(Mathf.FloorToInt(gridY), 0, _height - 1);
+				int x1 = Mathf.Min(x0 + 1, _width - 1);
+				int y1 = Mathf.Min(y0 + 1, _height - 1);
+				float tx = Mathf.Clamp01(gridX - x0);
+				float ty = Mathf.Clamp01(gridY - y0);
+
+				float bottom = Mathf.Lerp(_values[(y0 * _width) + x0], _values[(y0 * _width) + x1], tx);
+				float top = Mathf.Lerp(_values[(y1 * _width) + x0], _values[(y1 * _width) + x1], tx);
+				return Mathf.Lerp(bottom, top, ty);
 			}
 
-			if (!IsPlayableTile(activeBoard, tileX + 1, tileY))
+			/// <summary>0 outside, 1 inside, with a soft band about a third of a tile wide at the silhouette.</summary>
+			public float Inside(float boardX, float boardY)
 			{
-				minDistance = Mathf.Min(minDistance, 1f - localX);
+				return Smoothstep(0.4f, 0.6f, Sample(boardX, boardY));
 			}
 
-			if (!IsPlayableTile(activeBoard, tileX, tileY - 1))
+			/// <summary>Shader-style smoothstep; Unity's Mathf.SmoothStep interpolates between two values instead.</summary>
+			public static float Smoothstep(float edge0, float edge1, float x)
 			{
-				minDistance = Mathf.Min(minDistance, localY);
+				float t = Mathf.Clamp01((x - edge0) / (edge1 - edge0));
+				return t * t * (3f - (2f * t));
 			}
-
-			if (!IsPlayableTile(activeBoard, tileX, tileY + 1))
-			{
-				minDistance = Mathf.Min(minDistance, 1f - localY);
-			}
-
-			return minDistance;
 		}
 
 		private static bool IsPlayableTile(GameBoard activeBoard, int x, int y)
