@@ -57,6 +57,9 @@ Read chrome colors from `UIStyleTokens` in code rather than exposing them as ser
 - `Surface.OverlayDim`: `#0B0912CC` (modal/overlay dim)
 - `Surface.CanvasGlow`: `#342A52` (soft light pool behind the main-menu logo and buttons)
 - `Surface.Vignette`: `#07050C` (edge darkening for full-screen backdrops; always darker than Canvas)
+- `Surface.PanelSelected`: `#4E4078` (selected, "on", or your-row state on dark panels; `Text.Primary` 8.1:1, `Accent.Lichen` 7.5:1)
+
+**Never tint violet surfaces with lime or green.** Lime and violet sit nearly opposite each other, so any weak blend of the two (a green at 20-40% over a panel, or `Badge.Fill` of a green accent on a violet panel) comes out olive, the muddy look this palette replaced. Mark a selected or active dark element by lifting the violet to `Surface.PanelSelected` and putting the lime on a thin strip, border, badge, or label instead.
 
 ### 2.2 Fungal Accent Palette
 - `Accent.Moss`: `#5E9A1F` (deep foxfire; hover tints on dark buttons)
@@ -89,6 +92,7 @@ Every state color clears 4.5:1 as text on every panel; `State.Danger` is the tig
 - `Button.Bg.Pressed`: `#D6CCF0`
 - `Button.Bg.Selected`: `#B8FF3C` (foxfire lime: the affirmative call to action)
 - `Button.Bg.SelectedHover`: `Bg.Selected` blended 0.4 toward `Accent.Spore`, so hovering a lime button still shows feedback
+- `Button.DarkHover` / `Button.DarkPressed`: hover and press for dark, panel-colored buttons, which lift or sink the violet toward `Surface.PanelSelected` rather than tinting it green
 - `Button.Bg.Disabled`: `#9C95B4`
 - `Button.Text.Default`: `#1A1426` (14.8:1 on `Bg.Default` and on `Bg.Selected`)
 - `Button.Text.Disabled`: `#3A3450` (4.1:1 on `Bg.Disabled`)
@@ -380,7 +384,7 @@ Light text is never viable. Dark text works on the bright tokens, but `Accent.Mo
 
 That lands every accent in the palette, including the six category accents, between **7.8:1 and 11.6:1**, and the accent still names the chip. `UIStyleTokens.Badge` implements it (`Badge.Fill(accent)`, `Badge.Border(accent)`, `Badge.Label`); use the helper rather than re-deriving the blend.
 
-**Two-state controls must not lose contrast when switched on.** Hold both states within roughly 2:1 of each other; an "on" state much weaker than "off" reads as muddy even when it passes, because the eye compares it against the crisper off state. With Foxfire, the light neutral fill (14.8:1) and the lime `Button.Bg.Selected` (14.9:1) with dark text are evenly matched. For dark-panel utility toggles, pair the light neutral fill for "off" with an accent-blended dark fill plus `Text.Primary` for "on", which keeps both near 9:1.
+**Two-state controls must not lose contrast when switched on.** Hold both states within roughly 2:1 of each other; an "on" state much weaker than "off" reads as muddy even when it passes, because the eye compares it against the crisper off state. With Foxfire, the light neutral fill (14.8:1) and the lime `Button.Bg.Selected` (14.9:1) with dark text are evenly matched. For dark-panel utility toggles such as the sidebar `Pace` toggle, pair the light neutral fill for "off" (14.8:1) with `Surface.PanelSelected` and an `Accent.Lichen` label for "on" (7.5:1).
 
 **Minimum label size.** Chip and badge labels use `Type.Micro` (14px) as the auto-size floor, never lower. An 11px label strains the eye even at 6:1; the size and the contrast compound. If a 14px label does not fit, the chip is too small or the word is too long - shorten the word, do not shrink the text. `UIStyleTokens.Badge.MinimumLabelFontSize` carries this floor.
 
@@ -394,6 +398,8 @@ That lands every accent in the palette, including the six category accents, betw
 
 ### 6.1 Mode Select / Campaign / Start Setup
 - Use one consistent panel + button language across all pre-game screens.
+- On the main menu, `Campaign` is the main path and uses the lime affirmative style; `Custom Game` uses the light neutral style, and the remaining actions use the dark secondary style.
+- The menu backdrop shows ambient molds at their real colors (alpha about 0.6 at the edges, fainter as they encroach on the buttons) over a `Surface.CanvasGlow` pool and a `Surface.Vignette` edge. Purple and dark-blue colonies are skipped there because they vanish against violet.
 - Selected options should share one universal selected style.
 - Explanatory helper text uses `Text.Secondary`.
 - In large menu-style buttons, prefer centered icon-plus-label groupings over left-edge icon placement unless the entire button stack is intentionally left-aligned like a navigation list.

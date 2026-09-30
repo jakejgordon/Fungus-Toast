@@ -30,6 +30,12 @@ namespace FungusToast.Unity.UI
 
             /// <summary>Edge darkening for full-screen backdrops; always darker than Canvas.</summary>
             public static readonly Color Vignette = Hex("#07050C");
+
+            /// <summary>
+            /// Selected, "on", or your-row state on dark panels, paired with a lime strip, border, or label.
+            /// Lime blended weakly into violet mixes to olive, so dark selections lift the violet instead.
+            /// </summary>
+            public static readonly Color PanelSelected = Hex("#4E4078");
         }
 
         public static class Accent
@@ -175,6 +181,12 @@ namespace FungusToast.Unity.UI
 
                 if (selectionOverlay != null)
                 {
+                    // Keep the overlay behind the button's label; drawn on top it tints dark text lime.
+                    if (selectionOverlay.transform.parent == button.transform)
+                    {
+                        selectionOverlay.transform.SetAsFirstSibling();
+                    }
+
                     selectionOverlay.color = WithAlpha(Accent.Lichen, Alpha.SelectionFill);
                     selectionOverlay.enabled = isSelected;
                     selectionOverlay.gameObject.SetActive(isSelected);
@@ -236,6 +248,10 @@ namespace FungusToast.Unity.UI
             public static readonly Color BackgroundPressed = Hex("#D6CCF0");
             public static readonly Color BackgroundSelected = Hex("#B8FF3C");
             public static readonly Color BackgroundDisabled = Hex("#9C95B4");
+
+            /// <summary>Hover and press on dark (panel-colored) buttons: lift or sink the violet, never tint it green.</summary>
+            public static readonly Color DarkHover = Color.Lerp(Surface.PanelElevated, Surface.PanelSelected, 0.7f);
+            public static readonly Color DarkPressed = Color.Lerp(Surface.PanelPrimary, Surface.PanelSelected, 0.3f);
 
             /// <summary>Hover on an already-selected (lime) button: lifted toward pale Spore so it still reads.</summary>
             public static readonly Color BackgroundSelectedHover = Color.Lerp(BackgroundSelected, Accent.Spore, 0.4f);
@@ -370,8 +386,8 @@ namespace FungusToast.Unity.UI
                     return;
                 }
 
-                Color hoverColor = Color.Lerp(Surface.PanelElevated, Accent.Moss, 0.34f);
-                Color pressedColor = Color.Lerp(Surface.PanelPrimary, Accent.Moss, 0.18f);
+                Color hoverColor = DarkHover;
+                Color pressedColor = DarkPressed;
 
                 button.colors = new ColorBlock
                 {

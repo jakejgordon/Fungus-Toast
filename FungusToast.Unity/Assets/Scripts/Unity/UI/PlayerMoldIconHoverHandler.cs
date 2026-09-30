@@ -205,8 +205,8 @@ namespace FungusToast.Unity.UI
             background = targetBackground;
             focusOutline = targetOutline;
             normalColor = UIStyleTokens.Surface.PanelElevated;
-            hoverColor = Color.Lerp(UIStyleTokens.Surface.PanelElevated, UIStyleTokens.Accent.Moss, 0.34f);
-            pressedColor = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Accent.Moss, 0.18f);
+            hoverColor = UIStyleTokens.Button.DarkHover;
+            pressedColor = UIStyleTokens.Button.DarkPressed;
             ApplyNormalState();
         }
 

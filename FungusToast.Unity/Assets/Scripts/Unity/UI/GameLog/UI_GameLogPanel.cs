@@ -1163,7 +1163,7 @@ namespace FungusToast.Unity.UI.GameLog
             var colors = UIStyleTokens.Button.BuildColorBlock();
             colors.normalColor = Color.Lerp(UIStyleTokens.Button.BackgroundSelected, UIStyleTokens.Accent.Spore, 0.28f + (pulse * 0.18f));
             colors.highlightedColor = Color.Lerp(UIStyleTokens.Button.BackgroundHover, UIStyleTokens.Accent.Spore, 0.42f);
-            colors.pressedColor = Color.Lerp(UIStyleTokens.Button.BackgroundPressed, UIStyleTokens.Accent.Moss, 0.28f);
+            colors.pressedColor = UIStyleTokens.Button.BackgroundPressed;
             colors.selectedColor = colors.highlightedColor;
             colors.disabledColor = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Alpha.PanelDisabled);
             topActionButton.colors = colors;

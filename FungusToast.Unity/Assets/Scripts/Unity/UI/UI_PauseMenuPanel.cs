@@ -432,17 +432,16 @@ namespace FungusToast.Unity.UI
 
             bool isTimeLapse = GameManager.Instance != null && GameManager.Instance.IsFastRoundPresentationMode;
 
-            // The "on" state is tinted so the button reads at a glance, but it does not take the
-            // light-green CTA fill: that is a saturated mid-tone, and dark text on it drops from
-            // 9.6:1 to 5.9:1, which is the drop that makes the on-state look muddy beside the off
-            // one. A dark accent-blended fill with a light label holds ~9:1 in both states
-            // (UI_STYLE_GUIDE.md section 5.12).
+            // "Off" is the light neutral button; "on" switches to the dark selected violet with a lime
+            // label (7.5:1), so the two states are unmistakable without taking the lime CTA fill, which
+            // would make the toggle look like the turn's primary action (UI_STYLE_GUIDE.md section 5.12).
             UIStyleTokens.Button.ApplyStyle(paceToggleButton);
 
+            // "On" lifts the violet and glows the label lime; blending lime into violet would read olive.
             var fill = isTimeLapse
-                ? UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Lichen)
+                ? UIStyleTokens.Surface.PanelSelected
                 : UIStyleTokens.Button.BackgroundDefault;
-            var content = isTimeLapse ? UIStyleTokens.Badge.Label : UIStyleTokens.Button.TextDefault;
+            var content = isTimeLapse ? UIStyleTokens.Accent.Lichen : UIStyleTokens.Button.TextDefault;
 
             if (paceToggleButton.image != null)
             {
@@ -450,8 +449,8 @@ namespace FungusToast.Unity.UI
                 colors.normalColor = fill;
                 if (isTimeLapse)
                 {
-                    colors.highlightedColor = UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Spore);
-                    colors.pressedColor = UIStyleTokens.Badge.Fill(UIStyleTokens.Accent.Moss);
+                    colors.highlightedColor = Color.Lerp(UIStyleTokens.Surface.PanelSelected, UIStyleTokens.Text.Primary, 0.12f);
+                    colors.pressedColor = UIStyleTokens.Button.DarkPressed;
                     colors.selectedColor = fill;
                 }
 

@@ -368,7 +368,7 @@ namespace FungusToast.Unity.UI
             if (rowBackground != null)
             {
                 rowBackground.color = isPerspectivePlayer
-                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Moss, UIStyleTokens.Alpha.PerspectiveHighlight)
+                    ? UIStyleTokens.Surface.PanelSelected
                     : InactiveRowBackground;
             }
 

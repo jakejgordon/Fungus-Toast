@@ -2966,6 +2966,14 @@ namespace FungusToast.Unity.UI.GameStart
                 return;
             }
 
+            // The dropdown and its open list use the same lavender fill as the other light buttons.
+            if (dropdown.targetGraphic != null)
+            {
+                dropdown.targetGraphic.color = Color.white;
+            }
+
+            dropdown.colors = UIStyleTokens.Button.BuildColorBlock();
+
             if (dropdown.captionText != null)
             {
                 dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
@@ -2990,6 +2998,21 @@ namespace FungusToast.Unity.UI.GameStart
                 if (scrollRect != null)
                 {
                     scrollRect.scrollSensitivity = 1.5f;
+                }
+
+                var templateBackground = dropdown.template.GetComponent<Image>();
+                if (templateBackground != null)
+                {
+                    templateBackground.color = UIStyleTokens.Button.BackgroundDefault;
+                }
+
+                var itemToggles = dropdown.template.GetComponentsInChildren<Toggle>(true);
+                for (int index = 0; index < itemToggles.Length; index++)
+                {
+                    if (itemToggles[index] != null)
+                    {
+                        itemToggles[index].colors = UIStyleTokens.Button.BuildColorBlock();
+                    }
                 }
 
                 var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);

@@ -122,7 +122,7 @@ namespace FungusToast.Unity.UI
                 var inactive = UIStyleTokens.Surface.PanelSecondary;
                 inactive.a = 0.6f;
                 rowBackground.color = isPerspectivePlayer
-                    ? UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Moss, UIStyleTokens.Alpha.PerspectiveHighlight)
+                    ? UIStyleTokens.Surface.PanelSelected
                     : inactive;
             }
 

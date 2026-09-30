@@ -38,8 +38,11 @@ namespace FungusToast.Unity.UI.Campaign
         private const int AmbientMoldSpriteIndexScanLimit = 12;
         // Edge molds show their real colors; the encroaching ones that creep toward the logo and buttons
         // stay fainter so labels remain clean.
-        private const float AmbientMoldBaseAlpha = 0.38f;
-        private const float AmbientMoldAlphaRange = 0.08f;
+        private const float AmbientMoldBaseAlpha = 0.6f;
+        private const float AmbientMoldAlphaRange = 0.1f;
+
+        // Purple and dark-blue colonies nearly vanish against the violet menu, so the menu skips them.
+        private static readonly string[] AmbientMoldExcludedNameFragments = { "purple", "dark_blue" };
         private const float AmbientMoldScalePulse = 0.06f;
         private const float AmbientMoldDriftDistance = 10f;
         private const float AmbientEncroachmentBaseAlpha = 0.12f;
@@ -300,7 +303,8 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             UIStyleTokens.Button.ApplyNeutralMenuAction(hotseatButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
-            UIStyleTokens.Button.ApplyNeutralMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
+            // Campaign is the main path, so it gets the lime affirmative style; Custom Game stays neutral.
+            UIStyleTokens.Button.ApplyAffirmativeMenuAction(campaignButton, ExpandedButtonWidth, preferredHeight: 90f, minHeight: 72f);
             UIStyleTokens.Button.ApplySecondaryMenuAction(creditsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(settingsButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
             UIStyleTokens.Button.ApplySecondaryMenuAction(feedbackButton, UIStyleTokens.Button.DesktopCompactMenuActionWidth);
@@ -1115,6 +1119,26 @@ namespace FungusToast.Unity.UI.Campaign
             }
         }
 
+        private static bool IsLowContrastAmbientMold(GridVisualizer gridVisualizer, int moldIndex)
+        {
+            string tileName = gridVisualizer.GetMoldIconTileForMoldIndex(moldIndex)?.name;
+            if (string.IsNullOrEmpty(tileName))
+            {
+                return false;
+            }
+
+            string lowerName = tileName.ToLowerInvariant();
+            for (int i = 0; i < AmbientMoldExcludedNameFragments.Length; i++)
+            {
+                if (lowerName.Contains(AmbientMoldExcludedNameFragments[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private List<Sprite> CollectAmbientMoldSprites()
         {
             var sprites = new List<Sprite>();
@@ -1137,6 +1161,12 @@ namespace FungusToast.Unity.UI.Campaign
             if (eligibleMoldIndices.Count == 0)
             {
                 return sprites;
+            }
+
+            List<int> contrastingMoldIndices = eligibleMoldIndices.FindAll(index => !IsLowContrastAmbientMold(gridVisualizer, index));
+            if (contrastingMoldIndices.Count > 0)
+            {
+                eligibleMoldIndices = contrastingMoldIndices;
             }
 
             int selectedMoldIndex = eligibleMoldIndices[UnityEngine.Random.Range(0, eligibleMoldIndices.Count)];
@@ -1839,7 +1869,7 @@ namespace FungusToast.Unity.UI.Campaign
                 SettingsAdvancedHeadingText,
                 24f,
                 28f,
-                UIStyleTokens.Accent.Moss,
+                UIStyleTokens.Accent.Spore,
                 FontStyles.Bold);
 
             Transform dangerZone = CreateSettingsDangerZone(cardObject.transform);
