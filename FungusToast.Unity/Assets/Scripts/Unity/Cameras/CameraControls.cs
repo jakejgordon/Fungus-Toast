@@ -400,6 +400,13 @@ namespace FungusToast.Unity.Cameras
                 dynamicMaxZoom = Mathf.Max(dynamicMaxZoom, backdropFitZoom);
             }
 
+            // A surface with a hard crop caps zoom-out so the view, centered on the board, stops just above the crop.
+            if (TryGetBackdropViewFloorY(out float viewFloorY))
+            {
+                GetBoardExtents(out _, out _, out float boardMinY, out float boardMaxY);
+                dynamicMaxZoom = Mathf.Min(dynamicMaxZoom, ((boardMinY + boardMaxY) * 0.5f) - viewFloorY);
+            }
+
             return Mathf.Max(GetDynamicMinZoom(), dynamicMaxZoom);
         }
 
@@ -416,6 +423,13 @@ namespace FungusToast.Unity.Cameras
             float sizeByWidth = backdropBounds.width * 0.5f / Mathf.Max(0.01f, camera.aspect);
             fitZoom = Mathf.Max(sizeByHeight, sizeByWidth) * Mathf.Max(1f, backdropZoomOutMargin);
             return true;
+        }
+
+        private bool TryGetBackdropViewFloorY(out float viewFloorY)
+        {
+            viewFloorY = 0f;
+            return gameManager?.gridVisualizer != null
+                && gameManager.gridVisualizer.TryGetBackdropViewFloorWorldY(out viewFloorY);
         }
 
         private bool TryGetBackdropBounds(out Rect backdropBounds)
@@ -505,6 +519,11 @@ namespace FungusToast.Unity.Cameras
             {
                 clampedX = Mathf.Clamp(clampedX, backdropBounds.xMin, backdropBounds.xMax);
                 clampedY = Mathf.Clamp(clampedY, backdropBounds.yMin, backdropBounds.yMax);
+            }
+
+            if (TryGetBackdropViewFloorY(out float viewFloorY))
+            {
+                clampedY = Mathf.Max(clampedY, viewFloorY + viewHalfHeight);
             }
 
             return new Vector3(clampedX, clampedY, desiredPosition.z);

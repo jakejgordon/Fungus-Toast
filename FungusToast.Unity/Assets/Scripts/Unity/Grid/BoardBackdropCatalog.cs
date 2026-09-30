@@ -15,6 +15,7 @@ namespace FungusToast.Unity.Grid
         public const string PlateSurfaceId = "plate";
         public const string SmallPlateSurfaceId = "small_plate";
         public const string CuttingBoardSurfaceId = "cutting_board";
+        public const string ToeSurfaceId = "toe";
         public const string CuttingBoardMaterialSettingId = "cutting_board_material";
         public const string CountertopSettingId = "countertop";
 
@@ -44,12 +45,18 @@ namespace FungusToast.Unity.Grid
                 string surfaceResource,
                 float widthCm,
                 Rect visibleRectNormalized,
-                IReadOnlyList<string> allowedSettingIds)
+                IReadOnlyList<string> allowedSettingIds,
+                Vector2? mediumAnchorNormalized = null,
+                bool showsMediumShadow = true,
+                float? viewFloorNormalized = null)
             {
                 SurfaceResource = surfaceResource;
                 WidthCm = widthCm;
                 VisibleRectNormalized = visibleRectNormalized;
                 AllowedSettingIds = allowedSettingIds;
+                MediumAnchorNormalized = mediumAnchorNormalized ?? visibleRectNormalized.center;
+                ShowsMediumShadow = showsMediumShadow;
+                ViewFloorNormalized = viewFloorNormalized;
             }
 
             public string SurfaceResource { get; }
@@ -58,6 +65,15 @@ namespace FungusToast.Unity.Grid
             public Rect VisibleRectNormalized { get; }
             /// <summary>Settings that contrast with this surface; one is picked per game.</summary>
             public IReadOnlyList<string> AllowedSettingIds { get; }
+            /// <summary>Point in the surface sprite (normalized, origin bottom-left) that sits under the medium's visible center.</summary>
+            public Vector2 MediumAnchorNormalized { get; }
+            /// <summary>False when the medium is part of the surface (a nail in a toe) rather than resting on it.</summary>
+            public bool ShowsMediumShadow { get; }
+            /// <summary>
+            /// Normalized height in the surface sprite that the camera view may never go below, for a surface
+            /// photo that ends in a hard crop (a toe cut off above the foot).
+            /// </summary>
+            public float? ViewFloorNormalized { get; }
         }
 
         /// <summary>What the surface rests on: a seamless tile repeated to fill the view.</summary>
@@ -74,6 +90,10 @@ namespace FungusToast.Unity.Grid
             public float TileCm { get; }
         }
 
+        // A big-toe nail; the toe photo it was cut from is sized from the same pixels (691 px nail, 1213 px toe).
+        private const float ToenailWidthCm = 1.7f;
+        private const float ToeWidthCm = ToenailWidthCm * 1213f / 691f;
+
         // Typical food sizes, not measurements; tune by eye.
         private static readonly Dictionary<string, MediumScale> MediumsBySpriteName = new()
         {
@@ -86,6 +106,7 @@ namespace FungusToast.Unity.Grid
             ["yellow_cheese_600x600"] = new MediumScale(7.0f, new Rect(0.1183f, 0.0600f, 0.7567f, 0.8767f), CuttingBoardSurfaceId),
             ["cracker_final_600x600"] = new MediumScale(5.0f, new Rect(0.0100f, 0.0200f, 0.9750f, 0.9683f), SmallPlateSurfaceId),
             ["seed_cracker_550x550"] = new MediumScale(6.0f, new Rect(0.0036f, 0.0273f, 0.9945f, 0.9382f), SmallPlateSurfaceId),
+            ["toenail_709x709"] = new MediumScale(ToenailWidthCm, new Rect(0.0127f, 0.0945f, 0.9746f, 0.8124f), ToeSurfaceId),
         };
 
         // A surface may only sit on settings it contrasts with: the tan cutting board vanishes on the tan
@@ -113,6 +134,17 @@ namespace FungusToast.Unity.Grid
                 43.8f,
                 new Rect(0.0137f, 0.0166f, 0.9741f, 0.9688f),
                 CountertopOnly),
+            // The toenail medium is cut from this photo, so the nail lands back on its own pixels. The photo is
+            // cropped flat above the foot; the view floor keeps that edge off-screen at full zoom-out.
+            // TODO: swap the countertop placeholder for a bath mat setting once that photo exists.
+            [ToeSurfaceId] = new Surface(
+                ResourceFolder + "toe_surface_1224x1285",
+                ToeWidthCm,
+                new Rect(0.0057f, 0f, 0.9910f, 0.9798f),
+                CountertopOnly,
+                mediumAnchorNormalized: new Vector2(0.5527f, 0.6257f),
+                showsMediumShadow: false,
+                viewFloorNormalized: 0.02f),
         };
 
         // The cutting-board material's grain matches the measured board photo at roughly 48 cm per tile.

@@ -29,6 +29,11 @@ namespace FungusToast.Unity.Grid
 
             string source = string.IsNullOrWhiteSpace(spriteName) ? mediumId : spriteName;
 
+            if (source.IndexOf("toenail", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return ("Toenail", "Cuticle");
+            }
+
             if (source.IndexOf("seed", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return ("Seed Cracker", "Crumb");

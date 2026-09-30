@@ -68,11 +68,21 @@ Placing mediums at true scale needs each one's physical size. The runtime source
 | `cheese_800x800.png` | Pale cheese slice from a block | 8.0 cm | ~85 px/cm | Cutting board |
 | `cracker_final_600x600.png` | Saltine-style square cracker | 5.0 cm | ~117 px/cm | Small plate |
 | `seed_cracker_550x550.png` | Hexagonal seed cracker | 6.0 cm | ~91 px/cm | Small plate |
+| `toenail_709x709.png` | Big-toe nail, cut from the toe photo | 1.7 cm | ~406 px/cm | Toe |
 | `plate_surface_1476x1476.png` (art-source) | Plate | 21.6 cm (8.5 in) | ~67 px/cm | Settings: cutting-board material or countertop |
 | Same plate photo, drawn smaller | Small (bread) plate | 16.5 cm (6.5 in) | ~87 px/cm | Settings: cutting-board material or countertop |
 | `cutting_board_surface_2048x1504.png` (art-source) | Cutting board | 43.8 cm (17.25 in) | ~45 px/cm | Settings: countertop only |
+| `toe_surface_1224x1285.png` (art-source) | Big toe, cropped above the foot | ~3.0 cm (derived: 1.7 cm x 1213 / 691 px) | ~406 px/cm | Settings: countertop placeholder until a bath mat photo exists |
 
 Crackers sit on the small plate rather than the cutting board: a 5-6 cm cracker on a 44 cm board shows only plain board until zoomed out about 7x, the board and crackers are nearly the same tan, and the board photo looks soft that close up. The plate's rim appears after about 2.7x, and its smooth white center stays sharp.
+
+**Mediums cut from their surface.** The toenail is the first medium that is part of its surface rather than resting on it. It is cut from the same photo as the toe, and three surface options in `BoardBackdropCatalog` keep them aligned:
+
+- `mediumAnchorNormalized` places the medium's visible center at the nail's position in the toe photo, not at the photo's center.
+- `showsMediumShadow: false` skips the medium's contact shadow, which would draw a dark band on the skin.
+- `viewFloorNormalized` marks the flat crop at the bottom of the toe photo. `CameraControls` caps zoom-out and blocks panning below it, so no foot photo is needed.
+
+The toenail is currently only on the 165x165 size band, which no campaign level uses, so it can be tried from the solo board-size dropdown.
 
 **How a game's backdrop is chosen.** The medium fixes the surface (for realism). The surface lists the settings it contrasts with, and one is picked from the level's gameplay seed (`BoardBackdropCatalog.TryPickSetting`). The pick is stable when a game is resumed or a checkpoint reloads, but varies between games. Add a new setting by giving it an entry in `SettingsById` and adding its id to every surface it contrasts with; no other rule is needed.
 

@@ -123,6 +123,12 @@ namespace FungusToast.Unity.Grid.Helpers
 			return _backdropRenderer.TryGetSurfaceLocalRect(out localRect);
 		}
 
+		/// <summary>The lowest local height the camera may show, when the backdrop surface has a hard crop.</summary>
+		public bool TryGetBackdropViewFloorLocalY(out float localY)
+		{
+			return _backdropRenderer.TryGetViewFloorLocalY(out localY);
+		}
+
 		public Matrix4x4 GetPlayableSurfaceTileMatrix()
 		{
 			float scale = Mathf.Max(1f, _getActiveMedium()?.playableSurfaceTileScale ?? 1f);

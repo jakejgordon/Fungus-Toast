@@ -10,6 +10,7 @@ Runtime copies live in `FungusToast.Unity/Assets/Resources/Backdrops/`; update b
 | `cutting_board_material_1024x1024.png` | Seamless tile | Setting under the plate (the plate was photographed on a larger board of the same material). Too coarse for close-zoom detail; see below. | Grain matches the board photo at about 45-52 cm per tile, so only about 20-23 px/cm |
 | `plate_surface_1476x1476.png` | Surface (alpha cutout) | Plate, sits on the cutting-board material | 8.5 in (21.6 cm) diameter, about 67 px/cm |
 | `countertop_material_512x512.png` | Seamless tile | Setting under the cutting board, seen only when zoomed out | Not yet set (about 15 cm per tile reads naturally) |
+| `toe_surface_1224x1285.png` | Surface (alpha cutout) | The toe around the toenail medium. The owner's own photo, used unedited except for alpha cleanup (faint edge noise zeroed, interior alpha raised from 252 to 255). The toenail medium was cut from these same pixels. | About 3.0 cm wide, about 406 px/cm |
 
 ## Edits made after delivery
 
@@ -17,6 +18,8 @@ Runtime copies live in `FungusToast.Unity/Assets/Resources/Backdrops/`; update b
 - A second tile, `large_cutting_board_material.png`, was byte-identical to the cutting board tile and was dropped.
 
 ## Still needed
+
+- A bath mat setting tile for the toe. It currently uses the countertop as a placeholder.
 
 - Real sizes of each medium, so the game can place them at true physical scale.
 - A close-zoom material tile for the cutting board. At default zoom the area around the medium is shown at roughly 120 px/cm, and the current tile holds about 20 px/cm. It should be made from a dedicated close-up photo of the board surface rather than from the whole-board shot.

@@ -7,7 +7,7 @@ namespace FungusToast.Unity.Grid.Helpers
 {
     /// <summary>
     /// Draws the photographic backdrop behind a medium at true physical scale: the setting (a seamless tile,
-    /// such as a countertop), the surface (plate or cutting board) centered under the medium, and soft contact
+    /// such as a countertop), the surface (plate or cutting board) under the medium, and soft contact
     /// shadows under both. Scale comes from <see cref="BoardBackdropCatalog"/>: the medium's real width fixes
     /// how many world units a centimeter is, and everything else is sized from that.
     /// </summary>
@@ -44,6 +44,7 @@ namespace FungusToast.Unity.Grid.Helpers
         private SpriteRenderer[] _mediumShadowRenderers;
         private Rect _surfaceLocalRect;
         private bool _hasSurfaceLocalRect;
+        private float? _viewFloorLocalY;
 
         public GridBoardBackdropRenderer(Func<Transform> getVisualParent, Func<Tilemap> getToastTilemap)
         {
@@ -58,6 +59,15 @@ namespace FungusToast.Unity.Grid.Helpers
         {
             localRect = _surfaceLocalRect;
             return _hasSurfaceLocalRect;
+        }
+
+        /// <summary>
+        /// The lowest height, in the visual parent's local space, the camera view may show, when the surface has one.
+        /// </summary>
+        public bool TryGetViewFloorLocalY(out float localY)
+        {
+            localY = _viewFloorLocalY ?? 0f;
+            return _hasSurfaceLocalRect && _viewFloorLocalY.HasValue;
         }
 
         public void Render(SpriteRenderer mediumRenderer, Sprite mediumSprite, int gameplaySeed)
@@ -82,14 +92,14 @@ namespace FungusToast.Unity.Grid.Helpers
             Transform mediumTransform = mediumRenderer.transform;
             float mediumScale = mediumTransform.localScale.x;
             Vector2 mediumCenter = (Vector2)mediumTransform.localPosition
-                + (mediumScale * GetVisibleCenterInSprite(mediumSprite, medium.VisibleRectNormalized));
+                + (mediumScale * GetPointInSprite(mediumSprite, medium.VisibleRectNormalized.center));
             float mediumVisibleWidth = mediumScale * mediumSprite.bounds.size.x * medium.VisibleRectNormalized.width;
             float unitsPerCm = mediumVisibleWidth / Mathf.Max(0.01f, medium.WidthCm);
 
             float surfaceScale = (surface.WidthCm * unitsPerCm)
                 / Mathf.Max(0.0001f, surfaceSprite.bounds.size.x * surface.VisibleRectNormalized.width);
             Vector2 surfacePosition = mediumCenter
-                - (surfaceScale * GetVisibleCenterInSprite(surfaceSprite, surface.VisibleRectNormalized));
+                - (surfaceScale * GetPointInSprite(surfaceSprite, surface.MediumAnchorNormalized));
             Vector2 surfaceVisibleSize = surfaceScale * Vector2.Scale(
                 surfaceSprite.bounds.size,
                 surface.VisibleRectNormalized.size);
@@ -125,24 +135,38 @@ namespace FungusToast.Unity.Grid.Helpers
                 SurfaceShadowSpreadPerLayer,
                 SurfaceShadowDropPerLayer,
                 SurfaceShadowAlphaPerLayer);
-            PlaceShadows(
-                _mediumShadowRenderers,
-                mediumSprite,
-                mediumTransform.localPosition,
-                mediumScale,
-                mediumVisibleWidth,
-                MediumShadowSpreadPerLayer,
-                MediumShadowDropPerLayer,
-                MediumShadowAlphaPerLayer);
-            PlaceSetting(settingSprite, mediumCenter, setting.TileCm * unitsPerCm, surfaceVisibleSize);
+            if (surface.ShowsMediumShadow)
+            {
+                PlaceShadows(
+                    _mediumShadowRenderers,
+                    mediumSprite,
+                    mediumTransform.localPosition,
+                    mediumScale,
+                    mediumVisibleWidth,
+                    MediumShadowSpreadPerLayer,
+                    MediumShadowDropPerLayer,
+                    MediumShadowAlphaPerLayer);
+            }
+            else
+            {
+                HideAll(_mediumShadowRenderers);
+            }
 
-            _surfaceLocalRect = new Rect(mediumCenter - (surfaceVisibleSize * 0.5f), surfaceVisibleSize);
+            Vector2 surfaceVisibleCenter = surfacePosition
+                + (surfaceScale * GetPointInSprite(surfaceSprite, surface.VisibleRectNormalized.center));
+            PlaceSetting(settingSprite, surfaceVisibleCenter, setting.TileCm * unitsPerCm, surfaceVisibleSize);
+
+            _surfaceLocalRect = new Rect(surfaceVisibleCenter - (surfaceVisibleSize * 0.5f), surfaceVisibleSize);
             _hasSurfaceLocalRect = true;
+            _viewFloorLocalY = surface.ViewFloorNormalized.HasValue
+                ? surfacePosition.y + (surfaceScale * GetPointInSprite(surfaceSprite, new Vector2(0f, surface.ViewFloorNormalized.Value)).y)
+                : null;
         }
 
         public void Reset()
         {
             _hasSurfaceLocalRect = false;
+            _viewFloorLocalY = null;
             Hide(_settingRenderer);
             Hide(_surfaceRenderer);
             HideAll(_surfaceShadowRenderers);
@@ -189,11 +213,11 @@ namespace FungusToast.Unity.Grid.Helpers
             renderer.enabled = true;
         }
 
-        // Center of the sprite's visible rect, relative to the sprite pivot, in unscaled sprite units.
-        private static Vector2 GetVisibleCenterInSprite(Sprite sprite, Rect visibleRectNormalized)
+        // A normalized point in the sprite (origin bottom-left), relative to the sprite pivot, in unscaled sprite units.
+        private static Vector2 GetPointInSprite(Sprite sprite, Vector2 normalizedPoint)
         {
             Bounds bounds = sprite.bounds;
-            return (Vector2)bounds.min + Vector2.Scale(bounds.size, visibleRectNormalized.center);
+            return (Vector2)bounds.min + Vector2.Scale(bounds.size, normalizedPoint);
         }
 
         private Sprite LoadSprite(string resourcePath)

@@ -124,6 +124,23 @@ namespace FungusToast.Unity.Grid
             return true;
         }
 
+        /// <summary>
+        /// World height the camera view must stay above, when the backdrop surface photo ends in a hard crop
+        /// (the toe under a toenail is cut off above the foot).
+        /// </summary>
+        public bool TryGetBackdropViewFloorWorldY(out float worldY)
+        {
+            worldY = 0f;
+            if (boardMediumRenderer == null || !boardMediumRenderer.TryGetBackdropViewFloorLocalY(out float localY))
+            {
+                return false;
+            }
+
+            Transform visualParent = toastTilemap != null ? toastTilemap.transform : transform;
+            worldY = visualParent.TransformPoint(new Vector3(0f, localY, 0f)).y;
+            return true;
+        }
+
         // Selection highlight state
         private readonly List<Vector3Int> highlightedPositions = new();
         private Coroutine pulseHighlightCoroutine;
