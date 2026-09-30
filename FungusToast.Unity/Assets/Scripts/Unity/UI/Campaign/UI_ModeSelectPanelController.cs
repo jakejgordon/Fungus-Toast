@@ -128,6 +128,9 @@ namespace FungusToast.Unity.UI.Campaign
         private RectTransform ambientMoldLayerRoot;
         private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
         private readonly List<Texture2D> ambientBackdropTextures = new();
+        private readonly List<Sprite> ambientGeneratedSprites = new();
+        private readonly Dictionary<Texture2D, Texture2D> smoothAmbientMoldTextures = new();
+        private readonly Dictionary<Sprite, Sprite> smoothAmbientMoldSprites = new();
         private float ambientSequenceStartTime = -1f;
 
         private sealed class AmbientMoldDecoration
@@ -190,6 +193,18 @@ namespace FungusToast.Unity.UI.Campaign
             }
 
             ambientBackdropTextures.Clear();
+
+            for (int i = 0; i < ambientGeneratedSprites.Count; i++)
+            {
+                if (ambientGeneratedSprites[i] != null)
+                {
+                    Destroy(ambientGeneratedSprites[i]);
+                }
+            }
+
+            ambientGeneratedSprites.Clear();
+            smoothAmbientMoldTextures.Clear();
+            smoothAmbientMoldSprites.Clear();
         }
 
         /// <summary>
@@ -674,7 +689,9 @@ namespace FungusToast.Unity.UI.Campaign
                 layout.flexibleHeight = 0f;
 
                 Image background = badgeObject.GetComponent<Image>();
-                background.color = UIStyleTokens.WithAlpha(UIStyleTokens.Surface.PanelSecondary, 0.94f);
+                // Opaque on purpose: Outline draws offset lime copies of the whole Image beneath it,
+                // and any translucency lets them tint the fill olive.
+                background.color = UIStyleTokens.Surface.PanelSecondary;
                 background.raycastTarget = false;
 
                 Outline outline = badgeObject.GetComponent<Outline>();
@@ -1199,7 +1216,69 @@ namespace FungusToast.Unity.UI.Campaign
                 }
             }
 
+            // The board draws these 64 px tiles with point filtering; blown up on the menu that turns every
+            // texel into a visible block, so the menu uses smoothly filtered copies instead.
+            for (int i = 0; i < sprites.Count; i++)
+            {
+                sprites[i] = GetSmoothAmbientMoldSprite(sprites[i]);
+            }
+
             return sprites;
+        }
+
+        private Sprite GetSmoothAmbientMoldSprite(Sprite source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            if (smoothAmbientMoldSprites.TryGetValue(source, out Sprite cachedSprite) && cachedSprite != null)
+            {
+                return cachedSprite;
+            }
+
+            Texture2D sourceTexture = source.texture;
+            if (sourceTexture == null
+                || sourceTexture.filterMode != FilterMode.Point
+                || SystemInfo.copyTextureSupport == UnityEngine.Rendering.CopyTextureSupport.None)
+            {
+                return source;
+            }
+
+            try
+            {
+                if (!smoothAmbientMoldTextures.TryGetValue(sourceTexture, out Texture2D smoothTexture) || smoothTexture == null)
+                {
+                    // A GPU copy leaves the board's own texture untouched and works on non-readable assets.
+                    smoothTexture = new Texture2D(
+                        sourceTexture.width,
+                        sourceTexture.height,
+                        sourceTexture.format,
+                        sourceTexture.mipmapCount > 1)
+                    {
+                        name = $"{sourceTexture.name}_MenuSmooth",
+                        filterMode = FilterMode.Bilinear,
+                        wrapMode = TextureWrapMode.Clamp
+                    };
+                    Graphics.CopyTexture(sourceTexture, smoothTexture);
+                    smoothAmbientMoldTextures[sourceTexture] = smoothTexture;
+                    ambientBackdropTextures.Add(smoothTexture);
+                }
+
+                Rect spriteRect = source.packed ? source.textureRect : source.rect;
+                Vector2 normalizedPivot = new Vector2(source.pivot.x / source.rect.width, source.pivot.y / source.rect.height);
+                Sprite smoothSprite = Sprite.Create(smoothTexture, spriteRect, normalizedPivot, source.pixelsPerUnit);
+                smoothSprite.name = $"{source.name}_MenuSmooth";
+                ambientGeneratedSprites.Add(smoothSprite);
+                smoothAmbientMoldSprites[source] = smoothSprite;
+                return smoothSprite;
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogWarning($"[UI_ModeSelectPanelController] Could not smooth menu mold sprite '{source.name}': {exception.Message}");
+                return source;
+            }
         }
 
         private static void AddAmbientMoldSprite(List<Sprite> sprites, Sprite sprite)
