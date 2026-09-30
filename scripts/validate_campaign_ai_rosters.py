@@ -8,8 +8,9 @@ of shipping.
 
 Checks, in order of how badly a failure would hurt:
 
-  * every strategy named by a preset was measured in the P7 campaign panel, so a
-    typo cannot silently fall through to a random-fill lineup;
+  * every strategy named by a preset has either a P7 campaign-panel measurement
+    or an explicitly documented conservative supplemental index, so a typo
+    cannot silently fall through to a random-fill lineup;
   * a fixed lineup never repeats a strategy, since a duplicate spends two seats
     on one opponent;
   * a pool holds at least as many strategies as it has seats, or the level
@@ -31,7 +32,9 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 PRESETS = REPO / "FungusToast.Unity/Assets/Configs/Board Presets"
 BANDS = REPO / "FungusToast.Core/docs/second-level/AI_P7_CAMPAIGN_BANDS_V1.md"
+CURATION = REPO / "docs/CAMPAIGN_AI_CURATION.md"
 ROW = re.compile(r"\| (\S+) \| (\w+|—) \| ([\d.]+) \| (\d+) \| (\w+) \|")
+SUPPLEMENTAL_ROW = re.compile(r"\| `([^`]+)` \| `([\d.]+)` \|")
 
 
 def measured_shares() -> dict[str, float]:
@@ -40,6 +43,15 @@ def measured_shares() -> dict[str, float]:
               if m}
     if not shares:
         raise SystemExit(f"no measured strategies parsed from {BANDS}")
+    supplemental = {
+        m.group(1): float(m.group(2))
+        for m in (SUPPLEMENTAL_ROW.match(line) for line in CURATION.read_text(encoding="utf-8").splitlines())
+        if m
+    }
+    duplicates = sorted(set(shares).intersection(supplemental))
+    if duplicates:
+        raise SystemExit(f"supplemental campaign indices duplicate frozen P7 rows: {duplicates}")
+    shares.update(supplemental)
     return shares
 
 

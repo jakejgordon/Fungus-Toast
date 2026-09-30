@@ -13,7 +13,7 @@
       "boardWidth": 80,
       "boardHeight": 80,
       "baseSeed": 2026110000,
-      "gamesPerCondition": 400,
+      "gamesPerCondition": 405,
       "repeats": 1
     },
     {
@@ -40,7 +40,7 @@
       "boardWidth": 120,
       "boardHeight": 120,
       "baseSeed": 2026111500,
-      "gamesPerCondition": 200,
+      "gamesPerCondition": 203,
       "repeats": 1
     }
   ],
@@ -51,7 +51,7 @@
       "boardWidth": 140,
       "boardHeight": 100,
       "baseSeed": 2026112000,
-      "gamesPerCondition": 200,
+      "gamesPerCondition": 203,
       "repeats": 1
     },
     {
@@ -60,10 +60,10 @@
       "boardWidth": 60,
       "boardHeight": 100,
       "baseSeed": 2026112500,
-      "gamesPerCondition": 400,
+      "gamesPerCondition": 405,
       "repeats": 1
     }
   ],
-  "totalGameBudget": 1800,
+  "totalGameBudget": 1816,
   "runtimeBudgetSeconds": 21600
 }

@@ -2,7 +2,9 @@
 
 **Status:** promotion approved 2026-09-16. The reviewed candidate is promoted
 to the Proven solo roster as **Verdant Reclaimer** under durable strategy ID
-`ai.growth.verdant-reclaimer.v1`. Campaign placement remains deferred.
+`ai.growth.verdant-reclaimer.v1`. Campaign placement was subsequently approved
+for Campaign15 under campaign alias `CMP_Growth_VerdantReclaimer_Elite`. Its
+artifact-backed safe-proxy confirmation completed on 2026-09-30.
 
 ## Candidate and player-facing hypothesis
 
@@ -66,8 +68,27 @@ Jake approved the following product decisions on 2026-09-16:
 2. Use player-facing name **Verdant Reclaimer**, durable strategy ID
    `ai.growth.verdant-reclaimer.v1`, and the fantasy: "Builds a deep growth
    engine, then reclaims territory after the board breaks open."
-3. Enter the Proven solo pool only. Campaign placement remains a separate,
-   deferred pacing evaluation.
+3. Enter the Proven solo pool first. Campaign placement remains a separate
+   pacing evaluation; that evaluation later selected Campaign15.
+
+## Campaign15 placement confirmation
+
+The campaign alias preserves the promoted mutation configuration and adds a
+curated, ordered growth/reclamation Mycovariant plan. It replaces
+`CMP_Control_RebirthFurnace_Medium` in the 160x160 Campaign15 finale.
+
+The first seed-`20260930` confirmation reached 69/100 games before the old
+600-second harness budget expired. It is retained as an incomplete integrity
+artifact and contributes no placement conclusion. The harness now funds the
+100-game confirmation standard for 1,800 seconds.
+
+The fresh seed-`20261001` holdout completed all 100 games in 847 seconds with
+zero invariant mismatches and a valid resolved-manifest checksum. The safe
+proxy won 9% of games. Verdant Reclaimer won 35%, averaged 16.5% of living
+territory, and recorded normalized board share 1.327 (95% CI 1.242..1.412).
+Campaign11-15 still have no authored proxy target bands, but this result keeps
+the finale difficult while showing Verdant as a strong, non-exclusive threat.
+The Campaign15 placement is accepted.
 
 ## Provenance
 

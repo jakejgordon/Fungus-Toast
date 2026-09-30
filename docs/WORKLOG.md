@@ -9,11 +9,9 @@ Margin, Necrophytic Bloom, and Toxinborne Seeding.
 All previously listed Ecology balance probes and follow-up implementation tasks
 are considered complete. The current Aerated Frontier calibration uses
 `AeratedFrontierMinimumEligibleGrowthCycleAge = 5`.
-
-## Remaining Validation
-
-- Perform manual Unity Editor validation of the Substrate Ecology mutation tree,
-  inspector, dependency routes, and visual flows at supported resolutions.
+Manual Unity Editor validation of the Substrate Ecology mutation tree,
+inspector, dependency routes, and visual flows at supported resolutions is
+complete.
 
 ## TODO — Record Moldiness Level-Up Sounds
 
@@ -1148,7 +1146,7 @@ measurement model, phase gates, and open product decisions are in
     The count flows through Core, Parquet, analyzer CSV, and regression snapshots;
     the Unity Core DLL/PDB was refreshed. 268 Simulation tests, Core and
     Simulation builds, and analyzer syntax compilation pass. Unity Editor
-    compile plus normal and fast-forward AI spending remain the manual check.
+    compile plus normal and fast-forward AI spending are validated.
 
 71. P8.1 has its first reusable behavior-comparison primitive.
     `RosterBehaviorComparison` observes the complete roster with the same
@@ -1403,8 +1401,8 @@ measurement model, phase gates, and open product decisions are in
 94. Jake approved Bloom-20 for E1 promotion as **Verdant Reclaimer**. The
     promoted Proven-solo definition preserves candidate `9c5157e4` exactly,
     uses durable strategy ID `ai.growth.verdant-reclaimer.v1`, and carries its
-    measured Elite classification. Campaign placement remains deliberately
-    deferred as a separate pacing evaluation. Core passed 705/705 tests,
+    measured Elite classification. Campaign placement was initially deferred
+    as a separate pacing evaluation. Core passed 705/705 tests,
     Simulation passed 280/280, both projects build with zero warnings/errors,
     and the five-game rotating-slot promotion smoke completed with zero parity
     mismatches while exercising Verdant Reclaimer.
@@ -1476,6 +1474,22 @@ measurement model, phase gates, and open product decisions are in
      and Detrital took rewarded post-goal activations above level three in three
      games (reaching level five twice), proving the explicit priority path is
      live without making a balance claim.
+
+103. Verdant Reclaimer is now placed in the Campaign15 finale under the
+     campaign alias `CMP_Growth_VerdantReclaimer_Elite`, replacing Rebirth
+     Furnace. The alias preserves the promoted Bloom-20 mutation plan and adds
+     a curated growth/reclamation Mycovariant order. Its conservative static
+     difficulty index is the lowest P8 calibration-context 95% lower bound
+     (`1.361`), under which the authored ladder still rises from Campaign14
+     `1.601` to Campaign15 `1.769`. The first confirmation artifact stopped at
+     69/100 games under the old 600-second runtime cap and is excluded. A fresh
+     seed-`20261001` 100-game holdout completed in 847 seconds with zero
+     invariant mismatches and a valid manifest checksum. The safe proxy won
+     9%; Verdant won 35%, averaged 16.5% of living territory, and measured
+     normalized share `1.327` (95% CI `1.242..1.412`). Campaign11-15 have no
+     settled proxy bands, but the finale remains difficult and Verdant is a
+     strong, non-exclusive threat, so the placement is accepted. The campaign
+     harness now budgets 1,800 seconds for its 100-game confirmation standard.
 
 ### Proposed — AI strategy naming and metadata standard
 

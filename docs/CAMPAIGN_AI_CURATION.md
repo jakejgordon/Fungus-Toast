@@ -18,6 +18,18 @@ Do **not** use it for detailed simulation history or long experiment logs. Those
 - Starting Adaptations are now a real authoring lever for curated elites/boss-like opponents.
 - Hard-tier molds (`*_Hard`) are too punishing before roughly Campaign10; even one hard mold as early as Campaign8 has driven the safe proxy to `0/20` in prior screens. Introduce hard identities gradually starting around Campaign10, and confirm with an artifact-backed run before locking in an earlier placement.
 
+## Supplemental campaign difficulty indices
+
+The ladder validator primarily uses the frozen P7 Campaign-panel point estimates.
+Newer promoted strategies may use a conservative supplemental index when their
+artifact-backed classification postdates that matrix. The index must be the
+lowest relevant 95% interval bound, not a cross-panel point estimate, so it can
+only make the static ordering check harder to pass.
+
+| Strategy | Conservative index | Evidence |
+|---|---:|---|
+| `CMP_Growth_VerdantReclaimer_Elite` | `1.361` | Lowest P8 calibration-context 95% lower bound; all five calibration contexts and both holdouts classified Elite. |
+
 ## Current naming / roster reality
 
 The campaign no longer needs a speculative rename plan as the main focus.
@@ -88,17 +100,19 @@ Current status:
 
 ### Campaign15
 Current authored lineup:
-- `AI1`
-- `AI2`
-- `AI3`
-- `AI10`
-- `AI1`
-- `AI2`
-- `AI7`
+- `AI13`
+- `AI12`
+- `CMP_Bloom_AnabolicRegression_Medium`
+- `CMP_Control_AnabolicFirst_Hard`
+- `CMP_Economy_Economancer_Elite`
+- `CMP_Control_AnabolicRebirth_Medium`
+- `CMP_Growth_VerdantReclaimer_Elite`
 
 Current status:
-- not yet brought up to the same curated state as Campaign13-14
-- likely next late-campaign curation target when this thread resumes
+- Verdant Reclaimer replaces Rebirth Furnace as the finale's large-board growth/reclamation identity
+- static ladder ordering remains conservative because Verdant uses its lowest P8 95% lower bound
+- the fresh-seed 100-game Campaign15 holdout completed with zero invariant mismatches and a valid resolved-manifest checksum
+- the safe proxy won 9%, while Verdant won 35% with 1.327 normalized board share; the placement is accepted
 
 ## Current campaign-safe mold guidance
 

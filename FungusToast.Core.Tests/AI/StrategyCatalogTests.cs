@@ -148,9 +148,31 @@ public class StrategyCatalogTests
         Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
         Assert.True(definition.Metadata.Pools.HasFlag(StrategyPool.SimulationBaseline));
         Assert.False(definition.Metadata.Pools.HasFlag(StrategyPool.Campaign));
-        Assert.DoesNotContain(
-            AIRoster.CampaignStrategies,
-            candidate => string.Equals(candidate.StrategyName, strategy.StrategyName, StringComparison.OrdinalIgnoreCase));
+
+        var campaign = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.CampaignStrategiesByName["CMP_Growth_VerdantReclaimer_Elite"]);
+        Assert.Equal(
+            strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)),
+            campaign.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)));
+        Assert.Equal(strategy.EconomyProfile, campaign.EconomyProfile);
+        Assert.Equal(strategy.PrioritizeHighTier, campaign.PrioritizeHighTier);
+        Assert.Equal(
+            new[]
+            {
+                MycovariantIds.PerimeterProliferatorId,
+                MycovariantIds.CornerConduitIIIId,
+                MycovariantIds.ReclamationRhizomorphsId,
+                MycovariantIds.NecrophoricAdaptation,
+                MycovariantIds.HyphalDrawId
+            },
+            campaign.GetMycovariantPreferences().SelectMany(preference => preference.MycovariantIds));
+        Assert.All(campaign.GetMycovariantPreferences(), preference => Assert.False(preference.IsCategoryDerived));
+
+        var campaignDefinition = Assert.IsType<StrategyDefinition>(
+            StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, campaign.StrategyName));
+        Assert.Equal("Verdant Reclaimer", campaignDefinition.Metadata.FriendlyName);
+        Assert.Equal(CampaignDifficulty.Elite, campaignDefinition.Metadata.CampaignDifficulty);
+        Assert.True(campaignDefinition.Metadata.Pools.HasFlag(StrategyPool.Campaign));
     }
 
     [Fact]

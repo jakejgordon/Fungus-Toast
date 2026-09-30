@@ -331,7 +331,7 @@ public sealed class CalibrationMatrixTests
         int width,
         int height,
         int seed,
-        int games = 50) => new()
+        int games = 200) => new()
     {
         ContextId = contextId,
         PlayerCount = players,

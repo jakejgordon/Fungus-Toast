@@ -28,7 +28,7 @@ MonoBehaviour:
     startingAdaptationIds: []
   - strategyName: CMP_Control_AnabolicRebirth_Medium
     startingAdaptationIds: []
-  - strategyName: CMP_Control_RebirthFurnace_Medium
+  - strategyName: CMP_Growth_VerdantReclaimer_Elite
     startingAdaptationIds: []
   pooledAiPlayerCount: 0
   aiStrategyPool: []

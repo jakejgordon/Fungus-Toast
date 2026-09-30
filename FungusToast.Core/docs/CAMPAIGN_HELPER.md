@@ -192,6 +192,9 @@ These are working curation heuristics and can change as balance data evolves.
 ## Safe-proxy validation targets
 
 Campaign balance validation should use `TST_CampaignPlayer_SafeBaseline` via `scripts/run_campaign_balance.py` so the test matches the authored board preset, opponent lineup or pool resolution, nutrient-patch setting, and current campaign starting-adaptation flow. The harness defaults to the repository's 100-game-per-level confirmation standard; pass a smaller `--games` value only for explicitly exploratory screening.
+The 100-game confirmation also defaults to a 1,800-second runtime budget so
+large late-campaign boards can complete; exploratory overrides retain a
+600-second default unless `--runtime-budget-seconds` is supplied.
 
 Current first-pass target curve agreed in principle for that proxy:
 - `Campaign0-2`: `90-100%`

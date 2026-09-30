@@ -748,6 +748,30 @@ namespace FungusToast.Core.AI
                 },
                 preferredMycovariantIds: MycovariantCategoryHelper.GetPreferredMycovariantIds(MycovariantCategory.Growth)
             ),
+            // Campaign-facing alias of the Proven Verdant Reclaimer promotion. The separate
+            // registry name preserves authored-set identity while the player-facing profile stays
+            // Verdant Reclaimer.
+            new ParameterizedSpendingStrategy(
+                strategyName: "CMP_Growth_VerdantReclaimer_Elite",
+                prioritizeHighTier: true,
+                economyBias: EconomyBias.ModerateEconomy,
+                targetMutationGoals: new List<TargetMutationGoal>
+                {
+                    new TargetMutationGoal(MutationIds.AnabolicInversion),
+                    new TargetMutationGoal(MutationIds.MycelialBloom, 20),
+                    new TargetMutationGoal(MutationIds.MycotropicInduction, 1),
+                    new TargetMutationGoal(MutationIds.CatabolicRebirth, GameBalance.CatabolicRebirthMaxLevel),
+                    new TargetMutationGoal(MutationIds.PutrefactiveRejuvenation, GameBalance.PutrefactiveRejuvenationMaxLevel)
+                },
+                mycovariantPreferences: new List<MycovariantPreference>
+                {
+                    new(MycovariantIds.PerimeterProliferatorId, 1000, "Scales the deep growth engine along the board edge"),
+                    new(MycovariantIds.CornerConduitIIIId, 999, "Largest recurring growth corridor for a large board"),
+                    new(MycovariantIds.ReclamationRhizomorphsId, 998, "Extra attempts reinforce the Catabolic Rebirth loop"),
+                    new(MycovariantIds.NecrophoricAdaptation, 997, "Cell losses seed additional late-board reclamation"),
+                    new(MycovariantIds.HyphalDrawId, 996, "Fallback forward relocation for established biomass")
+                }
+            ),
             // Curated campaign aliases for modern roster use in board presets and campaign-balance harness.
             new ParameterizedSpendingStrategy(
                 strategyName: "CMP_TierCap_GrowthResilience_Easy",
@@ -3963,6 +3987,7 @@ namespace FungusToast.Core.AI
                 ["AI6"] = new("Rooted Canopy", "A simple, sturdy colony that grows safely within a limited mutation toolkit."),
                 ["AI12"] = new("Voltaic Bloom", "A colony that accelerates its metabolism first, then maintains flexible growth, decay, and recovery."),
                 ["AI13"] = new("Hoardspore Regent", "A resource-rich colony that builds its metabolic base before sustaining a full control lifecycle."),
+                ["CMP_Growth_VerdantReclaimer_Elite"] = new("Verdant Reclaimer", "Builds a deep growth engine, then reclaims territory after the board breaks open."),
 
                 ["CMP_Economy_Economancer_Elite"] = new("The Economancer", "Builds up safely, hoards mutation economy, and turns that stockpile into a brutal late swing."),
                 ["CMP_Economy_HoardsporeRegent_Elite"] = new("Hoardspore Regent", "Stays patient early, values long-term setup, and becomes much scarier once its engine is running."),
@@ -4185,6 +4210,7 @@ namespace FungusToast.Core.AI
                 ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
                 ["Grow>Kill>Reclaim(Econ/Reclaim)"] = StrategyTheme.Reclamation,
                 ["Verdant Reclaimer"] = StrategyTheme.Reclamation,
+                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyTheme.Reclamation,
                 ["Filament Regrowth"] = StrategyTheme.Defense,
                 ["Best_MaxEcon_Surge10_HyphalSurge"] = StrategyTheme.SurgeTempo,
                 ["Power Mutations Max Econ"] = StrategyTheme.LateGameSpike,
@@ -4239,6 +4265,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
                 ["Verdant Reclaimer"] = StrategyPowerTier.Strong, // P8 measured Elite in every classification context
+                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyPowerTier.Strong, // Campaign alias of the P8 Elite promotion
                 ["Filament Regrowth"] = StrategyPowerTier.Standard, // P7 measured Normal (1.058)
                 ["TST_FortressResilience"] = StrategyPowerTier.Weak,
                 ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
@@ -4389,6 +4416,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyLifecycle.NeedsTuning,
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyLifecycle.NeedsTuning,
                 ["Verdant Reclaimer"] = StrategyLifecycle.Active,
+                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyLifecycle.Active,
                 ["Filament Regrowth"] = StrategyLifecycle.Active,
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyLifecycle.Active,
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyLifecycle.Active,
@@ -4468,6 +4496,7 @@ namespace FungusToast.Core.AI
                 ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["Verdant Reclaimer"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
+                ["CMP_Growth_VerdantReclaimer_Elite"] = new[] { DifficultyBand.Hard, DifficultyBand.Elite },
                 ["Filament Regrowth"] = new[] { DifficultyBand.Hard },
                 ["TST_AnabolicBeaconNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
                 ["TST_AnabolicCreepingNecroRegressionCascade"] = new[] { DifficultyBand.Normal },
@@ -4518,6 +4547,7 @@ namespace FungusToast.Core.AI
                 // order; the previous assignments were authored by hand and the measurement
                 // found the ladder non-monotonic, with Elite's median below parity.
                 ["CMP_Bloom_ToxinborneBallistospore_Hard"] = CampaignDifficulty.Elite, // 2.244, IntervalTooWide: high variance, slotted on direction not mean
+                ["CMP_Growth_VerdantReclaimer_Elite"] = CampaignDifficulty.Elite, // P8: Elite in all five calibration contexts and both holdouts
                 ["AI13"] = CampaignDifficulty.Elite, // 2.076
                 ["CMP_Bloom_ToxinborneJetting_Medium"] = CampaignDifficulty.Elite, // 2.062, IntervalTooWide: high variance, slotted on direction not mean
                 ["AI12"] = CampaignDifficulty.Elite, // 1.959

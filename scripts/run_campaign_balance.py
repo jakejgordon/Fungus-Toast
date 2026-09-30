@@ -13,6 +13,7 @@ BOARD_PRESETS_DIR = ROOT / "FungusToast.Unity/Assets/Configs/Board Presets"
 SIM_PROJECT = ROOT / "FungusToast.Simulation/FungusToast.Simulation.csproj"
 PLAYER_PROXY = "TST_CampaignPlayer_SafeBaseline"
 DEFAULT_CONFIRMATION_GAMES = 100
+DEFAULT_CONFIRMATION_RUNTIME_BUDGET_SECONDS = 1800
 
 
 def parse_progression(path: Path) -> List[dict]:
@@ -240,7 +241,7 @@ def proxy_adaptations_for_level(level_index: int) -> List[str]:
     return [f"adaptation_{i}" for i in range(1, count + 1)]
 
 
-def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -> int:
+def run_level(level: dict, preset: dict, games: int, seed: int, runtime_budget_seconds: int, dry_run: bool) -> int:
     resolved_ai = resolve_campaign_ai_names(level["levelIndex"], preset, seed)
     lineup = [PLAYER_PROXY] + resolved_ai
 
@@ -274,6 +275,8 @@ def run_level(level: dict, preset: dict, games: int, seed: int, dry_run: bool) -
         str(seed + level["levelIndex"]),
         "--experiment-id",
         experiment_id,
+        "--runtime-budget-seconds",
+        str(runtime_budget_seconds),
         "--no-keyboard",
     ]
     if len(lineup) != 8:
@@ -317,8 +320,25 @@ def main() -> int:
         ),
     )
     parser.add_argument("--seed", type=int, default=20260327)
+    parser.add_argument(
+        "--runtime-budget-seconds",
+        type=int,
+        help=(
+            "Runtime budget for each level. Defaults to 1800 seconds for the 100-game "
+            "confirmation standard and 600 seconds for smaller exploratory runs."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
+    runtime_budget_seconds = args.runtime_budget_seconds
+    if runtime_budget_seconds is None:
+        runtime_budget_seconds = (
+            DEFAULT_CONFIRMATION_RUNTIME_BUDGET_SECONDS
+            if args.games == DEFAULT_CONFIRMATION_GAMES
+            else 600
+        )
+    if runtime_budget_seconds <= 0:
+        raise SystemExit("--runtime-budget-seconds must be positive.")
 
     levels = parse_progression(PROGRESSION)
     guid_map = build_guid_map(BOARD_PRESETS_DIR)
@@ -332,7 +352,7 @@ def main() -> int:
         if preset_path is None:
             raise SystemExit(f"Could not resolve board preset for campaign level {level['levelIndex']}.")
         preset = parse_board_preset(preset_path)
-        code = run_level(level, preset, args.games, args.seed, args.dry_run)
+        code = run_level(level, preset, args.games, args.seed, runtime_budget_seconds, args.dry_run)
         if code != 0:
             return code
 
