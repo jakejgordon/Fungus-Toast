@@ -12,31 +12,44 @@ namespace FungusToast.Unity.UI
     /// </summary>
     public static class UIStyleTokens
     {
+        /// <summary>
+        /// "Foxfire" palette: deep ink-violet chrome that sits opposite the tan boards, breads and cheeses on
+        /// the color wheel, with a bioluminescent lime (the glow of Panellus and Mycena) marking what is
+        /// interactive. See UI_STYLE_GUIDE.md section 2 for the measured contrast of every pairing.
+        /// </summary>
         public static class Surface
         {
-            public static readonly Color Canvas = Hex("#26271F");
-            public static readonly Color PanelPrimary = Hex("#34382C");
-            public static readonly Color PanelSecondary = Hex("#424837");
-            public static readonly Color PanelElevated = Hex("#515A45");
-            public static readonly Color OverlayDim = Hex("#12161DCC");
+            public static readonly Color Canvas = Hex("#14111D");
+            public static readonly Color PanelPrimary = Hex("#221C31");
+            public static readonly Color PanelSecondary = Hex("#2C2440");
+            public static readonly Color PanelElevated = Hex("#3A3052");
+            public static readonly Color OverlayDim = Hex("#0B0912CC");
+
+            /// <summary>Lighter pool of Canvas behind the main-menu logo and buttons.</summary>
+            public static readonly Color CanvasGlow = Hex("#342A52");
+
+            /// <summary>Edge darkening for full-screen backdrops; always darker than Canvas.</summary>
+            public static readonly Color Vignette = Hex("#07050C");
         }
 
         public static class Accent
         {
-            public static readonly Color Moss = Hex("#718E43");
-            public static readonly Color Lichen = Hex("#90AE5B");
-            public static readonly Color Spore = Hex("#BCCB88");
-            public static readonly Color Hyphae = Hex("#D9DEC0");
+            public static readonly Color Moss = Hex("#5E9A1F");
+            public static readonly Color Lichen = Hex("#B8FF3C");
+            public static readonly Color Spore = Hex("#C9FF6E");
+            public static readonly Color Hyphae = Hex("#E4FFB8");
+
+            /// <summary>Bread-crust brown for icon art; not a chrome color.</summary>
             public static readonly Color Putrefaction = Hex("#7F6242");
         }
 
         public static class Text
         {
-            public static readonly Color Primary = Hex("#F1F3EE");
-            public static readonly Color Secondary = Hex("#D9DED3");
-            public static readonly Color Muted = Hex("#B6BEAF");
-            public static readonly Color Disabled = Hex("#7A8174");
-            public static readonly Color OnAccent = Hex("#1B2117");
+            public static readonly Color Primary = Hex("#F4F0FF");
+            public static readonly Color Secondary = Hex("#D9D2EC");
+            public static readonly Color Muted = Hex("#A9A1C2");
+            public static readonly Color Disabled = Hex("#6F6789");
+            public static readonly Color OnAccent = Hex("#16200A");
         }
 
         public static class Typography
@@ -53,11 +66,11 @@ namespace FungusToast.Unity.UI
 
         public static class State
         {
-            public static readonly Color Success = Hex("#A9CC63");
-            public static readonly Color Info = Hex("#7EA4A6");
-            public static readonly Color Warning = Hex("#D1AE63");
-            public static readonly Color Danger = Hex("#B45E5E");
-            public static readonly Color Focus = Hex("#B3C77A");
+            public static readonly Color Success = Hex("#8EE05A");
+            public static readonly Color Info = Hex("#5FD0E3");
+            public static readonly Color Warning = Hex("#FFC53D");
+            public static readonly Color Danger = Hex("#FF7A92");
+            public static readonly Color Focus = Hex("#B8FF3C");
         }
 
         public static class Player
@@ -218,14 +231,17 @@ namespace FungusToast.Unity.UI
             public const float NarrowMenuActionHeight = 52f;
             public const float MinimumMenuActionHeight = 48f;
 
-            public static readonly Color BackgroundDefault = Hex("#DFE4D4");
-            public static readonly Color BackgroundHover = Hex("#EBEFE2");
-            public static readonly Color BackgroundPressed = Hex("#C9D2BA");
-            public static readonly Color BackgroundSelected = Hex("#98BE74");
-            public static readonly Color BackgroundDisabled = Hex("#A7AE9C");
+            public static readonly Color BackgroundDefault = Hex("#EDE6FF");
+            public static readonly Color BackgroundHover = Hex("#F7F3FF");
+            public static readonly Color BackgroundPressed = Hex("#D6CCF0");
+            public static readonly Color BackgroundSelected = Hex("#B8FF3C");
+            public static readonly Color BackgroundDisabled = Hex("#9C95B4");
 
-            public static readonly Color TextDefault = Hex("#202418");
-            public static readonly Color TextDisabled = Hex("#666B5E");
+            /// <summary>Hover on an already-selected (lime) button: lifted toward pale Spore so it still reads.</summary>
+            public static readonly Color BackgroundSelectedHover = Color.Lerp(BackgroundSelected, Accent.Spore, 0.4f);
+
+            public static readonly Color TextDefault = Hex("#1A1426");
+            public static readonly Color TextDisabled = Hex("#3A3450");
 
             public static ColorBlock BuildColorBlock(float colorMultiplier = 1f, float fadeDuration = 0.1f)
             {
@@ -245,7 +261,7 @@ namespace FungusToast.Unity.UI
             {
                 Color normal = useSelectedAsNormal ? BackgroundSelected : BackgroundDefault;
                 Color hover = useSelectedAsNormal
-                    ? Color.Lerp(BackgroundSelected, Accent.Lichen, 0.32f)
+                    ? BackgroundSelectedHover
                     : BackgroundHover;
 
                 return new ColorBlock

@@ -41,8 +41,8 @@ namespace FungusToast.Unity.UI.MutationTree
         private const float PressedFillDarken = 0.18f;
         private static readonly Vector2 StatusIndicatorOffset = new(-38f, -20f);
         private static readonly Vector2 DefaultHighlightEffectDistance = new(1.2f, -1.2f);
-        private static readonly Color HighlightedTextColor = new Color32(0x09, 0x0B, 0x07, 0xFF);
-        private static readonly Color HighlightedSecondaryTextColor = new Color32(0x1A, 0x1E, 0x14, 0xFF);
+        private static readonly Color HighlightedTextColor = UIStyleTokens.Text.OnAccent;
+        private static readonly Color HighlightedSecondaryTextColor = UIStyleTokens.Button.TextDefault;
         private const float DarkTextBackgroundLuminanceThreshold = 0.52f;
         private const float CategoryRailWidth = 3f;
         // Inset from the card edge so the rail reads as a stripe inside the card, not as a

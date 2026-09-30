@@ -25,7 +25,7 @@ namespace FungusToast.Unity.UI.MutationTree
         public static readonly Color AffordableGlow  = UIStyleTokens.WithAlpha(UIStyleTokens.Text.Primary, 0.08f);
         public static readonly Color LockedTint      = UIStyleTokens.Text.Disabled;
         public static readonly Color WarningOutline  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Warning, 0.95f);
-        public static readonly Color DefaultNodeBG   = new Color32(0x3A, 0x3E, 0x33, 0xFF); // category-neutral card base
+        public static readonly Color DefaultNodeBG   = Color.Lerp(UIStyleTokens.Surface.PanelPrimary, UIStyleTokens.Surface.PanelSecondary, 0.4f); // category-neutral card base
         public static readonly Color LockedNodeBG    = Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Surface.PanelPrimary, 0.58f);
         public static readonly Color MaxedNodeBG     = Color.Lerp(DefaultNodeBG, MaxedGold, MaxedFillBlend);
         public static readonly Color DependentHover  = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.6f);

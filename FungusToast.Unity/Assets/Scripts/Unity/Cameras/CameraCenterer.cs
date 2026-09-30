@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.UI;
+using FungusToast.Unity.UI;
 
 namespace FungusToast.Unity.Cameras
 {
@@ -27,6 +28,8 @@ namespace FungusToast.Unity.Cameras
 
         private void Awake()
         {
+            // The clear color only shows around mediums without a photographed backdrop; keep it on-palette.
+            if (Camera.main != null) Camera.main.backgroundColor = UIStyleTokens.Surface.Canvas;
             if (leftSidebarRect) _canvasScaler = leftSidebarRect.GetComponentInParent<CanvasScaler>();
             else if (rightSidebarRect) _canvasScaler = rightSidebarRect.GetComponentInParent<CanvasScaler>();
         }

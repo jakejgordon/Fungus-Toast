@@ -2821,7 +2821,7 @@ namespace FungusToast.Unity.UI.MycovariantDraft
         {
             var rt = card.GetComponent<RectTransform>();
             var origScale = rt.localScale;
-            var highlightColor = new Color(1f, 0.93f, 0.45f, 1f);
+            var highlightColor = UIStyleTokens.State.Focus;
 
             float duration = 0.24f;
             float elapsed = 0f;

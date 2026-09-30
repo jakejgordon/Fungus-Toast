@@ -585,7 +585,7 @@ namespace FungusToast.Unity
                 selectionPromptCancelButtonText.fontSize = 22f;
                 selectionPromptCancelButtonText.fontStyle = FontStyles.Bold;
                 selectionPromptCancelButtonText.alignment = TextAlignmentOptions.Center;
-                selectionPromptCancelButtonText.color = new Color(0.97f, 0.94f, 0.86f, 1f);
+                selectionPromptCancelButtonText.color = UIStyleTokens.Text.Primary;
             }
 
             if (selectionPromptCancelButtonText == null && selectionPromptCancelButton != null)

@@ -16,8 +16,11 @@ public class DraftOrderRow : MonoBehaviour
     public string arrowChar = "→";
     public float arrowFontSize = 28f; // Match your style
 
+    // The active drafter's glow follows the palette's focus color rather than a per-scene value.
+    private const float ActiveHighlightAlpha = 0.8f;
+    private static Color ActiveHighlightColor => UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, ActiveHighlightAlpha);
+
     [Header("Colors")]
-    public Color activeHighlightColor = new Color(1f, 1f, 0.5f, 0.8f); // Yellow glow
     public Color inactiveColor = Color.white;
     public Color previousColor = new Color(1f, 1f, 1f, 0.3f); // Faded
     public Color arrowColor = Color.white;
@@ -70,7 +73,7 @@ public class DraftOrderRow : MonoBehaviour
             if (highlightBG != null)
             {
                 highlightBG.enabled = (i == activeIndex);
-                highlightBG.color = (i == activeIndex) ? activeHighlightColor : Color.clear;
+                highlightBG.color = (i == activeIndex) ? ActiveHighlightColor : Color.clear;
             }
 
             AddOrdinal(cellGO.transform, i + 1, isHuman, isDone: i < activeIndex);

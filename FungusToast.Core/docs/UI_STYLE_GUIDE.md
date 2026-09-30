@@ -10,7 +10,8 @@
 
 ### Brand Tone
 - **Niche + geeky + fungal**: scientific-lab readability with organic mold accents.
-- **Mood**: earthy, damp, spore-laden, strategic.
+- **Mood**: bioluminescent night ("Foxfire"): deep ink-violet chrome, with a glowing lime for anything interactive, like the foxfire of Panellus and Mycena. Strategic and a little eerie.
+- **Why violet**: the play area is warm (tan boards, breads, cheeses, white plates). Violet sits opposite tan on the color wheel, so the interface recedes and the scene reads as lit. Keep large surfaces violet-dark and low-to-moderate in saturation so the seven mold colors stay distinct.
 - **Readability priority**: gameplay data must remain immediately legible.
 
 ### Flavor Voice
@@ -46,43 +47,51 @@ Applies to every `FlavorText` string (Mutations, Mycovariants) and to any evocat
 
 Use these names in docs, comments, and future theme assets.
 Do not introduce ad hoc color names in new UI work.
+Read chrome colors from `UIStyleTokens` in code rather than exposing them as serialized `Color` fields: a value saved in a scene or prefab overrides the code default, so a palette change silently misses it. Board and gameplay effect colors (tile highlights, growth flashes) are not chrome and live in `UIEffectConstants`.
 
 ### 2.1 Core Surfaces
-- `Surface.Canvas`: `#26271F` (global background / forest-loam anchor)
-- `Surface.PanelPrimary`: `#34382C` (sidebar + major panel)
-- `Surface.PanelSecondary`: `#424837` (nested cards/sections)
-- `Surface.PanelElevated`: `#515A45` (hovered/active section)
-- `Surface.OverlayDim`: `#12161DCC` (modal/overlay dim)
+- `Surface.Canvas`: `#14111D` (global background / night-loam anchor)
+- `Surface.PanelPrimary`: `#221C31` (sidebar + major panel)
+- `Surface.PanelSecondary`: `#2C2440` (nested cards/sections)
+- `Surface.PanelElevated`: `#3A3052` (hovered/active section)
+- `Surface.OverlayDim`: `#0B0912CC` (modal/overlay dim)
+- `Surface.CanvasGlow`: `#342A52` (soft light pool behind the main-menu logo and buttons)
+- `Surface.Vignette`: `#07050C` (edge darkening for full-screen backdrops; always darker than Canvas)
 
 ### 2.2 Fungal Accent Palette
-- `Accent.Moss`: `#718E43` (primary fungal accent)
-- `Accent.Lichen`: `#90AE5B` (positive/selected)
-- `Accent.Spore`: `#BCCB88` (soft highlight)
-- `Accent.Hyphae`: `#D9DEC0` (subtle bright details)
-- `Accent.Putrefaction`: `#7F6242` (warning-secondary, earthy)
+- `Accent.Moss`: `#5E9A1F` (deep foxfire; hover tints on dark buttons)
+- `Accent.Lichen`: `#B8FF3C` (foxfire lime: positive/selected, the signature color)
+- `Accent.Spore`: `#C9FF6E` (pale lime: titles, highlighted labels)
+- `Accent.Hyphae`: `#E4FFB8` (palest lime: section headings, subtle bright details)
+- `Accent.Putrefaction`: `#7F6242` (bread-crust brown for icon art; not a chrome color)
 
 ### 2.3 Text Colors
-- `Text.Primary`: `#F1F3EE`
-- `Text.Secondary`: `#D9DED3`
-- `Text.Muted`: `#B6BEAF`
-- `Text.Disabled`: `#7A8174`
-- `Text.OnAccent`: `#1B2117`
+- `Text.Primary`: `#F4F0FF`
+- `Text.Secondary`: `#D9D2EC`
+- `Text.Muted`: `#A9A1C2`
+- `Text.Disabled`: `#6F6789`
+- `Text.OnAccent`: `#16200A`
+
+Measured on the panels: `Text.Primary` 10.9-14.7:1, `Text.Secondary` 8.3-11.3:1, `Text.Muted` 5.0-6.7:1 (on `PanelElevated` through `PanelPrimary`).
 
 ### 2.4 Semantic States
-- `State.Success`: `#A9CC63`
-- `State.Info`: `#7EA4A6`
-- `State.Warning`: `#D1AE63`
-- `State.Danger`: `#B45E5E`
-- `State.Focus`: `#B3C77A`
+- `State.Success`: `#8EE05A`
+- `State.Info`: `#5FD0E3`
+- `State.Warning`: `#FFC53D`
+- `State.Danger`: `#FF7A92`
+- `State.Focus`: `#B8FF3C`
+
+Every state color clears 4.5:1 as text on every panel; `State.Danger` is the tightest at 4.9:1 on `PanelElevated`.
 
 ### 2.5 Buttons (State Tokens)
-- `Button.Bg.Default`: `#DFE4D4`
-- `Button.Bg.Hover`: `#EBEFE2`
-- `Button.Bg.Pressed`: `#C9D2BA`
-- `Button.Bg.Selected`: `#98BE74`
-- `Button.Bg.Disabled`: `#A7AE9C`
-- `Button.Text.Default`: `#2F3628`
-- `Button.Text.Disabled`: `#6F7466`
+- `Button.Bg.Default`: `#EDE6FF` (ghost-gill lavender)
+- `Button.Bg.Hover`: `#F7F3FF`
+- `Button.Bg.Pressed`: `#D6CCF0`
+- `Button.Bg.Selected`: `#B8FF3C` (foxfire lime: the affirmative call to action)
+- `Button.Bg.SelectedHover`: `Bg.Selected` blended 0.4 toward `Accent.Spore`, so hovering a lime button still shows feedback
+- `Button.Bg.Disabled`: `#9C95B4`
+- `Button.Text.Default`: `#1A1426` (14.8:1 on `Bg.Default` and on `Bg.Selected`)
+- `Button.Text.Disabled`: `#3A3450` (4.1:1 on `Bg.Disabled`)
 
 ### 2.6 Mutation Category Accents
 Each accent is a pigment found in a real fungus, and the six sit at least 39 degrees apart on the hue wheel so they read as distinct lanes at a glance.
@@ -351,17 +360,17 @@ A floating card is any panel that stays open over the board or another surface u
 
 Covers every small filled element that carries a label in a semantic hue: draft-card tags (`Passive`, `One-time`, `Bait`), status pills, count badges, and the "on" state of a two-state control such as the sidebar `Pace` toggle.
 
-**The rule: never put a label directly on a raw accent.** Every `Accent.*` and `State.*` token is a mid-tone, which is the one band where no text color works. Measured against the palette's own text tokens:
+**The rule: never put a small label directly on a raw accent.** Accent and state tokens are bright or mid-tones, where light text never works and dark text works only for some. Measured against the palette's own text tokens (Foxfire palette):
 
 | Fill | `Text.OnAccent` (dark) | `Text.Primary` (light) |
 |---|---|---|
-| `State.Info` | 6.07:1 | 2.43:1 |
-| `Accent.Moss` | **4.43:1** | 3.33:1 |
-| `Accent.Lichen` | 6.57:1 | 2.24:1 |
-| `State.Warning` | 7.79:1 | 1.89:1 |
-| `Button.Bg.Selected` | 7.80:1 | 1.89:1 |
+| `State.Info` | 9.33:1 | 1.61:1 |
+| `Accent.Moss` | **4.91:1** | 3.07:1 |
+| `Accent.Lichen` | 13.98:1 | 1.08:1 |
+| `State.Warning` | 10.69:1 | 1.41:1 |
+| `Button.Bg.Selected` | 13.98:1 | 1.08:1 |
 
-Dark text is the only option that clears 4.5:1, and it does so by a margin thin enough that one hue tweak fails it - `Accent.Moss` already does. Light text is never viable. A chip that passes today is one palette change from failing.
+Light text is never viable. Dark text works on the bright tokens, but `Accent.Moss` is a mid-tone that clears 4.5:1 by a thin margin, and the category accents vary. A chip that passes today can fail after one hue tweak.
 
 **Use the accent-blended dark fill instead.** This is the same treatment the mutation tree already uses for category accents (section 2.6), generalized:
 
@@ -369,9 +378,9 @@ Dark text is the only option that clears 4.5:1, and it does so by a margin thin 
 - Border: the raw accent at 1px, so hue identity still reads at a glance.
 - Label: `Text.Primary`.
 
-That lands every accent in the palette between **7.9:1 and 9.5:1**, and the accent still names the chip. `UIStyleTokens.Badge` implements it (`Badge.Fill(accent)`, `Badge.Border(accent)`, `Badge.Label`); use the helper rather than re-deriving the blend.
+That lands every accent in the palette, including the six category accents, between **7.8:1 and 11.6:1**, and the accent still names the chip. `UIStyleTokens.Badge` implements it (`Badge.Fill(accent)`, `Badge.Border(accent)`, `Badge.Label`); use the helper rather than re-deriving the blend.
 
-**Two-state controls must not lose contrast when switched on.** A toggle whose "off" state is the light neutral fill (9.64:1) and whose "on" state is `Button.Bg.Selected` with dark text (5.93:1) is legible by the numbers but reads as muddy, because the eye compares it against the crisper off state. Hold both states within roughly 2:1 of each other. For dark-panel utility toggles, pair the light neutral fill for "off" with an accent-blended dark fill plus `Text.Primary` for "on", which keeps both near 9:1.
+**Two-state controls must not lose contrast when switched on.** Hold both states within roughly 2:1 of each other; an "on" state much weaker than "off" reads as muddy even when it passes, because the eye compares it against the crisper off state. With Foxfire, the light neutral fill (14.8:1) and the lime `Button.Bg.Selected` (14.9:1) with dark text are evenly matched. For dark-panel utility toggles, pair the light neutral fill for "off" with an accent-blended dark fill plus `Text.Primary` for "on", which keeps both near 9:1.
 
 **Minimum label size.** Chip and badge labels use `Type.Micro` (14px) as the auto-size floor, never lower. An 11px label strains the eye even at 6:1; the size and the contrast compound. If a 14px label does not fit, the chip is too small or the word is too long - shorten the word, do not shrink the text. `UIStyleTokens.Badge.MinimumLabelFontSize` carries this floor.
 

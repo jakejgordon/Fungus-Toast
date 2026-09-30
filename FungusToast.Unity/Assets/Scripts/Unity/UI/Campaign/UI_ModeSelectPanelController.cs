@@ -36,17 +36,22 @@ namespace FungusToast.Unity.UI.Campaign
         private const float SettingsCardWidth = 860f;
         private const float SettingsTextWidth = 700f;
         private const int AmbientMoldSpriteIndexScanLimit = 12;
-        private const float AmbientMoldBaseAlpha = 0.12f;
-        private const float AmbientMoldAlphaRange = 0.06f;
+        // Edge molds show their real colors; the encroaching ones that creep toward the logo and buttons
+        // stay fainter so labels remain clean.
+        private const float AmbientMoldBaseAlpha = 0.38f;
+        private const float AmbientMoldAlphaRange = 0.08f;
         private const float AmbientMoldScalePulse = 0.06f;
         private const float AmbientMoldDriftDistance = 10f;
-        private const float AmbientEncroachmentBaseAlpha = 0.025f;
-        private const float AmbientEncroachmentAlphaRange = 0.025f;
+        private const float AmbientEncroachmentBaseAlpha = 0.12f;
+        private const float AmbientEncroachmentAlphaRange = 0.05f;
         private const float AmbientEncroachmentScalePulse = 0.035f;
         private const float AmbientEncroachmentDriftDistance = 5f;
         private const float AmbientEncroachmentRevealLeadInSeconds = 1f;
         private const float AmbientEncroachmentRevealWindowSeconds = 30f;
-        private const float AmbientBackdropVignetteAlpha = 0.2f;
+        private const float AmbientBackdropVignetteAlpha = 0.75f;
+        private const float AmbientBackdropGlowAlpha = 0.9f;
+        private static readonly Vector2 AmbientBackdropGlowSize = new(1500f, 1100f);
+        private const int AmbientBackdropGradientTextureSize = 128;
         private const float OverlayCardAlpha = 0.84f;
         private const int MainMenuHorizontalPadding = 40;
         private const int MainMenuVerticalPadding = 32;
@@ -119,6 +124,7 @@ namespace FungusToast.Unity.UI.Campaign
         private RectTransform ambientBackdropLayerRoot;
         private RectTransform ambientMoldLayerRoot;
         private readonly List<AmbientMoldDecoration> ambientMoldDecorations = new();
+        private readonly List<Texture2D> ambientBackdropTextures = new();
         private float ambientSequenceStartTime = -1f;
 
         private sealed class AmbientMoldDecoration
@@ -171,6 +177,16 @@ namespace FungusToast.Unity.UI.Campaign
             {
                 MainMenuRegistry.ModeSelectPanel = null;
             }
+
+            for (int i = 0; i < ambientBackdropTextures.Count; i++)
+            {
+                if (ambientBackdropTextures[i] != null)
+                {
+                    Destroy(ambientBackdropTextures[i]);
+                }
+            }
+
+            ambientBackdropTextures.Clear();
         }
 
         /// <summary>
@@ -258,7 +274,7 @@ namespace FungusToast.Unity.UI.Campaign
 
         private void ApplyStyle()
         {
-            UIStyleTokens.ApplyPanelSurface(gameObject, Color.Lerp(UIStyleTokens.Surface.Canvas, UIStyleTokens.Accent.Hyphae, 0.09f));
+            UIStyleTokens.ApplyPanelSurface(gameObject, UIStyleTokens.Surface.Canvas);
             UIStyleTokens.ApplyNonButtonTextPalette(gameObject);
 
             if (contentRoot != null)
@@ -882,53 +898,80 @@ namespace FungusToast.Unity.UI.Campaign
             ambientBackdropLayerRoot.offsetMax = Vector2.zero;
             ambientBackdropLayerRoot.SetSiblingIndex(0);
 
-            Color vignetteColor = new Color(
-                UIStyleTokens.Surface.PanelPrimary.r,
-                UIStyleTokens.Surface.PanelPrimary.g,
-                UIStyleTokens.Surface.PanelPrimary.b,
-                AmbientBackdropVignetteAlpha);
-            CreateBackdropBand("TopVignette", new Vector2(0.5f, 1f), new Vector2(0f, -78f), new Vector2(0f, 156f), vignetteColor, stretchHorizontally: true);
-            CreateBackdropBand("BottomVignette", new Vector2(0.5f, 0f), new Vector2(0f, 84f), new Vector2(0f, 168f), vignetteColor, stretchHorizontally: true);
-            CreateBackdropBand("LeftVignette", new Vector2(0f, 0.5f), new Vector2(92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
-            CreateBackdropBand("RightVignette", new Vector2(1f, 0.5f), new Vector2(-92f, 0f), new Vector2(184f, 0f), vignetteColor, stretchVertically: true);
+            // A lighter pool behind the logo and buttons, falling off to darker edges, gives the screen depth.
+            CreateBackdropGradient(
+                "CenterGlow",
+                UIStyleTokens.WithAlpha(UIStyleTokens.Surface.CanvasGlow, AmbientBackdropGlowAlpha),
+                fadeOutward: true,
+                stretchToFill: false,
+                AmbientBackdropGlowSize);
+            CreateBackdropGradient(
+                "Vignette",
+                UIStyleTokens.WithAlpha(UIStyleTokens.Surface.Vignette, AmbientBackdropVignetteAlpha),
+                fadeOutward: false,
+                stretchToFill: true,
+                Vector2.zero);
         }
 
-        private void CreateBackdropBand(
-            string objectName,
-            Vector2 anchor,
-            Vector2 anchoredPosition,
-            Vector2 sizeDelta,
-            Color color,
-            bool stretchHorizontally = false,
-            bool stretchVertically = false)
+        private void CreateBackdropGradient(string objectName, Color color, bool fadeOutward, bool stretchToFill, Vector2 size)
         {
             if (ambientBackdropLayerRoot == null)
             {
                 return;
             }
 
-            GameObject bandObject = new GameObject($"UI_ModeSelectAmbientBackdrop{objectName}", typeof(RectTransform), typeof(Image));
-            bandObject.transform.SetParent(ambientBackdropLayerRoot, false);
-            bandObject.layer = gameObject.layer;
+            GameObject gradientObject = new GameObject($"UI_ModeSelectAmbientBackdrop{objectName}", typeof(RectTransform), typeof(Image));
+            gradientObject.transform.SetParent(ambientBackdropLayerRoot, false);
+            gradientObject.layer = gameObject.layer;
 
-            RectTransform rectTransform = bandObject.GetComponent<RectTransform>();
-            rectTransform.anchorMin = stretchHorizontally
-                ? new Vector2(0f, anchor.y)
-                : stretchVertically
-                    ? new Vector2(anchor.x, 0f)
-                    : anchor;
-            rectTransform.anchorMax = stretchHorizontally
-                ? new Vector2(1f, anchor.y)
-                : stretchVertically
-                    ? new Vector2(anchor.x, 1f)
-                    : anchor;
+            RectTransform rectTransform = gradientObject.GetComponent<RectTransform>();
+            rectTransform.anchorMin = stretchToFill ? Vector2.zero : new Vector2(0.5f, 0.5f);
+            rectTransform.anchorMax = stretchToFill ? Vector2.one : new Vector2(0.5f, 0.5f);
             rectTransform.pivot = new Vector2(0.5f, 0.5f);
-            rectTransform.anchoredPosition = anchoredPosition;
-            rectTransform.sizeDelta = sizeDelta;
+            rectTransform.anchoredPosition = Vector2.zero;
+            rectTransform.sizeDelta = stretchToFill ? Vector2.zero : size;
 
-            Image image = bandObject.GetComponent<Image>();
+            Texture2D texture = BuildRadialGradientTexture(fadeOutward);
+            ambientBackdropTextures.Add(texture);
+
+            Image image = gradientObject.GetComponent<Image>();
+            image.sprite = Sprite.Create(
+                texture,
+                new Rect(0f, 0f, texture.width, texture.height),
+                new Vector2(0.5f, 0.5f));
             image.color = color;
             image.raycastTarget = false;
+        }
+
+        // White texture whose alpha follows the distance from the center: a soft pool when fading outward,
+        // a vignette (clear center, opaque corners) otherwise. The Image stretches it to its rect.
+        private static Texture2D BuildRadialGradientTexture(bool fadeOutward)
+        {
+            int size = AmbientBackdropGradientTextureSize;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: false)
+            {
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear
+            };
+
+            var pixels = new Color[size * size];
+            float half = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float distance = Mathf.Sqrt(((x - half) * (x - half)) + ((y - half) * (y - half))) / half;
+                    // Mathf.SmoothStep(from, to, t) eases between two values, so remap distance to t first.
+                    float alpha = fadeOutward
+                        ? 1f - Mathf.SmoothStep(0f, 1f, distance)
+                        : Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1.35f, distance));
+                    pixels[(y * size) + x] = new Color(1f, 1f, 1f, alpha);
+                }
+            }
+
+            texture.SetPixels(pixels);
+            texture.Apply(updateMipmaps: false, makeNoLongerReadable: true);
+            return texture;
         }
 
         private void CreateAmbientMoldDecoration(

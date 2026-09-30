@@ -35,7 +35,7 @@ namespace FungusToast.Unity.UI
         private const float SurgeDisplayEpsilon = 1e-6f;
         // Applied via a rich-text <color> tag: UI_MoldProfileRoot.ApplyStyle() repaints every label's
         // vertex color to Text.Secondary on each OnEnable, which would wash out a plain .color assignment.
-        private static readonly Color SurgeTextColor = new(0.07f, 0.20f, 0.04f, 1f);
+        private static readonly Color SurgeTextColor = UIStyleTokens.Text.OnAccent;
         private static readonly string SurgeTextHex = ColorUtility.ToHtmlStringRGB(SurgeTextColor);
 
         public void ResolveChildren(string arrowName, string percentName, string surgeName)

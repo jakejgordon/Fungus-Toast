@@ -26,10 +26,8 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
         public TextMeshProUGUI effectText;
         public Button pickButton; // Covers card
 
-        // Optionally set these via inspector for designer flexibility
-        [Header("Highlight Settings")]
-        public Color highlightColor = new Color(1f, 0.93f, 0.25f, 1f); // Bright gold/yellow
-        public float highlightAlpha = 1f;
+        // The active-pick outline follows the palette's focus color.
+        private static Color HighlightColor => UIStyleTokens.State.Focus;
 
         private Mycovariant mycovariant;
         private System.Action<Mycovariant> onPicked;
@@ -520,9 +518,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
                 outline.enabled = highlight;
                 if (highlight)
                 {
-                    var c = highlightColor;
-                    c.a = highlightAlpha;
-                    outline.effectColor = c;
+                    outline.effectColor = HighlightColor;
                 }
                 // Optionally, set a duller color if not highlighted, or just leave as-is
             }
@@ -530,7 +526,7 @@ namespace Assets.Scripts.Unity.UI.MycovariantDraft
             {
                 // Fallback: iconImage color shift for feedback if no outline
                 iconImage.color = highlight
-                    ? new Color(1f, 1f, 0.8f, 1f)
+                    ? Color.Lerp(Color.white, HighlightColor, 0.25f)
                     : Color.white;
             }
         }
