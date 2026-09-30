@@ -96,6 +96,7 @@ Every state color clears 4.5:1 as text on every panel; `State.Danger` is the tig
 - `Button.Bg.Disabled`: `#9C95B4`
 - `Button.Text.Default`: `#1A1426` (14.8:1 on `Bg.Default` and on `Bg.Selected`)
 - `Button.Text.Disabled`: `#3A3450` (4.1:1 on `Bg.Disabled`)
+- `Button.Text.Placeholder`: `#4A4262` (hint text such as "Select Mycovariant..." on light controls; 7.7:1 on `Bg.Default`)
 
 ### 2.6 Mutation Category Accents
 Each accent is a pigment found in a real fungus, and the six sit at least 39 degrees apart on the hue wheel so they read as distinct lanes at a glance.
@@ -287,6 +288,7 @@ Notes:
 - For dark utility buttons that keep light labels, do not brighten the hover fill so far toward pale `Accent.Spore` or light neutral button fills that the label loses contrast. Prefer a darker moss-tinted hover that preserves `Text.Primary` readability.
 
 ### 5.3 Dropdown/Input Readability
+- Style every TMP dropdown with `UIStyleTokens.Dropdown.Apply`: lavender `Button.Bg.Default` fill, bold `Button.Text.Default` labels, `Button.Text.Placeholder` hints. Regular-weight text at dropdown sizes renders mostly as anti-aliased edge pixels and reads gray even in the darkest color.
 - Dropdown caption and option text must use `Button.Text.Default` on light dropdown surfaces.
 - Placeholder text may use `Text.Disabled`, but selected values must not use disabled/muted colors.
 - For TMP dropdowns, verify both caption text and template item text after runtime styling passes.

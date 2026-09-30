@@ -19,6 +19,9 @@ namespace FungusToast.Unity.UI.GameStart
 {
     public class UI_StartGamePanel : MonoBehaviour
     {
+        private const float BoardSizeDropdownFontSize = 20f;
+        private const float BoardSizeDropdownScrollSensitivity = 1.5f;
+
         private const int DefaultHotseatPlayerCount = 8;
         private const int DefaultHotseatHumanPlayerCount = 1;
         private const string DevelopmentTestingEnabledPrefsKey = "StartGame.DevelopmentTestingEnabled";
@@ -2961,76 +2964,7 @@ namespace FungusToast.Unity.UI.GameStart
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
         {
-            if (dropdown == null)
-            {
-                return;
-            }
-
-            // The dropdown and its open list use the same lavender fill as the other light buttons.
-            if (dropdown.targetGraphic != null)
-            {
-                dropdown.targetGraphic.color = Color.white;
-            }
-
-            dropdown.colors = UIStyleTokens.Button.BuildColorBlock();
-
-            if (dropdown.captionText != null)
-            {
-                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-                dropdown.captionText.enableAutoSizing = false;
-                dropdown.captionText.fontSize = 18f;
-                dropdown.captionText.fontSizeMin = 18f;
-                dropdown.captionText.fontSizeMax = 18f;
-            }
-
-            if (dropdown.itemText != null)
-            {
-                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-                dropdown.itemText.enableAutoSizing = false;
-                dropdown.itemText.fontSize = 18f;
-                dropdown.itemText.fontSizeMin = 18f;
-                dropdown.itemText.fontSizeMax = 18f;
-            }
-
-            if (dropdown.template != null)
-            {
-                var scrollRect = dropdown.template.GetComponentInChildren<ScrollRect>(true);
-                if (scrollRect != null)
-                {
-                    scrollRect.scrollSensitivity = 1.5f;
-                }
-
-                var templateBackground = dropdown.template.GetComponent<Image>();
-                if (templateBackground != null)
-                {
-                    templateBackground.color = UIStyleTokens.Button.BackgroundDefault;
-                }
-
-                var itemToggles = dropdown.template.GetComponentsInChildren<Toggle>(true);
-                for (int index = 0; index < itemToggles.Length; index++)
-                {
-                    if (itemToggles[index] != null)
-                    {
-                        itemToggles[index].colors = UIStyleTokens.Button.BuildColorBlock();
-                    }
-                }
-
-                var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);
-                for (int index = 0; index < templateLabels.Length; index++)
-                {
-                    var templateLabel = templateLabels[index];
-                    if (templateLabel == null)
-                    {
-                        continue;
-                    }
-
-                    templateLabel.enableAutoSizing = false;
-                    templateLabel.fontSize = 18f;
-                    templateLabel.fontSizeMin = 18f;
-                    templateLabel.fontSizeMax = 18f;
-                    templateLabel.color = UIStyleTokens.Button.TextDefault;
-                }
-            }
+            UIStyleTokens.Dropdown.Apply(dropdown, BoardSizeDropdownFontSize, BoardSizeDropdownScrollSensitivity);
         }
 
         private void RefreshTestingSectionLayout()

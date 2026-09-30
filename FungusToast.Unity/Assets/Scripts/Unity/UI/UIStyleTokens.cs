@@ -257,6 +257,9 @@ namespace FungusToast.Unity.UI
             public static readonly Color BackgroundSelectedHover = Color.Lerp(BackgroundSelected, Accent.Spore, 0.4f);
 
             public static readonly Color TextDefault = Hex("#1A1426");
+
+            /// <summary>Hint text such as "Select Mycovariant..." on light controls: 7.7:1, still lighter than a value.</summary>
+            public static readonly Color TextPlaceholder = Hex("#4A4262");
             public static readonly Color TextDisabled = Hex("#3A3450");
 
             public static ColorBlock BuildColorBlock(float colorMultiplier = 1f, float fadeDuration = 0.1f)
@@ -477,6 +480,89 @@ namespace FungusToast.Unity.UI
                     labels[i].color = color;
                     labels[i].fontStyle = FontStyle.Bold;
                 }
+            }
+        }
+
+        /// <summary>
+        /// One look for every TMP dropdown: the light lavender button fill with bold dark labels. Regular-weight
+        /// text at dropdown sizes renders mostly as anti-aliased edge pixels and reads gray, so labels are bold.
+        /// </summary>
+        public static class Dropdown
+        {
+            public static void Apply(TMP_Dropdown dropdown, float fontSize, float scrollSensitivity)
+            {
+                if (dropdown == null)
+                {
+                    return;
+                }
+
+                if (dropdown.targetGraphic != null)
+                {
+                    dropdown.targetGraphic.color = Color.white;
+                }
+
+                dropdown.colors = Button.BuildColorBlock();
+
+                var labels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
+                for (int i = 0; i < labels.Length; i++)
+                {
+                    StyleLabel(labels[i], fontSize, IsPlaceholder(labels[i]));
+                }
+
+                StyleLabel(dropdown.captionText as TextMeshProUGUI, fontSize, isPlaceholder: false);
+                StyleLabel(dropdown.itemText as TextMeshProUGUI, fontSize, isPlaceholder: false);
+
+                if (dropdown.template == null)
+                {
+                    return;
+                }
+
+                var scrollRect = dropdown.template.GetComponentInChildren<ScrollRect>(true);
+                if (scrollRect != null)
+                {
+                    scrollRect.scrollSensitivity = scrollSensitivity;
+                }
+
+                var templateBackground = dropdown.template.GetComponent<Image>();
+                if (templateBackground != null)
+                {
+                    templateBackground.color = Button.BackgroundDefault;
+                }
+
+                var itemToggles = dropdown.template.GetComponentsInChildren<Toggle>(true);
+                for (int i = 0; i < itemToggles.Length; i++)
+                {
+                    if (itemToggles[i] != null)
+                    {
+                        itemToggles[i].colors = Button.BuildColorBlock();
+                    }
+                }
+
+                var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);
+                for (int i = 0; i < templateLabels.Length; i++)
+                {
+                    StyleLabel(templateLabels[i], fontSize, isPlaceholder: false);
+                }
+            }
+
+            private static bool IsPlaceholder(TextMeshProUGUI label)
+            {
+                return label != null && label.name.IndexOf("Placeholder", System.StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+
+            private static void StyleLabel(TextMeshProUGUI label, float fontSize, bool isPlaceholder)
+            {
+                if (label == null)
+                {
+                    return;
+                }
+
+                label.color = isPlaceholder ? Button.TextPlaceholder : Button.TextDefault;
+                label.fontStyle = isPlaceholder ? FontStyles.Normal : FontStyles.Bold;
+                label.enableAutoSizing = false;
+                label.fontSize = fontSize;
+                label.fontSizeMin = fontSize;
+                label.fontSizeMax = fontSize;
             }
         }
 

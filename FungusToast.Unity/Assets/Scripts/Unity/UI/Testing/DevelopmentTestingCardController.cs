@@ -1731,70 +1731,7 @@ namespace FungusToast.Unity.UI.Testing
 
         private static void ApplyDropdownReadability(TMP_Dropdown dropdown)
         {
-            if (dropdown == null)
-            {
-                return;
-            }
-
-            if (dropdown.captionText != null)
-            {
-                dropdown.captionText.color = UIStyleTokens.Button.TextDefault;
-                dropdown.captionText.enableAutoSizing = false;
-                dropdown.captionText.fontSize = TestingDropdownFontSize;
-                dropdown.captionText.fontSizeMin = TestingDropdownFontSize;
-                dropdown.captionText.fontSizeMax = TestingDropdownFontSize;
-            }
-
-            if (dropdown.itemText != null)
-            {
-                dropdown.itemText.color = UIStyleTokens.Button.TextDefault;
-                dropdown.itemText.enableAutoSizing = false;
-                dropdown.itemText.fontSize = TestingDropdownFontSize;
-                dropdown.itemText.fontSizeMin = TestingDropdownFontSize;
-                dropdown.itemText.fontSizeMax = TestingDropdownFontSize;
-            }
-
-            if (dropdown.template != null)
-            {
-                var scrollRect = dropdown.template.GetComponentInChildren<ScrollRect>(true);
-                if (scrollRect != null)
-                {
-                    scrollRect.scrollSensitivity = TestingDropdownScrollSensitivity;
-                }
-
-                var templateLabels = dropdown.template.GetComponentsInChildren<TextMeshProUGUI>(true);
-                for (int index = 0; index < templateLabels.Length; index++)
-                {
-                    var templateLabel = templateLabels[index];
-                    if (templateLabel == null)
-                    {
-                        continue;
-                    }
-
-                    templateLabel.enableAutoSizing = false;
-                    templateLabel.fontSize = TestingDropdownFontSize;
-                    templateLabel.fontSizeMin = TestingDropdownFontSize;
-                    templateLabel.fontSizeMax = TestingDropdownFontSize;
-                }
-            }
-
-            var labels = dropdown.GetComponentsInChildren<TextMeshProUGUI>(true);
-            for (int index = 0; index < labels.Length; index++)
-            {
-                var label = labels[index];
-                if (label == null)
-                {
-                    continue;
-                }
-
-                label.color = label.name.IndexOf("Placeholder", StringComparison.OrdinalIgnoreCase) >= 0
-                    ? UIStyleTokens.Text.Disabled
-                    : UIStyleTokens.Button.TextDefault;
-                label.enableAutoSizing = false;
-                label.fontSize = TestingDropdownFontSize;
-                label.fontSizeMin = TestingDropdownFontSize;
-                label.fontSizeMax = TestingDropdownFontSize;
-            }
+            UIStyleTokens.Dropdown.Apply(dropdown, TestingDropdownFontSize, TestingDropdownScrollSensitivity);
         }
     }
 }
