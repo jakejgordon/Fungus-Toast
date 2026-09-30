@@ -887,6 +887,25 @@ a held-out confirmation.
   invariant mismatches. The Testing pair remains registered for
   reproducibility.
 
+### Voltaic Bloom Hard (`CMP_Control_AnabolicFirst_Hard`) — rejected
+
+- Candidate order: Necrophoric Adaptation, Reclamation Rhizomorphs,
+  Aggressotropic Conduit III, Perimeter Proliferator, Hyphal Draw. This reused
+  the proven Voltaic Bloom plan but evaluated it independently because the
+  campaign variant starts eight cells farther from the edge.
+- Comparison seed `2026092624`, 50 pairs: treatment-control normalized board
+  share `+0.225640`, 95% CI `[-0.005113, +0.456392]`; the `-0.05`
+  non-inferiority margin was supported.
+- Held-out seed `2026092625`, 100 pairs: treatment-control normalized board
+  share `-0.044278`, 95% CI `[-0.170626, +0.082070]`; the lower bound did not
+  support the same margin. Artifacts use
+  `voltaicbloomhard_myco_{comparison,holdout}_{control,treatment}` with their
+  respective seeds.
+- The candidate was rejected at the holdout gate. The Campaign strategy remains
+  unchanged and its migration-debt entry remains. Both valid stages passed
+  manifest contamination checks and had zero simulation invariant mismatches;
+  the Testing pair remains registered for reproducibility.
+
 ### Legacy Hoardspore Regent (`AI13`) — rejected
 
 - Candidate order: Plasmid Bounty III, Reclamation Rhizomorphs, Necrophoric
