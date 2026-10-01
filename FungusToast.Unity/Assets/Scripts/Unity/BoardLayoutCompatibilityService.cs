@@ -497,6 +497,8 @@ namespace FungusToast.Unity
                 signature.Append('@').Append(metadata.playableHorizontalSpanProfileMinYNormalized);
                 signature.Append(',').Append(metadata.playableHorizontalSpanProfileMaxYNormalized);
                 AppendPlayableHorizontalSpanProfile(signature, metadata.playableHorizontalSpanProfile);
+                signature.Append(":outline=").Append(metadata.hasPlayableOutline);
+                AppendVector2List(signature, metadata.playableOutlineNormalized);
                 AppendBakedBlockedTileMasks(signature, metadata.bakedBlockedTileMasks);
             }
         }
@@ -554,6 +556,21 @@ namespace FungusToast.Unity
             {
                 Vector2Int coordinate = coordinates[i];
                 signature.Append('|').Append(coordinate.x).Append(',').Append(coordinate.y);
+            }
+        }
+
+        private static void AppendVector2List(StringBuilder signature, IReadOnlyList<Vector2> points)
+        {
+            if (points == null)
+            {
+                signature.Append("<null>");
+                return;
+            }
+
+            signature.Append(points.Count);
+            for (int i = 0; i < points.Count; i++)
+            {
+                AppendVector2(signature, points[i]);
             }
         }
 

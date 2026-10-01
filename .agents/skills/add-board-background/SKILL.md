@@ -17,13 +17,14 @@ Read these docs first:
    - plain alpha
    - ellipse metadata
    - horizontal span profile
-   - baked blocked-tile masks
+   - traced outline (preferred for photo silhouettes)
+   - baked blocked-tile masks (only for footprints an outline can't describe)
 2. Treat `visibleAlphaBoundsNormalized` as measured input, not as a tuning knob.
-3. If the board art is irregular but gameplay should still be square, use the contour-to-square baked-mask workflow instead of piling on inset and scale tweaks.
+3. If the board art is irregular but gameplay should still be square, use the traced-outline workflow instead of piling on inset and scale tweaks.
 4. Update the owning metadata in:
    - `FungusToast.Unity/Assets/Scripts/Unity/Grid/BoardMediumConfig.cs`
    - `FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset`
-5. Use `scripts/validate_board_backgrounds.py` to measure, validate, and emit baked masks when needed.
+5. Use `scripts/validate_board_backgrounds.py` to measure, validate, and emit outlines (`--emit-outline-sprite`) or, rarely, baked masks.
 6. Give the medium a real-world size: add its sprite to `BoardBackdropCatalog.cs` with a typical width in cm, its measured visible rect, and a surface (plate or cutting board), and add the same row to the sizes table in `NEW_BACKGROUND_HELPER.md`. A medium missing from the catalog renders with no backdrop.
 7. Do not hand-author blocked-tile ID lists.
 8. Keep placement, blocked tiles, mask rendering, and overlay alignment tied to one canonical footprint model.
@@ -31,8 +32,8 @@ Read these docs first:
 ## Validation
 
 1. Run the validator from the repo root.
-2. Confirm the reported metadata matches the intended board bounds and baked sizes.
-3. For baked sizes, confirm the validator reports `baked-mask` rather than fallback `alpha-shape`.
+2. Confirm the reported metadata matches the intended board bounds and shows the outline's point count.
+3. Confirm the probes for the sprite's sizes report `outline-shape` (or `baked-mask` for any baked size) rather than fallback `alpha-shape`.
 4. Perform the Unity visual pass for placement, blocked tiles, hover alignment, highlight clipping, and edge fades.
 5. If the sprite pixels or canonical board bounds change, rebake instead of preserving stale masks.
 

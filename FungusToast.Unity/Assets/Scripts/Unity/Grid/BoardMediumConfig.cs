@@ -56,6 +56,9 @@ namespace FungusToast.Unity.Grid
             [Range(0f, 1f)] public float playableHorizontalSpanProfileMinYNormalized = 0f;
             [Range(0f, 1f)] public float playableHorizontalSpanProfileMaxYNormalized = 1f;
             public List<PlayableHorizontalSpanStop> playableHorizontalSpanProfile = new();
+            [Tooltip("Closed polygon tracing the playable edge, normalized in the sprite (origin bottom-left). Emitted by scripts/validate_board_backgrounds.py --emit-outline-sprite.")]
+            public bool hasPlayableOutline = false;
+            public List<Vector2> playableOutlineNormalized = new();
             public List<BakedBlockedTileMask> bakedBlockedTileMasks = new();
         }
 
@@ -140,6 +143,8 @@ namespace FungusToast.Unity.Grid
                 float playableHorizontalSpanProfileMinYNormalizedMetadata,
                 float playableHorizontalSpanProfileMaxYNormalizedMetadata,
                 IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata,
+                bool hasPlayableOutlineMetadata,
+                IReadOnlyList<Vector2> playableOutlineNormalizedMetadata,
                 IReadOnlyList<BakedBlockedTileMask> bakedBlockedTileMasksMetadata,
                 float backgroundScaleMultiplier,
                 bool renderPlayableAreaOverlay,
@@ -174,6 +179,8 @@ namespace FungusToast.Unity.Grid
                 PlayableHorizontalSpanProfileMinYNormalizedMetadata = Mathf.Clamp01(Mathf.Min(playableHorizontalSpanProfileMinYNormalizedMetadata, playableHorizontalSpanProfileMaxYNormalizedMetadata));
                 PlayableHorizontalSpanProfileMaxYNormalizedMetadata = Mathf.Clamp01(Mathf.Max(playableHorizontalSpanProfileMinYNormalizedMetadata, playableHorizontalSpanProfileMaxYNormalizedMetadata));
                 PlayableHorizontalSpanProfileMetadata = playableHorizontalSpanProfileMetadata ?? Array.Empty<PlayableHorizontalSpanStop>();
+                HasPlayableOutlineMetadata = hasPlayableOutlineMetadata;
+                PlayableOutlineNormalizedMetadata = playableOutlineNormalizedMetadata ?? Array.Empty<Vector2>();
                 BakedBlockedTileMasksMetadata = bakedBlockedTileMasksMetadata ?? Array.Empty<BakedBlockedTileMask>();
                 BackgroundScaleMultiplier = backgroundScaleMultiplier;
                 RenderPlayableAreaOverlay = renderPlayableAreaOverlay;
@@ -208,6 +215,8 @@ namespace FungusToast.Unity.Grid
             public float PlayableHorizontalSpanProfileMinYNormalizedMetadata { get; }
             public float PlayableHorizontalSpanProfileMaxYNormalizedMetadata { get; }
             public IReadOnlyList<PlayableHorizontalSpanStop> PlayableHorizontalSpanProfileMetadata { get; }
+            public bool HasPlayableOutlineMetadata { get; }
+            public IReadOnlyList<Vector2> PlayableOutlineNormalizedMetadata { get; }
             public IReadOnlyList<BakedBlockedTileMask> BakedBlockedTileMasksMetadata { get; }
             public float BackgroundScaleMultiplier { get; }
             public bool RenderPlayableAreaOverlay { get; }
@@ -224,6 +233,7 @@ namespace FungusToast.Unity.Grid
                 && (DeriveBlockedTilesFromBackgroundAlpha
                     || HasPlayableEllipseMetadata
                     || HasPlayableHorizontalSpanProfileMetadata
+                    || HasPlayableOutlineMetadata
                     || BakedBlockedTileMasksMetadata.Count > 0
                     || RequiresImplicitAlphaTrimFallback(
                         HasVisibleAlphaBoundsMetadata,
@@ -442,6 +452,9 @@ namespace FungusToast.Unity.Grid
                 out float playableHorizontalSpanProfileMinYNormalizedMetadata,
                 out float playableHorizontalSpanProfileMaxYNormalizedMetadata,
                 out IReadOnlyList<PlayableHorizontalSpanStop> playableHorizontalSpanProfileMetadata);
+            bool hasPlayableOutlineMetadata = TryGetBackgroundSpriteMetadataPlayableOutline(
+                resolvedBackgroundSprite,
+                out IReadOnlyList<Vector2> playableOutlineNormalizedMetadata);
             TryGetBackgroundSpriteMetadataBakedBlockedTileMasks(
                 resolvedBackgroundSprite,
                 out IReadOnlyList<BakedBlockedTileMask> bakedBlockedTileMasksMetadata);
@@ -470,6 +483,8 @@ namespace FungusToast.Unity.Grid
                 playableHorizontalSpanProfileMinYNormalizedMetadata,
                 playableHorizontalSpanProfileMaxYNormalizedMetadata,
                 playableHorizontalSpanProfileMetadata,
+                hasPlayableOutlineMetadata,
+                playableOutlineNormalizedMetadata,
                 bakedBlockedTileMasksMetadata,
                 resolvedBackgroundScaleMultiplier,
                 resolvedRenderPlayableAreaOverlay,
@@ -522,6 +537,15 @@ namespace FungusToast.Unity.Grid
                 return MergeBlockedTileIds(bakedBlockedTileIds, explicitBlockedTileIds, boardWidth, boardHeight);
             }
 
+            if (settings.HasPlayableOutlineMetadata)
+            {
+                return MergeBlockedTileIds(
+                    BuildBlockedTileIdsFromOutline(settings, boardWidth, boardHeight),
+                    explicitBlockedTileIds,
+                    boardWidth,
+                    boardHeight);
+            }
+
             if (settings.HasPlayableHorizontalSpanProfileMetadata)
             {
                 return MergeBlockedTileIds(
@@ -544,6 +568,7 @@ namespace FungusToast.Unity.Grid
                 && settings.BakedBlockedTileMasksMetadata.Count == 0
                 && !settings.HasPlayableEllipseMetadata
                 && !settings.HasPlayableHorizontalSpanProfileMetadata
+                && !settings.HasPlayableOutlineMetadata
                 && RequiresImplicitAlphaTrimFallback(
                     settings.HasVisibleAlphaBoundsMetadata,
                     settings.VisibleAlphaBoundsNormalizedMetadata,
@@ -802,6 +827,19 @@ namespace FungusToast.Unity.Grid
             return true;
         }
 
+        private bool TryGetBackgroundSpriteMetadataPlayableOutline(Sprite sprite, out IReadOnlyList<Vector2> playableOutlineNormalized)
+        {
+            playableOutlineNormalized = Array.Empty<Vector2>();
+            BoardBackgroundSpriteMetadata metadata = GetBackgroundSpriteMetadata(sprite);
+            if (metadata == null || !metadata.hasPlayableOutline || metadata.playableOutlineNormalized == null || metadata.playableOutlineNormalized.Count < 3)
+            {
+                return false;
+            }
+
+            playableOutlineNormalized = metadata.playableOutlineNormalized;
+            return true;
+        }
+
         private bool TryGetBackgroundSpriteMetadataBakedBlockedTileMasks(
             Sprite sprite,
             out IReadOnlyList<BakedBlockedTileMask> bakedBlockedTileMasks)
@@ -999,6 +1037,145 @@ namespace FungusToast.Unity.Grid
             }
 
             return blockedTileIds;
+        }
+
+        /// <summary>
+        /// Tests tiles against the sprite's traced outline with the same sampling the alpha mask uses, so a medium
+        /// gets an exact footprint at any board size from a few hundred stored points instead of per-size masks.
+        /// </summary>
+        private IReadOnlyCollection<int> BuildBlockedTileIdsFromOutline(ResolvedBoardBackgroundSettings settings, int boardWidth, int boardHeight)
+        {
+            Rect safeArea = GetEffectiveBackgroundSafeAreaNormalized(
+                settings.BackgroundSprite,
+                settings.SafeAreaNormalized,
+                settings.ShouldUseBackgroundPlayableMask,
+                settings.ComposeSafeAreaWithBoardBoundsMetadata,
+                settings.HasVisibleAlphaBoundsMetadata,
+                settings.VisibleAlphaBoundsNormalizedMetadata,
+                settings.HasBoardBoundsMetadata,
+                settings.BoardBoundsNormalizedMetadata,
+                settings.HasPlayableEllipseMetadata,
+                settings.PlayableEllipseCenterNormalizedMetadata,
+                settings.PlayableEllipseRadiiNormalizedMetadata,
+                boardWidth,
+                boardHeight);
+            float minimumTileCoverage = Mathf.Clamp01(settings.BackgroundMinTileCoverage);
+            float[] clipBudgetSampleOffsets = BoardMaskClipSampling.BuildClipBudgetSampleOffsets(
+                Mathf.Max(1f, playableSurfaceTileScale),
+                Mathf.Clamp(settings.BackgroundMaxTileClipFraction, 0f, 0.49f),
+                Mathf.Clamp(settings.BackgroundTileClipSampleResolution, 1, 7));
+            var outline = new OutlineInsideTester(settings.PlayableOutlineNormalizedMetadata);
+            var blockedTileIds = new List<int>();
+
+            for (int y = 0; y < boardHeight; y++)
+            {
+                for (int x = 0; x < boardWidth; x++)
+                {
+                    bool isPlayable = EvaluateTileOutlineClipBudget(outline, safeArea, boardWidth, boardHeight, x, y, clipBudgetSampleOffsets)
+                        && (minimumTileCoverage <= 0f
+                            || EvaluateTileOutlineCoverage(outline, safeArea, boardWidth, boardHeight, x, y, minimumTileCoverage));
+                    if (!isPlayable)
+                    {
+                        blockedTileIds.Add((y * boardWidth) + x);
+                    }
+                }
+            }
+
+            return blockedTileIds;
+        }
+
+        private static bool EvaluateTileOutlineClipBudget(
+            OutlineInsideTester outline,
+            Rect safeArea,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            IReadOnlyList<float> sampleOffsets)
+        {
+            for (int sampleY = 0; sampleY < sampleOffsets.Count; sampleY++)
+            {
+                float normalizedY = safeArea.yMin + ((tileY + 0.5f + sampleOffsets[sampleY]) / boardHeight) * safeArea.height;
+                for (int sampleX = 0; sampleX < sampleOffsets.Count; sampleX++)
+                {
+                    float normalizedX = safeArea.xMin + ((tileX + 0.5f + sampleOffsets[sampleX]) / boardWidth) * safeArea.width;
+                    if (!outline.Contains(normalizedX, normalizedY))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private static bool EvaluateTileOutlineCoverage(
+            OutlineInsideTester outline,
+            Rect safeArea,
+            int boardWidth,
+            int boardHeight,
+            int tileX,
+            int tileY,
+            float minimumTileCoverage)
+        {
+            const int sampleResolution = 5;
+            int coveredSamples = 0;
+            for (int sampleY = 0; sampleY < sampleResolution; sampleY++)
+            {
+                float normalizedY = safeArea.yMin + ((tileY + ((sampleY + 0.5f) / sampleResolution)) / boardHeight) * safeArea.height;
+                for (int sampleX = 0; sampleX < sampleResolution; sampleX++)
+                {
+                    float normalizedX = safeArea.xMin + ((tileX + ((sampleX + 0.5f) / sampleResolution)) / boardWidth) * safeArea.width;
+                    if (outline.Contains(normalizedX, normalizedY))
+                    {
+                        coveredSamples++;
+                    }
+                }
+            }
+
+            return ((float)coveredSamples / (sampleResolution * sampleResolution)) >= minimumTileCoverage;
+        }
+
+        /// <summary>Even-odd point-in-polygon test; crossings are cached per sample row since a board reuses each row many times.</summary>
+        private sealed class OutlineInsideTester
+        {
+            private readonly IReadOnlyList<Vector2> _points;
+            private readonly Dictionary<float, float[]> _crossingsByY = new();
+            private readonly List<float> _scratch = new();
+
+            public OutlineInsideTester(IReadOnlyList<Vector2> points)
+            {
+                _points = points;
+            }
+
+            public bool Contains(float x, float y)
+            {
+                if (!_crossingsByY.TryGetValue(y, out float[] crossings))
+                {
+                    _scratch.Clear();
+                    for (int i = 0; i < _points.Count; i++)
+                    {
+                        Vector2 a = _points[i];
+                        Vector2 b = _points[(i + 1) % _points.Count];
+                        if ((a.y <= y) != (b.y <= y))
+                        {
+                            _scratch.Add(a.x + ((y - a.y) / (b.y - a.y)) * (b.x - a.x));
+                        }
+                    }
+
+                    crossings = _scratch.ToArray();
+                    Array.Sort(crossings);
+                    _crossingsByY[y] = crossings;
+                }
+
+                int crossingsLeftOfX = 0;
+                while (crossingsLeftOfX < crossings.Length && crossings[crossingsLeftOfX] <= x)
+                {
+                    crossingsLeftOfX++;
+                }
+
+                return (crossingsLeftOfX & 1) == 1;
+            }
         }
 
         private IReadOnlyCollection<int> BuildBlockedTileIdsFromHorizontalSpanProfile(ResolvedBoardBackgroundSettings settings, int boardWidth, int boardHeight)

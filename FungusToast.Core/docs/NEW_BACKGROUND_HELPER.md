@@ -12,7 +12,8 @@ Use this checklist when adding a brand-new board background:
    - plain alpha when the sprite alpha already matches the playable shape
    - ellipse metadata for boards whose playable area should be a true geometric circle or oval rather than follow the photo edge
    - horizontal span profile for stable row-by-row authored trims such as cheese
-   - baked masks for irregular photo silhouettes that need an exact square gameplay envelope such as Kaiser Bun, pita, and the toenail
+   - a traced outline for photo silhouettes that should play exactly to their edge inside a square board, such as pita and the toenail
+   - baked masks only for a footprint the outline can't express, such as hand-picked per-size exceptions
 2. Import the sprite and add or update the background entry in `ToastBoardMedium.asset`.
 3. Add a matching `boardBackgroundSpriteMetadata` entry for the sprite.
 4. Start from the conservative baseline:
@@ -20,7 +21,7 @@ Use this checklist when adding a brand-new board background:
    - `backgroundScaleMultiplier: 1.0`
    - `backgroundMaxTileClipFraction: 0.0`
    - `backgroundTileClipSampleResolution: 5`
-5. If the shape is irregular and should still play as a square board, follow the baked-mask workflow below instead of widening insets until it "looks close enough".
+5. If the shape is irregular and should still play as a square board, follow the traced-outline workflow below instead of widening insets until it "looks close enough".
 6. Run the validator, then do the Unity visual pass. Do not treat validator success as sufficient by itself.
 
 ## When To Use Which Shape Source
@@ -28,11 +29,30 @@ Use this checklist when adding a brand-new board background:
 Pick the simplest shape model that matches the intended playable silhouette.
 
 1. Use plain alpha-derived masking when the visible sprite alpha already cleanly matches the intended board footprint.
-2. Use `hasPlayableEllipse` only when the playable area should be a geometric ellipse. A real round food photo is rarely a true circle: pita used an ellipse until 2026-09-30, and it overhung the bread at the corners. It now uses baked masks.
+2. Use `hasPlayableEllipse` only when the playable area should be a geometric ellipse. A real round food photo is rarely a true circle: pita used an ellipse until 2026-09-30, and it overhung the bread at the corners.
 3. Use `hasPlayableHorizontalSpanProfile` when the silhouette needs authored asymmetric per-row trimming and the board-space shape is still easy to describe row by row.
-4. Use `bakedBlockedTileMasks` when the intended silhouette is irregular enough that row spans are brittle or when non-square source art needs a deliberately centered square gameplay envelope with conservative trimming.
+4. Use `hasPlayableOutline` when the playable area should follow the photo's edge. The outline is a closed polygon of a few dozen to a few hundred points traced from the sprite's alpha. The runtime tests each tile against it with the same sampling the alpha mask uses, so one outline gives an exact footprint at every board size.
+5. Use `bakedBlockedTileMasks` only when a footprint can't be described by the sprite's edge. Baked masks store every blocked tile for one exact board size, so a medium offered at many sizes costs tens of thousands of asset lines; pita alone was about 90k before it moved to an outline.
 
-The baked-mask path is the preferred workflow for irregular bread-photo boards like Kaiser Bun.
+The traced outline is the preferred workflow for irregular photo boards.
+
+## Traced-Outline Workflow
+
+Use this for irregular backgrounds whose gameplay board is square but whose playable area should follow the art's edge.
+
+1. Make the sprite's alpha the intended playable shape. A clean cutout already is one. When only part of a photo should be playable (the nail in a toe photo), cut that part out as its own sprite and put the rest of the photo in the backdrop surface.
+2. Emit the outline. The tool traces the alpha contour at the sprite's `backgroundAlphaPlayableThreshold`, simplifies it, and reports how many tiles would differ from any existing baked masks:
+
+   ```powershell
+   .\.venv\Scripts\python.exe scripts/validate_board_backgrounds.py --emit-outline-sprite <sprite-name> --emit-outline-tolerance-px 0.75
+   ```
+
+   0.75 px keeps the polygon within a fraction of a tile at every board size. A hard-edged cutout is a pixel staircase and needs a few hundred points; an antialiased edge needs far fewer (the toenail needs 58).
+3. In the sprite's `boardBackgroundSpriteMetadata` entry, set `hasBoardBounds: 1` with the square `boardBoundsNormalized` from `--emit-baked-mask-sprite` (step 2 of the baked workflow below), paste the `hasPlayableOutline` / `playableOutlineNormalized` snippet, and leave `bakedBlockedTileMasks: []`. Baked masks take priority over the outline, so remove any stale ones.
+4. Zero the size band's insets and set `composeSafeAreaWithBoardBoundsMetadata: 0` so the square owns placement.
+5. Run the validator and confirm the probes report `outline-shape` for that sprite's sizes, then do the Unity visual pass at a few sizes across the band.
+
+Re-emit the outline whenever the sprite's pixels change.
 
 ## Before You Start Tuning
 
@@ -132,7 +152,7 @@ Do not keep widening insets, scale multipliers, or clip budgets to compensate fo
 
 ## Contour-To-Square Baked-Mask Workflow
 
-Use this for irregular backgrounds whose intended gameplay board is square but whose art alpha is not.
+Prefer the traced-outline workflow above. This one stores a full blocked-tile list per board size, so use it only for footprints an outline can't describe. Its square-envelope step still applies to outlines.
 
 ### 1. Measure The Visible Perimeter
 
@@ -269,7 +289,7 @@ If a new background still looks wrong, check these before inventing more tuning:
 
 ## Regeneration Rules
 
-Rebake the masks if any of these change:
+Re-emit the outline (or rebake any baked masks) if any of these change:
 
 1. the source sprite pixels
 2. the intended square `boardBoundsNormalized`
@@ -281,10 +301,10 @@ Do not preserve old baked masks after a validator coordinate-system fix either; 
 
 ## Current Example
 
-Kaiser Bun is the reference implementation for this workflow:
+Kaiser Bun shows the current setup, and every other medium follows it:
 
 1. visible alpha stays recorded as the measured bun silhouette
 2. `boardBoundsNormalized` is the normalized rect emitted from the centered pixel-space square derived from `max(width, height)`
-3. the size bands `85x85`, `90x90`, and `95x95` use `bakedBlockedTileMasks`
+3. `playableOutlineNormalized` holds the traced edge (264 points), and `bakedBlockedTileMasks` is empty
 4. band insets are zeroed so the square envelope, blocked tiles, and rendered art all line up
-5. the validator/runtime row orientation must stay bottom-origin end-to-end or the bun's top contour will be baked onto the lower rows
+5. the validator/runtime row orientation must stay bottom-origin end-to-end or the bun's top contour will land on the lower rows

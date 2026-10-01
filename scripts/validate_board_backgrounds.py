@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import bisect
 import hashlib
 import math
 import re
@@ -65,6 +66,8 @@ class SpriteMetadata:
     playable_horizontal_span_profile_min_y: float
     playable_horizontal_span_profile_max_y: float
     playable_horizontal_span_profile: list[tuple[float, float, float]]
+    has_playable_outline: bool
+    playable_outline: list[tuple[float, float]]
     baked_blocked_tile_masks: list["BakedBlockedTileMask"]
 
 
@@ -156,6 +159,18 @@ def main() -> int:
         help="Comma-separated board sizes for baked-mask emission, for example '85x85,90x90,95x95'.",
     )
     parser.add_argument(
+        "--emit-outline-sprite",
+        type=str,
+        default="",
+        help="Optional sprite file name, stem, or guid to trace a playable outline from its alpha and emit a YAML snippet for.",
+    )
+    parser.add_argument(
+        "--emit-outline-tolerance-px",
+        type=float,
+        default=0.35,
+        help="Largest distance, in sprite pixels, the simplified outline may stray from the traced alpha contour.",
+    )
+    parser.add_argument(
         "--emit-baked-mask-version",
         type=str,
         default="contour-square-v1",
@@ -235,6 +250,7 @@ def main() -> int:
             f"board={'none' if not metadata.has_board_bounds else format_rect(metadata.board_bounds)} "
             f"ellipse={'none' if not metadata.has_playable_ellipse else format_ellipse(metadata.playable_ellipse_center, metadata.playable_ellipse_radii)} "
             f"profile={'none' if not metadata.has_playable_horizontal_span_profile else format_horizontal_span_profile(metadata.playable_horizontal_span_profile, metadata.playable_horizontal_span_profile_min_y, metadata.playable_horizontal_span_profile_max_y)} "
+            f"outline={'none' if not metadata.has_playable_outline else str(len(metadata.playable_outline)) + ' points'} "
             f"baked={'none' if not metadata.baked_blocked_tile_masks else format_baked_mask_summary(metadata.baked_blocked_tile_masks)}"
         )
 
@@ -279,6 +295,19 @@ def main() -> int:
                 overrides,
                 errors,
             )
+
+    if args.emit_outline_sprite:
+        print("")
+        print("Outline emission:")
+        emit_outline_snippet(
+            args.emit_outline_sprite,
+            args.emit_outline_tolerance_px,
+            metadata_by_guid,
+            sprite_images,
+            default_settings,
+            overrides,
+            errors,
+        )
 
     if errors:
         print("")
@@ -367,6 +396,8 @@ def build_metadata_map(asset: dict, sprite_guid_map: dict[str, Path]) -> dict[st
             playable_horizontal_span_profile_min_y=float(entry.get("playableHorizontalSpanProfileMinYNormalized", 0.0)),
             playable_horizontal_span_profile_max_y=float(entry.get("playableHorizontalSpanProfileMaxYNormalized", 1.0)),
             playable_horizontal_span_profile=horizontal_span_profile_from_yaml(entry.get("playableHorizontalSpanProfile")),
+            has_playable_outline=bool(entry.get("hasPlayableOutline", False)),
+            playable_outline=outline_from_yaml(entry.get("playableOutlineNormalized")),
             baked_blocked_tile_masks=baked_blocked_tile_masks_from_yaml(entry.get("bakedBlockedTileMasks")),
         )
     return metadata_by_guid
@@ -606,7 +637,7 @@ def collect_override_notes(settings: BackgroundSettings, notes: list[str]) -> No
             settings.metadata.board_bounds,
             0.0,
             0.0,
-        ):
+        ) and not settings.metadata.has_playable_outline:
             if settings.metadata.has_playable_horizontal_span_profile:
                 notes.append(
                     f"{settings.sprite_path.name} {settings.override_description}: boardBoundsNormalized extends past visible alpha bounds and relies on the authored horizontal-span profile to trim the overhang."
@@ -636,6 +667,7 @@ def evaluate_probe(
     effective_safe_area = get_effective_safe_area(settings, width, height)
     effective_ellipse = get_effective_playable_ellipse(settings)
     effective_horizontal_span_profile = get_effective_playable_horizontal_span_profile(settings)
+    outline_tester = get_playable_outline_tester(settings)
     clip_offsets = build_clip_budget_sample_offsets(
         PLAYABLE_SURFACE_TILE_SCALE,
         settings.max_tile_clip_fraction,
@@ -657,6 +689,31 @@ def evaluate_probe(
             if baked_blocked_tile_ids:
                 satisfies_clip_budget = True
                 satisfies_coverage = True
+            elif outline_tester is not None:
+                satisfies_clip_budget = (
+                    not clip_offsets
+                    or evaluate_tile_outline_clip_budget(
+                        outline_tester,
+                        effective_safe_area,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        clip_offsets,
+                    )
+                )
+                satisfies_coverage = (
+                    minimum_tile_coverage <= 0.0
+                    or evaluate_tile_outline_coverage(
+                        outline_tester,
+                        effective_safe_area,
+                        width,
+                        height,
+                        tile_x,
+                        tile_y,
+                        minimum_tile_coverage,
+                    )
+                )
             elif effective_horizontal_span_profile is not None:
                 satisfies_clip_budget = (
                     not clip_offsets
@@ -736,7 +793,7 @@ def evaluate_probe(
 
     total_tiles = width * height
     playable_tiles = total_tiles - blocked_tiles
-    effective_area_transparency_fraction = 0.0 if effective_ellipse is not None or effective_horizontal_span_profile is not None else measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold)
+    effective_area_transparency_fraction = 0.0 if effective_ellipse is not None or effective_horizontal_span_profile is not None or outline_tester is not None else measure_effective_area_transparency_fraction(image, effective_safe_area, alpha_threshold)
     return ProbeResult(
         width=width,
         height=height,
@@ -746,7 +803,7 @@ def evaluate_probe(
         total_tiles=total_tiles,
         effective_safe_area=effective_safe_area,
         effective_area_transparency_fraction=effective_area_transparency_fraction,
-        shape_source="baked-mask" if baked_blocked_tile_ids else ("profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area"))),
+        shape_source="baked-mask" if baked_blocked_tile_ids else "outline-shape" if outline_tester is not None else ("profile-shape" if effective_horizontal_span_profile is not None else ("ellipse-shape" if effective_ellipse is not None else ("alpha-shape" if effective_area_transparency_fraction > 0.0 else "rect-safe-area"))),
     )
 
 
@@ -1538,6 +1595,290 @@ def emit_baked_mask_snippet(
                 print(f"        - {tile_id}")
         else:
             print("        []")
+
+
+class OutlineInsideTester:
+    """Even-odd point-in-polygon test with crossings cached per sample row, so a whole board is cheap."""
+
+    def __init__(self, points: list[tuple[float, float]]):
+        self._edges = [(points[index], points[(index + 1) % len(points)]) for index in range(len(points))]
+        self._crossings_by_y: dict[float, list[float]] = {}
+
+    def contains(self, x: float, y: float) -> bool:
+        crossings = self._crossings_by_y.get(y)
+        if crossings is None:
+            crossings = sorted(
+                x0 + ((y - y0) / (y1 - y0)) * (x1 - x0)
+                for (x0, y0), (x1, y1) in self._edges
+                if (y0 <= y) != (y1 <= y)
+            )
+            self._crossings_by_y[y] = crossings
+        return bisect.bisect_right(crossings, x) % 2 == 1
+
+
+def outline_from_yaml(data: list[dict] | None) -> list[tuple[float, float]]:
+    return [(float(point.get("x", 0.0)), float(point.get("y", 0.0))) for point in (data or [])]
+
+
+def get_playable_outline_tester(settings: BackgroundSettings) -> OutlineInsideTester | None:
+    metadata = settings.metadata
+    if metadata is None or not metadata.has_playable_outline or len(metadata.playable_outline) < 3:
+        return None
+    return OutlineInsideTester(metadata.playable_outline)
+
+
+def evaluate_tile_outline_clip_budget(
+    tester: OutlineInsideTester,
+    safe_area: Rect,
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    sample_offsets: list[float],
+) -> bool:
+    for sample_offset_y in sample_offsets:
+        normalized_y = safe_area.y_min + ((tile_y + 0.5 + sample_offset_y) / board_height) * safe_area.height
+        for sample_offset_x in sample_offsets:
+            normalized_x = safe_area.x_min + ((tile_x + 0.5 + sample_offset_x) / board_width) * safe_area.width
+            if not tester.contains(normalized_x, normalized_y):
+                return False
+    return True
+
+
+def evaluate_tile_outline_coverage(
+    tester: OutlineInsideTester,
+    safe_area: Rect,
+    board_width: int,
+    board_height: int,
+    tile_x: int,
+    tile_y: int,
+    minimum_tile_coverage: float,
+) -> bool:
+    sample_resolution = 5
+    covered_samples = 0
+    for sample_y in range(sample_resolution):
+        normalized_y = safe_area.y_min + ((tile_y + ((sample_y + 0.5) / sample_resolution)) / board_height) * safe_area.height
+        for sample_x in range(sample_resolution):
+            normalized_x = safe_area.x_min + ((tile_x + ((sample_x + 0.5) / sample_resolution)) / board_width) * safe_area.width
+            if tester.contains(normalized_x, normalized_y):
+                covered_samples += 1
+    return (covered_samples / (sample_resolution * sample_resolution)) >= minimum_tile_coverage
+
+
+def trace_alpha_outline(image: SpriteImage, alpha_threshold: float) -> tuple[list[tuple[float, float]], int]:
+    """
+    Marching squares over the alpha grid, in the same pixel-center coordinates sample_alpha_bilinear uses
+    (column c sits at x = c / (width - 1)). Returns the largest loop in pixel units (origin bottom-left)
+    and how many loops were found in total.
+    """
+    width, height = image.width, image.height
+    threshold = alpha_threshold * 255.0
+
+    def value(row: int, col: int) -> float:
+        if row < 0 or row >= height or col < 0 or col >= width:
+            return 0.0
+        return float(image.alpha_rows[row][col])
+
+    def point(edge: tuple[str, int, int]) -> tuple[float, float]:
+        kind, row, col = edge
+        if kind == "h":
+            va, vb = value(row, col), value(row, col + 1)
+            t = (threshold - va) / (vb - va)
+            return (col + t, (height - 1) - row)
+        va, vb = value(row, col), value(row + 1, col)
+        t = (threshold - va) / (vb - va)
+        return (col, (height - 1) - (row + t))
+
+    neighbors: dict[tuple[str, int, int], list[tuple[str, int, int]]] = {}
+
+    def link(a: tuple[str, int, int], b: tuple[str, int, int]) -> None:
+        neighbors.setdefault(a, []).append(b)
+        neighbors.setdefault(b, []).append(a)
+
+    for row in range(-1, height):
+        for col in range(-1, width):
+            tl, tr = value(row, col) >= threshold, value(row, col + 1) >= threshold
+            bl, br = value(row + 1, col) >= threshold, value(row + 1, col + 1) >= threshold
+            case = (8 if tl else 0) | (4 if tr else 0) | (2 if br else 0) | (1 if bl else 0)
+            if case in (0, 15):
+                continue
+            top, bottom = ("h", row, col), ("h", row + 1, col)
+            left, right = ("v", row, col), ("v", row, col + 1)
+            if case in (1, 14):
+                link(left, bottom)
+            elif case in (2, 13):
+                link(bottom, right)
+            elif case in (3, 12):
+                link(left, right)
+            elif case in (4, 11):
+                link(top, right)
+            elif case in (6, 9):
+                link(top, bottom)
+            elif case in (7, 8):
+                link(left, top)
+            else:
+                center_inside = (value(row, col) + value(row, col + 1) + value(row + 1, col) + value(row + 1, col + 1)) * 0.25 >= threshold
+                # Case 5 has the top-right and bottom-left corners inside; case 10 the top-left and bottom-right.
+                # A filled center joins the inside corners, so the segments cut off the outside ones.
+                if (case == 5) == center_inside:
+                    link(left, top)
+                    link(bottom, right)
+                else:
+                    link(left, bottom)
+                    link(top, right)
+
+    loops: list[list[tuple[float, float]]] = []
+    visited: set[tuple[str, int, int]] = set()
+    for start in neighbors:
+        if start in visited:
+            continue
+        loop = [start]
+        visited.add(start)
+        previous, current = None, start
+        while True:
+            options = [edge for edge in neighbors[current] if edge != previous and edge not in visited]
+            if not options:
+                break
+            previous, current = current, options[0]
+            visited.add(current)
+            loop.append(current)
+        loops.append([point(edge) for edge in loop])
+
+    if not loops:
+        return [], 0
+    largest = max(loops, key=lambda loop: abs(polygon_area(loop)))
+    return largest, len(loops)
+
+
+def polygon_area(points: list[tuple[float, float]]) -> float:
+    return 0.5 * sum(
+        (points[index][0] * points[(index + 1) % len(points)][1]) - (points[(index + 1) % len(points)][0] * points[index][1])
+        for index in range(len(points))
+    )
+
+
+def simplify_closed_polygon(points: list[tuple[float, float]], tolerance: float) -> list[tuple[float, float]]:
+    """Douglas-Peucker on a closed loop, split at two far-apart vertices."""
+    if len(points) < 4:
+        return points[:]
+
+    def distance_squared(a: int, b: int) -> float:
+        return ((points[a][0] - points[b][0]) ** 2) + ((points[a][1] - points[b][1]) ** 2)
+
+    far = max(range(len(points)), key=lambda index: distance_squared(index, 0))
+    anchor = max(range(len(points)), key=lambda index: distance_squared(index, far))
+    rotated = points[anchor:] + points[:anchor]
+    split = (far - anchor) % len(points)
+
+    def simplify_open(chain: list[tuple[float, float]]) -> list[tuple[float, float]]:
+        keep = [False] * len(chain)
+        keep[0] = keep[-1] = True
+        stack = [(0, len(chain) - 1)]
+        while stack:
+            start, end = stack.pop()
+            (x0, y0), (x1, y1) = chain[start], chain[end]
+            dx, dy = x1 - x0, y1 - y0
+            length = math.hypot(dx, dy)
+            best_index, best_distance = -1, tolerance
+            for index in range(start + 1, end):
+                px, py = chain[index]
+                distance = abs((dy * (px - x0)) - (dx * (py - y0))) / length if length > 0 else math.hypot(px - x0, py - y0)
+                if distance > best_distance:
+                    best_index, best_distance = index, distance
+            if best_index >= 0:
+                keep[best_index] = True
+                stack.append((start, best_index))
+                stack.append((best_index, end))
+        return [chain[index] for index in range(len(chain)) if keep[index]]
+
+    first = simplify_open(rotated[:split + 1])
+    second = simplify_open(rotated[split:] + rotated[:1])
+    return first[:-1] + second[:-1]
+
+
+def build_outline_blocked_tile_ids(
+    tester: OutlineInsideTester,
+    board_bounds: Rect,
+    board_width: int,
+    board_height: int,
+    min_tile_coverage: float,
+    clip_offsets: list[float],
+) -> set[int]:
+    blocked: set[int] = set()
+    for tile_y in range(board_height):
+        for tile_x in range(board_width):
+            playable = (
+                (not clip_offsets or evaluate_tile_outline_clip_budget(tester, board_bounds, board_width, board_height, tile_x, tile_y, clip_offsets))
+                and (min_tile_coverage <= 0.0 or evaluate_tile_outline_coverage(tester, board_bounds, board_width, board_height, tile_x, tile_y, min_tile_coverage))
+            )
+            if not playable:
+                blocked.add((tile_y * board_width) + tile_x)
+    return blocked
+
+
+def emit_outline_snippet(
+    sprite_identifier: str,
+    tolerance_px: float,
+    metadata_by_guid: dict[str, SpriteMetadata],
+    sprite_images: dict[str, SpriteImage],
+    default_settings: BackgroundSettings,
+    overrides: list[BackgroundSettings],
+    errors: list[str],
+) -> None:
+    metadata = resolve_sprite_metadata(sprite_identifier, metadata_by_guid)
+    if metadata is None:
+        errors.append(f"No sprite metadata entry matched '{sprite_identifier}'.")
+        return
+
+    image = sprite_images.get(metadata.sprite_guid)
+    if image is None:
+        errors.append(f"No readable sprite image found for {metadata.sprite_path.name}.")
+        return
+
+    settings = next(
+        (candidate for candidate in [*overrides, default_settings] if candidate.sprite_guid == metadata.sprite_guid),
+        None,
+    )
+    alpha_threshold = settings.alpha_playable_threshold if settings is not None else 0.1
+    traced, loop_count = trace_alpha_outline(image, alpha_threshold)
+    if len(traced) < 3:
+        errors.append(f"No alpha contour found for {metadata.sprite_path.name}.")
+        return
+
+    simplified = simplify_closed_polygon(traced, tolerance_px)
+    normalized = [(x / (image.width - 1), y / (image.height - 1)) for x, y in simplified]
+    tester = OutlineInsideTester(normalized)
+
+    print(f"  Sprite: {metadata.sprite_path.name}")
+    print(
+        f"  Alpha threshold: {alpha_threshold}  loops found: {loop_count}  traced points: {len(traced)}  "
+        f"simplified points: {len(simplified)} (tolerance {tolerance_px} px)"
+    )
+    if metadata.has_board_bounds and metadata.baked_blocked_tile_masks and settings is not None:
+        print("  Parity against existing baked masks (tiles that differ):")
+        board_bounds = sanitize_rect(metadata.board_bounds)
+        for baked_mask in metadata.baked_blocked_tile_masks:
+            size_settings = resolve_settings_for_sprite_and_size(
+                metadata.sprite_guid, baked_mask.board_width, baked_mask.board_height, default_settings, overrides
+            ) or settings
+            clip_offsets = build_clip_budget_sample_offsets(
+                PLAYABLE_SURFACE_TILE_SCALE,
+                size_settings.max_tile_clip_fraction,
+                size_settings.tile_clip_sample_resolution,
+            )
+            outline_blocked = build_outline_blocked_tile_ids(
+                tester, board_bounds, baked_mask.board_width, baked_mask.board_height, size_settings.min_tile_coverage, clip_offsets
+            )
+            baked = set(baked_mask.blocked_tile_ids)
+            print(
+                f"    {baked_mask.board_width}x{baked_mask.board_height}: baked={len(baked)} outline={len(outline_blocked)} "
+                f"only-baked={len(baked - outline_blocked)} only-outline={len(outline_blocked - baked)}"
+            )
+    print("  YAML snippet:")
+    print("    hasPlayableOutline: 1")
+    print("    playableOutlineNormalized:")
+    for x, y in normalized:
+        print(f"    - {{x: {x:.6f}, y: {y:.6f}}}")
 
 
 def clamp01(value: float) -> float:
