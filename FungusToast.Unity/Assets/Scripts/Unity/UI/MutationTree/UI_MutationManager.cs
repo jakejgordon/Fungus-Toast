@@ -32,6 +32,7 @@ namespace FungusToast.Unity.UI.MutationTree
         private const string FinalRoundBankPointsTooltipText = "Ends your mutation phase now.\nThis is the final round, so banked points\nwill never be spent.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
+        private const float SpendButtonTwoLineHeight = 60f;
         private const float SpendPointsRowHeight = 82f;
         private const float BankButtonMinWidth = 220f;
         private const float BankButtonMinHeight = UIStyleTokens.Interaction.MinimumTargetSize;
@@ -2914,7 +2915,11 @@ namespace FungusToast.Unity.UI.MutationTree
 
         private static string BuildSpendPointsLabel(int points)
         {
-            return IsFinalRound ? $"Final Round: Spend {points} Points!" : $"Spend {points} Points!";
+            // The final-round cue sits on its own small caption line so the button keeps
+            // its usual width; RefreshSpendPointsButtonWidth grows the height to fit it.
+            return IsFinalRound
+                ? $"<size=62%><b><cspace=0.08em>FINAL ROUND</cspace></b></size>\nSpend {points} Points!"
+                : $"Spend {points} Points!";
         }
 
         private void RefreshFinalRoundTooltips()
@@ -2963,15 +2968,19 @@ namespace FungusToast.Unity.UI.MutationTree
                 layout = spendPointsButton.gameObject.AddComponent<LayoutElement>();
             }
 
+            // Assigned outright rather than Max'd so the two-line final-round height
+            // does not carry into the next game.
+            float buttonHeight = spendPointsButtonText.text.Contains('\n') ? SpendButtonTwoLineHeight : SpendButtonMinHeight;
+
             layout.minWidth = preferredWidth;
             layout.preferredWidth = preferredWidth;
-            layout.minHeight = Mathf.Max(layout.minHeight, SpendButtonMinHeight);
-            layout.preferredHeight = Mathf.Max(layout.preferredHeight, SpendButtonMinHeight);
+            layout.minHeight = buttonHeight;
+            layout.preferredHeight = buttonHeight;
 
             if (spendPointsButton.TryGetComponent<RectTransform>(out var buttonRect))
             {
                 buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, preferredWidth);
-                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, SpendButtonMinHeight);
+                buttonRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, buttonHeight);
             }
 
             ForceLayoutRebuild(spendPointsButton.transform.parent as RectTransform);
