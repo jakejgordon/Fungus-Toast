@@ -690,10 +690,9 @@ namespace FungusToast.Simulation
                             DefinitionFingerprint = definition.DefinitionFingerprint,
                             StrategyTheme = metadata.Archetype.ToString(),
                             StrategyStatus = metadata.Status.ToString(),
-                            StrategyPowerTier = metadata.PowerTier.ToString(),
                             StrategyRole = metadata.Role.ToString(),
                             StrategyLifecycle = metadata.Lifecycle.ToString(),
-                            DifficultyBands = metadata.DifficultyBands.Select(x => x.ToString()).ToList(),
+                            IntendedBands = metadata.IntendedBands.Select(x => x.ToString()).ToList(),
                             StrategyPools = metadata.Pools.ToString(),
                             FavoredAgainst = metadata.FavoredAgainst.Select(FormatCounterTag).ToList(),
                             WeakAgainst = metadata.WeakAgainst.Select(FormatCounterTag).ToList(),
@@ -785,10 +784,9 @@ namespace FungusToast.Simulation
                         Filter = new ExperimentStrategyFilter
                         {
                             Archetypes = config.StrategyFilter.Archetypes.ToList(),
-                            PowerTiers = config.StrategyFilter.PowerTiers.ToList(),
                             Roles = config.StrategyFilter.Roles.ToList(),
                             Lifecycles = config.StrategyFilter.Lifecycles.ToList(),
-                            DifficultyBands = config.StrategyFilter.DifficultyBands.ToList(),
+                            IntendedBands = config.StrategyFilter.IntendedBands.ToList(),
                             CampaignDifficulties = config.StrategyFilter.CampaignDifficulties.ToList(),
                             Pools = config.StrategyFilter.Pools.ToList()
                         }
@@ -1108,20 +1106,8 @@ namespace FungusToast.Simulation
                         }
                         break;
                     case "--power-tiers":
-                        if (i + 1 < args.Length)
-                        {
-                            var parsed = ParseCsvEnums<StrategyPowerTier>(args[i + 1]);
-                            if (parsed.Count == 0)
-                            {
-                                Console.WriteLine($"Invalid --power-tiers value: {args[i + 1]}");
-                                Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(StrategyPowerTier)))}");
-                                return null;
-                            }
-
-                            config.StrategyFilter.PowerTiers = parsed;
-                            i++;
-                        }
-                        break;
+                        Console.WriteLine("--power-tiers is retired; use --intended-bands, which matches each strategy's authored intended band.");
+                        return null;
                     case "--roles":
                         if (i + 1 < args.Length)
                         {
@@ -1152,18 +1138,19 @@ namespace FungusToast.Simulation
                             i++;
                         }
                         break;
+                    case "--intended-bands":
                     case "--difficulty-bands":
                         if (i + 1 < args.Length)
                         {
                             var parsed = ParseCsvEnums<DifficultyBand>(args[i + 1]);
                             if (parsed.Count == 0)
                             {
-                                Console.WriteLine($"Invalid --difficulty-bands value: {args[i + 1]}");
+                                Console.WriteLine($"Invalid {args[i]} value: {args[i + 1]}");
                                 Console.WriteLine($"Valid values: {string.Join(", ", Enum.GetNames(typeof(DifficultyBand)))}");
                                 return null;
                             }
 
-                            config.StrategyFilter.DifficultyBands = parsed;
+                            config.StrategyFilter.IntendedBands = parsed;
                             i++;
                         }
                         break;
@@ -1518,10 +1505,9 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --strategy-sets <csv>    Batch mode list, e.g. Testing,Proven,Mycovariants");
             Console.WriteLine("  --strategy-names <csv>   Explicit strategy names for single-run mode (overrides --players)");
             Console.WriteLine("  --archetypes <csv>       Filter roster by archetype metadata");
-            Console.WriteLine("  --power-tiers <csv>      Filter roster by power tier metadata");
             Console.WriteLine("  --roles <csv>            Filter roster by role metadata");
             Console.WriteLine("  --lifecycles <csv>       Filter roster by lifecycle metadata");
-            Console.WriteLine("  --difficulty-bands <csv> Filter roster by difficulty metadata");
+            Console.WriteLine("  --intended-bands <csv>   Filter roster by authored intended band (alias: --difficulty-bands)");
             Console.WriteLine("  --pools <csv>            Filter roster by pool metadata");
             Console.WriteLine("  --seed <number>          Base seed for deterministic strategy/order/game seeds (default: 0)");
             Console.WriteLine("  --selection-policy <p>   Strategy sampler: RandomUnique, CoverageBalanced, StratifiedCycle (default: CoverageBalanced)");
@@ -1583,7 +1569,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  dotnet run --seed 12345             # Run with deterministic seed 12345");
             Console.WriteLine("  dotnet run --selection-policy StratifiedCycle --games 100 --no-keyboard");
             Console.WriteLine("  dotnet run --strategy-set Testing --strategy-names TST_BalancedGeneralistControl,TST_BalancedControl_MaxEconomy --games 20 --no-keyboard");
-            Console.WriteLine("  dotnet run --strategy-set Testing --roles Experimental --power-tiers Strong,Spike --games 50 --no-keyboard");
+            Console.WriteLine("  dotnet run --strategy-set Testing --roles Experimental --intended-bands Hard,Elite --games 50 --no-keyboard");
             Console.WriteLine("  dotnet run --experiment-id testA    # Tag outputs under experiment ID testA");
             Console.WriteLine("  dotnet run --width 50 --height 75   # Run with 50x75 board");
             Console.WriteLine("  dotnet run -w 200 -p 4              # Run 4 players on 200x100 board");

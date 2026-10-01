@@ -133,7 +133,25 @@ initialization.
   `(strategy_id, fingerprint)` comparisons across artifacts are unaffected, and
   it keeps resolving as a lookup alias within its set for old saves and
   manifests. If the strategy's theme was being inferred from its name, pin it
-  in `_explicitStrategyThemesByName`; `StratifiedCycle` orders by theme.
+  in `_explicitStrategyArchetypesByName`; `StratifiedCycle` orders by archetype.
+
+### Intended versus measured band
+
+- **Intended band** (`IntendedBands`, authored in `_explicitIntendedBandsByName`)
+  is what the strategy was designed to be. There is no default; leave it unset
+  rather than guess.
+- **Measured band** (`StrategyDefinition.MeasuredBand`, recorded in
+  `StrategyMeasuredBands` by stable ID) is the latest classified evidence, with
+  its matrix, classifier version, date, and source document. Bands are relative
+  to the panel that measured them.
+- Never edit either one to make a disagreement disappear. A gap means the
+  strategy is not doing what it was built to do: retune it, or deliberately
+  re-author its intent. `StrategyBandReport` lists every gap. For strategies
+  fielded by a campaign board preset, a new gap fails
+  `Campaign_preset_strategies_measure_inside_their_intended_band`.
+- Authored power tiers were retired on 2026-09-30. Manifests must leave
+  `powerTiers` empty, and `--power-tiers` is rejected; filter by
+  `difficultyBands` / `--intended-bands` instead.
 
 Roster selection also requires enough registered definitions for every
 requested seat. It never synthesizes numbered `LegacyRandom` strategies; add

@@ -169,7 +169,7 @@ Examples:
 
 Campaign difficulty now has a formal metadata enum: `CampaignDifficulty`.
 Use that as the primary campaign-facing difficulty signal.
-`DifficultyBands` still exist as broader catalog/simulation tags, but campaign curation should prefer `CampaignDifficulty` for level-pool decisions.
+`IntendedBands` record the authored design intent for catalog/simulation filtering, and `StrategyDefinition.MeasuredBand` records the latest classified measurement (`StrategyMeasuredBands`). Campaign curation should prefer `CampaignDifficulty` for level-pool decisions; a campaign-preset strategy whose measured band falls outside its intended band fails `Campaign_preset_strategies_measure_inside_their_intended_band` unless it is acknowledged there.
 
 Current internal Campaign Tier intent:
 - **Training/Easy Tier**

@@ -50,7 +50,7 @@ public sealed class GeneratedCandidateCatalogTests : IDisposable
             Assert.Null(entry.CampaignDifficulty);
             Assert.Equal(StrategyRole.Experimental, entry.Role);
             Assert.Equal(StrategyLifecycle.Draft, entry.Lifecycle);
-            Assert.Empty(entry.DifficultyBands);
+            Assert.Empty(entry.IntendedBands);
         });
 
         foreach (var pool in new[] { StrategyPool.Campaign, StrategyPool.SimulationBaseline, StrategyPool.SimulationExperimental, StrategyPool.MycovariantLab })

@@ -13,14 +13,14 @@ Read these docs first:
 
 ## Workflow
 
-1. Confirm the target roster set, intended status, theme, and matchup purpose.
+1. Confirm the target roster set, intended status, archetype, intended band, and matchup purpose.
 2. Treat the strategy as three layers:
    - build order
    - surge plan
    - fallback personality
 3. Keep goal chains coherent across early economy, mid stabilization, and late conversion.
 4. When authoring surge-heavy strategies, ensure they still have a sensible non-surge backbone.
-5. Update the relevant roster entry and associated theme/status mappings in `FungusToast.Core/AI/AIRoster.cs`.
+5. Update the relevant roster entry and associated archetype/status/intended-band mappings in `FungusToast.Core/AI/AIRoster.cs`. Follow the naming rules in *Naming and identity*; a new strategy needs its stable ID pinned in `FungusToast.Core.Tests/AI/StrategyStableIds.txt`, and a rename goes through `StrategyIdentity.Renames`, never a bare string change.
 6. Prefer explicit strategy names and fixed seeds for comparison runs so results stay reproducible as the roster evolves.
 7. Record the intended lineup, seed, selection policy, and experiment ID whenever validating the change.
 
@@ -30,7 +30,8 @@ Read these docs first:
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj`.
 3. Run at least one seeded smoke simulation.
 4. Verify the strategy name, status, and selection metadata appear correctly in the exported results.
-5. For comparison work, prefer explicit `--strategy-names` over sampled rosters.
+5. Never copy a measured band into the intended band (or the reverse) to clear a mismatch; see *Intended versus measured band*.
+6. For comparison work, prefer explicit `--strategy-names` over sampled rosters.
 
 ## Output
 

@@ -21,14 +21,6 @@ namespace FungusToast.Core.AI
         TierCap
     }
 
-    public enum StrategyPowerTier
-    {
-        Weak,
-        Standard,
-        Strong,
-        Spike
-    }
-
     public enum StrategyRole
     {
         Baseline,
@@ -52,6 +44,22 @@ namespace FungusToast.Core.AI
         Normal,
         Hard,
         Elite
+    }
+
+    /// <summary>How well a measurement supports the band it reports.</summary>
+    public enum BandEvidence
+    {
+        /// <summary>Enough games and a tight enough interval to place the strategy.</summary>
+        Sufficient,
+
+        /// <summary>Measured, but on too few games to place.</summary>
+        TooFewGames,
+
+        /// <summary>Measured on enough games, but the interval spans too many bands to choose one.</summary>
+        IntervalTooWide,
+
+        /// <summary>Never measured in this context.</summary>
+        NotMeasured
     }
 
     public enum CampaignDifficulty
@@ -117,10 +125,9 @@ namespace FungusToast.Core.AI
             StrategySetEnum strategySet,
             StrategyArchetype archetype,
             StrategyStatus status,
-            StrategyPowerTier powerTier,
             StrategyRole role,
             StrategyLifecycle lifecycle,
-            IReadOnlyCollection<DifficultyBand> difficultyBands,
+            IReadOnlyCollection<DifficultyBand> intendedBands,
             CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
             string friendlyName,
@@ -137,10 +144,9 @@ namespace FungusToast.Core.AI
             StrategySet = strategySet;
             Archetype = archetype;
             Status = status;
-            PowerTier = powerTier;
             Role = role;
             Lifecycle = lifecycle;
-            DifficultyBands = difficultyBands;
+            IntendedBands = intendedBands;
             CampaignDifficulty = campaignDifficulty;
             Pools = pools;
             FriendlyName = friendlyName;
@@ -158,10 +164,14 @@ namespace FungusToast.Core.AI
         public StrategySetEnum StrategySet { get; }
         public StrategyArchetype Archetype { get; }
         public StrategyStatus Status { get; }
-        public StrategyPowerTier PowerTier { get; }
         public StrategyRole Role { get; }
         public StrategyLifecycle Lifecycle { get; }
-        public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        /// <summary>
+        /// The band the author designed this strategy to play at. Measured performance lives on
+        /// <see cref="StrategyDefinition.MeasuredBand"/>; a gap between the two means the strategy is
+        /// not doing what it was built to do. Empty when no intent has been recorded.
+        /// </summary>
+        public IReadOnlyCollection<DifficultyBand> IntendedBands { get; }
         public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
         public string FriendlyName { get; }
@@ -178,29 +188,22 @@ namespace FungusToast.Core.AI
     public sealed class StrategyCatalogFilter
     {
         public IReadOnlyCollection<StrategyArchetype> Archetypes { get; set; } = Array.Empty<StrategyArchetype>();
-        public IReadOnlyCollection<StrategyPowerTier> PowerTiers { get; set; } = Array.Empty<StrategyPowerTier>();
         public IReadOnlyCollection<StrategyRole> Roles { get; set; } = Array.Empty<StrategyRole>();
         public IReadOnlyCollection<StrategyLifecycle> Lifecycles { get; set; } = Array.Empty<StrategyLifecycle>();
-        public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; set; } = Array.Empty<DifficultyBand>();
+        public IReadOnlyCollection<DifficultyBand> IntendedBands { get; set; } = Array.Empty<DifficultyBand>();
         public IReadOnlyCollection<CampaignDifficulty> CampaignDifficulties { get; set; } = Array.Empty<CampaignDifficulty>();
         public IReadOnlyCollection<StrategyPool> Pools { get; set; } = Array.Empty<StrategyPool>();
 
         public bool IsEmpty => Archetypes.Count == 0
-            && PowerTiers.Count == 0
             && Roles.Count == 0
             && Lifecycles.Count == 0
-            && DifficultyBands.Count == 0
+            && IntendedBands.Count == 0
             && CampaignDifficulties.Count == 0
             && Pools.Count == 0;
 
         public bool Matches(StrategyCatalogEntry entry)
         {
             if (Archetypes.Count > 0 && !Archetypes.Contains(entry.Archetype))
-            {
-                return false;
-            }
-
-            if (PowerTiers.Count > 0 && !PowerTiers.Contains(entry.PowerTier))
             {
                 return false;
             }
@@ -215,7 +218,7 @@ namespace FungusToast.Core.AI
                 return false;
             }
 
-            if (DifficultyBands.Count > 0 && !entry.DifficultyBands.Any(DifficultyBands.Contains))
+            if (IntendedBands.Count > 0 && !entry.IntendedBands.Any(IntendedBands.Contains))
             {
                 return false;
             }

@@ -208,5 +208,8 @@ namespace FungusToast.Core.AI
         public StrategyCatalogEntry Metadata { get; }
         public string StrategyId { get; }
         public string DefinitionFingerprint { get; }
+
+        /// <summary>The latest classified measurement, or null if this strategy has never been measured.</summary>
+        public StrategyMeasuredBand? MeasuredBand => StrategyMeasuredBands.Get(StrategyId);
     }
 }

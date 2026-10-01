@@ -136,6 +136,24 @@ public sealed class ExperimentManifestTests
     }
 
     [Fact]
+    public void Validate_RejectsRetiredPowerTierFilter()
+    {
+        var condition = CreateValidCondition() with
+        {
+            Strategies = new ExperimentStrategySelection
+            {
+                StrategySet = StrategySetEnum.Testing,
+                SelectionPolicy = StrategySelectionPolicy.CoverageBalanced,
+                Filter = new ExperimentStrategyFilter { PowerTiers = new[] { "Strong" } }
+            }
+        };
+
+        var errors = ExperimentManifestValidator.Validate(CreateValidManifest(condition: condition));
+
+        Assert.Contains(errors, error => error.Contains("powerTiers is retired", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void Validate_RejectsPositionOnBlockedTile()
     {
         var condition = CreateValidCondition() with

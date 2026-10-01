@@ -107,7 +107,12 @@ namespace FungusToast.Unity.Editor
                 if (profile != null)
                 {
                     EditorGUILayout.LabelField("Archetype", profile.Archetype.ToString());
-                    EditorGUILayout.LabelField("Power", profile.PowerTier.ToString());
+                    EditorGUILayout.LabelField("Intended", profile.IntendedBands.Count > 0 ? string.Join("/", profile.IntendedBands) : "—");
+                    var measured = (StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, trimmedName)
+                                    ?? StrategyRegistry.GetDefinition(StrategySetEnum.Proven, trimmedName))?.MeasuredBand;
+                    EditorGUILayout.LabelField("Measured", measured == null
+                        ? "—"
+                        : $"{measured.Band?.ToString() ?? measured.Evidence.ToString()} ({measured.MatrixId}, {measured.EvidenceDate})");
                     EditorGUILayout.LabelField("Role", profile.Role.ToString());
                     EditorGUILayout.LabelField("Campaign Difficulty", profile.CampaignDifficulty?.ToString() ?? "—");
                     if (!string.IsNullOrWhiteSpace(profile.Intent))

@@ -132,10 +132,16 @@ public sealed class ExperimentStrategySelection
 public sealed class ExperimentStrategyFilter
 {
     public IReadOnlyList<StrategyArchetype> Archetypes { get; init; } = Array.Empty<StrategyArchetype>();
-    public IReadOnlyList<StrategyPowerTier> PowerTiers { get; init; } = Array.Empty<StrategyPowerTier>();
+    /// <summary>
+    /// Retired with authored power tiers; must be empty. Kept so recorded manifests still load and
+    /// the canonical condition fingerprint of an empty filter is unchanged.
+    /// </summary>
+    public IReadOnlyList<string> PowerTiers { get; init; } = Array.Empty<string>();
     public IReadOnlyList<StrategyRole> Roles { get; init; } = Array.Empty<StrategyRole>();
     public IReadOnlyList<StrategyLifecycle> Lifecycles { get; init; } = Array.Empty<StrategyLifecycle>();
-    public IReadOnlyList<DifficultyBand> DifficultyBands { get; init; } = Array.Empty<DifficultyBand>();
+    /// <summary>Matches a strategy's authored intended bands. The JSON name predates the rename.</summary>
+    [JsonPropertyName("difficultyBands")]
+    public IReadOnlyList<DifficultyBand> IntendedBands { get; init; } = Array.Empty<DifficultyBand>();
     public IReadOnlyList<CampaignDifficulty> CampaignDifficulties { get; init; } = Array.Empty<CampaignDifficulty>();
     public IReadOnlyList<StrategyPool> Pools { get; init; } = Array.Empty<StrategyPool>();
 
@@ -144,7 +150,7 @@ public sealed class ExperimentStrategyFilter
         && PowerTiers.Count == 0
         && Roles.Count == 0
         && Lifecycles.Count == 0
-        && DifficultyBands.Count == 0
+        && IntendedBands.Count == 0
         && CampaignDifficulties.Count == 0
         && Pools.Count == 0;
 }

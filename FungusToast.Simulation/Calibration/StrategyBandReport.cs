@@ -79,7 +79,7 @@ public static class StrategyBandReport
     }
 
     /// <summary>
-    /// Where measurement disagrees with the authored power tier. This is the point of calibrating
+    /// Where measurement disagrees with the authored intended band. This is the point of calibrating
     /// at all: a label nobody measured is a guess, and a boss that loses is a broken promise to the
     /// player rather than a rounding error.
     /// </summary>
@@ -95,19 +95,18 @@ public static class StrategyBandReport
             var entry = AIRoster.GetStrategyCatalogEntry(matrix.StrategySet, result.StrategyName);
             if (entry == null) continue;
 
-            var expected = ExpectedBandForTier(entry.PowerTier);
-            if (expected == null || expected == band) continue;
+            if (entry.IntendedBands.Count == 0 || entry.IntendedBands.Contains(band)) continue;
 
             mismatches.Add(
-                $"- **{result.StrategyName}** is authored `{entry.PowerTier}`"
+                $"- **{result.StrategyName}** is intended `{string.Join("/", entry.IntendedBands)}`"
                 + $"{(entry.Role == StrategyRole.Boss ? " and used as a **Boss**" : string.Empty)}"
                 + $", but measures **{band}** at {result.PooledNormalizedBoardShare.ToString("0.000", CultureInfo.InvariantCulture)}.");
         }
 
         builder.AppendLine();
-        builder.AppendLine("## Authored label vs measurement");
+        builder.AppendLine("## Intended band vs measurement");
         builder.AppendLine();
-        if (mismatches.Count == 0) builder.AppendLine("No strategy contradicts its authored power tier.");
+        if (mismatches.Count == 0) builder.AppendLine("No strategy contradicts its intended band.");
         else foreach (var mismatch in mismatches) builder.AppendLine(mismatch);
     }
 
@@ -133,18 +132,6 @@ public static class StrategyBandReport
                 + $"| {context.Games} |");
         }
     }
-
-    /// <summary>
-    /// The band an authored power tier implies. Standard covers the middle, so it is compatible
-    /// with either side of parity and never counted as a contradiction.
-    /// </summary>
-    private static DifficultyBand? ExpectedBandForTier(StrategyPowerTier tier) => tier switch
-    {
-        StrategyPowerTier.Weak => DifficultyBand.Easy,
-        StrategyPowerTier.Strong => DifficultyBand.Hard,
-        StrategyPowerTier.Spike => DifficultyBand.Hard,
-        _ => null
-    };
 
     private static string DescribeBand(DifficultyBand? band) => band?.ToString() ?? "—";
 }

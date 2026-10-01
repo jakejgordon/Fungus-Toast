@@ -14,21 +14,6 @@ public sealed record StrategyContextMeasurement(
     double Ci95Low,
     double Ci95High);
 
-public enum BandEvidence
-{
-    /// <summary>Enough games and a tight enough interval to place the strategy.</summary>
-    Sufficient,
-
-    /// <summary>Measured, but on too few games to place.</summary>
-    TooFewGames,
-
-    /// <summary>Measured on enough games, but the interval spans too many bands to choose one.</summary>
-    IntervalTooWide,
-
-    /// <summary>Never measured in this context.</summary>
-    NotMeasured
-}
-
 public sealed record ContextBand(
     string ContextId,
     bool IsHoldout,

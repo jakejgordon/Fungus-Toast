@@ -142,6 +142,14 @@ public static partial class ExperimentManifestValidator
             return;
         }
 
+        if (filter.PowerTiers is { Count: > 0 })
+        {
+            errors.Add(
+                $"{path}.strategies.filter.powerTiers is retired; filter by difficultyBands, which matches each " +
+                "strategy's authored intended band.");
+            return;
+        }
+
         if (filter.IsEmpty)
         {
             var unfilteredStrategies = AIRoster.GetStrategiesByFilter(
@@ -160,10 +168,9 @@ public static partial class ExperimentManifestValidator
         var matchingStrategies = AIRoster.GetStrategiesByFilter(condition.Strategies.StrategySet, new StrategyCatalogFilter
         {
             Archetypes = filter.Archetypes ?? Array.Empty<StrategyArchetype>(),
-            PowerTiers = filter.PowerTiers ?? Array.Empty<StrategyPowerTier>(),
             Roles = filter.Roles ?? Array.Empty<StrategyRole>(),
             Lifecycles = filter.Lifecycles ?? Array.Empty<StrategyLifecycle>(),
-            DifficultyBands = filter.DifficultyBands ?? Array.Empty<DifficultyBand>(),
+            IntendedBands = filter.IntendedBands ?? Array.Empty<DifficultyBand>(),
             CampaignDifficulties = filter.CampaignDifficulties ?? Array.Empty<CampaignDifficulty>(),
             Pools = filter.Pools ?? Array.Empty<StrategyPool>()
         });

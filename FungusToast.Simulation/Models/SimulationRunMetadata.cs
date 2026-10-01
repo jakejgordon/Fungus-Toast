@@ -1,5 +1,6 @@
 using FungusToast.Core.AI;
 using FungusToast.Simulation.Experiments;
+using System.Text.Json.Serialization;
 
 namespace FungusToast.Simulation.Models
 {
@@ -17,10 +18,14 @@ namespace FungusToast.Simulation.Models
         public required string DefinitionFingerprint { get; init; }
         public required string StrategyTheme { get; init; }
         public required string StrategyStatus { get; init; }
-        public required string StrategyPowerTier { get; init; }
+        /// <summary>Retired; present only in manifests recorded before authored power tiers were removed.</summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? StrategyPowerTier { get; init; }
         public required string StrategyRole { get; init; }
         public required string StrategyLifecycle { get; init; }
-        public required IReadOnlyList<string> DifficultyBands { get; init; }
+        /// <summary>Authored intended bands. The JSON name predates the rename.</summary>
+        [JsonPropertyName("difficultyBands")]
+        public required IReadOnlyList<string> IntendedBands { get; init; }
         public required string StrategyPools { get; init; }
         public required IReadOnlyList<string> FavoredAgainst { get; init; }
         public required IReadOnlyList<string> WeakAgainst { get; init; }

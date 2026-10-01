@@ -108,6 +108,26 @@ public sealed class StrategyIdentityTests
     }
 
     [Fact]
+    public void Measured_bands_key_registered_strategies()
+    {
+        var registeredIds = AIRoster.AuthoredStrategySets
+            .SelectMany(StrategyRegistry.GetDefinitions)
+            .Select(definition => definition.StrategyId)
+            .ToHashSet(StringComparer.Ordinal);
+
+        var orphaned = StrategyMeasuredBands.All.Keys.Where(id => !registeredIds.Contains(id)).ToList();
+
+        Assert.True(orphaned.Count == 0,
+            "Measured bands reference unregistered stable IDs; evidence must follow its strategy's identity: "
+            + string.Join(", ", orphaned));
+        Assert.All(StrategyMeasuredBands.All.Values, band =>
+        {
+            Assert.Matches("^\\d{4}-\\d{2}-\\d{2}$", band.EvidenceDate);
+            Assert.Equal(band.Band.HasValue, band.Evidence == BandEvidence.Sufficient);
+        });
+    }
+
+    [Fact]
     public void Rename_preserves_stable_id_and_fingerprint()
     {
         var legacy = CreateParameterized(startingOffset: 0, name: "Grow>Kill>Reclaim(Econ)");

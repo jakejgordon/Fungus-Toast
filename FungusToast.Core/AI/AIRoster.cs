@@ -71,10 +71,9 @@ namespace FungusToast.Core.AI
             string mutationPlan,
             string mycovariantPlan,
             string intent,
-            StrategyPowerTier powerTier,
             StrategyRole role,
             StrategyLifecycle lifecycle,
-            IReadOnlyCollection<DifficultyBand> difficultyBands,
+            IReadOnlyCollection<DifficultyBand> intendedBands,
             CampaignDifficulty? campaignDifficulty,
             StrategyPool pools,
             IReadOnlyCollection<CounterTag> favoredAgainst,
@@ -90,10 +89,9 @@ namespace FungusToast.Core.AI
             MutationPlan = mutationPlan;
             MycovariantPlan = mycovariantPlan;
             Intent = intent;
-            PowerTier = powerTier;
             Role = role;
             Lifecycle = lifecycle;
-            DifficultyBands = difficultyBands;
+            IntendedBands = intendedBands;
             CampaignDifficulty = campaignDifficulty;
             Pools = pools;
             FavoredAgainst = favoredAgainst;
@@ -110,10 +108,9 @@ namespace FungusToast.Core.AI
         public string MutationPlan { get; }
         public string MycovariantPlan { get; }
         public string Intent { get; }
-        public StrategyPowerTier PowerTier { get; }
         public StrategyRole Role { get; }
         public StrategyLifecycle Lifecycle { get; }
-        public IReadOnlyCollection<DifficultyBand> DifficultyBands { get; }
+        public IReadOnlyCollection<DifficultyBand> IntendedBands { get; }
         public CampaignDifficulty? CampaignDifficulty { get; }
         public StrategyPool Pools { get; }
         public IReadOnlyCollection<CounterTag> FavoredAgainst { get; }
@@ -4238,76 +4235,6 @@ namespace FungusToast.Core.AI
                 ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyStatus.Testing,
             };
 
-        private static readonly UniqueKeyDictionary<StrategyPowerTier> _explicitPowerTiersByName =
-            new(StringComparer.OrdinalIgnoreCase)
-            {
-                ["TST_Arch01_GrowthResilience"] = StrategyPowerTier.Standard,
-                ["TST_Arch02_ResilienceGrowth"] = StrategyPowerTier.Standard,
-                ["TST_Arch03_FungicideSurge"] = StrategyPowerTier.Spike,
-                ["TST_Arch04_DriftGrowth"] = StrategyPowerTier.Strong,
-                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyPowerTier.Strong,
-                ["TST_Arch05_DriftResilience"] = StrategyPowerTier.Standard,
-                ["TST_Arch06_SurgeGrowth"] = StrategyPowerTier.Standard,
-                ["TST_Arch07_DriftFungicide"] = StrategyPowerTier.Strong,
-                ["TST_Arch08_SurgeResilience"] = StrategyPowerTier.Standard,
-                ["TST_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Spike, // P7 measured Elite (1.866)
-                ["TST_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
-                ["TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst"] = StrategyPowerTier.Strong,
-                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyPowerTier.Spike, // P7 measured Elite (1.915)
-                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyPowerTier.Strong,
-                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyPowerTier.Strong,
-                ["VerdantReclaimer"] = StrategyPowerTier.Strong, // P8 measured Elite in every classification context
-                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyPowerTier.Strong, // Campaign alias of the P8 Elite promotion
-                ["RegrowthLattice"] = StrategyPowerTier.Standard, // P7 measured Normal (1.058)
-                ["TST_FortressResilience"] = StrategyPowerTier.Weak,
-                ["TST_OpportunisticCounterplay"] = StrategyPowerTier.Weak,
-                ["TST_RebirthAttrition"] = StrategyPowerTier.Weak,
-                ["TST_LowTierEconomyGrinder"] = StrategyPowerTier.Weak,
-                ["TST_LowTierSurgeSkirmisher"] = StrategyPowerTier.Weak,
-                ["RootedCanopy"] = StrategyPowerTier.Weak,
-                ["AI6"] = StrategyPowerTier.Weak,
-                ["AI12"] = StrategyPowerTier.Weak,
-                ["AI13"] = StrategyPowerTier.Strong,
-                ["CMP_Economy_Economancer_Elite"] = StrategyPowerTier.Strong,
-                ["CMP_Economy_HoardsporeRegent_Elite"] = StrategyPowerTier.Strong,
-                ["CMP_Defense_IronShell_Elite"] = StrategyPowerTier.Strong,
-                ["CMP_Bloom_NecrotoxinGauntlet_Elite"] = StrategyPowerTier.Strong,
-                ["TST_AI10_CreepingRegression"] = StrategyPowerTier.Strong,
-                ["CMP_Bloom_Thanatophyte_Elite"] = StrategyPowerTier.Strong,
-                ["TST_AI10_BeaconRegression"] = StrategyPowerTier.Strong,
-                ["TST_CreepingNecroRegressionCascade"] = StrategyPowerTier.Weak, // P7 measured Easy (0.490) in all 7 contexts
-                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyPowerTier.Strong,
-                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyPowerTier.Strong,
-                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyPowerTier.Standard,
-                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Economy_KillReclaim_Medium"] = StrategyPowerTier.Standard,
-                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyPowerTier.Standard,
-                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyPowerTier.Standard,
-                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyPowerTier.Standard,
-                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyPowerTier.Strong,
-                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyPowerTier.Weak,
-                ["CMP_Reclaim_Scavenger_Easy"] = StrategyPowerTier.Weak,
-                ["CMP_Surge_Pulsar_Easy"] = StrategyPowerTier.Standard,
-                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyPowerTier.Weak,
-                ["CMP_Defense_ResilientShell_Easy"] = StrategyPowerTier.Weak,
-                ["CMP_Defense_ReclaimShell_Easy"] = StrategyPowerTier.Weak,
-                ["CMP_Surge_BeaconTempo_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Control_AnabolicRebirth_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Surge_GrowthTempo_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Growth_Pressure_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Bloom_FortifyMimic_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Economy_TempoReclaim_Medium"] = StrategyPowerTier.Standard,
-                ["CMP_Control_AnabolicFirst_Hard"] = StrategyPowerTier.Strong,
-                ["TST_LateGameSpike"] = StrategyPowerTier.Spike,
-                ["RejuvenationEngine"] = StrategyPowerTier.Standard, // P7 measured Normal (0.943)
-                ["HyphalPulse"] = StrategyPowerTier.Weak, // P7 measured Easy (0.153), weakest in panel
-            };
-
         private static readonly UniqueKeyDictionary<StrategyRole> _explicitRolesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
@@ -4453,7 +4380,12 @@ namespace FungusToast.Core.AI
                 ["TST_RebirthAttrition"] = StrategyLifecycle.NeedsTuning,
             };
 
-        private static readonly UniqueKeyDictionary<DifficultyBand[]> _explicitDifficultyBandsByName =
+        /// <summary>
+        /// Authored design intent: the band each strategy is meant to play at. Never copy a
+        /// measurement here to make a mismatch disappear; measurements live in
+        /// <see cref="StrategyMeasuredBands"/>, and the gap between the two is the signal.
+        /// </summary>
+        private static readonly UniqueKeyDictionary<DifficultyBand[]> _explicitIntendedBandsByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
                 ["TST_Arch01_GrowthResilience"] = new[] { DifficultyBand.Normal },
@@ -4674,10 +4606,9 @@ namespace FungusToast.Core.AI
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
             var overrideNames = _explicitStrategyArchetypesByName.Keys
                 .Concat(_explicitStrategyStatusesByName.Keys)
-                .Concat(_explicitPowerTiersByName.Keys)
                 .Concat(_explicitRolesByName.Keys)
                 .Concat(_explicitLifecycleByName.Keys)
-                .Concat(_explicitDifficultyBandsByName.Keys)
+                .Concat(_explicitIntendedBandsByName.Keys)
                 .Concat(_explicitCampaignDifficultyByName.Keys)
                 .Concat(_explicitFavoredAgainstByName.Keys)
                 .Concat(_explicitWeakAgainstByName.Keys)
@@ -4878,15 +4809,14 @@ namespace FungusToast.Core.AI
         {
             var theme = GetArchetypeForStrategy(strategy);
             var status = GetStatusForStrategy(strategy, strategySet);
-            var powerTier = GetPowerTierForStrategy(strategy, strategySet);
             var role = GetRoleForStrategy(strategy, strategySet);
             var lifecycle = GetLifecycleForStrategy(strategy, strategySet);
-            var difficultyBands = GetDifficultyBandsForStrategy(strategy, strategySet);
+            var intendedBands = GetIntendedBandsForStrategy(strategy, strategySet);
             var campaignDifficulty = GetCampaignDifficultyForStrategy(strategy, strategySet);
             var pools = GetPoolsForStrategy(strategySet);
             var favoredAgainst = GetFavoredAgainstForStrategy(strategy);
             var weakAgainst = GetWeakAgainstForStrategy(strategy);
-            var notes = BuildNotes(strategySet, powerTier, role, lifecycle);
+            var notes = BuildNotes(strategySet, role, lifecycle);
 
             return new StrategyProfile(
                 strategy.StrategyName,
@@ -4898,10 +4828,9 @@ namespace FungusToast.Core.AI
                 BuildMutationPlan(strategy),
                 BuildMycovariantPlan(strategy),
                 BuildIntentLabel(strategy),
-                powerTier,
                 role,
                 lifecycle,
-                difficultyBands,
+                intendedBands,
                 campaignDifficulty,
                 pools,
                 favoredAgainst,
@@ -4921,10 +4850,9 @@ namespace FungusToast.Core.AI
                 entry.MutationPlan,
                 entry.MycovariantPlan,
                 entry.Intent,
-                entry.PowerTier,
                 entry.Role,
                 entry.Lifecycle,
-                entry.DifficultyBands,
+                entry.IntendedBands,
                 entry.CampaignDifficulty,
                 entry.Pools,
                 entry.FavoredAgainst,
@@ -5055,10 +4983,9 @@ namespace FungusToast.Core.AI
                 profile.StrategySet,
                 profile.Archetype,
                 profile.Status,
-                profile.PowerTier,
                 profile.Role,
                 profile.Lifecycle,
-                profile.DifficultyBands,
+                profile.IntendedBands,
                 profile.CampaignDifficulty,
                 profile.Pools,
                 profile.FriendlyName,
@@ -5118,27 +5045,6 @@ namespace FungusToast.Core.AI
             };
         }
 
-        public static StrategyPowerTier GetPowerTierForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
-        {
-            var registered = StrategyRegistry.GetDefinition(strategySet, strategy.StrategyName);
-            if (registered != null && ReferenceEquals(registered.Strategy, strategy))
-            {
-                return registered.Metadata.PowerTier;
-            }
-
-            if (_explicitPowerTiersByName.TryGetValue(strategy.StrategyName, out var explicitTier))
-            {
-                return explicitTier;
-            }
-
-            return strategySet switch
-            {
-                StrategySetEnum.Testing => StrategyPowerTier.Standard,
-                StrategySetEnum.Campaign => StrategyPowerTier.Standard,
-                _ => StrategyPowerTier.Standard
-            };
-        }
-
         public static StrategyRole GetRoleForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
             var registered = StrategyRegistry.GetDefinition(strategySet, strategy.StrategyName);
@@ -5190,24 +5096,18 @@ namespace FungusToast.Core.AI
             return StrategyLifecycle.Active;
         }
 
-        public static IReadOnlyCollection<DifficultyBand> GetDifficultyBandsForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
+        public static IReadOnlyCollection<DifficultyBand> GetIntendedBandsForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
             var registered = StrategyRegistry.GetDefinition(strategySet, strategy.StrategyName);
             if (registered != null && ReferenceEquals(registered.Strategy, strategy))
             {
-                return registered.Metadata.DifficultyBands;
+                return registered.Metadata.IntendedBands;
             }
 
-            if (_explicitDifficultyBandsByName.TryGetValue(strategy.StrategyName, out var explicitBands))
-            {
-                return explicitBands;
-            }
-
-            return strategySet switch
-            {
-                StrategySetEnum.Campaign => new[] { DifficultyBand.Normal },
-                _ => Array.Empty<DifficultyBand>()
-            };
+            // No default: an intent nobody authored would read as a promise the measurement then breaks.
+            return _explicitIntendedBandsByName.TryGetValue(strategy.StrategyName, out var explicitBands)
+                ? explicitBands
+                : Array.Empty<DifficultyBand>();
         }
 
         public static CampaignDifficulty? GetCampaignDifficultyForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
@@ -5270,7 +5170,6 @@ namespace FungusToast.Core.AI
 
         private static string BuildNotes(
             StrategySetEnum strategySet,
-            StrategyPowerTier powerTier,
             StrategyRole role,
             StrategyLifecycle lifecycle)
         {
@@ -5301,15 +5200,6 @@ namespace FungusToast.Core.AI
             if (lifecycle == StrategyLifecycle.NeedsTuning)
             {
                 notes.Add("Flagged for follow-up balance tuning.");
-            }
-
-            if (powerTier == StrategyPowerTier.Weak)
-            {
-                notes.Add("Expected to perform below baseline by design or current tuning.");
-            }
-            else if (powerTier == StrategyPowerTier.Spike)
-            {
-                notes.Add("High-variance ceiling; matchup and tempo matter heavily.");
             }
 
             return string.Join(" ", notes);

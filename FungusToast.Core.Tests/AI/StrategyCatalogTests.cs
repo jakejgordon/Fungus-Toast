@@ -58,8 +58,8 @@ public class StrategyCatalogTests
     /// <summary>
     /// AI13 is the campaign's flagship boss, so its identity is pinned against accidental drift.
     /// Its campaign tier moved Hard -> Elite when the P7 campaign matrix measured it at 2.076
-    /// pooled parity-normalized board share; the authored role and power tier did not move,
-    /// because measurement says how strong it is and authoring says what it is for.
+    /// pooled parity-normalized board share; the authored role did not move, because measurement
+    /// says how strong it is and authoring says what it is for.
     /// </summary>
     [Fact]
     public void Campaign_ai13_keeps_its_boss_identity_and_measured_elite_tier()
@@ -67,10 +67,10 @@ public class StrategyCatalogTests
         var definition = Assert.IsType<StrategyDefinition>(
             StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, "AI13"));
 
-        Assert.Equal(StrategyPowerTier.Strong, definition.Metadata.PowerTier);
         Assert.Equal(StrategyRole.Boss, definition.Metadata.Role);
-        Assert.Contains(DifficultyBand.Hard, definition.Metadata.DifficultyBands);
-        Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
+        Assert.Contains(DifficultyBand.Hard, definition.Metadata.IntendedBands);
+        Assert.Contains(DifficultyBand.Elite, definition.Metadata.IntendedBands);
+        Assert.Equal(DifficultyBand.Elite, definition.MeasuredBand?.Band);
         Assert.Equal(CampaignDifficulty.Elite, definition.Metadata.CampaignDifficulty);
     }
 
@@ -109,7 +109,10 @@ public class StrategyCatalogTests
         Assert.NotNull(catalogEntry);
         // Authored Strong until the P7 calibration measured it at 1.058 normalized board share
         // over 187 games, which is parity rather than above it. See AI_P7_REFERENCE_BANDS_V1.
-        Assert.Equal(StrategyPowerTier.Standard, catalogEntry.PowerTier);
+        var measured = StrategyRegistry.GetDefinition(StrategySetEnum.Proven, strategy.StrategyName)?.MeasuredBand;
+        Assert.Equal(DifficultyBand.Normal, measured?.Band);
+        Assert.Equal(1.058, measured?.PooledNormalizedBoardShare);
+        Assert.Equal(187, measured?.Games);
         Assert.Equal(StrategyRole.Spice, catalogEntry.Role);
         Assert.Equal(StrategyLifecycle.Active, catalogEntry.Lifecycle);
         Assert.Equal(StrategyArchetype.Defense, catalogEntry.Archetype);
@@ -143,9 +146,10 @@ public class StrategyCatalogTests
             definition.Metadata.AIPlayerIntentions);
         Assert.Equal(StrategyArchetype.Reclamation, definition.Metadata.Archetype);
         Assert.Equal(StrategyStatus.Proven, definition.Metadata.Status);
-        Assert.Equal(StrategyPowerTier.Strong, definition.Metadata.PowerTier);
+        Assert.Equal(DifficultyBand.Elite, definition.MeasuredBand?.Band);
+        Assert.Equal("p8-bloom20-contextual-v1", definition.MeasuredBand?.MatrixId);
         Assert.Equal(StrategyLifecycle.Active, definition.Metadata.Lifecycle);
-        Assert.Contains(DifficultyBand.Elite, definition.Metadata.DifficultyBands);
+        Assert.Contains(DifficultyBand.Elite, definition.Metadata.IntendedBands);
         Assert.True(definition.Metadata.Pools.HasFlag(StrategyPool.SimulationBaseline));
         Assert.False(definition.Metadata.Pools.HasFlag(StrategyPool.Campaign));
 
@@ -1697,20 +1701,100 @@ public class StrategyCatalogTests
     [Fact]
     public void Campaign_progression_board_presets_only_use_registered_campaign_strategies()
     {
-        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
-        var presetDir = Path.Combine(repoRoot, "FungusToast.Unity", "Assets", "Configs", "Board Presets");
-        var strategyNames = Directory
-            .EnumerateFiles(presetDir, "*.asset", SearchOption.TopDirectoryOnly)
-            .SelectMany(path => Regex.Matches(File.ReadAllText(path), @"strategyName:\s*([^\r\n]+)")
-                .Cast<Match>()
-                .Select(match => match.Groups[1].Value.Trim()))
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .ToList();
+        var strategyNames = ReadBoardPresetStrategyNames();
 
         Assert.NotEmpty(strategyNames);
         Assert.All(strategyNames, name => Assert.True(
             AIRoster.CampaignStrategiesByName.ContainsKey(name),
             $"Board preset references strategy '{name}', which is not registered in the Campaign set."));
+    }
+
+    /// <summary>
+    /// A campaign opponent measuring outside its intended band is a broken promise to the player,
+    /// so new mismatches fail. Known ones are acknowledged here until their intent is re-authored
+    /// or the strategy is retuned; resolving one requires removing it from the list.
+    /// </summary>
+    [Fact]
+    public void Campaign_preset_strategies_measure_inside_their_intended_band()
+    {
+        // Measured by the P7 Campaign panel before the 2026-09-07 reroster, which placed these by
+        // measured strength without updating their authored intent. Re-author intent alongside the
+        // strategy profiles, or retune, then remove the entry.
+        var acknowledged = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "AI12",
+            "CMP_AnabolicBeaconRhizolith_Elite",
+            "CMP_Bloom_AnabolicRegression_Medium",
+            "CMP_Bloom_BeaconRegression_Medium",
+            "CMP_Bloom_CreepingRegression_Elite",
+            "CMP_Bloom_FortifyMimic_Medium",
+            "CMP_Bloom_NecrotoxinGauntlet_Elite",
+            "CMP_Bloom_Thanatophyte_Elite",
+            "CMP_Control_AnabolicFirst_Hard",
+            "CMP_Control_AnabolicRebirth_Medium",
+            "CMP_Control_RebirthFurnace_Medium",
+            "CMP_Economy_KillReclaim_Medium",
+            "CMP_Economy_LateSpike_Hard",
+            "CMP_Growth_PutridTendrils_Medium",
+            "CMP_Growth_WildfireBloom_Medium",
+            "CMP_Reclaim_Scavenger_Easy",
+            "CMP_Surge_BeaconSprinter_Medium",
+            "CMP_Surge_BeaconTempo_Medium",
+            "CMP_Surge_GrowthTempo_Medium",
+            "CMP_Surge_Pulsar_Easy",
+            "TST_AI10_BeaconRegression",
+            "TST_AI10_CreepingRegression",
+            "TST_Campaign7_KillReclaim_Offset1",
+            "TST_Campaign7_KillReclaim_Offset2",
+            "TST_Campaign7_KillReclaim_Offset3",
+            "TST_Campaign7_KillReclaim_Offset8",
+        };
+
+        var mismatches = ReadBoardPresetStrategyNames()
+            .Distinct(StringComparer.Ordinal)
+            .Select(name => StrategyRegistry.GetDefinition(StrategySetEnum.Campaign, name))
+            .OfType<StrategyDefinition>()
+            .Where(definition => definition.Metadata.IntendedBands.Count > 0
+                && definition.MeasuredBand?.Band is { } band
+                && !definition.Metadata.IntendedBands.Contains(band))
+            .ToDictionary(
+                definition => definition.Strategy.StrategyName,
+                definition => $"{definition.Strategy.StrategyName}: intended {string.Join("/", definition.Metadata.IntendedBands)}, "
+                    + $"measured {definition.MeasuredBand!.Band} ({definition.MeasuredBand.MatrixId})",
+                StringComparer.Ordinal);
+
+        var unacknowledged = mismatches.Keys.Except(acknowledged).OrderBy(name => name, StringComparer.Ordinal).ToList();
+        var resolved = acknowledged.Except(mismatches.Keys).OrderBy(name => name, StringComparer.Ordinal).ToList();
+        Assert.True(unacknowledged.Count == 0,
+            "Campaign opponents measure outside their intended band:\n"
+            + string.Join("\n", unacknowledged.Select(name => mismatches[name])));
+        Assert.True(resolved.Count == 0,
+            "These acknowledged mismatches are resolved; remove them from the list: " + string.Join(", ", resolved));
+    }
+
+    /// <summary>Every strategy a board preset can field: fixed seats and pooled entries.</summary>
+    private static List<string> ReadBoardPresetStrategyNames()
+    {
+        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../"));
+        var presetDir = Path.Combine(repoRoot, "FungusToast.Unity", "Assets", "Configs", "Board Presets");
+        return Directory
+            .EnumerateFiles(presetDir, "*.asset", SearchOption.TopDirectoryOnly)
+            .SelectMany(path =>
+            {
+                var text = File.ReadAllText(path);
+                var seats = Regex.Matches(text, @"strategyName:\s*([^\r\n]+)")
+                    .Cast<Match>()
+                    .Select(match => match.Groups[1].Value);
+                var pooled = Regex.Matches(text, @"aiStrategyPool:[ \t]*\r?\n((?:[ \t]*- [^\r\n]+\r?\n)+)")
+                    .Cast<Match>()
+                    .SelectMany(match => Regex.Matches(match.Groups[1].Value, @"- ([^\r\n]+)")
+                        .Cast<Match>()
+                        .Select(item => item.Groups[1].Value));
+                return seats.Concat(pooled);
+            })
+            .Select(name => name.Trim())
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .ToList();
     }
 
     [Fact]

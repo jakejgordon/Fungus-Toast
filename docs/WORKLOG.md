@@ -1555,9 +1555,29 @@ Step 1 progress:
   Tests also enforce machine-safe player-facing names and alias resolution.
   Frozen evidence docs and example manifests keep the old names, which still
   resolve.
-- Remaining: merge `StrategyTheme` into `StrategyArchetype`; replace
-  `PowerTier`/`DifficultyBands` with an intended band plus a measured-band
-  record (band, classifier version, evidence date).
+- **`StrategyTheme` merged into `StrategyArchetype` 2026-09-30.** The enums were
+  identical, so ordering and the exported `strategy_theme` column are unchanged.
+- **Intended versus measured bands done 2026-09-30.** `PowerTier` is retired:
+  its values had been overwritten from P7 measurements on 2026-09-07, so they
+  were neither intent nor provenance-carrying evidence. `DifficultyBands` is now
+  `IntendedBands` (authored intent, with no default; the old silent `Normal`
+  default for Campaign entries fabricated intent nobody wrote).
+  `StrategyMeasuredBands` records 73 measurements keyed by stable ID (P7
+  reference panel 19, P7 campaign panel 53, and P8 for Verdant Reclaimer), each
+  with matrix, classifier version, date, and source document, exposed as
+  `StrategyDefinition.MeasuredBand`. The band report compares measured against
+  intended. A new test fails when a campaign-preset strategy measures outside
+  its intended band; 26 existing gaps are acknowledged there, measured before
+  the 2026-09-07 reroster placed those strategies by strength without updating
+  their intent. Re-authoring that intent belongs with the strategy-profile work
+  below. Simulation compatibility: the manifest's `powerTiers` field stays in the
+  schema but must be empty, `difficultyBands` keeps its JSON name, and run
+  metadata no longer writes `strategyPowerTier` but still reads it. Condition
+  fingerprints and serialized manifests were verified byte-identical against
+  HEAD. The board-preset test also now covers pooled (`aiStrategyPool`) seats.
+  Measurement records do not yet carry the definition fingerprint they were
+  measured against, so a record cannot detect that a retune staled it. Add that
+  when the band report emits records directly.
 - Then (agreed direction): authored strategy intent descriptions, content
   tags, the content-to-profile coverage report, and skill integration. See the
   coverage review proposal below.
