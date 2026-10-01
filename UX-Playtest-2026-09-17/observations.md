@@ -312,6 +312,18 @@ Screenshots: [026-game-2-endgame-countdown.png](screenshots/026-game-2-endgame-c
 - Campaign reward: +1 Moldiness; progress reached 5/12 toward the next threshold.
 - Notable UX arc: the reduced board and roster improve readability, but the fixed Round 15 draft promise conflicts with occupancy-driven endgame timing and can advertise content that the match can never reach.
 
+## 2026-10-01 full-screen retest addendum
+
+**Status:** Remediation remains open. This was verification only; no game implementation changed. The complete 3440 × 1440 Stage 2 playtest and new observations are recorded in [observations_20261001.md](observations_20261001.md).
+
+- **004/006 — In progress:** `BUY` / `UPGRADE` / `ACTIVATE`, `Bank Points & End Turn`, and sidebar `Pace` were clear in the player build. The mutation grid still shifts with detail-pane placement, and opening/closing it briefly exposes a partly blank transition.
+- **018 — In progress:** Jetting Mycelium III targeting had an explicit reticle and instructions, but the live cell-inspector panel intercepted a direction click. The eligible-cell treatment remains visually heavy.
+- **019/023/024 — Still unresolved:** Round 17 said `Final round!` while the action remained `Spend 10 Points!`. The HUD simultaneously advertised a Round 20 draft even though the countdown guaranteed a Round 17 finish. The Stage 2 start still lacked a named inherited-build summary.
+- **020/021 — In progress:** The Stage 2 victory row now had a `YOU` badge and accent. The carry-over picker used named cards with full effects and clear selection states. Loss-specific behavior remains unverified in this run.
+- **024 — Still unresolved:** The victory panel still exposed a sliver of gameplay HUD. Moldiness progress showed `6/12 to Level 4` without stating the distance to its next reward.
+
+The remaining observations and their prior statuses were not changed by this retest; see the dated file for the full 001–024 recheck and limits of this run.
+
 ## Cross-game priorities
 
 1. **P1 — Enforce one active teaching/modal layer at a time.** Tutorial, draft, placement, hover-inspector, mutation-tree, and results states currently stack and obscure each other.
