@@ -13,26 +13,6 @@ Manual Unity Editor validation of the Substrate Ecology mutation tree,
 inspector, dependency routes, and visual flows at supported resolutions is
 complete.
 
-## TODO — Record Moldiness Toast Crumble Sound
-
-The campaign victory toast's level-up still plays one placeholder clip, copied
-from an existing effect. Record the real one and overwrite this file in place,
-keeping the name; `GameManager` loads it from `Resources`, so no code, scene,
-or Inspector change is needed:
-
-- `FungusToast.Unity/Assets/Resources/Audio/SFX/sfx_ui_moldiness_toast_crumble_01.wav`
-  (placeholder: `sfx_board_jetting_mycelium_release_01`). About 0.5-0.7s,
-  played as the full toast crumbles into spores. Idea: crumble dry toast close
-  to the mic, with a soft breath "poof" for the spore burst.
-
-The real `sfx_ui_moldiness_level_up_01.wav` (played when the "Level Up!" banner
-appears) is recorded and in place.
-
-Both clips play over the campaign victory music, so keep them short and mid-to-high
-range, ideally in the key of `campaign_victory_track_yer_a_moldy_winner_harry`.
-Match the other effects: 44.1kHz, 16-bit, mono WAV. Levels are
-`MoldinessToastCrumbleVolume` and `MoldinessLevelUpVolume` in `GameManager.cs`.
-
 ## Active Initiative — AI Architecture and Balance Overhaul
 
 ### 2026-09-05 Hoardspore start-offset diagnosis
