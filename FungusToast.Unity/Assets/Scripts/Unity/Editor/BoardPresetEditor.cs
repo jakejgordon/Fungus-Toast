@@ -106,7 +106,7 @@ namespace FungusToast.Unity.Editor
 
                 if (profile != null)
                 {
-                    EditorGUILayout.LabelField("Theme", profile.Theme.ToString());
+                    EditorGUILayout.LabelField("Archetype", profile.Archetype.ToString());
                     EditorGUILayout.LabelField("Power", profile.PowerTier.ToString());
                     EditorGUILayout.LabelField("Role", profile.Role.ToString());
                     EditorGUILayout.LabelField("Campaign Difficulty", profile.CampaignDifficulty?.ToString() ?? "—");

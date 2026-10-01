@@ -353,7 +353,7 @@ public class StrategyCatalogTests
                 (MutationIds.MycotoxinFission, GameBalance.ToxinborneSeedingMaxLevel)
             },
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
-        Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
+        Assert.Equal(StrategyArchetype.Offense, AIRoster.GetArchetypeForStrategy(strategy));
     }
 
     [Theory]
@@ -378,7 +378,7 @@ public class StrategyCatalogTests
                 (MutationIds.PutrefactiveMycotoxin, 2)
             },
             strategy.TargetMutationGoals.Select(goal => (goal.MutationId, goal.TargetLevel)).ToArray());
-        Assert.Equal(StrategyTheme.Offense, AIRoster.GetThemeForStrategy(strategy));
+        Assert.Equal(StrategyArchetype.Offense, AIRoster.GetArchetypeForStrategy(strategy));
     }
 
     [Fact]

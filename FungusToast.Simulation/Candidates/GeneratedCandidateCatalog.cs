@@ -103,7 +103,7 @@ public static class GeneratedCandidateCatalog
     ///
     /// The copy has to be faithful. <c>StrategyRegistry.GetDefinition(IMutationSpendingStrategy)</c>
     /// resolves by reference across every set, so once an authored strategy is registered twice, a
-    /// caller like <c>AIRoster.GetThemeForStrategy</c> may read either copy's metadata. Keeping
+    /// caller like <c>AIRoster.GetArchetypeForStrategy</c> may read either copy's metadata. Keeping
     /// every measured field identical makes which copy it finds irrelevant; clearing pools is safe
     /// precisely because pool membership is the one thing a generated-set entry must never assert.
     /// </summary>

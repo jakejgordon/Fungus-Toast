@@ -220,7 +220,7 @@ namespace FungusToast.Simulation.Export
                 var playerThemeById = game.PlayerResults
                     .ToDictionary(
                         p => p.PlayerId,
-                        p => AIRoster.GetThemeForStrategy(p.Strategy).ToString());
+                        p => AIRoster.GetArchetypeForStrategy(p.Strategy).ToString());
 
                 foreach (var player in game.PlayerResults)
                 {
@@ -266,7 +266,7 @@ namespace FungusToast.Simulation.Export
                         StrategyName = player.StrategyName,
                         StrategyId = lineupEntry?.StrategyId ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'."),
                         StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
-                        StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                        StrategyTheme = AIRoster.GetArchetypeForStrategy(player.Strategy).ToString(),
                         StrategyStatus = lineupEntry?.StrategyStatus ?? AIRoster.GetStatusForStrategy(player.Strategy, metadata.StrategySet).ToString(),
                         StartingX = game.StartingPositionsByPlayerId[player.PlayerId].x,
                         StartingY = game.StartingPositionsByPlayerId[player.PlayerId].y,
@@ -481,7 +481,7 @@ namespace FungusToast.Simulation.Export
                             StrategyName = player.StrategyName,
                             StrategyId = lineupEntry?.StrategyId ?? throw new InvalidOperationException($"Missing selected-strategy metadata for '{player.StrategyName}'."),
                             StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
-                            StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                            StrategyTheme = AIRoster.GetArchetypeForStrategy(player.Strategy).ToString(),
                             GrowthSource = livingSource.Key.ToString(),
                             GrowthSourceDisplayName = GrowthSourceDisplayNames.GetDisplayName(livingSource.Key),
                             LivingCellCount = livingSource.Value
@@ -533,7 +533,7 @@ namespace FungusToast.Simulation.Export
                             StrategyName = player.StrategyName,
                             StrategyId = lineupEntry.StrategyId,
                             StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
-                            StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                            StrategyTheme = AIRoster.GetArchetypeForStrategy(player.Strategy).ToString(),
                             MutationId = mutationId,
                             MutationName = mutation.Name,
                             MutationTier = mutation.Tier.ToString(),
@@ -572,7 +572,7 @@ namespace FungusToast.Simulation.Export
                                 StrategyName = player.StrategyName,
                                 StrategyId = lineupEntry.StrategyId,
                                 StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
-                                StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                                StrategyTheme = AIRoster.GetArchetypeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
                                 MycovariantType = myco.MycovariantType,
@@ -597,7 +597,7 @@ namespace FungusToast.Simulation.Export
                                 StrategyName = player.StrategyName,
                                 StrategyId = lineupEntry.StrategyId,
                                 StrategyDefinitionFingerprint = lineupEntry.DefinitionFingerprint,
-                                StrategyTheme = AIRoster.GetThemeForStrategy(player.Strategy).ToString(),
+                                StrategyTheme = AIRoster.GetArchetypeForStrategy(player.Strategy).ToString(),
                                 MycovariantId = myco.MycovariantId,
                                 MycovariantName = myco.MycovariantName,
                                 MycovariantType = myco.MycovariantType,
@@ -665,7 +665,7 @@ namespace FungusToast.Simulation.Export
                 return "Unknown";
             }
 
-            return AIRoster.GetThemeForStrategy(player.Strategy).ToString();
+            return AIRoster.GetArchetypeForStrategy(player.Strategy).ToString();
         }
 
         private static string GetStartingPositionMode(ExperimentPositioning positioning)

@@ -52,22 +52,6 @@ namespace FungusToast.Core.AI
         StratifiedCycle
     }
 
-    public enum StrategyTheme
-    {
-        Balanced,
-        EconomyRamp,
-        Reclamation,
-        Offense,
-        SurgeTempo,
-        Defense,
-        Control,
-        Mobility,
-        Attrition,
-        Counterplay,
-        LateGameSpike,
-        TierCap
-    }
-
     public enum StrategyStatus
     {
         Testing,
@@ -80,7 +64,7 @@ namespace FungusToast.Core.AI
         public StrategyProfile(
             string strategyName,
             StrategySetEnum strategySet,
-            StrategyTheme theme,
+            StrategyArchetype archetype,
             StrategyStatus status,
             string friendlyName,
             string aiPlayerIntentions,
@@ -99,7 +83,7 @@ namespace FungusToast.Core.AI
         {
             StrategyName = strategyName;
             StrategySet = strategySet;
-            Theme = theme;
+            Archetype = archetype;
             Status = status;
             FriendlyName = friendlyName;
             AIPlayerIntentions = aiPlayerIntentions;
@@ -119,7 +103,7 @@ namespace FungusToast.Core.AI
 
         public string StrategyName { get; }
         public StrategySetEnum StrategySet { get; }
-        public StrategyTheme Theme { get; }
+        public StrategyArchetype Archetype { get; }
         public StrategyStatus Status { get; }
         public string FriendlyName { get; }
         public string AIPlayerIntentions { get; }
@@ -4082,147 +4066,147 @@ namespace FungusToast.Core.AI
                 "Offset8"
             };
 
-        private static readonly UniqueKeyDictionary<StrategyTheme> _explicitStrategyThemesByName =
+        private static readonly UniqueKeyDictionary<StrategyArchetype> _explicitStrategyArchetypesByName =
             new(StringComparer.OrdinalIgnoreCase)
             {
-                ["TST_HyperEconomyRamp"] = StrategyTheme.EconomyRamp,
-                ["TST_EconomyAtAllCosts"] = StrategyTheme.EconomyRamp,
-                ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyTheme.EconomyRamp,
-                ["TST_EarlyReclaimerSwarm"] = StrategyTheme.Reclamation,
-                ["TST_EcologyFrontierExpansion"] = StrategyTheme.Control,
-                ["TST_EcologyFrontierResilience"] = StrategyTheme.Defense,
-                ["TST_EcologyToxinFissioner"] = StrategyTheme.Offense,
-                ["TST_EcologyAutolyticDetrital"] = StrategyTheme.Attrition,
-                ["TST_EcologyAutolyticReclaimer"] = StrategyTheme.Reclamation,
-                ["TST_Arch01_GrowthResilience"] = StrategyTheme.Defense,
-                ["TST_Arch02_ResilienceGrowth"] = StrategyTheme.Defense,
-                ["TST_Arch03_FungicideSurge"] = StrategyTheme.Offense,
-                ["TST_Arch04_DriftGrowth"] = StrategyTheme.EconomyRamp,
-                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyTheme.EconomyRamp,
-                ["TST_Arch05_DriftResilience"] = StrategyTheme.Counterplay,
-                ["TST_Arch06_SurgeGrowth"] = StrategyTheme.SurgeTempo,
-                ["TST_Arch07_DriftFungicide"] = StrategyTheme.Counterplay,
-                ["TST_Arch08_SurgeResilience"] = StrategyTheme.SurgeTempo,
-                ["TST_BalancedControl_AnabolicFirst"] = StrategyTheme.Control,
-                ["TST_HyphalSurgeTempo"] = StrategyTheme.SurgeTempo,
-                ["TST_FortressResilience"] = StrategyTheme.Defense,
-                ["TST_OpportunisticCounterplay"] = StrategyTheme.Counterplay,
-                ["TST_Tier3PlateauSpecialist"] = StrategyTheme.TierCap,
-                ["TST_LateGameSpike"] = StrategyTheme.LateGameSpike,
-                ["TST_BalancedGeneralistControl"] = StrategyTheme.Control,
-                ["TST_BalancedControl_NoPreferredMyco"] = StrategyTheme.Control,
-                ["TST_RebirthAttrition"] = StrategyTheme.Attrition,
-                ["TST_BalancedControl_MaxEconomy"] = StrategyTheme.Control,
-                ["TST_LowTierEconomyGrinder"] = StrategyTheme.TierCap,
-                ["TST_LowTierSurgeSkirmisher"] = StrategyTheme.Counterplay,
-                ["TST_BalancedControl_MinorEconomy"] = StrategyTheme.Control,
-                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyTheme.Control,
-                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyTheme.Control,
-                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyTheme.EconomyRamp,
-                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyTheme.Control,
-                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyTheme.Control,
-                ["TST_CreepingNecroRegressionCascade"] = StrategyTheme.Control,
-                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyTheme.TierCap,
-                ["CMP_Reclaim_Scavenger_Easy"] = StrategyTheme.Reclamation,
-                ["CMP_Surge_Pulsar_Easy"] = StrategyTheme.SurgeTempo,
-                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyTheme.Reclamation,
-                ["CMP_Defense_ResilientShell_Easy"] = StrategyTheme.Defense,
-                ["CMP_Defense_ReclaimShell_Easy"] = StrategyTheme.Defense,
-                ["CMP_Surge_BeaconTempo_Medium"] = StrategyTheme.SurgeTempo,
-                ["CMP_Control_AnabolicRebirth_Medium"] = StrategyTheme.Control,
-                ["CMP_Surge_GrowthTempo_Medium"] = StrategyTheme.SurgeTempo,
-                ["CMP_Growth_Pressure_Medium"] = StrategyTheme.Offense,
-                ["CMP_Bloom_FortifyMimic_Medium"] = StrategyTheme.Attrition,
-                ["CMP_Economy_KillReclaim_Medium"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_HarvestBrokerOffset8_EconomyControl"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_ResilientMyceliumOffset1_CategoryControl"] = StrategyTheme.Defense,
-                ["TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants"] = StrategyTheme.Defense,
-                ["TST_Campaign_OverextenderOffset1_GrowthControl"] = StrategyTheme.Mobility,
-                ["TST_Campaign_OverextenderOffset1_CuratedMycovariants"] = StrategyTheme.Mobility,
-                ["TST_Campaign_ToxicTurtleOffset1_CategoryControl"] = StrategyTheme.Attrition,
-                ["TST_Campaign_ToxicTurtleOffset1_CuratedMycovariants"] = StrategyTheme.Attrition,
-                ["TST_Campaign_ResilientShell_CategoryControl"] = StrategyTheme.Defense,
-                ["TST_Campaign_ResilientShell_CuratedMycovariants"] = StrategyTheme.Defense,
-                ["TST_Campaign_ReclaimShell_CategoryControl"] = StrategyTheme.Defense,
-                ["TST_Campaign_ReclaimShell_CuratedMycovariants"] = StrategyTheme.Defense,
-                ["TST_Campaign_Scavenger_CategoryControl"] = StrategyTheme.Reclamation,
-                ["TST_Campaign_Scavenger_CuratedMycovariants"] = StrategyTheme.Reclamation,
-                ["TST_Campaign_InfiltrationSurge_CategoryControl"] = StrategyTheme.Reclamation,
-                ["TST_Campaign_InfiltrationSurge_CuratedMycovariants"] = StrategyTheme.Reclamation,
-                ["TST_Campaign_TempoReclaim_CategoryControl"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_TempoReclaim_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_Pulsar_CategoryControl"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_Pulsar_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_ResilientCanopy_NoPreferenceControl"] = StrategyTheme.TierCap,
-                ["TST_Campaign_ResilientCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
-                ["TST_Campaign_LateSpike_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
-                ["TST_Campaign_LateSpike_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
-                ["TST_Campaign_GrowthPressure_CategoryControl"] = StrategyTheme.Offense,
-                ["TST_Campaign_GrowthPressure_CuratedMycovariants"] = StrategyTheme.Offense,
-                ["TST_Campaign_PutridTendrils_NoPreferenceControl"] = StrategyTheme.Offense,
-                ["TST_Campaign_PutridTendrils_CuratedMycovariants"] = StrategyTheme.Offense,
-                ["TST_Campaign_WildfireBloom_NoPreferenceControl"] = StrategyTheme.Offense,
-                ["TST_Campaign_WildfireBloom_CuratedMycovariants"] = StrategyTheme.Offense,
-                ["TST_Campaign_BeaconSprinter_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_BeaconSprinter_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_BeaconTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_BeaconTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_GrowthTempo_NoPreferenceControl"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_GrowthTempo_CuratedMycovariants"] = StrategyTheme.SurgeTempo,
-                ["TST_Campaign_AnabolicRebirth_NoPreferenceControl"] = StrategyTheme.Control,
-                ["TST_Campaign_AnabolicRebirth_CuratedMycovariants"] = StrategyTheme.Control,
-                ["TST_Campaign_RebirthFurnace_NoPreferenceControl"] = StrategyTheme.Control,
-                ["TST_Campaign_RebirthFurnace_CuratedMycovariants"] = StrategyTheme.Control,
-                ["TST_Campaign_VoltaicBloom_CategoryControl"] = StrategyTheme.Control,
-                ["TST_Campaign_VoltaicBloom_CuratedMycovariants"] = StrategyTheme.Control,
-                ["TST_Campaign_HoardsporeRegentLegacy_CategoryControl"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants"] = StrategyTheme.EconomyRamp,
-                ["TST_Campaign_RejuvenationEngine_NoPreferenceControl"] = StrategyTheme.LateGameSpike,
-                ["TST_Campaign_RejuvenationEngine_CuratedMycovariants"] = StrategyTheme.LateGameSpike,
-                ["TST_Campaign_RootedCanopy_CategoryControl"] = StrategyTheme.TierCap,
-                ["TST_Campaign_RootedCanopy_CuratedMycovariants"] = StrategyTheme.TierCap,
-                ["TST_Campaign_RhizolithCrown_CategoryControl"] = StrategyTheme.Control,
-                ["TST_Campaign_RhizolithCrown_CuratedMycovariants"] = StrategyTheme.Control,
-                ["CMP_Economy_TempoReclaim_Medium"] = StrategyTheme.EconomyRamp,
-                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyTheme.Control,
-                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyTheme.Control,
-                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyTheme.Control,
-                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyTheme.Offense,
-                ["CMP_Control_AnabolicFirst_Hard"] = StrategyTheme.Control,
-                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyTheme.Offense,
-                ["CMP_Economy_LateSpike_Hard"] = StrategyTheme.LateGameSpike,
-                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyTheme.Control,
-                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyTheme.Control,
-                ["TST_CampaignPlayer_SafeBaseline"] = StrategyTheme.Control,
-                ["TST_Training_ResilientMycelium"] = StrategyTheme.Defense,
-                ["TST_Training_ResilientMycelium_Offset3"] = StrategyTheme.Defense,
-                ["CMP_Mobility_Overextender_Training"] = StrategyTheme.Mobility,
-                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyTheme.Mobility,
-                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyTheme.Mobility,
-                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyTheme.Attrition,
-                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyTheme.Attrition,
-                ["PutridTendrils"] = StrategyTheme.Defense,
-                ["SporeLedger"] = StrategyTheme.EconomyRamp,
-                ["ReclaimersLedger"] = StrategyTheme.Reclamation,
-                ["VerdantReclaimer"] = StrategyTheme.Reclamation,
-                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyTheme.Reclamation,
-                ["RegrowthLattice"] = StrategyTheme.Defense,
-                ["HyphalPulse"] = StrategyTheme.SurgeTempo,
-                ["RejuvenationEngine"] = StrategyTheme.LateGameSpike,
-                ["RootedCanopy"] = StrategyTheme.TierCap,
+                ["TST_HyperEconomyRamp"] = StrategyArchetype.EconomyRamp,
+                ["TST_EconomyAtAllCosts"] = StrategyArchetype.EconomyRamp,
+                ["TST_HyperEconomyRamp_NoOntogenic"] = StrategyArchetype.EconomyRamp,
+                ["TST_EarlyReclaimerSwarm"] = StrategyArchetype.Reclamation,
+                ["TST_EcologyFrontierExpansion"] = StrategyArchetype.Control,
+                ["TST_EcologyFrontierResilience"] = StrategyArchetype.Defense,
+                ["TST_EcologyToxinFissioner"] = StrategyArchetype.Offense,
+                ["TST_EcologyAutolyticDetrital"] = StrategyArchetype.Attrition,
+                ["TST_EcologyAutolyticReclaimer"] = StrategyArchetype.Reclamation,
+                ["TST_Arch01_GrowthResilience"] = StrategyArchetype.Defense,
+                ["TST_Arch02_ResilienceGrowth"] = StrategyArchetype.Defense,
+                ["TST_Arch03_FungicideSurge"] = StrategyArchetype.Offense,
+                ["TST_Arch04_DriftGrowth"] = StrategyArchetype.EconomyRamp,
+                ["TST_Arch04_DriftGrowth_NoOntogenic"] = StrategyArchetype.EconomyRamp,
+                ["TST_Arch05_DriftResilience"] = StrategyArchetype.Counterplay,
+                ["TST_Arch06_SurgeGrowth"] = StrategyArchetype.SurgeTempo,
+                ["TST_Arch07_DriftFungicide"] = StrategyArchetype.Counterplay,
+                ["TST_Arch08_SurgeResilience"] = StrategyArchetype.SurgeTempo,
+                ["TST_BalancedControl_AnabolicFirst"] = StrategyArchetype.Control,
+                ["TST_HyphalSurgeTempo"] = StrategyArchetype.SurgeTempo,
+                ["TST_FortressResilience"] = StrategyArchetype.Defense,
+                ["TST_OpportunisticCounterplay"] = StrategyArchetype.Counterplay,
+                ["TST_Tier3PlateauSpecialist"] = StrategyArchetype.TierCap,
+                ["TST_LateGameSpike"] = StrategyArchetype.LateGameSpike,
+                ["TST_BalancedGeneralistControl"] = StrategyArchetype.Control,
+                ["TST_BalancedControl_NoPreferredMyco"] = StrategyArchetype.Control,
+                ["TST_RebirthAttrition"] = StrategyArchetype.Attrition,
+                ["TST_BalancedControl_MaxEconomy"] = StrategyArchetype.Control,
+                ["TST_LowTierEconomyGrinder"] = StrategyArchetype.TierCap,
+                ["TST_LowTierSurgeSkirmisher"] = StrategyArchetype.Counterplay,
+                ["TST_BalancedControl_MinorEconomy"] = StrategyArchetype.Control,
+                ["TST_CampaignMirror_AI13_AnabolicFirst"] = StrategyArchetype.Control,
+                ["TST_CampaignMirror_AI13_AnabolicFirst_GrowthOnlyMyco"] = StrategyArchetype.Control,
+                ["TST_CampaignMirror_AI13_BalancedControl_MaxEconomy"] = StrategyArchetype.EconomyRamp,
+                ["TST_AnabolicBeaconNecroRegressionCascade"] = StrategyArchetype.Control,
+                ["TST_AnabolicCreepingNecroRegressionCascade"] = StrategyArchetype.Control,
+                ["TST_CreepingNecroRegressionCascade"] = StrategyArchetype.Control,
+                ["CMP_TierCap_GrowthResilience_Easy"] = StrategyArchetype.TierCap,
+                ["CMP_Reclaim_Scavenger_Easy"] = StrategyArchetype.Reclamation,
+                ["CMP_Surge_Pulsar_Easy"] = StrategyArchetype.SurgeTempo,
+                ["CMP_Reclaim_InfiltrationSurge_Easy"] = StrategyArchetype.Reclamation,
+                ["CMP_Defense_ResilientShell_Easy"] = StrategyArchetype.Defense,
+                ["CMP_Defense_ReclaimShell_Easy"] = StrategyArchetype.Defense,
+                ["CMP_Surge_BeaconTempo_Medium"] = StrategyArchetype.SurgeTempo,
+                ["CMP_Control_AnabolicRebirth_Medium"] = StrategyArchetype.Control,
+                ["CMP_Surge_GrowthTempo_Medium"] = StrategyArchetype.SurgeTempo,
+                ["CMP_Growth_Pressure_Medium"] = StrategyArchetype.Offense,
+                ["CMP_Bloom_FortifyMimic_Medium"] = StrategyArchetype.Attrition,
+                ["CMP_Economy_KillReclaim_Medium"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset1"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset2"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset3"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign7_KillReclaim_Offset8"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_HarvestBrokerOffset8_EconomyControl"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_HarvestBrokerOffset8_CuratedMycovariants"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_ResilientMyceliumOffset1_CategoryControl"] = StrategyArchetype.Defense,
+                ["TST_Campaign_ResilientMyceliumOffset1_CuratedMycovariants"] = StrategyArchetype.Defense,
+                ["TST_Campaign_OverextenderOffset1_GrowthControl"] = StrategyArchetype.Mobility,
+                ["TST_Campaign_OverextenderOffset1_CuratedMycovariants"] = StrategyArchetype.Mobility,
+                ["TST_Campaign_ToxicTurtleOffset1_CategoryControl"] = StrategyArchetype.Attrition,
+                ["TST_Campaign_ToxicTurtleOffset1_CuratedMycovariants"] = StrategyArchetype.Attrition,
+                ["TST_Campaign_ResilientShell_CategoryControl"] = StrategyArchetype.Defense,
+                ["TST_Campaign_ResilientShell_CuratedMycovariants"] = StrategyArchetype.Defense,
+                ["TST_Campaign_ReclaimShell_CategoryControl"] = StrategyArchetype.Defense,
+                ["TST_Campaign_ReclaimShell_CuratedMycovariants"] = StrategyArchetype.Defense,
+                ["TST_Campaign_Scavenger_CategoryControl"] = StrategyArchetype.Reclamation,
+                ["TST_Campaign_Scavenger_CuratedMycovariants"] = StrategyArchetype.Reclamation,
+                ["TST_Campaign_InfiltrationSurge_CategoryControl"] = StrategyArchetype.Reclamation,
+                ["TST_Campaign_InfiltrationSurge_CuratedMycovariants"] = StrategyArchetype.Reclamation,
+                ["TST_Campaign_TempoReclaim_CategoryControl"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_TempoReclaim_CuratedMycovariants"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_Pulsar_CategoryControl"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_Pulsar_CuratedMycovariants"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_ResilientCanopy_NoPreferenceControl"] = StrategyArchetype.TierCap,
+                ["TST_Campaign_ResilientCanopy_CuratedMycovariants"] = StrategyArchetype.TierCap,
+                ["TST_Campaign_LateSpike_NoPreferenceControl"] = StrategyArchetype.LateGameSpike,
+                ["TST_Campaign_LateSpike_CuratedMycovariants"] = StrategyArchetype.LateGameSpike,
+                ["TST_Campaign_GrowthPressure_CategoryControl"] = StrategyArchetype.Offense,
+                ["TST_Campaign_GrowthPressure_CuratedMycovariants"] = StrategyArchetype.Offense,
+                ["TST_Campaign_PutridTendrils_NoPreferenceControl"] = StrategyArchetype.Offense,
+                ["TST_Campaign_PutridTendrils_CuratedMycovariants"] = StrategyArchetype.Offense,
+                ["TST_Campaign_WildfireBloom_NoPreferenceControl"] = StrategyArchetype.Offense,
+                ["TST_Campaign_WildfireBloom_CuratedMycovariants"] = StrategyArchetype.Offense,
+                ["TST_Campaign_BeaconSprinter_NoPreferenceControl"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_BeaconSprinter_CuratedMycovariants"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_BeaconTempo_NoPreferenceControl"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_BeaconTempo_CuratedMycovariants"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_GrowthTempo_NoPreferenceControl"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_GrowthTempo_CuratedMycovariants"] = StrategyArchetype.SurgeTempo,
+                ["TST_Campaign_AnabolicRebirth_NoPreferenceControl"] = StrategyArchetype.Control,
+                ["TST_Campaign_AnabolicRebirth_CuratedMycovariants"] = StrategyArchetype.Control,
+                ["TST_Campaign_RebirthFurnace_NoPreferenceControl"] = StrategyArchetype.Control,
+                ["TST_Campaign_RebirthFurnace_CuratedMycovariants"] = StrategyArchetype.Control,
+                ["TST_Campaign_VoltaicBloom_CategoryControl"] = StrategyArchetype.Control,
+                ["TST_Campaign_VoltaicBloom_CuratedMycovariants"] = StrategyArchetype.Control,
+                ["TST_Campaign_HoardsporeRegentLegacy_CategoryControl"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_HoardsporeRegentLegacy_CuratedMycovariants"] = StrategyArchetype.EconomyRamp,
+                ["TST_Campaign_RejuvenationEngine_NoPreferenceControl"] = StrategyArchetype.LateGameSpike,
+                ["TST_Campaign_RejuvenationEngine_CuratedMycovariants"] = StrategyArchetype.LateGameSpike,
+                ["TST_Campaign_RootedCanopy_CategoryControl"] = StrategyArchetype.TierCap,
+                ["TST_Campaign_RootedCanopy_CuratedMycovariants"] = StrategyArchetype.TierCap,
+                ["TST_Campaign_RhizolithCrown_CategoryControl"] = StrategyArchetype.Control,
+                ["TST_Campaign_RhizolithCrown_CuratedMycovariants"] = StrategyArchetype.Control,
+                ["CMP_Economy_TempoReclaim_Medium"] = StrategyArchetype.EconomyRamp,
+                ["CMP_Bloom_CreepingNecro_Medium"] = StrategyArchetype.Control,
+                ["CMP_Bloom_BeaconRegression_Medium"] = StrategyArchetype.Control,
+                ["CMP_Bloom_AnabolicRegression_Medium"] = StrategyArchetype.Control,
+                ["CMP_Bloom_ToxinborneJetting_Medium"] = StrategyArchetype.Offense,
+                ["CMP_Control_AnabolicFirst_Hard"] = StrategyArchetype.Control,
+                ["CMP_Bloom_ToxinborneBallistospore_Hard"] = StrategyArchetype.Offense,
+                ["CMP_Economy_LateSpike_Hard"] = StrategyArchetype.LateGameSpike,
+                ["CMP_Bloom_CreepingRegression_Elite"] = StrategyArchetype.Control,
+                ["CMP_AnabolicBeaconRhizolith_Elite"] = StrategyArchetype.Control,
+                ["TST_CampaignPlayer_SafeBaseline"] = StrategyArchetype.Control,
+                ["TST_Training_ResilientMycelium"] = StrategyArchetype.Defense,
+                ["TST_Training_ResilientMycelium_Offset3"] = StrategyArchetype.Defense,
+                ["CMP_Mobility_Overextender_Training"] = StrategyArchetype.Mobility,
+                ["CMP_Mobility_Overextender_Training_Offset2"] = StrategyArchetype.Mobility,
+                ["CMP_Mobility_Overextender_Training_Offset3"] = StrategyArchetype.Mobility,
+                ["CMP_Attrition_ToxicTurtle_Training"] = StrategyArchetype.Attrition,
+                ["CMP_Attrition_ToxicTurtle_Training_Offset2"] = StrategyArchetype.Attrition,
+                ["PutridTendrils"] = StrategyArchetype.Defense,
+                ["SporeLedger"] = StrategyArchetype.EconomyRamp,
+                ["ReclaimersLedger"] = StrategyArchetype.Reclamation,
+                ["VerdantReclaimer"] = StrategyArchetype.Reclamation,
+                ["CMP_Growth_VerdantReclaimer_Elite"] = StrategyArchetype.Reclamation,
+                ["RegrowthLattice"] = StrategyArchetype.Defense,
+                ["HyphalPulse"] = StrategyArchetype.SurgeTempo,
+                ["RejuvenationEngine"] = StrategyArchetype.LateGameSpike,
+                ["RootedCanopy"] = StrategyArchetype.TierCap,
                 // Pinned when these were renamed: their themes had been inferred from the old names,
                 // and StratifiedCycle orders by theme, so a drift would change simulation lineups.
-                ["CreepingReclaimer"] = StrategyTheme.Balanced,
-                ["MutagenBloom"] = StrategyTheme.EconomyRamp,
-                ["AdaptiveBlight"] = StrategyTheme.EconomyRamp,
+                ["CreepingReclaimer"] = StrategyArchetype.Balanced,
+                ["MutagenBloom"] = StrategyArchetype.EconomyRamp,
+                ["AdaptiveBlight"] = StrategyArchetype.EconomyRamp,
                 // Mycovariants-set permutation that kept the legacy name; it previously shared the
                 // Proven entry's theme by name.
-                ["Grow>Kill>Reclaim(Econ)"] = StrategyTheme.EconomyRamp,
+                ["Grow>Kill>Reclaim(Econ)"] = StrategyArchetype.EconomyRamp,
             };
 
         private static readonly UniqueKeyDictionary<StrategyStatus> _explicitStrategyStatusesByName =
@@ -4688,7 +4672,7 @@ namespace FungusToast.Core.AI
                 .SelectMany(StrategyRegistry.GetDefinitions)
                 .Select(definition => definition.Strategy.StrategyName)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
-            var overrideNames = _explicitStrategyThemesByName.Keys
+            var overrideNames = _explicitStrategyArchetypesByName.Keys
                 .Concat(_explicitStrategyStatusesByName.Keys)
                 .Concat(_explicitPowerTiersByName.Keys)
                 .Concat(_explicitRolesByName.Keys)
@@ -4892,7 +4876,7 @@ namespace FungusToast.Core.AI
 
         private static StrategyProfile BuildStrategyProfile(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
         {
-            var theme = GetThemeForStrategy(strategy);
+            var theme = GetArchetypeForStrategy(strategy);
             var status = GetStatusForStrategy(strategy, strategySet);
             var powerTier = GetPowerTierForStrategy(strategy, strategySet);
             var role = GetRoleForStrategy(strategy, strategySet);
@@ -4930,7 +4914,7 @@ namespace FungusToast.Core.AI
             return new StrategyProfile(
                 entry.StrategyName,
                 entry.StrategySet,
-                (StrategyTheme)entry.Archetype,
+                entry.Archetype,
                 entry.Status,
                 entry.FriendlyName,
                 entry.AIPlayerIntentions,
@@ -5069,7 +5053,7 @@ namespace FungusToast.Core.AI
             return new StrategyCatalogEntry(
                 profile.StrategyName,
                 profile.StrategySet,
-                (StrategyArchetype)profile.Theme,
+                profile.Archetype,
                 profile.Status,
                 profile.PowerTier,
                 profile.Role,
@@ -5088,27 +5072,27 @@ namespace FungusToast.Core.AI
                 profile.MycovariantPlan);
         }
 
-        public static StrategyTheme GetThemeForStrategy(IMutationSpendingStrategy strategy)
+        public static StrategyArchetype GetArchetypeForStrategy(IMutationSpendingStrategy strategy)
         {
             var registered = StrategyRegistry.GetDefinition(strategy);
             if (registered != null)
             {
-                return (StrategyTheme)registered.Metadata.Archetype;
+                return registered.Metadata.Archetype;
             }
 
-            if (_explicitStrategyThemesByName.TryGetValue(strategy.StrategyName, out var explicitTheme))
+            if (_explicitStrategyArchetypesByName.TryGetValue(strategy.StrategyName, out var explicitArchetype))
             {
-                return explicitTheme;
+                return explicitArchetype;
             }
 
             var name = strategy.StrategyName;
-            if (name.Contains("Surge", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.SurgeTempo;
-            if (name.Contains("Reclaim", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Reclamation;
-            if (name.Contains("Econ", StringComparison.OrdinalIgnoreCase) || name.Contains("Mutate", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.EconomyRamp;
-            if (name.Contains("Toxin", StringComparison.OrdinalIgnoreCase) || name.Contains("Kill", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Offense;
-            if (name.Contains("Resilience", StringComparison.OrdinalIgnoreCase) || name.Contains("Defend", StringComparison.OrdinalIgnoreCase) || name.Contains("Resistance", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Defense;
-            if (name.Contains("Vector", StringComparison.OrdinalIgnoreCase) || name.Contains("Mobility", StringComparison.OrdinalIgnoreCase)) return StrategyTheme.Mobility;
-            return StrategyTheme.Balanced;
+            if (name.Contains("Surge", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.SurgeTempo;
+            if (name.Contains("Reclaim", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.Reclamation;
+            if (name.Contains("Econ", StringComparison.OrdinalIgnoreCase) || name.Contains("Mutate", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.EconomyRamp;
+            if (name.Contains("Toxin", StringComparison.OrdinalIgnoreCase) || name.Contains("Kill", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.Offense;
+            if (name.Contains("Resilience", StringComparison.OrdinalIgnoreCase) || name.Contains("Defend", StringComparison.OrdinalIgnoreCase) || name.Contains("Resistance", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.Defense;
+            if (name.Contains("Vector", StringComparison.OrdinalIgnoreCase) || name.Contains("Mobility", StringComparison.OrdinalIgnoreCase)) return StrategyArchetype.Mobility;
+            return StrategyArchetype.Balanced;
         }
 
         public static StrategyStatus GetStatusForStrategy(IMutationSpendingStrategy strategy, StrategySetEnum strategySet)
@@ -5333,18 +5317,18 @@ namespace FungusToast.Core.AI
 
         private static string BuildIntentLabel(IMutationSpendingStrategy strategy)
         {
-            return GetThemeForStrategy(strategy) switch
+            return GetArchetypeForStrategy(strategy) switch
             {
-                StrategyTheme.EconomyRamp => "Front-load economy and scale into high-tier pressure",
-                StrategyTheme.Reclamation => "Retake territory and convert attrition into board control",
-                StrategyTheme.Offense => "Maximize kill pressure and toxin conversion",
-                StrategyTheme.SurgeTempo => "Leverage surge windows and timing bursts",
-                StrategyTheme.Defense => "Stabilize with resilient growth before counter-attacking",
-                StrategyTheme.Counterplay => "Flexible line to respond to opponent mutation plans",
-                StrategyTheme.Mobility => "Create angle pressure with movement-heavy upgrades",
-                StrategyTheme.Attrition => "Win through long-cycle death and rebirth exchanges",
-                StrategyTheme.LateGameSpike => "Bank resources for high-impact late upgrades",
-                StrategyTheme.TierCap => "Concentrate value in constrained tier bands",
+                StrategyArchetype.EconomyRamp => "Front-load economy and scale into high-tier pressure",
+                StrategyArchetype.Reclamation => "Retake territory and convert attrition into board control",
+                StrategyArchetype.Offense => "Maximize kill pressure and toxin conversion",
+                StrategyArchetype.SurgeTempo => "Leverage surge windows and timing bursts",
+                StrategyArchetype.Defense => "Stabilize with resilient growth before counter-attacking",
+                StrategyArchetype.Counterplay => "Flexible line to respond to opponent mutation plans",
+                StrategyArchetype.Mobility => "Create angle pressure with movement-heavy upgrades",
+                StrategyArchetype.Attrition => "Win through long-cycle death and rebirth exchanges",
+                StrategyArchetype.LateGameSpike => "Bank resources for high-impact late upgrades",
+                StrategyArchetype.TierCap => "Concentrate value in constrained tier bands",
                 _ => "Balanced all-purpose mutation progression"
             };
         }
@@ -5671,11 +5655,11 @@ namespace FungusToast.Core.AI
         {
             var shuffled = sourceStrategies.OrderBy(_ => rng.Next()).ToList();
             var selected = new List<IMutationSpendingStrategy>(requestedCount);
-            var seenThemes = new HashSet<StrategyTheme>();
+            var seenThemes = new HashSet<StrategyArchetype>();
 
             foreach (var strategy in shuffled)
             {
-                var theme = GetThemeForStrategy(strategy);
+                var theme = GetArchetypeForStrategy(strategy);
                 if (seenThemes.Add(theme))
                 {
                     selected.Add(strategy);
@@ -5709,7 +5693,7 @@ namespace FungusToast.Core.AI
             int cycleIndex)
         {
             var ordered = sourceStrategies
-                .OrderBy(s => GetThemeForStrategy(s))
+                .OrderBy(s => GetArchetypeForStrategy(s))
                 .ThenBy(s => s.StrategyName, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 

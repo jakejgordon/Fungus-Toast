@@ -193,12 +193,12 @@ public sealed class GeneratedCandidateCatalogTests : IDisposable
     public void PublishingAReference_DoesNotChangeItsRosterMetadata()
     {
         var parent = StrategyRegistry.GetDefinition(StrategySetEnum.Testing, "TST_BalancedGeneralistControl")!;
-        var themeBefore = AIRoster.GetThemeForStrategy(parent.Strategy);
+        var themeBefore = AIRoster.GetArchetypeForStrategy(parent.Strategy);
         var favoredBefore = AIRoster.GetFavoredAgainstForStrategy(parent.Strategy);
 
         GeneratedCandidateCatalog.Publish(GenerateCandidates(), new[] { parent });
 
-        Assert.Equal(themeBefore, AIRoster.GetThemeForStrategy(parent.Strategy));
+        Assert.Equal(themeBefore, AIRoster.GetArchetypeForStrategy(parent.Strategy));
         Assert.Equal(favoredBefore, AIRoster.GetFavoredAgainstForStrategy(parent.Strategy));
     }
 
