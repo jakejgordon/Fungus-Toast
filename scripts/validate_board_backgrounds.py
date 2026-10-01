@@ -294,7 +294,7 @@ def main() -> int:
 
 def build_probe_sizes(full_square_max: int) -> list[tuple[int, int]]:
     squares = list(range(1, 21))
-    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 85, 90, 95, 99, 100, 101, 120, 140, 160, 165, 180, 200])
+    squares.extend([21, 25, 30, 35, 40, 41, 50, 60, 70, 80, 81, 85, 90, 95, 99, 100, 101, 120, 125, 130, 140, 150, 160, 165, 180, 200])
     if full_square_max > 0:
         squares.extend(range(1, full_square_max + 1))
 

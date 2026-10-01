@@ -10,9 +10,9 @@ Use this checklist when adding a brand-new board background:
 
 1. Pick the intended shape source before tuning anything:
    - plain alpha when the sprite alpha already matches the playable shape
-   - ellipse metadata for genuinely round/oval boards such as pita
+   - ellipse metadata for boards whose playable area should be a true geometric circle or oval rather than follow the photo edge
    - horizontal span profile for stable row-by-row authored trims such as cheese
-   - baked masks for irregular photo silhouettes that need an exact square gameplay envelope such as Kaiser Bun
+   - baked masks for irregular photo silhouettes that need an exact square gameplay envelope such as Kaiser Bun, pita, and the toenail
 2. Import the sprite and add or update the background entry in `ToastBoardMedium.asset`.
 3. Add a matching `boardBackgroundSpriteMetadata` entry for the sprite.
 4. Start from the conservative baseline:
@@ -28,7 +28,7 @@ Use this checklist when adding a brand-new board background:
 Pick the simplest shape model that matches the intended playable silhouette.
 
 1. Use plain alpha-derived masking when the visible sprite alpha already cleanly matches the intended board footprint.
-2. Use `hasPlayableEllipse` when the intended playable area is genuinely ellipse-like, such as pita.
+2. Use `hasPlayableEllipse` only when the playable area should be a geometric ellipse. A real round food photo is rarely a true circle: pita used an ellipse until 2026-09-30, and it overhung the bread at the corners. It now uses baked masks.
 3. Use `hasPlayableHorizontalSpanProfile` when the silhouette needs authored asymmetric per-row trimming and the board-space shape is still easy to describe row by row.
 4. Use `bakedBlockedTileMasks` when the intended silhouette is irregular enough that row spans are brittle or when non-square source art needs a deliberately centered square gameplay envelope with conservative trimming.
 
