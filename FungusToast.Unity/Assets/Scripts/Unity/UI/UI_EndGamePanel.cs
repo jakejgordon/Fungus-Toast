@@ -145,6 +145,8 @@ namespace FungusToast.Unity.UI
         private readonly List<AdaptationDefinition> pendingDefeatCarryoverOptions = new();
         private bool returnToCampaignMenuAfterMoldinessReward;
         private bool showPostAdaptationConfirmationAfterMoldinessRewardSelection;
+        // The final victory has no next stage, so the continue button only appears to claim rewards.
+        private bool claimFinalVictoryMoldinessRewardsOnContinue;
         private DefeatCarryoverEntryMode pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
         private CampaignVictorySnapshot cachedCampaignVictorySnapshot;
         private TextMeshProUGUI defeatCarryoverSelectionStatusLabel;
@@ -642,6 +644,7 @@ namespace FungusToast.Unity.UI
             pendingDefeatCarryoverEntryMode = DefeatCarryoverEntryMode.ImmediateLossScreen;
             cachedCampaignVictorySnapshot = null;
             showPostAdaptationConfirmationAfterMoldinessRewardSelection = false;
+            claimFinalVictoryMoldinessRewardsOnContinue = false;
             if (!isCampaign)
             {
                 ShowResultsInternal(ranked, board, playerStatistics, useCampaignTopSpacer: true);
@@ -713,8 +716,12 @@ namespace FungusToast.Unity.UI
                 {
                     defeatCarryoverSelectionCapacity = 0;
                 }
+            claimFinalVictoryMoldinessRewardsOnContinue = victory
+                && finalLevel
+                && presentationSnapshot != null
+                && presentationSnapshot.pendingMoldinessUnlockCount > 0;
             if (continueButton != null)
-                continueButton.gameObject.SetActive(victory && !finalLevel && hasNextLevel);
+                continueButton.gameObject.SetActive((victory && !finalLevel && hasNextLevel) || claimFinalVictoryMoldinessRewardsOnContinue);
             if (exitButton != null)
                 exitButton.gameObject.SetActive(true);
             if (playAgainButton != null)
@@ -747,7 +754,7 @@ namespace FungusToast.Unity.UI
                 bool hasPendingMoldinessRewards = presentationSnapshot != null && presentationSnapshot.pendingMoldinessUnlockCount > 0;
                 SetButtonLabel(
                     continueButton,
-                    requiresAdaptationBeforeContinue
+                    requiresAdaptationBeforeContinue || claimFinalVictoryMoldinessRewardsOnContinue
                         ? (hasPendingMoldinessRewards ? "Claim Moldiness Rewards" : "Select Adaptation")
                         : "Continue Campaign");
             }
@@ -2550,6 +2557,14 @@ namespace FungusToast.Unity.UI
 
                 if (returnToCampaignMenu)
                 {
+                    // A final victory can cross several thresholds at once; offer each before leaving.
+                    if (TryShowNextPendingMoldinessRewardSelection(
+                            returnToCampaignMenuAfterSelection: true,
+                            showAdaptationConfirmationAfterSelection: false))
+                    {
+                        return;
+                    }
+
                     HideInstant();
                     if (onExitToModeSelect != null)
                         onExitToModeSelect();
@@ -2573,29 +2588,22 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            if (claimFinalVictoryMoldinessRewardsOnContinue)
+            {
+                claimFinalVictoryMoldinessRewardsOnContinue = false;
+                TryShowNextPendingMoldinessRewardSelection(
+                    returnToCampaignMenuAfterSelection: true,
+                    showAdaptationConfirmationAfterSelection: false);
+                return;
+            }
+
             if (requiresAdaptationBeforeContinue)
             {
                 var manager = GameManager.Instance;
                 ApplyPostVictoryTestingSettings(manager);
-                var campaignController = manager?.CampaignController;
-                if (campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
+                if (manager?.CampaignController?.HasPendingMoldinessUnlockChoice == true)
                 {
-                    var snapshot = cachedCampaignVictorySnapshot;
-                    if (snapshot == null
-                        && (!campaignController.TryGetPendingMoldinessRewardSnapshot(out snapshot) || snapshot == null))
-                    {
-                        return;
-                    }
-
-                    snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
-                    string forcedUnlockId = manager != null && manager.IsTestingModeEnabled && manager.TestingForceMoldinessRewards
-                        ? manager.TestingForcedMoldinessRewardId
-                        : string.Empty;
-                    var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3, forcedUnlockId);
-                    ShowCampaignPendingMoldinessRewardSelection(
-                        snapshot,
-                        offers,
-                        campaignController.State?.moldiness,
+                    TryShowNextPendingMoldinessRewardSelection(
                         returnToCampaignMenuAfterSelection: false,
                         showAdaptationConfirmationAfterSelection: false);
                     return;
@@ -2630,32 +2638,50 @@ namespace FungusToast.Unity.UI
             requiresAdaptationBeforeContinue = false;
 
             var manager = GameManager.Instance;
-            var campaignController = manager?.CampaignController;
-            if (campaignController != null && campaignController.HasPendingMoldinessUnlockChoice)
+            if (manager?.CampaignController?.HasPendingMoldinessUnlockChoice == true)
             {
-                var snapshot = cachedCampaignVictorySnapshot;
-                if (snapshot == null
-                    && (!campaignController.TryGetPendingMoldinessRewardSnapshot(out snapshot) || snapshot == null))
+                if (!TryShowNextPendingMoldinessRewardSelection(
+                        returnToCampaignMenuAfterSelection: false,
+                        showAdaptationConfirmationAfterSelection: true))
                 {
-                    manager?.StartCampaignResume();
-                    return;
+                    manager.StartCampaignResume();
                 }
-
-                snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
-                string forcedUnlockId = manager != null && manager.IsTestingModeEnabled && manager.TestingForceMoldinessRewards
-                    ? manager.TestingForcedMoldinessRewardId
-                    : string.Empty;
-                var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3, forcedUnlockId);
-                ShowCampaignPendingMoldinessRewardSelection(
-                    snapshot,
-                    offers,
-                    campaignController.State?.moldiness,
-                    returnToCampaignMenuAfterSelection: false,
-                    showAdaptationConfirmationAfterSelection: true);
                 return;
             }
 
             ShowCampaignAdaptationSecuredConfirmation();
+        }
+
+        private bool TryShowNextPendingMoldinessRewardSelection(
+            bool returnToCampaignMenuAfterSelection,
+            bool showAdaptationConfirmationAfterSelection)
+        {
+            var manager = GameManager.Instance;
+            var campaignController = manager?.CampaignController;
+            if (campaignController == null || !campaignController.HasPendingMoldinessUnlockChoice)
+            {
+                return false;
+            }
+
+            var snapshot = cachedCampaignVictorySnapshot;
+            if (snapshot == null
+                && (!campaignController.TryGetPendingMoldinessRewardSnapshot(out snapshot) || snapshot == null))
+            {
+                return false;
+            }
+
+            snapshot.pendingMoldinessUnlockCount = campaignController.State?.moldiness?.pendingUnlockTriggers?.Count ?? snapshot.pendingMoldinessUnlockCount;
+            string forcedUnlockId = manager.IsTestingModeEnabled && manager.TestingForceMoldinessRewards
+                ? manager.TestingForcedMoldinessRewardId
+                : string.Empty;
+            var offers = campaignController.GetPendingMoldinessUnlockOffers(new System.Random(campaignController.State?.seed ?? 0), 3, forcedUnlockId);
+            ShowCampaignPendingMoldinessRewardSelection(
+                snapshot,
+                offers,
+                campaignController.State?.moldiness,
+                returnToCampaignMenuAfterSelection,
+                showAdaptationConfirmationAfterSelection);
+            return true;
         }
 
         private void ShowCampaignAdaptationSecuredConfirmation()
