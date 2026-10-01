@@ -35,12 +35,12 @@ public sealed class CandidateCatalogGenerationTests
             new CandidateCatalogReference
             {
                 StrategySet = StrategySetEnum.Proven,
-                StrategyName = "Grow>Kill>Reclaim(Econ/Reclaim)"
+                StrategyName = "ReclaimersLedger"
             },
             new CandidateCatalogReference
             {
                 StrategySet = StrategySetEnum.Proven,
-                StrategyName = "Grow>Kill>Reclaim(Econ/Reclaim)"
+                StrategyName = "ReclaimersLedger"
             }
         });
 

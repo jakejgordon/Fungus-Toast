@@ -111,8 +111,29 @@ fingerprint, and catalog metadata travel together. Runtime consumers and
 simulation artifacts read that record rather than joining name-keyed metadata
 maps. The remaining bootstrap override declarations are guarded: duplicate
 keys and names that do not resolve to any registered strategy stop roster
-initialization. Keep existing strategy names as compatibility aliases; do not
-rename them to create machine identity.
+initialization.
+
+### Naming and identity
+
+- **Strategy names** (`strategyName`) are internal keys referenced by board
+  presets, saves, manifests, and CLI arguments. Proven and Campaign names
+  outside the `TST_` prefix may only use letters, digits, and underscores, and
+  should not claim strength (`Best_`), embed tuning parameters (`Surge10`), or
+  assert difficulty, because all three go stale. Testing entries keep their
+  technical names while they are evaluated.
+- **Display names** are the `FriendlyName` presentation profile, independent
+  of the internal name. Follow the same no-superlative, no-difficulty rule.
+- **Stable IDs** are pinned in `FungusToast.Core.Tests/AI/StrategyStableIds.txt`.
+  A new strategy fails `Registered_stable_ids_match_the_frozen_snapshot` until
+  its line is added (the failure prints it). A pinned ID disappearing is always
+  a bug unless the strategy is being retired.
+- **Renaming** an existing strategy: add a `StrategyRename` entry to
+  `StrategyIdentity.Renames`, then rename every key in `AIRoster`. The legacy
+  name keeps deriving the stable ID and definition fingerprint, so
+  `(strategy_id, fingerprint)` comparisons across artifacts are unaffected, and
+  it keeps resolving as a lookup alias within its set for old saves and
+  manifests. If the strategy's theme was being inferred from its name, pin it
+  in `_explicitStrategyThemesByName`; `StratifiedCycle` orders by theme.
 
 Roster selection also requires enough registered definitions for every
 requested seat. It never synthesizes numbered `LegacyRandom` strategies; add

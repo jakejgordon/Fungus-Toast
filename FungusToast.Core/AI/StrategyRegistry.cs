@@ -94,14 +94,28 @@ namespace FungusToast.Core.AI
                 : Array.Empty<StrategyDefinition>();
         }
 
+        /// <summary>
+        /// Resolves a strategy by its current name, or by a legacy name it was renamed from.
+        /// </summary>
         public static StrategyDefinition? GetDefinition(StrategySetEnum strategySet, string strategyName)
         {
-            return DefinitionsBySet.TryGetValue(strategySet, out var definitions)
-                ? definitions.FirstOrDefault(definition => string.Equals(
-                    definition.Strategy.StrategyName,
-                    strategyName,
-                    StringComparison.OrdinalIgnoreCase))
-                : null;
+            if (!DefinitionsBySet.TryGetValue(strategySet, out var definitions))
+            {
+                return null;
+            }
+
+            return FindByName(definitions, strategyName)
+                ?? (StrategyIdentity.TryGetCurrentName(strategySet, strategyName, out var currentName)
+                    ? FindByName(definitions, currentName)
+                    : null);
+        }
+
+        private static StrategyDefinition? FindByName(IEnumerable<StrategyDefinition> definitions, string strategyName)
+        {
+            return definitions.FirstOrDefault(definition => string.Equals(
+                definition.Strategy.StrategyName,
+                strategyName,
+                StringComparison.OrdinalIgnoreCase));
         }
 
         public static StrategyDefinition? GetDefinition(IMutationSpendingStrategy strategy)
@@ -137,6 +151,15 @@ namespace FungusToast.Core.AI
                 {
                     throw new InvalidOperationException(
                         $"Duplicate strategy name '{definition.Strategy.StrategyName}' found while building {strategySet} strategy dictionary.");
+                }
+            }
+
+            // Legacy names stay addressable so saves and manifests recorded before a rename resolve.
+            foreach (var rename in StrategyIdentity.RenamedStrategies.Where(rename => rename.StrategySet == strategySet))
+            {
+                if (strategies.TryGetValue(rename.CurrentName, out var renamed))
+                {
+                    strategies.TryAdd(rename.LegacyName, renamed);
                 }
             }
 

@@ -91,7 +91,7 @@ public class StrategyCatalogTests
     [Fact]
     public void Filament_regrowth_is_a_measured_standard_single_player_growth_regeneration_strategy()
     {
-        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.ProvenStrategiesByName["Filament Regrowth"]);
+        var strategy = Assert.IsType<ParameterizedSpendingStrategy>(AIRoster.ProvenStrategiesByName["RegrowthLattice"]);
 
         Assert.Equal(
             new (int MutationId, int? TargetLevel)[]
@@ -120,7 +120,7 @@ public class StrategyCatalogTests
     public void Verdant_reclaimer_promotion_preserves_bloom20_behavior_and_player_facing_identity()
     {
         var strategy = Assert.IsType<ParameterizedSpendingStrategy>(
-            AIRoster.ProvenStrategiesByName["Verdant Reclaimer"]);
+            AIRoster.ProvenStrategiesByName["VerdantReclaimer"]);
 
         Assert.Equal(
             new (int MutationId, int? TargetLevel)[]
@@ -180,7 +180,7 @@ public class StrategyCatalogTests
     {
         var expectedPredecessors = new Dictionary<string, int>
         {
-            ["Creeping>Necrosporulation"] = MutationIds.Necrosporulation,
+            ["CreepingReclaimer"] = MutationIds.Necrosporulation,
             ["TST_AnabolicCreepingNecroRegressionCascade"] = MutationIds.NecrophyticBloom,
             ["TST_CreepingNecroRegressionCascade"] = MutationIds.NecrophyticBloom,
             ["TST_AI10_CreepingRegression"] = MutationIds.NecrophyticBloom,

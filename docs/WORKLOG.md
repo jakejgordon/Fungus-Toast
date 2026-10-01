@@ -1525,6 +1525,40 @@ Scope for the proposal, to be agreed before any rename:
 This is deliberately a proposal rather than a task list; the rename itself
 should not start until the grammar and the migration surface are agreed.
 
+**Agreed 2026-09-30 (Jake).** Strategy names stay internal keys; only the
+worst offenders are renamed, with aliases, and Testing entries are left alone.
+Stable IDs are pinned rather than re-derived, and `ai.*` IDs are assigned only
+on promotion. The authored band survives as *intent*, beside a separately
+recorded *measured* band, so a gap between them flags an AI that is not doing
+what it was designed to. A measurement contradicting intent is flagged through
+regression alerts and fails a test only for strategies in campaign presets.
+
+Step 1 progress:
+
+- **Identity and renames done 2026-09-30.** The twelve non-Testing Proven names
+  with `>`, `(`, `/`, spaces, or `Best_` now use their display names in
+  PascalCase (for example `Best_MaxEcon_Surge10_HyphalSurge` → `HyphalPulse`).
+  `StrategyIdentity.Renames` keeps each legacy name as the source of the stable
+  ID and fingerprint and as a per-set lookup alias, so old solo saves
+  (`RoundStartRuntimeSnapshot.MutationStrategyName`), manifests, and CLI
+  arguments still resolve. A full metadata dump of all 218 registered
+  strategies was identical before and after for every Proven, Campaign, and
+  Testing entry, including IDs and fingerprints. Three themes previously
+  inferred from the old names were pinned so `StratifiedCycle` lineups do not
+  move. The only difference: two Mycovariants-set permutations that still
+  carry the `Grow>Kill>Reclaim(Econ…)` names no longer borrow the Proven
+  entries' display names and Medium campaign difficulty by name collision.
+  The 218 stable IDs are pinned in `FungusToast.Core.Tests/AI/StrategyStableIds.txt`.
+  Tests also enforce machine-safe player-facing names and alias resolution.
+  Frozen evidence docs and example manifests keep the old names, which still
+  resolve.
+- Remaining: merge `StrategyTheme` into `StrategyArchetype`; replace
+  `PowerTier`/`DifficultyBands` with an intended band plus a measured-band
+  record (band, classifier version, evidence date).
+- Then (agreed direction): authored strategy intent descriptions, content
+  tags, the content-to-profile coverage report, and skill integration. See the
+  coverage review proposal below.
+
 ### Proposed — Follow-ups from the 2026-09-08 mycovariant and ladder work
 
 None of these were done in that session; they are the loose ends it exposed.

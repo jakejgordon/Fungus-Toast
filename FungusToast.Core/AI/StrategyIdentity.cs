@@ -17,15 +17,65 @@ namespace FungusToast.Core.AI
                 ["Verdant Reclaimer"] = "ai.growth.verdant-reclaimer.v1"
             };
 
+        /// <summary>
+        /// Strategies renamed after they accumulated simulation evidence. The legacy name remains
+        /// the strategy's identity: it derives the stable ID and feeds the definition fingerprint,
+        /// so a rename leaves <c>(strategy_id, fingerprint)</c> — and every artifact comparison keyed
+        /// on it — untouched. It also keeps resolving as a lookup alias within its set, so saves,
+        /// manifests, and CLI arguments that recorded it still load.
+        /// </summary>
+        private static readonly StrategyRename[] Renames =
+        {
+            new(StrategySetEnum.Proven, "Grow>Kill>Reclaim(Econ)", "SporeLedger"),
+            new(StrategySetEnum.Proven, "Grow>Kill>Reclaim(Econ/Reclaim)", "ReclaimersLedger"),
+            new(StrategySetEnum.Proven, "Mutate>Grow>Kill(Max Econ)", "MutagenBloom"),
+            new(StrategySetEnum.Proven, "Creeping>Necrosporulation", "CreepingReclaimer"),
+            new(StrategySetEnum.Proven, "Filament Regrowth", "RegrowthLattice"),
+            new(StrategySetEnum.Proven, "Power Mutations Max Econ", "RejuvenationEngine"),
+            new(StrategySetEnum.Proven, "Growth/Resilience", "RootedCanopy"),
+            new(StrategySetEnum.Proven, "Anabolic>Grow>CatabR>PutreRegen", "RebirthFurnace"),
+            new(StrategySetEnum.Proven, "Verdant Reclaimer", "VerdantReclaimer"),
+            new(StrategySetEnum.Proven, "Grow>Defend>Kill", "PutridTendrils"),
+            new(StrategySetEnum.Proven, "Grow>Mutate>Kill(Max Econ)", "AdaptiveBlight"),
+            new(StrategySetEnum.Proven, "Best_MaxEcon_Surge10_HyphalSurge", "HyphalPulse")
+        };
+
+        private static readonly System.Collections.Generic.IReadOnlyDictionary<string, StrategyRename> RenamesByCurrentName =
+            Renames.ToDictionary(rename => rename.CurrentName, StringComparer.OrdinalIgnoreCase);
+
+        public static System.Collections.Generic.IReadOnlyList<StrategyRename> RenamedStrategies => Renames;
+
+        /// <summary>
+        /// The name a strategy's stable ID and fingerprint are derived from: its legacy name if it
+        /// was renamed, otherwise its current name.
+        /// </summary>
+        public static string GetIdentityName(IMutationSpendingStrategy strategy)
+        {
+            if (strategy == null) throw new ArgumentNullException(nameof(strategy));
+            return RenamesByCurrentName.TryGetValue(strategy.StrategyName, out var rename)
+                ? rename.LegacyName
+                : strategy.StrategyName;
+        }
+
+        /// <summary>Resolves a legacy name recorded before a rename to the strategy's current name in that set.</summary>
+        public static bool TryGetCurrentName(StrategySetEnum strategySet, string legacyName, out string currentName)
+        {
+            var rename = Renames.FirstOrDefault(candidate => candidate.StrategySet == strategySet
+                && string.Equals(candidate.LegacyName, legacyName, StringComparison.OrdinalIgnoreCase));
+            currentName = rename?.CurrentName ?? string.Empty;
+            return rename != null;
+        }
+
         public static string GetStableId(StrategySetEnum strategySet, IMutationSpendingStrategy strategy)
         {
             if (strategy == null) throw new ArgumentNullException(nameof(strategy));
-            if (PromotedStableIdsByStrategyName.TryGetValue(strategy.StrategyName, out var promotedId))
+            var identityName = GetIdentityName(strategy);
+            if (PromotedStableIdsByStrategyName.TryGetValue(identityName, out var promotedId))
             {
                 return promotedId;
             }
 
-            var slug = new string(strategy.StrategyName
+            var slug = new string(identityName
                 .ToLowerInvariant()
                 .Select(character => char.IsLetterOrDigit(character) ? character : '-')
                 .ToArray());
@@ -41,7 +91,7 @@ namespace FungusToast.Core.AI
             var canonical = strategy switch
             {
                 ParameterizedSpendingStrategy parameterized => BuildParameterizedDefinition(parameterized),
-                RandomMutationSpendingStrategy random => string.Join("\n", DefinitionSchemaVersion, random.GetType().FullName, random.StrategyName),
+                RandomMutationSpendingStrategy random => string.Join("\n", DefinitionSchemaVersion, random.GetType().FullName, GetIdentityName(random)),
                 _ => throw new NotSupportedException(
                     $"Strategy type '{strategy.GetType().FullName}' needs an explicit definition fingerprint contract.")
             };
@@ -68,7 +118,7 @@ namespace FungusToast.Core.AI
             {
                 DefinitionSchemaVersion,
                 strategy.GetType().FullName ?? strategy.GetType().Name,
-                strategy.StrategyName,
+                GetIdentityName(strategy),
                 strategy.MaxTier?.ToString() ?? string.Empty,
                 strategy.PrioritizeHighTier?.ToString() ?? string.Empty,
                 categories,
@@ -81,5 +131,19 @@ namespace FungusToast.Core.AI
                 strategy.StartingSporeEdgeOffset.ToString(CultureInfo.InvariantCulture)
             });
         }
+    }
+
+    public sealed class StrategyRename
+    {
+        public StrategyRename(StrategySetEnum strategySet, string legacyName, string currentName)
+        {
+            StrategySet = strategySet;
+            LegacyName = legacyName;
+            CurrentName = currentName;
+        }
+
+        public StrategySetEnum StrategySet { get; }
+        public string LegacyName { get; }
+        public string CurrentName { get; }
     }
 }
