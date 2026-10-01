@@ -235,6 +235,8 @@ Screenshot: [018-auto-placement-multi-tooltip-overlap.png](screenshots/018-auto-
 
 ### 019 — Final-round signaling
 
+**Status: In progress (2026-10-01).** First pass, pending the maintainer's in-editor pass (retest item R05 in [observations_20261001.md](observations_20261001.md)). The 40-pixel header button cannot hold a second line, so the final-round framing is in the label itself plus its tooltip. While the endgame countdown is on its last round (`GameManager.IsFinalRound`, backed by the new `EndgameService.CountdownRoundsRemaining`), the CTA reads `Final Round: Spend N Points!` (`UI_MutationManager.BuildSpendPointsLabel`; the button already widens to fit its label). Its tooltip becomes "Final round: this is your last mutation phase. One more growth and decay cycle follows, then living cells decide the ranking." The Bank tooltip previously promised that points "carry over to next round", which is false in the final round. It now says that banked points will never be spent. Both tooltips revert outside the final round (`RefreshFinalRoundTooltips`, called from `RefreshSpendPointsButtonUI` at every mutation-phase start). Verification so far: an offline MSBuild compile of Assembly-CSharp shows no warnings.
+
 Screenshot: [019-final-round-status.png](screenshots/019-final-round-status.png)
 
 - **What happened:** The countdown transitioned to a red `Final round!` heading while the mutation-points CTA remained available.
@@ -287,6 +289,8 @@ Screenshot: [024-new-campaign-setup.png](screenshots/024-new-campaign-setup.png)
 
 ### 023 — Game 2 opening communicates inherited power poorly
 
+**Status: In progress (2026-10-01).** The milestone-schedule P2 has a first pass, shared with 024's P1 (see there). The inherited-build summary P2 is still open (retest item R06).
+
 Screenshot: [025-game-2-training-start.png](screenshots/025-game-2-training-start.png)
 
 - **What happened:** Game 2 began on a small two-player toast board with Cineramyxa's Toxin Primacy and the preserved Apical Yield adaptation active.
@@ -295,6 +299,8 @@ Screenshot: [025-game-2-training-start.png](screenshots/025-game-2-training-star
 - **P2 — Milestone schedule looks absolute:** `Mycovariant Draft: Round 15` is presented as a guaranteed future event, with no indication that board fill can end the match first. If the event is conditional, label it accordingly or dynamically move it earlier on shorter boards.
 
 ### 024 — Short-match milestone contradiction and Game 2 results
+
+**Status: In progress (2026-10-01).** First pass on the milestone P1, pending the maintainer's in-editor pass (retest item R01). The schedule itself is unchanged; the HUD now stops promising a draft once it becomes impossible. `UI_RightSideBar.BuildMycovariantDraftTimingText` reads the countdown through `GameManager.EndgameCountdownRoundsRemaining`. When the next trigger round falls after the last round (`currentRound + roundsRemaining - 1`), the `Mycovariant Draft` line reads `No more drafts`. A draft that lands exactly on the final round is still shown. In the 2026-10-01 match (countdown armed after Round 14, finish after Round 17), Rounds 15–17 would have shown `No more drafts` where they showed `Round 20 (in 5)`. Guaranteeing an early draft on short boards was not attempted. The two results P2s are still open (retest item R04). Verification so far: an offline MSBuild compile of Assembly-CSharp shows no warnings.
 
 Screenshots: [026-game-2-endgame-countdown.png](screenshots/026-game-2-endgame-countdown.png) and [027-game-2-results.png](screenshots/027-game-2-results.png)
 

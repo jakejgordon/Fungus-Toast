@@ -52,6 +52,12 @@ namespace FungusToast.Unity
 
         public bool GameEnded { get; private set; }
 
+        /// <summary>
+        /// Rounds left to play, counting the current one (1 = final round), or null when no
+        /// countdown is running. Read during a round, after the round counter has advanced.
+        /// </summary>
+        public int? CountdownRoundsRemaining => isCountdownActive && !GameEnded ? roundsRemainingUntilGameEnd : null;
+
         public EndgameService(
             GameUIManager ui,
             Func<GameBoard> getBoard,

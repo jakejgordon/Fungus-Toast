@@ -867,6 +867,13 @@ namespace FungusToast.Unity.UI
                 return "No upcoming draft";
             }
 
+            // Once the endgame countdown fixes the last round, never advertise a draft beyond it.
+            int? countdownRoundsRemaining = gameManager?.EndgameCountdownRoundsRemaining;
+            if (countdownRoundsRemaining.HasValue && nextDraftRound.Value > currentRound + countdownRoundsRemaining.Value - 1)
+            {
+                return "No more drafts";
+            }
+
             int roundsRemaining = nextDraftRound.Value - currentRound;
             return $"Round {nextDraftRound.Value} (in {roundsRemaining})";
         }

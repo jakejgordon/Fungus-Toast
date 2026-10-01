@@ -28,6 +28,8 @@ namespace FungusToast.Unity.UI.MutationTree
     {
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string BankPointsTooltipText = "Ends your mutation phase now.\nYour unspent points carry over to next round,\nso you can save up for a mutation you can't afford yet.";
+        private const string FinalRoundSpendPointsTooltipText = "Final round: this is your last mutation phase.\nOne more growth and decay cycle follows,\nthen living cells decide the ranking.";
+        private const string FinalRoundBankPointsTooltipText = "Ends your mutation phase now.\nThis is the final round, so banked points\nwill never be spent.";
         private const float SpendButtonMinWidth = 220f;
         private const float SpendButtonMinHeight = 40f;
         private const float SpendPointsRowHeight = 82f;
@@ -830,6 +832,8 @@ namespace FungusToast.Unity.UI.MutationTree
             if (spendPointsButton == null || buttonOutline == null || humanPlayer == null)
                 return;
 
+            RefreshFinalRoundTooltips();
+
             if (ShouldSuppressSpendPointsButton())
             {
                 spendPointsButton.gameObject.SetActive(false);
@@ -858,7 +862,7 @@ namespace FungusToast.Unity.UI.MutationTree
             if (points > 0)
             {
                 spendPointsButton.interactable = true;
-                SetSpendPointsButtonText($"Spend {points} Points!");
+                SetSpendPointsButtonText(BuildSpendPointsLabel(points));
                 buttonOutline.enabled = true;
             }
             else
@@ -2282,7 +2286,7 @@ namespace FungusToast.Unity.UI.MutationTree
                 bankPointsButton.interactable = true;
             }
             if (buttonOutline != null) buttonOutline.enabled = player.MutationPoints > 0;
-            SetSpendPointsButtonText(player.MutationPoints > 0 ? $"Spend {player.MutationPoints} Points!" : "No Points Available");
+            SetSpendPointsButtonText(player.MutationPoints > 0 ? BuildSpendPointsLabel(player.MutationPoints) : "No Points Available");
             if (mutationPointsCounterText != null)
                 mutationPointsCounterText.text = $"Mutation Points: {player.MutationPoints}";
 
@@ -2904,6 +2908,27 @@ namespace FungusToast.Unity.UI.MutationTree
         {
             UpdateHeaderActionButtonWidth(bankPointsButton, headerCenterSlotRect, BankButtonMinWidth);
             UpdateHeaderActionButtonWidth(dockButton, headerReturnSlotRect, ReturnButtonMinWidth);
+        }
+
+        private static bool IsFinalRound => GameManager.Instance != null && GameManager.Instance.IsFinalRound;
+
+        private static string BuildSpendPointsLabel(int points)
+        {
+            return IsFinalRound ? $"Final Round: Spend {points} Points!" : $"Spend {points} Points!";
+        }
+
+        private void RefreshFinalRoundTooltips()
+        {
+            bool isFinalRound = IsFinalRound;
+            if (spendPointsTooltipTrigger != null)
+            {
+                spendPointsTooltipTrigger.SetStaticText(isFinalRound ? FinalRoundSpendPointsTooltipText : SpendPointsTooltipText);
+            }
+
+            if (bankPointsButton != null && bankPointsButton.TryGetComponent<TooltipTrigger>(out var bankTrigger))
+            {
+                bankTrigger.SetStaticText(isFinalRound ? FinalRoundBankPointsTooltipText : BankPointsTooltipText);
+            }
         }
 
         private void SetSpendPointsButtonText(string text)

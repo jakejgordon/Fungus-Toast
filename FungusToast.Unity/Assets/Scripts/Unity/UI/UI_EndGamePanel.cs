@@ -4734,7 +4734,8 @@ namespace FungusToast.Unity.UI
         {
             EnsureRuntimeLayoutScaffold();
 
-            if (playAgainButton == null || endGameTestingRailRoot == null)
+            // Same gate as the campaign and start panels: player builds never get the testing card.
+            if (!DevelopmentTestingAccess.IsAvailable || playAgainButton == null || endGameTestingRailRoot == null)
             {
                 return;
             }

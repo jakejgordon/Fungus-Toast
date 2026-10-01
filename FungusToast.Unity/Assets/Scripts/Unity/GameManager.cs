@@ -426,6 +426,8 @@ namespace FungusToast.Unity
         private bool isMycovariantDraftChainActive;
         private bool humanDraftedMycovariantThisDraftChain;
         public int LastCompletedMycovariantDraftRound => lastCompletedMycovariantDraftRound;
+        public int? EndgameCountdownRoundsRemaining => endgameService?.CountdownRoundsRemaining;
+        public bool IsFinalRound => EndgameCountdownRoundsRemaining == 1;
         private Dictionary<(int playerId, int mutationId), List<int>> FirstUpgradeRounds = new();
 
         public bool IsTestingModeEnabled => testingModeEnabled; 

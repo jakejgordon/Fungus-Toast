@@ -36,6 +36,9 @@ The Stage 1 carry-over picker now shows three named cards with their full effect
 ## New observations
 
 - **N01 — Development control appears in the campaign handoff (P3).** The **Adaptation Secured** screen displayed **`Development Testing: Off`** near **Continue Campaign**. In a player build this reads like an internal setting interrupting a reward/continue moment. Hide it from normal campaign flow or explain its player-facing purpose.
+  - **Status: In progress (2026-10-01), pending the next player build.** Root cause: the campaign hub and start panels gate their testing rail on `DevelopmentTestingAccess.IsAvailable` (editor or development build), but `UI_EndGamePanel.EnsurePostVictoryTestingControls` built the post-victory testing card unconditionally. It now applies the same gate, so non-development player builds never build or show the card. The editor and development builds keep it.
+
+Fix status for R01 and R05 is recorded under 024 and 019 in [observations.md](observations.md).
 - **N02 — A results tooltip initially covered table headings (P3).** The pointer remained where I had clicked a final mutation. When the result appeared, a tooltip explaining living-cell ranking opened across the score table's header row and hid several column names until the pointer moved. Delay that tooltip on screen transition or position it below the headers.
 
 ## Recheck of the 2026-09-17 observations
