@@ -13,6 +13,25 @@ Manual Unity Editor validation of the Substrate Ecology mutation tree,
 inspector, dependency routes, and visual flows at supported resolutions is
 complete.
 
+## TODO — Record Moldiness Reward Claim Sound
+
+Claiming a moldiness reward (the "Claim Moldiness Reward" button on the campaign
+end panel) plays a placeholder clip, copied from
+`sfx_ui_adaptation_draft_pick_confirm_01`. Record the real one and overwrite
+this file in place, keeping the name; `GameManager` loads it from `Resources`,
+so no code, scene, or Inspector change is needed:
+
+- `FungusToast.Unity/Assets/Resources/Audio/SFX/sfx_ui_moldiness_reward_claim_01.wav`.
+  About 0.4-0.8s. It usually plays over music shortly after the toast
+  crumble and "Level Up!" sounds, so it should feel like the payoff of that
+  sequence without repeating the level-up pluck. Idea: a warm, satisfied
+  "pocketing" sound, such as a soft squelchy pop or a spore puff settling,
+  topped with a short bright chime.
+
+Match the other effects: 44.1kHz, 16-bit, mono WAV (record at 48kHz if easier;
+it just needs resampling). The level is `MoldinessRewardClaimVolume` in
+`GameManager.cs`.
+
 ## Active Initiative — AI Architecture and Balance Overhaul
 
 ### 2026-09-05 Hoardspore start-offset diagnosis

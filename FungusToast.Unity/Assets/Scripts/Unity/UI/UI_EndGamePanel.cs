@@ -2535,6 +2535,11 @@ namespace FungusToast.Unity.UI
                     return;
                 }
 
+                if (hasOffers)
+                {
+                    manager?.PlayMoldinessRewardClaimSound();
+                }
+
                 requiresMoldinessRewardSelection = false;
                 selectedMoldinessRewardId = null;
                 selectedMoldinessRewardVisual = null;
