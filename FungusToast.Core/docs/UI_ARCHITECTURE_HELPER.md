@@ -345,7 +345,7 @@ The current toast configuration asset lives at `FungusToast.Unity/Assets/Configs
 - This applies to campaign presets and development/testing board-size overrides without additional preset wiring.
 - White bread, seeded cracker, and plain cracker still use the shared alpha-mask fitting rule.
 - Cheese uses explicit authored horizontal-span profile metadata with vertical min/max bounds so it can keep a larger square placement footprint while trimming the left/right edges, top-left notch, and top/bottom bands deliberately across the cheese size band.
-- Pita follows its photo outline: a square `boardBoundsNormalized` around the visible bounds, baked masks for the campaign sizes (130, 140, 150, 160), and the identical alpha-derived footprint at every other size. It previously used an ellipse, which overhung the bread at the corners.
+- Pita follows its photo outline: a square `boardBoundsNormalized` around the visible bounds, with baked masks for every pita size the game offers (125-200 in steps of 5, except 165, which is the toenail). It previously used an ellipse, which overhung the bread at the corners. Bake every size a medium is offered at rather than relying on the runtime alpha fallback: in a 2026-09-30 playtest, an unbaked 125x125 pita still showed the old overhanging footprint while the baked 130x130 was correct.
 - Shaped photo boards can also enable a very faint playable-area overlay tint in `BoardMediumConfig`, and that overlay is generated from the live playable footprint rather than a separate authored shape.
 
 ### Import Guidance
