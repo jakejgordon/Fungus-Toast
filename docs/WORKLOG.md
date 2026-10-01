@@ -1488,6 +1488,9 @@ measurement model, phase gates, and open product decisions are in
      settled proxy bands, but the finale remains difficult and Verdant is a
      strong, non-exclusive threat, so the placement is accepted. The campaign
      harness now budgets 1,800 seconds for its 100-game confirmation standard.
+     Jake manually validated the Unity-facing placement on 2026-09-30 in
+     Campaign15 / player-facing Stage 16 (`Final Crust`): Verdant Reclaimer
+     appeared in the intended lineup and the encounter started normally.
 
 ### Proposed — AI strategy naming and metadata standard
 
