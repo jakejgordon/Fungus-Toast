@@ -14,7 +14,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
     /// pins it. This replaces the old <c>TooltipTrigger</c> on the icon rather than sitting beside
     /// one, so there is exactly one surface per icon and nothing to fight over.
     /// </summary>
-    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, ICursorSurface
+    public sealed class PlayerInspectorLauncher : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler, IScrollHandler, ICursorSurface
     {
         private const float FallbackHoverDelaySeconds = 0.35f;
 
@@ -69,6 +69,16 @@ namespace FungusToast.Unity.UI.PlayerInspector
             isHovering = false;
             previewShown = false;
             PlayerInspectorPanel.TogglePin(player, transform as RectTransform, hostCanvas);
+        }
+
+        // The preview is raycast-transparent, so the wheel lands here on the icon; pass it on so
+        // a long (dev-mode) preview can be scrolled without pinning.
+        public void OnScroll(PointerEventData eventData)
+        {
+            if (previewShown)
+            {
+                PlayerInspectorPanel.ScrollPreview(transform as RectTransform, eventData);
+            }
         }
 
         private void Update()

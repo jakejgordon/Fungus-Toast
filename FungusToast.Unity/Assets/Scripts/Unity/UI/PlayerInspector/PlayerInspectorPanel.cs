@@ -11,6 +11,7 @@ using FungusToast.Unity.UI.Tooltips;
 using FungusToast.Unity.UI.Tooltips.TooltipProviders;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace FungusToast.Unity.UI.PlayerInspector
@@ -45,6 +46,13 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private const float SectionHeaderFontSize = 18f;
         private const float BodyFontSize = 20f;
 
+        // Dev-mode AI plans can run past the screen height, so the body scrolls between a fixed
+        // header and hint. The scrollbar only appears once the content overflows.
+        private const float ScrollbarWidth = 6f;
+        private const float ScrollbarGap = 4f;
+        private const float MinScrollHeight = 120f;
+        private const float ScrollSensitivity = 24f;
+
         /// <summary>Gap between the anchor and the panel edge, matching the tooltip's own gap.</summary>
         private const float AnchorGap = 12f;
         private const float ScreenPadding = 12f;
@@ -55,9 +63,11 @@ namespace FungusToast.Unity.UI.PlayerInspector
         /// </summary>
         private const float ContentRefreshIntervalSeconds = 0.5f;
 
+        // The scrollbar gutter is reserved up front so the grids keep their column count whether
+        // or not the scrollbar is showing.
         private static readonly int IconColumns =
             Mathf.Max(1, Mathf.FloorToInt(
-                (PanelWidth - (PanelPadding * 2f) + CompactIconTileFactory.Spacing)
+                (PanelWidth - (PanelPadding * 2f) - ScrollbarWidth - ScrollbarGap + CompactIconTileFactory.Spacing)
                 / (CompactIconTileFactory.TileSize + CompactIconTileFactory.Spacing)));
 
         private const string PreviewHint = "Click to pin";
@@ -81,6 +91,9 @@ namespace FungusToast.Unity.UI.PlayerInspector
         private RectTransform surgeGrid = null!;
         private RectTransform adaptationGrid = null!;
         private RectTransform mycovariantGrid = null!;
+        private RectTransform scrollContent = null!;
+        private ScrollRect scrollRect = null!;
+        private LayoutElement scrollLayout = null!;
         private DraggableCard draggable = null!;
 
         private readonly List<GameObject> surgeTiles = new();
@@ -149,6 +162,18 @@ namespace FungusToast.Unity.UI.PlayerInspector
 
             Pinned?.Invoke();
             return true;
+        }
+
+        /// <summary>
+        /// Scrolls the hover preview from a wheel event on its anchor. The preview never takes
+        /// raycasts (so it cannot block the board), so the wheel only ever lands on the icon.
+        /// </summary>
+        public static void ScrollPreview(RectTransform? anchorRect, PointerEventData eventData)
+        {
+            if (IsOpenFor(anchorRect) && !instance!.isPinned)
+            {
+                instance.scrollRect.OnScroll(eventData);
+            }
         }
 
         public static void Close()
@@ -254,16 +279,18 @@ namespace FungusToast.Unity.UI.PlayerInspector
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             BuildHeader();
-            bodyText = CreateLabel("Body", BodyFontSize, FontStyles.Normal, UIStyleTokens.Text.Primary);
+            BuildScrollView();
+            bodyText = CreateLabel("Body", BodyFontSize, FontStyles.Normal, UIStyleTokens.Text.Primary, scrollContent);
             // Surges lead the icon sections: they are the only transient state in the panel and
             // the thing a player opens an opponent's inspector to check.
-            surgeHeaderText = CreateLabel("ActiveSurgesHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
-            surgeGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorSurgeGrid", IconColumns);
-            adaptationHeaderText = CreateLabel("AdaptationsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
-            adaptationGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorAdaptationGrid", IconColumns);
-            mycovariantHeaderText = CreateLabel("MycovariantsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted);
-            mycovariantGrid = CompactIconTileFactory.CreateGrid(rootRect, "UI_InspectorMycovariantGrid", IconColumns);
-            hintText = CreateLabel("Hint", BodyFontSize, FontStyles.Italic, UIStyleTokens.Text.Muted);
+            surgeHeaderText = CreateLabel("ActiveSurgesHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted, scrollContent);
+            surgeGrid = CompactIconTileFactory.CreateGrid(scrollContent, "UI_InspectorSurgeGrid", IconColumns);
+            adaptationHeaderText = CreateLabel("AdaptationsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted, scrollContent);
+            adaptationGrid = CompactIconTileFactory.CreateGrid(scrollContent, "UI_InspectorAdaptationGrid", IconColumns);
+            mycovariantHeaderText = CreateLabel("MycovariantsHeader", SectionHeaderFontSize, FontStyles.Bold, UIStyleTokens.Text.Muted, scrollContent);
+            mycovariantGrid = CompactIconTileFactory.CreateGrid(scrollContent, "UI_InspectorMycovariantGrid", IconColumns);
+            // The hint stays outside the scroll view so the pin/drag instructions are always visible.
+            hintText = CreateLabel("Hint", BodyFontSize, FontStyles.Italic, UIStyleTokens.Text.Muted, rootRect);
 
             draggable = CoachmarkLayoutUtility.MakeDraggable(rootRect, canvasRect, new Vector2(ScreenPadding, ScreenPadding));
             draggable.enabled = false;
@@ -337,10 +364,103 @@ namespace FungusToast.Unity.UI.PlayerInspector
             ApplyDefaultFont(closeLabel);
         }
 
-        private TextMeshProUGUI CreateLabel(string objectName, float fontSize, FontStyles style, Color color)
+        /// <summary>
+        /// Builds the scrolling middle of the panel. Its height is set in <see cref="RefreshContent"/>:
+        /// the content's own height when it fits, capped to what the screen leaves once the header
+        /// and hint are placed, so short panels look exactly as they did before scrolling existed.
+        /// </summary>
+        private void BuildScrollView()
+        {
+            var scrollObject = new GameObject("ScrollView", typeof(RectTransform), typeof(LayoutElement), typeof(WheelOnlyScrollRect));
+            scrollObject.transform.SetParent(rootRect, false);
+            var scrollViewRect = (RectTransform)scrollObject.transform;
+            scrollLayout = scrollObject.GetComponent<LayoutElement>();
+
+            var viewportObject = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+            viewportObject.transform.SetParent(scrollViewRect, false);
+            var viewportRect = (RectTransform)viewportObject.transform;
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.pivot = new Vector2(0f, 1f);
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+            // Clear but raycastable, so the wheel scrolls from the gaps between labels too.
+            var viewportImage = viewportObject.GetComponent<Image>();
+            viewportImage.color = Color.clear;
+            viewportImage.raycastTarget = true;
+
+            var contentObject = new GameObject("Content", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            contentObject.transform.SetParent(viewportRect, false);
+            scrollContent = (RectTransform)contentObject.transform;
+            scrollContent.anchorMin = new Vector2(0f, 1f);
+            scrollContent.anchorMax = new Vector2(1f, 1f);
+            scrollContent.pivot = new Vector2(0.5f, 1f);
+            scrollContent.anchoredPosition = Vector2.zero;
+            scrollContent.sizeDelta = Vector2.zero;
+
+            var contentLayout = contentObject.GetComponent<VerticalLayoutGroup>();
+            contentLayout.spacing = SectionSpacing;
+            contentLayout.childAlignment = TextAnchor.UpperLeft;
+            contentLayout.childControlWidth = true;
+            contentLayout.childControlHeight = true;
+            contentLayout.childForceExpandWidth = true;
+            contentLayout.childForceExpandHeight = false;
+
+            var contentFitter = contentObject.GetComponent<ContentSizeFitter>();
+            contentFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            contentFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scrollRect = scrollObject.GetComponent<WheelOnlyScrollRect>();
+            scrollRect.viewport = viewportRect;
+            scrollRect.content = scrollContent;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+            scrollRect.movementType = ScrollRect.MovementType.Clamped;
+            scrollRect.scrollSensitivity = ScrollSensitivity;
+            scrollRect.verticalScrollbar = BuildScrollbar(scrollViewRect);
+            scrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.AutoHideAndExpandViewport;
+            scrollRect.verticalScrollbarSpacing = ScrollbarGap;
+        }
+
+        private static Scrollbar BuildScrollbar(RectTransform parent)
+        {
+            var scrollbarObject = new GameObject("Scrollbar", typeof(RectTransform), typeof(Image), typeof(Scrollbar));
+            scrollbarObject.transform.SetParent(parent, false);
+            var scrollbarRect = (RectTransform)scrollbarObject.transform;
+            scrollbarRect.anchorMin = new Vector2(1f, 0f);
+            scrollbarRect.anchorMax = Vector2.one;
+            scrollbarRect.pivot = Vector2.one;
+            scrollbarRect.sizeDelta = new Vector2(ScrollbarWidth, 0f);
+            scrollbarRect.anchoredPosition = Vector2.zero;
+            scrollbarObject.GetComponent<Image>().color = UIStyleTokens.Surface.PanelElevated;
+
+            var slidingAreaObject = new GameObject("SlidingArea", typeof(RectTransform));
+            slidingAreaObject.transform.SetParent(scrollbarRect, false);
+            var slidingAreaRect = (RectTransform)slidingAreaObject.transform;
+            slidingAreaRect.anchorMin = Vector2.zero;
+            slidingAreaRect.anchorMax = Vector2.one;
+            slidingAreaRect.offsetMin = Vector2.zero;
+            slidingAreaRect.offsetMax = Vector2.zero;
+
+            var handleObject = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+            handleObject.transform.SetParent(slidingAreaRect, false);
+            var handleRect = (RectTransform)handleObject.transform;
+            handleRect.offsetMin = Vector2.zero;
+            handleRect.offsetMax = Vector2.zero;
+            var handleImage = handleObject.GetComponent<Image>();
+            handleImage.color = UIStyleTokens.Text.Muted;
+
+            var scrollbar = scrollbarObject.GetComponent<Scrollbar>();
+            scrollbar.handleRect = handleRect;
+            scrollbar.targetGraphic = handleImage;
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            return scrollbar;
+        }
+
+        private TextMeshProUGUI CreateLabel(string objectName, float fontSize, FontStyles style, Color color, RectTransform parent)
         {
             var labelObject = new GameObject(objectName, typeof(RectTransform), typeof(TextMeshProUGUI));
-            labelObject.transform.SetParent(rootRect, false);
+            labelObject.transform.SetParent(parent, false);
 
             var label = labelObject.GetComponent<TextMeshProUGUI>();
             label.color = color;
@@ -377,6 +497,7 @@ namespace FungusToast.Unity.UI.PlayerInspector
                 mycovariantSignature = null;
                 // A new subject re-anchors the panel even if the player had dragged it.
                 draggable.ResetMoved();
+                scrollRect.verticalNormalizedPosition = 1f;
             }
             nextContentRefreshTime = 0f;
 
@@ -475,7 +596,32 @@ namespace FungusToast.Unity.UI.PlayerInspector
             RebuildAdaptationTiles(adaptations);
             RebuildMycovariantTiles(mycovariants);
 
+            FitScrollViewHeight();
             LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+        }
+
+        /// <summary>
+        /// Sizes the scroll view to its content, capped to the screen height left once the
+        /// header, hint, padding and spacing are placed. Only long dev-mode AI panels reach the cap.
+        /// </summary>
+        private void FitScrollViewHeight()
+        {
+            // The body wraps to the viewport width, which is only known once the root has laid
+            // out; on the first open it has not, and the measured height would be far too tall.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rootRect);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(scrollContent);
+            float contentHeight = LayoutUtility.GetPreferredHeight(scrollContent);
+            float hintHeight = LayoutUtility.GetPreferredHeight(hintText.rectTransform);
+            float available = canvasRect.rect.height
+                - (ScreenPadding * 2f)
+                - (PanelPadding * 2f)
+                - HeaderHeight
+                - hintHeight
+                - (SectionSpacing * 2f);
+            float height = Mathf.Min(contentHeight, Mathf.Max(MinScrollHeight, available));
+
+            scrollLayout.preferredHeight = height;
+            scrollLayout.minHeight = height;
         }
 
         private static string FormatSectionHeader(string label, int count) =>
