@@ -126,6 +126,7 @@ These cues are currently wired in-game:
 - `sfx_phase_mutation_start_01.wav`
 - `sfx_phase_growth_start_01.wav`
 - `sfx_phase_decay_start_01.wav`
+- `sfx_phase_draft_start_01.wav`
 - `sfx_phase_growth_cycle_tick_01.wav`
 
 These are all Unity-side one-shot SFX and they currently respect the shared SFX enable/volume settings exposed in the main menu and in-game pause menu.
@@ -249,7 +250,7 @@ The first sound pass should cover the following cues.
 | Starting spore drop | `GameManager.PlayStartingSporeIntroAndContinue()` via `StartingSporeArrivalAnimator.Play(...)` | Play immediately when each starting spore arrival animation begins | `0.15s` to `0.35s` | Implemented. This cue is intentionally short and may overlap slightly across rapid staggered starting drops. |
 | Growth phase start | `GameManager.StartGrowthPhase()` or `GrowthPhaseRunner.StartGrowthPhase()` | Prefer the same moment the growth banner is shown | `0.60s` to `1.10s` | Implemented from `GameManager.StartGrowthPhase()`. Use one growth-phase cue, not duplicate cues in both methods. |
 | Decay phase start | `GameManager.StartDecayPhase()` | Play alongside `PhaseBanner.Show("Decay Phase Begins!", 2f)` | `0.55s` to `1.00s` | Implemented. Slightly darker tone than growth. Keep it short; decay is frequent. |
-| Drafting phase start | `GameManager.StartMycovariantDraftPhase(...)` | Play with the draft-phase banner after the controller is initialized | `0.80s` to `1.40s` | Planned. This cue can be a bit more ceremonial than standard phases because it is less frequent and more strategically important. |
+| Drafting phase start | `GameManager.StartMycovariantDraftPhase(...)` | Play with the draft-phase banner after the controller is initialized | `0.80s` to `1.40s` | Implemented. This cue can be a bit more ceremonial than standard phases because it is less frequent and more strategically important. |
 | Growth cycle start | `GrowthPhaseRunner.RunNextCycle(...)` | Play immediately after `phaseCycle++` and before `ExecuteSingleCycle(...)` | `0.08s` to `0.22s` | Implemented. Must be subtle. This cue repeats several times per round and should not compete with colony growth animations. |
 
 ## 7. Trigger Placement Notes
