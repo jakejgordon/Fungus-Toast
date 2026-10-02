@@ -543,8 +543,17 @@ namespace FungusToast.Unity.UI
             endGameDockBarRoot.pivot = new Vector2(0.5f, 0f);
             endGameDockBarRoot.anchoredPosition = new Vector2(0f, EndGameDockBarBottomInset);
             endGameDockBarRoot.sizeDelta = new Vector2(0f, EndGameDockBarHeight);
-            endGameDockBarRoot.offsetMin = new Vector2(EndGameDockBarHorizontalInset, endGameDockBarRoot.offsetMin.y);
-            endGameDockBarRoot.offsetMax = new Vector2(-EndGameDockBarHorizontalInset, endGameDockBarRoot.offsetMax.y);
+            // The panel root is full-screen, so add the overlay's side inset to keep the bar's width.
+            float dockHorizontalInset = EndGameDockBarHorizontalInset + GetOverlayHorizontalInset();
+            endGameDockBarRoot.offsetMin = new Vector2(dockHorizontalInset, endGameDockBarRoot.offsetMin.y);
+            endGameDockBarRoot.offsetMax = new Vector2(-dockHorizontalInset, endGameDockBarRoot.offsetMax.y);
+        }
+
+        private float GetOverlayHorizontalInset()
+        {
+            return showPostAdaptationConfirmationState
+                ? EndGameConfirmationOverlayHorizontalInset
+                : EndGameOverlayHorizontalInset;
         }
 
         private void CreateDockToggleButton(Transform parent)
@@ -1809,10 +1818,14 @@ namespace FungusToast.Unity.UI
             }
 
             int pendingRewards = snapshot.pendingMoldinessUnlockCount;
+            // Every level reached grants a reward, so the distance to the next level is the
+            // distance to the next reward; say it outright rather than leaving the meter to imply it.
+            int moldinessToNextLevel = Mathf.Max(1,
+                FungusToast.Unity.Campaign.MoldinessProgression.GetThresholdForTier(snapshot.moldinessTierAfterAward) - snapshot.moldinessProgressAfterAward);
             string thresholdMessage = pendingRewards > 0
                 ? (pendingRewards == 1 ? "New reward unlocked! Claim it below." : $"{pendingRewards} new rewards unlocked! Claim them below.")
                 : (snapshot.moldinessAwarded > 0
-                    ? "No new threshold crossed this run."
+                    ? $"{moldinessToNextLevel} more Moldiness to reach Level {snapshot.moldinessTierAfterAward + 2} and unlock its reward."
                     : "Moldiness is earned by clearing stages - none gained this run.");
 
             var detail = CreateCarryoverInfoText(root.transform,
@@ -4043,23 +4056,22 @@ namespace FungusToast.Unity.UI
                 return;
             }
 
+            // The root (and its dim background) covers the whole screen so no gameplay HUD
+            // shows beside the results; the side inset belongs to the content container.
             var panelRect = GetComponent<RectTransform>();
             if (panelRect != null)
             {
-                float horizontalInset = showPostAdaptationConfirmationState
-                    ? EndGameConfirmationOverlayHorizontalInset
-                    : EndGameOverlayHorizontalInset;
-
                 panelRect.anchorMin = Vector2.zero;
                 panelRect.anchorMax = Vector2.one;
-                panelRect.offsetMin = new Vector2(horizontalInset, 0f);
-                panelRect.offsetMax = new Vector2(-horizontalInset, 0f);
+                panelRect.offsetMin = Vector2.zero;
+                panelRect.offsetMax = Vector2.zero;
                 panelRect.localScale = Vector3.one;
             }
 
             endGameLayoutContainer = resultsCardBackground.transform.parent as RectTransform;
             if (endGameLayoutContainer != null)
             {
+                float horizontalInset = GetOverlayHorizontalInset();
                 float verticalInset = showPostAdaptationConfirmationState
                     ? EndGameConfirmationOverlayVerticalInset
                     : EndGameOverlayVerticalInset;
@@ -4068,8 +4080,8 @@ namespace FungusToast.Unity.UI
                 endGameLayoutContainer.anchorMax = Vector2.one;
                 endGameLayoutContainer.pivot = new Vector2(0.5f, 0.5f);
                 endGameLayoutContainer.anchoredPosition = Vector2.zero;
-                endGameLayoutContainer.offsetMin = new Vector2(0f, verticalInset);
-                endGameLayoutContainer.offsetMax = new Vector2(0f, -verticalInset);
+                endGameLayoutContainer.offsetMin = new Vector2(horizontalInset, verticalInset);
+                endGameLayoutContainer.offsetMax = new Vector2(-horizontalInset, -verticalInset);
                 endGameLayoutContainer.localScale = Vector3.one;
 
                 var layout = endGameLayoutContainer.GetComponent<VerticalLayoutGroup>();
