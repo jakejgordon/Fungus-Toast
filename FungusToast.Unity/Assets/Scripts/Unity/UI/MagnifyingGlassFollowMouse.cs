@@ -121,7 +121,6 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         bool overBread = gameStarted && IsMouseOverBread();
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
-        bool pointerOverTooltip = IsPointerOverTooltip(pointerScreen);
 
         // Decide if we show magnifier visuals (independent from tooltip logic)
         bool showVisuals = visualsAllowed && !selectionModeVisualsSuppressed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
@@ -138,26 +137,23 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         }
 
         // Tooltip logic: show when hovering valid cell regardless of visualsAllowed (still suppress if over UI to avoid conflicts)
-        bool processTooltip = (overBread && !pointerOverUI) || pointerOverTooltip;
+        // The inspector never holds still under the pointer: it has no controls, and a
+        // panel that froze when the pointer swept onto it covered the cells being aimed at.
+        bool processTooltip = overBread && !pointerOverUI;
 
         if (processTooltip)
         {
-            // Keep the inspected cell stable while the pointer moves onto the tooltip's
-            // explicit details control. Screen coordinates over UI are not board cells.
-            if (!pointerOverTooltip)
+            Vector3Int currentCellPos = GetCurrentCellPosition();
+            if (currentCellPos != lastHoveredCellPos)
             {
-                Vector3Int currentCellPos = GetCurrentCellPosition();
-                if (currentCellPos != lastHoveredCellPos)
-                {
-                    OnCellHoverChanged(currentCellPos);
-                    lastHoveredCellPos = currentCellPos;
-                }
-                else if (isTooltipVisible)
-                {
-                    // The open inspector rides alongside the lens. Placing it only on
-                    // cell entry left it stranded a cell or more behind a sweeping pointer.
-                    PlaceTooltipBesidePointer();
-                }
+                OnCellHoverChanged(currentCellPos);
+                lastHoveredCellPos = currentCellPos;
+            }
+            else if (isTooltipVisible)
+            {
+                // The open inspector rides alongside the lens. Placing it only on
+                // cell entry left it stranded a cell or more behind a sweeping pointer.
+                PlaceTooltipBesidePointer();
             }
         }
         else
@@ -496,9 +492,10 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
         // Configure CanvasGroup
         tooltipCanvasGroup.alpha = 0f;
-        tooltipCanvasGroup.interactable = true;
-        // The background is non-raycastable, but the explicit details button needs input.
-        tooltipCanvasGroup.blocksRaycasts = true;
+        // The inspector is read-only. Letting clicks through means it can never swallow a
+        // board click, which matters most while aiming a placement (observation 018).
+        tooltipCanvasGroup.interactable = false;
+        tooltipCanvasGroup.blocksRaycasts = false;
 
         // Start hidden
         tooltipInstance.SetActive(false);
@@ -780,19 +777,6 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         return new Vector2(
             Mathf.Clamp(position.x, TooltipScreenPadding, maxX),
             Mathf.Clamp(position.y, TooltipScreenPadding, maxY));
-    }
-
-    private bool IsPointerOverTooltip(Vector2 pointerScreen)
-    {
-        if (!isTooltipVisible || tooltipRectTransform == null || tooltipInstance == null || !tooltipInstance.activeInHierarchy)
-        {
-            return false;
-        }
-
-        Camera uiCamera = rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay
-            ? rootCanvas.worldCamera
-            : null;
-        return RectTransformUtility.RectangleContainsScreenPoint(tooltipRectTransform, pointerScreen, uiCamera);
     }
 
     void CacheRootCanvas()

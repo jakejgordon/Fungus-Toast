@@ -2301,7 +2301,7 @@ namespace FungusToast.Unity.Grid
 
         /// <summary>
         /// Shows the Chemotactic Beacon placement preview: the line tiles growth skips over are shaded gray,
-        /// the tile growth begins from pulses with the selectable-tile magenta, and the tiles growth will
+        /// the tile growth begins from pulses with the selectable-tile lime, and the tiles growth will
         /// claim are shaded black. Call <see cref="ClearChemotacticBeaconPreview"/> to remove the overlay.
         /// </summary>
         public void ShowChemotacticBeaconPreview(IEnumerable<int> traversedTileIds, int originTileId, IEnumerable<int> growthTileIds)

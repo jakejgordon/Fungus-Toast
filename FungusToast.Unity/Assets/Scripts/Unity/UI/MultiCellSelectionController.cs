@@ -105,7 +105,7 @@ namespace FungusToast.Unity.UI
 
             selectableTileIds = new HashSet<int>(validCells.Select(c => c.TileId));
 
-            // Highlight valid tiles using GridVisualizer (use magenta-pink like Jetting Mycelium)
+            // Highlight valid tiles with the shared selectable-tile pulse (UIEffectConstants)
             ReapplySelectionHighlights();
 
             // Show the initial prompt

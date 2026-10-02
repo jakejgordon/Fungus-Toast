@@ -110,7 +110,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
         /// <summary>
         /// Shows the Chemotactic Beacon line preview: traversed tiles solid gray, the growth origin pulsing with the
-        /// selectable-tile magenta, and growth tiles solid black.
+        /// selectable-tile lime, and growth tiles solid black.
         /// </summary>
         public void ShowChemotacticBeaconPreview(IEnumerable<Vector3Int> traversedPositions, Vector3Int? originPosition, IEnumerable<Vector3Int> growthPositions)
         {
@@ -171,7 +171,7 @@ namespace FungusToast.Unity.Grid.Helpers
         }
 
         /// <summary>
-        /// Pulses the beacon growth origin with the same magenta ping-pong used for selectable tiles,
+        /// Pulses the beacon growth origin with the same lime ping-pong used for selectable tiles,
         /// so it reads as "this is where the line starts" against the static gray/black line.
         /// </summary>
         private IEnumerator OriginPreviewPulseAnimation()
