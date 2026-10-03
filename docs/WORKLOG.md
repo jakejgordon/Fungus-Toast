@@ -1781,6 +1781,10 @@ changes through the normal Testing/evidence path.
    profile-derived representation of each strategy's stated plans. The
    executable `ParameterizedAIStrategy` remains the source of truth for exact
    mutation goals and ordered Mycovariant preferences.
+   **Vocabulary proposed 2026-10-03** in
+   `FungusToast.Core/docs/second-level/AI_CONTENT_TAG_VOCABULARY_PROPOSAL.md`
+   (20 capabilities, 16 board conditions, needs/creates/removes/amplifies
+   relations, draft tags for all current content); awaiting Jake's approval.
 2. Build a deterministic coverage-report command/test that runs whenever a
    mutation or Mycovariant is added or materially changed. It identifies
    plausible strategy matches, explains each match, and flags missing or stale
