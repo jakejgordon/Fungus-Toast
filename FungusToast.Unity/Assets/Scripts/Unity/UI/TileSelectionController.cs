@@ -603,7 +603,19 @@ namespace FungusToast.Unity.UI
             SelectionActive = false;
             onDirectionalSelectionPreviewChanged?.Invoke(anchorTileId, null);
             Reset();
+            // The effect's animation plays over the area just aimed at, so the lens stays down
+            // until the caller has finished it and calls ReleaseDirectionalAimLens.
+            SetLensHiddenForDirectionalAim(true);
             confirmed?.Invoke(anchorTileId, direction);
+        }
+
+        /// <summary>
+        /// Brings the magnifier back after a confirmed directional selection's effect has
+        /// finished animating. Cancelling the selection restores it without this call.
+        /// </summary>
+        public void ReleaseDirectionalAimLens()
+        {
+            SetLensHiddenForDirectionalAim(false);
         }
 
         private void SetLensHiddenForDirectionalAim(bool hidden)

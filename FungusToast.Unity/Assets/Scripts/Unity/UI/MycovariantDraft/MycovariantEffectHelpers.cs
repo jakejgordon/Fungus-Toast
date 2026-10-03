@@ -248,6 +248,8 @@ namespace FungusToast.Unity.UI.MycovariantDraft
 
                         yield return new WaitForSeconds(UIEffectConstants.JettingMyceliumPostVolleyHoldSeconds);
                     }
+
+                    TileSelectionController.Instance.ReleaseDirectionalAimLens();
                 }
 
                 onComplete?.Invoke();
