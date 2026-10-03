@@ -61,6 +61,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
 
     [Header("Board Size Gate")] [SerializeField] private int minBoardSizeForMagnifier =30; // minimum width/height required
     private bool visualsAllowed = true; // NEW: whether magnifier visuals may appear (tooltips ignore this)
+    private bool hiddenForDirectionalAim;
 
     void Start()
     {
@@ -122,7 +123,7 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
         bool pointerOverUI = EventSystem.current.IsPointerOverGameObject();
 
         // Decide if we show magnifier visuals (independent from tooltip logic)
-        bool showVisuals = visualsAllowed && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
+        bool showVisuals = visualsAllowed && !hiddenForDirectionalAim && overBread && !pointerOverUI && MagnifierProvidesAdditionalZoom();
 
         if (showVisuals)
         {
@@ -170,6 +171,18 @@ public class MagnifyingGlassFollowMouse : MonoBehaviour
                 }
             }
         }
+    }
+
+    /// <summary>
+    /// Hides the lens while a directional effect (Jetting Mycelium) is being aimed: the player is
+    /// judging the whole projected area by then, and the lens sits on top of that preview.
+    /// The lens still helps when picking the source cell, so only the aim step hides it.
+    /// </summary>
+    public void SetHiddenForDirectionalAim(bool hidden)
+    {
+        hiddenForDirectionalAim = hidden;
+        if (hidden && visualRoot != null && visualRoot.activeSelf)
+            visualRoot.SetActive(false);
     }
 
     void ResolveMagnifierCamera()

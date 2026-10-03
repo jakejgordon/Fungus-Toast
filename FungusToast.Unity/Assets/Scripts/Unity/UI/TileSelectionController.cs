@@ -22,6 +22,8 @@ namespace FungusToast.Unity.UI
         private const float DirectionAimDeadZoneWorldUnits = 0.15f;
         private static readonly Color DirectionalAnchorColor = new Color(1f, 0.35f, 0.85f, 1f);
 
+        private MagnifyingGlassFollowMouse magnifyingGlass;
+
         public static TileSelectionController Instance { get; private set; }
 
         [SerializeField] private GridVisualizer gridVisualizer;
@@ -87,6 +89,7 @@ namespace FungusToast.Unity.UI
         private void OnDisable()
         {
             CursorManager.Instance?.Pop(this);
+            SetLensHiddenForDirectionalAim(false);
         }
 
         private void Update()
@@ -407,6 +410,7 @@ namespace FungusToast.Unity.UI
                 gridVisualizer.ClearJettingMyceliumPreview();
                 gridVisualizer.ClearSelectedTiles();
                 GameManager.Instance?.HideSelectionPrompt();
+                SetLensHiddenForDirectionalAim(false);
             }
 
             selectingPlayerId = -1;
@@ -477,6 +481,7 @@ namespace FungusToast.Unity.UI
 
             SelectionActive = true;
             directionalSelectionPhase = DirectionalSelectionPhase.SelectSource;
+            SetLensHiddenForDirectionalAim(false);
             selectingPlayerId = directionalSelectingPlayerId;
             directionalAnchorTileId = -1;
             currentDirectionalAim = null;
@@ -523,6 +528,7 @@ namespace FungusToast.Unity.UI
 
             gridVisualizer.ClearAllHighlights();
             gridVisualizer.ShowSelectedTiles(new[] { anchorTileId }, DirectionalAnchorColor);
+            SetLensHiddenForDirectionalAim(true);
 
             if (hoverHighlighter != null)
             {
@@ -598,6 +604,13 @@ namespace FungusToast.Unity.UI
             onDirectionalSelectionPreviewChanged?.Invoke(anchorTileId, null);
             Reset();
             confirmed?.Invoke(anchorTileId, direction);
+        }
+
+        private void SetLensHiddenForDirectionalAim(bool hidden)
+        {
+            if (magnifyingGlass == null)
+                magnifyingGlass = FindAnyObjectByType<MagnifyingGlassFollowMouse>();
+            magnifyingGlass?.SetHiddenForDirectionalAim(hidden);
         }
     }
 }
