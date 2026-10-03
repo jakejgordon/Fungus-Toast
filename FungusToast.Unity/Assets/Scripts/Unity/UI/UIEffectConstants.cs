@@ -1291,16 +1291,14 @@ namespace FungusToast.Unity.UI
         public const float SelectableTilePulseDurationSeconds = 1.6f;
 
         /// <summary>
-        /// Resting end of the selectable-tile pulse: a faint Focus wash, so eligible tiles never
-        /// blink out entirely. Replaced an opaque magenta that dominated the colony colors (observation 018).
+        /// Fully transparent end of the selectable-tile magenta pulse.
         /// </summary>
-        public static readonly Color SelectableTilePulseDimColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.15f);
+        public static readonly Color SelectableTilePulseDimColor = new Color(1f, 0f, 0.9f, 0f);
 
         /// <summary>
-        /// Peak of the selectable-tile pulse: the palette's Focus lime (the same "act here" signal the
-        /// spend button uses), kept translucent so the cells underneath stay readable.
+        /// Fully opaque end of the selectable-tile magenta pulse.
         /// </summary>
-        public static readonly Color SelectableTilePulseBrightColor = UIStyleTokens.WithAlpha(UIStyleTokens.State.Focus, 0.55f);
+        public static readonly Color SelectableTilePulseBrightColor = new Color(1f, 0f, 0.9f, 1f);
 
         // ==================== CHEMOTACTIC BEACON HOVER PREVIEW ====================
         /// <summary>

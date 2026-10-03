@@ -21,7 +21,6 @@ namespace FungusToast.Unity.UI
 
         private const float DirectionAimDeadZoneWorldUnits = 0.15f;
         private static readonly Color DirectionalAnchorColor = new Color(1f, 0.35f, 0.85f, 1f);
-        private MagnifyingGlassFollowMouse magnifyingGlass;
 
         public static TileSelectionController Instance { get; private set; }
 
@@ -83,8 +82,6 @@ namespace FungusToast.Unity.UI
 
             if (gridVisualizer == null)
                 throw new System.Exception($"{nameof(TileSelectionController)} requires a reference to GridVisualizer. Assign it in the Inspector.");
-
-            magnifyingGlass = FindAnyObjectByType<MagnifyingGlassFollowMouse>();
         }
 
         private void OnDisable()
@@ -412,9 +409,6 @@ namespace FungusToast.Unity.UI
                 GameManager.Instance?.HideSelectionPrompt();
             }
 
-            SetSelectionModeVisualSuppression(false);
-            SetHoverVisualSuppression(false);
-
             selectingPlayerId = -1;
             IsCancellable = false;
             onCellSelected = null;
@@ -501,9 +495,6 @@ namespace FungusToast.Unity.UI
             gridVisualizer.ClearJettingMyceliumPreview();
             gridVisualizer.ClearAllHighlights();
 
-            SetSelectionModeVisualSuppression(true);
-            SetHoverVisualSuppression(false);
-
             if (hoverHighlighter != null)
             {
                 hoverHighlighter.SetSelectableTiles(selectableTileIds);
@@ -532,9 +523,6 @@ namespace FungusToast.Unity.UI
 
             gridVisualizer.ClearAllHighlights();
             gridVisualizer.ShowSelectedTiles(new[] { anchorTileId }, DirectionalAnchorColor);
-
-            SetSelectionModeVisualSuppression(true);
-            SetHoverVisualSuppression(true);
 
             if (hoverHighlighter != null)
             {
@@ -610,16 +598,6 @@ namespace FungusToast.Unity.UI
             onDirectionalSelectionPreviewChanged?.Invoke(anchorTileId, null);
             Reset();
             confirmed?.Invoke(anchorTileId, direction);
-        }
-
-        private void SetSelectionModeVisualSuppression(bool suppressed)
-        {
-            magnifyingGlass?.SetSelectionModeVisualSuppression(suppressed);
-        }
-
-        private void SetHoverVisualSuppression(bool suppressed)
-        {
-            hoverHighlighter?.SetHoverVisualSuppression(suppressed);
         }
     }
 }

@@ -21,6 +21,9 @@ namespace FungusToast.Unity.Grid.Helpers
         private readonly List<Vector3Int> _toxinPreviewPositions = new();
         private Vector3Int? _originPreviewPosition;
         private Coroutine _previewPulseCoroutine;
+        // Preview and hover share the overlay tilemap and can both be live while aiming. Each preview
+        // tile's resting colour is kept so the hover can hand the tile back instead of erasing it.
+        private readonly Dictionary<Vector3Int, Color> _previewRestColors = new();
         private static readonly Matrix4x4 InspectionHoverMatrix = Matrix4x4.TRS(
             Vector3.zero,
             Quaternion.identity,
@@ -52,10 +55,18 @@ namespace FungusToast.Unity.Grid.Helpers
         {
             if (_currentHoveredPosition.HasValue && _hoverOverlayTileMap != null)
             {
-                _hoverOverlayTileMap.SetTile(_currentHoveredPosition.Value, null);
-                _hoverOverlayTileMap.SetColor(_currentHoveredPosition.Value, Color.white);
-                _hoverOverlayTileMap.SetTransformMatrix(_currentHoveredPosition.Value, Matrix4x4.identity);
+                Vector3Int pos = _currentHoveredPosition.Value;
                 _currentHoveredPosition = null;
+                _hoverOverlayTileMap.SetTransformMatrix(pos, Matrix4x4.identity);
+                if (_previewRestColors.TryGetValue(pos, out Color restColor))
+                {
+                    _hoverOverlayTileMap.SetColor(pos, restColor);
+                }
+                else
+                {
+                    _hoverOverlayTileMap.SetTile(pos, null);
+                    _hoverOverlayTileMap.SetColor(pos, Color.white);
+                }
 
                 if (_hoverGlowCoroutine != null)
                 {
@@ -93,14 +104,12 @@ namespace FungusToast.Unity.Grid.Helpers
 
             foreach (var pos in livingCellPositions)
             {
-                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
-                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
+                SetPreviewTile(pos, UIEffectConstants.JettingMyceliumPreviewLivingDimColor);
                 _livingPreviewPositions.Add(pos);
             }
             foreach (var pos in toxinCellPositions)
             {
-                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
-                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
+                SetPreviewTile(pos, UIEffectConstants.JettingMyceliumPreviewToxinDimColor);
                 _toxinPreviewPositions.Add(pos);
             }
 
@@ -110,7 +119,7 @@ namespace FungusToast.Unity.Grid.Helpers
 
         /// <summary>
         /// Shows the Chemotactic Beacon line preview: traversed tiles solid gray, the growth origin pulsing with the
-        /// selectable-tile lime, and growth tiles solid black.
+        /// selectable-tile magenta, and growth tiles solid black.
         /// </summary>
         public void ShowChemotacticBeaconPreview(IEnumerable<Vector3Int> traversedPositions, Vector3Int? originPosition, IEnumerable<Vector3Int> growthPositions)
         {
@@ -122,25 +131,19 @@ namespace FungusToast.Unity.Grid.Helpers
 
             foreach (var pos in traversedPositions)
             {
-                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
-                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
-                _hoverOverlayTileMap.SetColor(pos, UIEffectConstants.ChemobeaconPreviewTraversedColor);
+                SetPreviewTile(pos, UIEffectConstants.ChemobeaconPreviewTraversedColor);
                 _livingPreviewPositions.Add(pos);
             }
             foreach (var pos in growthPositions)
             {
-                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
-                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
-                _hoverOverlayTileMap.SetColor(pos, UIEffectConstants.ChemobeaconPreviewGrowthColor);
+                SetPreviewTile(pos, UIEffectConstants.ChemobeaconPreviewGrowthColor);
                 _livingPreviewPositions.Add(pos);
             }
 
             if (originPosition.HasValue)
             {
                 var pos = originPosition.Value;
-                _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
-                _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
-                _hoverOverlayTileMap.SetColor(pos, UIEffectConstants.SelectableTilePulseBrightColor);
+                SetPreviewTile(pos, UIEffectConstants.SelectableTilePulseBrightColor);
                 _originPreviewPosition = pos;
                 _previewPulseCoroutine = _runner.StartCoroutine(OriginPreviewPulseAnimation());
             }
@@ -158,20 +161,21 @@ namespace FungusToast.Unity.Grid.Helpers
             }
             if (_hoverOverlayTileMap != null)
             {
-                foreach (var pos in _livingPreviewPositions)
-                    _hoverOverlayTileMap.SetTile(pos, null);
-                foreach (var pos in _toxinPreviewPositions)
-                    _hoverOverlayTileMap.SetTile(pos, null);
-                if (_originPreviewPosition.HasValue)
-                    _hoverOverlayTileMap.SetTile(_originPreviewPosition.Value, null);
+                // The hovered tile belongs to the hover now; it is released when the hover moves on.
+                foreach (var pos in _previewRestColors.Keys)
+                {
+                    if (pos != _currentHoveredPosition)
+                        _hoverOverlayTileMap.SetTile(pos, null);
+                }
             }
+            _previewRestColors.Clear();
             _livingPreviewPositions.Clear();
             _toxinPreviewPositions.Clear();
             _originPreviewPosition = null;
         }
 
         /// <summary>
-        /// Pulses the beacon growth origin with the same lime ping-pong used for selectable tiles,
+        /// Pulses the beacon growth origin with the same magenta ping-pong used for selectable tiles,
         /// so it reads as "this is where the line starts" against the static gray/black line.
         /// </summary>
         private IEnumerator OriginPreviewPulseAnimation()
@@ -186,9 +190,24 @@ namespace FungusToast.Unity.Grid.Helpers
                 float easedColorT = colorT < 0.5f
                     ? 2f * colorT * colorT
                     : 1f - 2f * (1f - colorT) * (1f - colorT);
-                _hoverOverlayTileMap.SetColor(_originPreviewPosition.Value, Color.Lerp(dim, bright, easedColorT));
+                if (_originPreviewPosition != _currentHoveredPosition)
+                    _hoverOverlayTileMap.SetColor(_originPreviewPosition.Value, Color.Lerp(dim, bright, easedColorT));
                 yield return null;
             }
+        }
+
+        private void SetPreviewTile(Vector3Int pos, Color restColor)
+        {
+            _previewRestColors[pos] = restColor;
+            if (pos == _currentHoveredPosition)
+            {
+                // Re-setting the tile would drop the hover's enlarged transform; ClearHoverEffect restores it.
+                return;
+            }
+
+            _hoverOverlayTileMap.SetTile(pos, _solidHighlightTile);
+            _hoverOverlayTileMap.SetTileFlags(pos, TileFlags.None);
+            _hoverOverlayTileMap.SetColor(pos, restColor);
         }
 
         private IEnumerator PreviewPulseAnimation()
@@ -210,12 +229,12 @@ namespace FungusToast.Unity.Grid.Helpers
 
                 foreach (var pos in _livingPreviewPositions)
                 {
-                    if (_hoverOverlayTileMap.HasTile(pos))
+                    if (pos != _currentHoveredPosition && _hoverOverlayTileMap.HasTile(pos))
                         _hoverOverlayTileMap.SetColor(pos, livingColor);
                 }
                 foreach (var pos in _toxinPreviewPositions)
                 {
-                    if (_hoverOverlayTileMap.HasTile(pos))
+                    if (pos != _currentHoveredPosition && _hoverOverlayTileMap.HasTile(pos))
                         _hoverOverlayTileMap.SetColor(pos, toxinColor);
                 }
 

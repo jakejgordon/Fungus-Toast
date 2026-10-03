@@ -20,7 +20,6 @@ namespace FungusToast.Unity.Grid
 
         private Vector3Int? lastHoveredCell = null;
         private HashSet<int> selectionTiles = new();
-        private bool hoverVisualsSuppressed;
 
         /// <summary>
         /// Invoked when a selectable tile is newly hovered (positive tileId) or hover is cleared (-1).
@@ -68,14 +67,7 @@ namespace FungusToast.Unity.Grid
             {
                 if (lastHoveredCell != cellPos)
                 {
-                    if (!hoverVisualsSuppressed)
-                    {
-                        gridVisualizer?.ShowHoverEffect(cellPos);
-                    }
-                    else
-                    {
-                        gridVisualizer?.ClearHoverEffect();
-                    }
+                    gridVisualizer?.ShowHoverEffect(cellPos);
 
                     if (selectionTiles.Count > 0)
                     {
@@ -193,15 +185,6 @@ namespace FungusToast.Unity.Grid
         public void ClearSelectableTiles()
         {
             selectionTiles.Clear();
-        }
-
-        public void SetHoverVisualSuppression(bool suppressed)
-        {
-            hoverVisualsSuppressed = suppressed;
-            if (suppressed)
-            {
-                gridVisualizer?.ClearHoverEffect();
-            }
         }
     }
 }

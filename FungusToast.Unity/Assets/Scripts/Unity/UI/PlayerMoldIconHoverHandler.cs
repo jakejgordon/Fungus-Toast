@@ -56,11 +56,10 @@ namespace FungusToast.Unity.UI
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            // Disable highlight while draft is active to avoid clobbering draft selection highlights
             if (!enabled || gridVisualizer == null)
                 return;
 
-            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+            if (DraftOwnsBoardHighlights())
                 return;
 
             gridVisualizer.HighlightPlayerTiles(playerId);
@@ -69,18 +68,39 @@ namespace FungusToast.Unity.UI
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            // Do not clear highlights during draft - draft UI controls highlights then
             if (!enabled || gridVisualizer == null)
                 return;
 
-            if (FungusToast.Unity.GameManager.Instance != null && FungusToast.Unity.GameManager.Instance.IsDraftPhaseActive)
+            if (DraftOwnsBoardHighlights())
                 return;
 
             RestoreSelectionHighlightsOrClear(gridVisualizer);
         }
 
+        /// <summary>
+        /// The draft drives board highlights while its cards are up, so icon hover stays out of
+        /// the way then. Once a pick hands off to a board placement, the placement owns the
+        /// highlights and icon hover works as in any other placement.
+        /// </summary>
+        private static bool DraftOwnsBoardHighlights()
+        {
+            var gameManager = FungusToast.Unity.GameManager.Instance;
+            return gameManager != null && gameManager.IsDraftPhaseActive && !HasActiveBoardSelection();
+        }
+
+        private static bool HasActiveBoardSelection()
+        {
+            return (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
+                || (MultiTileSelectionController.Instance != null && MultiTileSelectionController.Instance.HasActiveSelection)
+                || (TileSelectionController.Instance != null && TileSelectionController.Instance.HasActiveSelection);
+        }
+
         internal static void RestoreSelectionHighlightsOrClear(GridVisualizer gridVisualizer)
         {
+            // Drop the hover's player emphasis and starting-spore ping first; reapplying a
+            // selection's eligible-tile pulse does not stop them. Selected-tile markers survive.
+            gridVisualizer?.ClearHighlights();
+
             if (MultiCellSelectionController.Instance != null && MultiCellSelectionController.Instance.HasActiveSelection)
             {
                 MultiCellSelectionController.Instance.ReapplySelectionHighlights();
@@ -98,8 +118,6 @@ namespace FungusToast.Unity.UI
                 TileSelectionController.Instance.ReapplySelectionHighlights();
                 return;
             }
-
-            gridVisualizer?.ClearHighlights();
         }
     }
 
