@@ -2,11 +2,17 @@ using System.Collections.Generic;
 using FungusToast.Core.Board;
 using System.Linq;
 using FungusToast.Core.Players;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
     internal static class DirectionalMycovariantFactory
     {
+        private static readonly ContentProfile JettingMyceliumProfile =
+            ContentProfile.Of(Cap.RemotePlacement, Cap.ToxinPlacement).Creates(Cond.OwnToxins);
+
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return CreateJettingMycelium(MycovariantIds.JettingMyceliumIId, "Jetting Mycelium I", isUniversal: true);
@@ -27,6 +33,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "The cap ruptures violently. The colony blasts outward in a widening cloud of toxic spores wherever the pilot aims.",
                 Type = MycovariantType.Directional,
                 Category = MycovariantCategory.Fungicide,
+                Profile = JettingMyceliumProfile,
                 IsUniversal = isUniversal,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
                 {

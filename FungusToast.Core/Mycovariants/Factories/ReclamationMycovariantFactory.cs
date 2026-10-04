@@ -2,6 +2,9 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using FungusToast.Core.Config;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
@@ -22,6 +25,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "Even in death, the colony endures.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Reclamation,
+                Profile = ContentProfile.Of(Cap.SelfReclamation).Uses(Cond.OwnCellDeaths, Cond.OwnDeadCells),
                 IsUniversal = false,
                 AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetReclamationSynergyMycovariantIdsExcluding(MycovariantIds.NecrophoricAdaptation),
@@ -41,6 +45,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "Specialized hyphal networks persist even after setbacks, allowing the colony to recover and try again with renewed vigor.",
                 Type = MycovariantType.Passive,
                 Category = MycovariantCategory.Reclamation,
+                Profile = ContentProfile.Of(Cap.SelfReclamation).Amplifies(Cap.SelfReclamation).Uses(Cond.OwnDeadCells),
                 IsUniversal = false,
                 AutoMarkTriggered = true,
                 SynergyWith = MycovariantSynergyListFactory.GetReclamationSynergyMycovariantIdsExcluding(MycovariantIds.ReclamationRhizomorphsId),

@@ -19,12 +19,15 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 - **Substrate Ecology roster proposal:** [second-level/SUBSTRATE_ECOLOGY_ROSTER.md](second-level/SUBSTRATE_ECOLOGY_ROSTER.md)
 - **Canonical gameplay terminology:** [GAMEPLAY_TERMINOLOGY.md](GAMEPLAY_TERMINOLOGY.md)
 - **Simulation tracking implementation details:** [second-level/SIMULATION_TRACKING_IMPLEMENTATION.md](second-level/SIMULATION_TRACKING_IMPLEMENTATION.md)
+- **Content tags (required on every mutation):** [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md)
+- **Every existing mutation, its tags, prerequisites, and strategy usage:** [MUTATION_CATALOG.md](MUTATION_CATALOG.md) (generated)
 
 ## Suggested Agent Workflow
 
 1. Before implementation, define the mutation's intent, category, tier, trigger
-   timing, scaling, capability tags, important interactions, exclusions, and
-   expected player-facing summary.
+   timing, scaling, content tags (capabilities, needs/uses, creates, removes;
+   see [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md)),
+   important interactions, exclusions, and expected player-facing summary.
 2. Identify likely non-Testing AI profile matches and give each an initial
    coverage disposition from `AI_STRATEGY_AUTHORING.md`. An **Add for
    evaluation** disposition requires a Testing candidate/control and simulation
@@ -192,6 +195,8 @@ helper.MakeChild(new Mutation(
     maxLevel: GameBalance.NewMutationMaxLevel,
     category: MutationCategory.AppropriateCategory,
     tier: MutationTier.Tier3,
+    // Required. See "B. Tag the Mutation" below.
+    profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.OpenSpace),
     // For surge mutations only:
     isSurge: true,
     surgeDuration: GameBalance.NewSurgeDuration,
@@ -203,6 +208,12 @@ new MutationPrerequisite(MutationIds.PrereqMutation2, 3)); // Cross-category rec
 ```
 
 `MutationRepository` is now the coordinator that invokes category factories; avoid manually adding one-off mutation definitions directly there.
+
+#### **B. Tag the Mutation (Required)**
+
+Every mutation carries a `profile:` describing what it does, for the AI coverage review. `ContentProfileTests` fails without one. Follow [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md) ("Tagging new or changed content"): 1–3 capabilities, then Amplifies / Needs / Uses / Creates / Removes as they apply. The factories alias the enums as `Cap` and `Cond`. Check how similar mutations are tagged in [MUTATION_CATALOG.md](MUTATION_CATALOG.md) and [CONTENT_TAG_INDEX.md](CONTENT_TAG_INDEX.md). If no tag fits a genuinely new mechanic, follow "Extending the vocabulary" there instead of stretching an existing tag.
+
+Retag when a redesign changes what the mutation does, not just its numbers.
 
 ### **3. UI Integration**
 
@@ -330,9 +341,12 @@ NewMutationGrowth,
 1. **Build Test**:
     - `dotnet build FungusToast.Core/FungusToast.Core.csproj`
     - `dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj`
-2. **UI Test**: Check mutation appears in tree with correct prerequisites
-3. **Simulation Test**: Run simulation to verify tracking works
-4. **Effect Test**: Activate mutation in-game to confirm logic works
+2. **Content tags and catalogs**:
+    - `dotnet test FungusToast.Core.Tests --filter ContentProfiles` (fails on a missing or malformed profile, or a stale catalog)
+    - Regenerate and commit the catalogs: `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`
+3. **UI Test**: Check mutation appears in tree with correct prerequisites
+4. **Simulation Test**: Run simulation to verify tracking works
+5. **Effect Test**: Activate mutation in-game to confirm logic works
 
 ---
 

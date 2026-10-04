@@ -1,11 +1,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using FungusToast.Core.Config;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
     internal static class GrowthMycovariantFactory
     {
+        private static readonly ContentProfile CornerConduitProfile =
+            ContentProfile.Of(Cap.RemotePlacement).Uses(Cond.BoardEdge);
+
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return PerimeterProliferator();
@@ -23,6 +29,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "At the bread's edge, the colony finds untapped vigor, racing along the crust in a surge of expansion.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.BoardEdge),
             IsUniversal = false,
             AutoMarkTriggered = true,
             AIScore = (player, board) =>
@@ -50,6 +57,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Hyphae prioritize a direct arterial route to a strategic corner, exploiting vulnerabilities along the corridor.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = CornerConduitProfile,
             IsUniversal = true,
             AutoMarkTriggered = true,
             AIScore = (player, board) => CornerConduitScore(player, board, 6f, 4f, 2f)
@@ -63,6 +71,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Hyphal arterial routing intensifies, widening strategic throughput toward a dominant corner nexus.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = CornerConduitProfile,
             IsUniversal = false,
             AutoMarkTriggered = true,
             AIScore = (player, board) => CornerConduitScore(player, board, 7f, 5f, 3f)
@@ -76,6 +85,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A fully vascularized hyphal highway surges toward strategic dominance, overwhelming resistance in a focused advance.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = CornerConduitProfile,
             IsUniversal = false,
             AutoMarkTriggered = true,
             AIScore = (player, board) => CornerConduitScore(player, board, 8f, 6f, 4f)
@@ -90,6 +100,7 @@ namespace FungusToast.Core.Mycovariants
             IconId = "myco_hyphal_draw",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Growth,
+            Profile = ContentProfile.Of(Cap.Repositioning, Cap.LeaderFocus),
             IsUniversal = false,
             AutoMarkTriggered = false,
             ApplyEffect = (playerMyco, board, rng, observer) =>

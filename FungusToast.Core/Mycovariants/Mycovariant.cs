@@ -1,4 +1,5 @@
 ﻿using FungusToast.Core.Board;
+using FungusToast.Core.ContentProfiles;
 using FungusToast.Core.Metrics;
 using FungusToast.Core.Players;
 using System;
@@ -48,6 +49,13 @@ namespace FungusToast.Core.Mycovariants
         /// a poor draft for AI players, or otherwise intentionally asymmetric.
         /// </summary>
         public bool IsBait { get; set; } = false;
+
+        /// <summary>
+        /// Authoring tags for the content-to-strategy coverage review. Required on every non-Bait
+        /// Mycovariant and absent on Bait cards (enforced by ContentProfileTests); never read by
+        /// gameplay or AI behavior.
+        /// </summary>
+        public ContentProfile? Profile { get; set; }
 
         /// <summary>
         /// If true, this mycovariant will be automatically marked as triggered when acquired.

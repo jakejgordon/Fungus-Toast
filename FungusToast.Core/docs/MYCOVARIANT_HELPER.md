@@ -16,11 +16,14 @@ Mycovariants are drafted abilities that either:
 - **Shared pre-PR copy checklist:** [second-level/CONTENT_COPY_CHECKLIST.md](second-level/CONTENT_COPY_CHECKLIST.md)
 - **Technical implementation flow:** [second-level/MYCOVARIANT_TECHNICAL_FLOW.md](second-level/MYCOVARIANT_TECHNICAL_FLOW.md)
 - **Review checklist for PRs:** [second-level/MYCOVARIANT_PR_CHECKLIST.md](second-level/MYCOVARIANT_PR_CHECKLIST.md)
+- **Content tags (required on every non-Bait Mycovariant):** [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md)
+- **Every existing Mycovariant, its tags, and strategy usage:** [MYCOVARIANT_CATALOG.md](MYCOVARIANT_CATALOG.md) (generated)
 
 ## Suggested Agent Workflow
 
 1. Before implementation, define whether the Mycovariant is draft-time active,
-   passive, or both; record its capability tags, important interactions,
+   passive, or both; record its content tags (see
+   [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md)), important interactions,
    exclusions, and likely non-Testing AI profile matches.
 2. Give every likely AI match an initial coverage disposition from
    `AI_STRATEGY_AUTHORING.md`. An **Add for evaluation** disposition requires a
@@ -47,6 +50,7 @@ Mycovariants are drafted abilities that either:
 4. Write concise description and optional flavor text using `second-level/MYCOVARIANT_AUTHORING_STYLE.md`.
 5. Add a drawing case for the Mycovariant's id in `MycovariantIcons.cs` and review it with the `tools/icon-preview` harness. It should depict the effect and be distinct from every other Mycovariant.
 6. Define the Mycovariant in the correct category factory and wire any gameplay behavior through the appropriate processors, observers, and Unity draft hooks.
+7. Tag it with a `Profile =` initializer (required for every non-Bait Mycovariant; Bait cards stay untagged). Follow "Tagging new or changed content" in [second-level/AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md); tier families share one `private static readonly ContentProfile`. Compare with similar cards in [MYCOVARIANT_CATALOG.md](MYCOVARIANT_CATALOG.md) and [CONTENT_TAG_INDEX.md](CONTENT_TAG_INDEX.md).
 
 ### Add Mycovariant UI presence
 1. Reuse the existing Unity tooltip system with `ITooltipContentProvider` and `TooltipTrigger`.
@@ -59,6 +63,7 @@ Mycovariants are drafted abilities that either:
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when the change affects shared core behavior.
 3. Run a smoke simulation and inspect output for expected behavior when gameplay changed.
 4. Verify Unity draft behavior when the Mycovariant needs interactive input, custom visuals, or new icon wiring.
+5. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then regenerate and commit the catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`.
 
 ## Notes
 

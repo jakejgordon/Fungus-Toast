@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -25,7 +28,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: GameBalance.HomeostaticHarmonyMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier1
+                tier: MutationTier.Tier1,
+                profile: ContentProfile.Of(Cap.DecayResistance)
             ));
 
             // Tier-2
@@ -40,7 +44,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.ChronoresilientCytoplasmMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.DecayResistance)
             ), new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
 
             // Tier-3
@@ -55,7 +60,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.RegenerativeHyphaeMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.SelfReclamation).Uses(Cond.OwnDeadCells)
             ), new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 5));
 
             // Tier-4
@@ -70,7 +76,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.NecrosporulationMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier4
+                tier: MutationTier.Tier4,
+                profile: ContentProfile.Of(Cap.RemotePlacement).Needs(Cond.OwnCellDeaths)
             ),
                 new MutationPrerequisite(MutationIds.RegenerativeHyphae, 2),
                 new MutationPrerequisite(MutationIds.MycotoxinTracer, 7));
@@ -88,7 +95,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.NecrohyphalInfiltrationMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.CorpseCapture).Uses(Cond.EnemyDeadCells, Cond.EnemyContact)
             ),
             new MutationPrerequisite(MutationIds.Necrosporulation, 1),
             new MutationPrerequisite(MutationIds.DetritalEnzymes, 1));
@@ -106,7 +114,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
                 maxLevel: GameBalance.CatabolicRebirthMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier6
+                tier: MutationTier.Tier6,
+                profile: ContentProfile.Of(Cap.SelfReclamation).Needs(Cond.OwnToxins).Uses(Cond.OwnDeadCells)
             ),
             new MutationPrerequisite(MutationIds.Necrosporulation, 5),
             new MutationPrerequisite(MutationIds.MycotoxinCatabolism, 5));
@@ -124,7 +133,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier7),
                 maxLevel: GameBalance.HypersystemicRegenerationMaxLevel,
                 category: MutationCategory.CellularResilience,
-                tier: MutationTier.Tier7
+                tier: MutationTier.Tier7,
+                profile: ContentProfile.Of(Cap.SelfReclamation, Cap.ResistantCells).Amplifies(Cap.SelfReclamation).Uses(Cond.OwnDeadCells).Creates(Cond.OwnResistantCells)
             ),
             new MutationPrerequisite(MutationIds.RegenerativeHyphae, 3),
             new MutationPrerequisite(MutationIds.MycotropicInduction, 1));

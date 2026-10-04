@@ -1,11 +1,17 @@
 using System.Collections.Generic;
 using FungusToast.Core.Config;
 using System.Linq;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
     internal static class EconomyMycovariantFactory
     {
+        private static readonly ContentProfile PlasmidBountyProfile =
+            ContentProfile.Of(Cap.PointIncome);
+
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return PlasmidBounty();
@@ -27,6 +33,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "Horizontal gene transfer introduces novel genetic material, accelerating the colony's evolutionary potential.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
+                Profile = PlasmidBountyProfile,
                 IsUniversal = true,
                 AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -48,6 +55,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "Multiple plasmid integrations trigger a cascade of genetic recombination events across the mycelial network.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
+                Profile = PlasmidBountyProfile,
                 IsUniversal = false,
                 AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -69,6 +77,7 @@ namespace FungusToast.Core.Mycovariants
                 FlavorText = "A third influx outpaces the colony's repair machinery, and the mutation rate climbs past anything on record.",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
+                Profile = PlasmidBountyProfile,
                 IsUniversal = false,
                 AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -91,6 +100,7 @@ namespace FungusToast.Core.Mycovariants
                 IconId = "myco_ascus_wager",
                 Type = MycovariantType.Economy,
                 Category = MycovariantCategory.Economy,
+                Profile = ContentProfile.Of(Cap.FreeUpgrades),
                 IsUniversal = false,
                 AutoMarkTriggered = true,
                 ApplyEffect = (playerMyco, board, rng, observer) =>

@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -24,7 +27,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: GameBalance.AeratedFrontierMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier1
+                tier: MutationTier.Tier1,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.OpenSpace)
             ));
 
             helper.MakeChild(new Mutation(
@@ -39,7 +43,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.CrustwardTropismMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.BoardEdge)
             ),
                 new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
 
@@ -54,7 +59,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.CompactionPressureMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.CrampedSpace)
             ),
                 new MutationPrerequisite(MutationIds.AeratedFrontier, 10));
 
@@ -70,7 +76,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.DetritalEnzymesMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.OwnDeadCells, Cond.EnemyDeadCells)
             ),
                 new MutationPrerequisite(MutationIds.CrustwardTropism, 1),
                 new MutationPrerequisite(MutationIds.CompactionPressure, 1));
@@ -86,7 +93,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.ToxinMarginMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth).Uses(Cond.EnemyToxins)
             ),
                 new MutationPrerequisite(MutationIds.AeratedFrontier, 5),
                 new MutationPrerequisite(MutationIds.HomeostaticHarmony, 5));
@@ -104,7 +112,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4) + 1,
                 maxLevel: GameBalance.NecrophyticBloomMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier4
+                tier: MutationTier.Tier4,
+                profile: ContentProfile.Of(Cap.Composting).Uses(Cond.OwnDeadCells, Cond.EnemyDeadCells).Creates(Cond.NutrientPatches).Removes(Cond.OwnDeadCells, Cond.EnemyDeadCells)
             ),
                 new MutationPrerequisite(MutationIds.DetritalEnzymes, 3),
                 new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
@@ -120,7 +129,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.ToxinborneSeedingMaxLevel,
                 category: MutationCategory.SubstrateEcology,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.ConditionalGrowth, Cap.ToxinMobility, Cap.RemotePlacement).Needs(Cond.OwnToxins).Uses(Cond.EnemyContact)
             ),
                 new MutationPrerequisite(MutationIds.NecrophyticBloom, 1),
                 new MutationPrerequisite(MutationIds.SporicidalBloom, 1));

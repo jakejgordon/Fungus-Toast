@@ -34,6 +34,7 @@ Use this checklist before opening or approving a PR that changes Mycovariants.
 
 - [ ] Synergy lists are updated where relevant.
 - [ ] AI scoring is bounded and consistent with existing patterns.
+- [ ] Non-Bait cards carry a `Profile` per `AI_CONTENT_TAGS.md` (tier families share one static profile); `dotnet test FungusToast.Core.Tests --filter ContentProfiles` passes and the content catalogs were regenerated.
 
 ## Validation
 

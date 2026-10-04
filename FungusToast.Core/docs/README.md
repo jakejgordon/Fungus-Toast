@@ -51,6 +51,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
 
 ### AI
+- `second-level/AI_CONTENT_TAGS.md` — content tag vocabulary (capabilities, board conditions, needs/uses/creates/removes/amplifies), coverage-review matching rules, and how to tag or extend
 - `second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md` — completed AI-overhaul vocabulary, roster/name migration inventory, decision-surface audit, reproducibility gaps, risks, and Phase 2 slice order
 - `second-level/AI_P3_5_REFERENCE_BASELINE_V1.md` — locked, artifact-backed first AI reference corpus and analysis-version report
 - `second-level/AI_P3_5_REFERENCE_BASELINE_V2.md` — corrected post-review reference corpus with version, checksum, replay, and evidence-limit records
@@ -60,6 +61,12 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/AI_P8_ROSTER_BEHAVIOR_V1.md` — provenance-stamped observed build comparison for the Proven roster
 - `second-level/AI_P8_TARGET_MATRIX_PROPOSAL_V1.md` — proposed solo roster shape and evidence gates for Phase 8 actions
 - `second-level/AI_P8_CANDIDATE_SEARCH_PROTOCOL_V1.md` — proposed evidence-bound search lanes for the P8 Hard and Elite gaps
+
+### Content catalogs (generated — do not edit by hand)
+- `MUTATION_CATALOG.md` — every mutation with its tags, prerequisites, unlocks, and player-facing strategy usage
+- `MYCOVARIANT_CATALOG.md` — every Mycovariant with its tags, availability, and player-facing strategy usage
+- `CONTENT_TAG_INDEX.md` — every content tag with the mutations and Mycovariants that carry it
+- Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`; `ContentCatalogTests` fails while they are stale
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

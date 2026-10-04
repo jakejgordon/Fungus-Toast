@@ -12,6 +12,7 @@ Read these docs first:
 3. `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
 4. `FungusToast.Core/docs/second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 5. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
+6. `FungusToast.Core/docs/second-level/AI_CONTENT_TAGS.md`
 
 Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` before adding new analytics seams.
 
@@ -24,6 +25,7 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
    - `FungusToast.Core/Mutations/MutationTypeEnum.cs` when a new type is actually needed
    - `FungusToast.Core/Config/GameBalance.cs`
    - the appropriate factory under `FungusToast.Core/Mutations/Factories/`
+3a. Give the definition a `profile:` content profile per `AI_CONTENT_TAGS.md` ("Tagging new or changed content"). Compare with similar mutations in `FungusToast.Core/docs/MUTATION_CATALOG.md`. Retag when a redesign changes what the mutation does.
 4. Follow the shared naming doc and the helper's description template exactly. Keep tooltip copy readable first, implementation-accurate second, and run `CONTENT_COPY_CHECKLIST.md` before finishing.
 5. Wire gameplay behavior through the correct processor and coordinator path in `FungusToast.Core`.
 6. Add simulation-tracking hooks when the mutation creates meaningful analytics-visible behavior.
@@ -35,7 +37,8 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
 
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when shared gameplay behavior changed.
-3. Run targeted tests when the affected area already has them.
+3. Run targeted tests when the affected area already has them, and always `dotnet test FungusToast.Core.Tests --filter ContentProfiles`.
+3a. Regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests` and commit them with the change.
 4. Run a smoke simulation when gameplay behavior changed.
 5. If Unity-facing UI or tree layout changed, call out the required Unity verification explicitly.
 

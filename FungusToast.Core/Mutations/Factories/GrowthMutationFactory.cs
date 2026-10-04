@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -25,7 +28,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: GameBalance.MycelialBloomMaxLevel,
                 category: MutationCategory.Growth,
-                tier: MutationTier.Tier1
+                tier: MutationTier.Tier1,
+                profile: ContentProfile.Of(Cap.BaseGrowth).Creates(Cond.OwnCellDeaths)
             ));
 
             // Tier-2 Tendrils
@@ -46,7 +50,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.MycotropicInductionMaxLevel,
                 category: MutationCategory.Growth,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.DiagonalGrowth).Amplifies(Cap.DiagonalGrowth)
             ),
                 new MutationPrerequisite(MutationIds.TendrilNorthwest, 1),
                 new MutationPrerequisite(MutationIds.TendrilNortheast, 1),
@@ -66,7 +71,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.CreepingMoldMaxLevel,
                 category: MutationCategory.Growth,
-                tier: MutationTier.Tier4
+                tier: MutationTier.Tier4,
+                profile: ContentProfile.Of(Cap.Repositioning)
             ),
                 new MutationPrerequisite(MutationIds.MycotropicInduction, 3));
 
@@ -83,7 +89,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.FilamentOverdriveMaxLevel,
                 category: MutationCategory.Growth,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.DiagonalGrowth, Cap.RemotePlacement).Amplifies(Cap.DiagonalGrowth).Uses(Cond.OpenSpace).Creates(Cond.OwnCellDeaths, Cond.OwnDeadCells)
             ),
                 new MutationPrerequisite(MutationIds.CreepingMold, 3),
                 new MutationPrerequisite(MutationIds.HyphalSurge, 1),
@@ -112,7 +119,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.TendrilDiagonalGrowthMaxLevel,
                 category: MutationCategory.Growth,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.DiagonalGrowth)
             ),
             new MutationPrerequisite(MutationIds.MycelialBloom, 10));
         }

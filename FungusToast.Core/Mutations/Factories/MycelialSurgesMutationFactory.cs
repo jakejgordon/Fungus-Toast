@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -26,6 +29,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.HyphalSurgeMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.BaseGrowth).Creates(Cond.OwnCellDeaths, Cond.OwnDeadCells),
                 isSurge: true,
                 surgeDuration: GameBalance.HyphalSurgeDurationRounds,
                 pointsPerActivation: GameBalance.HyphalSurgePointsPerActivation,
@@ -47,6 +51,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.NecroticClearanceMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.CorpseDenial).Uses(Cond.OwnDeadCells).Removes(Cond.OwnDeadCells),
                 isSurge: true,
                 surgeDuration: GameBalance.NecroticClearanceSurgeDuration,
                 pointsPerActivation: GameBalance.NecroticClearancePointsPerActivation,
@@ -69,6 +74,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.ChemotacticBeaconMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.RemotePlacement).Uses(Cond.OpenSpace),
                 isSurge: true,
                 surgeDuration: GameBalance.ChemotacticBeaconSurgeDuration,
                 pointsPerActivation: GameBalance.ChemotacticBeaconPointsPerActivation,
@@ -91,6 +97,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.MimeticResilienceMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.ResistantCells, Cap.LeaderFocus).Uses(Cond.EnemyResistantCells, Cond.FallingBehind).Creates(Cond.OwnResistantCells),
                 isSurge: true,
                 surgeDuration: GameBalance.MimeticResilienceSurgeDuration,
                 pointsPerActivation: GameBalance.MimeticResiliencePointsPerActivation,
@@ -114,6 +121,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.CompetitiveAntagonismMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.LeaderFocus).Amplifies(Cap.ToxinPlacement).Uses(Cond.FallingBehind),
                 isSurge: true,
                 surgeDuration: GameBalance.CompetitiveAntagonismSurgeDuration,
                 pointsPerActivation: GameBalance.CompetitiveAntagonismPointsPerActivation,
@@ -136,6 +144,7 @@ namespace FungusToast.Core.Mutations.Factories
                 maxLevel: GameBalance.ChitinFortificationMaxLevel,
                 category: MutationCategory.MycelialSurges,
                 tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.ResistantCells).Creates(Cond.OwnResistantCells),
                 isSurge: true,
                 surgeDuration: GameBalance.ChitinFortificationSurgeDuration,
                 pointsPerActivation: GameBalance.ChitinFortificationPointsPerActivation,

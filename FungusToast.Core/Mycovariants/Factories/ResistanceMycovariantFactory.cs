@@ -3,11 +3,20 @@ using System.Linq;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
     internal static class ResistanceMycovariantFactory
     {
+        private static readonly ContentProfile MycelialBastionProfile =
+            ContentProfile.Of(Cap.ResistantCells).Creates(Cond.OwnResistantCells);
+
+        private static readonly ContentProfile AggressotropicConduitProfile =
+            ContentProfile.Of(Cap.RemotePlacement, Cap.LeaderFocus, Cap.ResistantCells).Creates(Cond.OwnResistantCells);
+
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return MycelialBastionI();
@@ -30,6 +39,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A fortified network of hyphae, woven to withstand any threat.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
+            Profile = MycelialBastionProfile,
             IsUniversal = true,
             ApplyEffect = (playerMyco, board, rng, observer) =>
             {
@@ -49,6 +59,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Layered hyphal walls thicken into a bulwark the substrate cannot breach.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
+            Profile = MycelialBastionProfile,
             IsUniversal = false,
             ApplyEffect = (playerMyco, board, rng, observer) =>
             {
@@ -68,6 +79,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The densest weave the colony can manage: living tissue that no longer answers to decay.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
+            Profile = MycelialBastionProfile,
             IsUniversal = false,
             ApplyEffect = (playerMyco, board, rng, observer) =>
             {
@@ -87,6 +99,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A single spore, delivered with surgical precision, takes root where none could before.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
+            Profile = ContentProfile.Of(Cap.ResistantCells, Cap.RemotePlacement).Creates(Cond.OwnResistantCells),
             IsUniversal = false,
             ApplyEffect = (playerMyco, board, rng, observer) =>
             {
@@ -107,6 +120,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The protective genetic material flows through the mycelial network, sharing resilience with neighboring cells.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Resistance,
+            Profile = ContentProfile.Of(Cap.ResistantCells).Amplifies(Cap.ResistantCells).Needs(Cond.OwnResistantCells).Creates(Cond.OwnResistantCells),
             IsUniversal = false,
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.HyphalResistanceTransferId),
@@ -121,6 +135,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Damage closes the septa and sends a hardening signal through the surviving branch tips.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Resistance,
+            Profile = ContentProfile.Of(Cap.ResistantCells).Uses(Cond.OwnCellDeaths).Creates(Cond.OwnResistantCells),
             IsUniversal = false,
             AutoMarkTriggered = true,
             IconId = "myco_septal_alarm",
@@ -137,6 +152,7 @@ namespace FungusToast.Core.Mycovariants
             IconId = "myco_septal_seal",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Resistance,
+            Profile = ContentProfile.Of(Cap.ResistantCells).Creates(Cond.OwnResistantCells),
             IsUniversal = false,
             IsLocked = true,
             RequiredMoldinessUnlockLevel = 1,
@@ -156,6 +172,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A probing arterial strand advances toward dominant rival biomass, crystallizing a hardened foothold at its leading edge.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = AggressotropicConduitProfile,
             IsUniversal = true,
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.AggressotropicConduitIId),
@@ -170,6 +187,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The invasive corridor thickens, boring deeper toward hostile dominance while fortifying its terminal node.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = AggressotropicConduitProfile,
             IsUniversal = false,
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.AggressotropicConduitIIId),
@@ -184,6 +202,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A fully committed invasive artery, tunneling toward the heart of rival territory and sealing its tip in hardened tissue.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Growth,
+            Profile = AggressotropicConduitProfile,
             IsUniversal = false,
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetResistanceSynergyMycovariantIdsExcluding(MycovariantIds.AggressotropicConduitIIIId),

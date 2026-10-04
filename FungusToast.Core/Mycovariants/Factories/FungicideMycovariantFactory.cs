@@ -3,11 +3,17 @@ using System.Linq;
 using FungusToast.Core.Config;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Players;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mycovariants
 {
     internal static class FungicideMycovariantFactory
     {
+        private static readonly ContentProfile BallistosporeDischargeProfile =
+            ContentProfile.Of(Cap.ToxinPlacement).Creates(Cond.OwnToxins);
+
         public static IEnumerable<Mycovariant> CreateAll()
         {
             yield return NeutralizingMantle();
@@ -27,6 +33,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A protective sheath of hyphae, secreting enzymes to break down hostile compounds.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Defense,
+            Profile = ContentProfile.Of(Cap.ToxinCleanup).Uses(Cond.EnemyToxins).Removes(Cond.EnemyToxins),
             IsUniversal = false,
             AutoMarkTriggered = true,
             AIScore = (player, board) => MycovariantGameBalance.AIDraftModeratePriority
@@ -40,6 +47,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Through secreted compounds, the colony's toxins linger long after their release, defying the march of time.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,
+            Profile = ContentProfile.Of(Cap.ToxinLongevity).Amplifies(Cap.ToxinPlacement).Needs(Cond.OwnToxins),
             IsUniversal = false,
             AutoMarkTriggered = true,
             ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -84,6 +92,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The colony's fruiting bodies tense, launching a volley of toxin-laden spores across the substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
+            Profile = BallistosporeDischargeProfile,
             IsUniversal = true,
             SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
             ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -106,6 +115,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "A second, heavier burst follows, blanketing the crumb in a toxic haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
+            Profile = BallistosporeDischargeProfile,
             IsUniversal = false,
             SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
             ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -128,6 +138,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The colony empties its fruiting bodies at once, and the whole crust falls silent under the settling haze.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
+            Profile = BallistosporeDischargeProfile,
             IsUniversal = false,
             SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
             ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -150,6 +161,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "The toxin's membrane ruptures, and cytolytic enzymes spread outward through the surrounding substrate.",
             Type = MycovariantType.Active,
             Category = MycovariantCategory.Fungicide,
+            Profile = ContentProfile.Of(Cap.DirectKill).Needs(Cond.OwnToxins).Uses(Cond.EnemyContact).Creates(Cond.EnemyCellsKilledByYou),
             IsUniversal = false,
             SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIds(),
             ApplyEffect = (playerMyco, board, rng, observer) =>
@@ -186,6 +198,7 @@ namespace FungusToast.Core.Mycovariants
             FlavorText = "Sensing the absence of targets, the colony's toxic spores drift through microscopic gradients, seeking new hosts to poison.",
             Type = MycovariantType.Passive,
             Category = MycovariantCategory.Fungicide,
+            Profile = ContentProfile.Of(Cap.ToxinMobility).Amplifies(Cap.ToxinPlacement).Needs(Cond.OwnToxins),
             IsUniversal = false,
             AutoMarkTriggered = true,
             SynergyWith = MycovariantSynergyListFactory.GetToxinSynergyMycovariantIdsExcluding(MycovariantIds.ChemotacticMycotoxinsId),

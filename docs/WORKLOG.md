@@ -1781,10 +1781,22 @@ changes through the normal Testing/evidence path.
    profile-derived representation of each strategy's stated plans. The
    executable `ParameterizedAIStrategy` remains the source of truth for exact
    mutation goals and ordered Mycovariant preferences.
-   **Vocabulary proposed 2026-10-03** in
-   `FungusToast.Core/docs/second-level/AI_CONTENT_TAG_VOCABULARY_PROPOSAL.md`
-   (20 capabilities, 16 board conditions, needs/creates/removes/amplifies
-   relations, draft tags for all current content); awaiting Jake's approval.
+   **Done 2026-10-04.** Jake approved the vocabulary in
+   `FungusToast.Core/docs/second-level/AI_CONTENT_TAGS.md`: 20 capabilities,
+   16 board conditions, and Amplifies / Needs / Uses / Creates / Removes
+   relations. *Uses* was split from *Needs* so salvage effects, such as
+   Regenerative Hyphae on dead cells, never suggest producing more of the
+   condition. Every mutation and non-Bait Mycovariant now carries a
+   `ContentProfile` on its definition (`FungusToast.Core/ContentProfiles/`).
+   Bait cards stay untagged. `ContentProfileTests` enforces the rules.
+   `ContentCatalogTests` generates and guards `MUTATION_CATALOG.md`,
+   `MYCOVARIANT_CATALOG.md`, and `CONTENT_TAG_INDEX.md`, which include
+   player-facing strategy usage. Helpers, skills, the docs map, and the
+   repo-wide hard rules require tagging. Measured per-content performance is
+   deliberately left out of the catalogs until a measurement source exists;
+   the preferred source is a dedicated normal-rules run that rotates through the
+   whole non-Testing roster. Next: the decision-record format (step 3), then
+   the coverage report (step 2).
 2. Build a deterministic coverage-report command/test that runs whenever a
    mutation or Mycovariant is added or materially changed. It identifies
    plausible strategy matches, explains each match, and flags missing or stale

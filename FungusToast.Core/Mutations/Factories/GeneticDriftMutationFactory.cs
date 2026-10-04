@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -25,7 +28,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: GameBalance.MutatorPhenotypeMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier1
+                tier: MutationTier.Tier1,
+                profile: ContentProfile.Of(Cap.FreeUpgrades)
             ));
 
             // Tier-2
@@ -40,7 +44,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.AdaptiveExpressionMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.PointIncome)
             ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 5));
 
             helper.MakeChild(new Mutation(
@@ -54,7 +59,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.MycotoxinCatabolismMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.ToxinCleanup, Cap.PointIncome).Uses(Cond.EnemyToxins).Removes(Cond.OwnToxins, Cond.EnemyToxins)
             ), new MutationPrerequisite(MutationIds.MutatorPhenotype, 2));
 
             // Tier-3
@@ -69,7 +75,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.AnabolicInversionMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.PointIncome).Uses(Cond.FallingBehind)
             ), new MutationPrerequisite(MutationIds.AdaptiveExpression, 3));
 
             // Tier-4
@@ -84,7 +91,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.LatentPolymorphismMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier4
+                tier: MutationTier.Tier4,
+                profile: ContentProfile.Of(Cap.PointIncome).Needs(Cond.BankedPoints)
             ),
                 new MutationPrerequisite(MutationIds.MutatorPhenotype, 7),
                 new MutationPrerequisite(MutationIds.AdaptiveExpression, 5),
@@ -104,7 +112,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.HyperadaptiveDriftMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.FreeUpgrades).Amplifies(Cap.FreeUpgrades)
             ),
             new MutationPrerequisite(MutationIds.MutatorPhenotype, GameBalance.MutatorPhenotypeMaxLevel - 2),
             new MutationPrerequisite(MutationIds.AnabolicInversion, GameBalance.AnabolicInversionMaxLevel),
@@ -123,7 +132,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
                 maxLevel: GameBalance.OntogenicRegressionMaxLevel,
                 category: MutationCategory.GeneticDrift,
-                tier: MutationTier.Tier6
+                tier: MutationTier.Tier6,
+                profile: ContentProfile.Of(Cap.TreePivot)
             ),
             new[]
             {

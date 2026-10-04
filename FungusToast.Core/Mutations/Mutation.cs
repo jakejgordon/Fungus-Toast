@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
 
 namespace FungusToast.Core.Mutations
 {
@@ -78,6 +79,12 @@ namespace FungusToast.Core.Mutations
         /// </summary>
         public MutationAITags AITags { get; private set; }
 
+        /// <summary>
+        /// Authoring tags for the content-to-strategy coverage review. Required on every mutation
+        /// (enforced by ContentProfileTests); never read by gameplay or AI behavior.
+        /// </summary>
+        public ContentProfile? Profile { get; private set; }
+
         public Mutation(
             int id,
             string name,
@@ -93,7 +100,8 @@ namespace FungusToast.Core.Mutations
             int surgeDuration = 0,
             int pointsPerActivation = 1,
             int pointIncreasePerLevel = 0, // NEW FIELD for surges
-            MutationAITags aiTags = MutationAITags.None
+            MutationAITags aiTags = MutationAITags.None,
+            ContentProfile? profile = null
         )
         {
             Id = id;
@@ -111,6 +119,7 @@ namespace FungusToast.Core.Mutations
             PointsPerActivation = pointsPerActivation;
             PointIncreasePerLevel = pointIncreasePerLevel;
             AITags = aiTags;
+            Profile = profile;
 
             Prerequisites = new List<MutationPrerequisite>();
             AnyPrerequisiteGroups = new List<MutationAnyPrerequisiteGroup>();

@@ -1,5 +1,8 @@
 using FungusToast.Core.Config;
 using System.Collections.Generic;
+using FungusToast.Core.ContentProfiles;
+using Cap = FungusToast.Core.ContentProfiles.ContentCapability;
+using Cond = FungusToast.Core.ContentProfiles.BoardCondition;
 
 namespace FungusToast.Core.Mutations.Factories
 {
@@ -25,7 +28,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier1),
                 maxLevel: 50,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier1
+                tier: MutationTier.Tier1,
+                profile: ContentProfile.Of(Cap.ToxinPlacement).Uses(Cond.EnemyContact).Creates(Cond.OwnToxins)
             ));
 
             // Tier-2
@@ -40,7 +44,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier2),
                 maxLevel: GameBalance.MycotoxinPotentiationMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier2
+                tier: MutationTier.Tier2,
+                profile: ContentProfile.Of(Cap.ToxinLongevity, Cap.DirectKill).Amplifies(Cap.ToxinPlacement).Needs(Cond.OwnToxins).Creates(Cond.EnemyCellsKilledByYou)
             ),
             new MutationPrerequisite(MutationIds.MycotoxinTracer, 5));
 
@@ -57,7 +62,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier3),
                 maxLevel: GameBalance.PutrefactiveMycotoxinMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier3
+                tier: MutationTier.Tier3,
+                profile: ContentProfile.Of(Cap.DirectKill).Uses(Cond.EnemyContact).Creates(Cond.EnemyCellsKilledByYou)
             ), new MutationPrerequisite(MutationIds.MycotoxinPotentiation, 1));
 
             // Tier-4
@@ -75,7 +81,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier4),
                 maxLevel: GameBalance.SporicidalBloomMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier4
+                tier: MutationTier.Tier4,
+                profile: ContentProfile.Of(Cap.ToxinPlacement).Needs(Cond.LargeColony).Creates(Cond.OwnToxins)
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 1),
             new MutationPrerequisite(MutationIds.MycelialBloom, 7)
@@ -93,7 +100,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.NecrotoxicConversionMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.CorpseCapture).Needs(Cond.EnemyCellsKilledByYou, Cond.OwnToxins)
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 5),
             new MutationPrerequisite(MutationIds.RegenerativeHyphae, 1));
@@ -110,7 +118,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier5),
                 maxLevel: GameBalance.PutrefactiveRejuvenationMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier5
+                tier: MutationTier.Tier5,
+                profile: ContentProfile.Of(Cap.DecayResistance).Needs(Cond.EnemyCellsKilledByYou)
             ),
             new MutationPrerequisite(MutationIds.PutrefactiveMycotoxin, 2),
             new MutationPrerequisite(MutationIds.ChronoresilientCytoplasm, 1));
@@ -128,7 +137,8 @@ namespace FungusToast.Core.Mutations.Factories
                 pointsPerUpgrade: GameBalance.MutationCosts.GetUpgradeCostByTier(MutationTier.Tier6),
                 maxLevel: GameBalance.PutrefactiveCascadeMaxLevel,
                 category: MutationCategory.Fungicide,
-                tier: MutationTier.Tier6
+                tier: MutationTier.Tier6,
+                profile: ContentProfile.Of(Cap.DirectKill).Amplifies(Cap.DirectKill).Uses(Cond.EnemyContact).Creates(Cond.EnemyCellsKilledByYou)
             ),
             new MutationPrerequisite(MutationIds.NecrotoxicConversion, 1),
             new MutationPrerequisite(MutationIds.ChemotacticBeacon, 1));

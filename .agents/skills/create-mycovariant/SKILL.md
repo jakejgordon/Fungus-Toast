@@ -13,6 +13,7 @@ Read these docs first:
 3a. `FungusToast.Core/docs/GAMEPLAY_TERMINOLOGY.md`
 3b. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 4. `FungusToast.Core/docs/second-level/MYCOVARIANT_TECHNICAL_FLOW.md`
+5. `FungusToast.Core/docs/second-level/AI_CONTENT_TAGS.md`
 
 Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before final review.
 
@@ -25,6 +26,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
    - `FungusToast.Core/Mycovariants/MycovariantIds.cs`
    - the appropriate category factory
    - the relevant processors, observers, and Unity draft hooks
+4a. Give the definition a `Profile =` content profile per `AI_CONTENT_TAGS.md` ("Tagging new or changed content"); tier families share one static profile, and Bait cards stay untagged. Compare with similar cards in `FungusToast.Core/docs/MYCOVARIANT_CATALOG.md`.
 5. Follow the style guide for concise player-facing copy and run `CONTENT_COPY_CHECKLIST.md` before finishing.
 6. Add a drawing case for the mycovariant's id in `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a diagram of the effect built from `IconGlyphs`; tiers share a drawing), then run `dotnet run` in `tools/icon-preview` and review the sheet; the run fails while any mycovariant lacks a case.
 7. Reuse existing draft, tooltip, and centralized art-lookup patterns before introducing new UI seams.
@@ -34,6 +36,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when shared gameplay behavior changed.
 3. Run a smoke simulation when gameplay behavior changed.
+3a. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests` and commit them.
 4. Verify Unity draft behavior when the mycovariant needs interactive input, custom visuals, or new icon wiring.
 5. Finish the PR checklist before calling the work complete.
 

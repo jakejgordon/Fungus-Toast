@@ -285,9 +285,11 @@ of the active strategy profiles. Its purpose is to find builds whose stated
 Mutation Plan or Mycovariant Plan suggests that the new content belongs in the
 build; it is not permission to silently alter a player-facing strategy.
 
-The review should use explicit authoring metadata on the new content (for
-example, capability and interaction tags) and the profile-derived strategy
-metadata. It should emit an auditable candidate list with one disposition per
+The review should use explicit authoring metadata on the new content and the
+profile-derived strategy metadata. The content side is the content profile
+every mutation and non-Bait Mycovariant carries; its vocabulary and the
+matching rules the review must follow (Needs versus Uses, bridge goals, what
+counts as tension) are in `second-level/AI_CONTENT_TAGS.md`. It should emit an auditable candidate list with one disposition per
 plausible match:
 
 - **Add for evaluation** — create a specifically reviewed Testing candidate or
