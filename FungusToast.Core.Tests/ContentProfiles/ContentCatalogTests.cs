@@ -4,6 +4,7 @@ using FungusToast.Core.AI;
 using FungusToast.Core.ContentProfiles;
 using FungusToast.Core.Mutations;
 using FungusToast.Core.Mycovariants;
+using FungusToast.Core.Tests.ContentProfiles.Coverage;
 
 namespace FungusToast.Core.Tests.ContentProfiles;
 
@@ -16,8 +17,6 @@ public class ContentCatalogTests
 {
     private const string UpdateVariable = "FUNGUS_UPDATE_CONTENT_CATALOG";
     private const int MaxListedStrategies = 8;
-
-    private static readonly StrategySetEnum[] PlayerFacingSets = { StrategySetEnum.Proven, StrategySetEnum.Campaign };
 
     [Fact]
     public void Mutation_catalog_is_current() =>
@@ -42,7 +41,7 @@ public class ContentCatalogTests
         var committed = File.Exists(path) ? File.ReadAllText(path).Replace("\r\n", "\n") : string.Empty;
         Assert.True(committed == generated,
             $"{fileName} is out of date with the content definitions. Regenerate it with "
-            + $"`{UpdateVariable}=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests` and commit the result.");
+            + $"`{UpdateVariable}=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles` and commit the result.");
     }
 
     internal static class ContentCatalogWriter
@@ -169,7 +168,7 @@ public class ContentCatalogTests
             var sb = new StringBuilder();
             sb.Append("# Content Tag Index\n\n");
             sb.Append("> **Generated** from the mutation and Mycovariant definitions by `ContentCatalogTests`. Do not edit by hand.\n");
-            sb.Append($"> Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`. Tag meanings: {TagsDocLink}.\n\n");
+            sb.Append($"> Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`. Tag meanings: {TagsDocLink}.\n\n");
             sb.Append("Every tag, with the content that carries it. Mycovariants are in *italics*; a tier family is listed once. Use this to answer questions such as \"what creates own dead cells?\" without reading the factories.\n\n");
 
             sb.Append("## Capabilities\n\n");
@@ -193,7 +192,7 @@ public class ContentCatalogTests
         {
             sb.Append($"# {title}\n\n");
             sb.Append($"> **Generated** from the {noun} definitions by `ContentCatalogTests`. Do not edit by hand: change the definition, then regenerate with\n");
-            sb.Append("> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`.\n");
+            sb.Append("> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`.\n");
             sb.Append($"> Tag meanings and authoring rules: {TagsDocLink}. Cross-content lookup by tag: [CONTENT_TAG_INDEX.md](CONTENT_TAG_INDEX.md).\n\n");
         }
 
@@ -271,58 +270,33 @@ public class ContentCatalogTests
 
         public static StrategyUsage Build()
         {
-            Assert.NotEmpty(AIRoster.ProvenStrategies); // registers the authored sets
             var usage = new StrategyUsage();
-            foreach (var set in PlayerFacingSets)
+            foreach (var entry in PlayerFacingStrategies.Load())
             {
-                var definitions = StrategyRegistry.GetDefinitions(set)
-                    .Where(definition => definition.Metadata.Lifecycle != StrategyLifecycle.Retired)
-                    .ToList();
-                string DisplayName(StrategyDefinition definition) =>
-                    string.IsNullOrWhiteSpace(definition.Metadata.FriendlyName)
-                        ? definition.Metadata.StrategyName
-                        : definition.Metadata.FriendlyName;
-                // Several campaign difficulty variants share a display name; the internal name tells them apart.
-                var sharedDisplayNames = definitions
-                    .GroupBy(DisplayName)
-                    .Where(group => group.Count() > 1)
-                    .Select(group => group.Key)
-                    .ToHashSet();
+                var strategy = entry.Strategy;
+                var label = entry.Label;
 
-                foreach (var definition in definitions)
+                foreach (var id in strategy.TargetMutationGoals.Select(goal => goal.MutationId).Distinct())
                 {
-                    if (definition.Strategy is not ParameterizedSpendingStrategy strategy)
-                    {
-                        continue;
-                    }
+                    Add(usage.goals, id, label);
+                }
 
-                    var displayName = DisplayName(definition);
-                    var label = sharedDisplayNames.Contains(displayName)
-                        ? $"{displayName} [`{definition.Metadata.StrategyName}`] ({set})"
-                        : $"{displayName} ({set})";
+                foreach (var id in strategy.SurgePriorityIds.Distinct())
+                {
+                    Add(usage.surges, id, label);
+                }
 
-                    foreach (var id in strategy.TargetMutationGoals.Select(goal => goal.MutationId).Distinct())
-                    {
-                        Add(usage.goals, id, label);
-                    }
+                var preferences = strategy.GetMycovariantPreferences();
+                var explicitIds = preferences.Where(p => !p.IsCategoryDerived).SelectMany(p => p.MycovariantIds).Distinct().ToHashSet();
+                foreach (var id in explicitIds)
+                {
+                    Add(usage.explicitPreferences, id, label);
+                }
 
-                    foreach (var id in strategy.SurgePriorityIds.Distinct())
-                    {
-                        Add(usage.surges, id, label);
-                    }
-
-                    var preferences = strategy.GetMycovariantPreferences();
-                    var explicitIds = preferences.Where(p => !p.IsCategoryDerived).SelectMany(p => p.MycovariantIds).Distinct().ToHashSet();
-                    foreach (var id in explicitIds)
-                    {
-                        Add(usage.explicitPreferences, id, label);
-                    }
-
-                    foreach (var id in preferences.Where(p => p.IsCategoryDerived).SelectMany(p => p.MycovariantIds).Distinct()
-                                 .Where(id => !explicitIds.Contains(id)))
-                    {
-                        usage.categoryPreferences[id] = usage.categoryPreferences.TryGetValue(id, out var count) ? count + 1 : 1;
-                    }
+                foreach (var id in preferences.Where(p => p.IsCategoryDerived).SelectMany(p => p.MycovariantIds).Distinct()
+                             .Where(id => !explicitIds.Contains(id)))
+                {
+                    usage.categoryPreferences[id] = usage.categoryPreferences.TryGetValue(id, out var count) ? count + 1 : 1;
                 }
             }
 

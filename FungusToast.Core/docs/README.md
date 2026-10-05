@@ -51,6 +51,7 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` — simulation-export wiring, observer extensions, and tracking-context implementation map
 
 ### AI
+- `second-level/AI_COVERAGE_DECISIONS.md` — coverage review: which strategy/content matches need a decision, the decision record, and how to resolve missing, stale, or orphaned decisions
 - `second-level/AI_CONTENT_TAGS.md` — content tag vocabulary (capabilities, board conditions, needs/uses/creates/removes/amplifies), coverage-review matching rules, and how to tag or extend
 - `second-level/AI_OVERHAUL_PHASE_0_1_AUDIT.md` — completed AI-overhaul vocabulary, roster/name migration inventory, decision-surface audit, reproducibility gaps, risks, and Phase 2 slice order
 - `second-level/AI_P3_5_REFERENCE_BASELINE_V1.md` — locked, artifact-backed first AI reference corpus and analysis-version report
@@ -66,7 +67,8 @@ These are intentionally second-hop documents: they are discovered from entry doc
 - `MUTATION_CATALOG.md` — every mutation with its tags, prerequisites, unlocks, and player-facing strategy usage
 - `MYCOVARIANT_CATALOG.md` — every Mycovariant with its tags, availability, and player-facing strategy usage
 - `CONTENT_TAG_INDEX.md` — every content tag with the mutations and Mycovariants that carry it
-- Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`; `ContentCatalogTests` fails while they are stale
+- `CONTENT_COVERAGE_REPORT.md` — every strategy/content candidate match with its score, reasons, and recorded decision
+- Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`; `ContentCatalogTests` fails while they are stale
 
 ### Shared naming
 - `second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md` — naming constraints shared across content systems

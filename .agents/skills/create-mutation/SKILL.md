@@ -13,6 +13,7 @@ Read these docs first:
 4. `FungusToast.Core/docs/second-level/MUTATION_MYCOVARIANT_ADAPTATION_NAMING.md`
 5. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 6. `FungusToast.Core/docs/second-level/AI_CONTENT_TAGS.md`
+7. `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS.md`
 
 Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` before adding new analytics seams.
 
@@ -37,8 +38,8 @@ Read `FungusToast.Core/docs/second-level/SIMULATION_TRACKING_IMPLEMENTATION.md` 
 
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when shared gameplay behavior changed.
-3. Run targeted tests when the affected area already has them, and always `dotnet test FungusToast.Core.Tests --filter ContentProfiles`.
-3a. Regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests` and commit them with the change.
+3. Run targeted tests when the affected area already has them, and always `dotnet test FungusToast.Core.Tests --filter ContentProfiles`. Record a coverage decision for every candidate it reports (paste the printed record into `CoverageDecisions.Reviewed`, then choose the disposition and write the rationale).
+3a. Regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles` and commit them with the change.
 4. Run a smoke simulation when gameplay behavior changed.
 5. If Unity-facing UI or tree layout changed, call out the required Unity verification explicitly.
 

@@ -1,7 +1,7 @@
 # Content Tag Index
 
 > **Generated** from the mutation and Mycovariant definitions by `ContentCatalogTests`. Do not edit by hand.
-> Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`. Tag meanings: [AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md).
+> Regenerate with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`. Tag meanings: [AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md).
 
 Every tag, with the content that carries it. Mycovariants are in *italics*; a tier family is listed once. Use this to answer questions such as "what creates own dead cells?" without reading the factories.
 

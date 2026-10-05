@@ -1796,11 +1796,19 @@ changes through the normal Testing/evidence path.
    deliberately left out of the catalogs until a measurement source exists;
    the preferred source is a dedicated normal-rules run that rotates through the
    whole non-Testing roster. Next: the decision-record format (step 3), then
-   the coverage report (step 2). **Decision-record format proposed
-   2026-10-05** in `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS_PROPOSAL.md`:
-   a weighted candidate rule (median 2 decisions per new item), C# records keyed
-   by stable strategy IDs, reason-text staleness, and a one-time Baseline for
-   the 331 existing candidates. Awaiting Jake's approval.
+   the coverage report (step 2). **Steps 2 and 3 done 2026-10-05** (Jake
+   approved all five recommendations). The review runs as
+   `CoverageDecisionTests` in `FungusToast.Core.Tests/ContentProfiles/Coverage/`.
+   A match scoring 2 or more points, against a non-Retired Proven or Campaign
+   strategy that does not already use the content, needs a recorded decision.
+   Strategies with identical plans share one decision. The tests fail on
+   missing, stale (reasons changed), orphaned, or malformed records, and print
+   ready-to-paste records. The 335 candidates present on 2026-10-05 were
+   imported once as `Baseline` (`CoverageBaseline.cs`; the writer refuses to
+   rerun). Agents may record any disposition, marked `Agent`; nothing edits a
+   player-facing strategy. Rules: `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS.md`;
+   readable view: generated `CONTENT_COVERAGE_REPORT.md`. Remaining: step 5
+   fixtures for the five briefs, and working down the Baseline backlog.
 2. Build a deterministic coverage-report command/test that runs whenever a
    mutation or Mycovariant is added or materially changed. It identifies
    plausible strategy matches, explains each match, and flags missing or stale

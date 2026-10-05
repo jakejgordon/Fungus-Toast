@@ -1,7 +1,7 @@
 # Mycovariant Catalog
 
 > **Generated** from the Mycovariant definitions by `ContentCatalogTests`. Do not edit by hand: change the definition, then regenerate with
-> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`.
+> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`.
 > Tag meanings and authoring rules: [AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md). Cross-content lookup by tag: [CONTENT_TAG_INDEX.md](CONTENT_TAG_INDEX.md).
 
 "Preferred by" counts player-facing strategies (Proven and Campaign sets, excluding Retired) that name the Mycovariant in an explicit, ordered draft preference. "In category sets of" counts those that only reach it through a whole-category preference, where AI score picks among equal options.

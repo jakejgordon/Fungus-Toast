@@ -37,7 +37,7 @@ Mycovariants are drafted abilities that either:
 8. Read `MYCOVARIANT_TECHNICAL_FLOW.md` before adding or changing behavior.
 9. Draw the Mycovariant's icon: add a case for its id to `FungusToast.Unity/Assets/Scripts/Unity/UI/Icons/MycovariantIcons.cs` (a small diagram of the effect built from `IconGlyphs`; tiered I/II/III variants share one drawing and get pips automatically), then run `dotnet run` in `tools/icon-preview` and check the sheet. The harness fails while any mycovariant lacks a case. See `UI_STYLE_GUIDE.md` section 5.9.
 10. Implement changes in category factories and processors.
-11. Re-run the content-to-profile coverage review after implementation or any material design change. Reconcile it with the up-front dispositions and do not silently change an existing strategy's preference order.
+11. Re-run the content-to-profile coverage review after implementation or any material design change: `dotnet test FungusToast.Core.Tests --filter ContentProfiles` prints a ready-to-paste decision record for every strategy the Mycovariant might belong in. Record them per [second-level/AI_COVERAGE_DECISIONS.md](second-level/AI_COVERAGE_DECISIONS.md), reconciling them with the up-front dispositions, and do not silently change an existing strategy's preference order.
 12. Validate with Core and Simulation builds when shared gameplay behavior changed.
 13. Complete `MYCOVARIANT_PR_CHECKLIST.md` before requesting review.
 
@@ -63,7 +63,7 @@ Mycovariants are drafted abilities that either:
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when the change affects shared core behavior.
 3. Run a smoke simulation and inspect output for expected behavior when gameplay changed.
 4. Verify Unity draft behavior when the Mycovariant needs interactive input, custom visuals, or new icon wiring.
-5. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then regenerate and commit the catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`.
+5. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then regenerate and commit the catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`.
 
 ## Notes
 

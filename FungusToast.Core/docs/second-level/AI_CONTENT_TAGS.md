@@ -16,6 +16,7 @@ Approved 2026-10-04 (Jake). Implemented in `FungusToast.Core/ContentProfiles/`.
 | A mutation's tags | its `profile:` constructor argument in `FungusToast.Core/Mutations/Factories/` |
 | A Mycovariant's tags | its `Profile =` initializer in `FungusToast.Core/Mycovariants/Factories/`; tier families share one `private static readonly` profile |
 | Every item's tags, prerequisites, and strategy usage | generated [MUTATION_CATALOG.md](../MUTATION_CATALOG.md) and [MYCOVARIANT_CATALOG.md](../MYCOVARIANT_CATALOG.md) |
+| Which strategies each item might belong in, and the recorded decisions | generated [CONTENT_COVERAGE_REPORT.md](../CONTENT_COVERAGE_REPORT.md); rules in [AI_COVERAGE_DECISIONS.md](AI_COVERAGE_DECISIONS.md) |
 | Which content carries a given tag | generated [CONTENT_TAG_INDEX.md](../CONTENT_TAG_INDEX.md) |
 | Enforcement | `FungusToast.Core.Tests/ContentProfiles/` |
 
@@ -24,7 +25,7 @@ reading surfaces for people and agents. `ContentCatalogTests` fails when they
 are stale, so regenerate them rather than editing them:
 
 ```bash
-FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests
+FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles
 ```
 
 ## What tags are for, and not for
@@ -124,15 +125,18 @@ Read every condition from the perspective of the colony that owns the content:
 
 ## How the coverage review uses the tags
 
-The review itself is not built yet. These rules are the contract it must
-follow, and the reason the vocabulary is shaped this way.
+The review is implemented in `FungusToast.Core.Tests/ContentProfiles/Coverage/`.
+Scoring, the candidate threshold, and how decisions are recorded are in
+[AI_COVERAGE_DECISIONS.md](AI_COVERAGE_DECISIONS.md); the generated
+[CONTENT_COVERAGE_REPORT.md](../CONTENT_COVERAGE_REPORT.md) shows every current
+candidate and its decision.
 
 **Strategy side.** A strategy's plan profile is derived from its executable
 configuration: the union of the profiles of its ordered `TargetMutationGoal`s,
 its surge priorities, and its explicitly ordered Mycovariant preferences,
 weighted toward the front of each order. Category-derived preference sets
-(`CategoryDerivedMycovariantIds`) count at low weight because they express
-almost no intent. Nothing is stored separately from the strategy.
+(`CategoryDerivedMycovariantIds`) do not count, because they express almost no
+intent. Nothing is stored separately from the strategy.
 
 **Bridge goals.** A goal bought only up to the level a later goal requires is a
 *bridge* and counts at low weight. A plan that buys Chronoresilient Cytoplasm 5
@@ -146,8 +150,8 @@ only to unlock Regenerative Hyphae is not a decay-resistance plan.
 | Amplifier | Content amplifies a capability the plan already has. |
 | Feeds the plan | Content creates a condition the plan **needs**. |
 | Fed by the plan | Content **needs** a condition the plan creates. |
-| Shared situation | Content and plan use or need the same environment, such as `OpenSpace`. Low weight. |
-| Tension | Content removes a condition the plan needs or uses, or the plan removes one the content needs or uses. Reported so a reviewer can record *Not applicable* with the reason. |
+| Shared situation | Content and plan use or need the same condition, such as `OpenSpace`. Context only. |
+| Tension | Content removes a condition the plan needs or uses, or the plan removes one the content needs or uses. Context only, shown so a reviewer can record *Not applicable* with the reason. |
 
 **Rules that keep matches honest:**
 
@@ -172,8 +176,10 @@ only to unlock Regenerative Hyphae is not a decay-resistance plan.
 5. Add **Removes** only when it destroys a condition at a scale that would
    undercut a plan relying on it, as Mycotoxin Catabolism does to own toxins.
 6. Tier families share one `private static readonly ContentProfile`.
-7. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then
-   regenerate the catalogs and commit them with the content.
+7. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`. Record a
+   decision for every coverage candidate it reports, per
+   [AI_COVERAGE_DECISIONS.md](AI_COVERAGE_DECISIONS.md). Then regenerate the
+   catalogs and the coverage report, and commit them with the content.
 
 ## Extending the vocabulary
 

@@ -32,6 +32,7 @@ Read these docs first:
 4. Verify the strategy name, status, and selection metadata appear correctly in the exported results.
 5. Never copy a measured band into the intended band (or the reverse) to clear a mismatch; see *Intended versus measured band*.
 6. For comparison work, prefer explicit `--strategy-names` over sampled rosters.
+7. For a player-facing (Proven or Campaign) strategy, run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`. Changing goals, surge priorities, or explicit Mycovariant preferences can create, stale, or orphan coverage decisions; resolve them per `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS.md` and regenerate the generated reports with `FUNGUS_UPDATE_CONTENT_CATALOG=1`.
 
 ## Output
 

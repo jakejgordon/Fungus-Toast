@@ -39,7 +39,7 @@ When creating a new Mutation, proactively list the proposed test cases that shou
 7. Follow the naming and description rules in this document exactly.
 8. Wire gameplay behavior through the correct Core processors, coordinators, and analytics seams.
 9. Update Unity mutation-tree placement when the new mutation needs a node.
-10. Re-run the content-to-profile coverage review after implementation or any material design change. Reconcile it with the up-front dispositions; an approved match becomes a separately reviewed Testing candidate or strategy patch, never a silent roster edit.
+10. Re-run the content-to-profile coverage review after implementation or any material design change: `dotnet test FungusToast.Core.Tests --filter ContentProfiles` lists every strategy the mutation might belong in and prints a ready-to-paste decision record for each. Record the decisions per [second-level/AI_COVERAGE_DECISIONS.md](second-level/AI_COVERAGE_DECISIONS.md), reconciling them with the up-front dispositions. An approved match becomes a separately reviewed Testing candidate or strategy patch, never a silent roster edit.
 11. Validate with Core and Simulation builds when shared gameplay behavior changed, and call out any required Unity follow-up explicitly.
 
 ---
@@ -342,8 +342,8 @@ NewMutationGrowth,
     - `dotnet build FungusToast.Core/FungusToast.Core.csproj`
     - `dotnet build FungusToast.Simulation/FungusToast.Simulation.csproj`
 2. **Content tags and catalogs**:
-    - `dotnet test FungusToast.Core.Tests --filter ContentProfiles` (fails on a missing or malformed profile, or a stale catalog)
-    - Regenerate and commit the catalogs: `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`
+    - `dotnet test FungusToast.Core.Tests --filter ContentProfiles` (fails on a missing or malformed profile, a coverage candidate without a decision, or a stale catalog)
+    - Regenerate and commit the catalogs: `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`
 3. **UI Test**: Check mutation appears in tree with correct prerequisites
 4. **Simulation Test**: Run simulation to verify tracking works
 5. **Effect Test**: Activate mutation in-game to confirm logic works

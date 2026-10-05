@@ -1,7 +1,7 @@
 # Mutation Catalog
 
 > **Generated** from the mutation definitions by `ContentCatalogTests`. Do not edit by hand: change the definition, then regenerate with
-> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests`.
+> `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles`.
 > Tag meanings and authoring rules: [AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md). Cross-content lookup by tag: [CONTENT_TAG_INDEX.md](CONTENT_TAG_INDEX.md).
 
 Strategy columns count player-facing strategies (Proven and Campaign sets, excluding Retired) that name the mutation as an ordered mutation goal or a surge priority.

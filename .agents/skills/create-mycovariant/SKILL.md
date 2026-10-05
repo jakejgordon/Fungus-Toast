@@ -14,6 +14,7 @@ Read these docs first:
 3b. `FungusToast.Core/docs/second-level/CONTENT_COPY_CHECKLIST.md`
 4. `FungusToast.Core/docs/second-level/MYCOVARIANT_TECHNICAL_FLOW.md`
 5. `FungusToast.Core/docs/second-level/AI_CONTENT_TAGS.md`
+6. `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS.md`
 
 Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before final review.
 
@@ -36,7 +37,7 @@ Read `FungusToast.Core/docs/second-level/MYCOVARIANT_PR_CHECKLIST.md` before fin
 1. Build `FungusToast.Core/FungusToast.Core.csproj`.
 2. Build `FungusToast.Simulation/FungusToast.Simulation.csproj` when shared gameplay behavior changed.
 3. Run a smoke simulation when gameplay behavior changed.
-3a. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, then regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentCatalogTests` and commit them.
+3a. Run `dotnet test FungusToast.Core.Tests --filter ContentProfiles`, record a coverage decision for every candidate it reports (paste the printed record into `CoverageDecisions.Reviewed`, then choose the disposition and write the rationale), then regenerate the content catalogs with `FUNGUS_UPDATE_CONTENT_CATALOG=1 dotnet test FungusToast.Core.Tests --filter ContentProfiles` and commit them.
 4. Verify Unity draft behavior when the mycovariant needs interactive input, custom visuals, or new icon wiring.
 5. Finish the PR checklist before calling the work complete.
 

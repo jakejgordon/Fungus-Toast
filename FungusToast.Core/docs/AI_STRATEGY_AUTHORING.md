@@ -289,7 +289,12 @@ The review should use explicit authoring metadata on the new content and the
 profile-derived strategy metadata. The content side is the content profile
 every mutation and non-Bait Mycovariant carries; its vocabulary and the
 matching rules the review must follow (Needs versus Uses, bridge goals, what
-counts as tension) are in `second-level/AI_CONTENT_TAGS.md`. It should emit an auditable candidate list with one disposition per
+counts as tension) are in `second-level/AI_CONTENT_TAGS.md`. The review is
+implemented as `CoverageDecisionTests`; the scoring threshold, the decision
+record, and the baseline are in `second-level/AI_COVERAGE_DECISIONS.md`.
+Changing a player-facing strategy's goals, surge priorities, or explicit
+Mycovariant preferences can raise new candidates too, and those need decisions
+in the same change. It should emit an auditable candidate list with one disposition per
 plausible match:
 
 - **Add for evaluation** — create a specifically reviewed Testing candidate or
