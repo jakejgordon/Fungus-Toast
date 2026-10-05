@@ -1796,7 +1796,11 @@ changes through the normal Testing/evidence path.
    deliberately left out of the catalogs until a measurement source exists;
    the preferred source is a dedicated normal-rules run that rotates through the
    whole non-Testing roster. Next: the decision-record format (step 3), then
-   the coverage report (step 2).
+   the coverage report (step 2). **Decision-record format proposed
+   2026-10-05** in `FungusToast.Core/docs/second-level/AI_COVERAGE_DECISIONS_PROPOSAL.md`:
+   a weighted candidate rule (median 2 decisions per new item), C# records keyed
+   by stable strategy IDs, reason-text staleness, and a one-time Baseline for
+   the 331 existing candidates. Awaiting Jake's approval.
 2. Build a deterministic coverage-report command/test that runs whenever a
    mutation or Mycovariant is added or materially changed. It identifies
    plausible strategy matches, explains each match, and flags missing or stale
