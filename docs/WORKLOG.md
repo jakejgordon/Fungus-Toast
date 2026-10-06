@@ -1,5 +1,15 @@
 # Fungus-Toast Worklog
 
+## Rot introduction — 2026-10-06
+
+Implemented static ownerless rot for player-facing campaign level 5 (Cheddar Edge, Campaign4/index4), enabled through the optional LevelSpec flag. A connected irregular edge-to-middle patch protects starting spores, blocks occupation, and adds a non-stacking +5 percentage points orthogonal Decay penalty. Resistant/last-cell protection, ownerless death attribution, endgame occupancy, additive save/resume, five replaceable placeholder sprites, hover inspection, and an introductory coachmark are included. Spreading and clearing remain deferred.
+
+Validation before remote sync: Core/Simulation builds passed without warnings; 780 Core tests and 286 Simulation tests passed. Three 40x40 Testing-control smoke games with --introductory-rot and no starting nutrients completed with zero invariant mismatches and recorded Rot deaths. Artifact: FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/rot-intro-smoke-20261006 (ignored local evidence). This is behavior evidence, not campaign balance calibration.
+
+Geometry caveat: the current 40x40 board uses an outline-derived mask without a baked mask, while generated Campaign4 start metadata describes a different baked cracker shape. Source inspection cannot verify the resolved runtime mask/spore layout; confirm the tongue actually reaches the middle and routes stay open in Editor.
+
+Pending Jake: Unity refresh/compile (no new warnings), level4/5 rollout boundary, patch appearance and routes, intro dismissal, hover/adjacent-cell copy, static behavior, new/legacy checkpoint resume, and switching modes with no stale visuals. Replace Resources/Rot/rot_patch_{1..5}_64x64.png in place, preserving .meta files; maintain pixel/unit scaling for one-tile sprites. Rules and art handoff are documented in CAMPAIGN_HELPER.md, SAVE_COMPATIBILITY.md, GAMEPLAY_TERMINOLOGY.md, SIMULATION_HELPER.md, and TOOLTIP_GUIDE.md.
+
 ## Current Status
 
 The Substrate Ecology build is complete. Its implemented roster is Aerated

@@ -80,6 +80,7 @@ public static class ResolvedExperimentReplayRunner
                 runMetadata: metadata,
                 exportParquet: true,
                 enableNutrientPatches: source.Condition.Systems.NutrientPatchesEnabled,
+                enableIntroductoryRot: source.Condition.Systems.IntroductoryRotEnabled,
                 enableMycovariantDraft: source.Condition.Systems.MycovariantDraftEnabled,
                 permanentlyBlockedTileIds: source.Condition.Board.BlockedTileIds,
                 startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,

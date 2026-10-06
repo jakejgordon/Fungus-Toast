@@ -68,6 +68,8 @@ public sealed class ResolvedSampling
 
 public sealed class ResolvedGameEvidence
 {
+    public IReadOnlyList<int> RotTileIds { get; init; } = Array.Empty<int>();
+    public float RotAdjacentDeathChance { get; init; }
     public required int GameIndex { get; init; }
     public required int GameSeed { get; init; }
     public required string TerminationReason { get; init; }

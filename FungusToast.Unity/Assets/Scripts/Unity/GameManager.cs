@@ -1222,6 +1222,13 @@ namespace FungusToast.Unity
                 preferredPositionsByPlayerId: campaignPreferredPositions,
                 enforceMinimumPlayableEdgeDistanceForPreferredPositions: true,
                 ignoreMinimumPlayableEdgeDistancePlayerIds: ignoreMinimumPlayableEdgeDistancePlayerIds);
+            // Authored level option; only seed new games, never checkpoint restores.
+            if (CurrentGameMode == GameMode.Campaign && campaignController?.CurrentLevelSpec?.enableRotPatch == true)
+            {
+                Board.ConfigureRot(FungusToast.Core.Config.RotBalance.AdjacentDeathChance);
+                RotPlacementUtility.PlaceIntroductoryPatch(Board);
+            }
+
             if (ShouldPlaceStartingNutrientPatches())
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(
@@ -2392,6 +2399,13 @@ namespace FungusToast.Unity
             }
             else if (!willFastForward)
             {
+                if (NewPlayerTooltipRules.ShouldShowRotIntro(
+                    applyStartingSporeEffects, CurrentGameMode == GameMode.Campaign,
+                    Board.RotTileIds.Count > 0, humanPlayers.Count, isFastForwarding))
+                {
+                    yield return new WaitForSecondsRealtime(WelcomeCoachmarkDelaySeconds);
+                    yield return RotIntroCoachmark.Show(ResolveRootUiCanvas());
+                }
                 StartNextRound();
             }
         }

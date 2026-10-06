@@ -34,6 +34,16 @@ This section is the canonical overview of the journey a player takes through Cam
 - **Adaptation:** a campaign reward or starting trait that persists across levels in the current run; selected eligible Adaptations can persist into one subsequent run only through defeat carry-over.
 - **Mycovariant:** a one-time or game-long ability drafted during an individual game; it does not persist to later campaign levels.
 
+## Rot introduction
+
+Player-facing level 5 (index 4, Cheddar Edge / Campaign4) introduces static, ownerless rot. The optional LevelSpec enableRotPatch flag defaults off. Core places a connected irregular tongue from the left playable edge toward the middle after spores and before nutrients/starting Adaptation effects. Starting-spore clearance may shift the tongue vertically; routes remain open around its tip. Other levels remain unchanged in this first rollout.
+
+Rot blocks mold, toxins, nutrients, and placement abilities. Orthogonal adjacency adds a non-stacking **5 percentage points** of death chance during Decay, preserving Resistant and last-living-cell protections. Deaths leave normal dead mold cells and use DeathReason.Rot, with no enemy kill credit. Rot cannot be cleared, claimed, or spread in this version. It counts toward endgame occupancy but never colony territory/score. Tuning is provisional, not an artifact-backed campaign balance conclusion.
+
+A once-per-profile introductory coachmark explains the hazard; hover inspection remains available. Checkpoint restore uses saved rot tiles/rules and never seeds a patch or repeats the introduction.
+
+Replace the five placeholder PNGs at FungusToast.Unity/Assets/Resources/Rot/rot_patch_{1..5}_64x64.png in place, preserving filenames and .meta GUIDs. Sprite PPU is 64 for 64x64 placeholders; if final art uses another resolution, adjust PPU proportionally to retain a one-tile footprint. No scene/Inspector wiring is needed.
+
 ## Current Data Model
 
 Campaign state is persisted in:

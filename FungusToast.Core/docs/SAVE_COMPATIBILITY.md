@@ -60,6 +60,10 @@ This stores round-start gameplay state such as:
 
 This uses the same runtime snapshot compatibility rules as campaign mid-level resume.
 
+## Rot checkpoint compatibility
+
+RoundStartRuntimeSnapshot adds RotTileIds and RotAdjacentDeathChance. Export stores actual state, not a regenerated patch recipe. Missing/null tile lists restore as no rot with zero default penalty; an old level-5 checkpoint is not retrofitted. Invalid overlapping/out-of-bounds rot tiles are rejected explicitly. DeathReason.Rot is appended without renumbering existing enum values.
+
 ## Compatibility tiers
 
 ### Usually safe

@@ -20,6 +20,8 @@ public sealed class RoundStartRuntimeSnapshot
     public List<int> PermanentlyBlockedTileIds = new();
     public List<FungalCellSnapshot> Cells = new();
     public List<NutrientPatchSnapshot> NutrientPatches = new();
+    public List<int> RotTileIds = new();
+    public float RotAdjacentDeathChance;
     public List<ChemobeaconMarkerSnapshot> Chemobeacons = new();
     public List<int> PendingHypervariationDraftPlayerIds = new();
     public MycovariantPoolRuntimeSnapshot? MycovariantPool;

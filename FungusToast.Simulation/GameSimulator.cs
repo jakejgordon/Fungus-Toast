@@ -38,7 +38,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
             bool enableStartingAdaptations = true,
-            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
+            bool enableIntroductoryRot = false
         )
         {
             var gameStopwatch = Stopwatch.StartNew();
@@ -57,7 +58,8 @@ namespace FungusToast.Simulation.GameSimulation
                 startingAdaptationIds,
                 preferredPositionsByPlayerId,
                 enableStartingAdaptations,
-                strategyStartingSporeEdgeOffsetOverrides);
+                strategyStartingSporeEdgeOffsetOverrides,
+                enableIntroductoryRot);
             var resolvedStartingPositions = players.ToDictionary(
                 player => player.PlayerId,
                 player =>
@@ -204,6 +206,7 @@ namespace FungusToast.Simulation.GameSimulation
             var result = GameResult.From(board, players, board.CurrentRound, simTracking);
             result.GameIndex = gameIndex > 0 ? gameIndex : 0;
             result.GameSeed = seed;
+            result.IntroductoryRotEnabled = enableIntroductoryRot;
             gameStopwatch.Stop();
             result.RuntimeMilliseconds = gameStopwatch.Elapsed.TotalMilliseconds;
             result.TerminationReason = terminationReason;
@@ -304,7 +307,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyList<IReadOnlyList<string>>? startingAdaptationIds = null,
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
             bool enableStartingAdaptations = true,
-            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null)
+            IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
+            bool enableIntroductoryRot = false)
         {
             var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
@@ -383,6 +387,10 @@ namespace FungusToast.Simulation.GameSimulation
                 preferredPositionsByPlayerId,
                 enforceMinimumPlayableEdgeDistanceForPreferredPositions: false,
                 ignoreMinimumPlayableEdgeDistancePlayerIds: null);
+            if (enableIntroductoryRot)
+            {
+                RotPlacementUtility.PlaceIntroductoryPatch(board);
+            }
             if (enableNutrientPatches)
             {
                 NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);

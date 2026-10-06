@@ -4,6 +4,16 @@
 
 This document contains the most effective commands for running different simulation scenarios and debugging the Fungus Toast game.
 
+## Static rot smoke runs
+
+Add --introductory-rot to normal simulations to use the same Core patch/decay rules as campaign level 5. Default off; placed after spores, before nutrients. Configuration records introductoryRotEnabled; game evidence records actual rot tile IDs/count and adjacent death chance. Player rows include DeathsFromRot (victim deaths, no enemy kill credit). Replay restores the toggle. Evidence fields are additive; strict replay still requires matching binaries.
+
+```bash
+dotnet run --no-build --project FungusToast.Simulation -- --games 3 --players 2 --width 40 --height 40 --introductory-rot --no-nutrient-patches --no-keyboard
+```
+
+This checks behavior, not campaign calibration. Spreading, clearing abilities, and campaign-wide rollout are deferred.
+
 ## Experiment input contract
 
 Simulation CLI options are validated through the versioned

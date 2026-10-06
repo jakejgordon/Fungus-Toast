@@ -469,7 +469,7 @@ namespace FungusToast.Core.Board
         public List<int> GetAllTileIds() => tileIdToCell.Keys.ToList();
         public float GetOccupiedTileRatio()
         {
-            int occupied = ComputeOccupiedTileCount();
+            int occupied = ComputeOccupiedTileCount() + rotTileIds.Count;
             int playableTiles = PlayableTileCount;
             return occupied == 0 || playableTiles <= 0 ? 0f : (float)occupied / playableTiles;
         }
@@ -482,7 +482,7 @@ namespace FungusToast.Core.Board
             => chemobeaconsByPlayerId.Values.FirstOrDefault(marker => marker.TileId == tileId);
         public bool HasChemobeacon(int playerId) => chemobeaconsByPlayerId.ContainsKey(playerId);
         public bool IsChemobeaconTile(int tileId) => chemobeaconsByPlayerId.Values.Any(marker => marker.TileId == tileId);
-        public bool IsTileBlockedForOccupation(int tileId) => IsPermanentlyBlockedTile(tileId) || IsChemobeaconTile(tileId);
+        public bool IsTileBlockedForOccupation(int tileId) => IsPermanentlyBlockedTile(tileId) || IsChemobeaconTile(tileId) || rotTileIds.Contains(tileId);
         public bool IsTileOpenForChemobeacon(int tileId)
         {
             var tile = GetTileById(tileId);

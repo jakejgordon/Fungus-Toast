@@ -30,6 +30,8 @@ namespace FungusToast.Unity.Campaign
             public BoardPreset boardPreset;
             /// <summary>Whether nutrient patches should be placed on this campaign level.</summary>
             public bool enableNutrientPatches = true;
+            /// <summary>Seed a static introductory rot patch after spores on new games only.</summary>
+            public bool enableRotPatch;
             /// <summary>
             /// Optional allowlist of nutrient patch types for this level. Empty means use the default full set.
             /// </summary>

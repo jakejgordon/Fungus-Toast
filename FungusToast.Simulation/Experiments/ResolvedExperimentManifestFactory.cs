@@ -61,6 +61,8 @@ public static class ResolvedExperimentManifestFactory
             {
                 GameIndex = game.GameIndex,
                 GameSeed = game.GameSeed,
+                RotTileIds = game.RotTileIds,
+                RotAdjacentDeathChance = game.RotAdjacentDeathChance,
                 TerminationReason = game.TerminationReason,
                 RuntimeMilliseconds = game.RuntimeMilliseconds,
                 AssignedStrategyLineup = game.PlayerResults

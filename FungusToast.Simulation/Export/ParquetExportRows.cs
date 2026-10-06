@@ -48,6 +48,9 @@ namespace FungusToast.Simulation.Export
         public int BlockedTileCount { get; set; }
         public string BlockedTileIds { get; set; } = string.Empty;
         public int PlayerCount { get; set; }
+        public bool IntroductoryRotEnabled { get; set; }
+        public int RotTileCount { get; set; }
+        public float RotAdjacentDeathChance { get; set; }
         public bool NutrientPatchesEnabled { get; set; }
         public bool MycovariantDraftEnabled { get; set; }
         public string StartingPositionMode { get; set; } = string.Empty;
@@ -63,6 +66,7 @@ namespace FungusToast.Simulation.Export
         public string WinnerPlayerIds { get; set; } = string.Empty;
         public int ToxicTileCount { get; set; }
         public int NutrientPatchCount { get; set; }
+        public string RotTileIds { get; set; } = string.Empty;
         public bool ParityAllPassed { get; set; }
     }
 
@@ -105,6 +109,9 @@ namespace FungusToast.Simulation.Export
         public string BoardGeometryFingerprint { get; set; } = string.Empty;
         public int BlockedTileCount { get; set; }
         public int PlayerCount { get; set; }
+        public bool IntroductoryRotEnabled { get; set; }
+        public int RotTileCount { get; set; }
+        public float RotAdjacentDeathChance { get; set; }
         public bool NutrientPatchesEnabled { get; set; }
         public bool MycovariantDraftEnabled { get; set; }
         public string DominantOpponentTheme { get; set; } = string.Empty;
@@ -118,6 +125,7 @@ namespace FungusToast.Simulation.Export
         public int FinalRank { get; set; }
         public int PlayersTiedAtFinalRank { get; set; }
         public int DeadCells { get; set; }
+        public int DeathsFromRot { get; set; }
         public int EndGameToxinCells { get; set; }
         public int NutrientClaims { get; set; }
         public int NutrientMutationPointsEarned { get; set; }
