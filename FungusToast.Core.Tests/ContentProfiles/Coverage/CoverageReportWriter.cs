@@ -20,7 +20,7 @@ internal static class CoverageReportWriter
         sb.Append("> How matches are scored and what each decision means: [AI_COVERAGE_DECISIONS.md](second-level/AI_COVERAGE_DECISIONS.md). Tags: [AI_CONTENT_TAGS.md](second-level/AI_CONTENT_TAGS.md).\n\n");
         sb.Append("Each row asks: *should these AI strategies use this content?* A row appears when the content scores at least ")
             .Append(ContentCoverageAnalyzer.CandidateThreshold)
-            .Append(" points against a strategy that does not already use it. Strategies with identical plans share a row.\n\n");
+            .Append(" points against a strategy that does not already use it. Strategies with identical plans share a row; each strategy's goal sentence follows its name.\n\n");
 
         sb.Append("## Summary\n\n");
         var withCandidates = rows.Select(r => r.Candidate.Item.Content.Key).Distinct().Count();
@@ -44,7 +44,7 @@ internal static class CoverageReportWriter
             sb.Append("| Strategies | Score | Reasons | Context | Decision |\n|---|---|---|---|---|\n");
             foreach (var (candidate, status) in itemRows.OrderBy(r => r.Candidate.Strategies[0].Label, StringComparer.Ordinal))
             {
-                sb.Append($"| {Cell(string.Join(", ", candidate.Strategies.Select(s => s.Label)))} ")
+                sb.Append($"| {StrategiesCell(candidate)} ")
                     .Append($"| {candidate.Score} ")
                     .Append($"| {Cell(string.Join("; ", candidate.Reasons))} ")
                     .Append($"| {Cell(candidate.Context.Count == 0 ? "—" : string.Join("; ", candidate.Context))} ")
@@ -103,6 +103,19 @@ internal static class CoverageReportWriter
         text.Append($" ({decision.DecidedBy}, {decision.Date})");
         return (decision.Disposition.ToString(), text.ToString());
     }
+
+    /// <summary>
+    /// Each strategy's name with its one-sentence goal (the profile's Fantasy, AIPlayerIntentions), so a
+    /// reader can judge the fit without looking the strategy up. Variants sharing a sentence share a line.
+    /// </summary>
+    private static string StrategiesCell(ContentCoverageAnalyzer.Candidate candidate) =>
+        string.Join("<br>", candidate.Strategies
+            .GroupBy(strategy => strategy.Definition.Metadata.AIPlayerIntentions?.Trim() ?? string.Empty)
+            .Select(group =>
+            {
+                var names = string.Join(", ", group.Select(strategy => $"**{Cell(strategy.Label)}**"));
+                return string.IsNullOrEmpty(group.Key) ? names : $"{names}: {Cell(group.Key)}";
+            }));
 
     private static string Cell(string text) => text.Replace("|", "\\|").Replace("\n", " ");
 }
