@@ -42,7 +42,7 @@ Rot blocks mold, toxins, nutrients, and placement abilities. Orthogonal adjacenc
 
 A once-per-profile introductory coachmark explains the hazard; hover inspection remains available. Checkpoint restore uses saved rot tiles/rules and never seeds a patch or repeats the introduction.
 
-Replace the five placeholder PNGs at FungusToast.Unity/Assets/Resources/Rot/rot_patch_{1..5}_64x64.png in place, preserving filenames and .meta GUIDs. Sprite PPU is 64 for 64x64 placeholders; if final art uses another resolution, adjust PPU proportionally to retain a one-tile footprint. No scene/Inspector wiring is needed.
+Canonical rot art is FungusToast.Unity/Assets/Sprites/Tiles/Rot/rot_{01..05}.png. Five Resources/Rot/rot_{01..05}.asset Tile assets reference those imported sub-sprites directly, so editing the canonical images updates gameplay without duplicate PNG copies. Keep source filenames, .meta GUIDs, and sub-sprite IDs stable. The 512x512 originals use centered Full Rect sprites, 512 Pixels Per Unit, bilinear filtering, and uncompressed textures for a one-tile footprint. The earlier Resources/Rot/rot_patch_{1..5}_64x64.png placeholders remain unused; no scene/Inspector wiring is required.
 
 ## Current Data Model
 

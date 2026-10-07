@@ -1,5 +1,11 @@
 # Fungus-Toast Worklog
 
+## Rot final art wiring — 2026-10-06
+
+Reviewed Jake’s five 512x512 rot sprites at full size and downsampled to 64px: cohesive wet/pitted olive-brown decay, with darker and crusted variants. Connected-patch seam visibility still needs in-game review. Runtime now loads five Resources Tile assets referencing the canonical Sprites/Tiles/Rot/rot_{01..05}.png sub-sprites directly; original PNGs and source GUID/sub-sprite IDs are preserved. Import scale corrected to 512 PPU, centered Full Rect, bilinear/uncompressed. Earlier placeholder PNGs remain but are no longer loaded.
+
+Validation: all five source/reference pairs, Tile GUID format, importer settings, and scoped diffs checked locally. No Core rules, scenes, or prefab wiring changed. Jake: refresh assets, confirm no missing rot Tile/sprite errors or compile warnings, and preview campaign level 5 for tile scale, positioning, seams, and readability. Unity runtime verification remains manual.
+
 ## Rot introduction — 2026-10-06
 
 Implemented static ownerless rot for player-facing campaign level 5 (Cheddar Edge, Campaign4/index4), enabled through the optional LevelSpec flag. A connected irregular edge-to-middle patch protects starting spores, blocks occupation, and adds a non-stacking +5 percentage points orthogonal Decay penalty. Resistant/last-cell protection, ownerless death attribution, endgame occupancy, additive save/resume, five replaceable placeholder sprites, hover inspection, and an introductory coachmark are included. Spreading and clearing remain deferred.

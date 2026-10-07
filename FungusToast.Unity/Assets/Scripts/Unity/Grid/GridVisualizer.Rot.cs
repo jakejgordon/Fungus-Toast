@@ -29,9 +29,11 @@ namespace FungusToast.Unity.Grid
             rotVisualTiles = new Tile[RotVisualVariantCount];
             for (int i = 0; i < rotVisualTiles.Length; i++)
             {
-                string path = $"Rot/rot_patch_{i + 1}_64x64";
-                Sprite sprite = Resources.Load<Sprite>(path);
-                if (sprite == null) Debug.LogError($"[GridVisualizer] Missing rot sprite: Resources/{path}.png");
+                // Resource Tile assets reference the canonical art in Sprites/Tiles/Rot.
+                string path = $"Rot/rot_{i + 1:00}";
+                Tile authoredTile = Resources.Load<Tile>(path);
+                Sprite sprite = authoredTile != null ? authoredTile.sprite : null;
+                if (sprite == null) Debug.LogError($"[GridVisualizer] Missing rot Tile or sprite: Resources/{path}.asset");
                 var tile = ScriptableObject.CreateInstance<Tile>();
                 tile.name = $"Rot visual {i + 1}";
                 tile.hideFlags = HideFlags.DontSave;
