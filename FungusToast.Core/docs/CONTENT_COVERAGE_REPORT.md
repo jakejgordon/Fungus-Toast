@@ -9,11 +9,11 @@ Each row asks: *should these AI strategies use this content?* A row appears when
 ## Summary
 
 - 61 tagged content items (Mycovariant tier families count once); 43 have at least one candidate.
-- 335 candidate rows, covering 496 strategy pairings.
+- 332 candidate rows, covering 493 strategy pairings.
 
 | Status | Rows |
 |---|---|
-| Baseline (not reviewed) | 335 |
+| Baseline (not reviewed) | 332 |
 
 ## Adaptive Expression
 
@@ -93,7 +93,6 @@ Each row asks: *should these AI strategies use this content?* A row appears when
 | **Creeping Reclaimer (Proven)**: A persistent colony that spreads first, then makes collapse feed its renewal. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
 | **Gravebloom (Campaign)**: Likes slow spreading decay that keeps paying off after the first contact. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
 | **Hoarded Bloom (Proven)**: A patient colony that accumulates mutation potential before expanding into a full control plan.<br>**Hoardspore Regent (Proven)**: A resource-rich control colony that lets a deep stockpile support its whole lifecycle. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
-| **Jetting Rot (Campaign)**: Builds a toxin-bloom engine, then rides jetting mycelium to spread poison pressure into distant lanes. | 4 | feeds: creates OwnToxins; same job: ToxinPlacement (top) | — | Baseline: not reviewed |
 | **Putrid Tendrils (Campaign)**: Reaches outward with aggressive growth lanes and tries to crowd territory early. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
 | **Putrid Tendrils (Proven)**: A tendril-driven colony that establishes multiple growth lanes before converting them into decay. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
 | **Rebirth Conductor (Campaign)**: Uses steady mutation growth and rebirth loops to stay in control of long games.<br>**Rebirth Furnace (Campaign)**: Welcomes messy fights and tries to turn every loss into fresh growth.<br>**Rebirth Furnace (Proven)**: A colony that uses metabolic growth to keep its death-and-regrowth cycle burning. | 2 | feeds: creates OwnToxins | — | Baseline: not reviewed |
@@ -242,7 +241,6 @@ Each row asks: *should these AI strategies use this content?* A row appears when
 | Strategies | Score | Reasons | Context | Decision |
 |---|---|---|---|---|
 | **Anabolic Regent (Proven)**: A metabolic-first control colony that converts early efficiency into durable board presence.<br>**Anabolic Steward (Proven)**: A colony that establishes a strong metabolic base before balancing spread, decay, and recovery.<br>**Hoardspore Regent [`AI13`] (Campaign)**: A resource-rich colony that builds its metabolic base before sustaining a full control lifecycle.<br>**Voltaic Bloom [`CMP_Control_AnabolicFirst_Hard`] (Campaign)**: Accelerates first, then pivots into flexible board control once it has breathing room. | 3 | feeds: creates OwnToxins; same job: RemotePlacement | — | Baseline: not reviewed |
-| **Ballistospore Rot (Campaign)**: Builds a toxin-bloom engine, then launches poison pressure across the board with ballistic spores. | 4 | feeds: creates OwnToxins; same job: ToxinPlacement (top) | — | Baseline: not reviewed |
 | **Beacon of Rot (Campaign)**: Uses guided pressure to open cracks, then deepens them with collapse effects. | 2 | same job: RemotePlacement (top) | — | Baseline: not reviewed |
 | **Beacon of Rot (Proven)**: A colony that builds a bloom, establishes a Chemotactic Beacon, then intensifies decay around its reach.<br>**Rhizolith (Campaign)**: Plants stubborn anchors, then uses guided pressure to squeeze whole lanes shut. | 2 | same job: RemotePlacement (top) | — | Baseline: not reviewed |
 | **Creeping Reclaimer (Campaign)**: A persistent colony that spreads first, then makes collapse feed its renewal. | 3 | feeds: creates OwnToxins; same job: RemotePlacement | — | Baseline: not reviewed |
@@ -408,7 +406,6 @@ Each row asks: *should these AI strategies use this content?* A row appears when
 | **Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign)**: Looks for sudden openings, quick repositioning, and short explosive turns instead of slow pressure. | 2 | fed by: needs OwnCellDeaths; same job: RemotePlacement | — | Baseline: not reviewed |
 | **Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign)**: Plays for tempo swings, using brief setup windows to launch sudden pressure. | 2 | fed by: needs OwnCellDeaths; same job: RemotePlacement | — | Baseline: not reviewed |
 | **Beacon of Rot (Proven)**: A colony that builds a bloom, establishes a Chemotactic Beacon, then intensifies decay around its reach.<br>**Rhizolith (Campaign)**: Plants stubborn anchors, then uses guided pressure to squeeze whole lanes shut. | 3 | fed by: needs OwnCellDeaths; same job: RemotePlacement (top) | — | Baseline: not reviewed |
-| **Jetting Rot (Campaign)**: Builds a toxin-bloom engine, then rides jetting mycelium to spread poison pressure into distant lanes. | 2 | fed by: needs OwnCellDeaths; same job: RemotePlacement | — | Baseline: not reviewed |
 | **Needle Reclaimer (Campaign)**: Sneaks into weak seams, then surges once it has a foothold worth exploiting. | 2 | fed by: needs OwnCellDeaths; same job: RemotePlacement | shares: OwnCellDeaths | Baseline: not reviewed |
 | **Rhizolith Crown (Campaign)**: Builds a stubborn core, then projects pressure outward from carefully held anchors. | 3 | fed by: needs OwnCellDeaths; same job: RemotePlacement (top) | shares: OwnCellDeaths | Baseline: not reviewed |
 

@@ -356,6 +356,13 @@ Legacy Campaign entries with empty or category-derived plans are frozen by
 leaves that baseline only after a specific list clears a matched comparison and
 a held-out confirmation.
 
+**Testing pairs retired 2026-10-06.** Every trial below has concluded, so its
+`TST_Campaign_<Name>_…Control` / `_CuratedMycovariants` pair (and
+`TST_Campaign_AI4_CuratedMycovariantsV2`) was deleted from the roster, together
+with its pinned stable ID and pairing test. The results recorded here stand.
+To replay a comparison, restore the pair from git history: the commit titled
+"refactor: prune finished AI experiment strategies".
+
 ### The Economancer (`CMP_Economy_Economancer_Elite`)
 
 - Promoted order: Plasmid Bounty III, Plasmid Bounty II, Plasmid Bounty I,
@@ -372,8 +379,7 @@ a held-out confirmation.
   share `+0.007541`, 95% CI `[-0.007239, 0.022321]`; the same margin was
   supported. Artifacts: `economancer_myco_holdout_{control,treatment}_2026091903`.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing control/treatment pair remains registered
-  so the comparison is reproducible.
+  invariant mismatches. The Testing control/treatment pair was kept so the comparison was reproducible, until its retirement on 2026-10-06.
 
 ### Hoardspore Regent (`CMP_Economy_HoardsporeRegent_Elite`)
 
@@ -391,8 +397,7 @@ a held-out confirmation.
 - Held-out seed `2026091913`, 100 pairs: treatment-control normalized board
   share `-0.005289`, 95% CI `[-0.021197, 0.010618]`; the same margin was
   supported. Artifacts: `hoardspore_myco_holdout_{control,treatment}_2026091913`.
-- Both stages passed manifest contamination checks. The Testing pair remains
-  registered for reproducibility.
+- Both stages passed manifest contamination checks. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Iron Shell (`CMP_Defense_IronShell_Elite`)
 
@@ -409,8 +414,7 @@ a held-out confirmation.
 - Held-out seed `2026091923`, 100 pairs: treatment-control normalized board
   share `+0.013053`, 95% CI `[-0.025559, 0.051665]`; the same margin was
   supported. Artifacts: `ironshell_myco_holdout_{control,treatment}_2026091923`.
-- Both stages passed manifest contamination checks. The Testing pair remains
-  registered for reproducibility.
+- Both stages passed manifest contamination checks. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### AI4 / Creeping Reclaimer (`AI4`) — migration in progress
 
@@ -457,7 +461,7 @@ a held-out confirmation.
 - Both stages passed manifest contamination checks and had zero simulation
   invariant mismatches. Exact paired parity confirms that the explicit order
   preserves the former category-control behavior for these samples. The
-  Testing pair remains registered for reproducibility.
+  Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Harvest Broker (`CMP_Economy_KillReclaim_Medium`)
 
@@ -476,8 +480,7 @@ a held-out confirmation.
   supported. Artifacts:
   `harvestbroker_myco_holdout_{control,treatment}_2026091993`.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Creeping Regression (`CMP_Bloom_CreepingRegression_Elite`)
 
@@ -496,8 +499,7 @@ a held-out confirmation.
   supported. Artifacts:
   `creepingregression_myco_holdout_{control,treatment}_2026092013`.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Voltaic Rot (`CMP_Bloom_AnabolicRegression_Medium`)
 
@@ -516,8 +518,7 @@ a held-out confirmation.
   supported. Artifacts:
   `voltaicrot_myco_holdout_{control,treatment}_2026092033`.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Harvest Broker, offset 1 (`TST_Campaign7_KillReclaim_Offset1`)
 
@@ -536,8 +537,7 @@ a held-out confirmation.
   supported. Artifacts:
   `harvestbroker_offset1_myco_holdout_{control,treatment}_2026092053`.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Harvest Broker, offset 2 (`TST_Campaign7_KillReclaim_Offset2`) — rejected
 
@@ -553,8 +553,7 @@ a held-out confirmation.
   `harvestbroker_offset2_myco_{comparison,holdout}_{control,treatment}` with
   their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility; the held-out result must not be tuned against.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06; the held-out result must not be tuned against.
 
 ### Harvest Broker, offset 3 (`TST_Campaign7_KillReclaim_Offset3`)
 
@@ -569,8 +568,7 @@ a held-out confirmation.
   `harvestbroker_offset3_myco_{comparison,holdout}_{control,treatment}` with
   their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Harvest Broker, offset 8 (`TST_Campaign7_KillReclaim_Offset8`)
 
@@ -585,8 +583,7 @@ a held-out confirmation.
   `harvestbroker_offset8_myco_{comparison,holdout}_{control,treatment}` with
   their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Resilient Mycelium, offset 1 (`TST_Training_ResilientMycelium_Offset1`)
 
@@ -603,8 +600,7 @@ a held-out confirmation.
   `resilientmycelium_offset1_myco_{comparison,holdout}_{control,treatment}`
   with their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Overextender, offset 1 (`CMP_Mobility_Overextender_Training_Offset1`)
 
@@ -621,8 +617,7 @@ a held-out confirmation.
   `overextender_offset1_myco_{comparison,holdout}_{control,treatment}` with
   their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Toxic Turtle, offset 1 (`CMP_Attrition_ToxicTurtle_Training_Offset1`)
 
@@ -639,8 +634,7 @@ a held-out confirmation.
   `toxicturtle_offset1_myco_{comparison,holdout}_{control,treatment}` with
   their respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Resilient Shell (`CMP_Defense_ResilientShell_Easy`) — rejected
 
@@ -655,7 +649,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Grave Bastion (`CMP_Defense_ReclaimShell_Easy`)
 
@@ -673,8 +667,7 @@ a held-out confirmation.
   `reclaimshell_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Scavenger Court (`CMP_Reclaim_Scavenger_Easy`)
 
@@ -691,8 +684,7 @@ a held-out confirmation.
   `scavenger_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Needle Reclaimer (`CMP_Reclaim_InfiltrationSurge_Easy`)
 
@@ -709,8 +701,7 @@ a held-out confirmation.
   `infiltrationsurge_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Tempo Harvester (`CMP_Economy_TempoReclaim_Medium`)
 
@@ -728,8 +719,7 @@ a held-out confirmation.
   `temporeclaim_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Pulsar Sprout (`CMP_Surge_Pulsar_Easy`)
 
@@ -747,8 +737,7 @@ a held-out confirmation.
   `pulsar_myco_{comparison,holdout}_{control,treatment}` with their respective
   seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Resilient Canopy (`CMP_TierCap_GrowthResilience_Easy`)
 
@@ -766,8 +755,7 @@ a held-out confirmation.
   `resilientcanopy_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### The Economancer (`CMP_Economy_LateSpike_Hard`)
 
@@ -784,8 +772,7 @@ a held-out confirmation.
   `latespike_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Pressure Bloom (`CMP_Growth_Pressure_Medium`)
 
@@ -803,8 +790,7 @@ a held-out confirmation.
   `growthpressure_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Putrid Tendrils (`CMP_Growth_PutridTendrils_Medium`) — rejected
 
@@ -820,7 +806,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Wildfire Bloom (`CMP_Growth_WildfireBloom_Medium`)
 
@@ -837,8 +823,7 @@ a held-out confirmation.
   `wildfirebloom_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Beacon Sprinter (`CMP_Surge_BeaconSprinter_Medium`) — rejected
 
@@ -853,7 +838,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Beacon Tempo (`CMP_Surge_BeaconTempo_Medium`) — rejected
 
@@ -868,7 +853,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Growth Tempo (`CMP_Surge_GrowthTempo_Medium`) — rejected
 
@@ -884,7 +869,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Rebirth Conductor (`CMP_Control_AnabolicRebirth_Medium`) — rejected
 
@@ -898,7 +883,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Rebirth Furnace (`CMP_Control_RebirthFurnace_Medium`) — rejected
 
@@ -913,7 +898,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Voltaic Bloom (`AI12`)
 
@@ -930,8 +915,7 @@ a held-out confirmation.
   `voltaicbloom_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Voltaic Bloom Hard (`CMP_Control_AnabolicFirst_Hard`) — rejected
 
@@ -950,7 +934,7 @@ a held-out confirmation.
 - The candidate was rejected at the holdout gate. The Campaign strategy remains
   unchanged and its migration-debt entry remains. Both valid stages passed
   manifest contamination checks and had zero simulation invariant mismatches;
-  the Testing pair remains registered for reproducibility.
+  the Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Legacy Hoardspore Regent (`AI13`) — rejected
 
@@ -966,8 +950,7 @@ a held-out confirmation.
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   The positive point estimate with a wide interval is insufficient promotion
   evidence, not evidence of harm. Both comparison arms had zero simulation
-  invariant mismatches; the Testing pair remains registered for
-  reproducibility.
+  invariant mismatches; the Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Rejuvenation Engine (`AI5`)
 
@@ -984,8 +967,7 @@ a held-out confirmation.
   `rejuvenationengine_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Rooted Canopy (`AI6`)
 
@@ -1003,8 +985,7 @@ a held-out confirmation.
   `rootedcanopy_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Rhizolith Crown (`CMP_AnabolicBeaconRhizolith_Elite`)
 
@@ -1022,8 +1003,7 @@ a held-out confirmation.
   `rhizolithcrown_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Beacon of Rot (`CMP_Bloom_BeaconRegression_Medium`) — rejected
 
@@ -1039,8 +1019,7 @@ a held-out confirmation.
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   The positive point estimate with a wide interval is insufficient promotion
   evidence, not evidence of harm. Both comparison arms had zero simulation
-  invariant mismatches; the Testing pair remains registered for
-  reproducibility.
+  invariant mismatches; the Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Gravebloom (`CMP_Bloom_CreepingNecro_Medium`) — rejected
 
@@ -1055,7 +1034,7 @@ a held-out confirmation.
 - The candidate was rejected at the comparison gate. No holdout was run, the
   Campaign strategy remains unchanged, and its migration-debt entry remains.
   Both comparison arms had zero simulation invariant mismatches; the Testing
-  pair remains registered for reproducibility.
+  pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Mimic Bastion (`CMP_Bloom_FortifyMimic_Medium`)
 
@@ -1072,8 +1051,7 @@ a held-out confirmation.
   `mimicbastion_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ### Thanatophyte (`CMP_Bloom_Thanatophyte_Elite`)
 
@@ -1089,8 +1067,7 @@ a held-out confirmation.
   `thanatophyte_myco_{comparison,holdout}_{control,treatment}` with their
   respective seeds.
 - Both stages passed manifest contamination checks and had zero simulation
-  invariant mismatches. The Testing pair remains registered for
-  reproducibility.
+  invariant mismatches. The Testing pair was kept for reproducibility until its retirement on 2026-10-06.
 
 ## Recommended Simulation Pattern
 

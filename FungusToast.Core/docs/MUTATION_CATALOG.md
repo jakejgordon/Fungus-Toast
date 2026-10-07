@@ -10,13 +10,13 @@ Strategy columns count player-facing strategies (Proven and Campaign sets, exclu
 
 | Mutation | Category | Tier | Capabilities | Goal in | Surge priority in |
 |---|---|---|---|---|---|
-| [Mycelial Bloom](#mycelial-bloom) | Growth | 1 | BaseGrowth | 8 | 0 |
+| [Mycelial Bloom](#mycelial-bloom) | Growth | 1 | BaseGrowth | 6 | 0 |
 | [Tendril Northeast](#tendril-northeast) | Growth | 2 | DiagonalGrowth | 3 | 0 |
 | [Tendril Northwest](#tendril-northwest) | Growth | 2 | DiagonalGrowth | 7 | 0 |
 | [Tendril Southeast](#tendril-southeast) | Growth | 2 | DiagonalGrowth | 3 | 0 |
 | [Tendril Southwest](#tendril-southwest) | Growth | 2 | DiagonalGrowth | 3 | 0 |
 | [Mycotropic Induction](#mycotropic-induction) | Growth | 3 | DiagonalGrowth | 18 | 0 |
-| [Creeping Mold](#creeping-mold) | Growth | 4 | Repositioning | 42 | 0 |
+| [Creeping Mold](#creeping-mold) | Growth | 4 | Repositioning | 40 | 0 |
 | [Filament Overdrive](#filament-overdrive) | Growth | 5 | DiagonalGrowth, RemotePlacement | 6 | 0 |
 | [Homeostatic Harmony](#homeostatic-harmony) | CellularResilience | 1 | DecayResistance | 0 | 0 |
 | [Chronoresilient Cytoplasm](#chronoresilient-cytoplasm) | CellularResilience | 2 | DecayResistance | 11 | 0 |
@@ -25,10 +25,10 @@ Strategy columns count player-facing strategies (Proven and Campaign sets, exclu
 | [Necrohyphal Infiltration](#necrohyphal-infiltration) | CellularResilience | 5 | CorpseCapture | 13 | 0 |
 | [Catabolic Rebirth](#catabolic-rebirth) | CellularResilience | 6 | SelfReclamation | 21 | 0 |
 | [Hypersystemic Regeneration](#hypersystemic-regeneration) | CellularResilience | 7 | SelfReclamation, ResistantCells | 1 | 0 |
-| [Mycotoxin Tracer](#mycotoxin-tracer) | Fungicide | 1 | ToxinPlacement | 5 | 0 |
-| [Mycotoxin Potentiation](#mycotoxin-potentiation) | Fungicide | 2 | ToxinLongevity, DirectKill | 5 | 0 |
-| [Putrefactive Mycotoxin](#putrefactive-mycotoxin) | Fungicide | 3 | DirectKill | 14 | 0 |
-| [Sporicidal Bloom](#sporicidal-bloom) | Fungicide | 4 | ToxinPlacement | 2 | 0 |
+| [Mycotoxin Tracer](#mycotoxin-tracer) | Fungicide | 1 | ToxinPlacement | 3 | 0 |
+| [Mycotoxin Potentiation](#mycotoxin-potentiation) | Fungicide | 2 | ToxinLongevity, DirectKill | 3 | 0 |
+| [Putrefactive Mycotoxin](#putrefactive-mycotoxin) | Fungicide | 3 | DirectKill | 12 | 0 |
+| [Sporicidal Bloom](#sporicidal-bloom) | Fungicide | 4 | ToxinPlacement | 0 | 0 |
 | [Necrotoxic Conversion](#necrotoxic-conversion) | Fungicide | 5 | CorpseCapture | 0 | 0 |
 | [Putrefactive Rejuvenation](#putrefactive-rejuvenation) | Fungicide | 5 | DecayResistance | 10 | 0 |
 | [Putrefactive Cascade](#putrefactive-cascade) | Fungicide | 6 | DirectKill | 13 | 0 |
@@ -50,8 +50,8 @@ Strategy columns count player-facing strategies (Proven and Campaign sets, exclu
 | [Crustward Tropism](#crustward-tropism) | SubstrateEcology | 2 | ConditionalGrowth | 0 | 0 |
 | [Detrital Enzymes](#detrital-enzymes) | SubstrateEcology | 3 | ConditionalGrowth | 0 | 0 |
 | [Toxin Margin](#toxin-margin) | SubstrateEcology | 3 | ConditionalGrowth | 0 | 0 |
-| [Necrophytic Bloom](#necrophytic-bloom) | SubstrateEcology | 4 | Composting | 11 | 0 |
-| [Toxinborne Seeding](#toxinborne-seeding) | SubstrateEcology | 5 | ConditionalGrowth, ToxinMobility, RemotePlacement | 2 | 0 |
+| [Necrophytic Bloom](#necrophytic-bloom) | SubstrateEcology | 4 | Composting | 9 | 0 |
+| [Toxinborne Seeding](#toxinborne-seeding) | SubstrateEcology | 5 | ConditionalGrowth, ToxinMobility, RemotePlacement | 0 | 0 |
 
 ## Growth
 
@@ -72,7 +72,7 @@ Expands your colony faster in the four orthogonal directions (up / down / left /
 | Uses | — |
 | Creates | OwnCellDeaths |
 | Removes | — |
-| Goal in | 8: Ballistospore Rot (Campaign), Beacon of Rot (Proven), Jetting Rot (Campaign), Rhizolith (Campaign), Rhizolith Crown (Campaign), Scavenger Court (Campaign), Verdant Reclaimer (Campaign), Verdant Reclaimer (Proven) |
+| Goal in | 6: Beacon of Rot (Proven), Rhizolith (Campaign), Rhizolith Crown (Campaign), Scavenger Court (Campaign), Verdant Reclaimer (Campaign), Verdant Reclaimer (Proven) |
 
 ### Tendril Northeast
 
@@ -186,7 +186,7 @@ Failed growth can become repositioning, letting a cell crawl into the tile it mi
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 42: Adaptive Blight (Proven), Anabolic Gravebloom (Proven), Anabolic Regent (Proven), Anabolic Steward (Proven), Ballistospore Rot (Campaign), Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), and 34 more |
+| Goal in | 40: Adaptive Blight (Proven), Anabolic Gravebloom (Proven), Anabolic Regent (Proven), Anabolic Steward (Proven), Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), Gravebloom (Proven), and 32 more |
 
 ### Filament Overdrive
 
@@ -361,7 +361,7 @@ Toxifies empty tiles along enemy borders to slow expansion.
 | Uses | EnemyContact |
 | Creates | OwnToxins |
 | Removes | — |
-| Goal in | 5: Ballistospore Rot (Campaign), Jetting Rot (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
+| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
 
 ### Mycotoxin Potentiation
 
@@ -380,7 +380,7 @@ Makes each toxin last longer and gives it a chance to kill nearby enemies.
 | Uses | — |
 | Creates | EnemyCellsKilledByYou |
 | Removes | — |
-| Goal in | 5: Ballistospore Rot (Campaign), Jetting Rot (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
+| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
 
 ### Putrefactive Mycotoxin
 
@@ -399,7 +399,7 @@ Lets living cells kill adjacent enemies just by touching them.
 | Uses | EnemyContact |
 | Creates | EnemyCellsKilledByYou |
 | Removes | — |
-| Goal in | 14: Ballistospore Rot (Campaign), Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Jetting Rot (Campaign), and 6 more |
+| Goal in | 12: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Reclaimer's Ledger (Proven), Spore Ledger (Proven), and 4 more |
 
 ### Sporicidal Bloom
 
@@ -418,7 +418,7 @@ Turns a large colony into a wave of toxic spore drops.
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Goal in | 2: Ballistospore Rot (Campaign), Jetting Rot (Campaign) |
+| Goal in | none |
 
 ### Necrotoxic Conversion
 
@@ -848,7 +848,7 @@ Large clusters of your dead cells can compost into neutral nutrient patches.
 | Uses | OwnDeadCells, EnemyDeadCells |
 | Creates | NutrientPatches |
 | Removes | OwnDeadCells, EnemyDeadCells |
-| Goal in | 11: Anabolic Gravebloom (Proven), Ballistospore Rot (Campaign), Beacon of Rot (Proven), Gravebloom (Proven), Jetting Rot (Campaign), Mimic Bastion (Campaign), Rhizolith (Campaign), Rhizolith Crown (Campaign), and 3 more |
+| Goal in | 9: Anabolic Gravebloom (Proven), Beacon of Rot (Proven), Gravebloom (Proven), Mimic Bastion (Campaign), Rhizolith (Campaign), Rhizolith Crown (Campaign), Thanatophyte (Campaign), The Necrotoxin Gauntlet [`TST_AI10_CreepingRegression`] (Campaign), and 1 more |
 
 ### Toxinborne Seeding
 
@@ -867,4 +867,4 @@ Lets a mobile toxin carry a newly grown cell into enemy territory.
 | Uses | EnemyContact |
 | Creates | — |
 | Removes | — |
-| Goal in | 2: Ballistospore Rot (Campaign), Jetting Rot (Campaign) |
+| Goal in | none |

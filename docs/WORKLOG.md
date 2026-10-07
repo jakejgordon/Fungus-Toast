@@ -48,6 +48,60 @@ Match the other effects: 44.1kHz, 16-bit, mono WAV (record at 48kHz if easier;
 it just needs resampling). The level is `MoldinessRewardClaimVolume` in
 `GameManager.cs`.
 
+## TODO — Promote the archetype harness and themed Testing roster
+
+**Roster pruned 2026-10-06** (Jake). 113 strategies that no campaign stage, the
+solo pool, or simulation tooling used were deleted: the 83 finished
+curated-Mycovariant trial pairs, 22 concluded diagnosis variants and
+unreferenced probes, 6 unreferenced `Grow>Kill>Reclaim(…)` permutations, and
+the two campaign Ecology variants no stage used
+(`CMP_Bloom_ToxinborneJetting_Medium`, `CMP_Bloom_ToxinborneBallistospore_Hard`).
+The roster went from 218 to 105 strategies. Jake chose to keep the two groups
+below and give them a future.
+
+**Goal:** tune each strategy below into a distinct, player-readable opponent,
+add the good ones to the solo pool, and consider placing some in campaign
+stages. Today they are Testing-only, so solo play and the campaign never see
+them.
+
+- **8-player archetype harness:** `TST_Arch01_GrowthResilience`,
+  `TST_Arch02_ResilienceGrowth`, `TST_Arch03_FungicideSurge`,
+  `TST_Arch04_DriftGrowth`, `TST_Arch05_DriftResilience`,
+  `TST_Arch06_SurgeGrowth`, `TST_Arch07_DriftFungicide`,
+  `TST_Arch08_SurgeResilience`.
+- **Themed roster** (`AI_STRATEGY_AUTHORING.md` → *Testing Strategy Catalog*):
+  `TST_HyperEconomyRamp`, `TST_EarlyReclaimerSwarm`, `TST_HyphalSurgeTempo`,
+  `TST_FortressResilience`, `TST_OpportunisticCounterplay`,
+  `TST_Tier3PlateauSpecialist`, `TST_LateGameSpike`,
+  `TST_BalancedGeneralistControl`, `TST_BalancedControl_NoPreferredMyco`,
+  `TST_RebirthAttrition`, `TST_BalancedControl_MaxEconomy`,
+  `TST_LowTierEconomyGrinder`, `TST_LowTierSurgeSkirmisher`,
+  `TST_BalancedControl_MinorEconomy`,
+  `TST_CampaignMirror_AI12_BalancedControl_AnabolicFirst`,
+  `TST_CampaignMirror_AI13_BalancedControl_MaxEconomy`,
+  `TST_EcologyFrontierExpansion`, `TST_EcologyFrontierResilience`.
+
+Steps:
+
+1. Triage. Several overlap existing Proven entries (the `TST_BalancedControl_*`
+   and `TST_CampaignMirror_*` lines mirror Proven or campaign builds). Decide
+   which add a genuinely new identity and drop or merge the rest.
+2. For each keeper, write the four-field profile (*Player-Facing Strategy
+   Profile Contract*): a player-facing name, a one-sentence fantasy, a coherent
+   mutation plan, and a curated, ordered Mycovariant list rather than a
+   category set. Use the content tags and `MUTATION_CATALOG.md` to spot
+   unused content (most Substrate Ecology mutations have no player-facing
+   strategy).
+3. Run the normal evidence ladder (smoke, calibration, comparison, holdout,
+   contextual classification) and record a measured band.
+4. Promote keepers to the Proven set (the solo pool) under machine-safe names
+   with stable IDs pinned. The archetype harness must stay reproducible for
+   8-player comparisons, so promote copies or record the harness change.
+5. Consider campaign placement where a stage needs that difficulty and
+   identity, following the campaign balance workflow.
+6. Promotion brings each strategy into the content coverage review: record
+   decisions for its new candidates (`AI_COVERAGE_DECISIONS.md`).
+
 ## Active Initiative — AI Architecture and Balance Overhaul
 
 ### 2026-09-05 Hoardspore start-offset diagnosis

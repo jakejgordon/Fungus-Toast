@@ -29,15 +29,15 @@
 | [Septal Alarm](#septal-alarm) | Resistance | Passive | ResistantCells | 9 | 8 |
 | [Septal Seal](#septal-seal) | Resistance | Active | ResistantCells | 0 | 8 |
 | [Surgical Inoculation](#surgical-inoculation) | Resistance | Active | ResistantCells, RemotePlacement | 0 | 8 |
-| [Ballistospore Discharge I](#ballistospore-discharge-i) | Fungicide | Active | ToxinPlacement | 1 | 2 |
-| [Ballistospore Discharge II](#ballistospore-discharge-ii) | Fungicide | Active | ToxinPlacement | 1 | 2 |
-| [Ballistospore Discharge III](#ballistospore-discharge-iii) | Fungicide | Active | ToxinPlacement | 2 | 2 |
-| [Chemotactic Mycotoxins](#chemotactic-mycotoxins) | Fungicide | Passive | ToxinMobility | 3 | 2 |
+| [Ballistospore Discharge I](#ballistospore-discharge-i) | Fungicide | Active | ToxinPlacement | 0 | 2 |
+| [Ballistospore Discharge II](#ballistospore-discharge-ii) | Fungicide | Active | ToxinPlacement | 0 | 2 |
+| [Ballistospore Discharge III](#ballistospore-discharge-iii) | Fungicide | Active | ToxinPlacement | 1 | 2 |
+| [Chemotactic Mycotoxins](#chemotactic-mycotoxins) | Fungicide | Passive | ToxinMobility | 1 | 2 |
 | [Cytolytic Burst](#cytolytic-burst) | Fungicide | Active | DirectKill | 0 | 2 |
-| [Enduring Toxaphores](#enduring-toxaphores) | Fungicide | Passive | ToxinLongevity | 3 | 2 |
-| [Jetting Mycelium I](#jetting-mycelium-i) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 1 | 2 |
-| [Jetting Mycelium II](#jetting-mycelium-ii) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 1 | 2 |
-| [Jetting Mycelium III](#jetting-mycelium-iii) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 1 | 2 |
+| [Enduring Toxaphores](#enduring-toxaphores) | Fungicide | Passive | ToxinLongevity | 1 | 2 |
+| [Jetting Mycelium I](#jetting-mycelium-i) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 0 | 2 |
+| [Jetting Mycelium II](#jetting-mycelium-ii) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 0 | 2 |
+| [Jetting Mycelium III](#jetting-mycelium-iii) | Fungicide | Directional | RemotePlacement, ToxinPlacement | 0 | 2 |
 | [Necrophoric Adaptation](#necrophoric-adaptation) | Reclamation | Passive | SelfReclamation | 10 | 7 |
 | [Reclamation Rhizomorphs](#reclamation-rhizomorphs) | Reclamation | Passive | SelfReclamation | 10 | 7 |
 | [Neutralizing Mantle](#neutralizing-mantle) | Defense | Passive | ToxinCleanup | 0 | 0 |
@@ -407,7 +407,7 @@ One-time on draft: launch toxin spores to toxify up to 12 empty tiles.
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Ballistospore Rot (Campaign) |
+| Preferred by | none |
 | In category sets of | 2 strategies |
 
 ### Ballistospore Discharge II
@@ -425,7 +425,7 @@ One-time on draft: launch toxin spores to toxify up to 17 empty tiles.
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Ballistospore Rot (Campaign) |
+| Preferred by | none |
 | In category sets of | 2 strategies |
 
 ### Ballistospore Discharge III
@@ -443,7 +443,7 @@ One-time on draft: launch toxin spores to toxify up to 22 empty tiles.
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 2: Ballistospore Rot (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
 | In category sets of | 2 strategies |
 
 ### Chemotactic Mycotoxins
@@ -461,7 +461,7 @@ For the rest of the game, at the end of each Decay Phase, each of your toxins wi
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 3: Ballistospore Rot (Campaign), Jetting Rot (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
 | In category sets of | 2 strategies |
 
 ### Cytolytic Burst
@@ -497,7 +497,7 @@ One-time on draft: extend all of your current toxins by 4 Growth Cycles. For the
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 3: Ballistospore Rot (Campaign), Jetting Rot (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
 | In category sets of | 2 strategies |
 
 ### Jetting Mycelium I
@@ -515,7 +515,7 @@ One-time on draft: aim a spore-jet from one of your living cells in one orthogon
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Jetting Rot (Campaign) |
+| Preferred by | none |
 | In category sets of | 2 strategies |
 
 ### Jetting Mycelium II
@@ -533,7 +533,7 @@ One-time on draft: aim a spore-jet from one of your living cells in one orthogon
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Jetting Rot (Campaign) |
+| Preferred by | none |
 | In category sets of | 2 strategies |
 
 ### Jetting Mycelium III
@@ -551,7 +551,7 @@ One-time on draft: aim a spore-jet from one of your living cells in one orthogon
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Jetting Rot (Campaign) |
+| Preferred by | none |
 | In category sets of | 2 strategies |
 
 ## Reclamation

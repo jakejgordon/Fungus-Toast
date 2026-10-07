@@ -89,9 +89,7 @@ namespace FungusToast.Core.AI
                 ["ai.growth.verdant-reclaimer.v1"] = new(DifficultyBand.Elite, BandEvidence.Sufficient, null, null, "p8-bloom20-contextual-v1", "2026-09-16", "FungusToast.Core/docs/second-level/AI_P8_BLOOM20_REVIEW_DOSSIER_V1.md"),
 
                 // P7 Campaign panel. Measured before the 2026-09-07 reslotting and reroster.
-                ["legacy.campaign.cmp-bloom-toxinborneballistospore-hard.v1"] = new(null, BandEvidence.IntervalTooWide, 2.244, 135, CampaignPanel, P7Date, CampaignPanelDoc), // CMP_Bloom_ToxinborneBallistospore_Hard
                 ["legacy.campaign.ai13.v1"] = new(DifficultyBand.Elite, BandEvidence.Sufficient, 2.076, 131, CampaignPanel, P7Date, CampaignPanelDoc), // AI13
-                ["legacy.campaign.cmp-bloom-toxinbornejetting-medium.v1"] = new(null, BandEvidence.IntervalTooWide, 2.062, 122, CampaignPanel, P7Date, CampaignPanelDoc), // CMP_Bloom_ToxinborneJetting_Medium
                 ["legacy.campaign.ai12.v1"] = new(DifficultyBand.Elite, BandEvidence.Sufficient, 1.959, 126, CampaignPanel, P7Date, CampaignPanelDoc), // AI12
                 ["legacy.campaign.cmp-bloom-anabolicregression-medium.v1"] = new(DifficultyBand.Elite, BandEvidence.Sufficient, 1.934, 149, CampaignPanel, P7Date, CampaignPanelDoc), // CMP_Bloom_AnabolicRegression_Medium
                 ["legacy.campaign.cmp-control-anabolicfirst-hard.v1"] = new(DifficultyBand.Elite, BandEvidence.Sufficient, 1.727, 137, CampaignPanel, P7Date, CampaignPanelDoc), // CMP_Control_AnabolicFirst_Hard
