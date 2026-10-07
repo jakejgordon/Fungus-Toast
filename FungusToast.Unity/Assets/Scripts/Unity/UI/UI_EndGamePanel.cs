@@ -196,7 +196,6 @@ namespace FungusToast.Unity.UI
             public Image Background;
             public Image HoverOverlay;
             public Image FillOverlay;
-            public Outline FillOverlayOutline;
             public Outline Outline;
             public Image BadgeBackground;
             public Color BadgeBaseColor;
@@ -1404,10 +1403,6 @@ namespace FungusToast.Unity.UI
 
             var hoverOverlay = CreateOptionCardOverlay(cardObject.transform, "HoverOverlay", UIStyleTokens.WithAlpha(UIStyleTokens.Accent.Spore, 0.10f));
             var fillOverlay = CreateOptionCardOverlay(cardObject.transform, "FillOverlay", UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 0.12f));
-            var fillOverlayOutline = fillOverlay.gameObject.AddComponent<Outline>();
-            fillOverlayOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 1f);
-            fillOverlayOutline.effectDistance = new Vector2(2f, -2f);
-            fillOverlayOutline.enabled = false;
 
             var outline = cardObject.AddComponent<Outline>();
 
@@ -1480,7 +1475,6 @@ namespace FungusToast.Unity.UI
                 Background = background,
                 HoverOverlay = hoverOverlay,
                 FillOverlay = fillOverlay,
-                FillOverlayOutline = fillOverlayOutline,
                 Outline = outline
             };
             defeatCarryoverOptionVisuals[adaptation.Id] = visual;
@@ -2020,10 +2014,6 @@ namespace FungusToast.Unity.UI
             fillOverlay.raycastTarget = false;
             fillOverlay.enabled = false;
             fillOverlayObject.SetActive(false);
-            var fillOverlayOutline = fillOverlayObject.AddComponent<Outline>();
-            fillOverlayOutline.effectColor = UIStyleTokens.WithAlpha(UIStyleTokens.Button.BackgroundSelected, 1f);
-            fillOverlayOutline.effectDistance = new Vector2(2f, -2f);
-            fillOverlayOutline.enabled = false;
 
             var outline = buttonObject.AddComponent<Outline>();
             outline.effectColor = UIStyleTokens.WithAlpha(offer.AccentColor, UIStyleTokens.Alpha.AccentOutline);
@@ -2060,7 +2050,6 @@ namespace FungusToast.Unity.UI
                 Background = background,
                 HoverOverlay = hoverOverlay,
                 FillOverlay = fillOverlay,
-                FillOverlayOutline = fillOverlayOutline,
                 Outline = outline,
                 BadgeBackground = badgeImage,
                 BadgeBaseColor = badgeBaseColor
@@ -2465,11 +2454,6 @@ namespace FungusToast.Unity.UI
                     visual.FillOverlay.enabled = false;
                     visual.FillOverlay.gameObject.SetActive(false);
                 }
-            }
-
-            if (visual.FillOverlayOutline != null)
-            {
-                visual.FillOverlayOutline.enabled = isSelected;
             }
 
             if (visual.Outline != null)
