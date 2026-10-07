@@ -153,6 +153,24 @@ public class RotTests
         Assert.Contains(board.AllTiles(), t => t.X > 44 && !t.HasRot);
     }
 
+    [Fact]
+    public void Introductory_patch_reaches_middle_with_campaign_four_candidate_starts()
+    {
+        var board = new GameBoard(40, 40, 5);
+        var starts = new[] { (28, 26), (16, 29), (9, 20), (16, 10), (28, 14) };
+        for (int i = 0; i < starts.Length; i++)
+        {
+            board.Players.Add(new Player(i, $"Mold {i}", PlayerTypeEnum.AI));
+            board.PlaceInitialSpore(i, starts[i].Item1, starts[i].Item2);
+        }
+        Assert.InRange(RotPlacementUtility.PlaceIntroductoryPatch(board), 30, 200);
+        var rot = board.RotTileIds.Select(id => board.GetTileById(id)!).ToList();
+        Assert.Contains(rot, tile => tile.X >= 20);
+        Assert.Contains(rot, tile => tile.X == 0);
+        Assert.All(rot, tile => Assert.All(starts, start =>
+            Assert.True(Math.Abs(tile.X - start.Item1) + Math.Abs(tile.Y - start.Item2) > 4)));
+    }
+
     [Theory]
     [InlineData(-0.01f)]
     [InlineData(1.01f)]

@@ -23,8 +23,10 @@ namespace FungusToast.Core.Board
             int offset = halfThickness + clearance + 1;
             // If a protected start bisects the middle tongue, shift it up/down rather
             // than amputating the obstacle. Prefer the central authored layout.
-            foreach (int centerY in new[] { board.Height / 2, board.Height / 2 + offset, board.Height / 2 - offset })
+            foreach (int shift in Enumerable.Range(-offset, offset * 2 + 1)
+                .OrderBy(Math.Abs).ThenByDescending(value => value))
             {
+                int centerY = board.Height / 2 + shift;
                 if (centerY - halfThickness < 1 || centerY + halfThickness >= board.Height - 1) continue;
                 var candidates = new HashSet<int>();
                 foreach (var tile in board.AllTiles())
