@@ -1,5 +1,13 @@
 # Fungus-Toast Worklog
 
+## Organic connected rot surface — 2026-10-06
+
+Jake approved replacing square rot tiles with connected, irregular patches plus subtle pulse/drift. Added a code-created mesh and Resource shader using the existing five PNGs unchanged. Board-space texture mixing eliminates per-cell texture rims; exposed edges are feathered/noisy and convex corners rounded, with diagonal-neighbor endpoint distances preserving continuity at concave bends/holes. GPU-only animation is ±2.5% brightness over 9 seconds and 0.018-cell drift on a 23-second base cycle; silhouette and Core occupancy/rules stay fixed. Static Tile fallback logs missing/unsupported shader. Mesh rebuilds only when dirty, clears on game reset/disable, and releases owned runtime assets on destruction.
+
+Validation: Core build passed, 0 errors/warnings; refreshed and hash-matched canonical/plugin DLLs against synchronized source. Artifact-only conflicts with concurrent e269a3eb were resolved by rebuilding merged Core source (no source conflicts). CPU-reference harness passed 22,528 shared-edge alpha comparisons plus isolated/interior coverage and bounded-motion checks; it is NOT Unity C#/shader compile evidence. No scenes/prefabs/importers/PNG edits. Unrelated local mold Tile metadata churn remains untouched.
+
+Pending Jake: pull and refresh Unity; no shader/C# errors or new warnings; stage-5 patch appearance at normal/magnified zoom, subtle animation, overlay sorting/hover, unchanged hazard footprint, checkpoint resume, and rot-free game transitions. See CAMPAIGN_HELPER.md for tunables and reference-test command. Unity validation remains manual.
+
 ## Rot final art wiring — 2026-10-06
 
 Reviewed Jake’s five 512x512 rot sprites at full size and downsampled to 64px: cohesive wet/pitted olive-brown decay, with darker and crusted variants. Connected-patch seam visibility still needs in-game review. Runtime now loads five Resources Tile assets referencing the canonical Sprites/Tiles/Rot/rot_{01..05}.png sub-sprites directly; original PNGs and source GUID/sub-sprite IDs are preserved. Import scale corrected to 512 PPU, centered Full Rect, bilinear/uncompressed. Earlier placeholder PNGs remain but are no longer loaded.

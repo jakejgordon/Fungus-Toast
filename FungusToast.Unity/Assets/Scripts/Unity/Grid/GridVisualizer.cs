@@ -398,8 +398,14 @@ namespace FungusToast.Unity.Grid
             overlayRenderer?.Dispose();
         }
 
+        private void OnDisable()
+        {
+            rotSurfaceRenderer?.Clear();
+        }
+
         private void LateUpdate()
         {
+            rotSurfaceRenderer?.Refresh(board);
             UpdateNutrientPulseVisuals();
             UpdateMoldIdleVisuals();
             UpdateChemobeaconPulseVisuals();
@@ -448,6 +454,7 @@ namespace FungusToast.Unity.Grid
             StopAllCoroutines();
             UnsubscribeFromBoardEvents();
             board = null;
+            rotSurfaceRenderer?.Clear();
             presentationEffects?.DestroyLingeringToasts();
 
             _activeAnimationCount = 0;
@@ -2004,6 +2011,7 @@ namespace FungusToast.Unity.Grid
             overlayRenderer?.ResetRuntimeState();
             ClearMoldIdleCache();
 
+            rotSurfaceRenderer?.Invalidate();
             toastTilemap.ClearAllTiles();
             moldTilemap.ClearAllTiles();
             overlayTilemap.ClearAllTiles();

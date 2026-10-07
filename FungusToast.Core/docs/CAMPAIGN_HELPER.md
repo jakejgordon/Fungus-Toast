@@ -286,3 +286,13 @@ Adaptation draft UI reuse:
 - Prefer data changes in assets and repositories over hardcoded branching.
 - Keep Core adaptation definitions Unity-free.
 - For non-campaign work, default validation is build + smoke simulation. Campaign changes need Unity-side validation instead.
+
+### Connected rot surface presentation
+
+Rot now uses a code-created mesh under the mold Tilemap, with `Resources/Rot/RotSurface.shader` sampling and smoothly mixing the five canonical images in continuous board coordinates. Only exposed edges receive noise/feathering and convex-corner rounding; diagonal-neighbor endpoint distances keep concave bends and holes seamless. The shader samples the central 64% of each full-image sprite, with smoothly warped coordinates and staggered rotated sampling phases to reduce mirrored repetition, avoiding transparent square PNG rims; original art is unchanged. Shader properties own presentation tuning: 0.30-cell corner radius, 0.045-cell edge inset plus 0.035-cell irregularity, 0.025-cell feather, ±2.5% brightness over 9 seconds, and 0.018-cell texture drift on a 23-second base cycle. The silhouette never animates, expands, or changes occupied cells. Missing/unsupported shader falls back to static Tile rendering with an actionable Console error.
+
+Mesh rebuilding is dirty-driven (board render, rot placement, or board change), not per-frame; idle animation runs in the shader. Reset/disable clears the mesh, destruction releases owned mesh/material/GameObject, and enabling again refreshes from the bound board. No scene, prefab, Inspector, original PNG, or deterministic Core rule changes are required.
+
+Local reference validation: `python3 tools/validate_rot_surface.py` exhausts 1,024 adjacent-cell neighborhoods in both orientations (22,528 shared-edge comparisons) plus isolated/interior coverage and animation defaults. Optional `--preview TEMP/rot-surface-preview.png` uses Pillow for a CPU approximation only, not an Editor capture. These checks do not compile C# or the GPU shader.
+
+Editor gate: refresh/recompile with no new errors or warnings; preview stage 5 at normal and magnified zoom; confirm continuous interiors, rounded irregular borders, subtle breathing/drift, correct sorting under hover/selection, unchanged blocked cells, checkpoint restore, and switching to a rot-free game without stale visuals.

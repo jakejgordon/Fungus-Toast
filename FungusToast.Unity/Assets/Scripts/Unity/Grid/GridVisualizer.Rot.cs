@@ -1,4 +1,5 @@
 using FungusToast.Core.Board;
+using FungusToast.Unity.Grid.Helpers;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -8,10 +9,19 @@ namespace FungusToast.Unity.Grid
     {
         private const int RotVisualVariantCount = 5;
         private Tile[] rotVisualTiles;
+        private RotSurfaceRenderer rotSurfaceRenderer;
 
         private bool RenderRotTile(BoardTile tile, Vector3Int position)
         {
             if (tile == null || !tile.HasRot || moldTilemap == null) return false;
+            rotSurfaceRenderer ??= new RotSurfaceRenderer(moldTilemap);
+            if (rotSurfaceRenderer.IsAvailable)
+            {
+                rotSurfaceRenderer.Invalidate();
+                moldTilemap.SetTile(position, null);
+                overlayTilemap?.SetTile(position, null);
+                return true;
+            }
             EnsureRotVisualTiles();
             // Stable coordinate variation: presentation never consumes the gameplay RNG.
             int variant = (int)(((uint)position.x * 73856093u ^ (uint)position.y * 19349663u) % RotVisualVariantCount);
@@ -45,6 +55,8 @@ namespace FungusToast.Unity.Grid
 
         private void DisposeRotVisualTiles()
         {
+            rotSurfaceRenderer?.Dispose();
+            rotSurfaceRenderer = null;
             if (rotVisualTiles == null) return;
             foreach (var tile in rotVisualTiles) if (tile != null) Destroy(tile);
             rotVisualTiles = null;
