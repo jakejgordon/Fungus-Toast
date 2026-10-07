@@ -12,10 +12,12 @@ namespace FungusToast.Core.Board
         public FungalCell? FungalCell { get; private set; }
         public NutrientPatch? NutrientPatch { get; private set; }
         public bool IsBlocked { get; private set; }
+        public bool HasRot { get; private set; }
+        internal void PlaceRot() => HasRot = true;
         public bool IsEdgeOfBoard { get; private set; }
         public bool IsOccupied => FungalCell != null;
         public bool HasNutrientPatch => NutrientPatch != null;
-        public bool IsOccupiedForSporePlacement => IsBlocked || FungalCell != null || NutrientPatch != null;
+        public bool IsOccupiedForSporePlacement => IsBlocked || HasRot || FungalCell != null || NutrientPatch != null;
 
         public BoardTile(int x, int y, int boardWidth)
         {

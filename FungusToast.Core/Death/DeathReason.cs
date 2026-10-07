@@ -23,6 +23,7 @@ namespace FungusToast.Core.Death
         DistalSpore,
         ConidiaAscent,
         TropicLysis,
-        FilamentOverdrive
+        FilamentOverdrive,
+        Rot // Append only: persisted enum values must stay stable.
     }
 }

@@ -47,9 +47,11 @@ namespace FungusToast.Core.Phases
                 : 0f;
             float ageChance = Math.Max(0f, ageComponent - harmonyReduction);
 
-            float totalChance = Math.Clamp(randomChance + ageChance, 0f, 1f);
+            float rotChance = !cell.IsResistant && board.IsAdjacentToRot(cell.TileId)
+                ? board.RotAdjacentDeathChance : 0f;
+            float totalChance = Math.Clamp(randomChance + ageChance + rotChance, 0f, 1f);
             float thresholdRandom = randomChance; // first segment of cumulative range
-            float thresholdAge = randomChance + ageChance; // (== totalChance)
+            float thresholdAge = randomChance + ageChance; // rot follows the normal decay segments
 
             if (roll < totalChance)
             {
@@ -57,7 +59,9 @@ namespace FungusToast.Core.Phases
                 {
                     return DeathCalculationResult.Death(totalChance, DeathReason.Randomness);
                 }
-                return DeathCalculationResult.Death(totalChance, DeathReason.Age);
+                if (roll < thresholdAge)
+                    return DeathCalculationResult.Death(totalChance, DeathReason.Age);
+                return DeathCalculationResult.Death(totalChance, DeathReason.Rot);
             }
 
             // Putrefactive Mycotoxin kill check (resolved only if base death fails)

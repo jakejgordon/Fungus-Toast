@@ -92,6 +92,11 @@ namespace FungusToast.Unity.UI.Tooltips.TooltipProviders
             sb.AppendLine($"Mycelial Bloom Modifier: <b>+{breakdown.MycelialBloomModifier * 100f:0.###}%</b> (Level {bloomLevel})");
             sb.AppendLine($"Homeostatic Harmony Reduction: <b>-{breakdown.HarmonyReduction * 100f:0.###}%</b> (Level {harmonyLevel})");
             sb.AppendLine($"Effective Chance: <b>{breakdown.EffectiveChance * 100f:0.###}%</b>");
+            if (board.RotTileIds.Count > 0)
+            {
+                sb.AppendLine($"Rot exposure: <b>+{board.RotAdjacentDeathChance * 100f:0.##} percentage points</b> for orthogonally adjacent cells only (non-stacking). The value above excludes this local hazard; inspect a cell for exposure.");
+                sb.AppendLine("Resistant cells and the last living cell remain protected.");
+            }
             return sb.ToString();
         }
 

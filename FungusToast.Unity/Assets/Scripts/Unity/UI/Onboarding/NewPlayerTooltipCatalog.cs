@@ -18,6 +18,7 @@ namespace FungusToast.Unity.UI.Onboarding
         MycovariantDraftIntro,
         AutoPlacementIntro,
         EndgameCountdownIntro,
+        RotIntro,
     }
 
     public enum NewPlayerTooltipSurface
@@ -63,6 +64,13 @@ namespace FungusToast.Unity.UI.Onboarding
     {
         private static readonly IReadOnlyList<NewPlayerTooltipDefinition> Definitions = new[]
         {
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.RotIntro,
+                "Onboarding.RotIntroSeen",
+                "Rot Blocks the Way",
+                $"Rot is ownerless and blocks mold, toxins, and nutrients. Grow around the patch: it cannot be cleared or claimed.\n\nOrthogonally adjacent living cells gain +{FungusToast.Core.Config.RotBalance.AdjacentDeathChance * 100f:0.##} percentage points death chance during Decay (non-stacking). Resistant cells and the last living cell are protected.\n\nRot stays in place. It counts toward occupied space, never your score. Hover it to inspect.",
+                NewPlayerTooltipSurface.ScreenCenterCoachmark,
+                "Show once per profile after the new-game title clears on a campaign board with rot, before the first mutation phase. Never show during checkpoint restore or fast-forward testing."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.WelcomeIntro,
                 "Onboarding.WelcomeIntroSeen",
@@ -198,6 +206,10 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
+        public static bool ShouldShowRotIntro(bool isNewGame, bool isCampaign, bool hasRot, int humanPlayerCount, bool isFastForwarding)
+            => isNewGame && isCampaign && hasRot && humanPlayerCount > 0 && !isFastForwarding
+                && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro);
+
         /// <summary>
         /// Same gating as <see cref="ShouldShowCameraPanIntro"/>: unlike the Spend Points intro this
         /// is not suppressed by plain testing mode, so the first-game flow can be exercised there.

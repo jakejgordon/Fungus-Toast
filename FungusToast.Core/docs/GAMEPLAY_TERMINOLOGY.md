@@ -88,6 +88,10 @@ Fungus Toast uses precise verbs for board-state changes so gameplay logic, analy
 - Lead with a plain-language benefit, then name the mechanic precisely in the details. On a term's first use in a description, add a short natural-language outcome when it helps comprehension (for example, "reclaim a dead cell, restoring it as your living cell"). Do not re-define the term on every use.
 - Flavor text and names may use evocative language such as *infiltration* or *invasion*, provided they are not explaining rules.
 
+## Rot
+
+**Rot** is an ownerless board hazard; one space is a **rot tile**, and a contiguous group is a **rot patch**. It is not a fungal cell, toxin, or colony. The current version is static and cannot be claimed or cleared. **Rot exposure** means orthogonal adjacency to at least one rot tile; more neighbors do not stack the penalty. Rot-caused death is a normal **Kill / Die** transition, leaving dead mold, not conversion into rot.
+
 ## Resistance
 
 `Resistant` is a permanent status on a living cell. It is the most referenced status in the game and the one most often written inconsistently, so the rules are strict.

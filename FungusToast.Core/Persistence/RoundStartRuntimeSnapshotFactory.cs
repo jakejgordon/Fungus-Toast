@@ -32,6 +32,8 @@ public static class RoundStartRuntimeSnapshotFactory
                 .Select(ExportPlayer)
                 .ToList(),
             PermanentlyBlockedTileIds = board.GetPermanentlyBlockedTileIds().OrderBy(tileId => tileId).ToList(),
+            RotTileIds = board.RotTileIds.ToList(),
+            RotAdjacentDeathChance = board.RotAdjacentDeathChance,
             Cells = board.GetAllCells()
                 .OrderBy(cell => cell.TileId)
                 .Select(ExportCell)
@@ -123,6 +125,14 @@ public static class RoundStartRuntimeSnapshotFactory
                 chemobeaconSnapshot.TileId,
                 chemobeaconSnapshot.MutationId,
                 chemobeaconSnapshot.TurnsRemaining);
+        }
+
+        // Additive fields: legacy snapshots have no rot and retain their original board.
+        board.ConfigureRot(snapshot.RotAdjacentDeathChance);
+        foreach (int tileId in (snapshot.RotTileIds ?? new List<int>()).OrderBy(id => id))
+        {
+            if (!board.TryPlaceRot(tileId))
+                throw new ArgumentException($"Invalid rot tile {tileId} in runtime snapshot.", nameof(snapshot));
         }
 
         board.UpdateCachedOccupiedTileRatio();

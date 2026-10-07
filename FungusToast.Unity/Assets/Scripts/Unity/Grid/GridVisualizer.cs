@@ -388,6 +388,7 @@ namespace FungusToast.Unity.Grid
 
         private void OnDestroy()
         {
+            DisposeRotVisualTiles();
             ClearStartingTileEmphasis();
             DestroyStartingSporeReticleAssets();
             UnsubscribeFromBoardEvents();
@@ -426,6 +427,7 @@ namespace FungusToast.Unity.Grid
 
             if (this.board != null)
             {
+                this.board.RotPlaced += RenderTileFromBoard;
                 this.board.ToxinPlaced += HandleToxinPlaced;
                 this.board.CellReclaimed += HandleCellReclaimed;
                 this.board.ResistanceAppliedBatch += HandleResistanceAppliedBatch;
@@ -1030,6 +1032,7 @@ namespace FungusToast.Unity.Grid
         {
             if (board != null)
             {
+                board.RotPlaced -= RenderTileFromBoard;
                 board.ToxinPlaced -= HandleToxinPlaced;
                 board.CellReclaimed -= HandleCellReclaimed;
                 board.ResistanceAppliedBatch -= HandleResistanceAppliedBatch;
@@ -1878,6 +1881,7 @@ namespace FungusToast.Unity.Grid
 
         public void RenderTileFromBoard(int tileId)
         {
+            if (RenderRotTile(ActiveBoard?.GetTileById(tileId), GetPositionForTileId(tileId))) return;
             boardStateRenderer?.RenderTileFromBoard(tileId);
             ApplyBaseMoldVisualTransform(ActiveBoard?.GetTileById(tileId), GetPositionForTileId(tileId));
             RefreshMoldIdleCacheForTile(tileId);
@@ -2024,6 +2028,7 @@ namespace FungusToast.Unity.Grid
                     toastTilemap.SetTileFlags(pos, TileFlags.None);
                     toastTilemap.SetColor(pos, GetSurfaceColor(x, y, board.Width, board.Height));
                     toastTilemap.SetTransformMatrix(pos, GetPlayableSurfaceTileMatrix());
+                    if (RenderRotTile(tile, pos)) continue;
                     RenderFungalCellOverlay(tile, pos);
                     RenderNutrientPatchOverlay(tile, pos);
                     RenderChemobeaconOverlay(tile.TileId, pos);

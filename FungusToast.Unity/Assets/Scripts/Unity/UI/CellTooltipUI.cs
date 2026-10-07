@@ -125,6 +125,11 @@ namespace FungusToast.Unity.UI
             AppendAge(cell);
             AppendExpiration(cell);
             AppendResistance(cell);
+            if (cell.IsAlive && board != null && board.IsAdjacentToRot(cell.TileId))
+            {
+                sb.AppendLine(EmphasizedLine("Rot exposure", $"+{board.RotAdjacentDeathChance * 100f:0.##} percentage points Decay chance", UIStyleTokens.State.Warning));
+                sb.AppendLine("Orthogonal adjacency only; does not stack. Resistant cells and the last living cell are protected.");
+            }
             AppendAnimationFlags(cell);
 
             CommitRenderedContent(cell.OwnerPlayerId, cell.LastOwnerPlayerId);
@@ -143,7 +148,7 @@ namespace FungusToast.Unity.UI
             }
 
             var chemobeacon = board?.GetChemobeaconAtTile(tile.TileId);
-            if (tile.NutrientPatch == null && chemobeacon == null)
+            if (!tile.HasRot && tile.NutrientPatch == null && chemobeacon == null)
             {
                 return;
             }
@@ -166,7 +171,15 @@ namespace FungusToast.Unity.UI
             var chemobeacon = board?.GetChemobeaconAtTile(tile.TileId);
 
             sb.Clear();
-            if (chemobeacon != null)
+            if (tile.HasRot)
+            {
+                sb.AppendLine(EmphasizedLine("Status", "Rot (ownerless)", UIStyleTokens.State.Warning));
+                sb.AppendLine("Blocks mold, toxins, and nutrients. Cannot be cleared or claimed.");
+                sb.AppendLine($"Orthogonally adjacent living cells gain +{board.RotAdjacentDeathChance * 100f:0.##} percentage points death chance during Decay. This does not stack.");
+                sb.AppendLine("Resistant cells and the last living cell are protected.");
+                sb.AppendLine("Counts toward occupied space, never player score. Rot does not spread.");
+            }
+            else if (chemobeacon != null)
             {
                 AppendChemobeaconInfo(tile, board, chemobeacon);
             }

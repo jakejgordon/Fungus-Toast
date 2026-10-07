@@ -27,6 +27,9 @@ namespace FungusToast.Simulation.Models
         public int BoardHeight { get; set; }
         public int ToxicTileCount { get; set; }
         public int NutrientPatchCount { get; set; }
+        public bool IntroductoryRotEnabled { get; set; }
+        public IReadOnlyList<int> RotTileIds { get; set; } = Array.Empty<int>();
+        public float RotAdjacentDeathChance { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;
         public ParityInvariantReport? ParityInvariantReport { get; set; }
         public Dictionary<int, (int x, int y)> StartingPositionsByPlayerId { get; set; } = new();
@@ -93,6 +96,7 @@ namespace FungusToast.Simulation.Models
                         : new Dictionary<DeathReason, int>(),
                     DeathsFromRandomness = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Randomness),
                     DeathsFromAge = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Age),
+                    DeathsFromRot = tracking.GetCellDeathCount(player.PlayerId, DeathReason.Rot),
 
                     // --- Mutation tree ---
                     MutationLevels = player.PlayerMutations.ToDictionary(
@@ -228,6 +232,8 @@ namespace FungusToast.Simulation.Models
                 SporesFromMycotoxinTracer = tracking.GetMycotoxinSporeDropCounts(),
                 ToxicTileCount = board.GetAllCells().Count(c => c.IsToxin),
                 NutrientPatchCount = tracking.GetNutrientPatchesPlaced(),
+                RotTileIds = board.RotTileIds.OrderBy(id => id).ToArray(),
+                RotAdjacentDeathChance = board.RotAdjacentDeathChance,
                 TrackingContext = tracking,
                 PerimeterProliferatorGrowthsByPlayer = tracking.GetAllPerimeterProliferatorGrowths()
             };

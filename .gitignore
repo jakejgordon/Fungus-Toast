@@ -47,6 +47,14 @@ FungusToast.Unity/Assets/Resources/PerformanceTestRunSettings.json.meta
 # === .NET BUILD OUTPUT (FungusToast.Core, Simulation) ===
 
 **/bin/
+# Keep the canonical Core DLL available after pulling (only this build artifact).
+!FungusToast.Core/bin/
+FungusToast.Core/bin/*
+!FungusToast.Core/bin/Debug/
+FungusToast.Core/bin/Debug/*
+!FungusToast.Core/bin/Debug/netstandard2.1/
+FungusToast.Core/bin/Debug/netstandard2.1/*
+!FungusToast.Core/bin/Debug/netstandard2.1/FungusToast.Core.dll
 **/obj/
 *.deps.json
 

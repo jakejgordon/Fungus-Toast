@@ -438,6 +438,7 @@ namespace FungusToast.Simulation
                     runMetadata: runMetadata,
                     exportParquet: config.ExportParquet,
                     enableNutrientPatches: config.EnableNutrientPatches,
+                    enableIntroductoryRot: config.EnableIntroductoryRot,
                     enableMycovariantDraft: config.EnableMycovariantDraft,
                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                     startingPositionOverride: config.StartingPositionOverride,
@@ -536,6 +537,7 @@ namespace FungusToast.Simulation
                                     runMetadata: runMetadata,
                                     exportParquet: config.ExportParquet,
                                     enableNutrientPatches: config.EnableNutrientPatches,
+                                    enableIntroductoryRot: config.EnableIntroductoryRot,
                                     enableMycovariantDraft: config.EnableMycovariantDraft,
                                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                                     startingPositionOverride: config.StartingPositionOverride,
@@ -794,6 +796,7 @@ namespace FungusToast.Simulation
                     Systems = new ExperimentSystems
                     {
                         NutrientPatchesEnabled = config.EnableNutrientPatches,
+                        IntroductoryRotEnabled = config.EnableIntroductoryRot,
                         MycovariantDraftEnabled = config.EnableMycovariantDraft,
                         StartingAdaptationsEnabled = config.EnableStartingAdaptations,
                         StartingAdaptations = config.StartingAdaptationIds?
@@ -1298,6 +1301,9 @@ namespace FungusToast.Simulation
                     case "--resume":
                         config.Resume = true;
                         break;
+                    case "--introductory-rot":
+                        config.EnableIntroductoryRot = true;
+                        break;
                     case "--no-nutrient-patches":
                     case "--disable-nutrient-patches":
                         config.EnableNutrientPatches = false;
@@ -1545,6 +1551,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --parquet                Export canonical Parquet datasets (default: enabled)");
             Console.WriteLine("  --no-parquet             Disable Parquet export");
             Console.WriteLine("  --resume                 Skip matching complete conditions; retry missing/failed/interrupted ones");
+            Console.WriteLine("  --introductory-rot       Place a static introductory rot patch (default: off)");
             Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
             Console.WriteLine("  --no-starting-adaptations Disable all baseline and explicit starting Adaptations");
@@ -1596,6 +1603,7 @@ namespace FungusToast.Simulation
             public StrategySelectionPolicy StrategySelectionPolicy { get; set; }
             public bool ExportParquet { get; set; }
             public bool Resume { get; set; }
+            public bool EnableIntroductoryRot { get; set; }
             public bool EnableNutrientPatches { get; set; }
             public bool EnableMycovariantDraft { get; set; }
             public bool EnableStartingAdaptations { get; set; }

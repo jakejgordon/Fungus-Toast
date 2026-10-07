@@ -61,6 +61,7 @@ namespace FungusToast.Simulation.Export
                 actualGamesExported = batchResult.GameResults.Count,
                 metadata.BoardWidth,
                 metadata.BoardHeight,
+                introductoryRotEnabled = metadata.Condition.Systems.IntroductoryRotEnabled,
                 files = new
                 {
                     games = wroteGames ? Path.GetFileName(gamesPath) : null,
@@ -186,6 +187,9 @@ namespace FungusToast.Simulation.Export
                     BlockedTileCount = metadata.Condition.Board.BlockedTileIds.Count,
                     BlockedTileIds = string.Join(",", metadata.Condition.Board.BlockedTileIds.OrderBy(id => id)),
                     PlayerCount = game.PlayerResults.Count,
+                    IntroductoryRotEnabled = game.IntroductoryRotEnabled,
+                    RotTileCount = game.RotTileIds.Count,
+                    RotAdjacentDeathChance = game.RotAdjacentDeathChance,
                     NutrientPatchesEnabled = metadata.Condition.Systems.NutrientPatchesEnabled,
                     MycovariantDraftEnabled = metadata.Condition.Systems.MycovariantDraftEnabled,
                     StartingPositionMode = GetStartingPositionMode(metadata.Condition.Positioning),
@@ -201,6 +205,7 @@ namespace FungusToast.Simulation.Export
                     WinnerPlayerIds = string.Join("|", game.WinnerIds.OrderBy(id => id)),
                     ToxicTileCount = game.ToxicTileCount,
                     NutrientPatchCount = game.NutrientPatchCount,
+                    RotTileIds = string.Join(",", game.RotTileIds),
                     ParityAllPassed = game.ParityInvariantReport?.AllPassed ?? true
                 });
             }
@@ -286,6 +291,9 @@ namespace FungusToast.Simulation.Export
                         BoardGeometryFingerprint = boardFingerprint,
                         BlockedTileCount = metadata.Condition.Board.BlockedTileIds.Count,
                         PlayerCount = metadata.Condition.PlayerCount,
+                        IntroductoryRotEnabled = game.IntroductoryRotEnabled,
+                        RotTileCount = game.RotTileIds.Count,
+                        RotAdjacentDeathChance = game.RotAdjacentDeathChance,
                         NutrientPatchesEnabled = metadata.Condition.Systems.NutrientPatchesEnabled,
                         MycovariantDraftEnabled = metadata.Condition.Systems.MycovariantDraftEnabled,
                         DominantOpponentTheme = dominantOpponentTheme,
@@ -301,6 +309,7 @@ namespace FungusToast.Simulation.Export
                         FinalRank = FinalPlacementCalculator.GetCompetitionRank(game.PlayerResults, player.PlayerId),
                         PlayersTiedAtFinalRank = FinalPlacementCalculator.GetTieCount(game.PlayerResults, player.PlayerId),
                         DeadCells = player.DeadCells,
+                        DeathsFromRot = player.DeathsFromRot,
                         EndGameToxinCells = player.EndGameToxinCells,
                         NutrientClaims = player.NutrientPatchesConsumed,
                         NutrientMutationPointsEarned = player.NutrientMutationPointsEarned,

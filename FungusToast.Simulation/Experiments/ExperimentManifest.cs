@@ -157,6 +157,7 @@ public sealed class ExperimentStrategyFilter
 
 public sealed class ExperimentSystems
 {
+    public bool IntroductoryRotEnabled { get; init; }
     public required bool NutrientPatchesEnabled { get; init; }
     public required bool MycovariantDraftEnabled { get; init; }
     public bool StartingAdaptationsEnabled { get; init; } = true;

@@ -30,6 +30,7 @@ namespace FungusToast.Simulation.Models
         public Dictionary<DeathReason, int> DeathsByReason { get; set; } = new();
 
         public int DeathsFromRandomness { get; set; }
+        public int DeathsFromRot { get; set; }
         public int DeathsFromAge { get; set; }
 
         // ──────────────
