@@ -1,5 +1,15 @@
 # Fungus-Toast Worklog
 
+## Rot idle motion follow-up — 2026-10-07
+
+Jake likes the connected surface but reports no visible pulse/drift in Unity. Source at 34638080 used shader-global scaled `_Time.y`, ±2.5% brightness/9s, and 0.018-cell drift/23s: at 32px/cell the peak horizontal motion was only about 0.19px/s. The precise runtime cause (faint motion versus frozen shader time) is not proven; no Editor playback trace is available.
+
+Patched presentation only: `_RotVisualTime` comes explicitly from `Time.unscaledTime` every LateUpdate/Refresh before the clean-mesh return; pulse is ±5.5%/6s and per-axis drift 0.04 cells/12s. The silhouette, original art, neighbor masks, mesh rebuild policy, and gameplay rules remain unchanged. The clock does not follow pause-menu or Time Lapse gameplay scaling.
+
+Validation: CPU reference passed 22,528 edge comparisons plus 601 temporal samples, 11.0% peak-to-peak brightness swing, and 1.87px texture travel over 3s at 32px/cell; source assertions cover both shader clock consumers and clock update placement. This is not actual Unity C#/shader compilation or playback evidence. Core build passed with 0 errors/warnings; refreshed canonical/plugin artifacts, and scoped diff checks passed.
+
+Pending Jake: refresh/recompile, restart Play if an old runtime material is retained, and watch stage-5 rot for 12 seconds with the Editor unpaused; check idle rounds, pause menu and Time Lapse. If it still looks static, inspect the runtime Rot surface material’s `_RotVisualTime` in Inspector Debug mode (should increase) and report Console shader/fallback errors. Do not call the runtime animation bug confirmed fixed until Jake verifies movement.
+
 ## Organic connected rot surface — 2026-10-06
 
 Jake approved replacing square rot tiles with connected, irregular patches plus subtle pulse/drift. Added a code-created mesh and Resource shader using the existing five PNGs unchanged. Board-space texture mixing eliminates per-cell texture rims; exposed edges are feathered/noisy and convex corners rounded, with diagonal-neighbor endpoint distances preserving continuity at concave bends/holes. GPU-only animation is ±2.5% brightness over 9 seconds and 0.018-cell drift on a 23-second base cycle; silhouette and Core occupancy/rules stay fixed. Static Tile fallback logs missing/unsupported shader. Mesh rebuilds only when dirty, clears on game reset/disable, and releases owned runtime assets on destruction.

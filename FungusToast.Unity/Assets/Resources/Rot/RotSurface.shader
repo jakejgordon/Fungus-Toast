@@ -12,10 +12,11 @@ Shader "FungusToast/RotSurface"
         _EdgeRoughness ("Edge irregularity (cells)", Range(0, 0.1)) = 0.035
         _EdgeFeather ("Edge softness (cells)", Range(0.001, 0.1)) = 0.025
         _TextureWarp ("Organic texture warp (cells)", Range(0, 0.3)) = 0.18
-        _PulseAmplitude ("Brightness pulse", Range(0, 0.1)) = 0.025
-        _PulsePeriod ("Pulse period (seconds)", Float) = 9
-        _DriftAmplitude ("Texture drift (cells)", Range(0, 0.1)) = 0.018
-        _DriftPeriod ("Drift period (seconds)", Float) = 23
+        [HideInInspector] _RotVisualTime ("Presentation time", Float) = 0
+        _PulseAmplitude ("Brightness pulse", Range(0, 0.1)) = 0.055
+        _PulsePeriod ("Pulse period (seconds)", Float) = 6
+        _DriftAmplitude ("Texture drift (cells)", Range(0, 0.1)) = 0.04
+        _DriftPeriod ("Drift period (seconds)", Float) = 12
     }
     SubShader
     {
@@ -33,6 +34,7 @@ Shader "FungusToast/RotSurface"
             #include "UnityCG.cginc"
             sampler2D _Rot1, _Rot2, _Rot3, _Rot4, _Rot5;
             float _CornerRadius, _EdgeInset, _EdgeRoughness, _EdgeFeather, _TextureWarp;
+            float _RotVisualTime;
             float _PulseAmplitude, _PulsePeriod, _DriftAmplitude, _DriftPeriod;
             struct appdata
             {
@@ -92,7 +94,7 @@ Shader "FungusToast/RotSurface"
                 // Silhouette is stationary: motion cannot imply spreading or expose cell seams.
                 float inset = _EdgeInset + _EdgeRoughness * Noise(i.boardUV * 7.0);
                 float alpha = smoothstep(0, _EdgeFeather, BoundaryDistance(i.localUV, i.edges, i.diagonals) - inset);
-                float driftTime = _Time.y * 6.2831853 / max(_DriftPeriod, 0.1);
+                float driftTime = _RotVisualTime * 6.2831853 / max(_DriftPeriod, 0.1);
                 float2 p = i.boardUV * 0.85 + _DriftAmplitude * float2(sin(driftTime), cos(driftTime * 0.83));
                 // Mirror-repeat the opaque central art, avoiding transparent rectangular PNG rims.
                 p += _TextureWarp * (float2(Noise(i.boardUV * 0.7), Noise(i.boardUV * 0.7 + 41.3)) - 0.5);
@@ -107,7 +109,7 @@ Shader "FungusToast/RotSurface"
                 float wc = saturate(1-abs(variant-2)), wd = saturate(1-abs(variant-3)), we = saturate(1-abs(variant-4));
                 float weight = wa*a.a + wb*b.a + wc*c.a + wd*d.a + we*e.a;
                 float3 color = (wa*a.rgb*a.a + wb*b.rgb*b.a + wc*c.rgb*c.a + wd*d.rgb*d.a + we*e.rgb*e.a) / max(weight, 0.001);
-                float pulse = 1.0 + _PulseAmplitude * sin(_Time.y * 6.2831853 / max(_PulsePeriod, 0.1) + Noise(i.boardUV * 0.18) * 2.0);
+                float pulse = 1.0 + _PulseAmplitude * sin(_RotVisualTime * 6.2831853 / max(_PulsePeriod, 0.1) + Noise(i.boardUV * 0.18) * 2.0);
                 return fixed4(color * pulse, alpha);
             }
             ENDCG

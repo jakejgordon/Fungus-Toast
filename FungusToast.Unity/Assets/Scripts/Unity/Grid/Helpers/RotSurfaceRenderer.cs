@@ -9,6 +9,7 @@ namespace FungusToast.Unity.Grid.Helpers
     /// <summary>Owns a continuous, shader-animated rot surface; never changes board state.</summary>
     internal sealed class RotSurfaceRenderer
     {
+        private static readonly int VisualTimeId = Shader.PropertyToID("_RotVisualTime");
         private readonly Tilemap tilemap;
         private readonly GameObject surface;
         private readonly Mesh mesh;
@@ -79,6 +80,9 @@ namespace FungusToast.Unity.Grid.Helpers
         public void Refresh(GameBoard board)
         {
             if (!IsAvailable) return;
+            // Idle presentation must tick even when the mesh is clean or gameplay time is paused.
+            // Match other ambient board effects: independent of Time Lapse and Time.timeScale.
+            material.SetFloat(VisualTimeId, Time.unscaledTime);
             if (!ReferenceEquals(renderedBoard, board)) dirty = true;
             if (!dirty) return;
             dirty = false;

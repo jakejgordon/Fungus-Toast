@@ -46,6 +46,13 @@ def alpha(cells, x, y, u, v):
     t = min(1, max(0, (d-inset)/FEATHER))
     return t*t*(3-2*t)
 
+def animation(seconds, bx, by):
+    phase = seconds*2*math.pi/max(setting('_DriftPeriod'),.1)
+    drift = setting('_DriftAmplitude')
+    dx,dy = drift*math.sin(phase), drift*math.cos(phase*.83)
+    pulse = 1 + setting('_PulseAmplitude')*math.sin(seconds*2*math.pi/max(setting('_PulsePeriod'),.1) + noise(bx*.18,by*.18)*2)
+    return dx,dy,pulse
+
 def checks():
     # Exhaust every surrounding arrangement for two horizontal neighbors, then transpose.
     fixed = {(1,1),(2,1)}
@@ -65,17 +72,29 @@ def checks():
     filled = {(x,y) for x in range(-1,2) for y in range(-1,2)}
     for u,v in itertools.product((0,.5,1), repeat=2):
         assert alpha(filled,0,0,u,v) == 1
-    assert 0 < setting('_PulseAmplitude') <= .03
-    assert setting('_PulsePeriod') >= 8
-    assert 0 < setting('_DriftAmplitude') <= .02
-    assert setting('_DriftPeriod') >= 20
+    assert .04 <= setting('_PulseAmplitude') <= .06
+    assert 5 <= setting('_PulsePeriod') <= 8
+    assert .03 <= setting('_DriftAmplitude') <= .05
+    assert 10 <= setting('_DriftPeriod') <= 16
+    frames = [animation(t/10,4.5,3.5) for t in range(601)]
+    pulses = [f[2] for f in frames]
+    assert max(pulses)-min(pulses) >= .08
+    assert all(abs(f[0]) <= setting('_DriftAmplitude') and abs(f[1]) <= setting('_DriftAmplitude') for f in frames)
+    a,b = animation(0,4.5,3.5), animation(3,4.5,3.5)
+    travel_pixels = math.hypot(b[0]-a[0],b[1]-a[1])*32/.85
+    assert travel_pixels > 1
+    assert '_Time.y' not in SOURCE
+    assert SOURCE.count('_RotVisualTime *') == 2
+    clock_source = (ROOT/'FungusToast.Unity/Assets/Scripts/Unity/Grid/Helpers/RotSurfaceRenderer.cs').read_text()
+    assert clock_source.index('material.SetFloat(VisualTimeId, Time.unscaledTime)') < clock_source.index('if (!dirty) return;')
+    print(f'Temporal reference: {len(frames)} frames; brightness swing {100*(max(pulses)-min(pulses)):.1f}%; 3-second drift {travel_pixels:.2f}px at 32px/cell.')
     silhouette = SOURCE.split('float alpha =',1)[1].split(';',1)[0]
-    assert '_Time' not in silhouette
+    assert '_Time' not in silhouette and '_RotVisualTime' not in silhouette
     assert 'mesh.SetUVs(3, missingDiagonals)' in (ROOT/'FungusToast.Unity/Assets/Scripts/Unity/Grid/Helpers/RotSurfaceRenderer.cs').read_text()
     print(f'PASS: {comparisons} shared-edge alpha comparisons; isolated/interior coverage; stationary silhouette; restrained animation defaults.')
     print('CPU reference only: Unity C# and GPU shader compile/render still require Editor validation.')
 
-def preview(path):
+def preview(path, seconds=0):
     from PIL import Image
     size = 32
     cells = {(x,y) for x in range(18) for y in range(8)
@@ -89,8 +108,9 @@ def preview(path):
             if (x,y) not in cells: continue
             opacity = alpha(cells,x,y,bx-x,by-y)
             def mirrored(t): return .18 + .64*(1-abs((t*.5%1)*2-1))
-            p = bx*.85 + setting('_TextureWarp')*(noise(bx*.7,by*.7)-.5)
-            q = by*.85 + setting('_TextureWarp')*(noise(bx*.7+41.3,by*.7+41.3)-.5)
+            dx,dy,pulse = animation(seconds,bx,by)
+            p = dx + bx*.85 + setting('_TextureWarp')*(noise(bx*.7,by*.7)-.5)
+            q = dy + by*.85 + setting('_TextureWarp')*(noise(bx*.7+41.3,by*.7+41.3)-.5)
             phases = [(p,q),(-q+.37,p+.61),(p+.73,q+.19),(q+.23,-p+.83),(p+.57,q+.47)]
             variant = noise(bx*.23+13.7,by*.23+13.7)*4
             accum = [0.,0.,0.]; weight = 0.
@@ -102,7 +122,7 @@ def preview(path):
                 weight += w
                 for channel in range(3): accum[channel] += sample[channel]*w
             background = (217,197,151)
-            color = tuple(round(accum[c]/max(weight,.001)*opacity + background[c]*(1-opacity)) for c in range(3))
+            color = tuple(round(min(255,accum[c]/max(weight,.001)*pulse)*opacity + background[c]*(1-opacity)) for c in range(3))
             result.putpixel((px,py),color)
     path = Path(path)
     path.parent.mkdir(parents=True,exist_ok=True)
@@ -112,6 +132,7 @@ def preview(path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--preview')
+    parser.add_argument('--time',type=float,default=0,help='Presentation seconds for the CPU preview.')
     args = parser.parse_args()
     checks()
-    if args.preview: preview(args.preview)
+    if args.preview: preview(args.preview,args.time)
