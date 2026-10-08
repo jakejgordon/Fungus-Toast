@@ -39,14 +39,28 @@ internal static class PlayerFacingStrategies
                 }
 
                 var displayName = DisplayName(definition);
+                // The intended difficulty travels with the name: an Easy opponent may be weak on
+                // purpose, which changes whether new content belongs in it.
+                var context = Difficulty(definition) is { } difficulty ? $"{set}, {difficulty}" : set.ToString();
                 var label = sharedDisplayNames.Contains(displayName)
-                    ? $"{displayName} [`{definition.Metadata.StrategyName}`] ({set})"
-                    : $"{displayName} ({set})";
+                    ? $"{displayName} [`{definition.Metadata.StrategyName}`] ({context})"
+                    : $"{displayName} ({context})";
                 entries.Add(new Entry(definition, strategy, set, label));
             }
         }
 
         return entries;
+    }
+
+    private static string? Difficulty(StrategyDefinition definition)
+    {
+        var metadata = definition.Metadata;
+        if (metadata.CampaignDifficulty.HasValue)
+        {
+            return metadata.CampaignDifficulty.Value.ToString();
+        }
+
+        return metadata.IntendedBands.Count > 0 ? string.Join("/", metadata.IntendedBands) : null;
     }
 
     private static string DisplayName(StrategyDefinition definition) =>

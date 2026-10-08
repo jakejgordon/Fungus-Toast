@@ -66,6 +66,38 @@ Match the other effects: 44.1kHz, 16-bit, mono WAV (record at 48kHz if easier;
 it just needs resampling). The level is `MoldinessRewardClaimVolume` in
 `GameManager.cs`.
 
+## TODO — Bring Filament Overdrive and Substrate Ecology into growth AI builds
+
+From Jake's first coverage-report spot check (2026-10-07). Filament Overdrive is
+the newest growth mutation, and Substrate Ecology the newest category. Most AI
+strategies predate both and were never updated. The coverage review now records
+AddForEvaluation decisions for Filament Overdrive in Overextender (all four
+Training variants), Putrid Tendrils (Campaign and Proven), Rebirth Furnace
+(Campaign and Proven), Verdant Reclaimer (Campaign and Proven), and Wildfire
+Bloom. Their follow-up is this task.
+
+- **Prerequisites shape the cost.** Filament Overdrive needs Creeping Mold 3,
+  Autolytic Surge 1, and Aerated Frontier 5. Adding it pulls a surge and the
+  root of Substrate Ecology into each build.
+- **Revisit, don't ignore, the 2026-08-30 call.** c9af39d kept Putrid
+  Tendrils, Wildfire Bloom, and Gravebloom (campaign) off Filament Overdrive as
+  an "unprofitable detour". It is pinned by
+  Campaign_strategies_do_not_take_an_unprofitable_filament_detour. Evaluate
+  first; change or delete that test only when the evidence supports it.
+- **Detrital Enzymes and the rest of Substrate Ecology** should enter some builds
+  (Jake). The coverage report lists 12 Detrital Enzymes candidates, mostly
+  growth-led plans that already leave corpses. Choose which strategies get it
+  as part of this work, and record the decisions.
+- **Easy and Training opponents stay weak on purpose.** Add content to their
+  theme only where it does not raise their difficulty.
+
+Steps: build a Testing candidate per strategy (or per identical-plan group)
+with Filament Overdrive and any Ecology goals sequenced after its existing
+engine. Run the normal evidence ladder against the parent. Promote what
+passes, keeping each strategy's intended difficulty. Then update the coverage
+decisions: adopted content leaves the review on its own, and rejected
+evaluations become NotApplicable with the evidence as rationale.
+
 ## TODO — Promote the archetype harness and themed Testing roster
 
 **Roster pruned 2026-10-06** (Jake). 113 strategies that no campaign stage, the

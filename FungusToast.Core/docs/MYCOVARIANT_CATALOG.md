@@ -59,7 +59,7 @@ One-time on draft: gain 1 free level of a random Tier 5 mutation, ignoring prere
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Rejuvenation Engine (Campaign), Tempo Harvester (Campaign), and 6 more |
+| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Rejuvenation Engine (Campaign, Medium), Tempo Harvester (Campaign, Medium), and 6 more |
 | In category sets of | 13 strategies |
 
 ### Plasmid Bounty I
@@ -77,7 +77,7 @@ One-time on draft: absorb foreign plasmids and gain 7 mutation points.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Scavenger Court (Campaign), Tempo Harvester (Campaign), and 6 more |
+| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Scavenger Court (Campaign, Medium), Tempo Harvester (Campaign, Medium), and 6 more |
 | In category sets of | 13 strategies |
 
 ### Plasmid Bounty II
@@ -95,7 +95,7 @@ One-time on draft: absorb foreign plasmids and gain 11 mutation points.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Scavenger Court (Campaign), Tempo Harvester (Campaign), and 6 more |
+| Preferred by | 14: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Scavenger Court (Campaign, Medium), Tempo Harvester (Campaign, Medium), and 6 more |
 | In category sets of | 13 strategies |
 
 ### Plasmid Bounty III
@@ -113,7 +113,7 @@ One-time on draft: absorb foreign plasmids and gain 15 mutation points.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 17: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Pressure Bloom (Campaign), Rejuvenation Engine (Campaign), and 9 more |
+| Preferred by | 17: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Pressure Bloom (Campaign, Easy), Rejuvenation Engine (Campaign, Medium), and 9 more |
 | In category sets of | 13 strategies |
 
 ## Growth
@@ -151,7 +151,7 @@ Before each Growth Phase, colonize, reclaim, infest, or overgrow up to 2 tiles f
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 2: Needle Reclaimer (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign) |
+| Preferred by | 2: Needle Reclaimer (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training) |
 | In category sets of | 20 strategies |
 
 ### Aggressotropic Conduit III
@@ -169,7 +169,7 @@ Before each Growth Phase, colonize, reclaim, infest, or overgrow up to 3 tiles f
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 9: Needle Reclaimer (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Pressure Bloom (Campaign), Pulsar Sprout (Campaign), Resilient Canopy (Campaign), Rhizolith Crown (Campaign), Rooted Canopy (Campaign), Voltaic Bloom [`AI12`] (Campaign), and 1 more |
+| Preferred by | 9: Needle Reclaimer (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Pressure Bloom (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Canopy (Campaign, Easy), Rhizolith Crown (Campaign, Training), Rooted Canopy (Campaign, Easy), Voltaic Bloom [`AI12`] (Campaign, Elite), and 1 more |
 | In category sets of | 20 strategies |
 
 ### Corner Conduit I
@@ -223,7 +223,7 @@ Before each Growth Phase, colonize, reclaim, infest, or overgrow up to 4 tiles f
 | Uses | BoardEdge |
 | Creates | — |
 | Removes | — |
-| Preferred by | 4: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Pressure Bloom (Campaign), Rhizolith Crown (Campaign), Verdant Reclaimer (Campaign) |
+| Preferred by | 4: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Pressure Bloom (Campaign, Easy), Rhizolith Crown (Campaign, Training), Verdant Reclaimer (Campaign, Elite) |
 | In category sets of | 20 strategies |
 
 ### Hyphal Draw
@@ -241,7 +241,7 @@ One-time on draft: trace from your starting spore toward the enemy start with th
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 7: Needle Reclaimer (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Pressure Bloom (Campaign), Pulsar Sprout (Campaign), Verdant Reclaimer (Campaign), Voltaic Bloom [`AI12`] (Campaign), Wildfire Bloom (Campaign) |
+| Preferred by | 7: Needle Reclaimer (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Pressure Bloom (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Verdant Reclaimer (Campaign, Elite), Voltaic Bloom [`AI12`] (Campaign, Elite), Wildfire Bloom (Campaign, Easy) |
 | In category sets of | 20 strategies |
 
 ### Perimeter Proliferator
@@ -259,7 +259,7 @@ For the rest of the game, your growth gets a 2.5x multiplier within 2 tiles of t
 | Uses | BoardEdge |
 | Creates | — |
 | Removes | — |
-| Preferred by | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Pressure Bloom (Campaign), Resilient Canopy (Campaign), Rooted Canopy (Campaign), Verdant Reclaimer (Campaign), Voltaic Bloom [`AI12`] (Campaign), Wildfire Bloom (Campaign) |
+| Preferred by | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Pressure Bloom (Campaign, Easy), Resilient Canopy (Campaign, Easy), Rooted Canopy (Campaign, Easy), Verdant Reclaimer (Campaign, Elite), Voltaic Bloom [`AI12`] (Campaign, Elite), Wildfire Bloom (Campaign, Easy) |
 | In category sets of | 20 strategies |
 
 ## Resistance
@@ -279,7 +279,7 @@ For the rest of the game, after each Growth Phase, each of your non-Resistant li
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 9: Grave Bastion (Campaign), Mimic Bastion (Campaign), Pulsar Sprout (Campaign), Resilient Canopy (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Rhizolith Crown (Campaign), Rooted Canopy (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), and 1 more |
+| Preferred by | 9: Grave Bastion (Campaign, Easy), Mimic Bastion (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Canopy (Campaign, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Rhizolith Crown (Campaign, Training), Rooted Canopy (Campaign, Easy), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), and 1 more |
 | In category sets of | 8 strategies |
 
 ### Mycelial Bastion I
@@ -297,7 +297,7 @@ One-time on draft: select up to 8 living cells to become Resistant. Resistant ce
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 1: Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign) |
+| Preferred by | 1: Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training) |
 | In category sets of | 8 strategies |
 
 ### Mycelial Bastion II
@@ -315,7 +315,7 @@ One-time on draft: select up to 11 living cells to become Resistant. Resistant c
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 1: Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign) |
+| Preferred by | 1: Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training) |
 | In category sets of | 8 strategies |
 
 ### Mycelial Bastion III
@@ -333,7 +333,7 @@ One-time on draft: select up to 16 living cells to become Resistant. Resistant c
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 6: Grave Bastion (Campaign), Mimic Bastion (Campaign), Pulsar Sprout (Campaign), Resilient Canopy (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Rooted Canopy (Campaign) |
+| Preferred by | 6: Grave Bastion (Campaign, Easy), Mimic Bastion (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Canopy (Campaign, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Rooted Canopy (Campaign, Easy) |
 | In category sets of | 8 strategies |
 
 ### Septal Alarm
@@ -351,7 +351,7 @@ For the rest of the game, whenever one of your living cells dies, each of your n
 | Uses | OwnCellDeaths |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Preferred by | 9: Grave Bastion (Campaign), Mimic Bastion (Campaign), Pulsar Sprout (Campaign), Resilient Canopy (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Rhizolith Crown (Campaign), Rooted Canopy (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), and 1 more |
+| Preferred by | 9: Grave Bastion (Campaign, Easy), Mimic Bastion (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Canopy (Campaign, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Rhizolith Crown (Campaign, Training), Rooted Canopy (Campaign, Easy), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), and 1 more |
 | In category sets of | 8 strategies |
 
 ### Septal Seal
@@ -443,7 +443,7 @@ One-time on draft: launch toxin spores to toxify up to 22 empty tiles.
 | Uses | — |
 | Creates | OwnToxins |
 | Removes | — |
-| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training) |
 | In category sets of | 2 strategies |
 
 ### Chemotactic Mycotoxins
@@ -461,7 +461,7 @@ For the rest of the game, at the end of each Decay Phase, each of your toxins wi
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training) |
 | In category sets of | 2 strategies |
 
 ### Cytolytic Burst
@@ -497,7 +497,7 @@ One-time on draft: extend all of your current toxins by 4 Growth Cycles. For the
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign) |
+| Preferred by | 1: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training) |
 | In category sets of | 2 strategies |
 
 ### Jetting Mycelium I
@@ -571,7 +571,7 @@ For the rest of the game, whenever one of your living cells dies, reclaim one or
 | Uses | OwnCellDeaths, OwnDeadCells |
 | Creates | — |
 | Removes | — |
-| Preferred by | 10: Grave Bastion (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Mimic Bastion (Campaign), Needle Reclaimer (Campaign), Rejuvenation Engine (Campaign), Scavenger Court (Campaign), Tempo Harvester (Campaign), and 2 more |
+| Preferred by | 10: Grave Bastion (Campaign, Easy), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Mimic Bastion (Campaign, Easy), Needle Reclaimer (Campaign, Training), Rejuvenation Engine (Campaign, Medium), Scavenger Court (Campaign, Medium), Tempo Harvester (Campaign, Medium), and 2 more |
 | In category sets of | 7 strategies |
 
 ### Reclamation Rhizomorphs
@@ -589,7 +589,7 @@ For the rest of the game, whenever your reclaim attempt fails, immediately make 
 | Uses | OwnDeadCells |
 | Creates | — |
 | Removes | — |
-| Preferred by | 10: Grave Bastion (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Mimic Bastion (Campaign), Needle Reclaimer (Campaign), Rejuvenation Engine (Campaign), Scavenger Court (Campaign), Tempo Harvester (Campaign), and 2 more |
+| Preferred by | 10: Grave Bastion (Campaign, Easy), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Mimic Bastion (Campaign, Easy), Needle Reclaimer (Campaign, Training), Rejuvenation Engine (Campaign, Medium), Scavenger Court (Campaign, Medium), Tempo Harvester (Campaign, Medium), and 2 more |
 | In category sets of | 7 strategies |
 
 ## Defense

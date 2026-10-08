@@ -18,9 +18,48 @@ internal static class ContentCoverageAnalyzer
     private const int SameJobTopPoints = 2;
     private const int SameJobLeadingPoints = 1;
     private const int LeadingCapabilityCount = 3;
-    private const int AmplifiesPoints = 1;
+    // An amplifier directly strengthens something the plan already invested in (Filament
+    // Overdrive for a Tendril plan), so it is a full candidate on its own.
+    private const int AmplifiesPoints = 2;
     private const int FeedsPlanPoints = 2;
     private const int FedByPlanPoints = 1;
+    // Salvage: the content uses a condition the plan already creates (Detrital Enzymes for a plan
+    // that leaves corpses). Safe to suggest, because it never asks the plan to make more of it.
+    private const int SalvagesPlanOutputPoints = 1;
+    // Related job: same capability family as the plan's top capability (conditional growth for a
+    // growth-led plan), but not the same capability.
+    private const int RelatedJobPoints = 1;
+
+    private static readonly Dictionary<ContentCapability, string> CapabilityFamilies = new()
+    {
+        [ContentCapability.BaseGrowth] = "Territory",
+        [ContentCapability.DiagonalGrowth] = "Territory",
+        [ContentCapability.ConditionalGrowth] = "Territory",
+        [ContentCapability.RemotePlacement] = "Territory",
+        [ContentCapability.Repositioning] = "Territory",
+        [ContentCapability.DecayResistance] = "Survival",
+        [ContentCapability.ResistantCells] = "Survival",
+        [ContentCapability.ToxinCleanup] = "Survival",
+        [ContentCapability.SelfReclamation] = "Death and corpses",
+        [ContentCapability.CorpseCapture] = "Death and corpses",
+        [ContentCapability.CorpseDenial] = "Death and corpses",
+        [ContentCapability.Composting] = "Death and corpses",
+        [ContentCapability.ToxinPlacement] = "Offense",
+        [ContentCapability.ToxinLongevity] = "Offense",
+        [ContentCapability.ToxinMobility] = "Offense",
+        [ContentCapability.DirectKill] = "Offense",
+        [ContentCapability.LeaderFocus] = "Offense",
+        [ContentCapability.PointIncome] = "Economy",
+        [ContentCapability.FreeUpgrades] = "Economy",
+        [ContentCapability.TreePivot] = "Economy",
+    };
+
+    // Conditions that creating another condition implies: a dying cell leaves a corpse.
+    private static readonly Dictionary<BoardCondition, BoardCondition> ImpliedConditions = new()
+    {
+        [BoardCondition.OwnCellDeaths] = BoardCondition.OwnDeadCells,
+        [BoardCondition.EnemyCellsKilledByYou] = BoardCondition.EnemyDeadCells,
+    };
 
     // Plan weights: earlier goals define the plan more than later ones; a bridge goal (bought only
     // to the level a later goal requires) barely counts; surges and explicit Mycovariant
@@ -131,7 +170,7 @@ internal static class ContentCoverageAnalyzer
 
             Record(Needs, profile.NeededConditions, key);
             Record(Uses, profile.UsedConditions, key);
-            Record(Creates, profile.CreatedConditions, key);
+            Record(Creates, WithImplied(profile.CreatedConditions), key);
             Record(Removes, profile.RemovedConditions, key);
         }
 
@@ -240,6 +279,17 @@ internal static class ContentCoverageAnalyzer
                 score += SameJobLeadingPoints;
                 reasons.AddRange(leading.Select(capability => $"same job: {capability}"));
             }
+            else if (ranked.Count > 0)
+            {
+                var related = profile.Capabilities
+                    .Where(capability => CapabilityFamilies[capability] == CapabilityFamilies[ranked[0]])
+                    .ToList();
+                if (related.Count > 0)
+                {
+                    score += RelatedJobPoints;
+                    reasons.AddRange(related.Select(capability => $"related job: {capability} ({CapabilityFamilies[capability]}, like top {ranked[0]})"));
+                }
+            }
         }
 
         var amplified = profile.AmplifiedCapabilities.Where(plan.CapabilityWeights.ContainsKey).ToList();
@@ -249,7 +299,7 @@ internal static class ContentCoverageAnalyzer
             reasons.AddRange(amplified.Select(capability => $"amplifies: {capability}"));
         }
 
-        var feeds = profile.CreatedConditions.Where(plan.Needs.ContainsKey).ToList();
+        var feeds = WithImplied(profile.CreatedConditions).Where(plan.Needs.ContainsKey).ToList();
         if (feeds.Count > 0)
         {
             score += FeedsPlanPoints;
@@ -263,8 +313,22 @@ internal static class ContentCoverageAnalyzer
             reasons.AddRange(fedBy.Select(condition => $"fed by: needs {condition}"));
         }
 
+        var salvages = profile.UsedConditions.Where(plan.Creates.ContainsKey).ToList();
+        if (salvages.Count > 0)
+        {
+            score += SalvagesPlanOutputPoints;
+            reasons.AddRange(salvages.Select(condition => $"salvages: uses {condition} the plan creates"));
+        }
+
         return (score, reasons.OrderBy(r => r, StringComparer.Ordinal).ToList(), BuildContext(item, plan));
     }
+
+    private static IEnumerable<BoardCondition> WithImplied(IEnumerable<BoardCondition> conditions) =>
+        conditions
+            .SelectMany(condition => ImpliedConditions.TryGetValue(condition, out var implied)
+                ? new[] { condition, implied }
+                : new[] { condition })
+            .Distinct();
 
     private static IReadOnlyList<string> BuildContext(ContentItem item, Plan plan)
     {

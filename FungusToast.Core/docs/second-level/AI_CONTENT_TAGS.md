@@ -147,16 +147,20 @@ only to unlock Regenerative Hyphae is not a decay-resistance plan.
 | Reason | Fires when |
 |---|---|
 | Same job | Content shares a capability with the plan's leading capabilities. |
+| Related job | Content is in the same capability family as the plan's top capability, such as conditional growth for a growth-led plan. |
 | Amplifier | Content amplifies a capability the plan already has. |
 | Feeds the plan | Content creates a condition the plan **needs**. |
 | Fed by the plan | Content **needs** a condition the plan creates. |
+| Salvages | Content **uses** a condition the plan already creates, such as Detrital Enzymes for a plan that leaves corpses. |
 | Shared situation | Content and plan use or need the same condition, such as `OpenSpace`. Context only. |
 | Tension | Content removes a condition the plan needs or uses, or the plan removes one the content needs or uses. Context only, shown so a reviewer can record *Not applicable* with the reason. |
 
 **Rules that keep matches honest:**
 
-1. **Uses never drives a feeds/fed-by match.** Regenerative Hyphae does not
-   make Autolytic Surge a suggestion for every reclamation plan.
+1. **Never suggest making more of something only *used*.** A plan that uses
+   dead cells (Regenerative Hyphae) is never matched to content that creates
+   them (Autolytic Surge). The reverse is fine: content that uses dead cells is
+   suggested to a plan that already creates them (*salvages*).
 2. **Making something rarer is not tension.** Chronoresilient Cytoplasm
    (`DecayResistance`) means fewer cells die, but it removes no corpses, so it
    is never flagged against Regenerative Hyphae. Only an explicit **Removes**

@@ -31,12 +31,22 @@ scores the match:
 |---|---|
 | Same job as the plan's top capability | 2 |
 | Same job as one of the plan's next two capabilities | 1 |
-| Amplifies a capability the plan has | 1 |
+| Related job: same capability family as the plan's top capability (for example conditional growth for a growth-led plan), when neither line above applies | 1 |
+| Amplifies a capability the plan has | 2 |
 | Feeds the plan: creates a condition the plan **needs** | 2 |
 | Fed by the plan: **needs** a condition the plan creates | 1 |
+| Salvages: **uses** a condition the plan already creates | 1 |
 | Shared situation, or tension | 0; shown as context only |
 
 A match worth **2 points or more** is a candidate and needs a decision.
+Creating own cell deaths counts as creating own dead cells, and killing enemy
+cells counts as creating enemy dead cells. The capability families are the
+groups in the vocabulary table of `AI_CONTENT_TAGS.md`.
+
+Each strategy is shown with its intended difficulty, for example
+"Iron Shell (Campaign, Training)". An Easy or Training opponent may be weak on
+purpose, so content that fits its theme can still be `NotApplicable`; say so
+in the rationale.
 
 - **Already in the plan:** content the strategy already uses (as a goal, a
   surge priority, or an explicit Mycovariant preference) never needs one.
@@ -49,8 +59,14 @@ A match worth **2 points or more** is a candidate and needs a decision.
   (bought only to the level a later goal requires) barely counts.
   Category-derived Mycovariant sets do not count.
 
-When introduced on 2026-10-05, this produced 335 candidates over 61 items:
-about 2 per item on average, though a few popular items had many more.
+**Calibration, 2026-10-07.** Jake's first spot check found two gaps. Detrital
+Enzymes raised no question at all. Filament Overdrive missed growth strategies
+already built around Tendrils, such as Rebirth Furnace and the campaign Verdant
+Reclaimer. The fix raised amplifiers from 1 to 2 points and added the
+*related job* and *salvages* reasons. Because nothing had been reviewed yet, the
+baseline was re-imported under the new scoring, with import date 2026-10-07.
+The roster had already been pruned to 105 strategies. Result: 386 candidates
+over 61 items.
 
 ## The decision record
 
@@ -83,7 +99,7 @@ new CoverageDecision(
 | `AddForEvaluation` | Worth testing in this strategy. | A Testing candidate goes through the normal evidence ladder. The player-facing strategy is never edited by the record, and changes only with Jake's approval. |
 | `ConsiderLater` | Plausible, but not now. | Nothing. |
 | `NotApplicable` | The apparent fit is wrong. | The rationale says why. Tension shown in the report is often the reason. |
-| `Baseline` | Existed on 2026-10-05; never reviewed. | Nothing. It cannot be added after the import date. |
+| `Baseline` | Existed at the 2026-10-07 import; never reviewed. | Nothing. It cannot be added after the import date. |
 
 An AI session may record any disposition, marked `decidedBy: CoverageDecider.Agent`.
 

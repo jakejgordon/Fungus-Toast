@@ -9,7 +9,13 @@ internal static class CoverageReportWriter
         ContentCoverageAnalyzer.Result analysis,
         IReadOnlyDictionary<(string ContentKey, string StrategyId), CoverageDecision> decisions)
     {
+        // Strategies with identical plans share a candidate, but they can be decided differently
+        // (a deliberately weak variant may decline what its siblings adopt), so each row holds only
+        // strategies that share one decision record, or share having none.
         var rows = analysis.Candidates
+            .SelectMany(candidate => candidate.Strategies
+                .GroupBy(strategy => decisions.TryGetValue((candidate.Item.Content.Key, strategy.StrategyId), out var decision) ? decision : null)
+                .Select(group => candidate with { Strategies = group.ToList() }))
             .Select(candidate => (Candidate: candidate, Status: Classify(candidate, decisions)))
             .ToList();
 

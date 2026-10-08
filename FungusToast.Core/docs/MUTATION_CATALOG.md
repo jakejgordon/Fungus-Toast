@@ -72,7 +72,7 @@ Expands your colony faster in the four orthogonal directions (up / down / left /
 | Uses | — |
 | Creates | OwnCellDeaths |
 | Removes | — |
-| Goal in | 6: Beacon of Rot (Proven), Rhizolith (Campaign), Rhizolith Crown (Campaign), Scavenger Court (Campaign), Verdant Reclaimer (Campaign), Verdant Reclaimer (Proven) |
+| Goal in | 6: Beacon of Rot (Proven, Medium), Rhizolith (Campaign, Easy), Rhizolith Crown (Campaign, Training), Scavenger Court (Campaign, Medium), Verdant Reclaimer (Campaign, Elite), Verdant Reclaimer (Proven, Hard/Elite) |
 
 ### Tendril Northeast
 
@@ -91,7 +91,7 @@ Pushes growth toward the northeast (up and to the right), trading away some norm
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 3: Putrid Tendrils (Campaign), Putrid Tendrils (Proven), Wildfire Bloom (Campaign) |
+| Goal in | 3: Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), Wildfire Bloom (Campaign, Easy) |
 
 ### Tendril Northwest
 
@@ -110,7 +110,7 @@ Pushes growth toward the northwest (up and to the left), trading away some norma
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign), Putrid Tendrils (Campaign), Putrid Tendrils (Proven), Wildfire Bloom (Campaign) |
+| Goal in | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign, Training), Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), Wildfire Bloom (Campaign, Easy) |
 
 ### Tendril Southeast
 
@@ -129,7 +129,7 @@ Pushes growth toward the southeast (down and to the right), trading away some no
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 3: Putrid Tendrils (Campaign), Putrid Tendrils (Proven), Wildfire Bloom (Campaign) |
+| Goal in | 3: Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), Wildfire Bloom (Campaign, Easy) |
 
 ### Tendril Southwest
 
@@ -148,7 +148,7 @@ Pushes growth toward the southwest (down and to the left), trading away some nor
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 3: Putrid Tendrils (Campaign), Putrid Tendrils (Proven), Wildfire Bloom (Campaign) |
+| Goal in | 3: Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), Wildfire Bloom (Campaign, Easy) |
 
 ### Mycotropic Induction
 
@@ -167,7 +167,7 @@ Turns all Tendrils into stronger diagonal branches.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 18: Grave Bastion (Campaign), Measured Mycelium (Campaign), Measured Mycelium (Proven), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign), Pressure Bloom (Campaign), and 10 more |
+| Goal in | 18: Grave Bastion (Campaign, Easy), Measured Mycelium (Campaign, Easy), Measured Mycelium (Proven, Easy), Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign, Training), Pressure Bloom (Campaign, Easy), and 10 more |
 
 ### Creeping Mold
 
@@ -186,7 +186,7 @@ Failed growth can become repositioning, letting a cell crawl into the tile it mi
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 40: Adaptive Blight (Proven), Anabolic Gravebloom (Proven), Anabolic Regent (Proven), Anabolic Steward (Proven), Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), Gravebloom (Proven), and 32 more |
+| Goal in | 40: Adaptive Blight (Proven), Anabolic Gravebloom (Proven, Medium), Anabolic Regent (Proven, Hard/Elite), Anabolic Steward (Proven, Hard), Creeping Reclaimer (Campaign, Medium), Creeping Reclaimer (Proven, Medium), Gravebloom (Campaign, Medium), Gravebloom (Proven, Elite), and 32 more |
 
 ### Filament Overdrive
 
@@ -205,7 +205,7 @@ Successful Tendril growth can sacrifice its source cell to drive a longer diagon
 | Uses | OpenSpace |
 | Creates | OwnCellDeaths, OwnDeadCells |
 | Removes | — |
-| Goal in | 6: Anabolic Gravebloom (Proven), Creeping Reclaimer (Proven), Gravebloom (Proven), Regrowth Lattice (Proven), The Necrotoxin Gauntlet [`CMP_Bloom_CreepingRegression_Elite`] (Campaign), The Necrotoxin Gauntlet [`TST_AI10_CreepingRegression`] (Campaign) |
+| Goal in | 6: Anabolic Gravebloom (Proven, Medium), Creeping Reclaimer (Proven, Medium), Gravebloom (Proven, Elite), Regrowth Lattice (Proven, Hard), The Necrotoxin Gauntlet [`CMP_Bloom_CreepingRegression_Elite`] (Campaign, Medium), The Necrotoxin Gauntlet [`TST_AI10_CreepingRegression`] (Campaign, Easy) |
 
 ## CellularResilience
 
@@ -245,7 +245,7 @@ Lets your older cells stay stable longer before age-based decay starts.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 11: Grave Bastion (Campaign), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign), Measured Mycelium (Campaign), Measured Mycelium (Proven), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), and 3 more |
+| Goal in | 11: Grave Bastion (Campaign, Easy), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign, Training), Measured Mycelium (Campaign, Easy), Measured Mycelium (Proven, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), and 3 more |
 
 ### Regenerative Hyphae
 
@@ -264,7 +264,7 @@ Reclaims your own dead cells near your living colony.
 | Uses | OwnDeadCells |
 | Creates | — |
 | Removes | — |
-| Goal in | 9: Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign), Pressure Bloom (Campaign), Regrowth Lattice (Proven), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign), and 1 more |
+| Goal in | 9: Creeping Reclaimer (Campaign, Medium), Creeping Reclaimer (Proven, Medium), Gravebloom (Campaign, Medium), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign, Training), Pressure Bloom (Campaign, Easy), Regrowth Lattice (Proven, Hard), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign, Training), and 1 more |
 
 ### Necrosporulation
 
@@ -283,7 +283,7 @@ A dying cell can colonize an empty tile somewhere else on the toast.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 25: Anabolic Regent (Proven), Anabolic Steward (Proven), Beacon of Rot (Campaign), Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), and 17 more |
+| Goal in | 25: Anabolic Regent (Proven, Hard/Elite), Anabolic Steward (Proven, Hard), Beacon of Rot (Campaign, Hard), Creeping Reclaimer (Campaign, Medium), Creeping Reclaimer (Proven, Medium), Gravebloom (Campaign, Medium), Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), and 17 more |
 
 ### Necrohyphal Infiltration
 
@@ -302,7 +302,7 @@ Failed expansion can reclaim enemy cells that have been dead long enough.
 | Uses | EnemyDeadCells, EnemyContact |
 | Creates | — |
 | Removes | — |
-| Goal in | 13: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Needle Reclaimer (Campaign), and 5 more |
+| Goal in | 13: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Needle Reclaimer (Campaign, Training), and 5 more |
 
 ### Catabolic Rebirth
 
@@ -321,7 +321,7 @@ Expired toxins can reclaim your dead cells instead of simply fading out.
 | Uses | OwnDeadCells |
 | Creates | — |
 | Removes | — |
-| Goal in | 21: Anabolic Regent (Proven), Anabolic Steward (Proven), Creeping Reclaimer (Campaign), Creeping Reclaimer (Proven), Gravebloom (Campaign), Hoarded Bloom (Proven), Hoardspore Regent (Proven), Hoardspore Regent [`AI13`] (Campaign), and 13 more |
+| Goal in | 21: Anabolic Regent (Proven, Hard/Elite), Anabolic Steward (Proven, Hard), Creeping Reclaimer (Campaign, Medium), Creeping Reclaimer (Proven, Medium), Gravebloom (Campaign, Medium), Hoarded Bloom (Proven, Hard), Hoardspore Regent (Proven, Hard/Elite), Hoardspore Regent [`AI13`] (Campaign, Elite), and 13 more |
 
 ### Hypersystemic Regeneration
 
@@ -340,7 +340,7 @@ Makes Regenerative Hyphae stronger and gives reclaimed cells a chance to come ba
 | Uses | OwnDeadCells |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Goal in | 1: Regrowth Lattice (Proven) |
+| Goal in | 1: Regrowth Lattice (Proven, Hard) |
 
 ## Fungicide
 
@@ -361,7 +361,7 @@ Toxifies empty tiles along enemy borders to slow expansion.
 | Uses | EnemyContact |
 | Creates | OwnToxins |
 | Removes | — |
-| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
+| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign, Training) |
 
 ### Mycotoxin Potentiation
 
@@ -380,7 +380,7 @@ Makes each toxin last longer and gives it a chance to kill nearby enemies.
 | Uses | — |
 | Creates | EnemyCellsKilledByYou |
 | Removes | — |
-| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
+| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign, Training) |
 
 ### Putrefactive Mycotoxin
 
@@ -399,7 +399,7 @@ Lets living cells kill adjacent enemies just by touching them.
 | Uses | EnemyContact |
 | Creates | EnemyCellsKilledByYou |
 | Removes | — |
-| Goal in | 12: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign), Reclaimer's Ledger (Proven), Spore Ledger (Proven), and 4 more |
+| Goal in | 12: Harvest Broker [`CMP_Economy_KillReclaim_Medium`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset1`] (Campaign, Hard), Harvest Broker [`TST_Campaign7_KillReclaim_Offset2`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset3`] (Campaign, Elite), Harvest Broker [`TST_Campaign7_KillReclaim_Offset8`] (Campaign, Hard), Hoardspore Regent [`CMP_Economy_HoardsporeRegent_Elite`] (Campaign, Hard), Reclaimer's Ledger (Proven, Medium), Spore Ledger (Proven, Medium), and 4 more |
 
 ### Sporicidal Bloom
 
@@ -456,7 +456,7 @@ Putrefactive kills can rejuvenate your nearby living cells.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 10: Putrid Tendrils (Campaign), Putrid Tendrils (Proven), Rebirth Conductor (Campaign), Rebirth Furnace (Campaign), Rebirth Furnace (Proven), Rejuvenation Engine (Campaign), Rejuvenation Engine (Proven), The Economancer [`CMP_Economy_LateSpike_Hard`] (Campaign), and 2 more |
+| Goal in | 10: Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), Rebirth Conductor (Campaign, Elite), Rebirth Furnace (Campaign, Elite), Rebirth Furnace (Proven), Rejuvenation Engine (Campaign, Medium), Rejuvenation Engine (Proven, Hard), The Economancer [`CMP_Economy_LateSpike_Hard`] (Campaign, Medium), and 2 more |
 
 ### Putrefactive Cascade
 
@@ -475,7 +475,7 @@ A putrefactive kill can keep traveling in the same direction through more enemie
 | Uses | EnemyContact |
 | Creates | EnemyCellsKilledByYou |
 | Removes | — |
-| Goal in | 13: Adaptive Blight (Proven), Anabolic Gravebloom (Proven), Beacon of Rot (Campaign), Gravebloom (Proven), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Mutagen Bloom (Proven), Putrid Tendrils (Campaign), Putrid Tendrils (Proven), and 5 more |
+| Goal in | 13: Adaptive Blight (Proven), Anabolic Gravebloom (Proven, Medium), Beacon of Rot (Campaign, Hard), Gravebloom (Proven, Elite), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Mutagen Bloom (Proven), Putrid Tendrils (Campaign, Elite), Putrid Tendrils (Proven), and 5 more |
 
 ## GeneticDrift
 
@@ -496,7 +496,7 @@ Grants a chance of generating a free Tier 1 mutation upgrade at the start of the
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 2: Measured Mycelium (Campaign), Measured Mycelium (Proven) |
+| Goal in | 2: Measured Mycelium (Campaign, Easy), Measured Mycelium (Proven, Easy) |
 
 ### Adaptive Expression
 
@@ -515,7 +515,7 @@ Can generate extra mutation points at the start of Mutation Phase.
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign), Pulsar Sprout (Campaign), Scavenger Court (Campaign), Tempo Harvester (Campaign) |
+| Goal in | 7: Overextender [`CMP_Mobility_Overextender_Training_Offset1`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset2`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training_Offset3`] (Campaign, Training), Overextender [`CMP_Mobility_Overextender_Training`] (Campaign, Training), Pulsar Sprout (Campaign, Easy), Scavenger Court (Campaign, Medium), Tempo Harvester (Campaign, Medium) |
 
 ### Mycotoxin Catabolism
 
@@ -534,7 +534,7 @@ Lets living cells break down nearby toxins for cleanup and occasional mutation p
 | Uses | EnemyToxins |
 | Creates | — |
 | Removes | OwnToxins, EnemyToxins |
-| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign) |
+| Goal in | 3: Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset1`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training_Offset2`] (Campaign, Training), Toxic Turtle [`CMP_Attrition_ToxicTurtle_Training`] (Campaign, Training) |
 
 ### Anabolic Inversion
 
@@ -553,7 +553,7 @@ Falling behind can turn into a burst of mutation points.
 | Uses | FallingBehind |
 | Creates | — |
 | Removes | — |
-| Goal in | 18: Anabolic Gravebloom (Proven), Anabolic Regent (Proven), Anabolic Steward (Proven), Beacon of Rot (Campaign), Hoarded Bloom (Proven), Hoardspore Regent (Proven), Hoardspore Regent [`AI13`] (Campaign), Pressure Bloom (Campaign), and 10 more |
+| Goal in | 18: Anabolic Gravebloom (Proven, Medium), Anabolic Regent (Proven, Hard/Elite), Anabolic Steward (Proven, Hard), Beacon of Rot (Campaign, Hard), Hoarded Bloom (Proven, Hard), Hoardspore Regent (Proven, Hard/Elite), Hoardspore Regent [`AI13`] (Campaign, Elite), Pressure Bloom (Campaign, Easy), and 10 more |
 
 ### Latent Polymorphism
 
@@ -591,7 +591,7 @@ Makes Mutator Phenotype reach further up your tree and sometimes chain extra Tie
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 8: Adaptive Blight (Proven), Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign), Hyphal Pulse (Proven), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign), Mutagen Bloom (Proven), Pulse Runner (Campaign), The Necrotoxin Gauntlet [`CMP_Bloom_NecrotoxinGauntlet_Elite`] (Campaign) |
+| Goal in | 8: Adaptive Blight (Proven), Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign, Training), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign, Training), Hyphal Pulse (Proven), Iron Shell [`CMP_Defense_IronShell_Elite`] (Campaign, Hard), Mutagen Bloom (Proven), Pulse Runner (Campaign, Training), The Necrotoxin Gauntlet [`CMP_Bloom_NecrotoxinGauntlet_Elite`] (Campaign, Easy) |
 
 ### Ontogenic Regression
 
@@ -610,7 +610,7 @@ Can trade away early mutations to steer evolution toward stronger late-game muta
 | Uses | — |
 | Creates | — |
 | Removes | — |
-| Goal in | 10: Anabolic Gravebloom (Proven), Beacon of Rot (Campaign), Beacon of Rot (Proven), Gravebloom (Proven), Rhizolith (Campaign), Rhizolith Crown (Campaign), Thanatophyte (Campaign), The Necrotoxin Gauntlet [`CMP_Bloom_CreepingRegression_Elite`] (Campaign), and 2 more |
+| Goal in | 10: Anabolic Gravebloom (Proven, Medium), Beacon of Rot (Campaign, Hard), Beacon of Rot (Proven, Medium), Gravebloom (Proven, Elite), Rhizolith (Campaign, Easy), Rhizolith Crown (Campaign, Training), Thanatophyte (Campaign, Easy), The Necrotoxin Gauntlet [`CMP_Bloom_CreepingRegression_Elite`] (Campaign, Medium), and 2 more |
 
 ## MycelialSurges
 
@@ -631,8 +631,8 @@ Accelerates your colony's growth at the cost of making its cells more likely to 
 | Uses | — |
 | Creates | OwnCellDeaths, OwnDeadCells |
 | Removes | — |
-| Goal in | 6: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign), Hyphal Pulse (Proven), Needle Reclaimer (Campaign), Pulsar Sprout (Campaign), Pulse Runner (Campaign) |
-| Surge priority in | 7: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign), Hyphal Pulse (Proven), Needle Reclaimer (Campaign), Pulsar Sprout (Campaign), Pulse Runner (Campaign), Wildfire Bloom (Campaign) |
+| Goal in | 6: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign, Training), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign, Training), Hyphal Pulse (Proven), Needle Reclaimer (Campaign, Training), Pulsar Sprout (Campaign, Easy), Pulse Runner (Campaign, Training) |
+| Surge priority in | 7: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign, Training), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign, Training), Hyphal Pulse (Proven), Needle Reclaimer (Campaign, Training), Pulsar Sprout (Campaign, Easy), Pulse Runner (Campaign, Training), Wildfire Bloom (Campaign, Easy) |
 
 ### Chemotactic Beacon
 
@@ -651,8 +651,8 @@ Lets you place a target marker and grow a straight line toward it.
 | Uses | OpenSpace |
 | Creates | — |
 | Removes | — |
-| Goal in | 7: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign), Beacon of Rot (Campaign), Beacon of Rot (Proven), Rhizolith (Campaign), Rhizolith Crown (Campaign), Tempo Harvester (Campaign) |
-| Surge priority in | 6: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign), Beacon of Rot (Proven), Rhizolith (Campaign), Rhizolith Crown (Campaign), Tempo Harvester (Campaign) |
+| Goal in | 7: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign, Training), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign, Training), Beacon of Rot (Campaign, Hard), Beacon of Rot (Proven, Medium), Rhizolith (Campaign, Easy), Rhizolith Crown (Campaign, Training), Tempo Harvester (Campaign, Medium) |
+| Surge priority in | 6: Beacon Sprinter [`CMP_Surge_BeaconSprinter_Medium`] (Campaign, Training), Beacon Sprinter [`CMP_Surge_BeaconTempo_Medium`] (Campaign, Training), Beacon of Rot (Proven, Medium), Rhizolith (Campaign, Easy), Rhizolith Crown (Campaign, Training), Tempo Harvester (Campaign, Medium) |
 
 ### Chitin Fortification
 
@@ -671,8 +671,8 @@ While active, permanently makes part of your colony Resistant before each Growth
 | Uses | — |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Goal in | 8: Grave Bastion (Campaign), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign), Mimic Bastion (Campaign), Pulsar Sprout (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign), Wildfire Bloom (Campaign) |
-| Surge priority in | 7: Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign), Mimic Bastion (Campaign), Pulsar Sprout (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign), Wildfire Bloom (Campaign) |
+| Goal in | 8: Grave Bastion (Campaign, Easy), Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign, Training), Mimic Bastion (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign, Training), Wildfire Bloom (Campaign, Easy) |
+| Surge priority in | 7: Iron Shell [`CMP_Defense_ResilientShell_Easy`] (Campaign, Training), Mimic Bastion (Campaign, Easy), Pulsar Sprout (Campaign, Easy), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset1`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium_Offset3`] (Campaign, Training), Resilient Mycelium [`TST_Training_ResilientMycelium`] (Campaign, Training), Wildfire Bloom (Campaign, Easy) |
 
 ### Necrotic Clearance
 
@@ -691,8 +691,8 @@ Lets your living cells clear nearby dead cells before enemies can reclaim them.
 | Uses | OwnDeadCells |
 | Creates | — |
 | Removes | OwnDeadCells |
-| Goal in | 1: Grave Bastion (Campaign) |
-| Surge priority in | 1: Grave Bastion (Campaign) |
+| Goal in | 1: Grave Bastion (Campaign, Easy) |
+| Surge priority in | 1: Grave Bastion (Campaign, Easy) |
 
 ### Competitive Antagonism
 
@@ -731,8 +731,8 @@ Lets you try to copy Resistant footholds from stronger enemies.
 | Uses | EnemyResistantCells, FallingBehind |
 | Creates | OwnResistantCells |
 | Removes | — |
-| Goal in | 1: Mimic Bastion (Campaign) |
-| Surge priority in | 1: Mimic Bastion (Campaign) |
+| Goal in | 1: Mimic Bastion (Campaign, Easy) |
+| Surge priority in | 1: Mimic Bastion (Campaign, Easy) |
 
 ## SubstrateEcology
 
@@ -848,7 +848,7 @@ Large clusters of your dead cells can compost into neutral nutrient patches.
 | Uses | OwnDeadCells, EnemyDeadCells |
 | Creates | NutrientPatches |
 | Removes | OwnDeadCells, EnemyDeadCells |
-| Goal in | 9: Anabolic Gravebloom (Proven), Beacon of Rot (Proven), Gravebloom (Proven), Mimic Bastion (Campaign), Rhizolith (Campaign), Rhizolith Crown (Campaign), Thanatophyte (Campaign), The Necrotoxin Gauntlet [`TST_AI10_CreepingRegression`] (Campaign), and 1 more |
+| Goal in | 9: Anabolic Gravebloom (Proven, Medium), Beacon of Rot (Proven, Medium), Gravebloom (Proven, Elite), Mimic Bastion (Campaign, Easy), Rhizolith (Campaign, Easy), Rhizolith Crown (Campaign, Training), Thanatophyte (Campaign, Easy), The Necrotoxin Gauntlet [`TST_AI10_CreepingRegression`] (Campaign, Easy), and 1 more |
 
 ### Toxinborne Seeding
 
