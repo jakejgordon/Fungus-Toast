@@ -70,7 +70,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 "Rot Blocks the Way",
                 $"Rot is ownerless and blocks mold, toxins, and nutrients. Grow around the patch: it cannot be cleared or claimed.\n\nOrthogonally adjacent living cells gain +{FungusToast.Core.Config.RotBalance.AdjacentDeathChance * 100f:0.##} percentage points death chance during Decay (non-stacking). Resistant cells and the last living cell are protected.\n\nRot stays in place. It counts toward occupied space, never your score. Hover it to inspect.",
                 NewPlayerTooltipSurface.ScreenCenterCoachmark,
-                "Show once per profile after the new-game title clears on a campaign board with rot, before the first mutation phase. Never show during checkpoint restore or fast-forward testing."),
+                "Show once per profile during round 1 of a new game on the first authored campaign level with rot, after the title clears and mutation controls initialize. Other round-1 coaching waits until it closes. Never show on later rot levels, during checkpoint restore, or while fast-forwarding."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.WelcomeIntro,
                 "Onboarding.WelcomeIntroSeen",
@@ -206,8 +206,10 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
-        public static bool ShouldShowRotIntro(bool isNewGame, bool isCampaign, bool hasRot, int humanPlayerCount, bool isFastForwarding)
-            => isNewGame && isCampaign && hasRot && humanPlayerCount > 0 && !isFastForwarding
+        public static bool ShouldShowRotIntro(bool isNewGame, bool isCampaign, bool isFirstRotLevel,
+            bool hasRot, int currentRound, int humanPlayerCount, bool isFastForwarding)
+            => isNewGame && isCampaign && isFirstRotLevel && hasRot && currentRound == 1
+                && humanPlayerCount > 0 && !isFastForwarding
                 && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro);
 
         /// <summary>

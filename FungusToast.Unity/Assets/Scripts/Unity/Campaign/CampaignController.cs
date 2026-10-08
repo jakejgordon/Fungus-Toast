@@ -54,6 +54,10 @@ namespace FungusToast.Unity.Campaign
         public bool HasActiveRun => State != null;
         public bool HasResumableRun => State != null && !State.requiresNewCampaignStart && !State.campaignCompleted;
         public CampaignProgression.LevelSpec CurrentLevelSpec => (State != null && State.levelIndex < progression.MaxLevels) ? progression.Get(State.levelIndex) : null;
+        /// <summary>Derive the introduction stage from authored order, not a hardcoded index.</summary>
+        public bool IsFirstRotLevel => State != null
+            && progression.levels != null
+            && State.levelIndex == progression.levels.FindIndex(level => level != null && level.enableRotPatch);
         public int CurrentLevelDisplay => State != null ? GetLevelDisplay(State.levelIndex) : 0;
         public string CurrentLevelTitle => State != null ? GetLevelTitle(State.levelIndex) : string.Empty;
         public BoardPreset CurrentBoardPreset

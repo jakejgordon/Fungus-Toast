@@ -263,3 +263,13 @@ For exact gating conditions, prefer `NewPlayerTooltipRules` over this prose summ
 - **“Let the player hover the icons inside an explanation.”** → interactive inspector panel
 - **“Announce a phase or status change.”** → informational banner/toast
 - **“Teach the player a system the first time they encounter it.”** → onboarding catalog entry
+
+## Rot introduction coaching
+
+The existing `RotIntro` catalog entry uses the shared draggable centered HUD card. It appears during **round 1 of a new game on the first authored campaign level with rot** (currently stage 5, Cheddar Edge), after round-one mutation controls initialize and the title-clear delay expires. `CampaignController.IsFirstRotLevel` derives the stage from progression order, not a fixed index. The board must actually contain rot and have a human player. Checkpoint restoration, later rounds/stages, and fast-forward flows do not trigger it.
+
+The rot card reserves the existing introductory teaching slot before round initialization; welcome, Spend Points, and camera guidance defer. The card closes automatically if the board changes, round 1 ends, fast-forward begins, or the game ends. Only explicit dismissal persists the existing `Onboarding.RotIntroSeen` key; ordinary new games preserve it, and the Settings onboarding reset clears it through the catalog as before. No new seen key or forced repetition was added.
+
+Static/source-derived checks: `python3 tools/validate_rot_coaching.py` exercises 384 trigger combinations and verifies authored-stage lookup and sequencing/reset/cancellation source contracts. It does not compile Unity C# or exercise real UI/coroutine behavior.
+
+Editor gate: reset onboarding tooltips if RotIntro was already dismissed, start a **new** stage-5 game (not a checkpoint), verify round-1 mutation controls and centered rot guidance after the title, close it and confirm subsequent coaching can appear. Also test leaving round 1 while the card is open, stage 4, a later stage/custom rot-enabled progression, fast-forward, checkpoint restore, and returning to the menu with no lingering card.

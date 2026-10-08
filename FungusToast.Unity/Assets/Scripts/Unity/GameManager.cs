@@ -446,8 +446,10 @@ namespace FungusToast.Unity
 
         private bool isFastForwarding = false;
         public bool IsFastForwarding => isFastForwarding;
-        /// <summary>True until the round-1 welcome coachmark has been closed or declined; the other round-1 coachmarks wait on it, including through the game-start intro.</summary>
-        public bool IsWelcomeCoachmarkActive => welcomeCoachmark != null && welcomeCoachmark.IsActive;
+        /// <summary>True while rot introduction or welcome owns round-one teaching; Spend Points and camera coaching wait on this slot.</summary>
+        public bool IsWelcomeCoachmarkActive => isRotIntroPendingOrVisible
+            || (welcomeCoachmark != null && welcomeCoachmark.IsActive);
+        private bool isRotIntroPendingOrVisible;
         public bool IsWelcomeCoachmarkPendingOrVisible => welcomeCoachmark != null && welcomeCoachmark.IsPendingOrVisible;
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
@@ -1848,6 +1850,7 @@ namespace FungusToast.Unity
         private IEnumerator ShowWelcomeCoachmarkAfterDelay()
         {
             yield return new WaitForSecondsRealtime(WelcomeCoachmarkDelaySeconds);
+            while (isRotIntroPendingOrVisible) yield return null;
             welcomeCoachmark?.ShowIfArmed();
         }
 
@@ -2039,6 +2042,7 @@ namespace FungusToast.Unity
             currentLevelGameplaySeed = 0;
             pendingGameplaySeed = null;
             endgameService?.Reset();
+            isRotIntroPendingOrVisible = false;
             welcomeCoachmark?.ResetForNewGame();
 
             FirstUpgradeRounds?.Clear();
@@ -2399,14 +2403,28 @@ namespace FungusToast.Unity
             }
             else if (!willFastForward)
             {
-                if (NewPlayerTooltipRules.ShouldShowRotIntro(
+                var introBoard = Board;
+                isRotIntroPendingOrVisible = NewPlayerTooltipRules.ShouldShowRotIntro(
                     applyStartingSporeEffects, CurrentGameMode == GameMode.Campaign,
-                    Board.RotTileIds.Count > 0, humanPlayers.Count, isFastForwarding))
+                    campaignController?.IsFirstRotLevel == true, introBoard.RotTileIds.Count > 0,
+                    introBoard.CurrentRound, humanPlayers.Count, isFastForwarding);
+                try
                 {
-                    yield return new WaitForSecondsRealtime(WelcomeCoachmarkDelaySeconds);
-                    yield return RotIntroCoachmark.Show(ResolveRootUiCanvas());
+                    // Reserve the teaching slot before round-one controls/coachmarks initialize.
+                    StartNextRound();
+                    if (isRotIntroPendingOrVisible)
+                    {
+                        yield return new WaitForSecondsRealtime(WelcomeCoachmarkDelaySeconds);
+                        bool StillInIntroRound() => ReferenceEquals(Board, introBoard)
+                            && introBoard.CurrentRound == 1 && !isFastForwarding && !gameEnded;
+                        if (StillInIntroRound())
+                            yield return RotIntroCoachmark.Show(ResolveRootUiCanvas(), StillInIntroRound);
+                    }
                 }
-                StartNextRound();
+                finally
+                {
+                    isRotIntroPendingOrVisible = false;
+                }
             }
         }
 
@@ -2433,6 +2451,7 @@ namespace FungusToast.Unity
             ConfigureBackgroundMusicService();
             ui.MutationUIManager?.ResetForNewGameState();
             ui.PauseMenuPanel?.ResetForNewGame();
+            isRotIntroPendingOrVisible = false;
             welcomeCoachmark?.ResetForNewGame();
             ui.EndGamePanel?.gameObject.SetActive(false);
             pauseMenuService?.ForceClose();

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FungusToast.Unity.UI.Onboarding
 {
-    /// <summary>Uses the shared draggable HUD card; retires before other round-one teaching starts.</summary>
+    /// <summary>Uses the shared draggable HUD card; shown during round one while other introductory teaching waits.</summary>
     public static class RotIntroCoachmark
     {
         private const float Width = 620f;
@@ -13,9 +13,9 @@ namespace FungusToast.Unity.UI.Onboarding
         private const float BodyFontSize = 21f;
         private const float TitleRowHeight = 42f;
 
-        public static IEnumerator Show(Canvas rootCanvas)
+        public static IEnumerator Show(Canvas rootCanvas, System.Func<bool> shouldRemainVisible)
         {
-            if (rootCanvas == null || NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro)) yield break;
+            if (rootCanvas == null || !shouldRemainVisible() || NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro)) yield break;
             bool dismissed = false;
             var card = CoachmarkLayoutUtility.BuildCard(
                 "UI_RotIntroCoachmark", rootCanvas.transform,
@@ -30,7 +30,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 float height = CoachmarkLayoutUtility.TitleTopInset + TitleRowHeight + 6f + bodyHeight
                     + ContentPadding + CoachmarkLayoutUtility.BodyBottomExtraInset;
                 card.Root.sizeDelta = new Vector2(Width, Mathf.Max(MinimumHeight, height));
-                while (!dismissed && card.Root != null) yield return null;
+                while (!dismissed && card.Root != null && shouldRemainVisible()) yield return null;
                 if (dismissed) NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.RotIntro);
             }
             finally

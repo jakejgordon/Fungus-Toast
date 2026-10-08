@@ -1,5 +1,13 @@
 # Fungus-Toast Worklog
 
+## First rot-stage round-one coaching — 2026-10-07
+
+Jake approved the repaired rot appearance/motion, then requested round-one coaching on the first campaign stage with rot. Reused the existing RotIntro catalog/card instead of adding a duplicate. Trigger now explicitly requires round 1, a new human campaign game, actual rot, and the first enabled authored progression stage (currently stage 5/Cheddar Edge). Round-one mutation controls initialize before the card shows; rot reserves the intro slot so welcome, Spend Points, and camera coaching defer. The card cancels on leaving round 1/board, fast-forward, or game end; reset paths clear the pending guard. Existing once-per-profile seen key is preserved and recorded only on explicit dismissal.
+
+Validation: 384 source-derived trigger combinations and lifecycle/sequencing contracts passed via tools/validate_rot_coaching.py. Core build/plugin sync and scoped diff checks performed before push. This is not Unity C# compilation or actual coroutine/UI evidence. No Core rules, scenes, prefabs, progression asset, rot art/animation, or unrelated local mold Tile metadata changed.
+
+Jake manual gate: reset onboarding tooltips if already seen, start new stage 5, verify round-one/title timing, draggable/dismissible guidance and subsequent coachmarks; advance the round with the card open, restore a checkpoint, test non-intro stages/fast-forward, and return to menu without leftovers. Canonical details: docs/ui/TOOLTIP_GUIDE.md.
+
 ## Rot idle motion follow-up — 2026-10-07
 
 Jake likes the connected surface but reports no visible pulse/drift in Unity. Source at 34638080 used shader-global scaled `_Time.y`, ±2.5% brightness/9s, and 0.018-cell drift/23s: at 32px/cell the peak horizontal motion was only about 0.19px/s. The precise runtime cause (faint motion versus frozen shader time) is not proven; no Editor playback trace is available.
