@@ -28,6 +28,8 @@ namespace FungusToast.Simulation.Models
         public int ToxicTileCount { get; set; }
         public int NutrientPatchCount { get; set; }
         public bool IntroductoryRotEnabled { get; set; }
+        public bool QuarantineRotEnabled { get; set; }
+        public QuarantinePopulationEvidence? QuarantinePopulation { get; set; }
         public IReadOnlyList<int> RotTileIds { get; set; } = Array.Empty<int>();
         public float RotAdjacentDeathChance { get; set; }
         public SimulationTrackingContext TrackingContext { get; set; } = null!;

@@ -15,6 +15,7 @@ namespace FungusToast.Unity.Campaign
         public string runId; // GUID string
         public int levelIndex; // current level (0-based)
         public List<string> selectedAdaptationIds = new(); // unique adaptation ids picked during this run
+        public string levelVariantId; // additive: missing old saves resolve by existing preset, never reroll
         public string boardPresetId; // preset identifier for board size/layout
         public int seed; // RNG seed for reproducibility
         public int boardWidth; // persisted board width for current level

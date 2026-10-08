@@ -88,7 +88,24 @@ namespace FungusToast.Simulation.Export
                 WriteIndented = true
             }));
 
+            string quarantinePath = Path.Combine(runFolder, "quarantine_population.json");
+            bool wroteQuarantine = batchResult.GameResults.Any(game => game.QuarantinePopulation != null);
+            if (wroteQuarantine)
+            {
+                var evidence = new
+                {
+                    schemaVersion = "fungus-toast.quarantine-population.v1",
+                    metadata.ExperimentId,
+                    games = batchResult.GameResults.Where(game => game.QuarantinePopulation != null).Select(game => new
+                    {
+                        game.GameIndex, game.GameSeed, game.TurnsPlayed, game.TerminationReason,
+                        game.StartingPositionsByPlayerId, game.RotTileIds, game.QuarantinePopulation
+                    })
+                };
+                File.WriteAllText(quarantinePath, JsonSerializer.Serialize(evidence, new JsonSerializerOptions { WriteIndented = true, IncludeFields = true }));
+            }
             var resolvedFiles = new Dictionary<string, ResolvedOutputFile>(StringComparer.Ordinal);
+            AddResolvedOutputFile(resolvedFiles, "quarantinePopulation", quarantinePath, wroteQuarantine);
             AddResolvedOutputFile(resolvedFiles, "games", gamesPath, wroteGames);
             AddResolvedOutputFile(resolvedFiles, "players", playersPath, wrotePlayers);
             AddResolvedOutputFile(resolvedFiles, "livingCellSources", livingCellSourcesPath, wroteLivingCellSources);

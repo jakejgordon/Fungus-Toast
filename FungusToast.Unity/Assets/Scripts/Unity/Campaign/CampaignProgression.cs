@@ -20,6 +20,17 @@ namespace FungusToast.Unity.Campaign
         /// Defines parameters for a single campaign level.
         /// </summary>
         [Serializable]
+        public class LevelVariant
+        {
+            public string variantId;
+            public string levelTitle;
+            public BoardPreset boardPreset;
+            public RotLayoutKind rotLayout;
+            public bool enableNutrientPatches = true;
+            public List<NutrientPatchType> allowedNutrientPatchTypes = new();
+        }
+
+        [Serializable]
         public class LevelSpec
         {
             /// <summary>Zero-based index for clarity / debugging (optional; may mirror list index).</summary>
@@ -32,6 +43,9 @@ namespace FungusToast.Unity.Campaign
             public bool enableNutrientPatches = true;
             /// <summary>Seed a static introductory rot patch after spores on new games only.</summary>
             public bool enableRotPatch;
+            /// <summary>Equal-weight complete encounter variants. Empty retains legacy preset/boss behavior.</summary>
+            public List<LevelVariant> variants = new();
+            public bool HasVariants => variants != null && variants.Count > 0;
             /// <summary>
             /// Optional allowlist of nutrient patch types for this level. Empty means use the default full set.
             /// </summary>

@@ -80,6 +80,19 @@ MonoBehaviour:
     boardPreset: {fileID: 11400000, guid: 0117a77f50594dfcb028754633c459de, type: 2}
     enableNutrientPatches: 1
     allowedNutrientPatchTypes: []
+    variants:
+    - variantId: flatbread-original
+      levelTitle: Flatbread Field
+      boardPreset: {fileID: 11400000, guid: 0117a77f50594dfcb028754633c459de, type: 2}
+      rotLayout: 0
+      enableNutrientPatches: 1
+      allowedNutrientPatchTypes: []
+    - variantId: rot-quarantine
+      levelTitle: Quarantined Crust
+      boardPreset: {fileID: 11400000, guid: cc7215a4113348d190bdef7d2eb8549a, type: 2}
+      rotLayout: 2
+      enableNutrientPatches: 1
+      allowedNutrientPatchTypes: []
   - levelIndex: 12
     levelTitle: Toasted Pocket
     boardPreset: {fileID: 11400000, guid: 8b80555a9b154cf5a38e69b28e4f6d78, type: 2}

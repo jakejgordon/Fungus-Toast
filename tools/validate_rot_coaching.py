@@ -8,28 +8,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / 'FungusToast.Unity/Assets/Scripts/Unity'
 catalog = (SCRIPTS / 'UI/Onboarding/NewPlayerTooltipCatalog.cs').read_text()
-match = re.search(r'ShouldShowRotIntro\([^)]*\)\s*=>\s*(.*?);', catalog, re.S)
-assert match, 'Rot coaching predicate missing'
-expression = match.group(1).replace('NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro)', 'hasBeenSeen')
-expression = expression.replace('&&', ' and ').replace('!', ' not ').strip()
-expression = ' '.join(expression.split())
-parsed = ast.parse(expression, mode='eval')
-allowed = (ast.Expression, ast.BoolOp, ast.UnaryOp, ast.Compare, ast.Name, ast.Constant,
-           ast.And, ast.Not, ast.Eq, ast.Gt, ast.Load)
-assert all(isinstance(node, allowed) for node in ast.walk(parsed))
-code = compile(parsed, '<source-derived rot coaching rule>', 'eval')
-booleans = ['isNewGame','isCampaign','isFirstRotLevel','hasRot','isFastForwarding','hasBeenSeen']
 count = 0
-for bits in itertools.product((False,True), repeat=len(booleans)):
-    for current_round in (0,1,2):
-        for humans in (0,1):
-            values = dict(zip(booleans,bits), currentRound=current_round, humanPlayerCount=humans)
-            actual = eval(code, {'__builtins__': {}}, values)
-            expected = (values['isNewGame'] and values['isCampaign'] and values['isFirstRotLevel']
-                        and values['hasRot'] and current_round == 1 and humans > 0
-                        and not values['isFastForwarding'] and not values['hasBeenSeen'])
-            assert actual == expected, values
-            count += 1
+for method, scope_name, tooltip in [('ShouldShowRotIntro','isFirstRotLevel','RotIntro'),
+                                   ('ShouldShowQuarantineCorridorIntro','isQuarantineVariant','QuarantineCorridorIntro')]:
+    match = re.search(method+r'\([^)]*\)\s*=>\s*(.*?);',catalog,re.S)
+    assert match, method+' missing'
+    expression = match.group(1).replace('NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.'+tooltip+')','hasBeenSeen')
+    expression = ' '.join(expression.replace('&&',' and ').replace('!',' not ').split())
+    parsed = ast.parse(expression,mode='eval')
+    allowed = (ast.Expression,ast.BoolOp,ast.UnaryOp,ast.Compare,ast.Name,ast.Constant,ast.And,ast.Not,ast.Eq,ast.Gt,ast.Load)
+    assert all(isinstance(node,allowed) for node in ast.walk(parsed))
+    code = compile(parsed,'<source-derived '+method+'>','eval')
+    booleans = ['isNewGame','isCampaign',scope_name,'hasRot','isFastForwarding','hasBeenSeen']
+    for bits in itertools.product((False,True),repeat=len(booleans)):
+        for current_round in (0,1,2):
+            for humans in (0,1):
+                values = dict(zip(booleans,bits),currentRound=current_round,humanPlayerCount=humans)
+                expected = (values['isNewGame'] and values['isCampaign'] and values[scope_name]
+                            and values['hasRot'] and current_round==1 and humans>0
+                            and not values['isFastForwarding'] and not values['hasBeenSeen'])
+                assert eval(code,{'__builtins__':{}},values)==expected,values
+                count += 1
 
 manager = (SCRIPTS / 'GameManager.cs').read_text()
 flow = manager.split('var introBoard = Board;',1)[1].split('#endregion',1)[0]
@@ -44,6 +43,9 @@ card = (SCRIPTS / 'UI/Onboarding/RotIntroCoachmark.cs').read_text()
 assert 'card.Root != null && shouldRemainVisible()' in card
 assert 'if (dismissed) NewPlayerTooltipCatalog.MarkSeen' in card
 assert 'finally' in card and 'card.HideImmediate()' in card
+assert 'object.ReferenceEquals(activeCard, card)' in card and 'public static void Cancel()' in card
+assert manager.count('RotIntroCoachmark.Cancel();') >= 2
+assert 'introTooltipId' in flow and 'ShouldShowQuarantineCorridorIntro' in flow
 controller = (SCRIPTS / 'Campaign/CampaignController.cs').read_text()
 assert 'State.levelIndex == progression.levels.FindIndex(level => level != null && level.enableRotPatch)' in controller
 asset = (ROOT/'FungusToast.Unity/Assets/Configs/Campaign/CampaignProgression.asset').read_text()

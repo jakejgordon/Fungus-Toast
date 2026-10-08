@@ -6,6 +6,7 @@ namespace FungusToast.Unity.UI.Onboarding
     /// <summary>Uses the shared draggable HUD card; shown during round one while other introductory teaching waits.</summary>
     public static class RotIntroCoachmark
     {
+        private static CoachmarkLayoutUtility.CoachmarkCard activeCard;
         private const float Width = 620f;
         private const float MinimumHeight = 180f;
         private const float ContentPadding = 20f;
@@ -13,31 +14,43 @@ namespace FungusToast.Unity.UI.Onboarding
         private const float BodyFontSize = 21f;
         private const float TitleRowHeight = 42f;
 
-        public static IEnumerator Show(Canvas rootCanvas, System.Func<bool> shouldRemainVisible)
+        public static IEnumerator Show(Canvas rootCanvas, System.Func<bool> shouldRemainVisible,
+            NewPlayerTooltipId tooltipId = NewPlayerTooltipId.RotIntro)
         {
-            if (rootCanvas == null || !shouldRemainVisible() || NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.RotIntro)) yield break;
+            if (rootCanvas == null || !shouldRemainVisible() || NewPlayerTooltipCatalog.HasBeenSeen(tooltipId)) yield break;
+            Cancel();
             bool dismissed = false;
             var card = CoachmarkLayoutUtility.BuildCard(
                 "UI_RotIntroCoachmark", rootCanvas.transform,
                 new Vector2(Width, MinimumHeight), () => dismissed = true,
                 TitleFontSize, BodyFontSize, pivot: new Vector2(0.5f, 0.5f),
                 titleRowHeight: TitleRowHeight, contentInset: ContentPadding);
+            activeCard = card;
             try
             {
                 card.Root.anchoredPosition = Vector2.zero;
-                card.Show(NewPlayerTooltipCatalog.Get(NewPlayerTooltipId.RotIntro));
+                card.Show(NewPlayerTooltipCatalog.Get(tooltipId));
                 float bodyHeight = card.Body.GetPreferredValues(card.Body.text, Width - ContentPadding * 2f, 0f).y;
                 float height = CoachmarkLayoutUtility.TitleTopInset + TitleRowHeight + 6f + bodyHeight
                     + ContentPadding + CoachmarkLayoutUtility.BodyBottomExtraInset;
                 card.Root.sizeDelta = new Vector2(Width, Mathf.Max(MinimumHeight, height));
                 while (!dismissed && card.Root != null && shouldRemainVisible()) yield return null;
-                if (dismissed) NewPlayerTooltipCatalog.MarkSeen(NewPlayerTooltipId.RotIntro);
+                if (dismissed) NewPlayerTooltipCatalog.MarkSeen(tooltipId);
             }
             finally
             {
-                card.HideImmediate();
-                if (card.Root != null) Object.Destroy(card.Root.gameObject);
+                if (object.ReferenceEquals(activeCard, card)) Cancel();
             }
+        }
+
+        /// <summary>Reset paths call this even if Unity stops the coroutine without disposing it.</summary>
+        public static void Cancel()
+        {
+            var card = activeCard;
+            activeCard = null;
+            if (card == null || card.Root == null) return;
+            card.HideImmediate();
+            Object.Destroy(card.Root.gameObject);
         }
     }
 }

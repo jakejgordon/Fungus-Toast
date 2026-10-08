@@ -31,7 +31,8 @@ namespace FungusToast.Simulation
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
             Func<int, int, List<IMutationSpendingStrategy>>? perGameLineupSelector = null,
-            bool enableIntroductoryRot = false)
+            bool enableIntroductoryRot = false,
+            bool enableQuarantineRot = false)
         {
             // Use TestingStrategies as default if none provided
             strategies ??= AIRoster.TestingStrategies;
@@ -63,7 +64,8 @@ namespace FungusToast.Simulation
                 enableStartingAdaptations: enableStartingAdaptations,
                 strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides,
                 perGameLineupSelector: perGameLineupSelector,
-                enableIntroductoryRot: enableIntroductoryRot);
+                enableIntroductoryRot: enableIntroductoryRot,
+                enableQuarantineRot: enableQuarantineRot);
 
             PrintParityInvariantSummary(results.GameResults);
 

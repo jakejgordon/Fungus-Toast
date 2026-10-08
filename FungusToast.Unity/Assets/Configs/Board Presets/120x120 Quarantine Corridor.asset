@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dac0b2d101f4c114d91c1aa9449bd5eb, type: 3}
+  m_Name: 120x120 Quarantine Corridor
+  m_EditorClassIdentifier:
+  presetId: Campaign11_QuarantineCorridor
+  boardWidth: 120
+  boardHeight: 120
+  aiPlayers:
+  - strategyName: CMP_Economy_LateSpike_Hard
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_CreepingNecro_Medium
+    startingAdaptationIds: []
+  - strategyName: CMP_Defense_IronShell_Elite
+    startingAdaptationIds: []
+  - strategyName: CMP_Bloom_BeaconRegression_Medium
+    startingAdaptationIds: []
+  - strategyName: TST_Campaign7_KillReclaim_Offset8
+    startingAdaptationIds: []
+  - strategyName: CMP_Economy_HoardsporeRegent_Elite
+    startingAdaptationIds: []
+  pooledAiPlayerCount: 0
+  aiStrategyPool: []
+  poolAdaptationOverrides: []

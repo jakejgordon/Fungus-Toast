@@ -36,13 +36,31 @@ This section is the canonical overview of the journey a player takes through Cam
 
 ## Rot introduction
 
-Player-facing level 5 (index 4, Cheddar Edge / Campaign4) introduces static, ownerless rot. The optional LevelSpec enableRotPatch flag defaults off. Core places a connected irregular tongue from the left playable edge toward the middle after spores and before nutrients/starting Adaptation effects. Starting-spore clearance may shift the tongue vertically; routes remain open around its tip. Other levels remain unchanged in this first rollout.
+Player-facing level 5 (index 4, Cheddar Edge / Campaign4) introduces static, ownerless rot. The optional LevelSpec enableRotPatch flag defaults off. Core places a connected irregular tongue from the left playable edge toward the middle after spores and before nutrients/starting Adaptation effects. Starting-spore clearance may shift the tongue vertically; routes remain open around its tip. The introduction stays unchanged; stage 12 now adds an optional quarantine-corridor encounter.
 
 Rot blocks mold, toxins, nutrients, and placement abilities. Orthogonal adjacency adds a non-stacking **5 percentage points** of death chance during Decay, preserving Resistant and last-living-cell protections. Deaths leave normal dead mold cells and use DeathReason.Rot, with no enemy kill credit. Rot cannot be cleared, claimed, or spread in this version. It counts toward endgame occupancy but never colony territory/score. Tuning is provisional, not an artifact-backed campaign balance conclusion.
 
 A once-per-profile introductory coachmark explains the hazard; hover inspection remains available. Checkpoint restore uses saved rot tiles/rules and never seeds a patch or repeats the introduction.
 
 Canonical rot art is FungusToast.Unity/Assets/Sprites/Tiles/Rot/rot_{01..05}.png. Five Resources/Rot/rot_{01..05}.asset Tile assets reference those imported sub-sprites directly, so editing the canonical images updates gameplay without duplicate PNG copies. Keep source filenames, .meta GUIDs, and sub-sprite IDs stable. The 512x512 originals use centered Full Rect sprites, 512 Pixels Per Unit, bilinear filtering, and uncompressed textures for a one-tile footprint. The earlier Resources/Rot/rot_patch_{1..5}_64x64.png placeholders remain unused; no scene/Inspector wiring is required.
+
+## Alternate campaign encounters
+
+A LevelSpec can author an equal-weight variants pool. Each LevelVariant supplies a stable variant ID, title, BoardPreset (medium/dimensions/opponents), RotLayoutKind, nutrient enablement and allowed nutrient types. Empty pools preserve legacy single-preset and boss-pool behavior; do not combine a variants pool and legacy boss pool. Each variant requires a unique preset ID within its stage so older saved preset identities map unambiguously.
+
+CampaignLevelVariantSelection uses run seed plus stage index, independently of gameplay RNG and legacy boss selection. The chosen levelVariantId persists with the preset ID. Saved identities beat seed selection and survive pool reordering; unknown/mismatched identities fail rather than reroll. Old stage-12 saves with Campaign11 retain the original encounter. No stage is inserted or renumbered.
+
+### Stage 12: Quarantined Crust
+
+Stage 12 chooses 50/50 between Flatbread Field (unchanged) and Quarantined Crust. Both use the existing 120x120 medium hotdog and the same six opponents/resources settings. On that rounded, elongated bread, the pocket is the far-right cap/end rather than a rectangular board corner. The actual outline contains 5,011 playable tiles, 761 pocket tiles (15.19%), 998 rot tiles (19.92%) and 141 corridor tiles. A thinner edge seal broadens into a thick central bulge surrounding the authored zigzag. Entrance (60,60), exit (94,60): shortest passage 74 orthogonal steps or 64 with diagonal growth. Single-cell throats and two-cell lanes/elbows permit only this normal-growth route, with no diagonal bypass. Remote seeding/placement can establish valid pocket territory; access is optional for victory.
+
+The plan is deterministic, read-only and RNG-free; unsupported masks/dimensions fail instead of falling back. New games apply it before spores and keep all starts outside the pocket/corridor/rot. The human begins at (47,76), 16 diagonal steps from the mouth; a competing AI begins 11 steps away. Authored slots supersede strategy edge offsets. Centripetal Germination remains active: raw minima are ten-cell rot clearance and sixteen-cell separation; post-Adaptation minima are five and ten, validated after actual placement. Core tests cover all 128 mixed/all-Centripetal loadouts. No Adaptation is suppressed. Starting nutrient seeds and cluster frontiers exclude the corridor, preventing a free Sporemeal chain through it.
+
+A separate once-per-profile round-one card teaches passage control and remote entry. Checkpoint restore uses saved mask/cells/RNG; it does not reseed or repeat coaching. Resets explicitly cancel owned cards even when Unity stops their coroutines.
+
+Development reproduction: enable testing mode, choose zero-based campaign level 11, set GameManager.testingForcedCampaignVariantId to rot-quarantine or flatbread-original. This applies only to fresh testing-level starts and persists the chosen ID. Disable testing/clear the override for ordinary random runs; resume never rerolls. No scene/prefab edits are needed.
+
+Portable checks: Core topology/identity/resource tests plus tools/validate_campaign_variants.py and tools/validate_rot_coaching.py. Generate the canonical mask/CPU topology preview with python3 scripts/inspect_quarantine_layout.py --output-dir TEMP/quarantine-layout (not a Unity capture). See SIMULATION_HELPER.md for replayable population evidence. Actual Unity compile, medium routing, visual readability, JSON save/resume and playability remain Editor gates. Population pilots are not difficulty calibration.
 
 ## Current Data Model
 
@@ -56,6 +74,7 @@ Important fields:
 - `campaignCompleted`: true after final victory
 - `pendingVictorySnapshot`: persisted endgame snapshot shown when resuming into a pending adaptation pick
 - `boardPresetId`, `boardWidth`, `boardHeight`
+- `levelVariantId`: active alternate identity; older saves resolve by their existing preset without rerolling
 - `moldiness.highestUnlockedCampaignStartDifficultyIndex`: persistent meta-progression state that gates which campaign start difficulties the player can choose for a new run
 
 ## Campaign Start Difficulties

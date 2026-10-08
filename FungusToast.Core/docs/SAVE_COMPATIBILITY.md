@@ -64,6 +64,12 @@ This uses the same runtime snapshot compatibility rules as campaign mid-level re
 
 RoundStartRuntimeSnapshot adds RotTileIds and RotAdjacentDeathChance. Export stores actual state, not a regenerated patch recipe. Missing/null tile lists restore as no rot with zero default penalty; an old level-5 checkpoint is not retrofitted. Invalid overlapping/out-of-bounds rot tiles are rejected explicitly. DeathReason.Rot is appended without renumbering existing enum values.
 
+## Campaign encounter variants
+
+CampaignState adds levelVariantId without renaming fields or stage indices. Stage-12 pools use stable distinct variant/preset IDs. Old Campaign11 saves resolve to flatbread-original, including checkpoints; the new pool does not retrofit rot. New/advanced choices are seeded and persisted. Resume prioritizes stored IDs, normalizes missing variant IDs from the saved preset, and never rerolls unknown/inconsistent identities. Keep active-save IDs stable.
+
+Quarantine checkpoints store the actual rot mask, not its recipe. Restore skips fresh placement and coaching and preserves cells/RNG. Verify title, medium, AI and resource routing on original/quarantine resumes in Unity. Testing-only forced IDs require a fresh testing-level start and then persist normally.
+
 ## Compatibility tiers
 
 ### Usually safe

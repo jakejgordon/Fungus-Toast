@@ -69,6 +69,15 @@ namespace FungusToast.Unity.Campaign
                 return FindOrResolveBoardPreset(spec, State.levelIndex);
             }
         }
+        public CampaignProgression.LevelVariant CurrentLevelVariant => State != null
+            ? ResolveLevelVariant(CurrentLevelSpec, State.levelIndex, preserveSavedIdentity: true) : null;
+        public FungusToast.Core.Board.RotLayoutKind CurrentRotLayout => CurrentLevelVariant?.rotLayout
+            ?? (CurrentLevelSpec?.enableRotPatch == true
+                ? FungusToast.Core.Board.RotLayoutKind.IntroductoryTongue : FungusToast.Core.Board.RotLayoutKind.None);
+        public bool CurrentNutrientPatchesEnabled => CurrentLevelVariant?.enableNutrientPatches
+            ?? CurrentLevelSpec?.enableNutrientPatches ?? true;
+        public IReadOnlyCollection<FungusToast.Core.Board.NutrientPatchType> CurrentAllowedNutrientPatchTypes
+            => CurrentLevelVariant?.allowedNutrientPatchTypes ?? CurrentLevelSpec?.allowedNutrientPatchTypes;
         public IReadOnlyList<string> CurrentResolvedAiStrategyNames => State != null ? State.resolvedAiStrategyNames : Array.Empty<string>();
         public CampaignDifficulty CurrentStartDifficulty => State?.startDifficulty ?? CampaignDifficulty.Training;
         public bool IsAwaitingAdaptationSelection => State != null && State.pendingAdaptationSelection;
@@ -122,7 +131,9 @@ namespace FungusToast.Unity.Campaign
         public string GetLevelTitle(int levelIndex)
         {
             var levelSpec = progression.Get(levelIndex);
-            return levelSpec?.levelTitle?.Trim() ?? string.Empty;
+            var variant = State != null
+                ? ResolveLevelVariant(levelSpec, levelIndex, preserveSavedIdentity: State.levelIndex == levelIndex) : null;
+            return (variant?.levelTitle ?? levelSpec?.levelTitle)?.Trim() ?? string.Empty;
         }
 
         public string GetFormattedLevelTitle(int levelIndex)
@@ -152,7 +163,8 @@ namespace FungusToast.Unity.Campaign
             CampaignDifficulty startDifficulty = CampaignDifficulty.Training,
             int? levelIndexOverride = null,
             IReadOnlyList<string> temporaryTestingAdaptationIds = null,
-            bool treatLevelOverrideAsFreshRunWithoutPersistentState = false)
+            bool treatLevelOverrideAsFreshRunWithoutPersistentState = false,
+            string testingForcedVariantId = "")
         {
             if (progression.MaxLevels == 0) throw new InvalidOperationException("CampaignProgression has no levels defined.");
 
@@ -167,13 +179,24 @@ namespace FungusToast.Unity.Campaign
             var targetSpec = progression.Get(targetLevelIndex);
             int newSeed = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
             State = new CampaignState { seed = newSeed };
-            var preset = ResolveBoardPreset(targetSpec, targetLevelIndex);
+            var selectedVariant = ResolveLevelVariant(targetSpec, targetLevelIndex, preserveSavedIdentity: false);
+            if (!string.IsNullOrWhiteSpace(testingForcedVariantId))
+            {
+                if (!treatLevelOverrideAsFreshRunWithoutPersistentState)
+                    throw new ArgumentException("Forced variants are available only for fresh testing-level runs.", nameof(testingForcedVariantId));
+                selectedVariant = targetSpec.variants?.FirstOrDefault(v => v != null
+                    && StringComparer.Ordinal.Equals(v.variantId, testingForcedVariantId.Trim()));
+                if (selectedVariant == null)
+                    throw new ArgumentException($"Stage {targetLevelIndex + 1} has no variant '{testingForcedVariantId}'.", nameof(testingForcedVariantId));
+            }
+            var preset = selectedVariant?.boardPreset ?? ResolveBoardPreset(targetSpec, targetLevelIndex);
             if (preset == null) throw new InvalidOperationException($"Campaign level {targetLevelIndex} has no BoardPreset assigned.");
             State = new CampaignState
             {
                 runId = Guid.NewGuid().ToString(),
                 levelIndex = targetLevelIndex,
                 boardPresetId = preset.presetId,
+                levelVariantId = selectedVariant?.variantId ?? string.Empty,
                 seed = newSeed,
                 boardWidth = preset.boardWidth,
                 boardHeight = preset.boardHeight,
@@ -253,8 +276,15 @@ namespace FungusToast.Unity.Campaign
                 State.pendingVictorySnapshot = null;
             }
 
+            bool normalizedVariantIdentity = false;
+            if (!State.requiresNewCampaignStart && CurrentLevelSpec?.HasVariants == true
+                && string.IsNullOrEmpty(State.levelVariantId))
+            {
+                State.levelVariantId = CurrentLevelVariant.variantId;
+                normalizedVariantIdentity = true;
+            }
             EnsureResolvedAiLineup();
-            if (normalizedMoldinessState || normalizedPendingAdaptationDraftState)
+            if (normalizedVariantIdentity || normalizedMoldinessState || normalizedPendingAdaptationDraftState)
             {
                 CampaignSaveService.Save(State);
             }
@@ -871,7 +901,9 @@ namespace FungusToast.Unity.Campaign
             {
                 Debug.Log($"[CampaignController] Boss level {targetIndex}: selected preset {preset.presetId} from pool of {spec.bossBoardPresets.Count}");
             }
+            var variant = ResolveLevelVariant(spec, targetIndex, preserveSavedIdentity: false);
             State.levelIndex = targetIndex;
+            State.levelVariantId = variant?.variantId ?? string.Empty;
             State.boardPresetId = preset.presetId;
             State.boardWidth = preset.boardWidth;
             State.boardHeight = preset.boardHeight;
@@ -934,6 +966,7 @@ namespace FungusToast.Unity.Campaign
             State.seed = 0;
             State.moldiness ??= MoldinessProgression.CreateDefaultState();
             State.boardPresetId = string.Empty;
+            State.levelVariantId = string.Empty;
             State.boardWidth = 0;
             State.boardHeight = 0;
             State.currentLevelGameplaySeed = 0;
@@ -1438,8 +1471,25 @@ namespace FungusToast.Unity.Campaign
             CampaignSaveService.Save(State);
         }
 
+        private CampaignProgression.LevelVariant ResolveLevelVariant(
+            CampaignProgression.LevelSpec spec, int levelIndex, bool preserveSavedIdentity)
+        {
+            if (spec?.HasVariants != true) return null;
+            if (spec.HasBossPool) throw new InvalidOperationException($"Stage {levelIndex + 1} cannot mix variants with a legacy boss pool.");
+            if (spec.variants.Any(v => v == null || v.boardPreset == null))
+                throw new InvalidOperationException($"Stage {levelIndex + 1} has a null variant or missing board preset.");
+            bool useSaved = preserveSavedIdentity && State != null && State.levelIndex == levelIndex;
+            int index = CampaignLevelVariantSelection.ResolveVariantIndex(State?.seed ?? 0, levelIndex,
+                spec.variants.Select(v => v.variantId).ToArray(),
+                spec.variants.Select(v => v.boardPreset.presetId).ToArray(),
+                useSaved ? State.levelVariantId : null, useSaved ? State.boardPresetId : null);
+            return spec.variants[index];
+        }
+
         private BoardPreset ResolveBoardPreset(CampaignProgression.LevelSpec spec, int levelIndex)
         {
+            var variant = ResolveLevelVariant(spec, levelIndex, preserveSavedIdentity: false);
+            if (variant != null) return variant.boardPreset;
             if (spec.HasBossPool)
             {
                 int idx = CampaignRunDeterminism.PickBossPresetIndex(State.seed, levelIndex, spec.bossBoardPresets.Count);
@@ -1450,6 +1500,8 @@ namespace FungusToast.Unity.Campaign
 
         private BoardPreset FindOrResolveBoardPreset(CampaignProgression.LevelSpec spec, int levelIndex)
         {
+            var variant = ResolveLevelVariant(spec, levelIndex, preserveSavedIdentity: true);
+            if (variant != null) return variant.boardPreset;
             if (!string.IsNullOrEmpty(State?.boardPresetId))
             {
                 if (spec.HasBossPool)

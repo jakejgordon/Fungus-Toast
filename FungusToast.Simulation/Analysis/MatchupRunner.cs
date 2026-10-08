@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.AI;
+using FungusToast.Core.AI;
 using FungusToast.Core.Config;
 using FungusToast.Core.Death;
 using FungusToast.Simulation.GameSimulation;
@@ -86,7 +86,8 @@ namespace FungusToast.Simulation.Analysis
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
             Func<int, int, List<IMutationSpendingStrategy>>? perGameLineupSelector = null,
-            bool enableIntroductoryRot = false)
+            bool enableIntroductoryRot = false,
+            bool enableQuarantineRot = false)
         {
             if (gameSeedSchedule != null && gameSeedSchedule.Count != gamesToPlay)
                 throw new ArgumentException("Game seed schedule count must match gamesToPlay.", nameof(gameSeedSchedule));
@@ -148,7 +149,8 @@ namespace FungusToast.Simulation.Analysis
                     preferredPositionsByPlayerId: preferredPositionsByPlayerId,
                     enableStartingAdaptations: enableStartingAdaptations,
                     strategyStartingSporeEdgeOffsetOverrides: strategyStartingSporeEdgeOffsetOverrides,
-                    enableIntroductoryRot: enableIntroductoryRot
+                    enableIntroductoryRot: enableIntroductoryRot,
+                    enableQuarantineRot: enableQuarantineRot
                 );
 
                 results.Add(result);

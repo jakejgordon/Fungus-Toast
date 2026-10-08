@@ -14,7 +14,8 @@ namespace FungusToast.Core.Board
             List<Player> players,
             Random rng,
             ISimulationObserver? observer = null,
-            IReadOnlyCollection<NutrientPatchType>? allowedPatchTypes = null)
+            IReadOnlyCollection<NutrientPatchType>? allowedPatchTypes = null,
+            ISet<int>? excludedTileIds = null)
         {
             if (board == null || players == null || rng == null)
             {
@@ -38,7 +39,7 @@ namespace FungusToast.Core.Board
                 .ToList();
 
             var candidateTileIds = board.AllTiles()
-                .Where(tile => !tile.IsOccupiedForSporePlacement)
+                .Where(tile => !tile.IsOccupiedForSporePlacement && !(excludedTileIds?.Contains(tile.TileId) ?? false))
                 .Select(tile => tile.TileId)
                 .ToList();
 
@@ -73,7 +74,8 @@ namespace FungusToast.Core.Board
                         desiredClusterSize,
                         rng,
                         candidateRegionIndicesByTileId,
-                        placedTileCountsByRegion);
+                        placedTileCountsByRegion,
+                        excludedTileIds);
                     if (clusterTileIds.Count < GameBalance.NutrientPatchClusterMinimumSize)
                     {
                         continue;
@@ -166,7 +168,8 @@ namespace FungusToast.Core.Board
             int desiredClusterSize,
             Random rng,
             IReadOnlyDictionary<int, int> candidateRegionIndicesByTileId,
-            IReadOnlyList<int> placedTileCountsByRegion)
+            IReadOnlyList<int> placedTileCountsByRegion,
+            ISet<int>? excludedTileIds)
         {
             foreach (int regionIndex in BuildRegionPlacementOrder(placedTileCountsByRegion))
             {
@@ -180,7 +183,7 @@ namespace FungusToast.Core.Board
                     startingTileIds,
                     minimumDistanceFromStartingSpores,
                     desiredClusterSize,
-                    rng);
+                    rng, excludedTileIds);
                 if (clusterTileIds.Count >= GameBalance.NutrientPatchClusterMinimumSize)
                 {
                     return clusterTileIds;
@@ -193,7 +196,7 @@ namespace FungusToast.Core.Board
                 startingTileIds,
                 minimumDistanceFromStartingSpores,
                 desiredClusterSize,
-                rng);
+                rng, excludedTileIds);
         }
 
         private static List<int> TryBuildClusterFromSeedPool(
@@ -202,7 +205,8 @@ namespace FungusToast.Core.Board
             IReadOnlyList<int> startingTileIds,
             int minimumDistanceFromStartingSpores,
             int desiredClusterSize,
-            Random rng)
+            Random rng,
+            ISet<int>? excludedTileIds)
         {
             var seedTileIds = seedCandidateTileIds
                 .Where(tileId => IsEligibleClusterTile(
@@ -210,7 +214,7 @@ namespace FungusToast.Core.Board
                     tileId,
                     startingTileIds,
                     minimumDistanceFromStartingSpores,
-                    Array.Empty<int>()))
+                    Array.Empty<int>(), excludedTileIds))
                 .ToList();
 
             Shuffle(seedTileIds, rng);
@@ -233,7 +237,7 @@ namespace FungusToast.Core.Board
                             tileId,
                             startingTileIds,
                             minimumDistanceFromStartingSpores,
-                            clusterTileIds))
+                            clusterTileIds, excludedTileIds))
                         .ToList();
 
                     if (growthOptions.Count == 0)
@@ -278,10 +282,11 @@ namespace FungusToast.Core.Board
             int candidateTileId,
             IReadOnlyList<int> startingTileIds,
             int minimumDistanceFromStartingSpores,
-            IEnumerable<int> currentClusterTileIds)
+            IEnumerable<int> currentClusterTileIds,
+            ISet<int>? excludedTileIds)
         {
             BoardTile? candidateTile = board.GetTileById(candidateTileId);
-            if (candidateTile == null || candidateTile.IsOccupiedForSporePlacement)
+            if (candidateTile == null || candidateTile.IsOccupiedForSporePlacement || (excludedTileIds?.Contains(candidateTileId) ?? false))
             {
                 return false;
             }

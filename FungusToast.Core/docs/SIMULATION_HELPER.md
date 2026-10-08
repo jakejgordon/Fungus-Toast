@@ -14,6 +14,16 @@ dotnet run --no-build --project FungusToast.Simulation -- --games 3 --players 2 
 
 This checks behavior, not campaign calibration. Spreading, clearing abilities, and campaign-wide rollout are deferred.
 
+## Quarantine corridor smoke and population evidence
+
+Use --quarantine-rot for the shared stage-12 QuarantineRotLayout. It requires the real authored 120x120 hotdog mask and at most seven players; a rectangle is unsupported. Do not combine introductory rot or nonempty custom position/offset controls. The layout owns starts, supersedes strategy edge offsets, preserves starting Adaptations, validates effective placements and excludes the corridor from starting nutrient seeds/frontiers. Empty replay control dictionaries are not overrides.
+
+Generate the canonical blocked-mask input with python3 scripts/inspect_quarantine_layout.py --output-dir TEMP/quarantine-layout. Then run the existing CLI with --width 120 --height 120 --blocked-tiles-file TEMP/quarantine-layout/blocked-tiles.txt --quarantine-rot, an explicit --strategy-set Campaign lineup, seed, unique experiment ID, purpose and bounded runtime. Default population probes use --no-nutrient-patches; test resource-enabled startup separately.
+
+The optional quarantineRotEnabled input flag defaults off and is omitted when false, preserving old serialized system fingerprints. Replay restores it. Existing rot evidence contains actual mask IDs/count/penalty; quarantine runs also emit quarantine_population.json, hashed in resolved-manifest outputs. It contains geometry sizes/distances and post-Decay round samples: pocket fungal occupancy, living cells by player, corridor occupancy, first living pocket entry and first half-occupied pocket. Occupied includes dead/toxin fungal cells; it is not the living-cell score and excludes unclaimed nutrients. Population observations do not change rules or consume RNG.
+
+Verify the resolved-manifest sidecar and all output hashes, and perform strict replay with the matching binaries. Three-game population smoke is not campaign calibration: the safe proxy lacks a real run's accumulated Adaptations, and the current curation policy has no settled stage-12 target band. Report any proxy win percentage against that explicitly-unsettled target, never claim difficulty acceptance from a small pilot.
+
 ## Experiment input contract
 
 Simulation CLI options are validated through the versioned

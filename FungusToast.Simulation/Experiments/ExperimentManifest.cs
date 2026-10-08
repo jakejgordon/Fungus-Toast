@@ -1,4 +1,4 @@
-﻿using FungusToast.Core.AI;
+using FungusToast.Core.AI;
 using FungusToast.Simulation.Models;
 using System.Text.Json.Serialization;
 
@@ -158,6 +158,8 @@ public sealed class ExperimentStrategyFilter
 public sealed class ExperimentSystems
 {
     public bool IntroductoryRotEnabled { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool QuarantineRotEnabled { get; init; }
     public required bool NutrientPatchesEnabled { get; init; }
     public required bool MycovariantDraftEnabled { get; init; }
     public bool StartingAdaptationsEnabled { get; init; } = true;

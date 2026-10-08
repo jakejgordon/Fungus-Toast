@@ -1375,7 +1375,8 @@ namespace FungusToast.Unity
                 startDifficulty,
                 levelOverride,
                 forcedStartingAdaptationIds,
-                treatLevelOverrideAsFreshRunWithoutPersistentState: isTestingLevelOverride);
+                treatLevelOverrideAsFreshRunWithoutPersistentState: isTestingLevelOverride,
+                testingForcedVariantId: isTestingLevelOverride ? GameManager.Instance.TestingForcedCampaignVariantId : string.Empty);
             setGameMode(GameMode.Campaign);
             StartCampaignGameplay(campaignController);
         }

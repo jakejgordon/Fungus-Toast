@@ -8,5 +8,23 @@ namespace FungusToast.Core.Config
         public const float IntroductoryHalfThicknessHeightFactor = 0.10f;
         public const float StartingSporeClearanceSizeFactor = 0.10f;
         public const int MinimumStartingSporeClearance = 4;
+
+        // Stage 12 alternate: authored against the 120x120 medium hotdog silhouette.
+        public const int QuarantineBoardSize = 120;
+        public const int QuarantineMaximumPlayers = 7;
+        public const int QuarantineBeltStartX = 60;
+        public const int QuarantinePocketStartX = 95;
+        public const int QuarantineOuterBeltStartX = 87;
+        public const int QuarantineBulgeBottomY = 45;
+        public const int QuarantineBulgeTopY = 73;
+        public const int QuarantineEntranceY = 60;
+        public const double QuarantineMinimumPocketFraction = 0.14;
+        public const double QuarantineMaximumPocketFraction = 0.16;
+        public const int QuarantineStartingRotClearance = 10;
+        public const int QuarantineStartingSeparation = 16;
+        public const int QuarantineStartingEdgeClearance = 4;
+        // Existing starting-position Adaptations remain active; these are post-modifier minima.
+        public const int QuarantineEffectiveStartingRotClearance = 5;
+        public const int QuarantineEffectiveStartingSeparation = 10;
     }
 }

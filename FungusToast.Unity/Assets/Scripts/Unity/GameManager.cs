@@ -298,6 +298,7 @@ namespace FungusToast.Unity
         public bool testingHasMycovariantOverride = false;
         public int testingMycovariantId = 0;
         public int testingCampaignLevelIndex = 0;
+        public string testingForcedCampaignVariantId = string.Empty;
         public string testingForcedAdaptationId = string.Empty;
         public string testingForcedMoldinessRewardId = string.Empty;
         public List<string> testingForcedStartingAdaptationIds = new();
@@ -433,6 +434,7 @@ namespace FungusToast.Unity
         public bool IsTestingModeEnabled => testingModeEnabled; 
         public int? TestingMycovariantId => TestingMycovariantIdOrNull;
         public int TestingCampaignLevelIndex => testingCampaignLevelIndex;
+        public string TestingForcedCampaignVariantId => testingForcedCampaignVariantId;
         public string TestingForcedAdaptationId => testingForcedAdaptationId;
         public string TestingForcedMoldinessRewardId => testingForcedMoldinessRewardId;
         public IReadOnlyList<string> TestingForcedStartingAdaptationIds => testingForcedStartingAdaptationIds;
@@ -450,6 +452,7 @@ namespace FungusToast.Unity
         public bool IsWelcomeCoachmarkActive => isRotIntroPendingOrVisible
             || (welcomeCoachmark != null && welcomeCoachmark.IsActive);
         private bool isRotIntroPendingOrVisible;
+        private QuarantineRotPlan? quarantineRotPlan;
         public bool IsWelcomeCoachmarkPendingOrVisible => welcomeCoachmark != null && welcomeCoachmark.IsPendingOrVisible;
         private RoundPresentationSpeedMode roundPresentationSpeedMode = RoundPresentationSpeedMode.Normal;
         public RoundPresentationSpeedMode RoundPresentationSpeedMode => roundPresentationSpeedMode;
@@ -1215,6 +1218,18 @@ namespace FungusToast.Unity
             var edgeOffsets = players
                 .Select(player => player.MutationStrategy is ParameterizedSpendingStrategy parameterized ? parameterized.StartingSporeEdgeOffset : 0)
                 .ToArray();
+            quarantineRotPlan = null;
+            if (CurrentGameMode == GameMode.Campaign
+                && campaignController?.CurrentRotLayout == RotLayoutKind.QuarantineCorridor)
+            {
+                quarantineRotPlan = QuarantineRotLayout.Build(Board, players.Count);
+                Board.ConfigureRot(RotBalance.AdjacentDeathChance);
+                foreach (int tileId in quarantineRotPlan.RotTileIds)
+                    if (!Board.TryPlaceRot(tileId))
+                        throw new InvalidOperationException($"Quarantine rot tile {tileId} overlaps starting board state.");
+                // Authored encounter slots supersede strategy-specific edge offsets.
+                Array.Clear(edgeOffsets, 0, edgeOffsets.Length);
+            }
             var (campaignPreferredPositions, ignoreMinimumPlayableEdgeDistancePlayerIds) = GetCampaignPreferredStartingPositions();
             StartingSporeUtility.PlaceStartingSpores(
                 Board,
@@ -1224,8 +1239,11 @@ namespace FungusToast.Unity
                 preferredPositionsByPlayerId: campaignPreferredPositions,
                 enforceMinimumPlayableEdgeDistanceForPreferredPositions: true,
                 ignoreMinimumPlayableEdgeDistancePlayerIds: ignoreMinimumPlayableEdgeDistancePlayerIds);
+            if (quarantineRotPlan != null)
+                QuarantineRotLayout.ValidateEffectiveStartingPositions(Board, quarantineRotPlan);
             // Authored level option; only seed new games, never checkpoint restores.
-            if (CurrentGameMode == GameMode.Campaign && campaignController?.CurrentLevelSpec?.enableRotPatch == true)
+            if (CurrentGameMode == GameMode.Campaign
+                && campaignController?.CurrentRotLayout == RotLayoutKind.IntroductoryTongue)
             {
                 Board.ConfigureRot(FungusToast.Core.Config.RotBalance.AdjacentDeathChance);
                 RotPlacementUtility.PlaceIntroductoryPatch(Board);
@@ -1238,7 +1256,8 @@ namespace FungusToast.Unity
                     players,
                     rng,
                     gameUIManager.GameLogRouter,
-                    GetAllowedCampaignNutrientPatchTypes());
+                    GetAllowedCampaignNutrientPatchTypes(),
+                    excludedTileIds: quarantineRotPlan != null ? new HashSet<int>(quarantineRotPlan.CorridorTileIds) : null);
             }
 
             int round = Board.CurrentRound;
@@ -1253,6 +1272,17 @@ namespace FungusToast.Unity
                 return (null, null);
             }
 
+            var authoredPlan = quarantineRotPlan;
+            if (authoredPlan != null)
+            {
+                var orderedPlayers = players.OrderBy(player => player.PlayerType == PlayerTypeEnum.Human ? 0 : 1)
+                    .ThenBy(player => player.PlayerId).ToList();
+                var authored = orderedPlayers.Select((player, slot) =>
+                        (player.PlayerId, Position: authoredPlan.StartingPositions[slot]))
+                    .ToDictionary(entry => entry.PlayerId, entry => entry.Position);
+                // The plan independently validates silhouette, rot, and inter-player clearance.
+                return (authored, new HashSet<int>(authored.Keys));
+            }
             var preset = campaignController?.CurrentBoardPreset;
             if (preset?.humanStartingCoordinatePool != null && preset.humanStartingCoordinatePool.Count > 0)
             {
@@ -1296,7 +1326,7 @@ namespace FungusToast.Unity
                 return true;
             }
 
-            return campaignController?.CurrentLevelSpec?.enableNutrientPatches ?? true;
+            return campaignController?.CurrentNutrientPatchesEnabled ?? true;
         }
 
         private IReadOnlyCollection<NutrientPatchType>? GetAllowedCampaignNutrientPatchTypes()
@@ -1306,7 +1336,7 @@ namespace FungusToast.Unity
                 return null;
             }
 
-            return campaignController?.CurrentLevelSpec?.allowedNutrientPatchTypes;
+            return campaignController?.CurrentAllowedNutrientPatchTypes;
         }
 
         public void StartGrowthPhase()
@@ -2042,6 +2072,8 @@ namespace FungusToast.Unity
             currentLevelGameplaySeed = 0;
             pendingGameplaySeed = null;
             endgameService?.Reset();
+            RotIntroCoachmark.Cancel();
+            quarantineRotPlan = null;
             isRotIntroPendingOrVisible = false;
             welcomeCoachmark?.ResetForNewGame();
 
@@ -2128,6 +2160,7 @@ namespace FungusToast.Unity
             testingHasMycovariantOverride = false;
             testingMycovariantId = 0;
             testingCampaignLevelIndex = 0;
+            testingForcedCampaignVariantId = string.Empty;
             testingForcedAdaptationId = string.Empty;
             testingForcedMoldinessRewardId = string.Empty;
             testingForcedStartingAdaptationIds = new List<string>();
@@ -2404,7 +2437,13 @@ namespace FungusToast.Unity
             else if (!willFastForward)
             {
                 var introBoard = Board;
-                isRotIntroPendingOrVisible = NewPlayerTooltipRules.ShouldShowRotIntro(
+                bool showQuarantineIntro = NewPlayerTooltipRules.ShouldShowQuarantineCorridorIntro(
+                    applyStartingSporeEffects, CurrentGameMode == GameMode.Campaign,
+                    campaignController?.CurrentRotLayout == RotLayoutKind.QuarantineCorridor,
+                    introBoard.RotTileIds.Count > 0, introBoard.CurrentRound, humanPlayers.Count, isFastForwarding);
+                var introTooltipId = showQuarantineIntro
+                    ? NewPlayerTooltipId.QuarantineCorridorIntro : NewPlayerTooltipId.RotIntro;
+                isRotIntroPendingOrVisible = showQuarantineIntro || NewPlayerTooltipRules.ShouldShowRotIntro(
                     applyStartingSporeEffects, CurrentGameMode == GameMode.Campaign,
                     campaignController?.IsFirstRotLevel == true, introBoard.RotTileIds.Count > 0,
                     introBoard.CurrentRound, humanPlayers.Count, isFastForwarding);
@@ -2418,12 +2457,14 @@ namespace FungusToast.Unity
                         bool StillInIntroRound() => ReferenceEquals(Board, introBoard)
                             && introBoard.CurrentRound == 1 && !isFastForwarding && !gameEnded;
                         if (StillInIntroRound())
-                            yield return RotIntroCoachmark.Show(ResolveRootUiCanvas(), StillInIntroRound);
+                            yield return RotIntroCoachmark.Show(ResolveRootUiCanvas(), StillInIntroRound, introTooltipId);
                     }
                 }
                 finally
                 {
                     isRotIntroPendingOrVisible = false;
+                    if (ReferenceEquals(Board, introBoard) && introBoard.CurrentRound == 1 && !isFastForwarding && !gameEnded)
+                        gameUIManager?.MutationUIManager?.TryShowSpendMutationPointsCoachmark();
                 }
             }
         }
@@ -2451,6 +2492,8 @@ namespace FungusToast.Unity
             ConfigureBackgroundMusicService();
             ui.MutationUIManager?.ResetForNewGameState();
             ui.PauseMenuPanel?.ResetForNewGame();
+            RotIntroCoachmark.Cancel();
+            quarantineRotPlan = null;
             isRotIntroPendingOrVisible = false;
             welcomeCoachmark?.ResetForNewGame();
             ui.EndGamePanel?.gameObject.SetActive(false);

@@ -1,4 +1,4 @@
-﻿using FungusToast.Core;
+using FungusToast.Core;
 using FungusToast.Core.AI;
 using FungusToast.Core.Board;
 using FungusToast.Core.Campaign;
@@ -39,7 +39,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
-            bool enableIntroductoryRot = false
+            bool enableIntroductoryRot = false,
+            bool enableQuarantineRot = false
         )
         {
             var gameStopwatch = Stopwatch.StartNew();
@@ -59,7 +60,33 @@ namespace FungusToast.Simulation.GameSimulation
                 preferredPositionsByPlayerId,
                 enableStartingAdaptations,
                 strategyStartingSporeEdgeOffsetOverrides,
-                enableIntroductoryRot);
+                enableIntroductoryRot, enableQuarantineRot);
+            var quarantinePlan = enableQuarantineRot ? QuarantineRotLayout.Build(board, players.Count) : null;
+            QuarantinePopulationEvidence? quarantineEvidence = quarantinePlan == null ? null : new()
+            {
+                PocketTileCount = quarantinePlan.PocketTileIds.Count,
+                CorridorTileCount = quarantinePlan.CorridorTileIds.Count,
+                RotTileCount = quarantinePlan.RotTileIds.Count,
+                CorridorOrthogonalDistance = quarantinePlan.CorridorOrthogonalDistance,
+                CorridorDiagonalDistance = quarantinePlan.CorridorDiagonalDistance
+            };
+            void SampleQuarantine(int round)
+            {
+                if (quarantinePlan == null || quarantineEvidence == null) return;
+                var living = quarantinePlan.PocketTileIds.Select(board.GetCell)
+                    .Where(cell => cell?.IsAlive == true).ToList();
+                int occupied = quarantinePlan.PocketTileIds.Count(id => board.GetCell(id) != null);
+                if (living.Count > 0) quarantineEvidence.FirstPocketEntryRound ??= round;
+                if (occupied*2 >= quarantinePlan.PocketTileIds.Count) quarantineEvidence.HalfPocketOccupiedRound ??= round;
+                quarantineEvidence.Samples.Add(new()
+                {
+                    Round = round, PocketOccupiedTiles = occupied, PocketLivingTiles = living.Count,
+                    CorridorOccupiedTiles = quarantinePlan.CorridorTileIds.Count(id => board.GetCell(id) != null),
+                    PocketLivingByPlayer = living.GroupBy(cell => cell!.OwnerPlayerId
+                        ?? throw new InvalidOperationException("Living pocket cell has no owner.")).ToDictionary(g => g.Key, g => g.Count())
+                });
+            }
+            SampleQuarantine(0);
             var resolvedStartingPositions = players.ToDictionary(
                 player => player.PlayerId,
                 player =>
@@ -174,6 +201,7 @@ namespace FungusToast.Simulation.GameSimulation
                     simTracking);
                 TurnEngine.RunGrowthPhase(board, players, rng, simTracking);
                 TurnEngine.RunDecayPhase(board, players, simTracking.FailedGrowthsByPlayerId, rng, simTracking);
+                SampleQuarantine(board.CurrentRound);
 
                 foreach (var player in players)
                 {
@@ -207,6 +235,8 @@ namespace FungusToast.Simulation.GameSimulation
             result.GameIndex = gameIndex > 0 ? gameIndex : 0;
             result.GameSeed = seed;
             result.IntroductoryRotEnabled = enableIntroductoryRot;
+            result.QuarantineRotEnabled = enableQuarantineRot;
+            result.QuarantinePopulation = quarantineEvidence;
             gameStopwatch.Stop();
             result.RuntimeMilliseconds = gameStopwatch.Elapsed.TotalMilliseconds;
             result.TerminationReason = terminationReason;
@@ -308,7 +338,8 @@ namespace FungusToast.Simulation.GameSimulation
             IReadOnlyDictionary<int, (int x, int y)>? preferredPositionsByPlayerId = null,
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
-            bool enableIntroductoryRot = false)
+            bool enableIntroductoryRot = false,
+            bool enableQuarantineRot = false)
         {
             var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
@@ -368,6 +399,21 @@ namespace FungusToast.Simulation.GameSimulation
                 }
             }
 
+            if (enableIntroductoryRot && enableQuarantineRot)
+                throw new ArgumentException("Introductory and quarantine rot layouts are mutually exclusive.");
+            QuarantineRotPlan? plan = null;
+            if (enableQuarantineRot)
+            {
+                if (startingPositionOverride is { Count: > 0 } || preferredPositionsByPlayerId is { Count: > 0 }
+                    || strategyStartingSporeEdgeOffsetOverrides is { Count: > 0 })
+                    throw new ArgumentException("Quarantine uses authored starts; custom positioning or edge offsets cannot be combined with this layout.");
+                plan = QuarantineRotLayout.Build(board, playerCount);
+                board.ConfigureRot(RotBalance.AdjacentDeathChance);
+                foreach (int id in plan.RotTileIds)
+                    if (!board.TryPlaceRot(id)) throw new InvalidOperationException($"Quarantine rot tile {id} overlaps setup state.");
+                preferredPositionsByPlayerId = players.Select((p,slot) => (p.PlayerId, Position:plan.StartingPositions[slot]))
+                    .ToDictionary(p => p.PlayerId,p => p.Position);
+            }
             // Use the shared starting spore placement utility
             var edgeOffsets = strategies
                 .Select(strategy => strategyStartingSporeEdgeOffsetOverrides != null
@@ -377,6 +423,7 @@ namespace FungusToast.Simulation.GameSimulation
                             ? parameterized.StartingSporeEdgeOffset
                             : 0)
                 .ToArray();
+            if (enableQuarantineRot) Array.Clear(edgeOffsets, 0, edgeOffsets.Length);
             StartingSporeUtility.PlaceStartingSpores(
                 board,
                 players,
@@ -387,13 +434,15 @@ namespace FungusToast.Simulation.GameSimulation
                 preferredPositionsByPlayerId,
                 enforceMinimumPlayableEdgeDistanceForPreferredPositions: false,
                 ignoreMinimumPlayableEdgeDistancePlayerIds: null);
+            if (plan != null) QuarantineRotLayout.ValidateEffectiveStartingPositions(board, plan);
             if (enableIntroductoryRot)
             {
                 RotPlacementUtility.PlaceIntroductoryPatch(board);
             }
             if (enableNutrientPatches)
             {
-                NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer);
+                NutrientPatchPlacementUtility.PlaceStartingNutrientPatches(board, players, rng, observer,
+                    excludedTileIds: plan != null ? new HashSet<int>(plan.CorridorTileIds) : null);
             }
             AdaptationEffectProcessor.OnStartingSporesEstablished(board, players, rng);
 

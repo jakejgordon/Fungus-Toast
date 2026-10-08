@@ -19,6 +19,7 @@ namespace FungusToast.Unity.UI.Onboarding
         AutoPlacementIntro,
         EndgameCountdownIntro,
         RotIntro,
+        QuarantineCorridorIntro,
     }
 
     public enum NewPlayerTooltipSurface
@@ -71,6 +72,13 @@ namespace FungusToast.Unity.UI.Onboarding
                 $"Rot is ownerless and blocks mold, toxins, and nutrients. Grow around the patch: it cannot be cleared or claimed.\n\nOrthogonally adjacent living cells gain +{FungusToast.Core.Config.RotBalance.AdjacentDeathChance * 100f:0.##} percentage points death chance during Decay (non-stacking). Resistant cells and the last living cell are protected.\n\nRot stays in place. It counts toward occupied space, never your score. Hover it to inspect.",
                 NewPlayerTooltipSurface.ScreenCenterCoachmark,
                 "Show once per profile during round 1 of a new game on the first authored campaign level with rot, after the title clears and mutation controls initialize. Other round-1 coaching waits until it closes. Never show on later rot levels, during checkpoint restore, or while fast-forwarding."),
+            new NewPlayerTooltipDefinition(
+                NewPlayerTooltipId.QuarantineCorridorIntro,
+                "Onboarding.QuarantineCorridorIntroSeen",
+                "A Passage Through the Rot",
+                "The far pocket holds unclaimed space. A narrow zigzag is the only growth route through the rot, and cells beside rot face extra decay. Establish a foothold, then hold the passage.\n\nRemote seeding or placement can reach the pocket without walking the corridor. Necrosporulation, compatible mycovariants, or Adaptations can provide a shortcut.",
+                NewPlayerTooltipSurface.ScreenCenterCoachmark,
+                "Show once per profile during round 1 of a new human campaign game using the quarantine-corridor variant with actual rot. Never show on checkpoint restore or fast-forward."),
             new NewPlayerTooltipDefinition(
                 NewPlayerTooltipId.WelcomeIntro,
                 "Onboarding.WelcomeIntroSeen",
@@ -206,6 +214,12 @@ namespace FungusToast.Unity.UI.Onboarding
 
     public static class NewPlayerTooltipRules
     {
+        public static bool ShouldShowQuarantineCorridorIntro(bool isNewGame, bool isCampaign,
+            bool isQuarantineVariant, bool hasRot, int currentRound, int humanPlayerCount, bool isFastForwarding)
+            => isNewGame && isCampaign && isQuarantineVariant && hasRot && currentRound == 1
+                && humanPlayerCount > 0 && !isFastForwarding
+                && !NewPlayerTooltipCatalog.HasBeenSeen(NewPlayerTooltipId.QuarantineCorridorIntro);
+
         public static bool ShouldShowRotIntro(bool isNewGame, bool isCampaign, bool isFirstRotLevel,
             bool hasRot, int currentRound, int humanPlayerCount, bool isFastForwarding)
             => isNewGame && isCampaign && isFirstRotLevel && hasRot && currentRound == 1

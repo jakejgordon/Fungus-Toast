@@ -181,6 +181,17 @@ public static partial class ExperimentManifestValidator
     private static void ValidateSystems(ExperimentCondition condition, string path, ICollection<string> errors)
     {
         if (condition.Systems == null) { errors.Add($"{path}.systems is required."); return; }
+        if (condition.Systems.QuarantineRotEnabled)
+        {
+            if (condition.Systems.IntroductoryRotEnabled) errors.Add($"{path}.systems cannot combine introductory and quarantine rot.");
+            if (condition.Board == null || condition.Board.Width != FungusToast.Core.Config.RotBalance.QuarantineBoardSize
+                || condition.Board.Height != FungusToast.Core.Config.RotBalance.QuarantineBoardSize
+                || condition.PlayerCount > FungusToast.Core.Config.RotBalance.QuarantineMaximumPlayers)
+                errors.Add($"{path}: quarantine requires the authored 120x120 hotdog silhouette and at most seven players.");
+            if (condition.Positioning?.ExactStartingPositions?.Count > 0 || condition.Positioning?.PreferredPositionPools?.Count > 0
+                || condition.Positioning?.StrategyEdgeOffsetOverrides?.Count > 0)
+                errors.Add($"{path}: quarantine reserves authored start slots; do not combine custom positioning or edge offsets.");
+        }
         var seenSlots = new HashSet<int>();
         foreach (var loadout in condition.Systems.StartingAdaptations ?? Array.Empty<PlayerStartingAdaptations>())
         {
