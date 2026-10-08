@@ -2131,12 +2131,14 @@ namespace FungusToast.Unity
             int campaignLevelIndex = 0,
             string forcedAdaptationId = "",
             string forcedMoldinessRewardId = "",
-            IReadOnlyList<string>? forcedStartingAdaptationIds = null)
+            IReadOnlyList<string>? forcedStartingAdaptationIds = null,
+            string forcedCampaignVariantId = "")
         {
             testingModeEnabled = true;
             testingHasMycovariantOverride = mycovariantId.HasValue;
             testingMycovariantId = mycovariantId ?? 0;
             testingCampaignLevelIndex = Math.Max(0, campaignLevelIndex);
+            testingForcedCampaignVariantId = forcedCampaignVariantId ?? string.Empty;
             testingForcedAdaptationId = forcedAdaptationId ?? string.Empty;
             testingForcedMoldinessRewardId = forcedMoldinessRewardId ?? string.Empty;
             testingForcedStartingAdaptationIds = forcedStartingAdaptationIds?

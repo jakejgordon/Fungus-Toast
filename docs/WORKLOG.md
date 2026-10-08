@@ -2040,3 +2040,10 @@ independently shippable commit.
 - Record only current work, decisions, validation results, and genuinely pending
   follow-ups here; retain detailed historical evidence in commits, test output,
   and simulation artifacts.
+
+
+## 2026-10-08 — Development testing campaign-option dropdown
+
+- Code-built second dropdown beneath Campaign Stage for multi-variant stages, displaying authored titles/order and defaulting to first on stage change. Hidden on ordinary stages; no stale override leakage.
+- Selection travels through testing configuration, GameManager startup, and endgame-card reload; normal seeded selection and saved-resume precedence unchanged. No scene/prefab/Core changes.
+- Validation: campaign variant source-contract script (including picker/reset/routing assertions); Core build. Unity C# compilation, dropdown layout and actual launch/reset/resume remain Jake's manual Editor gate (see CAMPAIGN_HELPER).

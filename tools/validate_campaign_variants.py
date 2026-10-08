@@ -50,3 +50,19 @@ state=(source/'Campaign/CampaignState.cs').read_text()
 assert 'public string levelVariantId;' in state
 print('PASS: unchanged stage ordering; two complete distinct-ID stage12 variants; original AI/resource preservation; save identity and startup source contracts.')
 print('Unity compile, actual JSON save/resume, variant titles and board/card rendering remain manual Editor gates.')
+
+card=(source/'UI/Testing/DevelopmentTestingCardController.cs').read_text()
+assert '"Campaign Level Option"' in card
+assert 'campaignVariants.Count > 1' in card
+refresh=card.split('private void RefreshCampaignVariantOptions()',1)[1].split('private void OnCampaignVariantChanged',1)[0]
+assert 'campaignVariants.AddRange(spec.variants)' in refresh
+assert 'if (index < 0) index = 0;' in refresh
+assert 'SetValueWithoutNotify(index)' in refresh
+change=card.split('private void OnCampaignLevelChanged(int index)',1)[1].split('private void OnForcedMoldinessRewardChanged',1)[0]
+assert change.index('selectedCampaignVariantId = string.Empty;') < change.index('RefreshCampaignVariantOptions();')
+assert 'selectedCampaignVariantId = configuration.CampaignVariantId;' in card
+assert 'configuration.ForcedStartingAdaptationIds, configuration.CampaignVariantId' in card
+assert 'testingForcedCampaignVariantId = forcedCampaignVariantId ?? string.Empty;' in manager
+endgame=(source/'UI/UI_EndGamePanel.cs').read_text()
+assert 'manager?.TestingForcedCampaignVariantId ?? string.Empty' in endgame
+print('PASS: testing picker source contracts: authored order, first-option default, stage reset, configuration reload, startup/endgame routing.')

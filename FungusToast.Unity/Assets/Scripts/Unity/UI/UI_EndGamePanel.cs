@@ -4699,7 +4699,8 @@ namespace FungusToast.Unity.UI
                 manager != null ? manager.TestingCampaignLevelIndex : 0,
                 forcedAdaptationId,
                 manager?.TestingForcedMoldinessRewardId ?? string.Empty,
-                manager?.TestingForcedStartingAdaptationIds);
+                manager?.TestingForcedStartingAdaptationIds,
+                manager?.TestingForcedCampaignVariantId ?? string.Empty);
         }
 
         private void CreateHeaderCell(Transform parent, string text, EndGameResultsTableLayout.Column column, TextAlignmentOptions alignment, string tooltip = null)

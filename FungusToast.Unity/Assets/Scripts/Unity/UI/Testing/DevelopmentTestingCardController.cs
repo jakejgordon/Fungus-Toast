@@ -130,6 +130,7 @@ namespace FungusToast.Unity.UI.Testing
         public ForcedGameResultMode ForcedResult { get; }
         public bool ForceMoldinessRewards { get; }
         public int CampaignLevelIndex { get; }
+        public string CampaignVariantId { get; }
         public string ForcedAdaptationId { get; }
         public string ForcedMoldinessRewardId { get; }
         public IReadOnlyList<string> ForcedStartingAdaptationIds { get; }
@@ -146,7 +147,7 @@ namespace FungusToast.Unity.UI.Testing
             int campaignLevelIndex,
             string forcedAdaptationId,
             string forcedMoldinessRewardId,
-            IReadOnlyList<string> forcedStartingAdaptationIds)
+            IReadOnlyList<string> forcedStartingAdaptationIds, string campaignVariantId = "")
         {
             IsEnabled = isEnabled;
             BoardSizeOverride = boardSizeOverride;
@@ -159,6 +160,7 @@ namespace FungusToast.Unity.UI.Testing
                 && forcedResult == ForcedGameResultMode.ForcedWin
                 && forceMoldinessRewards;
             CampaignLevelIndex = Math.Max(0, campaignLevelIndex);
+            CampaignVariantId = campaignVariantId ?? string.Empty;
             ForcedAdaptationId = forcedAdaptationId ?? string.Empty;
             ForcedMoldinessRewardId = forcedMoldinessRewardId ?? string.Empty;
             ForcedStartingAdaptationIds = forcedStartingAdaptationIds?
@@ -460,6 +462,10 @@ namespace FungusToast.Unity.UI.Testing
         private TMP_Dropdown boardSizeDropdown;
         private GameObject campaignLevelRow;
         private TMP_Dropdown campaignLevelDropdown;
+        private GameObject campaignVariantRow;
+        private TMP_Dropdown campaignVariantDropdown;
+        private readonly List<CampaignProgression.LevelVariant> campaignVariants = new();
+        private string selectedCampaignVariantId = string.Empty;
         private GameObject mycovariantRow;
         private TMP_Dropdown mycovariantDropdown;
         private Button fastForwardButton;
@@ -529,6 +535,11 @@ namespace FungusToast.Unity.UI.Testing
                     "Campaign Stage",
                     out campaignLevelDropdown);
                 ConfigureCampaignLevelDropdown();
+                campaignVariantRow = EnsureDropdownRow(
+                    $"{options.ControlPrefix}CampaignVariantRow", $"{options.ControlPrefix}CampaignVariantLabel",
+                    $"{options.ControlPrefix}CampaignVariantDropdown", "Campaign Level Option", out campaignVariantDropdown);
+                campaignVariantDropdown.onValueChanged = new TMP_Dropdown.DropdownEvent();
+                campaignVariantDropdown.onValueChanged.AddListener(OnCampaignVariantChanged);
             }
 
             mycovariantRow = EnsureDropdownRow(
@@ -589,6 +600,7 @@ namespace FungusToast.Unity.UI.Testing
             SetSiblingIndex(forcedStartingAdaptationsRow != null ? forcedStartingAdaptationsRow.transform : null, 10);
             SetSiblingIndex(mycovariantRow != null ? mycovariantRow.transform : null, 11);
 
+            SetSiblingIndex(campaignVariantRow != null ? campaignVariantRow.transform : null, 2);
             RefreshDropdownOptions();
             RefreshVisualState();
         }
@@ -609,6 +621,7 @@ namespace FungusToast.Unity.UI.Testing
             testingEnabled = configuration.IsEnabled;
             fastForwardRounds = Math.Max(0, configuration.FastForwardRounds);
             selectedCampaignLevelIndex = Math.Max(0, configuration.CampaignLevelIndex);
+            selectedCampaignVariantId = configuration.CampaignVariantId;
             skipToEnd = testingEnabled && configuration.SkipToEndGame;
             forceFirstGame = options.SupportsFirstGameToggle && testingEnabled && configuration.ForceFirstGame;
             forceMoldinessRewards = options.SupportsForceMoldinessRewards
@@ -726,10 +739,13 @@ namespace FungusToast.Unity.UI.Testing
                 var campaignLevelOptions = BuildCampaignLevelOptions();
                 campaignLevelDropdown.ClearOptions();
                 campaignLevelDropdown.AddOptions(campaignLevelOptions);
-                campaignLevelDropdown.value = Mathf.Max(0, Mathf.Min(selectedCampaignLevelIndex, campaignLevelOptions.Count - 1));
+                selectedCampaignLevelIndex = Mathf.Max(0, Mathf.Min(selectedCampaignLevelIndex, campaignLevelOptions.Count - 1));
+                campaignLevelDropdown.SetValueWithoutNotify(selectedCampaignLevelIndex);
                 campaignLevelDropdown.RefreshShownValue();
                 ApplyDropdownReadability(campaignLevelDropdown);
             }
+
+            RefreshCampaignVariantOptions();
 
             if (mycovariantDropdown != null)
             {
@@ -847,6 +863,11 @@ namespace FungusToast.Unity.UI.Testing
                 campaignLevelDropdown.interactable = testingEnabled && options.SupportsCampaignLevelSelection;
             }
 
+            if (campaignVariantRow != null)
+            {
+                campaignVariantRow.SetActive(testingEnabled && options.SupportsCampaignLevelSelection && campaignVariants.Count > 1);
+                campaignVariantDropdown.interactable = testingEnabled;
+            }
             if (adaptationDropdown != null)
             {
                 adaptationDropdown.interactable = testingEnabled && skipToEnd;
@@ -966,7 +987,8 @@ namespace FungusToast.Unity.UI.Testing
                 selectedCampaignLevelIndex,
                 selectedAdaptationId,
                 selectedMoldinessRewardId,
-                forcedStartingAdaptationIds);
+                forcedStartingAdaptationIds,
+                options.SupportsCampaignLevelSelection ? selectedCampaignVariantId : string.Empty);
         }
 
         public void ApplyToGameManager(GameManager manager)
@@ -993,7 +1015,7 @@ namespace FungusToast.Unity.UI.Testing
                 configuration.CampaignLevelIndex,
                 configuration.ForcedAdaptationId,
                 configuration.ForcedMoldinessRewardId,
-                configuration.ForcedStartingAdaptationIds);
+                configuration.ForcedStartingAdaptationIds, configuration.CampaignVariantId);
         }
 
         private void ConfigureBoardSizeDropdown()
@@ -1035,6 +1057,33 @@ namespace FungusToast.Unity.UI.Testing
             forcedMoldinessRewardDropdown.onValueChanged.AddListener(OnForcedMoldinessRewardChanged);
             forcedMoldinessRewardDropdown.RefreshShownValue();
             ApplyDropdownReadability(forcedMoldinessRewardDropdown);
+        }
+
+        private void RefreshCampaignVariantOptions()
+        {
+            if (campaignVariantDropdown == null) return;
+            campaignVariants.Clear();
+            var progression = GameManager.Instance?.CampaignProgression;
+            if (progression != null && selectedCampaignLevelIndex < progression.MaxLevels)
+            {
+                var spec = progression.Get(selectedCampaignLevelIndex);
+                if (spec.HasVariants) campaignVariants.AddRange(spec.variants);
+            }
+            int index = campaignVariants.FindIndex(variant => string.Equals(variant.variantId, selectedCampaignVariantId, StringComparison.Ordinal));
+            if (index < 0) index = 0;
+            selectedCampaignVariantId = campaignVariants.Count > 0 ? campaignVariants[index].variantId : string.Empty;
+            campaignVariantDropdown.ClearOptions();
+            campaignVariantDropdown.AddOptions(campaignVariants.Select(variant =>
+                string.IsNullOrWhiteSpace(variant.levelTitle) ? variant.variantId : variant.levelTitle).ToList());
+            campaignVariantDropdown.SetValueWithoutNotify(index);
+            campaignVariantDropdown.RefreshShownValue();
+            ApplyDropdownReadability(campaignVariantDropdown);
+        }
+
+        private void OnCampaignVariantChanged(int index)
+        {
+            selectedCampaignVariantId = index >= 0 && index < campaignVariants.Count
+                ? campaignVariants[index].variantId : string.Empty;
         }
 
         private List<string> BuildCampaignLevelOptions()
@@ -1556,6 +1605,8 @@ namespace FungusToast.Unity.UI.Testing
             selectedForcedStartingAdaptationIds.Clear();
             fastForwardRounds = 0;
             selectedCampaignLevelIndex = 0;
+            selectedCampaignVariantId = string.Empty;
+            RefreshDropdownOptions();
             forcedResult = ForcedGameResultMode.Natural;
 
             if (forcedMoldinessRewardDropdown != null)
@@ -1640,7 +1691,9 @@ namespace FungusToast.Unity.UI.Testing
         private void OnCampaignLevelChanged(int index)
         {
             selectedCampaignLevelIndex = Math.Max(0, index);
-            NotifyLayoutInvalidated();
+            selectedCampaignVariantId = string.Empty;
+            RefreshCampaignVariantOptions();
+            RefreshVisualState();
         }
 
         private void OnForcedMoldinessRewardChanged(int index)
