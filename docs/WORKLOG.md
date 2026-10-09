@@ -1,5 +1,34 @@
 # Fungus-Toast Worklog
 
+## Level-8 Kaiser bun alternate — 2026-10-08
+
+Jake confirmed the alternate belongs to level 8 (Country Slice/index7), the existing
+90x90 Kaiser bun. Rotten Heart uses the same six-opponent pool and nutrient settings,
+with equal selection alongside the unchanged original. Stable variant/preset IDs
+country-original/Campaign7 and rotten-heart/Campaign7_RottenHeart preserve legacy
+encounters and prevent reload rerolls. No stages renumbered; no new assets/art/coachmarks,
+scenes/prefabs, Windows development or installation.
+
+Core builds a deterministic organic central island before spores/resources: 1,145 of
+5,726 actual playable tiles (19.9965%), lobed/jagged contour, bounds x25–66/y26–66.
+Rot is a single connected interior component; the outside stays connected under both
+orthogonal and diagonal movement. Original human-start difficulty metadata is reused;
+strategy offsets and Centripetal remain active. Real placement tests cover all128
+mixed Centripetal loadouts and cycle all7 original human-start candidates. Nutrient
+startup/checkpoint roundtrip is tested separately. Existing decay/ability rules apply.
+
+Portable validation: asset-derived geometry and variant/picker/save-source contracts;
+Core/Simulation builds (0 errors/warnings), Core776/776 and Simulation290/290. These are not Unity C# compilation/rendering
+or difficulty calibration. Canonical Core/plugin artifacts refreshed and hashes checked.
+
+Jake manual gate: pull/refresh, check no errors/new warnings; in development testing
+choose level8/index7, Campaign Level Option Rotten Heart, start fresh. Inspect jagged
+organic island at normal zoom, routes around all sides, spore/resources clearance and
+title. Compare Country Slice original; check legacy original and new alternate
+checkpoint resume preserve identity/rot without rerolls. Playtest pacing/rot pressure
+with actual accumulated Adaptations. No difficulty target-band acceptance claimed.
+
+
 ## Stage-12 alternate encounters and quarantine passage — 2026-10-08
 
 Approved scope: original versus quarantine 50/50 at stage 12; ~15% colonizable pocket, one 1–2-cell zigzag through thick rot, entrance toward middle, remote seeding shortcut optional. On the existing elongated 120x120 hotdog, the curated pocket is the far-right cap/end (not a literal square-board corner). No stages renumbered, AI roster changes, new artwork, scenes/prefabs, Windows development or installations.

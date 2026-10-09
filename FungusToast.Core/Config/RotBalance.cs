@@ -9,6 +9,12 @@ namespace FungusToast.Core.Config
         public const float StartingSporeClearanceSizeFactor = 0.10f;
         public const int MinimumStartingSporeClearance = 4;
 
+        // Level 8 alternate, measured against actual playable terrain.
+        public const int CentralIslandBoardSize = 90;
+        public const double CentralIslandPlayableFraction = 0.20;
+        public const double CentralIslandBroadLobeAmplitude = 0.13;
+        public const double CentralIslandFineLobeAmplitude = 0.055;
+
         // Stage 12 alternate: authored against the 120x120 medium hotdog silhouette.
         public const int QuarantineBoardSize = 120;
         public const int QuarantineMaximumPlayers = 7;

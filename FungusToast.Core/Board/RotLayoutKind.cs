@@ -5,6 +5,7 @@ namespace FungusToast.Core.Board
     {
         None = 0,
         IntroductoryTongue = 1,
-        QuarantineCorridor = 2
+        QuarantineCorridor = 2,
+        CentralIsland = 3
     }
 }

@@ -66,3 +66,20 @@ assert 'testingForcedCampaignVariantId = forcedCampaignVariantId ?? string.Empty
 endgame=(source/'UI/UI_EndGamePanel.cs').read_text()
 assert 'manager?.TestingForcedCampaignVariantId ?? string.Empty' in endgame
 print('PASS: testing picker source contracts: authored order, first-option default, stage reset, configuration reload, startup/endgame routing.')
+
+# Level 8 uses the same complete-variant/save/picker machinery.
+stage8 = levels[7]
+assert [v['variantId'] for v in stage8['variants']] == ['country-original','rotten-heart']
+assert [v['rotLayout'] for v in stage8['variants']] == [0,3]
+original8 = preset(stage8['boardPreset']['guid'])
+for variant in stage8['variants']:
+    board = preset(variant['boardPreset']['guid'])
+    assert board['boardWidth'] == board['boardHeight'] == 90
+    for field in ['aiPlayers','pooledAiPlayerCount','aiStrategyPool','poolAdaptationOverrides']:
+        assert board[field] == original8[field], field
+    assert variant['enableNutrientPatches'] == stage8['enableNutrientPatches']
+    assert variant['allowedNutrientPatchTypes'] == stage8['allowedNutrientPatchTypes']
+assert [preset(v['boardPreset']['guid'])['presetId'] for v in stage8['variants']] == ['Campaign7','Campaign7_RottenHeart']
+assert placement.index('CentralRotLayout.Place(Board)') < placement.index('StartingSporeUtility.PlaceStartingSpores')
+assert 'RotLayoutKind.CentralIsland ? "Campaign7" : preset.presetId' in manager
+print('PASS: level8 distinct stable IDs, original pooled AI/resources, terrain-first island placement and original human start metadata retained.')

@@ -60,6 +60,19 @@ MonoBehaviour:
     boardPreset: {fileID: 11400000, guid: bdb637903fe045a8b63658b83eedfa0f, type: 2}
     enableNutrientPatches: 1
     allowedNutrientPatchTypes: []
+    variants:
+    - variantId: country-original
+      levelTitle: Country Slice
+      boardPreset: {fileID: 11400000, guid: bdb637903fe045a8b63658b83eedfa0f, type: 2}
+      rotLayout: 0
+      enableNutrientPatches: 1
+      allowedNutrientPatchTypes: []
+    - variantId: rotten-heart
+      levelTitle: Rotten Heart
+      boardPreset: {fileID: 11400000, guid: b7e1bf855f874966a962967f8fd051c4, type: 2}
+      rotLayout: 3
+      enableNutrientPatches: 1
+      allowedNutrientPatchTypes: []
   - levelIndex: 8
     levelTitle: First Pita
     boardPreset: {fileID: 11400000, guid: b9249acd817248c6916fab398a7b771b, type: 2}

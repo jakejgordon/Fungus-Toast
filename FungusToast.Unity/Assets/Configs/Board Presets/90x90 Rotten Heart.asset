@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dac0b2d101f4c114d91c1aa9449bd5eb, type: 3}
+  m_Name: 90x90 Rotten Heart
+  m_EditorClassIdentifier:
+  presetId: Campaign7_RottenHeart
+  boardWidth: 90
+  boardHeight: 90
+  aiPlayers: []
+  pooledAiPlayerCount: 6
+  aiStrategyPool:
+  - CMP_TierCap_GrowthResilience_Easy
+  - CMP_Bloom_FortifyMimic_Medium
+  - CMP_Growth_WildfireBloom_Medium
+  - CMP_Bloom_NecrotoxinGauntlet_Elite
+  - CMP_Bloom_Thanatophyte_Elite
+  - CMP_Defense_ReclaimShell_Easy
+  - CMP_Growth_Pressure_Medium
+  - CMP_Reclaim_Scavenger_Easy
+  poolAdaptationOverrides: []

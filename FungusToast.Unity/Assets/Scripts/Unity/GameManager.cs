@@ -1230,6 +1230,9 @@ namespace FungusToast.Unity
                 // Authored encounter slots supersede strategy-specific edge offsets.
                 Array.Clear(edgeOffsets, 0, edgeOffsets.Length);
             }
+            if (CurrentGameMode == GameMode.Campaign
+                && campaignController?.CurrentRotLayout == RotLayoutKind.CentralIsland)
+                CentralRotLayout.Place(Board);
             var (campaignPreferredPositions, ignoreMinimumPlayableEdgeDistancePlayerIds) = GetCampaignPreferredStartingPositions();
             StartingSporeUtility.PlaceStartingSpores(
                 Board,
@@ -1298,7 +1301,9 @@ namespace FungusToast.Unity
             }
 
             if (preset != null
-                && CampaignBoardStartingPositionCatalog.TryGetMetadata(preset.presetId, players.Count, out var metadata))
+                && CampaignBoardStartingPositionCatalog.TryGetMetadata(
+                    campaignController?.CurrentRotLayout == RotLayoutKind.CentralIsland ? "Campaign7" : preset.presetId,
+                    players.Count, out var metadata))
             {
                 var preferredCoordinates = CampaignStartingPositionDifficultyResolver.GetAllowedStartingPositions(
                     metadata,

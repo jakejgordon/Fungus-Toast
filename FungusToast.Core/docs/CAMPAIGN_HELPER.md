@@ -50,6 +50,30 @@ A LevelSpec can author an equal-weight variants pool. Each LevelVariant supplies
 
 CampaignLevelVariantSelection uses run seed plus stage index, independently of gameplay RNG and legacy boss selection. The chosen levelVariantId persists with the preset ID. Saved identities beat seed selection and survive pool reordering; unknown/mismatched identities fail rather than reroll. Old stage-12 saves with Campaign11 retain the original encounter. No stage is inserted or renumbered.
 
+### Level 8: Rotten Heart
+
+Level 8 (index 7) chooses equally between Country Slice (unchanged) and Rotten Heart.
+Both retain the 90x90 Kaiser bun, six-opponent pool and starting nutrient settings.
+Rotten Heart fills 1,145 of 5,726 playable tiles (19.9965%) with a single central,
+uneven lobed island. The fixed RNG-free contour has broad irregular lobes and smaller
+jagged scallops; it is not a square or a straight barrier. Normal growth must route
+around the center. The surrounding playable region is connected under orthogonal
+and diagonal movement, and rot never touches the playable outer edge.
+
+Core places the island before spores/resources, preserving strategy edge offsets
+and Centripetal Germination. The original Campaign7 human-start difficulty metadata
+is reused. Tests cover the real asset-derived outline and all 128 mixed Centripetal
+loadouts through shared spore placement. Existing rot rendering/decay rules apply;
+there is no new coaching, artwork or ability restriction. Saved Country Slice
+identities stay original; new Rotten Heart checkpoints retain stored terrain/rot.
+
+Development reproduction: choose campaign level 8 (zero-based index 7), then
+Campaign Level Option **Rotten Heart**, and start fresh. Its stable forced ID is
+rotten-heart; country-original selects the original. Resume never rerolls.
+Portable checks establish geometry/placement, not balance or actual Unity rendering.
+Editor compile, jagged connected appearance, routes at normal zoom, original versus
+alternate selection and both old/new save-resume remain manual gates.
+
 ### Stage 12: Quarantined Crust
 
 Stage 12 chooses 50/50 between Flatbread Field (unchanged) and Quarantined Crust. Both use the existing 120x120 medium hotdog and the same six opponents/resources settings. On that rounded, elongated bread, the pocket is the far-right cap/end rather than a rectangular board corner. The actual outline contains 5,011 playable tiles, 759 pocket tiles (15.15%), 1,285 rot tiles (25.64%) and 54 passage tiles. A deterministic irregular rounded central patch tapers to the real crust, with a scalloped right boundary rather than rectangular edges. Entrance (60,60), exit (94,60): shortest passage 34 steps with either orthogonal or diagonal growth. The path stays within rows 59–61, mostly straight with slight jagged edges, not maze-like return legs. Single-cell throats and one/two-cell lanes permit only this normal-growth route, with no diagonal bypass. Remote seeding/placement can establish valid pocket territory; access is optional for victory.
