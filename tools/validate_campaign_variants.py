@@ -83,3 +83,9 @@ assert [preset(v['boardPreset']['guid'])['presetId'] for v in stage8['variants']
 assert placement.index('CentralRotLayout.Place(Board)') < placement.index('StartingSporeUtility.PlaceStartingSpores')
 assert 'RotLayoutKind.CentralIsland ? "Campaign7" : preset.presetId' in manager
 print('PASS: level8 distinct stable IDs, original pooled AI/resources, terrain-first island placement and original human start metadata retained.')
+
+import run_campaign_balance as harness
+parsed = harness.parse_progression(harness.PROGRESSION)
+assert parsed[7]['guid'] == levels[7]['boardPreset']['guid']
+assert parsed[11]['guid'] == levels[11]['boardPreset']['guid']
+print('PASS: campaign balance harness does not let nested variants overwrite base preset IDs.')

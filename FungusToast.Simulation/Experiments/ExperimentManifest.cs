@@ -160,6 +160,8 @@ public sealed class ExperimentSystems
     public bool IntroductoryRotEnabled { get; init; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool QuarantineRotEnabled { get; init; }
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool CentralRotEnabled { get; init; }
     public required bool NutrientPatchesEnabled { get; init; }
     public required bool MycovariantDraftEnabled { get; init; }
     public bool StartingAdaptationsEnabled { get; init; } = true;

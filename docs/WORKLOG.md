@@ -1,5 +1,37 @@
 # Fungus-Toast Worklog
 
+## Rotten Heart proxy difficulty probe — 2026-10-08
+
+Jake requested simulation difficulty of the level8 alternate. Added replayable
+--central-rot plumbing using Core CentralRotLayout, optional default-omitted causal
+input and mutual-exclusion/dimension validation. Campaign harness now accepts an
+explicit authored --variant and parses progression structurally, fixing nested
+variant GUIDs overwriting the original top-level preset. Rotten Heart probe derives
+the real Kaiser outline mask, uses original Training human-start window and retains
+strategy offsets/perks, nutrients and normal drafts. No gameplay or AI retuning.
+
+100-game artifact: campaign_balance_lvl07_Campaign7_RottenHeart_g100_seed20261008.
+Harness seed20261008, simulator base20261015, fixed slots, one seed-resolved six-AI
+pool lineup. Proxy canonical additional Adaptations1–6 plus mold baseline20;
+normal Training-start AI mold baselines, no extra difficulty Adaptations. This is
+an established proxy stand-in, not all player-earned loadouts or pooled lineups.
+Input real mask5726playable and1145rot verified in all100games. All output hashes
+and resolved-manifest sidecar verified; Core/Simulation build0warnings/errors,
+Simulation292/292tests and variant/harness identity contracts passed.
+
+Artifact-derived safeproxy45/100wins(45%), Wilson95%CI35.6–54.8%; level8/Campaign7
+intended target15–35% =>10ppabove upper bound, easier-than-target in this context.
+Proxy average506.91living,513.69dead,104.28toxins,6.53rotdeaths, rank2.54.
+Other wins: Scavenger31, FortifyMimic21, Pressure2, ReclaimShell1,
+WildfireBloom0, NecrotoxinGauntlet0. No conclusion about the causal effect of rot
+versus original: no matched original arm; no automatic tuning authorized.
+Analysis CSV: TEMP/rotten-heart-analysis/post_simulation_player_summary.csv.
+Run folders under FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/.
+Source artifact stamps257696c3 and exact binaries; run used uncommitted simulation support;
+the later support commit does not relabel the recorded provenance.
+Full strict100game replay passed; matching outcome90bb5e2050d5b22f30839ce6b59467bb4e4379274b3f659060ae30540dc0d2c3. Replay output hashes verified.
+
+
 ## Level-8 Kaiser bun alternate — 2026-10-08
 
 Jake confirmed the alternate belongs to level 8 (Country Slice/index7), the existing

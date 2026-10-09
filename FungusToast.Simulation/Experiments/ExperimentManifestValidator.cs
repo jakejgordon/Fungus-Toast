@@ -181,6 +181,13 @@ public static partial class ExperimentManifestValidator
     private static void ValidateSystems(ExperimentCondition condition, string path, ICollection<string> errors)
     {
         if (condition.Systems == null) { errors.Add($"{path}.systems is required."); return; }
+        if (condition.Systems.CentralRotEnabled)
+        {
+            if (condition.Systems.IntroductoryRotEnabled || condition.Systems.QuarantineRotEnabled)
+                errors.Add($"{path}.systems rot layouts are mutually exclusive.");
+            if (condition.Board == null || condition.Board.Width != 90 || condition.Board.Height != 90)
+                errors.Add($"{path}: central rot requires a 90x90 Kaiser bun mask.");
+        }
         if (condition.Systems.QuarantineRotEnabled)
         {
             if (condition.Systems.IntroductoryRotEnabled) errors.Add($"{path}.systems cannot combine introductory and quarantine rot.");

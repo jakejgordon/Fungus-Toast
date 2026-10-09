@@ -82,6 +82,7 @@ public static class ResolvedExperimentReplayRunner
                 enableNutrientPatches: source.Condition.Systems.NutrientPatchesEnabled,
                 enableIntroductoryRot: source.Condition.Systems.IntroductoryRotEnabled,
                 enableQuarantineRot: source.Condition.Systems.QuarantineRotEnabled,
+                enableCentralRot: source.Condition.Systems.CentralRotEnabled,
                 enableMycovariantDraft: source.Condition.Systems.MycovariantDraftEnabled,
                 permanentlyBlockedTileIds: source.Condition.Board.BlockedTileIds,
                 startingPositionOverride: exactPositions.Count > 0 ? exactPositions : null,

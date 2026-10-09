@@ -440,6 +440,7 @@ namespace FungusToast.Simulation
                     enableNutrientPatches: config.EnableNutrientPatches,
                     enableIntroductoryRot: config.EnableIntroductoryRot,
                     enableQuarantineRot: config.EnableQuarantineRot,
+                    enableCentralRot: config.EnableCentralRot,
                     enableMycovariantDraft: config.EnableMycovariantDraft,
                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                     startingPositionOverride: config.StartingPositionOverride,
@@ -540,6 +541,7 @@ namespace FungusToast.Simulation
                                     enableNutrientPatches: config.EnableNutrientPatches,
                                     enableIntroductoryRot: config.EnableIntroductoryRot,
                                     enableQuarantineRot: config.EnableQuarantineRot,
+                    enableCentralRot: config.EnableCentralRot,
                                     enableMycovariantDraft: config.EnableMycovariantDraft,
                                     permanentlyBlockedTileIds: config.PermanentlyBlockedTileIds,
                                     startingPositionOverride: config.StartingPositionOverride,
@@ -800,6 +802,7 @@ namespace FungusToast.Simulation
                         NutrientPatchesEnabled = config.EnableNutrientPatches,
                         IntroductoryRotEnabled = config.EnableIntroductoryRot,
                         QuarantineRotEnabled = config.EnableQuarantineRot,
+                        CentralRotEnabled = config.EnableCentralRot,
                         MycovariantDraftEnabled = config.EnableMycovariantDraft,
                         StartingAdaptationsEnabled = config.EnableStartingAdaptations,
                         StartingAdaptations = config.StartingAdaptationIds?
@@ -1304,6 +1307,9 @@ namespace FungusToast.Simulation
                     case "--resume":
                         config.Resume = true;
                         break;
+                    case "--central-rot":
+                        config.EnableCentralRot = true;
+                        break;
                     case "--quarantine-rot":
                         config.EnableQuarantineRot = true;
                         break;
@@ -1558,6 +1564,7 @@ namespace FungusToast.Simulation
             Console.WriteLine("  --no-parquet             Disable Parquet export");
             Console.WriteLine("  --resume                 Skip matching complete conditions; retry missing/failed/interrupted ones");
             Console.WriteLine("  --introductory-rot       Place a static introductory rot patch (default: off)");
+            Console.WriteLine("  --central-rot           Level8 central Kaiser rot island (90x90, matching mask)");
             Console.WriteLine("  --quarantine-rot         Authored 120x120 hotdog corridor; matching mask, <=7 players, no custom positions/offsets");
             Console.WriteLine("  --no-nutrient-patches    Disable nutrient patch placement");
             Console.WriteLine("  --no-mycovariants        Disable mycovariant drafting");
@@ -1612,6 +1619,7 @@ namespace FungusToast.Simulation
             public bool Resume { get; set; }
             public bool EnableIntroductoryRot { get; set; }
             public bool EnableQuarantineRot { get; set; }
+            public bool EnableCentralRot { get; set; }
             public bool EnableNutrientPatches { get; set; }
             public bool EnableMycovariantDraft { get; set; }
             public bool EnableStartingAdaptations { get; set; }

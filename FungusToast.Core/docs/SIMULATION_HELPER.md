@@ -14,6 +14,26 @@ dotnet run --no-build --project FungusToast.Simulation -- --games 3 --players 2 
 
 This checks behavior, not campaign calibration. Spreading, clearing abilities, and campaign-wide rollout are deferred.
 
+## Central Kaiser rot and campaign alternates
+
+Use --central-rot for Core CentralRotLayout on the real 90x90 Kaiser bun mask.
+It is mutually exclusive with the other rot layouts, placed before spores/resources,
+and retains normal strategy edge offsets, starting Adaptations and preferred starts.
+The optional centralRotEnabled input flag is omitted when false and restored by
+strict replay. Existing per-game rot IDs/count/penalty evidence records the layout.
+
+Run level8 Rotten Heart through the campaign harness (index7):
+
+    python3 scripts/run_campaign_balance.py --level 7 --variant rotten-heart --games 100 --seed 20261008 --runtime-budget-seconds 240
+
+Explicit --variant requires --level and an authored stable ID. The harness now parses
+progression structurally, so nested alternates cannot overwrite the original preset.
+For Rotten Heart it derives the real outline mask and applies the original Campaign7
+Training-start human position window. It keeps authored nutrients enabled and the
+existing canonical proxy prefix (adaptation_1..6 plus mold baseline), six resolved
+pooled opponents and normal drafts. This describes one seed-resolved lineup, not all
+pool combinations or player-earned loadouts. The level8/Campaign7 target is 15–35%.
+
 ## Quarantine corridor smoke and population evidence
 
 Use --quarantine-rot for the shared stage-12 QuarantineRotLayout. It requires the real authored 120x120 hotdog mask and at most seven players; a rectangle is unsupported. Do not combine introductory rot or nonempty custom position/offset controls. The layout owns starts, supersedes strategy edge offsets, preserves starting Adaptations, validates effective placements and excludes the corridor from starting nutrient seeds/frontiers. Empty replay control dictionaries are not overrides.

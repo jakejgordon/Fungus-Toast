@@ -17,28 +17,9 @@ DEFAULT_CONFIRMATION_RUNTIME_BUDGET_SECONDS = 1800
 
 
 def parse_progression(path: Path) -> List[dict]:
-    levels: List[dict] = []
-    current = None
-    for raw in path.read_text().splitlines():
-        line = raw.rstrip()
-        m = re.match(r"\s*- levelIndex: (\d+)", line)
-        if m:
-            if current:
-                levels.append(current)
-            current = {"levelIndex": int(m.group(1))}
-            continue
-        if current is None:
-            continue
-        m = re.match(r"\s*boardPreset: \{fileID: .* guid: ([0-9a-f]+),", line)
-        if m:
-            current["guid"] = m.group(1)
-            continue
-        m = re.match(r"\s*enableNutrientPatches: (\d+)", line)
-        if m:
-            current["enableNutrientPatches"] = m.group(1) == "1"
-    if current:
-        levels.append(current)
-    return levels
+    import validate_board_backgrounds as v
+    levels = v.load_unity_yaml(path)["MonoBehaviour"]["levels"]
+    return [dict(level, guid=level["boardPreset"]["guid"]) for level in levels]
 
 
 def build_guid_map(directory: Path) -> Dict[str, Path]:
@@ -279,6 +260,25 @@ def run_level(level: dict, preset: dict, games: int, seed: int, runtime_budget_s
         str(runtime_budget_seconds),
         "--no-keyboard",
     ]
+    if level.get("rotLayout") == 3:
+        import validate_board_backgrounds as v
+        import json, math
+        asset = v.load_unity_yaml(ROOT / "FungusToast.Unity/Assets/Configs/Toast Configs/ToastBoardMedium.asset")["MonoBehaviour"]
+        sprites = v.build_sprite_guid_map(ROOT / "FungusToast.Unity/Assets/Sprites/UI/Bread Backgrounds")
+        metadata = v.build_metadata_map(asset, sprites)
+        override = next(o for o in asset["boardBackgroundOverrides"] if o.get("minBoardWidth") == 90)
+        settings = v.build_settings(override, metadata, sprites, "Kaiser", "level8", 90,90,90,90)
+        blocked = v.build_outline_blocked_tile_ids(v.get_playable_outline_tester(settings),
+            v.get_effective_safe_area(settings,90,90),90,90,settings.min_tile_coverage,
+            v.build_clip_budget_sample_offsets(v.PLAYABLE_SURFACE_TILE_SCALE,settings.max_tile_clip_fraction,settings.tile_clip_sample_resolution))
+        mask = ROOT / "TEMP" / "campaign8-kaiser-blocked.txt"; mask.parent.mkdir(exist_ok=True)
+        mask.write_text(",".join(map(str,sorted(blocked))))
+        cmd.extend(["--central-rot","--blocked-tiles-file",str(mask)])
+        catalog = json.loads((ROOT / "FungusToast.Core/Board/Generated/campaign_board_starting_positions.json").read_text())
+        entries = next(m["entries"] for m in catalog if m["preset_id"]=="Campaign7" and m["player_count"]==7)
+        entries = sorted(entries,key=lambda e:(e["favor_rank"],-e["win_percentage"],e["slot_index"]))
+        # Normal Training-start campaign uses the best half of authored human positions.
+        human_start_pool = [(e["x"],e["y"]) for e in entries[:math.ceil(len(entries)/2)]]
     if len(lineup) != 8:
         cmd.extend(["--players", str(len(lineup))])
     if not level.get("enableNutrientPatches", True):
@@ -328,6 +328,7 @@ def main() -> int:
             "confirmation standard and 600 seconds for smaller exploratory runs."
         ),
     )
+    parser.add_argument("--variant", help="Explicit authored alternate ID (requires --level).")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     runtime_budget_seconds = args.runtime_budget_seconds
@@ -348,6 +349,13 @@ def main() -> int:
         raise SystemExit("No matching campaign levels found.")
 
     for level in selected:
+        if args.variant:
+            if args.level is None: raise SystemExit("--variant requires --level")
+            variants = [v for v in level.get("variants", []) if v["variantId"] == args.variant]
+            if len(variants) != 1: raise SystemExit("Unknown/ambiguous variant ID")
+            level = dict(level, **variants[0]); level["guid"] = level["boardPreset"]["guid"]
+        if level.get("rotLayout", 0) not in (0, 3):
+            raise SystemExit("This harness does not yet support that rot layout; do not simulate it without rot.")
         preset_path = guid_map.get(level.get("guid", ""))
         if preset_path is None:
             raise SystemExit(f"Could not resolve board preset for campaign level {level['levelIndex']}.")

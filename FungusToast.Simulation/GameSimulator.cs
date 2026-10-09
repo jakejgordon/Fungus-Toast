@@ -40,7 +40,8 @@ namespace FungusToast.Simulation.GameSimulation
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
             bool enableIntroductoryRot = false,
-            bool enableQuarantineRot = false
+            bool enableQuarantineRot = false,
+            bool enableCentralRot = false
         )
         {
             var gameStopwatch = Stopwatch.StartNew();
@@ -60,7 +61,7 @@ namespace FungusToast.Simulation.GameSimulation
                 preferredPositionsByPlayerId,
                 enableStartingAdaptations,
                 strategyStartingSporeEdgeOffsetOverrides,
-                enableIntroductoryRot, enableQuarantineRot);
+                enableIntroductoryRot, enableQuarantineRot, enableCentralRot);
             var quarantinePlan = enableQuarantineRot ? QuarantineRotLayout.Build(board, players.Count) : null;
             QuarantinePopulationEvidence? quarantineEvidence = quarantinePlan == null ? null : new()
             {
@@ -339,7 +340,8 @@ namespace FungusToast.Simulation.GameSimulation
             bool enableStartingAdaptations = true,
             IReadOnlyDictionary<string, int>? strategyStartingSporeEdgeOffsetOverrides = null,
             bool enableIntroductoryRot = false,
-            bool enableQuarantineRot = false)
+            bool enableQuarantineRot = false,
+            bool enableCentralRot = false)
         {
             var rng = randomStreams.Gameplay;
             int playerCount = strategies.Count;
@@ -399,8 +401,8 @@ namespace FungusToast.Simulation.GameSimulation
                 }
             }
 
-            if (enableIntroductoryRot && enableQuarantineRot)
-                throw new ArgumentException("Introductory and quarantine rot layouts are mutually exclusive.");
+            if ((enableIntroductoryRot ? 1 : 0) + (enableQuarantineRot ? 1 : 0) + (enableCentralRot ? 1 : 0) > 1)
+                throw new ArgumentException("Rot layouts are mutually exclusive.");
             QuarantineRotPlan? plan = null;
             if (enableQuarantineRot)
             {
@@ -414,6 +416,7 @@ namespace FungusToast.Simulation.GameSimulation
                 preferredPositionsByPlayerId = players.Select((p,slot) => (p.PlayerId, Position:plan.StartingPositions[slot]))
                     .ToDictionary(p => p.PlayerId,p => p.Position);
             }
+            if (enableCentralRot) CentralRotLayout.Place(board);
             // Use the shared starting spore placement utility
             var edgeOffsets = strategies
                 .Select(strategy => strategyStartingSporeEdgeOffsetOverrides != null
@@ -432,7 +435,7 @@ namespace FungusToast.Simulation.GameSimulation
                 startingPositionOverride,
                 edgeOffsets,
                 preferredPositionsByPlayerId,
-                enforceMinimumPlayableEdgeDistanceForPreferredPositions: false,
+                enforceMinimumPlayableEdgeDistanceForPreferredPositions: enableCentralRot,
                 ignoreMinimumPlayableEdgeDistancePlayerIds: null);
             if (plan != null) QuarantineRotLayout.ValidateEffectiveStartingPositions(board, plan);
             if (enableIntroductoryRot)
