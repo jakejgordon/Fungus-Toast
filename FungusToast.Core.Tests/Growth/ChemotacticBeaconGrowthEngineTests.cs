@@ -247,6 +247,60 @@ public class ChemotacticBeaconGrowthEngineTests
         Assert.Contains(setup.board.GetTile(4, 2)!.TileId, outcome.AffectedTileIds);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Beacon_line_stops_at_rot_even_with_a_friendly_origin_beyond_it(bool remoteColony)
+    {
+        var setup = CreateBeaconBoard(level: 5, beaconTileId: 29);
+        Assert.True(setup.board.TryPlaceRot(setup.board.GetTile(4, 2)!.TileId));
+        Assert.True(setup.board.TryPlaceRot(setup.board.GetTile(5, 2)!.TileId));
+        if (remoteColony)
+            setup.board.PlaceFungalCell(new FungalCell(setup.player.PlayerId, setup.board.GetTile(7, 2)!.TileId, GrowthSource.Manual, lastOwnerPlayerId: null));
+        Assert.Equal(setup.player.StartingTileId, DirectedVectorHelper.GetChemotacticBeaconGrowthOriginTileId(
+            setup.player, setup.board, setup.player.StartingTileId!.Value, 29));
+        var projected = DirectedVectorHelper.GetChemotacticBeaconPathProjection(
+            setup.player, setup.board, setup.player.StartingTileId.Value, 29, 100, 100);
+        Assert.Equal(new[] { 22, 23 }, projected.GrowthTileIds);
+        Assert.Empty(projected.SpiralTileIds);
+        for (int round = 0; round < 3; round++)
+            MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 3, 2);
+        Assert.All(new[] { 4, 5, 6, 8, 9 }, x => Assert.Null(setup.board.GetTile(x, 2)!.FungalCell));
+        Assert.Null(setup.board.GetTile(9, 1)!.FungalCell); // no spiral beyond barrier
+    }
+
+    [Fact]
+    public void Beacon_spiral_stops_at_rot_instead_of_skipping_to_the_other_side()
+    {
+        var setup = CreateBeaconBoard(level: 5, beaconTileId: 23);
+        Assert.True(setup.board.TryPlaceRot(setup.board.GetTile(4, 1)!.TileId)); // second clockwise tile
+        var projected = DirectedVectorHelper.GetChemotacticBeaconPathProjection(
+            setup.player, setup.board, setup.player.StartingTileId!.Value, 23, 100, 100);
+        Assert.Equal(new[] { 22, 24 }, projected.GrowthTileIds);
+        MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
+        AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
+        Assert.Null(setup.board.GetTile(3, 1)!.FungalCell);
+        Assert.Null(setup.board.GetTile(4, 1)!.FungalCell);
+    }
+
+    [Fact]
+    public void Beacon_diagonal_line_stops_at_rot_and_preserves_preview_execution_parity()
+    {
+        var setup = CreateBeaconBoard(level: 5, beaconTileId: 34); // (1,2) -> (4,3)
+        Assert.True(setup.board.TryPlaceRot(setup.board.GetTile(3, 3)!.TileId));
+        var projection = DirectedVectorHelper.GetChemotacticBeaconPathTargetTileIds(
+            setup.player, setup.board, setup.player.StartingTileId!.Value, 34, 20);
+        var outcome = DirectedVectorHelper.ApplyChemotacticBeaconPathGrowth(setup.player, setup.board,
+            new Random(1), setup.player.StartingTileId.Value, 34, 20, new TestSimulationObserver(),
+            GrowthSource.ChemotacticBeacon, DeathReason.HyphalVectoring);
+        Assert.Equal(new[] { 22 }, projection);
+        Assert.Equal(projection, outcome.AffectedTileIds);
+        Assert.Null(setup.board.GetTile(4, 3)!.FungalCell);
+    }
+
     private static (GameBoard board, List<Player> players, Player player) CreateBeaconBoard(int level, int beaconTileId, IEnumerable<int>? blockedTileIds = null)
     {
         var board = new GameBoard(width: 10, height: 5, playerCount: 1, blockedTileIds);

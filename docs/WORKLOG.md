@@ -2058,3 +2058,12 @@ independently shippable commit.
 - Validation completed: Core767 and Simulation290 tests pass; Simulation build0warnings/errors; variant/coaching source contracts pass. Quarantine layout tests prove 34-step orthogonal/diagonal access, endpoint/interior cuts, narrow width, region connectivity, legal remote access and all128 mixed Centripetal loadouts.
 - Current population smoke artifact: Simulation/bin/Debug/net8.0/SimulationParquet/quarantine_organic_g3_seed20261008; output hashes verified and strict replay outcome cc7e714385cc77223dc2645364bea5d11c4a7038b9858bd36587d6826ce6f73d. Games finish28/28/29 turns; pocket entry17/15/19, half occupation25/25/26; last recorded occupancy648/700/691 of759, living298/384/365. Earlier entry can be remote placement, not proof of corridor traversal. Safe proxy0/3 (0%); stage12 target band is unset, NOT calibrated.
 - Nutrient-enabled one-game startup smoke quarantine_organic_nutrients_g1_seed20261009 also completes with all output hashes verified; last pocket occupancy 646/759, living 322.
+
+
+## 2026-10-08 — Chemotactic Beacon cannot cross rot
+
+- Jake reported Beacon could skip an entire rot patch. Shared Beacon-only candidate traversal now terminates at the first rot tile on the line or clockwise spiral; origin scanning also stops there so an existing remote friendly colony cannot restart the surge beyond the barrier. Generic Hyphal Vectoring rules are unchanged.
+- Projection/AI/Unity preview and execution share the same traversal. Technical copy adds: "Growth stops at rot and cannot cross it." No target cost, scaling, RNG, marker duration or save schema changes.
+- Regressions cover thick barriers, repeated growth passes, a friendly colony beyond rot, diagonal approach and spiral interruption/preview parity. Manual Unity check: target across rot and confirm preview/growth stop before it; target through the open passage still works; check technical text.
+- Portable validation: focused Beacon34, full Core771 and Simulation290 tests pass; Simulation/Core build0warnings/errors. Shared preview/AI projection uses corrected traversal; actual Unity compile/preview/growth and displayed technical copy remain manual gates.
+- One-game quarantine integration smoke beacon_rot_barrier_g1_seed20261008 completes with all output hashes verified. This is regression evidence only, not difficulty calibration.

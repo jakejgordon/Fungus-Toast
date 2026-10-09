@@ -353,6 +353,7 @@ namespace FungusToast.Core.Growth
         /// Growth begins just past the furthest friendly living cell on that line (or the spore when there is none).
         /// If the line reaches the marker with quota left, growth continues in a clockwise spiral around the marker.
         /// Only valid growth targets consume quota, and those targets are assigned in earliest-to-latest path order.
+        /// Rot terminates travel, including origin discovery and the clockwise spiral.
         /// </summary>
         public static VectorLineOutcome ApplyChemotacticBeaconPathGrowth(
             Player player,
@@ -493,7 +494,7 @@ namespace FungusToast.Core.Growth
             for (int index = originIndex + 1; index < path.Count; index++)
             {
                 var tile = board.GetTile(path[index].x, path[index].y);
-                if (tile == null)
+                if (tile == null || tile.HasRot)
                 {
                     yield break;
                 }
@@ -514,6 +515,7 @@ namespace FungusToast.Core.Growth
 
             foreach (var tile in EnumerateClockwiseSpiral(board, targetTile, startTile))
             {
+                if (tile.HasRot) yield break;
                 yield return (tile, true);
             }
         }
@@ -619,7 +621,7 @@ namespace FungusToast.Core.Growth
             for (int index = 0; index < path.Count; index++)
             {
                 var tile = board.GetTile(path[index].x, path[index].y);
-                if (tile == null || tile.TileId == targetTileId)
+                if (tile == null || tile.HasRot || tile.TileId == targetTileId)
                 {
                     break;
                 }
