@@ -263,6 +263,8 @@ public class ChemotacticBeaconGrowthEngineTests
             setup.player, setup.board, setup.player.StartingTileId.Value, 29, 100, 100);
         Assert.Equal(new[] { 22, 23 }, projected.GrowthTileIds);
         Assert.Empty(projected.SpiralTileIds);
+        Assert.Equal(24, projected.BlockingRotTileId);
+        Assert.True(projected.MarkerBlockedByRot);
         for (int round = 0; round < 3; round++)
             MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
@@ -279,6 +281,8 @@ public class ChemotacticBeaconGrowthEngineTests
         var projected = DirectedVectorHelper.GetChemotacticBeaconPathProjection(
             setup.player, setup.board, setup.player.StartingTileId!.Value, 23, 100, 100);
         Assert.Equal(new[] { 22, 24 }, projected.GrowthTileIds);
+        Assert.Equal(14, projected.BlockingRotTileId);
+        Assert.False(projected.MarkerBlockedByRot);
         MycelialSurgeMutationProcessor.ProcessChemotacticBeacon(setup.board, setup.players, new Random(1), new TestSimulationObserver());
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 2, 2);
         AssertOwnedByPlayer(setup.board, setup.player.PlayerId, 4, 2);
@@ -299,6 +303,22 @@ public class ChemotacticBeaconGrowthEngineTests
         Assert.Equal(new[] { 22 }, projection);
         Assert.Equal(projection, outcome.AffectedTileIds);
         Assert.Null(setup.board.GetTile(4, 3)!.FungalCell);
+    }
+
+    [Fact]
+    public void Beacon_preview_has_no_rot_warning_for_clear_routes_or_barriers_beyond_its_budget()
+    {
+        var setup = CreateBeaconBoard(level: 1, beaconTileId: 29);
+        var clear = ChemotacticBeaconHelper.GetProjectedGrowthPath(setup.player, setup.board, 29, 1);
+        Assert.Null(clear.BlockingRotTileId);
+        Assert.False(clear.MarkerBlockedByRot);
+        Assert.True(setup.board.TryPlaceRot(25));
+        var limited = DirectedVectorHelper.GetChemotacticBeaconPathProjection(setup.player, setup.board, 21, 29, 1, 1);
+        Assert.Null(limited.BlockingRotTileId);
+        var full = ChemotacticBeaconHelper.GetProjectedGrowthPath(setup.player, setup.board, 29, 1);
+        Assert.Equal(25, full.BlockingRotTileId);
+        Assert.True(full.MarkerBlockedByRot);
+        Assert.Equal(new[] { 22, 23, 24 }, full.GrowthTileIds);
     }
 
     private static (GameBoard board, List<Player> players, Player player) CreateBeaconBoard(int level, int beaconTileId, IEnumerable<int>? blockedTileIds = null)

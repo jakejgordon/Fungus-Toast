@@ -2067,3 +2067,12 @@ independently shippable commit.
 - Regressions cover thick barriers, repeated growth passes, a friendly colony beyond rot, diagonal approach and spiral interruption/preview parity. Manual Unity check: target across rot and confirm preview/growth stop before it; target through the open passage still works; check technical text.
 - Portable validation: focused Beacon34, full Core771 and Simulation290 tests pass; Simulation/Core build0warnings/errors. Shared preview/AI projection uses corrected traversal; actual Unity compile/preview/growth and displayed technical copy remain manual gates.
 - One-game quarantine integration smoke beacon_rot_barrier_g1_seed20261008 completes with all output hashes verified. This is regression evidence only, not difficulty calibration.
+
+
+## 2026-10-08 — Beacon rot-targeting warning
+
+- Jake requested a warning or X markers so an unreachable target is not misleading. Chosen scoped implementation: contextual warning in the existing selection banner, with separate blocked-marker and spiral-only wording; semantic warning token and existing Cancel button retained. No new assets/prefabs, cost rules or placement restrictions.
+- Shared read-only Core projection exposes the first stopping rot tile and whether it blocks the marker; preview metadata comes from the same traversal as execution, not a second Unity line algorithm. Existing line/spiral stop behavior preserved.
+- Manual Unity gate: blocked target vs clear corridor, reachable marker/blocked spiral, move off board/UI, Cancel/Esc, confirm, menu/restart cleanup, banner readability and no compile errors/new warnings. Portable source contracts are not Unity verification.
+- Warning replaces (rather than appends to) the ordinary instruction so it fits the existing compact banner; moving to a clear target or clearing hover restores normal instructions. Placement remains allowed for useful growth before the barrier.
+- Validated: focused Beacon35, full Core772 + Simulation290 pass; build0errors/warnings; warning lifecycle source-contract script passes. One-game artifact beacon_rot_warning_g1_seed20261008 has identical outcome to pre-warning beacon_rot_barrier_g1_seed20261008 with all hashes verified. DLL/plugin refreshed and equal. Unity banner interaction/compile remains manual.

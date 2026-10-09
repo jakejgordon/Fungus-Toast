@@ -26,6 +26,9 @@ namespace FungusToast.Unity.UI.MutationTree
 {
     public class UI_MutationManager : MonoBehaviour
     {
+        private const string BeaconSelectionPrompt = "Select one empty, non-nutrient tile to place your Chemotactic Beacon.";
+        private const string BeaconRotLineWarning = "Blocked by rot: this Beacon cannot reach the marker.";
+        private const string BeaconRotSpiralWarning = "The marker is reachable, but spiral growth stops at rot.";
         private const string SpendPointsTooltipText = "Open your upgrades and spend your mutation points now.";
         private const string BankPointsTooltipText = "Ends your mutation phase now.\nYour unspent points carry over to next round,\nso you can save up for a mutation you can't afford yet.";
         private const string FinalRoundSpendPointsTooltipText = "Final round: this is your last mutation phase.\nOne more growth and decay cycle follows,\nthen living cells decide the ranking.";
@@ -744,7 +747,7 @@ namespace FungusToast.Unity.UI.MutationTree
                     SetMutationChoiceLocked(false);
                     resolved = true;
                 },
-                "Select one empty, non-nutrient tile to place your Chemobeacon.",
+                BeaconSelectionPrompt,
                 showCancelButton: true,
                 cancelButtonLabel: "Cancel (Esc)",
                 cancellable: true
@@ -752,13 +755,29 @@ namespace FungusToast.Unity.UI.MutationTree
 
             TileSelectionController.Instance.SetHoverPreviewCallback(tileId =>
             {
-                if (gridVisualizer == null || tileId < 0)
+                var selection = TileSelectionController.Instance;
+                if (selection == null || !selection.HasActiveSelection)
                 {
                     gridVisualizer?.ClearChemotacticBeaconPreview();
                     return;
                 }
+                if (tileId < 0)
+                {
+                    gridVisualizer?.ClearChemotacticBeaconPreview();
+                    gameManager.ShowSelectionPrompt(BeaconSelectionPrompt, true, "Cancel (Esc)", () => selection.CancelSelection());
+                    return;
+                }
 
                 var projection = ChemotacticBeaconHelper.GetProjectedGrowthPath(humanPlayer, board, tileId, projectedLevel, humanPlayer.GetSurgeDuration(mutation));
+                string prompt = BeaconSelectionPrompt;
+                if (projection.BlockingRotTileId.HasValue)
+                {
+                    string warning = projection.MarkerBlockedByRot ? BeaconRotLineWarning : BeaconRotSpiralWarning;
+                    string warningColor = ColorUtility.ToHtmlStringRGB(UIStyleTokens.State.Warning);
+                    prompt = $"<color=#{warningColor}>{warning}</color>";
+                }
+                gameManager.ShowSelectionPrompt(prompt, true, "Cancel (Esc)", () => selection.CancelSelection());
+                if (gridVisualizer == null) return;
                 if (projection.OriginTileId < 0)
                 {
                     gridVisualizer.ClearChemotacticBeaconPreview();

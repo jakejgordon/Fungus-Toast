@@ -323,8 +323,10 @@ namespace FungusToast.Core.Growth
         {
             public static readonly ChemotacticBeaconPathProjection Empty = new(-1, Array.Empty<int>(), Array.Empty<int>(), Array.Empty<int>());
 
-            public ChemotacticBeaconPathProjection(int originTileId, IReadOnlyList<int> traversedTileIds, IReadOnlyList<int> lineGrowthTileIds, IReadOnlyList<int> spiralTileIds)
+            public ChemotacticBeaconPathProjection(int originTileId, IReadOnlyList<int> traversedTileIds, IReadOnlyList<int> lineGrowthTileIds, IReadOnlyList<int> spiralTileIds, int? blockingRotTileId = null, bool markerBlockedByRot = false)
             {
+                BlockingRotTileId = blockingRotTileId;
+                MarkerBlockedByRot = markerBlockedByRot;
                 OriginTileId = originTileId;
                 TraversedTileIds = traversedTileIds;
                 LineGrowthTileIds = lineGrowthTileIds;
@@ -334,6 +336,11 @@ namespace FungusToast.Core.Growth
 
             /// <summary>Tile growth begins from: the furthest friendly living cell on the line, or the starting spore.</summary>
             public int OriginTileId { get; }
+
+            /// <summary>First rot tile terminating the projected route, if encountered within the preview budget.</summary>
+            public int? BlockingRotTileId { get; }
+            /// <summary>True for a blocked line; false when the marker is reachable and only its spiral hits rot.</summary>
+            public bool MarkerBlockedByRot { get; }
 
             /// <summary>Line tiles from the starting spore up to (but excluding) the origin. Empty when the origin is the spore.</summary>
             public IReadOnlyList<int> TraversedTileIds { get; }
@@ -379,6 +386,8 @@ namespace FungusToast.Core.Growth
                 {
                     break;
                 }
+
+                if (tile.HasRot) break;
 
                 if (!IsChemotacticBeaconGrowthTarget(tile, board, player.PlayerId, out bool alreadyOwned))
                 {
@@ -459,10 +468,19 @@ namespace FungusToast.Core.Growth
             var lineGrowthTileIds = new List<int>();
             var spiralTileIds = new List<int>();
             var selectedTileIds = new HashSet<int>();
+            int? blockingRotTileId = null;
+            bool markerBlockedByRot = false;
             foreach (var (tile, fromSpiral) in EnumerateChemotacticBeaconGrowthCandidates(board, startTile, targetTile, path, originIndex))
             {
                 if (selectedGrowthTargets >= (fromSpiral ? spiralLimit : lineTileLimit))
                 {
+                    break;
+                }
+
+                if (tile.HasRot)
+                {
+                    blockingRotTileId = tile.TileId;
+                    markerBlockedByRot = !fromSpiral;
                     break;
                 }
 
@@ -476,7 +494,7 @@ namespace FungusToast.Core.Growth
                 (fromSpiral ? spiralTileIds : lineGrowthTileIds).Add(tile.TileId);
             }
 
-            return new ChemotacticBeaconPathProjection(originTileId, traversedTileIds, lineGrowthTileIds, spiralTileIds);
+            return new ChemotacticBeaconPathProjection(originTileId, traversedTileIds, lineGrowthTileIds, spiralTileIds, blockingRotTileId, markerBlockedByRot);
         }
 
         /// <summary>
@@ -494,7 +512,7 @@ namespace FungusToast.Core.Growth
             for (int index = originIndex + 1; index < path.Count; index++)
             {
                 var tile = board.GetTile(path[index].x, path[index].y);
-                if (tile == null || tile.HasRot)
+                if (tile == null)
                 {
                     yield break;
                 }
@@ -506,6 +524,7 @@ namespace FungusToast.Core.Growth
                 }
 
                 yield return (tile, false);
+                if (tile.HasRot) yield break;
             }
 
             if (!reachedTarget)
@@ -515,8 +534,8 @@ namespace FungusToast.Core.Growth
 
             foreach (var tile in EnumerateClockwiseSpiral(board, targetTile, startTile))
             {
-                if (tile.HasRot) yield break;
                 yield return (tile, true);
+                if (tile.HasRot) yield break;
             }
         }
 
