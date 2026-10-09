@@ -35,27 +35,41 @@ namespace FungusToast.Core.Board
 
     /// <summary>
     /// Fixed stage-12 alternate for the medium 120x120 hotdog. The right-hand cap is a
-    /// roughly 15% pocket. A thin edge seal with a thick central bulge clips to playable terrain, not the
-    /// empty board rectangle. Only the authored zigzag is carved out of that belt.
+    /// roughly 15% pocket. An irregular rounded patch clips to playable terrain, not the
+    /// empty board rectangle. A nearly straight, gently jagged passage crosses the patch.
     /// Remote placement remains legal in the pocket; this is a growth barrier, not terrain.
     /// Unsupported masks fail explicitly; there is no generated fallback or RNG.
     /// </summary>
     public static class QuarantineRotLayout
     {
-        // Inclusive rectangles are the authored corridor, NOT dilation of a polyline:
-        // single-cell entrance/exit throats, two-cell lanes and 2x2 elbow overlaps.
-        // The widely separated return legs prevent eight-neighbor cross-leg jumps.
+        // Short overlapping one/two-cell runs form a gently jagged, forward-only path.
+        // Single-cell throats prevent diagonal entry around either end.
         private static readonly (int left, int bottom, int right, int top)[] CorridorLanes =
         {
             (60, 60, 64, 60),
-            (65, 60, 66, 70),
-            (65, 69, 76, 70),
-            (75, 48, 76, 70),
-            (75, 48, 85, 49),
-            (84, 48, 85, 60),
-            (84, 59, 88, 60),
-            (89, 60, 94, 60)
+            (64, 60, 69, 61),
+            (69, 60, 75, 60),
+            (75, 59, 81, 60),
+            (81, 60, 87, 60),
+            (87, 60, 92, 61),
+            (92, 60, 94, 60)
         };
+
+        // Integer-only contour: a rounded central lobe narrows into scalloped crust seals.
+        // Authored coarse waves avoid ruler-straight sides without consuming gameplay RNG.
+        public static int PocketBoundaryX(int y)
+        {
+            int offset = Math.Abs(y - RotBalance.QuarantineEntranceY);
+            return RotBalance.QuarantinePocketStartX + (offset <= 4 ? 0 : (offset / 6) % 3 - 1);
+        }
+
+        public static int RotBoundaryX(int y)
+        {
+            int offset = Math.Abs(y - RotBalance.QuarantineEntranceY);
+            int rounded = RotBalance.QuarantineBeltStartX + offset * offset / RotBalance.QuarantineContourCurvature;
+            int scallop = offset <= 4 ? 0 : (offset / 3) % 3;
+            return Math.Min(PocketBoundaryX(y) - RotBalance.QuarantineCrustSealWidth, rounded + scallop);
+        }
 
         private static readonly (int x, int y)[] AuthoredStarts =
         {
@@ -77,14 +91,11 @@ namespace FungusToast.Core.Board
                     for (int x = lane.left; x <= lane.right; x++)
                         corridor.Add(y * board.Width + x);
             Require(corridor.IsSubsetOf(playable), "The silhouette clips the authored corridor.");
-            var pocket = new HashSet<int>(playable.Where(id => id % board.Width >= RotBalance.QuarantinePocketStartX));
+            var pocket = new HashSet<int>(playable.Where(id => id % board.Width >= PocketBoundaryX(id / board.Width)));
             var belt = new HashSet<int>(playable.Where(id =>
             {
                 int x = id % board.Width, y = id / board.Width;
-                return x < RotBalance.QuarantinePocketStartX
-                    && (x >= RotBalance.QuarantineOuterBeltStartX
-                        || (x >= RotBalance.QuarantineBeltStartX
-                            && y >= RotBalance.QuarantineBulgeBottomY && y <= RotBalance.QuarantineBulgeTopY));
+                return x >= RotBoundaryX(y) && x < PocketBoundaryX(y);
             }));
             var main = new HashSet<int>(playable.Except(pocket).Except(belt));
             var rot = new HashSet<int>(belt.Except(corridor));

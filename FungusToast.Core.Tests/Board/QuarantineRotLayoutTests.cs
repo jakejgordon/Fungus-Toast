@@ -22,10 +22,10 @@ public class QuarantineRotLayoutTests
         var board = CreateBoard();
         var plan = QuarantineRotLayout.Build(board);
         Assert.Equal(5011, board.PlayableTileCount);
-        Assert.Equal(761, plan.PocketTileIds.Count);
+        Assert.Equal(759, plan.PocketTileIds.Count);
         Assert.InRange(plan.PocketTileIds.Count / (double)board.PlayableTileCount, 0.14, 0.16);
-        Assert.Equal(998, plan.RotTileIds.Count);
-        Assert.Equal(141, plan.CorridorTileIds.Count);
+        Assert.Equal(1285, plan.RotTileIds.Count);
+        Assert.Equal(54, plan.CorridorTileIds.Count);
         Assert.Equal(Id(60, 60), plan.EntranceTileId);
         Assert.Equal(Id(94, 60), plan.ExitTileId);
 
@@ -72,9 +72,9 @@ public class QuarantineRotLayoutTests
     }
 
     [Theory]
-    [InlineData(false, 74)]
-    [InlineData(true, 64)]
-    public void Only_the_long_zigzag_connects_main_and_pocket_even_with_diagonal_growth(bool diagonal, int distance)
+    [InlineData(false, 34)]
+    [InlineData(true, 34)]
+    public void Only_the_direct_jagged_passage_connects_main_and_pocket_even_with_diagonal_growth(bool diagonal, int distance)
     {
         var board = CreateBoard();
         var plan = QuarantineRotLayout.Build(board);
@@ -88,13 +88,13 @@ public class QuarantineRotLayoutTests
         Assert.Equal(corridor.Count, distances.Count);
         Assert.Equal(distance, distances[plan.ExitTileId]);
         Assert.Equal(distance, diagonal ? plan.CorridorDiagonalDistance : plan.CorridorOrthogonalDistance);
-        Assert.InRange(distance, 60, 100); // much longer than the 34-cell straight displacement
+        Assert.Equal(34, distance); // direct crossing, not a maze
 
         foreach (var cut in new[]
         {
             new[] { plan.EntranceTileId },
             new[] { plan.ExitTileId },
-            new[] { Id(75, 55), Id(76, 55) }, // cut the middle return leg, not just its mouth
+            new[] { Id(78, 59), Id(78, 60) }, // cut an interior cross-section
             plan.CorridorTileIds.ToArray()
         })
         {
@@ -109,10 +109,8 @@ public class QuarantineRotLayoutTests
         var board = CreateBoard();
         var plan = QuarantineRotLayout.Build(board);
         var corridor = plan.CorridorTileIds.ToHashSet();
-        Assert.Contains(Id(65, 65), corridor);
-        Assert.Contains(Id(66, 65), corridor);
-        Assert.All(new[] { Id(65, 69), Id(66, 69), Id(65, 70), Id(66, 70) }, id => Assert.Contains(id, corridor));
-        Assert.All(new[] { Id(75, 48), Id(76, 48), Id(75, 49), Id(76, 49) }, id => Assert.Contains(id, corridor));
+        Assert.All(new[] { Id(66, 60), Id(66, 61), Id(78, 59), Id(78, 60) }, id => Assert.Contains(id, corridor));
+        Assert.All(corridor, id => Assert.InRange(id / 120, 59, 61));
         for (int y = 0; y < 118; y++)
             for (int x = 0; x < 118; x++)
                 Assert.False(Enumerable.Range(0, 3).All(dy => Enumerable.Range(0, 3).All(dx => corridor.Contains(Id(x + dx, y + dy)))),
@@ -125,23 +123,19 @@ public class QuarantineRotLayoutTests
     }
 
     [Fact]
-    public void Belt_is_pinned_to_both_actual_silhouette_edges_in_every_column()
+    public void Organic_patch_has_curved_edges_and_still_seals_the_actual_crust()
     {
         var board = CreateBoard();
         var plan = QuarantineRotLayout.Build(board);
         var rot = plan.RotTileIds.ToHashSet();
-        for (int x = RotBalance.QuarantineOuterBeltStartX; x < 95; x++)
-        {
-            var column = board.AllTiles().Where(t => !t.IsBlocked && t.X == x).OrderBy(t => t.Y).ToArray();
-            Assert.Contains(column.First().TileId, rot);
-            Assert.Contains(column.Last().TileId, rot);
-            Assert.True(board.IsPlayableEdgeTile(column.First().TileId));
-            Assert.True(board.IsPlayableEdgeTile(column.Last().TileId));
-        }
-        Assert.All(rot, id => Assert.InRange(board.GetTileById(id)!.X, 60, 94));
-        Assert.Contains(Id(60, 73), rot); // thick central bulge
-        Assert.Contains(Id(60, 45), rot);
-        Assert.DoesNotContain(Id(65, 76), rot); // useful bread remains above/below the bulge
+        var boundaryRows = board.AllTiles().Where(t => !t.IsBlocked && board.IsPlayableEdgeTile(t.TileId)
+            && t.X >= QuarantineRotLayout.RotBoundaryX(t.Y) && t.X < QuarantineRotLayout.PocketBoundaryX(t.Y));
+        Assert.All(boundaryRows, tile => Assert.Contains(tile.TileId, rot));
+        Assert.True(QuarantineRotLayout.RotBoundaryX(40) > QuarantineRotLayout.RotBoundaryX(50));
+        Assert.True(QuarantineRotLayout.RotBoundaryX(50) > QuarantineRotLayout.RotBoundaryX(60));
+        Assert.True(Enumerable.Range(30, 60).Select(QuarantineRotLayout.PocketBoundaryX).Distinct().Count() > 1);
+        Assert.All(rot, id => Assert.InRange(id % 120, QuarantineRotLayout.RotBoundaryX(id / 120), QuarantineRotLayout.PocketBoundaryX(id / 120) - 1));
+        Assert.DoesNotContain(Id(65, 76), rot);
         Assert.DoesNotContain(Id(65, 42), rot);
         Assert.DoesNotContain(rot, id => board.GetTileById(id)!.Y is 0 or 119);
     }
@@ -247,7 +241,7 @@ public class QuarantineRotLayoutTests
         Assert.Throws<ArgumentException>(() => QuarantineRotLayout.Build(new GameBoard(120, 120, 7)));
         foreach (int count in new[] { -1, 0, 8 })
             Assert.Throws<ArgumentOutOfRangeException>(() => QuarantineRotLayout.Build(CreateBoard(), count));
-        var clipped = new GameBoard(120, 120, 7, CanonicalBlocked.Value.Append(Id(75, 55)));
+        var clipped = new GameBoard(120, 120, 7, CanonicalBlocked.Value.Append(Id(78, 60)));
         Assert.Contains("clips", Assert.Throws<ArgumentException>(() => QuarantineRotLayout.Build(clipped)).Message);
         var disconnected = new GameBoard(120, 120, 7, CanonicalBlocked.Value.Except(new[] { 0 }));
         Assert.Contains("disconnected", Assert.Throws<ArgumentException>(() => QuarantineRotLayout.Build(disconnected)).Message);

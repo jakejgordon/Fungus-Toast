@@ -2047,3 +2047,14 @@ independently shippable commit.
 - Code-built second dropdown beneath Campaign Stage for multi-variant stages, displaying authored titles/order and defaulting to first on stage change. Hidden on ordinary stages; no stale override leakage.
 - Selection travels through testing configuration, GameManager startup, and endgame-card reload; normal seeded selection and saved-resume precedence unchanged. No scene/prefab/Core changes.
 - Validation: campaign variant source-contract script (including picker/reset/routing assertions); Core build. Unity C# compilation, dropdown layout and actual launch/reset/resume remain Jake's manual Editor gate (see CAMPAIGN_HELPER).
+
+
+## 2026-10-08 — Organic quarantine revision
+
+- Jake requested replacing ruler-straight rot and maze-like passage with a rotted-bread patch and direct, slightly jagged route. Fresh layout now uses deterministic rounded/scalloped contours, 759/5011 pocket tiles (15.15%), 1285 rot, 54 passage. Route34 steps rather than74/64; authored starts/perks and optional remote access retained.
+- Old saved masks remain unchanged; no variant renumbering or gameplay RNG changes. Earlier three-game population evidence describes the previous maze and is NOT evidence for the new layout.
+- Manual Unity gate: fresh index11/Quarantined Crust compile/visual readability, organic edges/path, actual save/resume, and gameplay timing. CPU topology preview is not Unity rendering or difficulty calibration.
+
+- Validation completed: Core767 and Simulation290 tests pass; Simulation build0warnings/errors; variant/coaching source contracts pass. Quarantine layout tests prove 34-step orthogonal/diagonal access, endpoint/interior cuts, narrow width, region connectivity, legal remote access and all128 mixed Centripetal loadouts.
+- Current population smoke artifact: Simulation/bin/Debug/net8.0/SimulationParquet/quarantine_organic_g3_seed20261008; output hashes verified and strict replay outcome cc7e714385cc77223dc2645364bea5d11c4a7038b9858bd36587d6826ce6f73d. Games finish28/28/29 turns; pocket entry17/15/19, half occupation25/25/26; last recorded occupancy648/700/691 of759, living298/384/365. Earlier entry can be remote placement, not proof of corridor traversal. Safe proxy0/3 (0%); stage12 target band is unset, NOT calibrated.
+- Nutrient-enabled one-game startup smoke quarantine_organic_nutrients_g1_seed20261009 also completes with all output hashes verified; last pocket occupancy 646/759, living 322.

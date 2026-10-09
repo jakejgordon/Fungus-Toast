@@ -29,10 +29,14 @@ def layout():
     belt,pocket_x = constant('QuarantineBeltStartX'),constant('QuarantinePocketStartX')
     playable = set(range(120*120))-blocked
     corridor = {y*120+x for left,bottom,right,top in lanes for y in range(bottom,top+1) for x in range(left,right+1)}
-    pocket = {i for i in playable if i%120 >= pocket_x}
-    thin_x = constant('QuarantineOuterBeltStartX')
-    bottom,top = constant('QuarantineBulgeBottomY'),constant('QuarantineBulgeTopY')
-    rot = {i for i in playable if i%120 < pocket_x and (i%120 >= thin_x or (i%120 >= belt and bottom <= i//120 <= top))}-corridor
+    def pocket_boundary(y):
+        offset=abs(y-constant('QuarantineEntranceY'))
+        return pocket_x+(0 if offset <= 4 else (offset//6)%3-1)
+    def rot_boundary(y):
+        offset=abs(y-constant('QuarantineEntranceY'))
+        return min(pocket_boundary(y)-constant('QuarantineCrustSealWidth'),belt+offset*offset//constant('QuarantineContourCurvature')+(0 if offset <= 4 else (offset//3)%3))
+    pocket = {i for i in playable if i%120 >= pocket_boundary(i//120)}
+    rot = {i for i in playable if rot_boundary(i//120) <= i%120 < pocket_boundary(i//120)}-corridor
     assert corridor <= playable
     assert len(playable)==5011
     assert 0.14 <= len(pocket)/len(playable) <= 0.16

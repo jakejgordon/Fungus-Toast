@@ -273,3 +273,5 @@ When a change introduces a new compatibility hazard or a new migration pattern:
 - update this document
 - link any deeper design/migration detail from the most relevant helper doc
 - keep `CAMPAIGN_HELPER.md` and other feature docs focused on their systems, with this file as the canonical compatibility reference
+
+- Quarantine organic-layout revision (2026-10-08): only fresh encounters use the rounded patch/direct passage. Existing saves restore their stored rot and cell masks; they are not regenerated or silently reshaped. Variant IDs remain unchanged. Old simulation artifacts must use their matching historical binary for strict replay, not the new layout binary.

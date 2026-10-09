@@ -76,7 +76,7 @@ namespace FungusToast.Unity.UI.Onboarding
                 NewPlayerTooltipId.QuarantineCorridorIntro,
                 "Onboarding.QuarantineCorridorIntroSeen",
                 "A Passage Through the Rot",
-                "The far pocket holds unclaimed space. A narrow zigzag is the only growth route through the rot, and cells beside rot face extra decay. Establish a foothold, then hold the passage.\n\nRemote seeding or placement can reach the pocket without walking the corridor. Necrosporulation, compatible mycovariants, or Adaptations can provide a shortcut.",
+                "The far pocket holds unclaimed space. A narrow passage is the only growth route through the rot, and cells beside rot face extra decay. Establish a foothold, then hold the passage.\n\nRemote seeding or placement can reach the pocket without walking the corridor. Necrosporulation, compatible mycovariants, or Adaptations can provide a shortcut.",
                 NewPlayerTooltipSurface.ScreenCenterCoachmark,
                 "Show once per profile during round 1 of a new human campaign game using the quarantine-corridor variant with actual rot. Never show on checkpoint restore or fast-forward."),
             new NewPlayerTooltipDefinition(

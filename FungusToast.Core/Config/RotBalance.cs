@@ -14,9 +14,8 @@ namespace FungusToast.Core.Config
         public const int QuarantineMaximumPlayers = 7;
         public const int QuarantineBeltStartX = 60;
         public const int QuarantinePocketStartX = 95;
-        public const int QuarantineOuterBeltStartX = 87;
-        public const int QuarantineBulgeBottomY = 45;
-        public const int QuarantineBulgeTopY = 73;
+        public const int QuarantineContourCurvature = 35;
+        public const int QuarantineCrustSealWidth = 5;
         public const int QuarantineEntranceY = 60;
         public const double QuarantineMinimumPocketFraction = 0.14;
         public const double QuarantineMaximumPocketFraction = 0.16;
