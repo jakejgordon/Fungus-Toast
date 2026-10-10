@@ -54,7 +54,14 @@ Current real authored presets in Unity:
 - `Campaign15` (`160x160 7 AI.asset`)
 
 ### Campaign7
-Current authored pool resolves six unique opponents from twelve medium/easy candidates, including `CMP_Bloom_ToxinborneJetting_Medium`. It is intentionally a pool, not a fixed lineup, so Jetting Rot is eligible but not guaranteed every run.
+The original authored pool resolves six unique opponents from eight candidates.
+Rotten Heart (Campaign7_RottenHeart) preserves that pool except it replaces
+CMP_Bloom_NecrotoxinGauntlet_Elite with CMP_Bloom_CreepingNecro_Medium, whose
+recorded Campaign-panel band is Normal and whose default starting edge offset is
+zero. The central rot otherwise forces Necrotoxin away from its preferred center
+start. The substitution is variant-local; candidates remain pooled, not guaranteed
+opponents. Original Country Slice and already-resolved saved lineups are unchanged.
+Startup/start-position smoke evidence is not a new difficulty calibration.
 
 ### Campaign12
 Current authored pool resolves seven unique opponents from ten hard/elite/medium candidates, including `CMP_Bloom_ToxinborneBallistospore_Hard`. It is intentionally a pool, not a fixed lineup, so Ballistospore Rot is eligible but not guaranteed every run.

@@ -53,7 +53,11 @@ CampaignLevelVariantSelection uses run seed plus stage index, independently of g
 ### Level 8: Rotten Heart
 
 Level 8 (index 7) chooses equally between Country Slice (unchanged) and Rotten Heart.
-Both retain the 90x90 Kaiser bun, six-opponent pool and starting nutrient settings.
+Both retain the 90x90 Kaiser bun, six-opponent count and starting nutrient settings.
+Rotten Heart alone replaces CMP_Bloom_NecrotoxinGauntlet_Elite in its eight-candidate
+pool with CMP_Bloom_CreepingNecro_Medium (measured Normal; zero starting edge offset),
+avoiding the center-start fallback forced by the island. Country Slice retains its
+original pool. This affects newly resolved encounters; existing saved lineups persist.
 Rotten Heart fills 1,145 of 5,726 playable tiles (19.9965%) with a single central,
 uneven lobed island. The fixed RNG-free contour has broad irregular lobes and smaller
 jagged scallops; it is not a square or a straight barrier. Normal growth must route

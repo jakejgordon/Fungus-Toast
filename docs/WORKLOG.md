@@ -1,5 +1,33 @@
 # Fungus-Toast Worklog
 
+## Rotten Heart opponent substitution — 2026-10-09
+
+Jake approved replacing center-hampered Necrotoxin Gauntlet with a different Medium
+opponent only for the rot variant. Rotten Heart's eight-entry pool substitutes
+CMP_Bloom_CreepingNecro_Medium one-for-one, preserving order, six-opponent count,
+resources, preset/variant IDs and all other entries. Original Country Slice pool
+and global strategy definitions are untouched. Existing saved resolved lineups are
+retained; fresh encounters resolve the revised pool. No save migration or reroll.
+
+Creeping Necro is authored Medium and measured Campaign-panel Normal with sufficient
+evidence (145games/1.212 normalized share), zero default start edge offset. Initially
+considered Anabolic Regression but rejected its measured Elite record before editing.
+Creeping Necro retains growth/death-rebirth theme without center-start dependence.
+Variant/harness contracts pass: exact one-entry replacement, uniqueness, measured
+band and zero-offset default. Two-game rot and clear startup smokes use existing
+binaries and seeds20261015–20261016, prior proxy/other opponents, resources/drafts,
+and real Kaiser mask. Replacement starts (30,76)/(59,76), baseline Adaptation22,
+match both arms; all14 player starts match. Rot count1145/game; output hashes and
+manifest sidecars pass. Four games are startup proof, not difficulty acceptance.
+Smoke IDs: creeping_necro_rot_swap_rot_g2_seed20261009 and clear counterpart;
+actual seeds are in manifests, not inferred from those experiment labels.
+Rot-arm strict replay and output/manifest hashes passed. No C# or DLL content changes.
+
+Jake manual gate: pull/reimport; start fresh level8/index7 Rotten Heart and check
+Creeping Necro eligible, Necrotoxin excluded. Original Country Slice retains
+Necrotoxin. Existing checkpoints intentionally retain their saved opponents.
+
+
 ## Rotten Heart matched no-rot control — 2026-10-09
 
 Jake requested an identical100game simulation with rot removed. Used the previous

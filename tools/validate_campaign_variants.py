@@ -75,8 +75,13 @@ original8 = preset(stage8['boardPreset']['guid'])
 for variant in stage8['variants']:
     board = preset(variant['boardPreset']['guid'])
     assert board['boardWidth'] == board['boardHeight'] == 90
-    for field in ['aiPlayers','pooledAiPlayerCount','aiStrategyPool','poolAdaptationOverrides']:
+    for field in ['aiPlayers','pooledAiPlayerCount','poolAdaptationOverrides']:
         assert board[field] == original8[field], field
+    expected_pool = list(original8['aiStrategyPool'])
+    if variant['variantId'] == 'rotten-heart':
+        expected_pool = ['CMP_Bloom_CreepingNecro_Medium' if name == 'CMP_Bloom_NecrotoxinGauntlet_Elite' else name for name in expected_pool]
+    assert board['aiStrategyPool'] == expected_pool
+    assert len(set(board['aiStrategyPool'])) == len(board['aiStrategyPool'])
     assert variant['enableNutrientPatches'] == stage8['enableNutrientPatches']
     assert variant['allowedNutrientPatchTypes'] == stage8['allowedNutrientPatchTypes']
 assert [preset(v['boardPreset']['guid'])['presetId'] for v in stage8['variants']] == ['Campaign7','Campaign7_RottenHeart']
@@ -89,3 +94,16 @@ parsed = harness.parse_progression(harness.PROGRESSION)
 assert parsed[7]['guid'] == levels[7]['boardPreset']['guid']
 assert parsed[11]['guid'] == levels[11]['boardPreset']['guid']
 print('PASS: campaign balance harness does not let nested variants overwrite base preset IDs.')
+
+roster = (ROOT / 'FungusToast.Core/AI/AIRoster.cs').read_text()
+start = roster.index('strategyName: "CMP_Bloom_CreepingNecro_Medium"')
+end = roster.index('new ParameterizedSpendingStrategy(', start)
+assert 'startingSporeEdgeOffset:' not in roster[start:end]
+measured = (ROOT / 'FungusToast.Core/AI/StrategyMeasuredBands.cs').read_text()
+assert '["legacy.campaign.cmp-bloom-creepingnecro-medium.v1"] = new(DifficultyBand.Normal, BandEvidence.Sufficient' in measured
+print('PASS: Rotten Heart alone replaces Necrotoxin with measured-Normal Creeping Necro, no center-seeking offset.')
+
+saved_lineup = controller.split('private void EnsureResolvedAiLineup()',1)[1].split('private CampaignProgression.LevelVariant ResolveLevelVariant',1)[0]
+assert saved_lineup.index('if (State.resolvedAiStrategyNames.Count > 0)') < saved_lineup.index('BuildResolvedAiStrategyNames')
+assert 'return;' in saved_lineup.split('if (State.resolvedAiStrategyNames.Count > 0)',1)[1].split('BuildResolvedAiStrategyNames',1)[0]
+print('PASS: existing resolved saved lineups are retained; revised pool applies to new encounters.')
