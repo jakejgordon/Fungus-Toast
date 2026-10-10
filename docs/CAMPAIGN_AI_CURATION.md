@@ -61,7 +61,10 @@ recorded Campaign-panel band is Normal and whose default starting edge offset is
 zero. The central rot otherwise forces Necrotoxin away from its preferred center
 start. The substitution is variant-local; candidates remain pooled, not guaranteed
 opponents. Original Country Slice and already-resolved saved lineups are unchanged.
-Startup/start-position smoke evidence is not a new difficulty calibration.
+The updated seed-resolved lineup received a 100-game confirmation: safe proxy
+34% versus the 15–35% target (1 point below the upper bound), Creeping Necro39%.
+This is one fixed lineup/context, not acceptance of every pool combination.
+Details and artifact provenance: docs/WORKLOG.md, 2026-10-10.
 
 ### Campaign12
 Current authored pool resolves seven unique opponents from ten hard/elite/medium candidates, including `CMP_Bloom_ToxinborneBallistospore_Hard`. It is intentionally a pool, not a fixed lineup, so Ballistospore Rot is eligible but not guaranteed every run.

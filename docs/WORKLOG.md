@@ -1,5 +1,33 @@
 # Fungus-Toast Worklog
 
+## Rotten Heart replacement 100-game confirmation — 2026-10-10
+
+Jake requested100games after the Creeping Necro substitution. Used the canonical
+campaign harness (level7/rotten-heart/games100/seed20261008, budget240s), with a
+TEMP wrapper retaining --no-build and a unique experiment label to avoid overwriting
+the prior same-seed artifact. No harness/source edits. Exact previous Core/Simulation
+DLL SHA256s verified before execution and in output; same seeds20261015–20261114,
+lineup/slots except Necrotoxin→CreepingNecro, real Kaiser mask, central rot, nutrients,
+drafts, proxy Adaptations1–6 plus mold baseline and original human-start pool.
+Deep causal condition comparison proves only explicit opponent name changed.
+100/100complete,700playerrows, allgames1145rot, output hashes + sidecar verified.
+
+Artifact: rotten_heart_creeping_necro_g100_seed20261008, under
+FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/.
+Safeproxy34/100wins(34%), no sharedwins: inside Campaign7 target15–35%,1ppbelow
+upper bound. Previous matched-seed rot lineup45%: observed delta−11pp;20kseed-paired
+bootstrap95%CI−24..+2pp, not a statistically decisive improvement. Proxy absolute
+bootstrap95%CI25–44%; one fixed seed-resolved pool lineup, not all pool combinations.
+CreepingNecro39wins, FortifyMimic17, Pressure6, ReclaimShell2, Scavenger2, Wildfire0.
+Proxy avg483.91living/400.14dead/83toxins, rank2.62. Point target fit confirmed for
+this context, near easy upper edge; no further automatic balancing performed.
+Canonical CSV: TEMP/rotten-heart-creeping-g100-analysis/post_simulation_player_summary.csv.
+Comparison/result JSON: TEMP/rotten-heart-creeping-g100-result.json; reproducible
+TEMP/analyze_rotten_heart_creeping_g100.py. Recorded outcome:
+21f1eb2f68bc1a89c883d3535d321a1631c4c51c44d617fd396808c93ac8e5e6.
+Full100game strict replay verified matching outcome; all replay output hashes and manifest sidecar pass. No C# or DLL changes.
+
+
 ## Rotten Heart opponent substitution — 2026-10-09
 
 Jake approved replacing center-hampered Necrotoxin Gauntlet with a different Medium
