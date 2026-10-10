@@ -1,5 +1,31 @@
 # Fungus-Toast Worklog
 
+## Earlier Filament priority approved — runtime integrity stop — 2026-10-10
+
+Jake approved Filament immediately after Putrid's Tendril backbone, ahead of late
+recovery/cascade. Added bounded v2 plan: four Tendril2 goals,Induction2,Filament5,
+then unchanged Catabolic Rebirth/Rejuvenation/Cascade goals. Candidate437618fecf39
+changes only ordered goals; no live roster,Core behavior or draft/start changes.
+Two candidate contract tests pass; full Simulation294/294 passes. Core source
+unchanged; rebuild/plugin DLL/PDB hashes synchronized, tracked artifacts refreshed.
+
+Preregistered smoke1: five pairs,120x120,rotate,seeds2026101021–2026101025,fixed
+MaxEconomy opponent,no nutrients/drafts/starting Adaptations,120s/arm. Control
+reached4/5 before cap (130.868s measured total,32.717s/game); sidecar/output hashes
+pass. EXCLUDED integrity-only: no exposure/performance inference. Stopped the
+unmatched treatment and verified no owned simulation remains. Do not count the
+incomplete control as a candidate win/loss or carry partial rows into a replacement.
+
+Replacement smoke2 is specified, NOT launched: fresh seeds2026101041–2026101045,
+same controls/gate,300s/arm based only on timing, no partial reuse. Await Jake's
+approval for a15-minute chunk. Conditional20-pair calibration is unrun; its old
+240s/arm allowance must be rebudgeted from observed throughput before dispatch.
+Exposure gate remains purchase+triggers in at least3/5 games. Generated strict
+replay remains separately blocked; no replay/promotion/benefit claim.
+Protocol/characterization/integrity-stop JSON: TEMP/filament-early-20261010/.
+Canonical plan/profile/protocol: AI_STRATEGY_AUTHORING.md, Filament investigation.
+
+
 ## Filament strategy-fit audit and first reachability stop — 2026-10-10
 
 Jake approved starting growth-AI Filament/Ecology work and asked to identify
@@ -30,9 +56,9 @@ Core776/776 and Simulation293/293 pass. Canonical/plugin binaries refreshed from
 unchanged Core source and hashes equal. Fit/cost/profile details are in
 AI_STRATEGY_AUTHORING.md under Filament Overdrive fit investigation.
 
-Next Jake decision: authorize earlier Filament priority and identify which
-recovery/cascade goals it may delay, or prioritize a different family.
-AddForEvaluation stays open; the existing no-detour Campaign test remains intact.
+Earlier-priority decision approved by Jake at12:00 on2026-10-10; see the newer
+runtime-stop entry above. AddForEvaluation stays open; the no-detour live Campaign
+test remains intact.
 
 
 ## Rotten Heart replacement 100-game confirmation — 2026-10-10

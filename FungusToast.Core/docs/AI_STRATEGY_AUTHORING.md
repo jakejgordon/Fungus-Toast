@@ -409,6 +409,43 @@ Strict replay was attempted with the catalog but refused "Unknown strategy set:
 Generated" before execution. Replay parity remains unverified; a separate tooling
 follow-up is recorded. Do not equate original artifact hash checks with replay.
 
+### Approved earlier-priority proposal
+
+Jake approved delaying the late recovery/cascade goals on 2026-10-10. Plan
+FungusToast.Simulation/Examples/candidate-plan.filament-putrid-tendrils.v2.json
+inserts Filament5 after the four level-2 Tendril goals and Induction2, before
+Catabolic Rebirth. Candidate437618fecf39 changes only the ordered goal gene;
+all existing goals remain, with fallback/economy/surge/draft/start controls intact.
+This is a Generated-only priority experiment, not a Campaign or Proven retune.
+The profile retains the same tendril/sacrifice fantasy and experimental draft
+control as v1; earlier acquisition now intentionally takes priority over late
+recovery/cascade. A benefit contrast includes prerequisites and delayed spending.
+
+Preregistered smoke: five pairs,120x120,seeds2026101021–2026101025,rotating slots,
+fixed MaxEconomy opponent,no nutrients/drafts/starting Adaptations,120 seconds
+per arm. Exposure gate: purchase and actual triggers in at least3/5 treatment
+games; no strength inference from smoke. If earned, the frozen20-pair calibration
+uses unused seeds2026101101–2026101120 and the same context,240seconds per arm;
+stop on a paired normalized-board-share95% interval wholly below-0.05. Comparison
+and distinct-board/seed holdout must be earned separately. Incomplete runs are
+integrity-only, never a candidate pass/fail or an excuse to retry an adverse result.
+Local exact protocol/commands/characterization: TEMP/filament-early-20261010/.
+Strict Generated replay remains a known separate tooling blocker.
+
+Smoke1 is **excluded on integrity**: control completed4/5 in130.868seconds
+(mean32.717s/game) under the120-second cap. Output hashes and manifest sidecar
+pass; these partial games are not exposure/performance evidence. The unmatched
+treatment was stopped, with no candidate result interpreted. Both candidate
+contract tests and all294 Simulation tests pass.
+
+A runtime-only replacement is specified but NOT launched: five pairs on fresh
+seeds2026101041–2026101045, same board/opponent/system/slot controls and exposure
+gate,300seconds per arm. This allows measured-throughput headroom without
+reusing partial outcomes. Requires approval for a15-minute chunk. The conditional
+240-second calibration budget is also insufficient at this observed pace; it
+must be rebudgeted before any dispatch, without reference to candidate outcomes.
+No calibration, comparison, holdout, promotion or benefit verdict is earned.
+
 ## Campaign Mycovariant Migration Ledger
 
 Legacy Campaign entries with empty or category-derived plans are frozen by

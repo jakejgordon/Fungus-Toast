@@ -9,6 +9,36 @@ namespace FungusToast.Simulation.Tests.Candidates;
 public sealed class FilamentCandidatePlanTests
 {
     [Fact]
+    public void Earlier_priority_inserts_filament_after_tendril_backbone_before_late_recovery()
+    {
+        _ = AIRoster.CampaignStrategies.Count;
+        var plan = CandidateGenerationPlanJson.Deserialize(File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory, "Fixtures", "candidate-plan.filament-putrid-tendrils.v2.json")));
+        Assert.Empty(CandidateGenerationPlanValidator.Validate(plan));
+        var candidate = Assert.Single(CandidateGenerator.Generate(plan).Accepted);
+        Assert.Empty(CandidateGenomeValidator.Validate(candidate));
+        var parent = Assert.IsType<ParameterizedSpendingStrategy>(
+            AIRoster.CampaignStrategiesByName["CMP_Growth_PutridTendrils_Medium"]);
+        var strategy = CandidateGenomeFactory.Materialize(candidate);
+        Assert.Equal(parent.TargetMutationGoals.Take(5).Select(g => (g.MutationId, g.TargetLevel)),
+            strategy.TargetMutationGoals.Take(5).Select(g => (g.MutationId, g.TargetLevel)));
+        Assert.Equal(MutationIds.MycotropicInduction, strategy.TargetMutationGoals[4].MutationId);
+        Assert.Equal(MutationIds.FilamentOverdrive, strategy.TargetMutationGoals[5].MutationId);
+        Assert.Equal(GameBalance.FilamentOverdriveMaxLevel, strategy.TargetMutationGoals[5].TargetLevel);
+        Assert.Equal(MutationIds.CatabolicRebirth, strategy.TargetMutationGoals[6].MutationId);
+        Assert.Equal(parent.TargetMutationGoals.Select(g => (g.MutationId, g.TargetLevel)),
+            strategy.TargetMutationGoals.Where(g => g.MutationId != MutationIds.FilamentOverdrive)
+                .Select(g => (g.MutationId, g.TargetLevel)));
+        Assert.Single(candidate.VariedGenes);
+        var characterization = CandidateCharacterizationGate.Run(new[] { candidate });
+        Assert.Empty(characterization.Findings);
+        Assert.Single(characterization.Passed);
+        Assert.DoesNotContain(parent.TargetMutationGoals, g => g.MutationId == MutationIds.FilamentOverdrive);
+        Assert.DoesNotContain(AIRoster.CampaignStrategies, s => s.StrategyName == candidate.DisplayName);
+        Assert.DoesNotContain(AIRoster.ProvenStrategies, s => s.StrategyName == candidate.DisplayName);
+    }
+
+    [Fact]
     public void Putrid_extension_preserves_the_complete_engine_and_only_appends_filament()
     {
         _ = AIRoster.CampaignStrategies.Count;

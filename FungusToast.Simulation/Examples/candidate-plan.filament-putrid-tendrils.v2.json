@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "fungus-toast.ai-candidate-plan.v1",
+  "planId": "filament-putrid-tendrils-v2",
+  "purpose": "Jake-approved Testing-only Putrid Tendrils priority experiment: preserve four Tendril level-2 goals and Mycotropic Induction 2, insert Filament Overdrive 5 next, then retain the existing Catabolic Rebirth, Putrefactive Rejuvenation and Cascade goals. Delay late recovery/cascade investments intentionally. Preserve all other behavior genes. Evaluate full prerequisite/displaced-spend effect, not isolated Filament strength. No live roster change or promotion.",
+  "parentStrategyId": "legacy.campaign.cmp-growth-putridtendrils-medium.v1",
+  "parentStrategySet": "campaign",
+  "operators": [
+    "goalInsertion"
+  ],
+  "maximumCandidates": 1,
+  "goalInsertions": [
+    {
+      "mutationId": 41,
+      "targetLevel": 5,
+      "position": 5
+    }
+  ]
+}
