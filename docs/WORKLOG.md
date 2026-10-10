@@ -1,5 +1,40 @@
 # Fungus-Toast Worklog
 
+## Filament strategy-fit audit and first reachability stop — 2026-10-10
+
+Jake approved starting growth-AI Filament/Ecology work and asked to identify
+likely beneficiaries first. Reviewed coverage decisions, current rules/goal
+spines, deterministic Proven/Campaign reports and 2026-08-30 detour evidence.
+Putrid Tendrils is the clearest direct Tendril family; Rebirth Furnace/Verdant
+Reclaimer are recovery-led follow-ons. Wildfire/Overextender have Easy/Training
+role constraints. Coverage scores are compatibility, not measured benefit.
+
+Added one bounded Generated-only plan and regression test: preserve Campaign
+Putrid Tendrils' complete eight-goal spine, then append Filament5. Candidate
+candidate.cmp-growth-putridtendrils-medium.a4a89329d81f passes static/characterization.
+Preregistered reachability smoke: two five-game arms,120x120,rotating slots,
+seeds2026101001–2026101005,fixed MaxEconomy opponent,no nutrients/Mycovariants/
+starting Adaptations. Both5/5complete; output hashes/sidecars,matching binaries
+and all10actualstarts/loadouts verified. Treatment buys CreepingMold3 in5/5
+(rounds30–32), but Filament0/5 and zero triggers/bonus cells. Later-goal prerequisites
+can consume points before earlier goals finish; this is not a pure mechanic
+contrast. Stop the appended proposal: no calibration/comparison/holdout or benefit
+claim. Artifacts: filament_putrid_reach_smoke_{control,treatment}_20261010.
+Audit/protocol/result: TEMP/filament-fit-20261010/.
+Strict treatment replay is BLOCKED: CLI exits1 with "Unknown strategy set: Generated"
+despite supplied candidate catalog. No replay parity claim; separate tooling follow-up
+recorded. The complete hashed original artifacts still establish zero purchase/trigger.
+
+No live strategy,balance constant,Core rule or coverage disposition changes.
+Core776/776 and Simulation293/293 pass. Canonical/plugin binaries refreshed from
+unchanged Core source and hashes equal. Fit/cost/profile details are in
+AI_STRATEGY_AUTHORING.md under Filament Overdrive fit investigation.
+
+Next Jake decision: authorize earlier Filament priority and identify which
+recovery/cascade goals it may delay, or prioritize a different family.
+AddForEvaluation stays open; the existing no-detour Campaign test remains intact.
+
+
 ## Rotten Heart replacement 100-game confirmation — 2026-10-10
 
 Jake requested100games after the Creeping Necro substitution. Used the canonical

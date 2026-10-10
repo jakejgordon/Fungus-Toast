@@ -349,6 +349,66 @@ is implemented.
     plan, compare the proposed ordered list against its unchanged control with
     deterministic simulation seeds, then confirm it on a held-out seed.
 
+## Filament Overdrive fit investigation (2026-10-10)
+
+Coverage identifies plausible matches, not measured beneficiaries. The approved
+backlog covers Putrid Tendrils (Proven/Campaign), Rebirth Furnace (Proven/Campaign),
+Verdant Reclaimer (Proven/Campaign), Wildfire Bloom, and four Overextender Training
+variants. Broader Baseline matches remain unreviewed. Coverage scores measure
+compatibility, not expected performance or effect size.
+
+- **First direct-fit family: Putrid Tendrils.** Explicit four-direction Tendrils
+  supply trigger opportunities; later recovery may reuse sacrificed tissue.
+  Campaign currently measures Elite despite its internal Medium suffix. Revisit
+  the unsuccessful earlier detour with evidence; keep its live regression intact.
+- **Recovery-led follow-ons: Rebirth Furnace and Verdant Reclaimer.** Their
+  death/recovery plans plausibly support sacrifice, but their explicit Induction
+  target is only one and neither explicitly establishes Creeping Mold. Check
+  realized Tendril levels, prerequisite spend and acquisition timing first.
+- **Role-constrained: Wildfire Bloom and Overextender.** Both have strong Tendril
+  themes, but Wildfire's resistance can prevent source sacrifice. Wildfire must
+  remain Easy and Overextender Training; strength gains are not automatic success.
+
+At base prices, Filament5 costs30 MP before missing prerequisites: CreepingMold3
+(15 MP), AutolyticSurge1(7 MP), AeratedFrontier5(5 MP), plus missing ancestors.
+Existing purchases and economy/free-upgrade effects change the incremental bill.
+Autolytic Surge retains internal HyphalSurge ID. Resistant sources, blocked
+runners, early death and late acquisition can eliminate a nominal fit.
+
+### First Testing-only proposal and reachability stop
+
+Bounded plan: FungusToast.Simulation/Examples/candidate-plan.filament-putrid-tendrils.v1.json.
+It generates one candidate, never an authored roster entry. Profile:
+**Putrid Tendrils / Filament extension**; fantasy: a tendril-led colony extending
+its lanes through sacrificed launch cells, with recovery intended to sustain
+losses. Mutation plan derives the unchanged Campaign parent's complete ordered
+spine, then appends Filament5. Mycovariant plan preserves the parent's current
+executable scorer/preferences as an experimental control; existing curation debt
+is unresolved, so this is not a promotion-ready profile.
+
+Candidate a4a89329d81f passed static/deterministic characterization. Preregistered
+reachability-only smoke: five pairs,120x120,rotating slots,seeds2026101001–2026101005,
+fixed TST_BalancedControl_MaxEconomy opponent, nutrients/drafts/starting Adaptations
+off. Both arms complete; artifact hashes/sidecars,binary identities and all10
+starts/loadouts verified. Treatment buys CreepingMold3 in5/5(rounds30–32), but
+Filament0/5, with zero triggers/bonus cells. Appending a goal can buy prerequisites
+while earlier expensive goals remain incomplete; list order is not acquisition
+isolation. These outcomes cannot identify the benefit of an active Filament.
+
+Stop this proposal before calibration/comparison/holdout. This rejects its
+reachability in this context, not Filament strength or the family's thematic fit.
+Keep AddForEvaluation open and the live no-detour regression unchanged. An earlier
+pickup requires an explicit engine-priority choice: which recovery/cascade goals
+may it delay? If authorized, generate a new bounded plan with unused seeds, repeat
+reachability, then the normal evidence ladder/contextual difficulty checks. The
+treatment measures prerequisite purchases and displaced spending, not Filament alone.
+
+Artifacts: filament_putrid_reach_smoke_{control,treatment}_20261010 under
+SimulationParquet; local audit/protocol/result: TEMP/filament-fit-20261010/.
+Strict replay was attempted with the catalog but refused "Unknown strategy set:
+Generated" before execution. Replay parity remains unverified; a separate tooling
+follow-up is recorded. Do not equate original artifact hash checks with replay.
+
 ## Campaign Mycovariant Migration Ledger
 
 Legacy Campaign entries with empty or category-derived plans are frozen by
