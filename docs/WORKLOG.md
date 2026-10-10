@@ -1,5 +1,39 @@
 # Fungus-Toast Worklog
 
+## Rotten Heart matched no-rot control — 2026-10-09
+
+Jake requested an identical100game simulation with rot removed. Used the previous
+recorded Simulation/Core DLLs directly, without rebuilding or changing source;
+SHA256 f01e258ebc1917f5f423c56982da6216c5d304eaf59abfa9c8c06092b9642f4e /
+e8f2827c90d2b1792ab15a7c41c6ec236849a13cbefba6a7084eed13443eb3ab match.
+Exact game seeds20261015–20261114, lineup/slots, Kaiser mask, nutrients/drafts,
+Adaptations and preferred-start pools retained. Manifest condition deep comparison
+proves only centralRotEnabled changed; all output hashes and sidecars verified.
+No-rot artifact: rotten_heart_no_rot_matched_g100_seed20261008;100/100complete.
+
+Safeproxy wincredit31.5%(31solo+1sharedwin), versus45%rot: rot-minus-no-rot+13.5pp.
+Campaign7/level8 target15–35%: no-rot is inside, rot is10ppabove upper bound.
+Seed-matched results:14proxywinsboth,31rot-only,18no-rot-only,37neither;
+exactMcNemar(binary winning status)p=.08543 => suggestive, not definitive across
+seeds/lineups. Fractional-credit paired bootstrap20kresamples/seed20261009
+95%CI+0.5..+27pp; methods differ because one proxy win is shared.
+No-rot proxy avg529.61living/520.73dead/119.73toxins, rank3.29; withrot rank2.54.
+
+Important interpretation:100/700actualstartrows differ, all NecrotoxinGauntlet.
+Its no-rot start(45or44,61) falls inside the rot island; terrain-first placement
+relocates it to perimeter locations in the rot encounter. The proxy and allfive
+other opponents have identical actualstarts. Necrotoxin wincredit0→15%withoutrot.
+This isolates the central-rot campaign feature, including automatic start fallback,
+not a pure midgame obstruction effect at identical spore positions. Fixed-position
+isolation would require a separately controlled pair of new arms, not merely calling
+this comparison identical positions. No balance/AI/gameplay changes made.
+
+Canonical summary: TEMP/rotten-heart-no-rot-analysis/post_simulation_player_summary.csv.
+Matched analysis: TEMP/rotten-heart-matched-comparison.json and analyze_rotten_heart_matched.py.
+All run folders under FungusToast.Simulation/bin/Debug/net8.0/SimulationParquet/.
+Full no-rot100game strict replay verified outcome39c1489d16b29b5840dd1113b3b7ce3bc7984c842df66103cc9047c2d02c6b72; replay output hashes and manifest checksum pass.
+
+
 ## Rotten Heart proxy difficulty probe — 2026-10-08
 
 Jake requested simulation difficulty of the level8 alternate. Added replayable
