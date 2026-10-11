@@ -120,6 +120,8 @@ namespace FungusToast.Simulation
             var replayManifestPath = GetOptionValue(args, "--replay-manifest");
             if (replayManifestPath != null)
             {
+                // Replay validates/resolves the recorded lineup too; Generated is process-local.
+                if (!TryLoadCandidateCatalog(args)) return;
                 try
                 {
                     ResolvedExperimentReplayRunner.Run(

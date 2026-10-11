@@ -68,7 +68,7 @@ with `sha256sum -c resolved-manifest.sha256`.
 Replay and verify a completed artifact in one command:
 
 ```bash
-dotnet run --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
+dotnet run --no-build --project FungusToast.Simulation/FungusToast.Simulation.csproj -- \
   --replay-manifest /path/to/resolved-manifest.json
 ```
 
@@ -77,7 +77,15 @@ strategy fingerprint must match the artifact. It uses the recorded lineup and
 exact game-seed schedule, writes to a timestamped replay artifact by default,
 and exits unsuccessfully if the canonical outcome fingerprint differs. Use
 `--replay-experiment-id <id>` only when a stable non-colliding artifact ID is
-needed.
+needed. Use --no-build to retain the recorded binaries; a rebuild can change
+their identity even when gameplay source is unchanged.
+
+For Generated lineups, also supply --candidate-catalog /path/to/catalog.json.
+Replay publishes that catalog before validating or resolving the recorded lineup.
+Invalid/missing catalogs fail rather than substituting an authored roster. All
+existing binary, strategy-ID/definition and outcome checks remain strict. After
+a replay-routing repair/rebuild, generate new proof artifacts under those binaries;
+do not edit older manifests or relax fingerprint checks to make them replay.
 
 The Parquet datasets duplicate the fields most often needed for causal
 analysis. `games.parquet` includes condition and board fingerprints, the
