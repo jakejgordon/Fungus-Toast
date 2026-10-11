@@ -1,5 +1,50 @@
 # Fungus-Toast Worklog
 
+## Generated replay repaired; 20-pair calibration originals complete — 2026-10-10
+
+Jake approved 40-minute repair/calibration chunk at 22:02 EDT. Source fix
+1ea347b1 pushed: publish --candidate-catalog before replay validation/lookup,
+without changing ReplayRunner's strict checks. Three new routing tests pass;
+full Simulation 297/297 and Core 776/776 pass, zero-warning builds. Built proof
+binaries at the committed repair; canonical/Unity DLL and PDB hashes match.
+No Core gameplay, balance constants, live roster or v2 candidate changes.
+
+Fresh three-game 40x40 CLI proof strictly replays outcome 02212960d38316ee...
+Old binary identity, altered strategy ID and altered definition fingerprint remain
+rejected in negative probes; original manifests untouched. Routing bug resolved.
+
+Both preregistered original calibration arms 20/20 complete: same candidate
+437618fecf39, seeds 2026101101–2026101120, 120x120, rotate, fixed MaxEconomy,
+no nutrients/drafts/starting Adaptations, 900s/arm. Runtime 444.628s/463.024s.
+All hashes/sidecars, code identities, conditions (only target name differs),
+40 actual starting player records/slots/loadouts, opponent and Core parity pass.
+
+Canonical diagnostic result: normalized-share delta -0.05574, 95% CI
+[-0.20704,+0.09556]; wins 30% -> 25%, difference -5pp (CI -27.37..+17.37pp).
+Living cells 3636.55 -> 3347.30; rank 1.70 -> 1.75. Frozen regression-stop
+upper<-0.05 does NOT trigger; no benefit/non-inferiority/promotion verdict.
+This is one bare-board AI matchup, not campaign/proxy difficulty validation.
+Filament acquired12/20, triggered11/20, first rounds19–35; 3775 triggers,
+7678 bonus cells,3775 sacrifices,3903 net immediate cells; max game817 (20.9%).
+Payoff does not equal surviving/incremental strength; exposure remains patchy.
+Affordable-unspent phase flags parent11/treatment3, not runner exceptions.
+
+FULL CALIBRATION REPLAY PARITY PENDING: time preflight refused dispatch of either
+full replay inside the remaining chunk. Both original samples are complete and
+preserved; no partial pooling or outcome-conditioned retry. Up to15 extra minutes
+of verification requested, NOT yet received. No simulations remain running.
+Next: replay the existing originals with catalog and unchanged binaries, not a
+new measurement sample. Keep strict hashes/IDs/definitions/outcomes; record later
+documentation-only Git HEAD separately from fixed executable assembly provenance.
+Do not advance Comparison/Holdout or live promotion before remaining validation
+and separate authority. Candidate is still Testing-only; AddForEvaluation open.
+
+Artifacts filament_putrid_early_cal_{control,treatment}_20261010; exact protocol,
+state, commands, result, CSV traces and canonical tables:
+TEMP/filament-calibration-20261010/{analysis,treatment-analysis}/.
+Full details: AI_STRATEGY_AUTHORING.md, Filament calibration investigation.
+
+
 ## Earlier Filament smoke2 complete — exposure gate passed — 2026-10-10
 
 Jake approved the 15-minute replacement smoke chunk at 21:29 EDT. Used the same
@@ -30,7 +75,7 @@ NEXT: replay-routing repair, then the earned 20-pair calibration on unused seeds
 2026101101–2026101120. Proposed conservative runtime 900s/arm from earlier observed
 40.895s max/game plus headroom; keep controls and -0.05 regression-stop rule.
 Requires a longer approved chunk (suggest 40 minutes including repair/analysis).
-No next gate is running; paused awaiting that authority, not candidate promotion.
+Longer chunk approved at22:02; superseded by the newer calibration handoff above.
 Canonical findings/table: AI_STRATEGY_AUTHORING.md, Filament investigation.
 
 

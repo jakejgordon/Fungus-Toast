@@ -485,8 +485,76 @@ unused seeds 2026101101–2026101120. The old 240s/arm timing allowance must be
 replaced before dispatch; conservative proposal is 900s/arm based on the earlier
 40.895s worst observed game plus startup/export headroom, not candidate outcomes.
 Retain the same candidate, controls and preregistered -0.05 regression-stop rule.
-Replay repair plus calibration requires a longer approved chunk; neither has
-started. No calibration, comparison, holdout, promotion or benefit verdict is earned.
+This longer chunk was subsequently approved at22:02; see the calibration
+handoff below. Comparison, holdout, promotion and benefit verdict remain unearned.
+
+### Calibration originals complete; full replay parity pending
+
+Jake approved the 40-minute replay-repair/calibration chunk at 22:02 EDT on
+2026-10-10. Source fix 1ea347b1 loads the candidate catalog in the replay branch
+before validation/lineup resolution. Three new routing tests pass; full Simulation
+297/297 and Core 776/776 pass, with zero-warning Core/Simulation builds. Rebuilt
+against the committed fix; canonical/Unity DLL and PDB hashes match. No Core
+rules, balance constants, authored roster or candidate genes changed.
+
+A fresh three-game 40x40 CLI-only proof and strict replay have identical outcome
+02212960d38316ee0f159b2a48ea46c892ec1ac989ac2aa8ae7cfa3f6ed2fc3e.
+Old-code artifacts remain rejected for binary mismatch. Separate TEMP copies
+with wrong strategy ID or definition fingerprint also remain rejected; original
+manifests were untouched. This resolves the routing defect, not parity of the
+older smoke under different binaries.
+
+Preregistered calibration: 20 pairs, 120x120, seeds 2026101101–2026101120,
+rotating slots, the same v2 candidate/MaxEconomy opponent and disabled systems.
+Both original arms finished 20/20 under separate 900s caps (444.628s control,
+463.024s treatment). Source revision/binary identities, manifest sidecars, all
+output hashes, all 40 actual starting player records/loadouts/slots, opponent
+identity, deep conditions and Core accounting parity pass. No partial pooling.
+
+| Diagnostic | Parent | Earlier Filament |
+|---|---:|---:|
+| Wins | 6/20 (30%) | 5/20 (25%) |
+| Mean living cells | 3,636.55 | 3,347.30 |
+| Mean parity-normalized living-cell share | 0.83504 | 0.77930 |
+| Mean final rank | 1.70 | 1.75 |
+| Filament acquisition / active games | 0 / 0 | 12 / 11 |
+
+Canonical paired normalized-share difference: **-0.05574**, 95% interval
+**[-0.20704, +0.09556]**. Win-credit difference: -5 percentage points, interval
+[-27.37, +17.37]. Measured share correlation 0.0752; paired/unpaired variance
+ratio 1.0812. The frozen regression-stop rule (upper interval < -0.05) does NOT
+trigger. This is neither a benefit nor a non-inferiority verdict. No decision-
+bearing hypothesis/verdict was emitted for Calibration; these are diagnostics.
+This is not a campaign/proxy difficulty test or target-band acceptance.
+
+Treatment has joint acquisition-and-trigger exposure in 11/20 games (55%), with
+first acquisitions in rounds 19–35; one purchase at round 35 never triggers.
+The smoke gate remains passed on its own cohort; do not retrofit a calibration
+exposure threshold. Totals: 3,775 triggers, 7,678 bonus cells, 3,775 source deaths,
+3,903 net immediate cells. Largest game contributes 817 (20.9%) of that net.
+Gross payoff does not establish surviving territory or incremental benefit of
+Filament alone: prerequisites and displaced recovery/cascade spending remain
+part of the treatment. Affordable-unspent spending flags: 11 parent / 3 treatment;
+these are not runner exceptions, but are a separate pre-promotion health caveat.
+
+**Full calibration replay parity is NOT verified.** The owned runner stopped at
+the time preflight before starting either full replay; it did not interrupt or
+truncate either original arm. Approval for up to 15 additional minutes of full-
+arm verification was requested; no extension has been received. Do not advance
+Comparison/Holdout or promote a live strategy while this handoff is pending.
+Resume verification from the existing completed originals, with the same catalog
+and binaries; do not regenerate the measurement sample or edit manifests.
+Git HEAD may later advance for documentation/artifacts while executable hashes
+and assembly version remain fixed; record that provenance distinction rather
+than weakening binary, strategy or outcome validation.
+
+Artifacts: filament_putrid_early_cal_{control,treatment}_20261010.
+Protocol/commands/state/result/CSV traces: TEMP/filament-calibration-20261010/.
+Canonical tables: analysis/paired_comparison.csv and each arm's
+post_simulation_player_summary.csv (analysis/ for control, treatment-analysis/
+for treatment). Source fingerprints are 67e7d8c2ca4255576870ac19aff3b3ab0c3dd496a0f067ef26b35887ef4da9bc
+(control) and 5783557b0896694ff33a0601b95d7dd4be04f02e9cc6f4561521156bcfac95c8
+(treatment). The Testing-only proposal remains experimental; no benefit is proved.
 
 ## Campaign Mycovariant Migration Ledger
 
