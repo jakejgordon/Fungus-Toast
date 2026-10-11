@@ -1,6 +1,6 @@
 # Fungus-Toast Worklog
 
-## Generated replay repaired; 20-pair calibration originals complete — 2026-10-10
+## Generated replay repaired; 20-pair calibration fully replay-verified — 2026-10-11
 
 Jake approved 40-minute repair/calibration chunk at 22:02 EDT. Source fix
 1ea347b1 pushed: publish --candidate-catalog before replay validation/lookup,
@@ -29,15 +29,21 @@ Filament acquired12/20, triggered11/20, first rounds19–35; 3775 triggers,
 Payoff does not equal surviving/incremental strength; exposure remains patchy.
 Affordable-unspent phase flags parent11/treatment3, not runner exceptions.
 
-FULL CALIBRATION REPLAY PARITY PENDING: time preflight refused dispatch of either
-full replay inside the remaining chunk. Both original samples are complete and
-preserved; no partial pooling or outcome-conditioned retry. Up to15 extra minutes
-of verification requested, NOT yet received. No simulations remain running.
-Next: replay the existing originals with catalog and unchanged binaries, not a
-new measurement sample. Keep strict hashes/IDs/definitions/outcomes; record later
-documentation-only Git HEAD separately from fixed executable assembly provenance.
-Do not advance Comparison/Holdout or live promotion before remaining validation
-and separate authority. Candidate is still Testing-only; AddForEvaluation open.
+FULL CALIBRATION REPLAY PARITY COMPLETE. Jake authorized continuation until done
+at00:48 EDT2026-10-11. Resumed only outstanding verification of existing originals
+with same catalog/binaries and --no-build. Both20/20 strict replays pass, exact
+outcomes67e7d8c2ca425557...control and5783557b0896694f...treatment. All sidecars/
+output hashes, binaries/assembly version, IDs/definitions, deep conditions/seeds,
+actual starts/loadouts and Core parity pass. All gameplay columns of all five
+Parquet datasets match exactly; only experimentID/timestamp/runtime differ.
+Original manifests untouched; no new measurement, pooling or rebuild. Replay wall
+times115.415s/114.932s. Source commit1ea347b1 vsreplayHEAD7d5a1bb6 is a recorded
+doc/artifact-only metadata difference; actual executable identities remain fixed.
+No strict guard relaxed or commit-label override used. No simulations remain live.
+Existing canonical estimates preserved, no repeated analysis sample or verdict.
+Repair/calibration-verification lane complete; current candidate remains Testing-
+only, benefit unproved. Comparison50/Holdout100 remain unrun and separate work;
+no live promotion. AddForEvaluation scientific evidence remains open.
 
 Artifacts filament_putrid_early_cal_{control,treatment}_20261010; exact protocol,
 state, commands, result, CSV traces and canonical tables:

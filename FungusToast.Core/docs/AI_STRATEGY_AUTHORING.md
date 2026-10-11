@@ -488,7 +488,7 @@ Retain the same candidate, controls and preregistered -0.05 regression-stop rule
 This longer chunk was subsequently approved at22:02; see the calibration
 handoff below. Comparison, holdout, promotion and benefit verdict remain unearned.
 
-### Calibration originals complete; full replay parity pending
+### Calibration complete; full strict replay parity verified
 
 Jake approved the 40-minute replay-repair/calibration chunk at 22:02 EDT on
 2026-10-10. Source fix 1ea347b1 loads the candidate catalog in the replay branch
@@ -537,16 +537,30 @@ Filament alone: prerequisites and displaced recovery/cascade spending remain
 part of the treatment. Affordable-unspent spending flags: 11 parent / 3 treatment;
 these are not runner exceptions, but are a separate pre-promotion health caveat.
 
-**Full calibration replay parity is NOT verified.** The owned runner stopped at
-the time preflight before starting either full replay; it did not interrupt or
-truncate either original arm. Approval for up to 15 additional minutes of full-
-arm verification was requested; no extension has been received. Do not advance
-Comparison/Holdout or promote a live strategy while this handoff is pending.
-Resume verification from the existing completed originals, with the same catalog
-and binaries; do not regenerate the measurement sample or edit manifests.
-Git HEAD may later advance for documentation/artifacts while executable hashes
-and assembly version remain fixed; record that provenance distinction rather
-than weakening binary, strategy or outcome validation.
+**Full calibration replay parity verified on 2026-10-11.** The original chunk's
+time preflight initially held both full replays without truncating measurement.
+At 00:48 EDT Jake authorized continuation until verification/handoff was done.
+Reused the completed originals/catalog and exact preserved binaries with
+--no-build; no new measurement, rebuilding, partial pooling or manifest edits.
+Both full replays finished 20/20 and reproduced the original outcome fingerprints
+below. All manifest sidecars/output hashes, binary/assembly version, strategy IDs
+and definitions, conditions, seed schedules, starting controls and Core parity
+pass. All five Parquet datasets per arm match every gameplay column exactly;
+only ExperimentId, RunTimestampUtc and RuntimeMilliseconds differ as applicable.
+Wall times: control 115.415s, treatment 114.932s; timing differences are diagnostic,
+not gameplay evidence. Original artifact files remain unchanged.
+
+Original repository commit was 1ea347b1; replay repository commit was 7d5a1bb6
+(documentation/artifact-only advance). CodeIdentityResolver reads current Git HEAD,
+while executable SHA identities and assembly version remain fixed at the tested
+repair build. This distinction is recorded explicitly; no native strict binary,
+strategy or outcome check was weakened and no commit-label override was used.
+
+The calibration result and frozen regression-stop interpretation are unchanged.
+Verification complete does not establish benefit, non-inferiority or promotion.
+The requested repair/calibration verification lane is complete; 50-pair Comparison
+and 100-pair Holdout remain unrun and outside this verification-only continuation.
+No live AI/Core/balance changes. Larger strength evaluation remains separate work.
 
 Artifacts: filament_putrid_early_cal_{control,treatment}_20261010.
 Protocol/commands/state/result/CSV traces: TEMP/filament-calibration-20261010/.
