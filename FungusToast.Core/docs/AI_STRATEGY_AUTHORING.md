@@ -438,13 +438,55 @@ pass; these partial games are not exposure/performance evidence. The unmatched
 treatment was stopped, with no candidate result interpreted. Both candidate
 contract tests and all294 Simulation tests pass.
 
-A runtime-only replacement is specified but NOT launched: five pairs on fresh
-seeds2026101041–2026101045, same board/opponent/system/slot controls and exposure
-gate,300seconds per arm. This allows measured-throughput headroom without
-reusing partial outcomes. Requires approval for a15-minute chunk. The conditional
-240-second calibration budget is also insufficient at this observed pace; it
-must be rebudgeted before any dispatch, without reference to candidate outcomes.
-No calibration, comparison, holdout, promotion or benefit verdict is earned.
+### Earlier-priority replacement smoke: exposure gate passed
+
+Jake approved the 15-minute rerun chunk at 21:29 EDT on 2026-10-10. Completed
+five fresh pairs on seeds 2026101041–2026101045, retaining the same candidate,
+120x120 rectangle, opponent, rotating slots and disabled nutrients/drafts/starting
+Adaptations. Both arms finished 5/5 under the 300-second per-arm budgets; the
+runner required a complete, hashed control artifact before starting treatment.
+No partial rows from smoke1 were reused. Regenerated catalog is byte-identical
+to the saved v2 catalog, and both arms use the previously tested binary hashes.
+
+| Game | First Filament round | Final level | Triggers | Net immediate cells |
+|---|---:|---:|---:|---:|
+| 1 | Not acquired | 0 | 0 | 0 |
+| 2 | 18 | 5 | 549 | 629 |
+| 3 | 31 | 4 | 53 | 38 |
+| 4 | 35 | 2 | 1 | 0 |
+| 5 | 33 | 2 | 7 | 4 |
+
+Joint acquisition-and-trigger exposure is **4/5**, passing the preregistered
+at-least-3/5 gate; control has no Filament purchases or triggers. Treatment totals:
+610 triggers, 1,281 bonus cells, 610 source deaths, **671 net immediate cells**.
+This is gross immediate growth minus sacrificed sources, not surviving territory
+or incremental strategy benefit. Game 2 contributes 629/671 of that net (93.7%);
+three acquisitions are still late. Do not infer general strength from this smoke.
+
+Both manifest sidecars and every output hash pass. Deep conditions differ only
+by the declared target strategy; exact seeds, all ten starts/loadouts/slots,
+opponent definition and code/binary identities match. Two candidate contract
+tests pass again with --no-build. Runtime: control 26.886s, treatment 26.518s.
+No live roster, balance constant, Core rule or source code changes were made.
+
+Artifacts: filament_putrid_early_smoke2_{control,treatment}_20261010 under
+SimulationParquet. Exact protocol/commands, durable run state, CSV purchase and
+upgrade traces, and result.json: TEMP/filament-early-smoke2-20261010/.
+
+Strict treatment replay was attempted once with its catalog and refused
+"Unknown strategy set: Generated". Program routes replay before publishing the
+catalog, leaving ReplayRunner's Generated lookup empty. Replay parity remains
+unverified; fix that routing separately without weakening strict validation.
+A Simulation rebuild changes binary identities, so any corrected CLI proof must
+use artifacts generated under those new binaries, not relax the hash checks.
+
+The next performance gate is the previously proposed 20-pair calibration on
+unused seeds 2026101101–2026101120. The old 240s/arm timing allowance must be
+replaced before dispatch; conservative proposal is 900s/arm based on the earlier
+40.895s worst observed game plus startup/export headroom, not candidate outcomes.
+Retain the same candidate, controls and preregistered -0.05 regression-stop rule.
+Replay repair plus calibration requires a longer approved chunk; neither has
+started. No calibration, comparison, holdout, promotion or benefit verdict is earned.
 
 ## Campaign Mycovariant Migration Ledger
 

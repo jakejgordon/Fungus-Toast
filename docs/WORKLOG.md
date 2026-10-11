@@ -1,5 +1,39 @@
 # Fungus-Toast Worklog
 
+## Earlier Filament smoke2 complete — exposure gate passed — 2026-10-10
+
+Jake approved the 15-minute replacement smoke chunk at 21:29 EDT. Used the same
+v2 candidate 437618fecf39 with fresh seeds 2026101041–2026101045, five pairs,
+120x120, rotating slots, fixed TST_BalancedControl_MaxEconomy opponent, no
+nutrients/drafts/starting Adaptations, 300-second per-arm caps. No partial reuse.
+Catalog regeneration is byte-identical to the saved proposal; retained tested
+binaries via --no-build. Runner gates treatment on complete/hash-verified control.
+Both arms 5/5 complete; all sidecars/output hashes, binary identities, deep input
+controls, seeds, all ten actual starts/loadouts/slots and opponent definition match.
+Two candidate contract tests pass again; no source/balance/live-roster changes.
+
+Filament acquired and triggered in 4/5 treatment games (control 0/5), passing the
+preregistered >=3/5 joint-exposure gate. Final levels 0/5/4/2/2; first acquisition
+rounds absent/18/31/35/33. Totals: 610 triggers, 1,281 bonus cells, 610 source
+sacrifices, 671 net immediate cells. Not incremental strategy benefit or final
+surviving territory: game2 supplies 629/671 net (93.7%); three acquisitions late.
+Runtime control 26.886s/treatment 26.518s. No strength, difficulty or promotion call.
+
+Artifacts: filament_putrid_early_smoke2_{control,treatment}_20261010.
+Protocol/commands/run-state/CSV traces/result: TEMP/filament-early-smoke2-20261010/.
+Strict treatment replay attempted once, BLOCKED by Unknown strategy set: Generated.
+Program's replay branch runs before catalog publication; no replay parity claim.
+Fix separately and preserve strict binary/strategy validation. Rebuild changes
+binary identity, so proof artifacts must be generated under the corrected build.
+
+NEXT: replay-routing repair, then the earned 20-pair calibration on unused seeds
+2026101101–2026101120. Proposed conservative runtime 900s/arm from earlier observed
+40.895s max/game plus headroom; keep controls and -0.05 regression-stop rule.
+Requires a longer approved chunk (suggest 40 minutes including repair/analysis).
+No next gate is running; paused awaiting that authority, not candidate promotion.
+Canonical findings/table: AI_STRATEGY_AUTHORING.md, Filament investigation.
+
+
 ## Earlier Filament priority approved — runtime integrity stop — 2026-10-10
 
 Jake approved Filament immediately after Putrid's Tendril backbone, ahead of late
@@ -16,10 +50,10 @@ pass. EXCLUDED integrity-only: no exposure/performance inference. Stopped the
 unmatched treatment and verified no owned simulation remains. Do not count the
 incomplete control as a candidate win/loss or carry partial rows into a replacement.
 
-Replacement smoke2 is specified, NOT launched: fresh seeds2026101041–2026101045,
-same controls/gate,300s/arm based only on timing, no partial reuse. Await Jake's
-approval for a15-minute chunk. Conditional20-pair calibration is unrun; its old
-240s/arm allowance must be rebudgeted from observed throughput before dispatch.
+Replacement smoke2 was approved at21:29 and completed; see the newer exposure
+gate entry above. It used fresh seeds2026101041–2026101045, same controls/gate,
+300s/arm based only on timing, with no partial reuse. Conditional20-pair
+calibration is unrun; its old240s/arm allowance must be rebudgeted from observed throughput before dispatch.
 Exposure gate remains purchase+triggers in at least3/5 games. Generated strict
 replay remains separately blocked; no replay/promotion/benefit claim.
 Protocol/characterization/integrity-stop JSON: TEMP/filament-early-20261010/.
